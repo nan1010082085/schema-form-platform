@@ -1,4 +1,5 @@
 {
+  "nodeVersion": 20,
   "outputDirectory": "packages/web/dist",
   "buildCommand": "pnpm build:server && pnpm build:web",
   "installCommand": "pnpm install --frozen-lockfile",
