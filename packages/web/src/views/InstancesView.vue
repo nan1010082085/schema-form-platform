@@ -42,8 +42,7 @@ const createDialogVisible = ref(false)
 const createType = ref<'form' | 'search-list'>('form')
 const createName = ref('')
 
-function openCreateDialog(type: 'form' | 'search-list') {
-  createType.value = type
+function openCreateDialog() {
   createName.value = ''
   createDialogVisible.value = true
 }
@@ -205,8 +204,7 @@ const isFiltered = computed(() =>
             <p class="fg-instances__subtitle">管理所有表单和搜索列表实例</p>
           </div>
           <div class="fg-instances__header-actions">
-            <el-button type="primary" :icon="Plus" @click="openCreateDialog('form')">新建表单</el-button>
-            <el-button type="success" :icon="Plus" @click="openCreateDialog('search-list')">新建搜索列表</el-button>
+            <el-button type="primary" :icon="Plus" @click="openCreateDialog">新建实例</el-button>
           </div>
         </div>
 
@@ -288,8 +286,7 @@ const isFiltered = computed(() =>
         <h2 class="fg-instances__empty-title">还没有 Schema 实例</h2>
         <p class="fg-instances__empty-desc">创建您的第一个表单或搜索列表来开始使用</p>
         <div class="fg-instances__empty-actions">
-          <el-button type="primary" size="large" :icon="Plus" @click="openCreateDialog('form')">创建表单</el-button>
-          <el-button type="success" size="large" :icon="Plus" @click="openCreateDialog('search-list')">创建搜索列表</el-button>
+          <el-button type="primary" size="large" :icon="Plus" @click="openCreateDialog">创建实例</el-button>
         </div>
       </div>
 
@@ -371,7 +368,7 @@ const isFiltered = computed(() =>
     <!-- Create Dialog -->
     <el-dialog
       v-model="createDialogVisible"
-      :title="createType === 'form' ? '新建表单' : '新建搜索列表'"
+      title="新建实例"
       width="440px"
       :close-on-click-modal="false"
       append-to-body
@@ -387,9 +384,10 @@ const isFiltered = computed(() =>
           />
         </el-form-item>
         <el-form-item label="类型">
-          <el-tag :type="createType === 'form' ? '' : 'success'">
-            {{ createType === 'form' ? '表单' : '搜索列表' }}
-          </el-tag>
+          <el-select v-model="createType" style="width:100%">
+            <el-option label="表单 (Form)" value="form" />
+            <el-option label="搜索列表 (Search List)" value="search-list" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
