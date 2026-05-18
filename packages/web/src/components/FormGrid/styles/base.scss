@@ -9,7 +9,7 @@
 .fg-grid-row {
   display: flex;
   width: 100%;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: stretch; // 单元格等高
 }
 
@@ -21,7 +21,7 @@
   align-items: center;  // 内容垂直居中
   background: #fff;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 // ---- 消除行之间重复上边框 ----
