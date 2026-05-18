@@ -187,6 +187,8 @@ async function handleSaveDraft() {
       schemaStatus.value = 'draft'
     }
     ElMessage.success('草稿已保存')
+  } else {
+    ElMessage.error(schemaStore.error || '保存失败')
   }
 }
 
@@ -499,6 +501,16 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
 <template>
   <div class="editor-view">
+    <el-alert
+      v-if="schemaStore.hasError"
+      :title="schemaStore.error ?? ''"
+      type="error"
+      show-icon
+      closable
+      class="editor-view__error"
+      @close="schemaStore.clearError?.()"
+    />
+
     <EditorToolbar
       :mode="mode"
       :selected-index="selectedIndex"
@@ -706,14 +718,22 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     border-right: 1px solid #e4e7ed;
     display: flex;
     flex-direction: column;
-    transition: transform 0.25s ease, width 0.25s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
     z-index: 2;
 
     &--collapsed {
       width: 0;
       transform: translateX(-100%);
       overflow: hidden;
+      opacity: 0;
     }
+  }
+
+  &__error {
+    margin: 8px 16px 0;
+    flex-shrink: 0;
   }
 
   &__name-area {

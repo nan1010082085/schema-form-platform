@@ -460,6 +460,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   border-bottom: 1px solid #e4e7ed;
   flex-shrink: 0;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   &__left {
     display: flex;
@@ -493,6 +497,9 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    padding: 4px 8px;
+    background: #fafafa;
+    border-radius: 6px;
 
     .el-divider--vertical {
       margin: 0 4px;

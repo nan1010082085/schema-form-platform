@@ -5,6 +5,7 @@
  * Sectioned layout: Basic Properties / Linkage Config / API Config / JSON Preview
  */
 import { computed, watch, ref } from 'vue'
+import { Setting, Connection } from '@element-plus/icons-vue'
 import PropertySection from '@/components/Editor/PropertySection.vue'
 import LinkageConfig from '@/components/Editor/LinkageConfig.vue'
 import ApiConfig from '@/components/Editor/ApiConfig.vue'
@@ -29,6 +30,10 @@ const emit = defineEmits<{
 
 // Local editing copy to avoid mutating props directly
 const localSchema = ref<FormSchemaItem | null>(null)
+
+// Dialog visibility
+const apiConfigVisible = ref(false)
+const linkageConfigVisible = ref(false)
 
 watch(
   () => props.schema,
@@ -388,31 +393,34 @@ const validationResult = computed(() => {
         />
       </PropertySection>
 
-      <!-- Section 2: Linkage Config (form components only) -->
-      <PropertySection
-        v-if="!isLayoutType && !isButtonType"
-        title="Linkage Config"
-        :default-open="false"
-      >
-        <LinkageConfig
-          :linkages="localSchema.linkages ?? []"
-          :available-fields="availableFields"
-          @update:linkages="handleLinkageUpdate"
-        />
-      </PropertySection>
+      <!-- Advanced config buttons -->
+      <div class="property-panel__advanced">
+        <el-button
+          v-if="!isLayoutType && !isButtonType"
+          size="small"
+          class="property-panel__advanced-btn"
+          @click="linkageConfigVisible = true"
+        >
+          <el-icon><Connection /></el-icon>
+          联动配置
+          <el-tag v-if="localSchema.linkages?.length" size="small" type="warning" class="property-panel__advanced-tag">
+            {{ localSchema.linkages.length }}
+          </el-tag>
+        </el-button>
 
-      <!-- Section 3: API Config (components with dynamic options) -->
-      <PropertySection
-        v-if="supportsApi"
-        title="API Config"
-        :default-open="false"
-      >
-        <ApiConfig
-          :api="localSchema.api"
-          @update:api="handleApiUpdate"
-          @generate-schema="handleGenerateSchema"
-        />
-      </PropertySection>
+        <el-button
+          v-if="supportsApi"
+          size="small"
+          class="property-panel__advanced-btn"
+          @click="apiConfigVisible = true"
+        >
+          <el-icon><Setting /></el-icon>
+          API 配置
+          <el-tag v-if="localSchema.api" size="small" type="success" class="property-panel__advanced-tag">
+            已配置
+          </el-tag>
+        </el-button>
+      </div>
 
       <!-- Section 4: JSON Preview -->
       <PropertySection title="JSON Preview" :default-open="false">
@@ -427,8 +435,40 @@ const validationResult = computed(() => {
     </el-scrollbar>
 
     <div v-else class="property-panel__empty">
-      Select a component on the canvas to edit its properties.
+      请在画布上选择一个组件来编辑其属性
     </div>
+
+    <!-- API Config Dialog -->
+    <el-dialog
+      v-model="apiConfigVisible"
+      title="API 配置"
+      width="680px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <ApiConfig
+        v-if="localSchema"
+        :api="localSchema.api"
+        @update:api="handleApiUpdate"
+        @generate-schema="handleGenerateSchema"
+      />
+    </el-dialog>
+
+    <!-- Linkage Config Dialog -->
+    <el-dialog
+      v-model="linkageConfigVisible"
+      title="联动配置"
+      width="800px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <LinkageConfig
+        v-if="localSchema"
+        :linkages="localSchema.linkages ?? []"
+        :available-fields="availableFields"
+        @update:linkages="handleLinkageUpdate"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -508,6 +548,24 @@ const validationResult = computed(() => {
       color: #e6a23c;
       border: 1px solid #faecd8;
     }
+
+  &__advanced {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  &__advanced-btn {
+    width: 100%;
+    justify-content: flex-start;
+
+    .el-icon { margin-right: 4px; }
+  }
+
+  &__advanced-tag {
+    margin-left: auto;
+  }
   }
 }
 </style>
