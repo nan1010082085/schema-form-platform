@@ -9,6 +9,20 @@
 import { ref } from 'vue'
 import type { SchemaType } from '@/components/FormGrid/types'
 
+const TYPE_ZH: Record<string, string> = {
+  'grid-row': '行容器', 'grid-col': '列容器', 'page': '页面', 'card': '卡片',
+  'toolbar': '工具栏', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
+  'steps': '步骤条', 'tabs': '标签页',
+  'input': '输入框', 'number': '数字', 'select': '下拉选择', 'radio': '单选',
+  'checkbox': '多选', 'date': '日期', 'date-range': '日期范围',
+  'textarea': '多行文本', 'richtext': '富文本',
+  'button-list': '按钮列表', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
+  'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
+  'person-select': '人员选择', 'dept-select': '部门选择', 'transfer': '穿梭框',
+  'detail-form': '详情表单', 'banner': '横幅', 'tree-layout': '树形布局',
+  'date-time-slot': '日期时间段', 'dialog': '对话框', 'search-list': '搜索列表',
+}
+
 interface ComponentItem {
   type: SchemaType
   label: string
@@ -102,8 +116,7 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
               draggable="true"
               @dragstart="handleDragStart($event, item.type)"
             >
-              <span class="component-panel__item-type">{{ item.type }}</span>
-              <span class="component-panel__item-label">{{ item.label }}</span>
+              <span class="component-panel__item-label">{{ TYPE_ZH[item.type] ?? item.label }}</span>
             </div>
           </div>
         </el-collapse-item>
@@ -158,19 +171,11 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
     }
   }
 
-  &__item-type {
-    font-size: 11px;
-    color: #409eff;
-    font-weight: 500;
-    line-height: 1.2;
-    word-break: break-all;
-    text-align: center;
-  }
-
   &__item-label {
     font-size: 12px;
-    color: #606266;
-    margin-top: 3px;
+    color: #303133;
+    font-weight: 500;
+    text-align: center;
   }
 }
 </style>
