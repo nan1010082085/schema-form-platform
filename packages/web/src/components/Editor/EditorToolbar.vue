@@ -29,6 +29,8 @@ import {
   FullScreen,
   Promotion,
   MoreFilled,
+  Upload,
+  Download,
 } from '@element-plus/icons-vue'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import type { SchemaListItem } from '@/types/api'
@@ -404,8 +406,18 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         </el-tooltip>
       </div>
 
-      <!-- Group 8: More dropdown (Load / Import / Export) -->
+      <!-- Group 8: Import / Export + More -->
       <div class="editor-toolbar__ops">
+        <el-tooltip content="导入 JSON" placement="bottom">
+          <el-button size="small" @click="handleImport">
+            <el-icon><Upload /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="导出 JSON" placement="bottom">
+          <el-button size="small" @click="handleExport">
+            <el-icon><Download /></el-icon>
+          </el-button>
+        </el-tooltip>
         <el-dropdown trigger="click" @command="handleMoreCommand">
           <el-tooltip content="更多操作" placement="bottom">
             <el-button size="small">
@@ -415,9 +427,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="load">从服务器加载</el-dropdown-item>
-              <el-dropdown-item command="import-json">导入 JSON</el-dropdown-item>
               <el-dropdown-item command="import-response">导入响应</el-dropdown-item>
-              <el-dropdown-item command="export-json">导出 JSON</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>

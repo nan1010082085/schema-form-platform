@@ -268,12 +268,14 @@ function handleItemDragEnd() {
   dropPosition.value = null
 }
 
-// ---- Nested container drop handler (canvas-to-canvas moves only) ----
+// ---- Nested container drop handler ----
 function handleNestedContainerDrop(payload: { parentPath: number[]; index: number; dragDataRaw: string }) {
   try {
     const data = JSON.parse(payload.dragDataRaw) as { source: 'panel' | 'canvas'; type: SchemaType; sourcePath?: number[] }
-    // 组件面板拖拽不允许直接放入布局容器，仅允许画布内组件移动
-    if (data.source === 'canvas' && data.sourcePath) {
+    if (data.source === 'panel') {
+      const newItem = createDefaultSchema(data.type)
+      emit('drop-to-container', payload.parentPath, payload.index, newItem)
+    } else if (data.source === 'canvas' && data.sourcePath) {
       emit('drag-to-container', data.sourcePath, payload.parentPath, payload.index)
     }
   } catch { /* ignore malformed data */ }
