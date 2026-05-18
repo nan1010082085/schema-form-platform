@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.0-rc.2 (2026-05-18)
+
+### Backend
+
+- **Serverless handler refactor**: handler 移入 `src/` 目录，`tsc` 编译到 `dist/handler.js`，Vercel esbuild 可正确追踪依赖
+- **User model**: 新增 `User` Mongoose 模型（username / bcrypt password / role），认证路由待实施
+- **Auth deps**: 添加 `bcryptjs` + `jsonwebtoken` 依赖
+
+### Deployment
+
+- **Vercel dual-build**: `buildCommand` 改为 `pnpm build:server && pnpm build:web`，先编译后端 TypeScript 再构建前端
+- **Single-project monorepo**: 前后端统一部署在单个 Vercel 项目，`api/` serverless function + SPA 静态文件
+- **API rewrites**: `/api/*` → serverless function，`/*` → SPA index.html
+- **Root CLAUDE.md**: 新增项目级架构文档与常用命令参考
+
+### Fixes
+
+- 移除未使用的 `hasSearchResults` 变量（修复 vue-tsc 构建错误）
+
 ## 1.0.0-rc.1 (2026-05-15)
 
 ### Features
