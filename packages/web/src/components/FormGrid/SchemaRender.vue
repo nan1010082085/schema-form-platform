@@ -267,7 +267,14 @@ watch(
   <template v-if="!isVisible" />
 
   <!-- 布局节点：行 -->
-  <div v-else-if="isLayoutRow" class="fg-grid-row">
+  <div
+    v-else-if="isLayoutRow"
+    class="fg-grid-row"
+    :class="{ 'fg-grid-row--drop': editable && isContainerType }"
+    @dragover.prevent="editable && isContainerType ? onContainerDragOver($event) : undefined"
+    @dragleave="editable && isContainerType ? onContainerDragLeave($event) : undefined"
+    @drop.prevent.stop="editable && isContainerType ? onContainerDrop($event) : undefined"
+  >
     <template v-for="(child, idx) in schema.children" :key="idx">
       <ErrorBoundary
         v-if="!child.hidden"
@@ -290,8 +297,11 @@ watch(
   <!-- 布局节点：单元格 -->
   <div
     v-else-if="isLayoutCol"
-    :class="colClass"
+    :class="[...colClass, { 'fg-grid-col--drop': editable && isContainerType }]"
     :style="colStyle"
+    @dragover.prevent="editable && isContainerType ? onContainerDragOver($event) : undefined"
+    @dragleave="editable && isContainerType ? onContainerDragLeave($event) : undefined"
+    @drop.prevent.stop="editable && isContainerType ? onContainerDrop($event) : undefined"
   >
     <!-- 纯标签单元格 -->
     <div v-if="isLabelOnly" class="fg-cell--label-only" :class="cellAlignClass">

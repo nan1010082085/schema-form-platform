@@ -342,6 +342,42 @@ function handleTreeSelect(path: number[]) {
   nextTick(() => { drawerVisible.value = true })
 }
 
+function handleTreeReorder(payload: { sourcePath: number[]; targetPath: number[]; position: 'before' | 'after' | 'inside' }) {
+  pushState(schema.value)
+  const { sourcePath, targetPath, position } = payload
+
+  // 获取被拖拽的项
+  const item = getItemAtPath(schema.value, sourcePath)
+  if (!item) return
+
+  // 计算插入位置
+  let insertParentPath: number[]
+  let insertIndex: number
+  if (position === 'inside') {
+    insertParentPath = targetPath
+    insertIndex = 0
+  } else if (position === 'before') {
+    insertParentPath = targetPath.slice(0, -1)
+    insertIndex = targetPath[targetPath.length - 1]
+  } else {
+    insertParentPath = targetPath.slice(0, -1)
+    insertIndex = targetPath[targetPath.length - 1] + 1
+  }
+
+  // 调整索引：如果源和目标在同一父级，且源在目标之前，移除后索引需减 1
+  const sourceParent = sourcePath.slice(0, -1)
+  const sourceIdx = sourcePath[sourcePath.length - 1]
+  if (sourceParent.join(',') === insertParentPath.join(',') && sourceIdx < insertIndex) {
+    insertIndex--
+  }
+
+  // 先移除，再插入
+  schema.value = removeAtPath(schema.value, sourcePath)
+  schema.value = insertAtPath(schema.value, insertParentPath, insertIndex, JSON.parse(JSON.stringify(item)))
+  selectedPath.value = [...insertParentPath, insertIndex]
+  selectedPaths.value = [selectedPath.value]
+}
+
 // ---- Property update ----
 function handlePropertyUpdate(updatedItem: FormSchemaItem) {
   if (!selectedPath.value) return
@@ -643,6 +679,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
             :schema="schema"
             :selected-path="selectedPath"
             @select="handleTreeSelect"
+            @reorder="handleTreeReorder"
           />
         </el-scrollbar>
       </aside>

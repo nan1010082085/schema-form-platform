@@ -20,7 +20,76 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'select': [path: number[]]
+  'reorder': [payload: { sourcePath: number[]; targetPath: number[]; position: 'before' | 'after' | 'inside' }]
 }>()
+
+// ---- Drag state ----
+const dragNodePath = ref<number[] | null>(null)
+
+function handleNodeDragStart(node: SchemaTreeNode) {
+  dragNodePath.value = node.path
+}
+
+function handleNodeDragEnd() {
+  dragNodePath.value = null
+}
+
+function allowDrag(_node: SchemaTreeNode): boolean {
+  // 允许拖拽所有节点
+  return true
+}
+
+function allowDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, type: 'prev' | 'next' | 'inner'): boolean {
+  // 禁止拖入自身或其子节点
+  const dragPath = draggingNode.path.join(',')
+  const dropPath = dropNode.path.join(',')
+  if (dragPath === dropPath) return false
+  if (dropPath.startsWith(dragPath + ',')) return false
+  // 仅容器节点允许拖入内部(inner)
+  if (type === 'inner') return dropNode.isContainer
+  return true
+}
+
+function handleNodeDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, dropType: 'before' | 'after' | 'inner', _event: DragEvent) {
+  const sourcePath = draggingNode.path
+  let targetPath: number[]
+  let position: 'before' | 'after' | 'inside'
+
+  if (dropType === 'inner') {
+    targetPath = [...dropNode.path, 0]
+    position = 'inside'
+  } else if (dropType === 'before') {
+    targetPath = [...dropNode.path]
+    // adjust: insert at the position, shift dropNode down
+    const last = targetPath[targetPath.length - 1]
+    targetPath[targetPath.length - 1] = last
+    position = 'before'
+  } else {
+    targetPath = [...dropNode.path]
+    targetPath[targetPath.length - 1] = dropNode.path[dropNode.path.length - 1] + 1
+    position = 'after'
+  }
+
+  emit('reorder', { sourcePath, targetPath, position })
+  dragNodePath.value = null
+}
+
+function getTypeZh(type: string): string {
+  const map: Record<string, string> = {
+    'grid-row': '行', 'grid-col': '列', 'page': '页', 'card': '卡片',
+    'toolbar': '工具栏', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
+    'steps': '步骤条', 'tabs': '标签页',
+    'input': '输入框', 'number': '数字', 'select': '下拉选择', 'radio': '单选',
+    'checkbox': '多选', 'date': '日期', 'date-range': '日期范围',
+    'textarea': '多行文本', 'richtext': '富文本',
+    'button-list': '按钮', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
+    'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
+    'person-select': '人员', 'dept-select': '部门', 'transfer': '穿梭框',
+    'detail-form': '详情', 'banner': '横幅', 'tree-layout': '树形',
+    'date-time-slot': '日期时段', 'dialog': '弹窗', 'search-list': '搜索列表',
+  }
+  return map[type] ?? type
+}
 
 // ---- Tree data ----
 const treeData = computed(() => buildSchemaTree(props.schema))
@@ -115,7 +184,13 @@ function handleToggleExpand(node: SchemaTreeNode) {
       :highlight-current="true"
       :current-node-key="selectedKey"
       :expand-on-click-node="false"
+      draggable
+      :allow-drag="allowDrag"
+      :allow-drop="allowDrop"
       @node-click="handleNodeClick"
+      @node-drag-start="handleNodeDragStart"
+      @node-drag-end="handleNodeDragEnd"
+      @node-drop="handleNodeDrop"
     >
       <template #default="{ node: _node, data }">
         <div
@@ -136,7 +211,7 @@ function handleToggleExpand(node: SchemaTreeNode) {
 
           <span class="schema-tree__type-icon">{{ getNodeIcon(data.type) }}</span>
 
-          <span class="schema-tree__type-badge">{{ data.type }}</span>
+          <span class="schema-tree__type-badge">{{ getTypeZh(data.type) }}</span>
 
           <span v-if="data.field" class="schema-tree__field">{{ data.field }}</span>
         </div>
