@@ -65,6 +65,56 @@ const canvasSizePresets = [
   { label: '1366×768', value: '1366×768' },
 ]
 
+// ---- Thumbnail linkage ----
+const canvasScrollRef = ref<InstanceType<typeof import('element-plus')['ElScrollbar']>>()
+const scrollLeft = ref(0)
+const scrollTop = ref(0)
+
+function handleCanvasScroll() {
+  const wrap = canvasScrollRef.value?.wrapRef
+  if (wrap) {
+    scrollLeft.value = wrap.scrollLeft
+    scrollTop.value = wrap.scrollTop
+  }
+}
+
+const thumbScale = 8 // canvas px → thumbnail px ratio
+
+const indicatorStyle = computed(() => {
+  const wrap = canvasScrollRef.value?.wrapRef
+  const vw = wrap?.clientWidth ?? window.innerWidth
+  const vh = wrap?.clientHeight ?? 300
+  return {
+    left: `${scrollLeft.value / thumbScale}px`,
+    top: `${scrollTop.value / thumbScale}px`,
+    width: `${Math.round(vw / thumbScale)}px`,
+    height: `${Math.round(vh / thumbScale)}px`,
+  }
+})
+
+function handleThumbnailClick(e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  const wrap = canvasScrollRef.value?.wrapRef
+  if (wrap) {
+    wrap.scrollLeft = x * thumbScale - wrap.clientWidth / 2
+    wrap.scrollTop = y * thumbScale - wrap.clientHeight / 2
+  }
+}
+
+// Schema item color map for thumbnail preview
+const thumbColorMap: Record<string, string> = {
+  'page': '#e8f4fd', 'card': '#fff', 'toolbar': '#f5f7fa',
+  'grid-row': '#fafbfc', 'grid-col': '#fafbfc',
+  'title': '#e8f4fd', 'table': '#ecf5ff', 'search-list': '#ecf5ff',
+  'input': '#fff', 'number': '#fff', 'select': '#fff',
+}
+function thumbItemStyle(_item: FormSchemaItem) {
+  return { background: thumbColorMap[_item.type] ?? '#fafbfc' }
+}
+
 // ---- Right drawer (overlay) ----
 const drawerVisible = ref(false)
 
@@ -607,7 +657,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
       <!-- Center canvas -->
       <div class="editor-view__center">
-        <el-scrollbar class="editor-view__scrollbar">
+        <el-scrollbar ref="canvasScrollRef" class="editor-view__scrollbar" @scroll="handleCanvasScroll">
           <div class="editor-view__canvas" :style="canvasStyle">
             <EditorCanvas
               :schema="schema"
@@ -627,16 +677,24 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
         </el-scrollbar>
 
         <!-- Thumbnail mini-map -->
-        <div v-if="showThumbnail && mode === 'edit'" class="editor-view__thumbnail">
+        <div v-if="showThumbnail && mode === 'edit'" class="editor-view__thumbnail" @click="handleThumbnailClick">
           <div class="editor-view__thumbnail-inner">
             <div
               class="editor-view__thumbnail-content"
               :style="{
-                width: `${Math.round(canvasWidth / 10)}px`,
-                height: `${Math.round(canvasHeight / 10)}px`,
+                width: `${Math.round(canvasWidth / thumbScale)}px`,
+                height: `${Math.round(canvasHeight / thumbScale)}px`,
               }"
             >
-              <div class="editor-view__thumbnail-indicator" />
+              <!-- Simplified schema preview -->
+              <div
+                v-for="(item, idx) in schema"
+                :key="idx"
+                class="editor-view__thumbnail-block"
+                :style="thumbItemStyle(item)"
+              />
+              <!-- Viewport indicator -->
+              <div class="editor-view__thumbnail-indicator" :style="indicatorStyle" />
             </div>
           </div>
         </div>
@@ -825,37 +883,47 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     bottom: 16px;
     right: 16px;
     width: 200px;
-    height: 120px;
+    height: 140px;
     background: #fff;
-    border: 2px solid #c0c4cc;
-    border-radius: 6px;
+    border: 2px solid #dcdfe6;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     z-index: 10;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    &:hover { border-color: #409eff; }
   }
 
   &__thumbnail-inner {
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
     position: relative;
   }
 
   &__thumbnail-content {
-    background: #fafafa;
-    border: 1px solid #e0e0e0;
+    background: #fafbfc;
+    border: 1px solid #e8ecf1;
     margin: 8px auto;
     position: relative;
+  }
+
+  &__thumbnail-block {
+    height: 4px;
+    margin: 1px 2px;
+    border-radius: 1px;
+    border: 1px solid #e0e4e8;
   }
 
   &__thumbnail-indicator {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    border: 1px solid #f56c6c;
+    border: 2px solid #f56c6c;
+    background: rgba(245, 108, 108, 0.06);
     pointer-events: none;
+    transition: left 0.1s, top 0.1s;
   }
 
   // ---- Drawer title ----
