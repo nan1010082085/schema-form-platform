@@ -14,8 +14,10 @@
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "@koa/router": "^13.1.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.7",
     "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.3",
     "koa": "^2.15.4",
     "koa-bodyparser": "^4.4.1",
     "koa-helmet": "^9.0.0",
