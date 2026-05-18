@@ -302,7 +302,7 @@ function handleCanvasClick(event: Event) {
     <!-- Edit mode: click overlay for selection -->
     <div v-if="mode === 'edit'" class="editor-canvas__inner">
       <div v-if="schema.length === 0" class="editor-canvas__empty">
-        <p>Drag components here to build your form</p>
+        <p>拖拽组件到此处构建表单</p>
       </div>
 
       <div
@@ -345,7 +345,7 @@ function handleCanvasClick(event: Event) {
     <div v-else class="editor-canvas__inner editor-canvas__inner--preview">
       <FormGrid v-if="schema.length > 0" :schema="schema" />
       <div v-else class="editor-canvas__empty">
-        <p>No components to preview</p>
+        <p>预览模式无组件</p>
       </div>
     </div>
   </div>

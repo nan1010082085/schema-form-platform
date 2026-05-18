@@ -647,7 +647,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
         v-model="drawerVisible"
         direction="rtl"
         size="380px"
-        :close-on-click-modal="false"
+        :close-on-click-modal="true"
         :modal="true"
         append-to-body
       >

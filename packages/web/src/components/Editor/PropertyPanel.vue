@@ -162,16 +162,16 @@ const validationResult = computed(() => {
       </div>
 
       <!-- Section 1: Basic Properties -->
-      <PropertySection title="Basic Properties" :default-open="true">
+      <PropertySection title="基本属性" :default-open="true">
         <!-- Type (read-only) -->
         <div class="property-panel__field">
-          <label class="property-panel__label">Type</label>
+          <label class="property-panel__label">类型</label>
           <el-input :model-value="localSchema.type" disabled size="small" />
         </div>
 
         <!-- Field -->
         <div v-if="!isLayoutType && !isButtonType" class="property-panel__field">
-          <label class="property-panel__label">Field</label>
+          <label class="property-panel__label">字段</label>
           <el-input
             :model-value="localSchema.field"
             size="small"
@@ -182,7 +182,7 @@ const validationResult = computed(() => {
 
         <!-- Label -->
         <div class="property-panel__field">
-          <label class="property-panel__label">Label</label>
+          <label class="property-panel__label">标签</label>
           <el-input
             :model-value="localSchema.label"
             size="small"
@@ -193,7 +193,7 @@ const validationResult = computed(() => {
 
         <!-- Span (grid-col only) -->
         <div v-if="supportsSpan" class="property-panel__field">
-          <label class="property-panel__label">Span</label>
+          <label class="property-panel__label">栅格</label>
           <el-input-number
             :model-value="(localSchema.span as number) ?? 24"
             :min="1"
@@ -206,7 +206,7 @@ const validationResult = computed(() => {
 
         <!-- Hidden -->
         <div class="property-panel__field">
-          <label class="property-panel__label">Hidden</label>
+          <label class="property-panel__label">隐藏</label>
           <el-switch
             :model-value="localSchema.hidden ?? false"
             @update:model-value="emitUpdate('hidden', $event)"
@@ -218,7 +218,7 @@ const validationResult = computed(() => {
           v-if="['input', 'number', 'select', 'textarea', 'date', 'date-range'].includes(localSchema.type)"
           class="property-panel__field"
         >
-          <label class="property-panel__label">Placeholder</label>
+          <label class="property-panel__label">占位符</label>
           <el-input
             :model-value="(localSchema.props as Record<string, unknown>)?.placeholder as string ?? ''"
             size="small"
@@ -228,7 +228,7 @@ const validationResult = computed(() => {
 
         <!-- Width -->
         <div class="property-panel__field">
-          <label class="property-panel__label">Width</label>
+          <label class="property-panel__label">宽度</label>
           <el-input
             :model-value="localSchema.width"
             size="small"
@@ -239,7 +239,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: List API (search-list only) -->
-      <PropertySection v-if="isSearchListType" title="List API" :default-open="true">
+      <PropertySection v-if="isSearchListType" title="列表 API" :default-open="true">
         <div class="property-panel__form">
           <div class="property-panel__field">
             <label class="property-panel__label">URL</label>
@@ -251,7 +251,7 @@ const validationResult = computed(() => {
             />
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Method</label>
+            <label class="property-panel__label">请求方法</label>
             <el-select
               :model-value="localSchema?.listApi?.method ?? 'get'"
               size="small"
@@ -263,7 +263,7 @@ const validationResult = computed(() => {
             </el-select>
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Page Param</label>
+            <label class="property-panel__label">页码参数</label>
             <el-input
               :model-value="localSchema?.listApi?.pageParam ?? 'pageNum'"
               size="small"
@@ -272,7 +272,7 @@ const validationResult = computed(() => {
             />
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Size Param</label>
+            <label class="property-panel__label">条数参数</label>
             <el-input
               :model-value="localSchema?.listApi?.sizeParam ?? 'pageSize'"
               size="small"
@@ -281,7 +281,7 @@ const validationResult = computed(() => {
             />
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Data Path</label>
+            <label class="property-panel__label">数据路径</label>
             <el-input
               :model-value="localSchema?.listApi?.dataPath ?? 'data'"
               size="small"
@@ -290,7 +290,7 @@ const validationResult = computed(() => {
             />
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Total Path</label>
+            <label class="property-panel__label">总数路径</label>
             <el-input
               :model-value="localSchema?.listApi?.totalPath ?? 'total'"
               size="small"
@@ -299,7 +299,7 @@ const validationResult = computed(() => {
             />
           </div>
           <div class="property-panel__field">
-            <label class="property-panel__label">Auto Load</label>
+            <label class="property-panel__label">自动加载</label>
             <el-switch
               :model-value="localSchema?.listApi?.immediate ?? true"
               @update:model-value="updateListApi('immediate', $event)"
@@ -309,7 +309,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Search Fields (search-list only) -->
-      <PropertySection v-if="isSearchListType" title="Search Fields" :default-open="false">
+      <PropertySection v-if="isSearchListType" title="搜索字段" :default-open="false">
         <SearchFieldsEditor
           :search-fields="localSchema.searchFields ?? []"
           @update:search-fields="handleSearchFieldsUpdate"
@@ -317,7 +317,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Columns (search-list only) -->
-      <PropertySection v-if="isSearchListType" title="Columns" :default-open="false">
+      <PropertySection v-if="isSearchListType" title="列配置" :default-open="false">
         <ColumnsEditor
           :columns="localSchema.columns ?? []"
           @update:columns="handleColumnsUpdate"
@@ -325,7 +325,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Row Actions (search-list only) -->
-      <PropertySection v-if="isSearchListType" title="Row Actions" :default-open="false">
+      <PropertySection v-if="isSearchListType" title="行操作" :default-open="false">
         <RowActionsEditor
           :row-actions="localSchema.rowActions ?? []"
           @update:row-actions="handleRowActionsUpdate"
@@ -333,7 +333,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Buttons (search-list toolbar buttons) -->
-      <PropertySection v-if="isSearchListType" title="Buttons" :default-open="false">
+      <PropertySection v-if="isSearchListType" title="按钮" :default-open="false">
         <ButtonEditor
           :buttons="localSchema.buttons ?? []"
           @update:buttons="handleButtonsUpdate"
@@ -341,7 +341,7 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Buttons (button-list / toolbar-buttons) -->
-      <PropertySection v-if="isButtonType" title="Buttons" :default-open="true">
+      <PropertySection v-if="isButtonType" title="按钮" :default-open="true">
         <ButtonEditor
           :buttons="localSchema.buttons ?? []"
           @update:buttons="handleButtonsUpdate"
@@ -349,9 +349,9 @@ const validationResult = computed(() => {
       </PropertySection>
 
       <!-- Section: Dialog (dialog type only) -->
-      <PropertySection v-if="isDialogType" title="Dialog" :default-open="true">
+      <PropertySection v-if="isDialogType" title="弹窗配置" :default-open="true">
         <div class="property-panel__field">
-          <label class="property-panel__label">Title</label>
+          <label class="property-panel__label">标题</label>
           <el-input
             :model-value="(localSchema.props as Record<string, unknown>)?.dialogTitle as string ?? ''"
             size="small"
@@ -360,7 +360,7 @@ const validationResult = computed(() => {
           />
         </div>
         <div class="property-panel__field">
-          <label class="property-panel__label">Width</label>
+          <label class="property-panel__label">宽度</label>
           <el-input
             :model-value="(localSchema.props as Record<string, unknown>)?.dialogWidth as string ?? '994px'"
             size="small"
@@ -369,7 +369,7 @@ const validationResult = computed(() => {
           />
         </div>
         <div class="property-panel__field">
-          <label class="property-panel__label">Dialog Schema (JSON)</label>
+          <label class="property-panel__label">弹窗 Schema (JSON)</label>
           <el-input
             :model-value="(localSchema.props as Record<string, unknown>)?.dialogSchemaText as string ?? ''"
             type="textarea"
