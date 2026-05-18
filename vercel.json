@@ -1,6 +1,6 @@
 {
   "outputDirectory": "packages/web/dist",
-  "buildCommand": "pnpm --filter @schema-form/web exec vite build",
+  "buildCommand": "pnpm build:server && pnpm build:web",
   "installCommand": "pnpm install --frozen-lockfile",
   "functions": {
     "api/index.ts": {

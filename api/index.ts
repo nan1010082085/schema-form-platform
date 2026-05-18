@@ -1,1 +1,1 @@
-export { default } from '../packages/server/api/index.js'
+export { default } from '../packages/server/dist/handler.js'

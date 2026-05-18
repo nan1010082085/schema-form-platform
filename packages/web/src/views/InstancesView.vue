@@ -184,10 +184,6 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
   return status === 'published' ? 'success' : 'info'
 }
 
-const hasSearchResults = computed(() =>
-  !store.loading && store.hasSchemas && sortedSchemas.value.length > 0,
-)
-
 const isFiltered = computed(() =>
   activeTab.value !== 'all' || (searchInput.value && searchInput.value.trim().length > 0),
 )
