@@ -332,7 +332,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-tooltip content="Ungroup Container" placement="bottom">
+        <el-tooltip content="取消分组" placement="bottom">
           <el-button :disabled="!canUngroup" size="small" @click="handleUngroup">
             <el-icon><FolderRemove /></el-icon>
           </el-button>
@@ -341,7 +341,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
       <!-- Group 5: Validate -->
       <div v-if="mode === 'edit'" class="editor-toolbar__ops">
-        <el-tooltip content="Validate Schema" placement="bottom">
+        <el-tooltip content="校验 Schema" placement="bottom">
           <el-button size="small" @click="emit('validate')">
             <el-icon>
               <Warning v-if="(validationErrorCount ?? 0) > 0" style="color: #e6a23c" />
@@ -359,7 +359,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
       <!-- Group 6: Save Draft / Publish / Preview -->
       <div class="editor-toolbar__ops editor-toolbar__ops--actions">
-        <el-tooltip content="Save Draft (Ctrl+S)" placement="bottom">
+        <el-tooltip content="保存草稿 (Ctrl+S)" placement="bottom">
           <el-button type="primary" size="small" @click="handleSaveDraft">
             保存草稿
           </el-button>
@@ -393,7 +393,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-tooltip content="Toggle Thumbnail" placement="bottom">
+        <el-tooltip content="切换缩略图" placement="bottom">
           <el-button
             size="small"
             :type="showThumbnail ? 'primary' : 'default'"
@@ -407,7 +407,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       <!-- Group 8: More dropdown (Load / Import / Export) -->
       <div class="editor-toolbar__ops">
         <el-dropdown trigger="click" @command="handleMoreCommand">
-          <el-tooltip content="More options" placement="bottom">
+          <el-tooltip content="更多操作" placement="bottom">
             <el-button size="small">
               <el-icon><MoreFilled /></el-icon>
             </el-button>
@@ -425,7 +425,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     </div>
 
     <!-- Load from Server Dialog -->
-    <el-dialog v-model="showLoadDialog" title="Load Schema from Server" width="560px">
+    <el-dialog v-model="showLoadDialog" title="从服务器加载 Schema" width="560px">
       <el-table
         :data="loadSchemaList"
         v-loading="loadSchemaLoading"
@@ -433,8 +433,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         height="300"
         @row-click="handleLoadSchema"
       >
-        <el-table-column prop="name" label="Name" />
-        <el-table-column prop="updatedAt" label="Updated" width="180" />
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="updatedAt" label="更新时间" width="180" />
       </el-table>
       <p v-if="!loadSchemaLoading && loadSchemaList.length === 0"
         style="text-align:center; color:#909399; padding: 24px 0;">
@@ -443,12 +443,12 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     </el-dialog>
 
     <!-- Import Dialog -->
-    <el-dialog v-model="showImportDialog" title="Import JSON Schema" width="600px">
+    <el-dialog v-model="showImportDialog" title="导入 JSON Schema" width="600px">
       <el-input
         v-model="importJson"
         type="textarea"
         :rows="16"
-        placeholder="Paste your FormSchemaItem[] JSON here..."
+        placeholder="在此粘贴 FormSchemaItem[] JSON..."
       />
       <template #footer>
         <el-button @click="showImportDialog = false">Cancel</el-button>
