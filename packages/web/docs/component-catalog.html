@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormGrid 组件文档预览</title>
+<style>
+:root { --bg:#f5f7fa; --card:#fff; --text:#303133; --sub:#909399; --border:#e4e7ed; --brand:#409eff; --success:#67c23a; --radius:10px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); padding:24px; line-height:1.6; }
+.container { max-width:1200px; margin:0 auto; }
+header { background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460); color:#fff; border-radius:var(--radius); padding:32px 40px; margin-bottom:24px; }
+header h1 { font-size:26px; }
+header p { font-size:14px; opacity:.8; margin-top:6px; }
+nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; position:sticky; top:12px; z-index:10; background:var(--bg); padding:8px 0; }
+nav a { padding:6px 14px; border-radius:16px; font-size:12px; text-decoration:none; color:var(--brand); background:#ecf5ff; border:1px solid #d9ecff; white-space:nowrap; }
+nav a:hover { background:var(--brand); color:#fff; }
+.section { margin-bottom:32px; }
+.section h2 { font-size:20px; margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--brand); display:flex; align-items:center; gap:8px; }
+.card { background:var(--card); border-radius:var(--radius); padding:24px; margin-bottom:16px; box-shadow:0 1px 8px rgba(0,0,0,.04); }
+.card h3 { font-size:16px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.card h3 .tag { font-size:10px; padding:2px 8px; border-radius:10px; }
+.tag-layout { background:#e6f7ff; color:#1890ff; }
+.tag-base { background:#f6ffed; color:#52c41a; }
+.tag-business { background:#fff7e6; color:#fa8c16; }
+.props { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0; }
+.props th { text-align:left; background:#fafafa; padding:6px 10px; border:1px solid var(--border); font-weight:600; }
+.props td { padding:6px 10px; border:1px solid var(--border); }
+.props code { background:#f5f5f5; padding:1px 5px; border-radius:3px; font-size:11px; }
+.schema-block { background:#1e1e1e; color:#d4d4d4; border-radius:6px; padding:14px; font-size:12px; font-family:'Fira Code',Consolas,monospace; overflow-x:auto; white-space:pre; max-height:400px; overflow-y:auto; }
+.copy-btn { float:right; font-size:11px; padding:2px 12px; cursor:pointer; background:var(--brand); color:#fff; border:none; border-radius:4px; margin-bottom:6px; }
+footer { text-align:center; color:var(--sub); font-size:12px; padding:40px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<h1>FormGrid 组件文档</h1>
+<p>Schema-driven 表单引擎 — 29 个组件完整参考 | 版本: Sprint 19 | 日期: 2026-05-15</p>
+</header>
+
+<nav>
+<a href="#layout">布局组件</a><a href="#base">基础表单</a><a href="#business">业务组件</a>
+<a href="#linkage">联动配置</a><a href="#api">API配置</a><a href="#searchlist">搜索列表</a>
+</nav>
+
+<!-- ======================== 布局组件 ======================== -->
+<div class="section" id="layout"><h2>📐 布局组件 (Layout)</h2>
+
+<div class="card">
+<h3><span class="tag tag-layout">Layout</span> Page — 页面根容器</h3>
+<table class="props"><tr><th>属性</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td>type</td><td><code>'page'</code></td><td>—</td><td>根容器，包裹整个表单</td></tr>
+<tr><td>children</td><td><code>FormSchemaItem[]</code></td><td>—</td><td>子级 schema 数组</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"page","children":[{"type":"toolbar","children":[...]},{"type":"card","children":[...]}]}</div>
+</div>
+
+<div class="card">
+<h3><span class="tag tag-layout">Layout</span> Toolbar — 固定顶部工具栏</h3>
+<table class="props"><tr><th>属性</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td>type</td><td><code>'toolbar'</code></td><td>—</td><td>position:fixed 顶部工具栏</td></tr>
+<tr><td>CSS变量</td><td><code>--fg-toolbar-gap/align/height/bg</code></td><td>—</td><td>穿透 scoped 的样式变量</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"toolbar","children":[{"type":"button-list","buttons":[{"text":"提交","buttonType":"primary","actions":[{"type":"submit"}]}]}]}</div>
+</div>
+
+<div class="card">
+<h3><span class="tag tag-layout">Layout</span> Card — 卡片容器</h3>
+<table class="props"><tr><th>属性</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+<tr><td>type</td><td><code>'card'</code></td><td>—</td><td>白色卡片，margin:20px，圆角10px</td></tr>
+<tr><td>CSS变量</td><td><code>--fg-card-padding/bg/radius</code></td><td>—</td><td>穿透 scoped 样式变量</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"card","children":[{"type":"grid-row","children":[...]}]}</div>
+</div>
+
+<div class="card">
+<h3><span class="tag tag-layout">Layout</span> Grid Row + Grid Col — 24列栅格</h3>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"grid-row","children":[
+  {"type":"grid-col","span":12,"children":[{"type":"input","field":"name","label":"姓名"}]},
+  {"type":"grid-col","span":12,"children":[{"type":"input","field":"email","label":"邮箱"}]}
+]}</div>
+</div>
+
+<div class="card"><h3><span class="tag tag-layout">Layout</span> Title / Divider / Spacer / Steps / Tabs</h3>
+<table class="props"><tr><th>类型</th><th>说明</th></tr>
+<tr><td><code>'title'</code></td><td>标题文字，通过 <code>label</code> 设置</td></tr>
+<tr><td><code>'divider'</code></td><td>分割线</td></tr>
+<tr><td><code>'spacer'</code></td><td>留白间距</td></tr>
+<tr><td><code>'steps'</code></td><td>步骤条容器，children 为每一步</td></tr>
+<tr><td><code>'tabs'</code></td><td>标签页容器，children 为每个 tab</td></tr></table>
+</div>
+</div>
+
+<!-- ======================== 基础表单 ======================== -->
+<div class="section" id="base"><h2>📝 基础表单组件 (Base)</h2>
+
+<div class="card"><h3><span class="tag tag-base">Base</span> Input / Number / Textarea / Richtext</h3>
+<table class="props"><tr><th>类型</th><th>field</th><th>placeholder</th><th>rules</th><th>width</th><th>hidden</th></tr>
+<tr><td><code>'input'</code></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td><code>'number'</code></td><td>✅</td><td>✅</td><td>✅(min/max)</td><td>✅</td><td>✅</td></tr>
+<tr><td><code>'textarea'</code></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+<tr><td><code>'richtext'</code></td><td>✅</td><td>—</td><td>—</td><td>✅</td><td>✅</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"input","field":"userName","label":"用户名","placeholder":"请输入用户名","rules":[{"required":true,"message":"必填","trigger":"blur"}]}</div>
+</div>
+
+<div class="card"><h3><span class="tag tag-base">Base</span> Select / Radio / Checkbox — 选项组件</h3>
+<p style="font-size:13px;color:var(--sub);margin-bottom:8px;">支持静态 options 或动态 API 加载（含 dataPath/template params/TTL/childrenKey 树形）</p>
+<table class="props"><tr><th>类型</th><th>options</th><th>api</th><th>multiple</th><th>linkages</th></tr>
+<tr><td><code>'select'</code></td><td>✅ DictItem[]</td><td>✅ SchemaApiConfig</td><td>—</td><td>✅ 6种联动</td></tr>
+<tr><td><code>'radio'</code></td><td>✅ DictItem[]</td><td>✅ SchemaApiConfig</td><td>—</td><td>✅</td></tr>
+<tr><td><code>'checkbox'</code></td><td>✅ DictItem[]</td><td>✅ SchemaApiConfig</td><td>✅(数组值)</td><td>✅</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"select","field":"status","label":"状态","api":{"url":"/api/statuses","method":"get","labelKey":"name","valueKey":"id","dataPath":"result.records","ttl":300000}}</div></div>
+
+<div class="card"><h3><span class="tag tag-base">Base</span> Date / Date Range</h3>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"date-range","field":"dateRange","label":"日期范围","defaultValue":["2026-01-01","2026-12-31"]}</div></div>
+</div>
+
+<!-- ======================== 业务组件 ======================== -->
+<div class="section" id="business"><h2>🏢 业务组件 (Business)</h2>
+
+<div class="card"><h3><span class="tag tag-business">Business</span> Button-List / Toolbar-Buttons — 按钮动作</h3>
+<p style="font-size:13px;color:var(--sub);margin-bottom:8px;">支持 8 种动作类型: emit / dialog / api / navigate / submit / reset / upload / validate。S18 起支持结构化编辑（不再需要手写 JSON）</p>
+<table class="props"><tr><th>动作类型</th><th>特有属性</th></tr>
+<tr><td><code>emit</code></td><td>eventName, eventPayload (JSON)</td></tr>
+<tr><td><code>dialog</code></td><td>dialogTitle, dialogWidth, dialogSchema (FormSchemaItem[])</td></tr>
+<tr><td><code>api</code></td><td>apiUrl, apiMethod (get|post), apiParams (JSON 或 "formData")</td></tr>
+<tr><td><code>navigate</code></td><td>navigatePath (支持 :id 占位), navigateQuery (JSON)</td></tr>
+<tr><td><code>submit/reset/upload/validate</code></td><td>无额外属性 (label + confirm 通用)</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"button-list","buttons":[{"text":"保存草稿","buttonType":"primary","actions":[{"type":"api","label":"保存","apiUrl":"/api/draft","apiMethod":"post","apiParams":"formData"}]},{"text":"提交并关闭","buttonType":"success","actions":[{"type":"validate"},{"type":"submit"}]}]}</div></div>
+
+<div class="card"><h3><span class="tag tag-business">Business</span> Search-List — 搜索列表</h3>
+<p style="font-size:13px;color:var(--sub);margin-bottom:8px;">最复杂的业务组件：搜索表单 + 数据表格 + 分页 + 行操作 + 导出。完整编辑器覆盖。</p>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"search-list",
+ "listApi":{"url":"/api/orders","method":"post","pageParam":"pageNum","sizeParam":"pageSize","dataPath":"data","totalPath":"total"},
+ "searchFields":[{"type":"input","field":"keyword","label":"关键词","span":8}],
+ "columns":[
+   {"prop":"id","label":"ID","render":"text"},
+   {"prop":"status","label":"状态","render":"badge","colorMap":{"paid":"#67c23a","unpaid":"#f56c6c"}},
+   {"prop":"total","label":"金额","render":"text"}
+ ],
+ "rowActions":[
+   {"label":"查看","buttonType":"primary","type":"emit","emitEvent":"view"},
+   {"label":"编辑","buttonType":"warning","type":"dialog","dialogTitle":"编辑订单","dialogSchema":[{"type":"input","field":"remark","label":"备注"}]}
+ ],
+ "buttons":[{"text":"新增","buttonType":"primary","actions":[{"type":"dialog","dialogTitle":"新增","dialogSchema":[...]}]}]}</div></div>
+
+<div class="card"><h3><span class="tag tag-business">Business</span> File-Preview — 文件选择预览 (S19新)</h3>
+<p style="font-size:13px;color:var(--sub);margin-bottom:8px;">两列布局：左列已选文件（多行显示+删除），右列选择按钮打开 dialog 选择</p>
+<table class="props"><tr><th>属性</th><th>类型</th><th>说明</th></tr>
+<tr><td>options</td><td><code>{name,url?,id?}[]</code></td><td>可选文件列表（可来自API）</td></tr>
+<tr><td>multiple</td><td><code>boolean</code></td><td>是否多选（默认false）</td></tr>
+<tr><td>maxFiles</td><td><code>number</code></td><td>多选上限</td></tr>
+<tr><td>api</td><td><code>SchemaApiConfig</code></td><td>动态加载文件列表</td></tr></table>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"file-preview","field":"attachments","label":"附件","multiple":true,"maxFiles":5,"api":{"url":"/api/files","method":"get","dataPath":"data","labelKey":"name","valueKey":"id"}}</div></div>
+
+<div class="card"><h3><span class="tag tag-business">Business</span> File-List / Upload / Table / Pagination / Transfer / Person-Select / Dept-Select / Detail-Form / Banner / Tree-Layout / DateTime-Slot / Dialog</h3>
+<table class="props"><tr><th>类型</th><th>说明</th></tr>
+<tr><td><code>'file-list'</code></td><td>文件列表展示</td></tr>
+<tr><td><code>'upload'</code></td><td>文件上传（el-upload封装）</td></tr>
+<tr><td><code>'table'</code></td><td>可编辑表格（行内编辑）</td></tr>
+<tr><td><code>'pagination'</code></td><td>分页器</td></tr>
+<tr><td><code>'transfer'</code></td><td>穿梭框（双列表选择）</td></tr>
+<tr><td><code>'person-select'</code></td><td>人员选择器（支持treeData + childrenKey树形）</td></tr>
+<tr><td><code>'dept-select'</code></td><td>部门选择器（支持树形选项）</td></tr>
+<tr><td><code>'detail-form'</code></td><td>详情表单（只读模式）</td></tr>
+<tr><td><code>'banner'</code></td><td>Banner横幅</td></tr>
+<tr><td><code>'tree-layout'</code></td><td>树形布局（如组织架构）</td></tr>
+<tr><td><code>'date-time-slot'</code></td><td>时间段选择</td></tr>
+<tr><td><code>'dialog'</code></td><td>弹窗（可渲染dialogSchema）</td></tr></table></div>
+</div>
+
+<!-- ======================== 联动配置 ======================== -->
+<div class="section" id="linkage"><h2>🔗 联动配置 (Linkage)</h2>
+
+<div class="card"><h3>6 种联动类型</h3>
+<table class="props"><tr><th>类型</th><th>触发条件</th><th>真时行为</th><th>假时行为</th></tr>
+<tr><td><code>visible</code></td><td>condition=true</td><td>显示字段</td><td>隐藏 + elseValue回退</td></tr>
+<tr><td><code>disabled</code></td><td>condition=true</td><td>禁用字段</td><td>解除禁用</td></tr>
+<tr><td><code>required</code></td><td>condition=true</td><td>设为必填</td><td>取消必填</td></tr>
+<tr><td><code>options</code></td><td>condition=true</td><td>切换选项（thenOptions/thenApi）</td><td>恢复默认 + elseValue回退</td></tr>
+<tr><td><code>set-value</code></td><td>condition=true</td><td>设值（thenValue字面值/valueSource字段复制）</td><td>elseValue回退</td></tr>
+<tr><td><code>reset-fields</code></td><td>condition=true</td><td>重置targetFields到defaultValue</td><td>—</td></tr></table>
+</div>
+
+<div class="card"><h3>多字段联动示例 — Checkbox → 单字段控制</h3>
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制</button>{"type":"checkbox","field":"features","label":"功能选择","options":[
+  {"label":"高级审批","value":"advanced"},
+  {"label":"加急处理","value":"urgent"}
+],
+"linkages":[
+  {"type":"visible","watchFields":["features"],"condition":"values.features && values.features.includes('advanced')","elseValue":""},
+  {"type":"set-value","watchFields":["features"],"condition":"values.features && values.features.includes('urgent')",
+   "thenValue":"加急模式已启用","valueSource":undefined}
+]}</div></div>
+
+<div class="card"><h3>联动配置公共属性</h3>
+<table class="props"><tr><th>属性</th><th>类型</th><th>说明</th></tr>
+<tr><td>type</td><td><code>LinkageType</code></td><td>visible|disabled|required|options|set-value|reset-fields</td></tr>
+<tr><td>watchFields</td><td><code>string[]</code></td><td>监听的字段名数组</td></tr>
+<tr><td>condition</td><td><code>string | Function</code></td><td>字符串表达式（沙箱eval）或函数</td></tr>
+<tr><td>elseValue</td><td><code>FormFieldValue</code></td><td>条件 false 时回退值</td></tr>
+<tr><td>thenOptions</td><td><code>DictItem[]</code></td><td>仅options类型：条件true时替换选项</td></tr>
+<tr><td>thenApi</td><td><code>SchemaApiConfig</code></td><td>仅options类型：条件true时替换API</td></tr>
+<tr><td>thenValue</td><td><code>FormFieldValue</code></td><td>仅set-value类型：条件true时字面值</td></tr>
+<tr><td>valueSource</td><td><code>string</code></td><td>仅set-value类型：复制值的源字段</td></tr>
+<tr><td>targetFields</td><td><code>string[]</code></td><td>仅reset-fields类型：要重置的字段数组</td></tr></table>
+<p style="font-size:12px;color:var(--sub);margin-top:8px;">⚠️ 循环依赖自动检测降级 — useLinkage 中 DFS 检测，循环字段回退到默认状态</p>
+</div>
+</div>
+
+<!-- ======================== API配置 ======================== -->
+<div class="section" id="api"><h2>🌐 API 数据配置 (SchemaApiConfig)</h2>
+
+<div class="card">
+<table class="props"><tr><th>属性</th><th>类型</th><th>默认值</th><th>版本</th><th>说明</th></tr>
+<tr><td>url</td><td><code>string</code></td><td>—</td><td>S7</td><td>API地址（必填）</td></tr>
+<tr><td>method</td><td><code>'get' | 'post'</code></td><td>get</td><td>S7</td><td>HTTP方法</td></tr>
+<tr><td>params</td><td><code>Record&lt;string,unknown&gt;</code></td><td>—</td><td>S7</td><td>查询/body参数，支持 <code>${fieldName}</code> 模板</td></tr>
+<tr><td>dataPath</td><td><code>string</code></td><td>—</td><td><b>S16</b></td><td>dot-notation数据路径（如result.records），回退链: data>list>rows>items>records</td></tr>
+<tr><td>labelKey</td><td><code>string</code></td><td>label</td><td>S7</td><td>映射到DictItem.label的键</td></tr>
+<tr><td>valueKey</td><td><code>string</code></td><td>value</td><td>S7</td><td>映射到DictItem.value的键</td></tr>
+<tr><td>childrenKey</td><td><code>string</code></td><td>—</td><td><b>S17</b></td><td>树形数据子节点键（保留嵌套结构不拍平）</td></tr>
+<tr><td>ttl</td><td><code>number</code></td><td>0</td><td><b>S17</b></td><td>缓存TTL毫秒，0=永不过期</td></tr>
+<tr><td>immediate</td><td><code>boolean</code></td><td>true</td><td>S7</td><td>挂载时立即加载</td></tr>
+<tr><td>dictCode</td><td><code>string</code></td><td>—</td><td>S7</td><td>字典码（优先于url，从global.dictMap查找）</td></tr></table>
+<p style="font-size:12px;color:var(--sub);margin-top:8px;">📦 responseNormalizer.ts (S16) — 统一4处响应解析为单一模块 | optionsCache.ts (S17) — TTL支持</p>
+</div>
+</div>
+
+<!-- ======================== 搜索列表 ======================== -->
+<div class="section" id="searchlist"><h2>📋 搜索列表 (Search-List) 完整Schema</h2>
+
+<div class="card">
+<div class="schema-block"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">复制完整Schema</button>{
+  "type": "search-list",
+  "field": "orderList",
+  "label": "订单列表",
+  "listApi": {
+    "url": "/api/orders",
+    "method": "post",
+    "pageParam": "pageNum",
+    "sizeParam": "pageSize",
+    "dataPath": "data.records",
+    "totalPath": "data.total",
+    "immediate": true
+  },
+  "searchFields": [
+    { "type": "input", "field": "keyword", "label": "关键词", "span": 8 },
+    { "type": "select", "field": "status", "label": "状态", "span": 8,
+      "api": { "url": "/api/statuses", "method": "get", "dataPath": "data", "labelKey": "name", "valueKey": "code" }
+    },
+    { "type": "date-range", "field": "dateRange", "label": "日期", "span": 8 }
+  ],
+  "columns": [
+    { "prop": "id", "label": "订单号", "render": "text", "width": "120" },
+    { "prop": "status", "label": "状态", "render": "badge", "colorMap": { "paid": "#67c23a", "unpaid": "#f56c6c" } },
+    { "prop": "amount", "label": "金额", "render": "text", "align": "right" },
+    { "prop": "createdAt", "label": "创建时间", "render": "tooltip", "tooltipField": "createdAtFull" },
+    { "prop": "image", "label": "图片", "render": "image", "imageWidth": 80 }
+  ],
+  "rowActions": [
+    { "label": "查看", "buttonType": "primary", "type": "emit", "emitEvent": "view", "icon": "View" },
+    { "label": "编辑", "buttonType": "warning", "type": "dialog", "dialogTitle": "编辑订单",
+      "dialogSchema": [{"type": "input", "field": "remark", "label": "备注"}]
+    },
+    { "label": "删除", "buttonType": "danger", "type": "api", "apiUrl": "/api/orders/:id", "apiMethod": "post",
+      "confirm": "确认删除该订单?"
+    }
+  ],
+  "buttons": [
+    { "text": "新增", "buttonType": "primary",
+      "actions": [{"type": "dialog", "dialogTitle": "新增订单", "dialogSchema": [
+        {"type": "input", "field": "customerName", "label": "客户名称", "rules": [{"required": true, "message": "必填"}]},
+        {"type": "number", "field": "amount", "label": "金额"}
+      ]}]
+    },
+    { "text": "导出", "buttonType": "default", "actions": [{"type": "emit", "eventName": "export", "eventPayload": {"format": "csv"}}] }
+  ]
+}</div></div>
+</div>
+
+<footer>FormGrid v0.x — 29 组件 | 6 联动类型 | 完整 API 数据管道 | Vue 3 + Element Plus + qiankun<br>文档生成于 Sprint 19 · 2026-05-15</footer>
+</div>
+</body>
+</html>

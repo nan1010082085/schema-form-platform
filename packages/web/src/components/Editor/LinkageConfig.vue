@@ -1,0 +1,348 @@
+<script setup lang="ts">
+/**
+ * LinkageConfig -- CRUD UI for SchemaLinkage[] on a single schema item.
+ *
+ * Each linkage row supports:
+ * - type: LinkageType (select)
+ * - watchFields: string[] (multi-select from availableFields)
+ * - condition: string expression with real-time validation
+ * - thenOptions / thenApi (for 'options' type)
+ * - elseValue
+ */
+import { computed } from 'vue'
+import { Plus, Delete } from '@element-plus/icons-vue'
+import { validateExpression } from '@/utils/expression'
+import type { SchemaLinkage, LinkageType, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
+
+const props = defineProps<{
+  linkages: SchemaLinkage[]
+  availableFields: string[]
+}>()
+
+const emit = defineEmits<{
+  'update:linkages': [linkages: SchemaLinkage[]]
+}>()
+
+/** Linkage type options */
+const linkageTypeOptions: { label: string; value: LinkageType }[] = [
+  { label: 'Visible', value: 'visible' },
+  { label: 'Disabled', value: 'disabled' },
+  { label: 'Required', value: 'required' },
+  { label: 'Options', value: 'options' },
+  { label: 'Set Value', value: 'set-value' },
+  { label: 'Reset Fields', value: 'reset-fields' },
+]
+
+/** Available fields as select options */
+const fieldOptions = computed(() =>
+  props.availableFields.map((f) => ({ label: f, value: f })),
+)
+
+/**
+ * Cached condition validation states (Sprint 11 performance fix).
+ * One computed per linkage rule, avoids re-evaluating on every render.
+ */
+const conditionStates = computed(() =>
+  props.linkages.map((linkage) => {
+    if (!linkage.condition) return { valid: true as const, error: undefined as string | undefined }
+    return validateExpression(linkage.condition as string)
+  }),
+)
+
+function addLinkage() {
+  const newLinkage: SchemaLinkage = {
+    type: 'visible',
+    watchFields: [],
+    condition: '',
+  }
+  emit('update:linkages', [...props.linkages, newLinkage])
+}
+
+function removeLinkage(index: number) {
+  const updated = props.linkages.filter((_, i) => i !== index)
+  emit('update:linkages', updated)
+}
+
+function updateLinkage<K extends keyof SchemaLinkage>(index: number, field: K, value: SchemaLinkage[K]) {
+  const updated = props.linkages.map((item, i) =>
+    i === index ? { ...item, [field]: value } : item,
+  )
+  emit('update:linkages', updated)
+}
+
+/** Parse thenOptions from textarea (one per line: label=value) */
+function parseOptionsText(text: string): DictItem[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const eqIdx = line.indexOf('=')
+      if (eqIdx === -1) return { label: line, value: line }
+      return { label: line.slice(0, eqIdx).trim(), value: line.slice(eqIdx + 1).trim() }
+    })
+}
+
+function optionsToText(options?: DictItem[]): string {
+  if (!options?.length) return ''
+  return options.map((o) => `${o.label}=${o.value}`).join('\n')
+}
+
+/** Parse thenApi from JSON text */
+function parseApiText(text: string): SchemaApiConfig | undefined {
+  if (!text.trim()) return undefined
+  try {
+    return JSON.parse(text) as SchemaApiConfig
+  } catch {
+    return undefined
+  }
+}
+
+function apiToText(api?: SchemaApiConfig): string {
+  if (!api) return ''
+  return JSON.stringify(api, null, 2)
+}
+</script>
+
+<template>
+  <div class="linkage-config">
+    <div v-if="linkages.length === 0" class="linkage-config__empty">
+      No linkage rules configured.
+    </div>
+
+    <div
+      v-for="(linkage, idx) in linkages"
+      :key="idx"
+      class="linkage-config__item"
+    >
+      <div class="linkage-config__item-header">
+        <span class="linkage-config__item-title">Rule {{ idx + 1 }}</span>
+        <el-button
+          type="danger"
+          :icon="Delete"
+          size="small"
+          text
+          @click="removeLinkage(idx)"
+        />
+      </div>
+
+      <!-- Type -->
+      <div class="linkage-config__field">
+        <label class="linkage-config__label">Type</label>
+        <el-select
+          :model-value="linkage.type"
+          size="small"
+          style="width: 100%"
+          @update:model-value="updateLinkage(idx, 'type', $event as LinkageType)"
+        >
+          <el-option
+            v-for="opt in linkageTypeOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+
+      <!-- Watch Fields -->
+      <div class="linkage-config__field">
+        <label class="linkage-config__label">Watch Fields</label>
+        <el-select
+          :model-value="linkage.watchFields"
+          size="small"
+          multiple
+          filterable
+          style="width: 100%"
+          placeholder="Select fields to watch"
+          @update:model-value="updateLinkage(idx, 'watchFields', $event as string[])"
+        >
+          <el-option
+            v-for="opt in fieldOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+
+      <!-- Condition Expression -->
+      <div class="linkage-config__field">
+        <label class="linkage-config__label">Condition</label>
+        <el-input
+          :model-value="linkage.condition"
+          type="textarea"
+          :rows="2"
+          size="small"
+          placeholder='${field} === "value"'
+          :class="{ 'is-error': !conditionStates[idx].valid }"
+          @update:model-value="updateLinkage(idx, 'condition', $event)"
+        />
+        <div
+          v-if="linkage.condition && !conditionStates[idx].valid"
+          class="linkage-config__error"
+        >
+          {{ conditionStates[idx].error }}
+        </div>
+      </div>
+
+      <!-- thenOptions (for 'options' type) -->
+      <div v-if="linkage.type === 'options'" class="linkage-config__field">
+        <label class="linkage-config__label">Then Options (label=value, one per line)</label>
+        <el-input
+          :model-value="optionsToText(linkage.thenOptions)"
+          type="textarea"
+          :rows="3"
+          size="small"
+          placeholder="Option A=opt_a&#10;Option B=opt_b"
+          @update:model-value="updateLinkage(idx, 'thenOptions', parseOptionsText($event))"
+        />
+      </div>
+
+      <!-- thenApi (for 'options' type) -->
+      <div v-if="linkage.type === 'options'" class="linkage-config__field">
+        <label class="linkage-config__label">Then API (JSON)</label>
+        <el-input
+          :model-value="apiToText(linkage.thenApi)"
+          type="textarea"
+          :rows="3"
+          size="small"
+          placeholder='{"url":"/api/options","method":"get"}'
+          @update:model-value="updateLinkage(idx, 'thenApi', parseApiText($event))"
+        />
+      </div>
+
+      <!-- set-value specific: literal value -->
+      <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
+        <label class="linkage-config__label">Then Value (literal)</label>
+        <el-input
+          :model-value="String(linkage.thenValue ?? '')"
+          size="small"
+          placeholder="Literal value to set"
+          @update:model-value="updateLinkage(idx, 'thenValue', $event)"
+        />
+      </div>
+
+      <!-- set-value specific: value source field -->
+      <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
+        <label class="linkage-config__label">Value Source (copy from field)</label>
+        <el-select
+          :model-value="linkage.valueSource ?? ''"
+          size="small"
+          style="width: 100%"
+          clearable
+          placeholder="Select a field to copy value from"
+          @update:model-value="updateLinkage(idx, 'valueSource', $event || undefined)"
+        >
+          <el-option
+            v-for="opt in fieldOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+
+      <!-- reset-fields specific: target fields -->
+      <div v-if="linkage.type === 'reset-fields'" class="linkage-config__field">
+        <label class="linkage-config__label">Target Fields (fields to reset)</label>
+        <el-select
+          :model-value="linkage.targetFields ?? []"
+          size="small"
+          multiple
+          filterable
+          style="width: 100%"
+          placeholder="Select fields to reset"
+          @update:model-value="updateLinkage(idx, 'targetFields', $event as string[])"
+        >
+          <el-option
+            v-for="opt in fieldOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+
+      <!-- elseValue -->
+      <div class="linkage-config__field">
+        <label class="linkage-config__label">Else Value</label>
+        <el-input
+          :model-value="String(linkage.elseValue ?? '')"
+          size="small"
+          placeholder="Fallback value when condition is false"
+          @update:model-value="updateLinkage(idx, 'elseValue', $event)"
+        />
+      </div>
+    </div>
+
+    <el-button
+      type="primary"
+      :icon="Plus"
+      size="small"
+      plain
+      style="width: 100%; margin-top: 8px"
+      @click="addLinkage"
+    >
+      Add Linkage Rule
+    </el-button>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.linkage-config {
+  &__empty {
+    text-align: center;
+    color: #909399;
+    font-size: 12px;
+    padding: 12px 0;
+  }
+
+  &__item {
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fafafa;
+  }
+
+  &__item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  &__item-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  &__field {
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: #606266;
+    margin-bottom: 3px;
+  }
+
+  &__error {
+    font-size: 11px;
+    color: #f56c6c;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+
+  .is-error :deep(.el-textarea__inner) {
+    border-color: #f56c6c;
+  }
+}
+</style>

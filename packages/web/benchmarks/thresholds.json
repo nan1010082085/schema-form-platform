@@ -1,0 +1,12 @@
+{
+  "_comment": "FormGrid 性能基准 — 渲染 SchemaRender 的 FCP 时间（ms）。必须在 JSDOM 或 headless 浏览器中测量。",
+  "version": "1.0.0-rc.1",
+  "updated": "2026-05-15",
+  "thresholds": {
+    "render_50_fields": { "max_ms": 300, "description": "50 个 input 字段，grid-row 布局" },
+    "render_100_fields": { "max_ms": 600, "description": "100 个 input 字段，grid-row 布局" },
+    "render_200_fields": { "max_ms": 2000, "description": "200 个 input 字段，grid-row 布局" },
+    "render_nested_3_levels": { "max_ms": 500, "description": "page > card > grid-row 3 层嵌套，50 字段" },
+    "render_with_linkage": { "max_ms": 800, "description": "50 字段 + 5 个联动规则（options + visible + set-value）" }
+  }
+}

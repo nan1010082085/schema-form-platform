@@ -1,0 +1,25 @@
+{
+  "name": "schema-form-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FormGrid monorepo — schema-driven form engine with editor and backend services",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "dev:web": "pnpm --filter @schema-form/web dev",
+    "dev:server": "pnpm --filter @schema-form/server dev",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter @schema-form/web build",
+    "build:server": "pnpm --filter @schema-form/server build",
+    "db:up": "pnpm --filter @schema-form/server db:up",
+    "db:down": "pnpm --filter @schema-form/server db:down",
+    "db:migrate": "pnpm --filter @schema-form/server db:migrate",
+    "db:studio": "pnpm --filter @schema-form/server db:studio",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  }
+}

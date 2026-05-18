@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.turbo/
+*.log
+.claude/
+packages/*/node_modules/
+packages/*/dist/
+packages/*/.claude/
+.claude/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.playwright-mcp/
+
+# Build
+*.tsbuildinfo
+*.png
