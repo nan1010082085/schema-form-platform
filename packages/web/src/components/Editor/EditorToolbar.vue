@@ -243,10 +243,19 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
 <template>
   <div class="editor-toolbar">
-    <!-- Brand: title + schema ID -->
+    <!-- Brand: title + schema ID + save/publish/preview -->
     <div class="editor-toolbar__brand">
       <h2 class="editor-toolbar__title">{{ displayTitle }}</h2>
       <span v-if="schemaId" class="editor-toolbar__id-badge">{{ schemaId.slice(0, 8) }}</span>
+      <div class="editor-toolbar__ops editor-toolbar__ops--actions">
+        <el-button type="primary" size="small" @click="handleSaveDraft">保存草稿</el-button>
+        <el-button type="success" size="small" @click="handlePublish">
+          <el-icon><Promotion /></el-icon>发布
+        </el-button>
+        <el-button size="small" @click="handlePreview">
+          <el-icon><View /></el-icon>预览
+        </el-button>
+      </div>
     </div>
 
     <!-- Button groups evenly distributed across remaining width -->
@@ -359,24 +368,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         </el-tooltip>
       </div>
 
-      <!-- Group 6: Save Draft / Publish / Preview -->
-      <div class="editor-toolbar__ops editor-toolbar__ops--actions">
-        <el-tooltip content="保存草稿 (Ctrl+S)" placement="bottom">
-          <el-button type="primary" size="small" @click="handleSaveDraft">
-            保存草稿
-          </el-button>
-        </el-tooltip>
-        <el-button type="success" size="small" @click="handlePublish">
-          <el-icon><Promotion /></el-icon>
-          发布
-        </el-button>
-        <el-button size="small" @click="handlePreview">
-          <el-icon><View /></el-icon>
-          预览
-        </el-button>
-      </div>
-
-      <!-- Group 7: Canvas Size / Thumbnail -->
+      <!-- Group 6: Canvas Size / Thumbnail -->
       <div class="editor-toolbar__ops">
         <el-dropdown trigger="click" @command="handleCanvasSizeChange">
           <el-button size="small">
@@ -469,16 +461,15 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 .editor-toolbar {
   display: flex;
   align-items: center;
-  height: 56px;
-  padding: 0 16px;
+  height: 44px;
+  padding: 0 8px;
   background: #fff;
   border-bottom: 1px solid #e4e7ed;
   flex-shrink: 0;
-  gap: 12px;
+  gap: 6px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   &__brand {
     display: flex;
@@ -515,16 +506,16 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     display: flex;
     align-items: center;
     justify-content: space-evenly;
-    gap: 4px;
+    gap: 2px;
   }
 
   // Each functional button cluster
   &__ops {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 0;
     flex-shrink: 0;
-    padding: 4px 8px;
+    padding: 2px 4px;
     background: #fafafa;
     border-radius: 6px;
 
