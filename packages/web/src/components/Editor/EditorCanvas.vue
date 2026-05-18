@@ -336,7 +336,7 @@ function handleCanvasClick(event: Event) {
           :schema="[item]"
           :editable="true"
           :is-dragging="isDragActive"
-          @container-drop="handleNestedContainerDrop"
+          @container-drop="(e) => handleNestedContainerDrop({ ...e, parentPath: e.parentPath.length ? [idx, ...e.parentPath.slice(1)] : [] })"
         />
       </div>
     </div>
