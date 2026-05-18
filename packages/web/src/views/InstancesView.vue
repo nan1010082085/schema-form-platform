@@ -482,6 +482,13 @@ const isFiltered = computed(() =>
 
   &__search {
     width: 200px;
+    :deep(.el-input__inner) { height: 32px; font-size: 13px; }
+  }
+
+  // Dialog form inputs should match button heights
+  :deep(.el-dialog) {
+    .el-input__inner { height: 32px; font-size: 14px; }
+    .el-select .el-input__inner { height: 32px; }
   }
 
   // ---- Content area ----

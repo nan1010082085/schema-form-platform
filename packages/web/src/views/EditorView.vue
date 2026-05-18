@@ -742,7 +742,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
   }
 
   &__name-input {
-    :deep(.el-input__inner) { font-weight: 600; font-size: 15px; }
+    :deep(.el-input__inner) { font-weight: 600; font-size: 15px; height: 40px; }
   }
 
   &__meta {
@@ -869,6 +869,9 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     padding: 8px 0;
 
     h3 { font-size: 16px; margin: 0 0 16px; color: #303133; }
+
+    :deep(.el-input__inner) { height: 32px; font-size: 14px; }
+    :deep(.el-select .el-input__inner) { height: 32px; }
   }
 }
 </style>
