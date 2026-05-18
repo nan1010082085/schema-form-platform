@@ -102,9 +102,9 @@ function handleToggleExpand(node: SchemaTreeNode) {
 </script>
 
 <template>
-  <div class="schema-tree">
+  <el-scrollbar class="schema-tree">
     <div v-if="treeData.length === 0" class="schema-tree__empty">
-      <p>No components yet</p>
+      <p>暂无组件</p>
     </div>
     <el-tree
       v-else
@@ -142,14 +142,13 @@ function handleToggleExpand(node: SchemaTreeNode) {
         </div>
       </template>
     </el-tree>
-  </div>
+  </el-scrollbar>
 </template>
 
 <style scoped lang="scss">
 .schema-tree {
   width: 100%;
   height: 100%;
-  overflow-y: auto;
   padding: 8px 0;
 
   &__empty {

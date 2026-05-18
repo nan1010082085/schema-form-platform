@@ -1,16 +1,16 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: formgrid-postgres
+  mongo:
+    image: mongo:8
+    container_name: formgrid-mongo
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '27017:27017'
     environment:
-      POSTGRES_USER: formgrid
-      POSTGRES_PASSWORD: formgrid
-      POSTGRES_DB: formgrid
+      MONGO_INITDB_ROOT_USERNAME: formgrid
+      MONGO_INITDB_ROOT_PASSWORD: formgrid
+      MONGO_INITDB_DATABASE: formgrid
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodata:/data/db
 
 volumes:
-  pgdata:
+  mongodata:

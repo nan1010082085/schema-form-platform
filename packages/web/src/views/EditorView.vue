@@ -2,12 +2,14 @@
 /**
  * EditorView — 可视化 Schema 编辑器
  *
- * 三栏布局：左侧(名称+组件面板/结构树) / 中间(el-scrollbar+画布+缩略图) / 右侧(抽屉-属性配置)
- * Phase 3: 固定画布 1920×1080，保存/发布走服务，beforeRouteLeave 未保存提示
+ * 三栏布局：左侧(可折叠组件面板/结构树) / 中间(el-scrollbar+画布) / 右侧(el-drawer 覆盖层)
+ * 左侧面板通过 transform 收起，与画布同级布局；右侧为上层覆盖抽屉
+ * 支持 30 步历史回退/前进
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+import { Fold, Expand } from '@element-plus/icons-vue'
 import EditorToolbar from '@/components/Editor/EditorToolbar.vue'
 import ComponentPanel from '@/components/Editor/ComponentPanel.vue'
 import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
@@ -34,13 +36,14 @@ const route = useRoute()
 const router = useRouter()
 const schemaStore = useSchemaStore()
 
-// ---- History (undo/redo) ----
-const { pushState, undo, redo, canUndo, canRedo } = useHistory({ maxSize: 50 })
+// ---- History (30 steps) ----
+const { pushState, undo, redo, canUndo, canRedo } = useHistory({ maxSize: 30 })
 
 // ---- Editor state ----
 const schema = ref<FormSchemaItem[]>([])
 const mode = ref<'edit' | 'preview'>('edit')
 const leftTab = ref<'components' | 'structure'>('components')
+const leftCollapsed = ref(false)
 
 // ---- Schema identity ----
 const currentSchemaId = ref<string | null>(null)
@@ -62,7 +65,7 @@ const canvasSizePresets = [
   { label: '1366×768', value: '1366×768' },
 ]
 
-// ---- Drawer ----
+// ---- Right drawer (overlay) ----
 const drawerVisible = ref(false)
 
 // ---- Selection state ----
@@ -175,7 +178,6 @@ async function handleSaveDraft() {
       currentSchemaId.value = result.id
       schemaStatus.value = 'draft'
       router.replace({ path: '/editor', query: { id: result.id } })
-      // Re-fetch from server to get server state
       const detail = await schemaStore.fetchSchemaById(result.id)
       if (detail?.json) {
         schema.value = detail.json
@@ -206,7 +208,7 @@ async function handlePublish() {
   if (result) {
     schemaStatus.value = 'published'
     lastSavedJson.value = JSON.stringify(schema.value)
-    ElMessage.success(`已发布！发布 ID: ${result.publishId}`)
+    ElMessage.success('已发布！')
   }
 }
 
@@ -218,6 +220,10 @@ function handlePreview() {
 
 function handleToggleThumbnail() {
   showThumbnail.value = !showThumbnail.value
+}
+
+function toggleLeftPanel() {
+  leftCollapsed.value = !leftCollapsed.value
 }
 
 // ---- Canvas size ----
@@ -398,7 +404,7 @@ function handleGroup(containerType: 'card' | 'page' | 'toolbar') {
 
 function handleUngroup() {
   if (!selectedPath.value) return
-	const item = getItemAtPath(schema.value, selectedPath.value)!
+  const item = getItemAtPath(schema.value, selectedPath.value)!
   if (!isContainerType(item) || selectedPath.value.length > 1) return
   pushState(schema.value)
   const idx = selectedPath.value[0]
@@ -412,12 +418,12 @@ function handleValidate() {
   validationErrorCount.value = result.errors.filter((e) => e.severity === 'error').length
   validationWarningCount.value = result.errors.filter((e) => e.severity === 'warning').length
   if (result.valid && validationWarningCount.value === 0) {
-    ElMessage.success('Schema is valid')
+    ElMessage.success('Schema 校验通过')
   } else if (result.valid) {
-    ElNotification({ title: 'Schema Validation', message: `${validationWarningCount.value} warning(s)`, type: 'warning', duration: 4000 })
+    ElNotification({ title: 'Schema 校验', message: `${validationWarningCount.value} 个警告`, type: 'warning', duration: 4000 })
   } else {
     const msgs = result.errors.slice(0, 5).map(e => `• ${e.message}`).join('\n')
-    ElNotification({ title: 'Schema Validation Failed', message: msgs, type: 'error', duration: 6000 })
+    ElNotification({ title: 'Schema 校验失败', message: msgs, type: 'error', duration: 6000 })
   }
 }
 
@@ -532,21 +538,24 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     />
 
     <div class="editor-view__body">
-      <!-- Left panel -->
-      <aside v-if="mode === 'edit'" class="editor-view__left">
+      <!-- Left panel: same layout level as canvas, collapses with transform -->
+      <aside
+        v-if="mode === 'edit'"
+        class="editor-view__left"
+        :class="{ 'editor-view__left--collapsed': leftCollapsed }"
+      >
         <div class="editor-view__name-area">
           <el-input
             v-model="schemaName"
             placeholder="未命名实例"
             size="large"
             class="editor-view__name-input"
-            @blur="() => { if (schemaName.trim()) lastSavedName = schemaName.trim() }"
           />
           <div v-if="currentSchemaId" class="editor-view__meta">
             <el-tag size="small" :type="schemaStatus === 'published' ? 'success' : 'info'">
               {{ schemaStatus === 'published' ? '已发布' : '草稿' }}
             </el-tag>
-            <el-tag size="small" type="primary">
+            <el-tag size="small" :type="schemaType === 'form' ? '' : 'success'">
               {{ schemaType === 'form' ? '表单' : '搜索列表' }}
             </el-tag>
           </div>
@@ -565,7 +574,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
           >结构</button>
         </div>
 
-        <div class="editor-view__left-content">
+        <el-scrollbar class="editor-view__left-scrollbar">
           <ComponentPanel v-show="leftTab === 'components'" />
           <SchemaTree
             v-show="leftTab === 'structure'"
@@ -573,8 +582,17 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
             :selected-path="selectedPath"
             @select="handleTreeSelect"
           />
-        </div>
+        </el-scrollbar>
       </aside>
+
+      <!-- Collapse toggle button -->
+      <button
+        v-if="mode === 'edit'"
+        class="editor-view__left-toggle"
+        @click="toggleLeftPanel"
+      >
+        <el-icon :size="14"><Fold v-if="!leftCollapsed" /><Expand v-else /></el-icon>
+      </button>
 
       <!-- Center canvas -->
       <div class="editor-view__center">
@@ -612,15 +630,17 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
         </div>
       </div>
 
-      <!-- Right drawer -->
+      <!-- Right drawer: overlay layer, not in layout flow -->
       <el-drawer
         v-model="drawerVisible"
         direction="rtl"
         size="380px"
         :close-on-click-modal="false"
+        :modal="true"
+        append-to-body
       >
         <template #header>
-          <span v-if="selectedSchema">
+          <span v-if="selectedSchema" class="editor-view__drawer-title">
             {{ (selectedSchema as any).label || selectedSchema?.type || '组件' }} 配置
           </span>
           <span v-else>编辑器配置</span>
@@ -668,27 +688,36 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #f5f7fa;
+  background: #f0f2f5;
 
   &__body {
     display: flex;
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    position: relative;
   }
 
-  // ---- Left panel ----
+  // ---- Left panel: same level as canvas, collapse via transform ----
   &__left {
-    width: 240px;
+    width: 260px;
     flex-shrink: 0;
     background: #fff;
     border-right: 1px solid #e4e7ed;
     display: flex;
     flex-direction: column;
+    transition: transform 0.25s ease, width 0.25s ease;
+    z-index: 2;
+
+    &--collapsed {
+      width: 0;
+      transform: translateX(-100%);
+      overflow: hidden;
+    }
   }
 
   &__name-area {
-    padding: 12px;
+    padding: 14px 12px;
     border-bottom: 1px solid #f0f0f0;
   }
 
@@ -724,10 +753,32 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     &--active { color: #409eff; border-bottom-color: #409eff; }
   }
 
-  &__left-content {
+  &__left-scrollbar {
     flex: 1;
-    overflow-y: auto;
-    padding: 8px;
+    min-height: 0;
+  }
+
+  // ---- Left panel collapse toggle ----
+  &__left-toggle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 22px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    color: #909399;
+    transition: all 0.2s;
+
+    &:hover { color: #409eff; background: #ecf5ff; }
   }
 
   // ---- Center canvas ----
@@ -735,7 +786,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     flex: 1;
     min-width: 0;
     position: relative;
-    background: #e8e8e8;
+    background: #e0e3e8;
   }
 
   &__scrollbar {
@@ -744,22 +795,22 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
   &__canvas {
     background: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
     margin: 24px;
   }
 
   // ---- Thumbnail ----
   &__thumbnail {
     position: absolute;
-    bottom: 12px;
-    right: 12px;
+    bottom: 16px;
+    right: 16px;
     width: 200px;
     height: 120px;
     background: #fff;
-    border: 2px solid #409eff;
-    border-radius: 4px;
+    border: 2px solid #c0c4cc;
+    border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     z-index: 10;
   }
 
@@ -783,15 +834,21 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     left: 0;
     width: 100%;
     height: 100%;
-    border: 2px solid #f56c6c;
+    border: 1px solid #f56c6c;
     pointer-events: none;
   }
 
-  // ---- Global config ----
+  // ---- Drawer title ----
+  &__drawer-title {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  // ---- Global config (shown when nothing selected) ----
   &__global-config {
     padding: 8px 0;
 
-    h3 { font-size: 16px; margin: 0 0 16px; color: #333; }
+    h3 { font-size: 16px; margin: 0 0 16px; color: #303133; }
   }
 }
 </style>

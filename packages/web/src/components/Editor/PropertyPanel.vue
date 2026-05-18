@@ -141,8 +141,8 @@ const validationResult = computed(() => {
 
 <template>
   <div class="property-panel">
-    <div class="property-panel__header">Properties</div>
-    <div v-if="localSchema" class="property-panel__body">
+    <div class="property-panel__header">属性配置</div>
+    <el-scrollbar v-if="localSchema" class="property-panel__body">
 
       <!-- Real-time validation alerts -->
       <div v-if="validationResult?.errors.length" class="property-panel__validation">
@@ -424,7 +424,7 @@ const validationResult = computed(() => {
           size="small"
         />
       </PropertySection>
-    </div>
+    </el-scrollbar>
 
     <div v-else class="property-panel__empty">
       Select a component on the canvas to edit its properties.
@@ -434,25 +434,21 @@ const validationResult = computed(() => {
 
 <style scoped lang="scss">
 .property-panel {
-  width: 300px;
-  background: #fff;
-  border-left: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  height: 100%;
 
   &__header {
-    padding: 16px;
-    font-size: 16px;
+    padding: 0 0 12px;
+    font-size: 15px;
     font-weight: 600;
     color: #303133;
-    border-bottom: 1px solid #e4e7ed;
     flex-shrink: 0;
   }
 
   &__body {
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;
   }
 
   &__field {

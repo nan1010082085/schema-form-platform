@@ -1,13 +1,11 @@
-import { PrismaClient } from '@prisma/client'
+import mongoose from 'mongoose'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://formgrid:formgrid@localhost:27017/formgrid'
+
+export async function connectDatabase(): Promise<void> {
+  mongoose.set('strictQuery', false)
+  await mongoose.connect(MONGODB_URI)
+  console.log('[db] MongoDB connected')
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'warn', 'error'] : ['error'],
-})
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
-}
+export { mongoose }

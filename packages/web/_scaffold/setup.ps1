@@ -95,6 +95,5 @@ Write-Host "Next steps:" -ForegroundColor White
 Write-Host "  1. cd $MonorepoRoot" -ForegroundColor White
 Write-Host "  2. pnpm install" -ForegroundColor White
 Write-Host "  3. cd packages/server && docker compose up -d" -ForegroundColor White
-Write-Host "  4. cd packages/server && npx prisma migrate dev --name init" -ForegroundColor White
-Write-Host "  5. pnpm dev  (starts both web and server)" -ForegroundColor White
+Write-Host "  4. pnpm dev  (starts both web and server)" -ForegroundColor White
 Write-Host ""

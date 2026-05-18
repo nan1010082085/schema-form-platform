@@ -1,16 +1,18 @@
 import Router from '@koa/router'
-import { prisma } from '../config/database.js'
+import { mongoose } from '../config/database.js'
 
 const router = new Router()
 
 router.get('/api/health', async (ctx) => {
-  let dbStatus = 'disconnected'
+  let dbStatus: 'connected' | 'disconnected' = 'disconnected'
 
-  try {
-    await prisma.$queryRaw`SELECT 1`
-    dbStatus = 'connected'
-  } catch {
-    dbStatus = 'disconnected'
+  if (mongoose.connection.readyState === 1) {
+    try {
+      await mongoose.connection.db!.admin().ping()
+      dbStatus = 'connected'
+    } catch {
+      dbStatus = 'disconnected'
+    }
   }
 
   ctx.body = {

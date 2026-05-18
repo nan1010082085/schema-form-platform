@@ -1,13 +1,15 @@
 import Router from '@koa/router'
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
-import { prisma } from '../config/database.js'
+import { FormSchemaModel } from '../models/FormSchema.js'
 
 const router = new Router({ prefix: '/api/schemas' })
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 /**
  * GET /api/schemas
- * List all schemas with optional search by name.
- * Query params: ?search=&page=1&pageSize=20
  */
 router.get('/', async (ctx) => {
   const { search, type, status, publishId, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
@@ -15,20 +17,15 @@ router.get('/', async (ctx) => {
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
   const skip = (page - 1) * pageSize
 
-  const where: Record<string, unknown> = {}
-  if (search) where.name = { contains: search as string, mode: 'insensitive' as const }
-  if (type && ['form', 'search_list'].includes(type as string)) where.type = type as string
-  if (status && ['draft', 'published'].includes(status as string)) where.status = status as string
-  if (publishId) where.publishId = publishId as string
+  const filter: Record<string, unknown> = {}
+  if (search) filter.name = { $regex: escapeRegex(search as string), $options: 'i' }
+  if (type && ['form', 'search_list'].includes(type as string)) filter.type = type as string
+  if (status && ['draft', 'published'].includes(status as string)) filter.status = status as string
+  if (publishId) filter.publishId = publishId as string
 
   const [items, total] = await Promise.all([
-    prisma.formSchema.findMany({
-      where,
-      skip,
-      take: pageSize,
-      orderBy: { updatedAt: 'desc' },
-    }),
-    prisma.formSchema.count({ where }),
+    FormSchemaModel.find(filter).skip(skip).limit(pageSize).sort({ updatedAt: -1 }),
+    FormSchemaModel.countDocuments(filter),
   ])
 
   ctx.body = {
@@ -45,8 +42,6 @@ router.get('/', async (ctx) => {
 
 /**
  * POST /api/schemas
- * Create a new schema.
- * Body: { name: string, json: object }
  */
 router.post('/', async (ctx) => {
   const { name, json, type } = ctx.request.body as { name?: string; json?: unknown; type?: string }
@@ -65,13 +60,11 @@ router.post('/', async (ctx) => {
 
   const schemaType = (type === 'search-list' || type === 'search_list') ? 'search_list' : 'form'
 
-  const schema = await prisma.formSchema.create({
-    data: {
-      id: uuidv4(),
-      name: name.trim(),
-      type: schemaType,
-      json: json as object,
-    },
+  const schema = await FormSchemaModel.create({
+    _id: uuidv4(),
+    name: name.trim(),
+    type: schemaType,
+    json: json as object,
   })
 
   ctx.status = 201
@@ -80,7 +73,6 @@ router.post('/', async (ctx) => {
 
 /**
  * GET /api/schemas/:id
- * Get a single schema by ID.
  */
 router.get('/:id', async (ctx) => {
   const { id } = ctx.params
@@ -91,7 +83,7 @@ router.get('/:id', async (ctx) => {
     return
   }
 
-  const schema = await prisma.formSchema.findUnique({ where: { id } })
+  const schema = await FormSchemaModel.findById(id)
 
   if (!schema) {
     ctx.status = 404
@@ -104,8 +96,6 @@ router.get('/:id', async (ctx) => {
 
 /**
  * PUT /api/schemas/:id
- * Update a schema by ID.
- * Body: { name?: string, json?: object }
  */
 router.put('/:id', async (ctx) => {
   const { id } = ctx.params
@@ -119,7 +109,7 @@ router.put('/:id', async (ctx) => {
     return
   }
 
-  const existing = await prisma.formSchema.findUnique({ where: { id } })
+  const existing = await FormSchemaModel.findById(id)
   if (!existing) {
     ctx.status = 404
     ctx.body = { success: false, error: { message: 'Schema not found.' } }
@@ -144,14 +134,13 @@ router.put('/:id', async (ctx) => {
     data.json = json
   }
   if (status !== undefined) {
-    if (!['draft', 'published'].includes(status)) {
+    if (!['draft', 'published'].includes(status as string)) {
       ctx.status = 400
       ctx.body = { success: false, error: { message: 'Field "status" must be "draft" or "published".' } }
       return
     }
     data.status = status
     if (status === 'published') {
-      // 首次发布生成 publishId，后续复用
       if (!existing.publishId) {
         data.publishId = uuidv4()
       }
@@ -159,7 +148,7 @@ router.put('/:id', async (ctx) => {
     }
   }
   if (type !== undefined) {
-    if (!['form', 'search_list'].includes(type)) {
+    if (!['form', 'search_list'].includes(type as string)) {
       ctx.status = 400
       ctx.body = { success: false, error: { message: 'Field "type" must be "form" or "search_list".' } }
       return
@@ -173,17 +162,13 @@ router.put('/:id', async (ctx) => {
     return
   }
 
-  const schema = await prisma.formSchema.update({
-    where: { id },
-    data: data as never,
-  })
+  const schema = await FormSchemaModel.findByIdAndUpdate(id, data, { new: true })
 
   ctx.body = { success: true, data: schema }
 })
 
 /**
  * DELETE /api/schemas/:id
- * Delete a schema by ID.
  */
 router.delete('/:id', async (ctx) => {
   const { id } = ctx.params
@@ -194,14 +179,14 @@ router.delete('/:id', async (ctx) => {
     return
   }
 
-  const existing = await prisma.formSchema.findUnique({ where: { id } })
+  const existing = await FormSchemaModel.findById(id)
   if (!existing) {
     ctx.status = 404
     ctx.body = { success: false, error: { message: 'Schema not found.' } }
     return
   }
 
-  await prisma.formSchema.delete({ where: { id } })
+  await FormSchemaModel.findByIdAndDelete(id)
 
   ctx.status = 200
   ctx.body = { success: true, data: null }

@@ -85,7 +85,7 @@ async function jsonBodyParser(ctx: any, next: () => Promise<any>) {
   await next()
 }
 
-describe('Backend Smoke Test (Koa + Prisma)', () => {
+describe('Backend Smoke Test (Koa + MongoDB)', () => {
   beforeAll(async () => {
     const app = new Koa()
     app.use(errorHandler)
