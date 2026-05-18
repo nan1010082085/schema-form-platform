@@ -6,6 +6,7 @@
  * 拖拽 dataTransfer 中携带 SchemaType 字符串。
  * 使用 el-scrollbar 替代原生滚动条。
  */
+import { ref } from 'vue'
 import type { SchemaType } from '@/components/FormGrid/types'
 
 interface ComponentItem {
@@ -17,6 +18,9 @@ interface ComponentCategory {
   name: string
   items: ComponentItem[]
 }
+
+/** el-collapse v-model: array of currently expanded category names */
+const activeNames = ref<string[]>(['布局'])
 
 const categories: ComponentCategory[] = [
   {
@@ -79,25 +83,31 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
 <template>
   <el-scrollbar class="component-panel">
     <div class="component-panel__body">
-      <div
-        v-for="category in categories"
-        :key="category.name"
-        class="component-panel__category"
-      >
-        <div class="component-panel__category-title">{{ category.name }}</div>
-        <div class="component-panel__list">
+      <el-collapse v-model="activeNames" class="component-panel__collapse">
+        <el-collapse-item
+          v-for="category in categories"
+          :key="category.name"
+          :name="category.name"
+          :title="category.name"
+        >
+          <!-- v-if so collapsed categories render zero DOM nodes (~15 items instead of ~35 initially) -->
           <div
-            v-for="item in category.items"
-            :key="item.type"
-            class="component-panel__item"
-            draggable="true"
-            @dragstart="handleDragStart($event, item.type)"
+            v-if="activeNames.includes(category.name)"
+            class="component-panel__list"
           >
-            <span class="component-panel__item-type">{{ item.type }}</span>
-            <span class="component-panel__item-label">{{ item.label }}</span>
+            <div
+              v-for="item in category.items"
+              :key="item.type"
+              class="component-panel__item"
+              draggable="true"
+              @dragstart="handleDragStart($event, item.type)"
+            >
+              <span class="component-panel__item-type">{{ item.type }}</span>
+              <span class="component-panel__item-label">{{ item.label }}</span>
+            </div>
           </div>
-        </div>
-      </div>
+        </el-collapse-item>
+      </el-collapse>
     </div>
   </el-scrollbar>
 </template>
@@ -110,26 +120,17 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
     padding: 12px;
   }
 
-  &__category {
-    margin-bottom: 16px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__category-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #909399;
-    margin-bottom: 8px;
-    padding-left: 4px;
+  &__collapse {
+    // Remove default el-collapse top/bottom borders so it blends with the panel
+    border-top: none;
+    border-bottom: none;
   }
 
   &__list {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
+    padding-bottom: 8px;
   }
 
   &__item {
@@ -137,7 +138,7 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: calc(50% - 3px);
+    // Grid handles width; item fills its column cell
     padding: 10px 4px;
     border: 1px solid #e4e7ed;
     border-radius: 6px;

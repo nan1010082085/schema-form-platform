@@ -242,10 +242,6 @@ const canvasStyle = computed(() => ({
 }))
 
 // ---- Drawer ----
-watch(selectedSchema, (val) => {
-  if (val) drawerVisible.value = true
-})
-
 function handleSelect(index: number | null, ctrl?: boolean, shift?: boolean) {
   if (index === null) {
     selectedPath.value = null
@@ -283,7 +279,10 @@ function handleSelect(index: number | null, ctrl?: boolean, shift?: boolean) {
     selectedPath.value = clickedPath
     selectedPaths.value = [clickedPath]
   }
-  drawerVisible.value = true
+}
+
+function handleOpenProperties() {
+  if (selectedPath.value) drawerVisible.value = true
 }
 
 function handleTreeSelect(path: number[]) {
@@ -619,6 +618,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
               :canvas-height="canvasHeight"
               @update:schema="handleSchemaUpdate"
               @select="handleSelect"
+              @open-properties="handleOpenProperties"
               @drag-reorder="handleDragReorder"
               @drop-to-container="handleDropToContainer"
               @drag-to-container="handleDragToContainer"

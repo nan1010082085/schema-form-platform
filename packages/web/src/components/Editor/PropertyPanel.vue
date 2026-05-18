@@ -175,7 +175,7 @@ const validationResult = computed(() => {
           <el-input
             :model-value="localSchema.field"
             size="small"
-            placeholder="formData field name"
+            placeholder="表单字段名"
             @update:model-value="emitUpdate('field', $event)"
           />
         </div>
@@ -186,7 +186,7 @@ const validationResult = computed(() => {
           <el-input
             :model-value="localSchema.label"
             size="small"
-            placeholder="Display label"
+            placeholder="显示标签"
             @update:model-value="emitUpdate('label', $event)"
           />
         </div>
@@ -232,7 +232,7 @@ const validationResult = computed(() => {
           <el-input
             :model-value="localSchema.width"
             size="small"
-            placeholder="e.g. 200px or 50%"
+            placeholder="如: 200px 或 50%"
             @update:model-value="emitUpdate('width', $event)"
           />
         </div>
@@ -355,7 +355,7 @@ const validationResult = computed(() => {
           <el-input
             :model-value="(localSchema.props as Record<string, unknown>)?.dialogTitle as string ?? ''"
             size="small"
-            placeholder="Dialog title"
+            placeholder="弹窗标题"
             @update:model-value="emitUpdate('props', { ...localSchema.props, dialogTitle: $event })"
           />
         </div>
@@ -477,95 +477,97 @@ const validationResult = computed(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #fafbfc;
 
   &__header {
-    padding: 0 0 12px;
-    font-size: 15px;
+    padding: 14px 16px 10px;
+    font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: #1a1a2e;
     flex-shrink: 0;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e8ecf1;
   }
 
   &__body {
     flex: 1;
     min-height: 0;
+    padding: 4px 0 8px;
   }
 
   &__field {
-    margin-bottom: 12px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+    margin-bottom: 10px;
+    &:last-child { margin-bottom: 0; }
   }
 
   &__label {
     display: block;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     color: #606266;
-    margin-bottom: 4px;
-  }
-
-  &__hint {
-    margin: 0;
-    padding: 8px 0;
-    font-size: 12px;
-    color: #909399;
-    font-style: italic;
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
   }
 
   &__empty {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 32px;
+    padding: 48px 24px;
     text-align: center;
     color: #909399;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    background: #fff;
   }
 
   &__validation {
-    margin-bottom: 12px;
+    margin: 0 12px 10px;
   }
 
   &__validation-item {
     font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 5px;
     margin-bottom: 4px;
     line-height: 1.4;
+    font-weight: 500;
 
     &--error {
       background: #fef0f0;
       color: #f56c6c;
-      border: 1px solid #fde2e2;
+      border-left: 3px solid #f56c6c;
     }
 
     &--warning {
       background: #fdf6ec;
       color: #e6a23c;
-      border: 1px solid #faecd8;
+      border-left: 3px solid #e6a23c;
     }
+  }
 
   &__advanced {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 6px;
+    margin: 12px 8px 8px;
   }
 
   &__advanced-btn {
     width: 100%;
     justify-content: flex-start;
-
-    .el-icon { margin-right: 4px; }
+    border-radius: 6px;
+    font-size: 12px;
+    transition: all 0.15s;
+    .el-icon { margin-right: 6px; }
+    &:hover { border-color: #409eff; background: #ecf5ff; }
   }
 
   &__advanced-tag {
     margin-left: auto;
-  }
+    font-size: 11px;
   }
 }
 </style>

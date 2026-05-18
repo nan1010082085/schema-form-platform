@@ -10,11 +10,31 @@
  * 5. 跨层级拖拽移动
  *
  * Phase 3: 接受 canvasWidth/canvasHeight props，画布填充固定尺寸父容器
+ *
+ * Phase 3.1: 浮动属性标签
+ * - 点击组件显示浮动标签，点击标签才打开属性抽屉
+ * - 拖拽放置不再自动选中或打开抽屉
  */
 import { ref, computed } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
 import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
 import { isFullWidthType } from '@/components/FormGrid/types'
+
+/** SchemaType → 中文标签映射（浮动标签 + 组件面板显示） */
+const TYPE_LABEL_ZH: Record<string, string> = {
+  'grid-row': '行容器', 'grid-col': '列容器', 'page': '页面', 'card': '卡片',
+  'toolbar': '工具栏', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
+  'steps': '步骤条', 'tabs': '标签页',
+  'input': '输入框', 'number': '数字', 'select': '下拉选择', 'radio': '单选',
+  'checkbox': '多选', 'date': '日期', 'date-range': '日期范围',
+  'textarea': '多行文本', 'richtext': '富文本',
+  'button-list': '按钮列表', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
+  'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
+  'person-select': '人员选择', 'dept-select': '部门选择', 'transfer': '穿梭框',
+  'detail-form': '详情表单', 'banner': '横幅', 'tree-layout': '树形布局',
+  'date-time-slot': '日期时间段', 'dialog': '对话框', 'search-list': '搜索列表',
+}
+function typeLabel(type: string): string { return TYPE_LABEL_ZH[type] ?? type }
 
 const props = defineProps<{
   schema: FormSchemaItem[]
@@ -30,6 +50,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:schema': [schema: FormSchemaItem[]]
   'select': [index: number | null, ctrl?: boolean, shift?: boolean]
+  'open-properties': []
   'drag-reorder': [fromIndex: number, toIndex: number]
   'drop-to-container': [parentPath: number[], index: number, item: FormSchemaItem]
   'drag-to-container': [sourcePath: number[], targetPath: number[], targetIndex: number]
@@ -59,15 +80,15 @@ function createDefaultSchema(type: SchemaType): FormSchemaItem {
   if (type === 'grid-row') return { type: 'grid-row', children: [] }
   if (type === 'grid-col') return { type: 'grid-col', span: 12, children: [] }
   if (type === 'card' || type === 'page' || type === 'toolbar') {
-    return { type, label: type === 'card' ? 'Card' : undefined, children: [] }
+    return { type, label: type === 'card' ? '卡片' : undefined, children: [] }
   }
-  if (type === 'title') return { type: 'title', label: 'Title' }
+  if (type === 'title') return { type: 'title', label: '标题' }
   if (type === 'divider') return { type: 'divider' }
   if (type === 'spacer') return { type: 'spacer' }
   if (type === 'steps') {
     return {
       type: 'steps',
-      props: { steps: [{ title: 'Step 1' }, { title: 'Step 2' }] },
+      props: { steps: [{ title: '步骤一' }, { title: '步骤二' }] },
       children: [
         { type: 'grid-row', children: [] },
         { type: 'grid-row', children: [] },
@@ -77,7 +98,7 @@ function createDefaultSchema(type: SchemaType): FormSchemaItem {
   if (type === 'tabs') {
     return {
       type: 'tabs',
-      props: { tabs: [{ title: 'Tab 1' }] },
+      props: { tabs: [{ title: '标签一' }] },
       children: [{ type: 'grid-row', children: [] }],
     }
   }
@@ -89,59 +110,59 @@ function createDefaultSchema(type: SchemaType): FormSchemaItem {
   switch (type) {
     case 'input':
     case 'textarea':
-      item = { ...base, label: 'Input', props: { placeholder: 'Please enter' } }
+      item = { ...base, label: '输入框', props: { placeholder: '请输入' } }
       break
     case 'number':
-      item = { ...base, label: 'Number', props: { placeholder: 'Please enter' } }
+      item = { ...base, label: '数字', props: { placeholder: '请输入' } }
       break
     case 'select':
-      item = { ...base, label: 'Select', options: [{ label: 'Option A', value: 'a' }, { label: 'Option B', value: 'b' }] }
+      item = { ...base, label: '下拉选择', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
       break
     case 'radio':
-      item = { ...base, label: 'Radio', options: [{ label: 'Option A', value: 'a' }, { label: 'Option B', value: 'b' }] }
+      item = { ...base, label: '单选', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
       break
     case 'checkbox':
-      item = { ...base, label: 'Checkbox', options: [{ label: 'Option A', value: 'a' }, { label: 'Option B', value: 'b' }] }
+      item = { ...base, label: '多选', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
       break
     case 'date':
-      item = { ...base, label: 'Date' }
+      item = { ...base, label: '日期' }
       break
     case 'date-range':
-      item = { ...base, label: 'Date Range' }
+      item = { ...base, label: '日期范围' }
       break
     case 'button-list':
       item = {
         type: 'button-list',
         buttons: [
-          { text: 'Submit', buttonType: 'primary', actions: [{ type: 'submit' }] },
-          { text: 'Reset', actions: [{ type: 'reset' }] },
+          { text: '提交', buttonType: 'primary', actions: [{ type: 'submit' }] },
+          { text: '重置', actions: [{ type: 'reset' }] },
         ],
       }
       break
     case 'upload':
-      item = { ...base, label: 'Upload' }
+      item = { ...base, label: '上传' }
       break
     case 'table':
-      item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true } }
+      item = { ...base, label: '表格', props: { columnSchema: [], showActions: true } }
       break
     case 'pagination':
       item = { type: 'pagination', props: { currentPage: 1, pageSize: 10, total: 0 } }
       break
     case 'search-list':
       item = {
-        type: 'search-list', label: 'Search List',
+        type: 'search-list', label: '搜索列表',
         props: { pageSize: 10, rowKey: 'id', showSelection: false, showIndex: true, border: true, stripe: true },
         listApi: { url: '/api/list', method: 'post' },
         searchFields: [
-          { type: 'input', field: 'keyword', label: 'Keyword', span: 6 },
-          { type: 'date-range', field: 'dateRange', label: 'Date', span: 8 },
+          { type: 'input', field: 'keyword', label: '关键词', span: 6 },
+          { type: 'date-range', field: 'dateRange', label: '日期', span: 8 },
         ],
         columns: [
-          { prop: 'name', label: 'Name', width: 120 },
-          { prop: 'status', label: 'Status', width: 100, render: 'tag', colorMap: { active: 'success', inactive: 'danger' } },
+          { prop: 'name', label: '名称', width: 120 },
+          { prop: 'status', label: '状态', width: 100, render: 'tag', colorMap: { active: 'success', inactive: 'danger' } },
         ],
-        rowActions: [{ label: 'Edit', type: 'emit', emitEvent: 'edit-row' }],
-        buttons: [{ text: 'Add', buttonType: 'primary', actions: [{ type: 'emit', eventName: 'add-item' }] }],
+        rowActions: [{ label: '编辑', type: 'emit', emitEvent: 'edit-row' }],
+        buttons: [{ text: '新增', buttonType: 'primary', actions: [{ type: 'emit', eventName: 'add-item' }] }],
       }
       break
     default:
@@ -152,6 +173,9 @@ function createDefaultSchema(type: SchemaType): FormSchemaItem {
   return item
 }
 
+/**
+ * 拖放组件到画布 — 不再自动选中或打开属性抽屉
+ */
 function handleDrop(event: DragEvent) {
   event.preventDefault()
   isDragOver.value = false
@@ -161,9 +185,7 @@ function handleDrop(event: DragEvent) {
     const type = event.dataTransfer?.getData('schema-type') as SchemaType | undefined
     if (!type) return
     const newItem = createDefaultSchema(type)
-    const newSchema = [...props.schema, newItem]
-    emit('update:schema', newSchema)
-    emit('select', newSchema.length - 1)
+    emit('update:schema', [...props.schema, newItem])
     return
   }
 
@@ -171,9 +193,7 @@ function handleDrop(event: DragEvent) {
     const data = JSON.parse(raw) as { source: 'panel' | 'canvas'; type: SchemaType; sourcePath?: number[] }
     if (data.source === 'panel') {
       const newItem = createDefaultSchema(data.type)
-      const newSchema = [...props.schema, newItem]
-      emit('update:schema', newSchema)
-      emit('select', newSchema.length - 1)
+      emit('update:schema', [...props.schema, newItem])
     }
   } catch { /* ignore malformed data */ }
 }
@@ -304,7 +324,14 @@ function handleCanvasClick(event: Event) {
         @drop="handleItemDrop($event, idx)"
         @dragend="handleItemDragEnd"
       >
-        <div class="editor-canvas__item-badge">{{ item.type }}</div>
+        <!-- Floating property tag: only shown when selected, clicking opens drawer -->
+        <div
+          v-if="selectedIndex === idx"
+          class="editor-canvas__item-tag"
+          @click.stop="emit('open-properties')"
+        >
+          {{ typeLabel(item.type) }}
+        </div>
         <FormGrid
           :schema="[item]"
           :editable="true"
@@ -338,7 +365,7 @@ function handleCanvasClick(event: Event) {
   &__inner {
     width: 100%;
     min-height: 100%;
-    padding: 24px;
+    padding: 10px;
 
     &--preview {
       max-width: 960px;
@@ -370,20 +397,10 @@ function handleCanvasClick(event: Event) {
 
     &--selected {
       border-color: #409eff;
-
-      .editor-canvas__item-badge {
-        background: #409eff;
-        color: #fff;
-      }
     }
 
     &--multi-selected {
       border-color: #79bbff;
-
-      .editor-canvas__item-badge {
-        background: #79bbff;
-        color: #fff;
-      }
     }
 
     &--dragging {
@@ -399,17 +416,24 @@ function handleCanvasClick(event: Event) {
     box-shadow: 0 2px 0 0 #409eff;
   }
 
-  &__item-badge {
+  // Floating property tag — shown on selected item, click to open drawer
+  &__item-tag {
     position: absolute;
-    top: -1px;
-    left: -1px;
-    padding: 2px 8px;
-    font-size: 11px;
-    background: #909399;
+    top: -24px;
+    left: 0;
+    padding: 2px 10px;
+    font-size: 12px;
+    background: rgba(64, 158, 255, 0.85);
     color: #fff;
-    border-radius: 0 0 4px 0;
-    z-index: 2;
-    pointer-events: none;
+    border-radius: 10px;
+    z-index: 3;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+
+    &:hover {
+      background: rgba(64, 158, 255, 1);
+    }
   }
 }
 </style>
