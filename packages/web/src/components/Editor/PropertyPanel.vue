@@ -384,7 +384,7 @@ const validationResult = computed(() => {
       <!-- Section: Validation Rules (form components only) -->
       <PropertySection
         v-if="!isLayoutType && !isButtonType"
-        title="Validation Rules"
+        title="校验规则"
         :default-open="false"
       >
         <RulesEditor
@@ -423,7 +423,7 @@ const validationResult = computed(() => {
       </div>
 
       <!-- Section 4: JSON Preview -->
-      <PropertySection title="JSON Preview" :default-open="false">
+      <PropertySection title="JSON 预览" :default-open="false">
         <el-input
           type="textarea"
           :model-value="JSON.stringify(localSchema, null, 2)"

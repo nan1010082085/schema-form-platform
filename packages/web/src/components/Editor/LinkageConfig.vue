@@ -25,12 +25,12 @@ const emit = defineEmits<{
 
 /** Linkage type options */
 const linkageTypeOptions: { label: string; value: LinkageType }[] = [
-  { label: 'Visible', value: 'visible' },
-  { label: 'Disabled', value: 'disabled' },
-  { label: 'Required', value: 'required' },
-  { label: 'Options', value: 'options' },
-  { label: 'Set Value', value: 'set-value' },
-  { label: 'Reset Fields', value: 'reset-fields' },
+  { label: '可见', value: 'visible' },
+  { label: '禁用', value: 'disabled' },
+  { label: '必填', value: 'required' },
+  { label: '选项', value: 'options' },
+  { label: '设置值', value: 'set-value' },
+  { label: '重置字段', value: 'reset-fields' },
 ]
 
 /** Available fields as select options */
@@ -107,7 +107,7 @@ function apiToText(api?: SchemaApiConfig): string {
 <template>
   <div class="linkage-config">
     <div v-if="linkages.length === 0" class="linkage-config__empty">
-      No linkage rules configured.
+      未配置联动规则。
     </div>
 
     <div
@@ -116,7 +116,7 @@ function apiToText(api?: SchemaApiConfig): string {
       class="linkage-config__item"
     >
       <div class="linkage-config__item-header">
-        <span class="linkage-config__item-title">Rule {{ idx + 1 }}</span>
+        <span class="linkage-config__item-title">规则 {{ idx + 1 }}</span>
         <el-button
           type="danger"
           :icon="Delete"
@@ -128,7 +128,7 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- Type -->
       <div class="linkage-config__field">
-        <label class="linkage-config__label">Type</label>
+        <label class="linkage-config__label">类型</label>
         <el-select
           :model-value="linkage.type"
           size="small"
@@ -146,14 +146,14 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- Watch Fields -->
       <div class="linkage-config__field">
-        <label class="linkage-config__label">Watch Fields</label>
+        <label class="linkage-config__label">监听字段</label>
         <el-select
           :model-value="linkage.watchFields"
           size="small"
           multiple
           filterable
           style="width: 100%"
-          placeholder="Select fields to watch"
+          placeholder="选择要监听的字段"
           @update:model-value="updateLinkage(idx, 'watchFields', $event as string[])"
         >
           <el-option
@@ -167,7 +167,7 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- Condition Expression -->
       <div class="linkage-config__field">
-        <label class="linkage-config__label">Condition</label>
+        <label class="linkage-config__label">条件表达式</label>
         <el-input
           :model-value="linkage.condition"
           type="textarea"
@@ -187,20 +187,20 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- thenOptions (for 'options' type) -->
       <div v-if="linkage.type === 'options'" class="linkage-config__field">
-        <label class="linkage-config__label">Then Options (label=value, one per line)</label>
+        <label class="linkage-config__label">联动选项 (label=value, 每行一个)</label>
         <el-input
           :model-value="optionsToText(linkage.thenOptions)"
           type="textarea"
           :rows="3"
           size="small"
-          placeholder="Option A=opt_a&#10;Option B=opt_b"
+          placeholder="选项A=opt_a&#10;选项B=opt_b"
           @update:model-value="updateLinkage(idx, 'thenOptions', parseOptionsText($event))"
         />
       </div>
 
       <!-- thenApi (for 'options' type) -->
       <div v-if="linkage.type === 'options'" class="linkage-config__field">
-        <label class="linkage-config__label">Then API (JSON)</label>
+        <label class="linkage-config__label">联动 API (JSON)</label>
         <el-input
           :model-value="apiToText(linkage.thenApi)"
           type="textarea"
@@ -213,24 +213,24 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- set-value specific: literal value -->
       <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
-        <label class="linkage-config__label">Then Value (literal)</label>
+        <label class="linkage-config__label">联动赋值 (字面量)</label>
         <el-input
           :model-value="String(linkage.thenValue ?? '')"
           size="small"
-          placeholder="Literal value to set"
+          placeholder="要设置的字面量值"
           @update:model-value="updateLinkage(idx, 'thenValue', $event)"
         />
       </div>
 
       <!-- set-value specific: value source field -->
       <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
-        <label class="linkage-config__label">Value Source (copy from field)</label>
+        <label class="linkage-config__label">值来源 (从字段复制)</label>
         <el-select
           :model-value="linkage.valueSource ?? ''"
           size="small"
           style="width: 100%"
           clearable
-          placeholder="Select a field to copy value from"
+          placeholder="选择要复制值的字段"
           @update:model-value="updateLinkage(idx, 'valueSource', $event || undefined)"
         >
           <el-option
@@ -244,14 +244,14 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- reset-fields specific: target fields -->
       <div v-if="linkage.type === 'reset-fields'" class="linkage-config__field">
-        <label class="linkage-config__label">Target Fields (fields to reset)</label>
+        <label class="linkage-config__label">目标字段 (要重置的字段)</label>
         <el-select
           :model-value="linkage.targetFields ?? []"
           size="small"
           multiple
           filterable
           style="width: 100%"
-          placeholder="Select fields to reset"
+          placeholder="选择要重置的字段"
           @update:model-value="updateLinkage(idx, 'targetFields', $event as string[])"
         >
           <el-option
@@ -265,11 +265,11 @@ function apiToText(api?: SchemaApiConfig): string {
 
       <!-- elseValue -->
       <div class="linkage-config__field">
-        <label class="linkage-config__label">Else Value</label>
+        <label class="linkage-config__label">否则赋值</label>
         <el-input
           :model-value="String(linkage.elseValue ?? '')"
           size="small"
-          placeholder="Fallback value when condition is false"
+          placeholder="条件为 false 时的回退值"
           @update:model-value="updateLinkage(idx, 'elseValue', $event)"
         />
       </div>
@@ -283,7 +283,7 @@ function apiToText(api?: SchemaApiConfig): string {
       style="width: 100%; margin-top: 8px"
       @click="addLinkage"
     >
-      Add Linkage Rule
+      添加联动规则
     </el-button>
   </div>
 </template>

@@ -32,21 +32,21 @@ const inputMode = ref<'paste' | 'url'>('paste')
 
 /** SchemaType options for override dropdown */
 const schemaTypeOptions: { label: string; value: SchemaType }[] = [
-  { label: 'Input', value: 'input' },
-  { label: 'Number', value: 'number' },
-  { label: 'Select', value: 'select' },
-  { label: 'Radio', value: 'radio' },
-  { label: 'Checkbox', value: 'checkbox' },
-  { label: 'Date', value: 'date' },
-  { label: 'Date Range', value: 'date-range' },
-  { label: 'Textarea', value: 'textarea' },
-  { label: 'Richtext', value: 'richtext' },
-  { label: 'Upload', value: 'upload' },
-  { label: 'Table', value: 'table' },
-  { label: 'Person Select', value: 'person-select' },
-  { label: 'Dept Select', value: 'dept-select' },
-  { label: 'Transfer', value: 'transfer' },
-  { label: 'Card (nested)', value: 'card' },
+  { label: '输入框', value: 'input' },
+  { label: '数字', value: 'number' },
+  { label: '下拉选择', value: 'select' },
+  { label: '单选', value: 'radio' },
+  { label: '复选框', value: 'checkbox' },
+  { label: '日期', value: 'date' },
+  { label: '日期范围', value: 'date-range' },
+  { label: '文本域', value: 'textarea' },
+  { label: '富文本', value: 'richtext' },
+  { label: '上传', value: 'upload' },
+  { label: '表格', value: 'table' },
+  { label: '人员选择', value: 'person-select' },
+  { label: '部门选择', value: 'dept-select' },
+  { label: '穿梭框', value: 'transfer' },
+  { label: '卡片 (嵌套)', value: 'card' },
 ]
 
 function open() {
@@ -65,7 +65,7 @@ function handleParse() {
   inferences.value = []
 
   if (!jsonText.value.trim()) {
-    parseError.value = 'Please paste a JSON response.'
+    parseError.value = '请粘贴 JSON 响应。'
     return
   }
 
@@ -73,13 +73,13 @@ function handleParse() {
     const parsed = JSON.parse(jsonText.value) as unknown
     const result = inferFieldsFromJson(parsed)
     if (result.length === 0) {
-      parseError.value = 'No fields could be inferred from this JSON. Ensure it contains an object with properties.'
+      parseError.value = '无法从此 JSON 推断任何字段。请确保它包含带有属性的对象。'
       return
     }
     inferences.value = result
     step.value = 'preview'
   } catch {
-    parseError.value = 'Invalid JSON format.'
+    parseError.value = '无效的 JSON 格式。'
   }
 }
 
@@ -112,14 +112,14 @@ async function handleFetchFromUrl() {
 
     const result = inferFieldsFromJson(dataSource)
     if (result.length === 0) {
-      fetchError.value = 'No fields could be inferred from the response. Ensure it returns an object or array with properties.'
+      fetchError.value = '无法从响应中推断任何字段。请确保它返回带有属性的对象或数组。'
       return
     }
     inferences.value = result
     step.value = 'preview'
-    ElMessage.success(`Fetched and analyzed ${result.length} fields`)
+    ElMessage.success(`获取并分析了 ${result.length} 个字段`)
   } catch (e: unknown) {
-    fetchError.value = e instanceof Error ? e.message : 'Request failed'
+    fetchError.value = e instanceof Error ? e.message : '请求失败'
   } finally {
     fetching.value = false
   }
@@ -135,7 +135,7 @@ function handleGenerate() {
   const schema = fieldInferencesToSchema(inferences.value)
   emit('import', schema)
   visible.value = false
-  ElMessage.success(`Generated ${schema.length} schema items`)
+  ElMessage.success(`生成了 ${schema.length} 个 schema 项`)
 }
 
 function handleBack() {
@@ -148,7 +148,7 @@ defineExpose({ open })
 <template>
   <el-dialog
     v-model="visible"
-    title="Import from JSON"
+    title="从 JSON 导入"
     width="700px"
     :close-on-click-modal="false"
     @close="visible = false"
@@ -162,14 +162,14 @@ defineExpose({ open })
           :class="{ 'json-importer__mode-tab--active': inputMode === 'paste' }"
           @click="inputMode = 'paste'"
         >
-          Paste JSON
+          粘贴 JSON
         </button>
         <button
           class="json-importer__mode-tab"
           :class="{ 'json-importer__mode-tab--active': inputMode === 'url' }"
           @click="inputMode = 'url'"
         >
-          Fetch from URL
+          从 URL 获取
         </button>
       </div>
 
@@ -179,7 +179,7 @@ defineExpose({ open })
           v-model="jsonText"
           type="textarea"
           :rows="14"
-          placeholder='Paste API response JSON here, e.g.:
+          placeholder='在此粘贴 API 响应 JSON, 例如:
 {
   "user_name": "John",
   "age": 30,
@@ -197,7 +197,7 @@ defineExpose({ open })
             <el-input
               v-model="fetchUrl"
               size="small"
-              placeholder="/api/list or https://example.com/api/data"
+              placeholder="/api/list 或 https://example.com/api/data"
               @keyup.enter="handleFetchFromUrl"
             />
             <el-button
@@ -206,12 +206,12 @@ defineExpose({ open })
               :loading="fetching"
               @click="handleFetchFromUrl"
             >
-              Fetch
+              获取
             </el-button>
           </div>
           <div v-if="fetchError" class="json-importer__error">{{ fetchError }}</div>
           <div v-if="jsonText" class="json-importer__fetched-preview">
-            <label class="json-importer__label">Fetched Response:</label>
+            <label class="json-importer__label">获取的响应:</label>
             <el-input
               :model-value="jsonText"
               type="textarea"
@@ -227,12 +227,12 @@ defineExpose({ open })
     <!-- Step 2: Preview & Override -->
     <div v-else class="json-importer__preview">
       <p class="json-importer__summary">
-        {{ inferences.length }} fields detected. Override inferred types if needed.
+        {{ inferences.length }} 个字段被检测到。如需要可覆盖推断的类型。
       </p>
       <el-table :data="inferences" border size="small" max-height="400">
-        <el-table-column prop="field" label="Field Name" min-width="140" />
-        <el-table-column prop="label" label="Label" min-width="120" />
-        <el-table-column label="Type" width="160">
+        <el-table-column prop="field" label="字段名" min-width="140" />
+        <el-table-column prop="label" label="标签" min-width="120" />
+        <el-table-column label="类型" width="160">
           <template #default="{ row, $index }">
             <el-select
               :model-value="row.type"
@@ -249,7 +249,7 @@ defineExpose({ open })
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column label="Sample Value" min-width="160">
+        <el-table-column label="示例值" min-width="160">
           <template #default="{ row }">
             <span class="json-importer__sample">
               {{ typeof row.sample === 'object' ? JSON.stringify(row.sample) : String(row.sample ?? '') }}
@@ -260,13 +260,13 @@ defineExpose({ open })
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">Cancel</el-button>
+      <el-button @click="visible = false">取消</el-button>
       <template v-if="step === 'input' && inputMode === 'paste'">
-        <el-button type="primary" @click="handleParse">Parse</el-button>
+        <el-button type="primary" @click="handleParse">解析</el-button>
       </template>
       <template v-else-if="step === 'preview'">
-        <el-button @click="handleBack">Back</el-button>
-        <el-button type="primary" @click="handleGenerate">Generate Schema</el-button>
+        <el-button @click="handleBack">返回</el-button>
+        <el-button type="primary" @click="handleGenerate">生成 Schema</el-button>
       </template>
     </template>
   </el-dialog>

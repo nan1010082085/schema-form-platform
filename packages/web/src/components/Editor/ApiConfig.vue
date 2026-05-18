@@ -85,7 +85,7 @@ function handleParamsChange(text: string) {
     paramsError.value = ''
     emitApiField('params', parsed)
   } catch {
-    paramsError.value = 'Invalid JSON'
+    paramsError.value = '无效的 JSON'
   }
 }
 
@@ -107,10 +107,10 @@ async function testConnection() {
     rawResponse.value = res
 
     const { data } = normalizeListResponse(res, { dataPath: props.api.dataPath })
-    testResult.value = { success: true, message: `Success: ${data.length} items returned` }
+    testResult.value = { success: true, message: `成功: ${data.length} 条数据返回` }
   } catch (e: unknown) {
     rawResponse.value = null
-    testResult.value = { success: false, message: e instanceof Error ? e.message : 'Request failed' }
+    testResult.value = { success: false, message: e instanceof Error ? e.message : '请求失败' }
   } finally {
     testing.value = false
   }
@@ -131,27 +131,27 @@ function analyzeAndGenerateSchema() {
     <!-- Toggle: enable API -->
     <div v-if="!hasApi" class="api-config__toggle">
       <el-button size="small" type="primary" plain @click="switchMode('url')">
-        Configure API
+        配置 API
       </el-button>
     </div>
 
     <template v-else>
       <!-- Data source mode switch -->
       <div class="api-config__field">
-        <label class="api-config__label">Data Source</label>
+        <label class="api-config__label">数据源</label>
         <el-radio-group :model-value="sourceMode" size="small" @update:model-value="switchMode($event as DataSourceMode)">
-          <el-radio-button value="dict">Dict Code</el-radio-button>
+          <el-radio-button value="dict">字典编码</el-radio-button>
           <el-radio-button value="url">URL</el-radio-button>
         </el-radio-group>
       </div>
 
       <!-- Dict Code mode -->
       <div v-if="sourceMode === 'dict'" class="api-config__field">
-        <label class="api-config__label">Dict Code</label>
+        <label class="api-config__label">字典编码</label>
         <el-input
           :model-value="api?.dictCode ?? ''"
           size="small"
-          placeholder="e.g. gender_list"
+          placeholder="例如: gender_list"
           @update:model-value="emitApiField('dictCode', $event)"
         />
       </div>
@@ -169,7 +169,7 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Method</label>
+          <label class="api-config__label">请求方法</label>
           <el-select
             :model-value="api?.method ?? 'get'"
             size="small"
@@ -182,7 +182,7 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Params (JSON)</label>
+          <label class="api-config__label">参数 (JSON)</label>
           <el-input
             :model-value="paramsText"
             type="textarea"
@@ -196,18 +196,18 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Data Path</label>
+          <label class="api-config__label">数据路径</label>
           <el-input
             :model-value="api?.dataPath ?? ''"
             size="small"
-            placeholder="data (dot-notation e.g. result.records)"
+            placeholder="data (点号分隔 例如: result.records)"
             @update:model-value="emitApiField('dataPath', $event || undefined)"
           />
         </div>
 
         <div class="api-config__field api-config__field--row">
           <div style="flex: 1">
-            <label class="api-config__label">Label Key</label>
+            <label class="api-config__label">标签字段</label>
             <el-input
               :model-value="api?.labelKey ?? 'label'"
               size="small"
@@ -216,7 +216,7 @@ function analyzeAndGenerateSchema() {
             />
           </div>
           <div style="flex: 1">
-            <label class="api-config__label">Value Key</label>
+            <label class="api-config__label">值字段</label>
             <el-input
               :model-value="api?.valueKey ?? 'value'"
               size="small"
@@ -227,7 +227,7 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Children Key (tree data)</label>
+          <label class="api-config__label">子节点字段 (树形数据)</label>
           <el-input
             :model-value="api?.childrenKey ?? ''"
             size="small"
@@ -237,7 +237,7 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Load Immediately</label>
+          <label class="api-config__label">立即加载</label>
           <el-switch
             :model-value="api?.immediate !== false"
             @update:model-value="emitApiField('immediate', $event)"
@@ -245,7 +245,7 @@ function analyzeAndGenerateSchema() {
         </div>
 
         <div class="api-config__field">
-          <label class="api-config__label">Cache TTL (ms, 0 = never expire)</label>
+          <label class="api-config__label">缓存时间 (毫秒, 0 = 不过期)</label>
           <el-input
             :model-value="String(api?.ttl ?? 0)"
             size="small"
@@ -262,7 +262,7 @@ function analyzeAndGenerateSchema() {
           style="width: 100%"
           @click="testConnection"
         >
-          Test Connection
+          测试连接
         </el-button>
         <div
           v-if="testResult"
@@ -278,7 +278,7 @@ function analyzeAndGenerateSchema() {
             style="margin-left: 8px"
             @click="analyzeAndGenerateSchema"
           >
-            Analyze &amp; Generate Schema
+            分析并生成 Schema
           </el-button>
         </div>
       </template>
@@ -291,7 +291,7 @@ function analyzeAndGenerateSchema() {
         style="width: 100%; margin-top: 8px"
         @click="clearApi"
       >
-        Remove API Config
+        移除 API 配置
       </el-button>
     </template>
   </div>

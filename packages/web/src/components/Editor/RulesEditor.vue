@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * RulesEditor — Visual editor for Element Plus FormItemRule[].
+ * RulesEditor -- Visual editor for Element Plus FormItemRule[].
  *
  * Sprint 18: Replaces "configured in JSON view" with structured form.
- * Each rule row: required switch → type → min/max → pattern → message → trigger.
+ * Each rule row: required switch -> type -> min/max -> pattern -> message -> trigger.
  */
 import { Plus, Delete } from '@element-plus/icons-vue'
 
@@ -16,22 +16,22 @@ const emit = defineEmits<{
 }>()
 
 const ruleTypeOptions = [
-  { label: 'String', value: 'string' },
-  { label: 'Number', value: 'number' },
-  { label: 'Boolean', value: 'boolean' },
-  { label: 'Date', value: 'date' },
-  { label: 'Array', value: 'array' },
-  { label: 'Object', value: 'object' },
-  { label: 'Email', value: 'email' },
+  { label: '字符串', value: 'string' },
+  { label: '数字', value: 'number' },
+  { label: '布尔', value: 'boolean' },
+  { label: '日期', value: 'date' },
+  { label: '数组', value: 'array' },
+  { label: '对象', value: 'object' },
+  { label: '邮箱', value: 'email' },
   { label: 'URL', value: 'url' },
-  { label: 'Integer', value: 'integer' },
-  { label: 'Float', value: 'float' },
+  { label: '整数', value: 'integer' },
+  { label: '浮点数', value: 'float' },
 ]
 
 const triggerOptions = [
-  { label: 'Blur', value: 'blur' },
-  { label: 'Change', value: 'change' },
-  { label: 'Blur + Change', value: 'blur,change' },
+  { label: '失焦', value: 'blur' },
+  { label: '变更', value: 'change' },
+  { label: '失焦+变更', value: 'blur,change' },
 ]
 
 function addRule() {
@@ -61,23 +61,23 @@ function setRequired(index: number, val: boolean) {
 
 <template>
   <div class="rules-editor">
-    <div v-if="!rules?.length" class="rules-editor__empty">No validation rules configured.</div>
+    <div v-if="!rules?.length" class="rules-editor__empty">未配置校验规则。</div>
 
     <div v-for="(rule, idx) in (rules ?? [])" :key="idx" class="rules-editor__item">
       <div class="rules-editor__item-header">
-        <span class="rules-editor__item-title">Rule {{ idx + 1 }}</span>
+        <span class="rules-editor__item-title">规则 {{ idx + 1 }}</span>
         <el-button type="danger" :icon="Delete" size="small" text @click="removeRule(idx)" />
       </div>
 
       <!-- Required -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Required</label>
+        <label class="rules-editor__label">必填</label>
         <el-switch :model-value="rule.required === true" @update:model-value="setRequired(idx, $event)" />
       </div>
 
       <!-- Type -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Type</label>
+        <label class="rules-editor__label">类型</label>
         <el-select
           :model-value="rule.type ?? ''"
           size="small"
@@ -91,7 +91,7 @@ function setRequired(index: number, val: boolean) {
 
       <!-- Min -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Min</label>
+        <label class="rules-editor__label">最小值</label>
         <el-input-number
           :model-value="rule.min as number ?? undefined"
           size="small"
@@ -103,7 +103,7 @@ function setRequired(index: number, val: boolean) {
 
       <!-- Max -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Max</label>
+        <label class="rules-editor__label">最大值</label>
         <el-input-number
           :model-value="rule.max as number ?? undefined"
           size="small"
@@ -115,7 +115,7 @@ function setRequired(index: number, val: boolean) {
 
       <!-- Pattern -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Pattern (RegExp string)</label>
+        <label class="rules-editor__label">正则表达式</label>
         <el-input
           :model-value="rule.pattern ? String(rule.pattern) : ''"
           size="small"
@@ -126,18 +126,18 @@ function setRequired(index: number, val: boolean) {
 
       <!-- Message -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Error Message</label>
+        <label class="rules-editor__label">错误提示</label>
         <el-input
           :model-value="rule.message ?? ''"
           size="small"
-          placeholder="Validation error message"
+          placeholder="校验错误提示"
           @update:model-value="updateRule(idx, { message: $event || undefined })"
         />
       </div>
 
       <!-- Trigger -->
       <div class="rules-editor__field">
-        <label class="rules-editor__label">Trigger</label>
+        <label class="rules-editor__label">触发方式</label>
         <el-select
           :model-value="rule.trigger ?? 'blur'"
           size="small"
@@ -150,7 +150,7 @@ function setRequired(index: number, val: boolean) {
     </div>
 
     <el-button type="primary" :icon="Plus" size="small" plain style="width:100%;margin-top:8px" @click="addRule">
-      Add Rule
+      添加规则
     </el-button>
   </div>
 </template>
