@@ -35,18 +35,30 @@ watch(() => props.defaultOpen, (val) => {
 <style scoped lang="scss">
 .property-section {
   border: none;
+  margin: 0 8px 4px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
   :deep(.el-collapse-item__header) {
-    background: #f5f7fa;
-    padding: 0 12px;
-    font-size: 13px;
-    height: 36px;
-    line-height: 36px;
-    border-bottom: 1px solid #ebeef5;
+    background: #fafbfc;
+    padding: 0 14px;
+    font-size: 12px;
+    height: 34px;
+    line-height: 34px;
+    border-bottom: 1px solid #f0f2f5;
+    border-radius: 8px 8px 0 0;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #f0f3f8;
+    }
   }
 
   :deep(.el-collapse-item__wrap) {
     border-bottom: none;
+    background: #fff;
   }
 
   :deep(.el-collapse-item__content) {
@@ -56,10 +68,11 @@ watch(() => props.defaultOpen, (val) => {
   &__title {
     font-weight: 600;
     color: #303133;
+    font-size: 12px;
   }
 
   &__body {
-    padding: 12px;
+    padding: 10px 14px;
   }
 }
 </style>

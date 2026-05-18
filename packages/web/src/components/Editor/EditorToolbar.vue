@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
- * EditorToolbar — 编辑器顶部工具栏 (Phase 3)
+ * EditorToolbar — 编辑器顶部工具栏 (Phase 4-5 redesign)
  *
- * 功能分组：
- * 1. 左侧：标题 + 编辑操作（撤销/重做 复制/删除/上移/下移/对齐/分组 校验）
- * 2. 右侧：保存草稿/发布/预览 | 加载/导入/导出 | 画布尺寸/缩略图/模式切换
+ * Layout: full-width evenly distributed groups (no left-right split).
+ * Icons: L/C/R text replaced with inline SVG alignment icons.
+ * Low-frequency ops (Load/Import/Export) moved into a "More" dropdown.
  *
- * Phase 3 新增:
- * - 保存草稿 / 发布 / 预览 按钮
- * - 缩略图切换
- * - 画布尺寸选择器
+ * Group order (left to right):
+ *   Undo/Redo | Copy/Delete/MoveUp/MoveDown | AlignLeft/Center/Right
+ *   | Group/Ungroup | Validate
+ * Right side:
+ *   Save/Publish/Preview | CanvasSize/Thumbnail | More(···)
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -18,9 +19,6 @@ import {
   Delete,
   Top,
   Bottom,
-  Upload,
-  Download,
-  Document,
   RefreshLeft,
   RefreshRight,
   FolderAdd,
@@ -30,6 +28,7 @@ import {
   View,
   FullScreen,
   Promotion,
+  MoreFilled,
 } from '@element-plus/icons-vue'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import type { SchemaListItem } from '@/types/api'
@@ -50,13 +49,13 @@ const props = defineProps<{
   validationErrorCount?: number
   /** Validation warning count */
   validationWarningCount?: number
-  /** Phase 3: Schema name for display */
+  /** Schema name for display */
   schemaName?: string
-  /** Phase 3: Current schema ID (null when new) */
+  /** Current schema ID (null when new) */
   schemaId?: string | null
-  /** Phase 3: Thumbnail toggle state */
+  /** Thumbnail toggle state */
   showThumbnail?: boolean
-  /** Phase 3: Current canvas size preset */
+  /** Current canvas size preset */
   canvasSizePreset?: string
 }>()
 
@@ -75,17 +74,11 @@ const emit = defineEmits<{
   'group': [containerType: 'card' | 'page' | 'toolbar']
   'ungroup': []
   'validate': []
-  /** Phase 3: Save as draft */
   'save-draft': []
-  /** Phase 3: Publish */
   'publish': []
-  /** Phase 3: Preview */
   'preview': []
-  /** Phase 3: Toggle thumbnail */
   'toggle-thumbnail': []
-  /** Phase 3: Canvas size changed */
   'canvas-size-change': [preset: string]
-  /** Emitted when user loads a schema from server */
   'load-schema': [schema: FormSchemaItem[]]
 }>()
 
@@ -98,7 +91,7 @@ const isLastItem = computed(() => props.selectedIndex === props.schemaLength - 1
 /** Display title — shows schema name when editing an existing schema */
 const displayTitle = computed(() => {
   if (props.schemaName) return props.schemaName
-  return 'Schema Editor'
+  return 'Schema 编辑器'
 })
 
 // ---- Tooltip helpers ----
@@ -137,7 +130,7 @@ function handleExport() {
   emit('export')
 }
 
-// ---- Phase 3: Save / Publish / Preview ----
+// ---- Save / Publish / Preview ----
 function handleSaveDraft() {
   emit('save-draft')
 }
@@ -156,9 +149,9 @@ function handleToggleThumbnail() {
 
 // ---- Canvas size presets ----
 const canvasSizePresets = [
-  { label: '1920×1080', value: '1920×1080' },
-  { label: '1440×900', value: '1440×900' },
-  { label: '1366×768', value: '1366×768' },
+  { label: '1920x1080', value: '1920x1080' },
+  { label: '1440x900', value: '1440x900' },
+  { label: '1366x768', value: '1366x768' },
   { label: 'Custom', value: 'custom' },
 ]
 
@@ -166,7 +159,7 @@ function handleCanvasSizeChange(preset: string) {
   emit('canvas-size-change', preset)
 }
 
-// ---- Load from Server (Phase 3: moved to dropdown) ----
+// ---- Load from Server ----
 const schemaStore = useSchemaStore()
 const showLoadDialog = ref(false)
 const loadSchemaList = ref<SchemaListItem[]>([])
@@ -193,12 +186,6 @@ async function handleLoadSchema(item: SchemaListItem) {
   }
 }
 
-// ---- Mode toggle ----
-function toggleMode() {
-  const newMode = props.mode === 'edit' ? 'preview' : 'edit'
-  emit('update:mode', newMode)
-}
-
 // ---- Edit operations ----
 function handleCopy() { if (!hasSelection.value) return; emit('copy') }
 function handleDelete() { if (!hasSelection.value) return; emit('delete') }
@@ -215,6 +202,16 @@ function handleGroup(type: 'card' | 'page' | 'toolbar') {
   emit('group', type)
 }
 function handleUngroup() { if (!props.canUngroup) return; emit('ungroup') }
+
+// ---- More dropdown handler ----
+function handleMoreCommand(command: string) {
+  switch (command) {
+    case 'load': handleOpenLoadDialog(); break
+    case 'import-json': handleImport(); break
+    case 'import-response': emit('import-response'); break
+    case 'export-json': handleExport(); break
+  }
+}
 
 // ---- Keyboard shortcuts ----
 function handleKeydown(event: KeyboardEvent) {
@@ -244,71 +241,89 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
 <template>
   <div class="editor-toolbar">
-    <div class="editor-toolbar__left">
+    <!-- Brand: title + schema ID -->
+    <div class="editor-toolbar__brand">
       <h2 class="editor-toolbar__title">{{ displayTitle }}</h2>
       <span v-if="schemaId" class="editor-toolbar__id-badge">{{ schemaId.slice(0, 8) }}</span>
+    </div>
 
-      <!-- Undo/Redo group -->
+    <!-- Button groups evenly distributed across remaining width -->
+    <div class="editor-toolbar__groups">
+      <!-- Group 1: Undo / Redo -->
       <div v-if="mode === 'edit'" class="editor-toolbar__ops">
-        <el-tooltip content="Undo (Ctrl+Z)" placement="bottom">
+        <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
           <el-button :disabled="!canUndo" size="small" @click="handleUndo">
             <el-icon><RefreshLeft /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="Redo (Ctrl+Shift+Z)" placement="bottom">
+        <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
           <el-button :disabled="!canRedo" size="small" @click="handleRedo">
             <el-icon><RefreshRight /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
       </div>
 
-      <!-- Edit operations group -->
+      <!-- Group 2: Copy / Delete / Move Up / Move Down -->
       <div v-if="mode === 'edit'" class="editor-toolbar__ops">
-        <el-tooltip :content="batchLabel('Copy (Ctrl+C)')" placement="bottom">
+        <el-tooltip :content="batchLabel('复制 (Ctrl+C)')" placement="bottom">
           <el-button :disabled="!hasSelection" size="small" @click="handleCopy">
             <el-icon><CopyDocument /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip :content="batchLabel('Delete (Del)')" placement="bottom">
+        <el-tooltip :content="batchLabel('删除 (Del)')" placement="bottom">
           <el-button :disabled="!hasSelection" size="small" @click="handleDelete">
             <el-icon><Delete /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
-        <el-tooltip content="Move Up (Alt+Up)" placement="bottom">
+        <el-tooltip content="上移 (Alt+Up)" placement="bottom">
           <el-button :disabled="!hasSelection || isFirstItem" size="small" @click="handleMoveUp">
             <el-icon><Top /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="Move Down (Alt+Down)" placement="bottom">
+        <el-tooltip content="下移 (Alt+Down)" placement="bottom">
           <el-button :disabled="!hasSelection || isLastItem" size="small" @click="handleMoveDown">
             <el-icon><Bottom /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
-        <el-tooltip content="Align Left" placement="bottom">
+      </div>
+
+      <!-- Group 3: Align Left / Center / Right -->
+      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+        <el-tooltip content="左对齐" placement="bottom">
           <el-button :disabled="!hasSelection" size="small" @click="handleAlign('left')">
-            <span class="editor-toolbar__align-icon">L</span>
+            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
+              <rect x="1" y="7" width="10" height="2" rx="0.5"/>
+              <rect x="1" y="12" width="12" height="2" rx="0.5"/>
+            </svg>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="Align Center" placement="bottom">
+        <el-tooltip content="居中对齐" placement="bottom">
           <el-button :disabled="!hasSelection" size="small" @click="handleAlign('center')">
-            <span class="editor-toolbar__align-icon">C</span>
+            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
+              <rect x="3" y="7" width="10" height="2" rx="0.5"/>
+              <rect x="2" y="12" width="12" height="2" rx="0.5"/>
+            </svg>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="Align Right" placement="bottom">
+        <el-tooltip content="右对齐" placement="bottom">
           <el-button :disabled="!hasSelection" size="small" @click="handleAlign('right')">
-            <span class="editor-toolbar__align-icon">R</span>
+            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
+              <rect x="5" y="7" width="10" height="2" rx="0.5"/>
+              <rect x="3" y="12" width="12" height="2" rx="0.5"/>
+            </svg>
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
+      </div>
+
+      <!-- Group 4: Group / Ungroup -->
+      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
         <el-dropdown :disabled="!canGroup" trigger="click" @command="handleGroup">
-          <el-tooltip :content="batchLabel('Group as Container')" placement="bottom">
-            <el-button :disabled="!canGroup" size="small">
-              <el-icon><FolderAdd /></el-icon>
-            </el-button>
-          </el-tooltip>
+          <el-button :disabled="!canGroup" size="small">
+            <el-icon><FolderAdd /></el-icon>
+          </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="card">Group as Card</el-dropdown-item>
@@ -322,7 +337,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             <el-icon><FolderRemove /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
+      </div>
+
+      <!-- Group 5: Validate -->
+      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
         <el-tooltip content="Validate Schema" placement="bottom">
           <el-button size="small" @click="emit('validate')">
             <el-icon>
@@ -338,15 +356,14 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           </el-button>
         </el-tooltip>
       </div>
-    </div>
 
-    <!-- Phase 3: Right side with save/publish/preview + utilities -->
-    <div class="editor-toolbar__right">
-      <!-- Save / Publish / Preview group -->
-      <div class="editor-toolbar__ops">
-        <el-button type="primary" size="small" @click="handleSaveDraft">
-          保存草稿
-        </el-button>
+      <!-- Group 6: Save Draft / Publish / Preview -->
+      <div class="editor-toolbar__ops editor-toolbar__ops--actions">
+        <el-tooltip content="Save Draft (Ctrl+S)" placement="bottom">
+          <el-button type="primary" size="small" @click="handleSaveDraft">
+            保存草稿
+          </el-button>
+        </el-tooltip>
         <el-button type="success" size="small" @click="handlePublish">
           <el-icon><Promotion /></el-icon>
           发布
@@ -355,15 +372,14 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           <el-icon><View /></el-icon>
           预览
         </el-button>
-        <el-divider direction="vertical" />
       </div>
 
-      <!-- Canvas tools -->
+      <!-- Group 7: Canvas Size / Thumbnail -->
       <div class="editor-toolbar__ops">
         <el-dropdown trigger="click" @command="handleCanvasSizeChange">
           <el-button size="small">
             <el-icon><FullScreen /></el-icon>
-            {{ canvasSizePreset ?? '1920×1080' }}
+            {{ canvasSizePreset ?? '1920x1080' }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -386,33 +402,26 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             缩略图
           </el-button>
         </el-tooltip>
-        <el-divider direction="vertical" />
       </div>
 
-      <!-- Import / Export / Load -->
+      <!-- Group 8: More dropdown (Load / Import / Export) -->
       <div class="editor-toolbar__ops">
-        <el-button size="small" @click="handleOpenLoadDialog">
-          加载
-        </el-button>
-        <el-button size="small" @click="handleImport">
-          <el-icon><Upload /></el-icon>
-          导入JSON
-        </el-button>
-        <el-button size="small" @click="emit('import-response')">
-          <el-icon><Document /></el-icon>
-          导入响应
-        </el-button>
-        <el-button size="small" @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出JSON
-        </el-button>
-        <el-divider direction="vertical" />
+        <el-dropdown trigger="click" @command="handleMoreCommand">
+          <el-tooltip content="More options" placement="bottom">
+            <el-button size="small">
+              <el-icon><MoreFilled /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="load">Load from Server</el-dropdown-item>
+              <el-dropdown-item command="import-json">Import JSON</el-dropdown-item>
+              <el-dropdown-item command="import-response">Import Response</el-dropdown-item>
+              <el-dropdown-item command="export-json">Export JSON</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
-
-      <!-- Mode toggle -->
-      <el-button :type="mode === 'preview' ? 'success' : 'info'" size="small" @click="toggleMode">
-        {{ mode === 'edit' ? '预览' : '编辑' }}
-      </el-button>
     </div>
 
     <!-- Load from Server Dialog -->
@@ -429,7 +438,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       </el-table>
       <p v-if="!loadSchemaLoading && loadSchemaList.length === 0"
         style="text-align:center; color:#909399; padding: 24px 0;">
-        No schemas found on server
+        服务器上未找到 Schema
       </p>
     </el-dialog>
 
@@ -453,27 +462,28 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 .editor-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 56px;
   padding: 0 16px;
   background: #fff;
   border-bottom: 1px solid #e4e7ed;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
-  &__left {
+  &__brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 140px;
   }
 
   &__title {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #303133;
     white-space: nowrap;
@@ -492,31 +502,40 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     white-space: nowrap;
   }
 
+  // Groups container: fills remaining space, distributes children evenly
+  &__groups {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 4px;
+  }
+
+  // Each functional button cluster
   &__ops {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
     padding: 4px 8px;
     background: #fafafa;
     border-radius: 6px;
 
-    .el-divider--vertical {
-      margin: 0 4px;
+    // Right-side clusters use a slightly different bg to visually separate
+    &--actions {
+      background: transparent;
+      padding: 4px 2px;
     }
   }
 
-  &__right {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
+  // Alignment icons: three horizontal lines at varying widths
   &__align-icon {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
+    display: block;
+    opacity: 0.75;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 
   &__badge {
