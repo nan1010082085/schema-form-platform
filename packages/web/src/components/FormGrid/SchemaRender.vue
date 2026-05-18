@@ -190,7 +190,7 @@ const componentAlignStyle = computed(() => {
 })
 
 // ---- Editor: Container drag-and-drop (Sprint 11) ----
-const EDITABLE_CONTAINER_TYPES = new Set(['card', 'page', 'toolbar'])
+const EDITABLE_CONTAINER_TYPES = new Set(['card', 'page', 'toolbar', 'grid-row', 'grid-col'])
 const isContainerType = computed(() => EDITABLE_CONTAINER_TYPES.has(props.schema.type))
 const isHovered = ref(false)
 

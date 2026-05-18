@@ -35,44 +35,49 @@ watch(() => props.defaultOpen, (val) => {
 <style scoped lang="scss">
 .property-section {
   border: none;
-  margin: 0 8px 4px;
-  background: #fff;
-  border-radius: 8px;
+  margin: 0 0 2px;
+  background: transparent;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
   :deep(.el-collapse-item__header) {
-    background: #fafbfc;
-    padding: 0 14px;
-    font-size: 12px;
-    height: 34px;
-    line-height: 34px;
+    background: transparent;
+    padding: 0 12px;
+    font-size: 11px;
+    height: 32px;
+    line-height: 32px;
     border-bottom: 1px solid #f0f2f5;
-    border-radius: 8px 8px 0 0;
-    transition: background 0.15s;
+    border-radius: 0;
+    color: #606266;
+    letter-spacing: 0.3px;
+    transition: color 0.15s;
 
-    &:hover {
-      background: #f0f3f8;
-    }
+    &:hover { color: #409eff; }
   }
 
   :deep(.el-collapse-item__wrap) {
     border-bottom: none;
-    background: #fff;
+    background: transparent;
   }
 
   :deep(.el-collapse-item__content) {
-    padding-bottom: 0;
+    padding-bottom: 4px;
+  }
+
+  :deep(.el-collapse-item__arrow) {
+    font-size: 11px;
+    color: #c0c4cc;
   }
 
   &__title {
     font-weight: 600;
-    color: #303133;
-    font-size: 12px;
+    color: inherit;
+    font-size: 11px;
+    text-transform: none;
   }
 
   &__body {
-    padding: 10px 14px;
+    padding: 8px 12px 4px;
   }
 }
 </style>

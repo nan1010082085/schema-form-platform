@@ -401,11 +401,9 @@ const validationResult = computed(() => {
           class="property-panel__advanced-btn"
           @click="linkageConfigVisible = true"
         >
-          <el-icon><Connection /></el-icon>
+          <el-icon :size="14"><Connection /></el-icon>
           联动配置
-          <el-tag v-if="localSchema.linkages?.length" size="small" type="warning" class="property-panel__advanced-tag">
-            {{ localSchema.linkages.length }}
-          </el-tag>
+          <el-tag v-if="localSchema.linkages?.length" size="small" type="warning"> {{ localSchema.linkages.length }} </el-tag>
         </el-button>
 
         <el-button
@@ -414,11 +412,9 @@ const validationResult = computed(() => {
           class="property-panel__advanced-btn"
           @click="apiConfigVisible = true"
         >
-          <el-icon><Setting /></el-icon>
+          <el-icon :size="14"><Setting /></el-icon>
           API 配置
-          <el-tag v-if="localSchema.api" size="small" type="success" class="property-panel__advanced-tag">
-            已配置
-          </el-tag>
+          <el-tag v-if="localSchema.api" size="small" type="success">已配置</el-tag>
         </el-button>
       </div>
 
@@ -477,97 +473,101 @@ const validationResult = computed(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fafbfc;
+  background: #fff;
 
   &__header {
-    padding: 14px 16px 10px;
-    font-size: 14px;
+    padding: 12px 16px;
+    font-size: 13px;
     font-weight: 600;
     color: #1a1a2e;
     flex-shrink: 0;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #e8ecf1;
+    border-bottom: 1px solid #f0f2f5;
   }
 
   &__body {
     flex: 1;
     min-height: 0;
-    padding: 4px 0 8px;
+    padding: 4px 0;
   }
 
   &__field {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     &:last-child { margin-bottom: 0; }
   }
 
   &__label {
     display: block;
     font-size: 11px;
-    font-weight: 600;
-    color: #606266;
-    margin-bottom: 3px;
-    letter-spacing: 0.3px;
+    font-weight: 500;
+    color: #909399;
+    margin-bottom: 4px;
   }
 
   &__empty {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 48px 24px;
     text-align: center;
-    color: #909399;
+    color: #c0c4cc;
     font-size: 13px;
-    line-height: 1.8;
-    background: #fff;
   }
 
   &__validation {
-    margin: 0 12px 10px;
+    margin: 0 12px 8px;
   }
 
   &__validation-item {
     font-size: 11px;
     padding: 6px 10px;
-    border-radius: 5px;
+    border-radius: 4px;
     margin-bottom: 4px;
     line-height: 1.4;
-    font-weight: 500;
 
     &--error {
       background: #fef0f0;
       color: #f56c6c;
-      border-left: 3px solid #f56c6c;
+      border-left: 2px solid #f56c6c;
     }
 
     &--warning {
       background: #fdf6ec;
       color: #e6a23c;
-      border-left: 3px solid #e6a23c;
+      border-left: 2px solid #e6a23c;
     }
   }
 
   &__advanced {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin: 12px 8px 8px;
+    gap: 0;
+    margin: 8px 12px 4px;
   }
 
   &__advanced-btn {
     width: 100%;
     justify-content: flex-start;
-    border-radius: 6px;
+    border: none;
+    border-radius: 4px;
     font-size: 12px;
-    transition: all 0.15s;
-    .el-icon { margin-right: 6px; }
-    &:hover { border-color: #409eff; background: #ecf5ff; }
+    height: 32px;
+    color: #606266;
+    background: transparent;
+    padding: 0 8px;
+    transition: background 0.1s;
+    .el-icon { margin-right: 6px; color: #909399; }
+    &:hover { background: #f5f7fa; color: #409eff; .el-icon { color: #409eff; } }
   }
 
   &__advanced-tag {
     margin-left: auto;
-    font-size: 11px;
+    font-size: 10px;
   }
+
+  // Tighter element-plus overrides in drawer context
+  :deep(.el-input--small .el-input__wrapper) { border-radius: 4px; }
+  :deep(.el-input-number--small .el-input__wrapper) { border-radius: 4px; }
+  :deep(.el-select--small .el-select__wrapper) { border-radius: 4px; }
 }
 </style>
