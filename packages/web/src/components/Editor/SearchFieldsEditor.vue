@@ -18,13 +18,13 @@ const emit = defineEmits<{
 }>()
 
 const typeOptions = [
-  { label: 'Input', value: 'input' as const },
-  { label: 'Number', value: 'number' as const },
-  { label: 'Select', value: 'select' as const },
-  { label: 'Radio', value: 'radio' as const },
-  { label: 'Checkbox', value: 'checkbox' as const },
-  { label: 'Date', value: 'date' as const },
-  { label: 'Date Range', value: 'date-range' as const },
+  { label: '输入框', value: 'input' as const },
+  { label: '数字', value: 'number' as const },
+  { label: '下拉选择', value: 'select' as const },
+  { label: '单选', value: 'radio' as const },
+  { label: '复选框', value: 'checkbox' as const },
+  { label: '日期', value: 'date' as const },
+  { label: '日期范围', value: 'date-range' as const },
 ]
 
 /** Types that support static options */
@@ -101,7 +101,7 @@ function removeApi(index: number) {
   updateField(index, 'api', undefined)
 }
 
-/** Params text buffer per field index — avoid mutating props directly during editing */
+/** Params text buffer per field index -- avoid mutating props directly during editing */
 const paramsTextCache: Record<number, string> = {}
 
 function getParamsText(idx: number, field: SearchFieldSchema): string {
@@ -119,14 +119,14 @@ function handleParamsChange(idx: number, text: string) {
   try {
     const parsed = JSON.parse(text) as Record<string, unknown>
     updateApiField(idx, { params: parsed })
-  } catch { /* invalid JSON — don't update until valid */ }
+  } catch { /* invalid JSON -- don't update until valid */ }
 }
 </script>
 
 <template>
   <div class="search-fields-editor">
     <div v-if="searchFields.length === 0" class="search-fields-editor__empty">
-      No search fields configured.
+      未配置搜索字段。
     </div>
 
     <div
@@ -135,7 +135,7 @@ function handleParamsChange(idx: number, text: string) {
       class="search-fields-editor__item"
     >
       <div class="search-fields-editor__item-header">
-        <span class="search-fields-editor__item-title">Field {{ idx + 1 }}</span>
+        <span class="search-fields-editor__item-title">字段 {{ idx + 1 }}</span>
         <div class="search-fields-editor__item-actions">
           <el-button
             :icon="Top"
@@ -162,7 +162,7 @@ function handleParamsChange(idx: number, text: string) {
       </div>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Type</label>
+        <label class="search-fields-editor__label">类型</label>
         <el-select
           :model-value="field.type"
           size="small"
@@ -179,27 +179,27 @@ function handleParamsChange(idx: number, text: string) {
       </div>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Field</label>
+        <label class="search-fields-editor__label">字段</label>
         <el-input
           :model-value="field.field"
           size="small"
-          placeholder="Field name"
+          placeholder="字段名"
           @update:model-value="updateField(idx, 'field', $event)"
         />
       </div>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Label</label>
+        <label class="search-fields-editor__label">标签</label>
         <el-input
           :model-value="field.label"
           size="small"
-          placeholder="Display label"
+          placeholder="显示标签"
           @update:model-value="updateField(idx, 'label', $event)"
         />
       </div>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Span (1-24)</label>
+        <label class="search-fields-editor__label">栅格 (1-24)</label>
         <el-input-number
           :model-value="field.span ?? 8"
           :min="1"
@@ -211,31 +211,31 @@ function handleParamsChange(idx: number, text: string) {
       </div>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Placeholder</label>
+        <label class="search-fields-editor__label">占位符</label>
         <el-input
           :model-value="field.placeholder ?? ''"
           size="small"
-          placeholder="Placeholder text"
+          placeholder="占位符文本"
           @update:model-value="updateField(idx, 'placeholder', $event || undefined)"
         />
       </div>
 
       <template v-if="needsOptions(field.type)">
         <div class="search-fields-editor__field">
-          <label class="search-fields-editor__label">Options (label=value, one per line)</label>
+          <label class="search-fields-editor__label">选项 (label=value, 每行一个)</label>
           <el-input
             :model-value="optionsToText(field.options)"
             type="textarea"
             :rows="3"
             size="small"
-            placeholder="Option A=opt_a&#10;Option B=opt_b"
+            placeholder="选项A=opt_a&#10;选项B=opt_b"
             @update:model-value="updateField(idx, 'options', parseOptionsText($event))"
           />
         </div>
 
         <div class="search-fields-editor__api-section">
           <div class="search-fields-editor__field">
-            <label class="search-fields-editor__label">API URL</label>
+            <label class="search-fields-editor__label">接口地址</label>
             <el-input
               :model-value="field.api?.url ?? ''"
               size="small"
@@ -246,7 +246,7 @@ function handleParamsChange(idx: number, text: string) {
 
           <template v-if="field.api?.url">
             <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">Method</label>
+              <label class="search-fields-editor__label">请求方法</label>
               <el-select
                 :model-value="field.api?.method ?? 'get'"
                 size="small"
@@ -259,7 +259,7 @@ function handleParamsChange(idx: number, text: string) {
             </div>
 
             <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">Params (JSON)</label>
+              <label class="search-fields-editor__label">参数 (JSON)</label>
               <el-input
                 :model-value="getParamsText(idx, field)"
                 type="textarea"
@@ -271,7 +271,7 @@ function handleParamsChange(idx: number, text: string) {
             </div>
 
             <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">Data Path (dot-notation)</label>
+              <label class="search-fields-editor__label">数据路径 (点号分隔)</label>
               <el-input
                 :model-value="field.api?.dataPath ?? ''"
                 size="small"
@@ -282,7 +282,7 @@ function handleParamsChange(idx: number, text: string) {
 
             <div class="search-fields-editor__field api-config__field--row">
               <div style="flex: 1">
-                <label class="search-fields-editor__label">Label Key</label>
+                <label class="search-fields-editor__label">标签字段</label>
                 <el-input
                   :model-value="field.api?.labelKey ?? 'label'"
                   size="small"
@@ -291,7 +291,7 @@ function handleParamsChange(idx: number, text: string) {
                 />
               </div>
               <div style="flex: 1">
-                <label class="search-fields-editor__label">Value Key</label>
+                <label class="search-fields-editor__label">值字段</label>
                 <el-input
                   :model-value="field.api?.valueKey ?? 'value'"
                   size="small"
@@ -302,18 +302,18 @@ function handleParamsChange(idx: number, text: string) {
             </div>
 
             <el-button size="small" type="danger" plain style="width:100%;margin-top:4px" @click="removeApi(idx)">
-              Remove API
+              移除 API
             </el-button>
           </template>
         </div>
       </template>
 
       <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">Default Value</label>
+        <label class="search-fields-editor__label">默认值</label>
         <el-input
           :model-value="String(field.defaultValue ?? '')"
           size="small"
-          placeholder="Default value"
+          placeholder="默认值"
           @update:model-value="updateField(idx, 'defaultValue', $event)"
         />
       </div>
@@ -327,7 +327,7 @@ function handleParamsChange(idx: number, text: string) {
       style="width: 100%; margin-top: 8px"
       @click="addField"
     >
-      Add Search Field
+      添加搜索字段
     </el-button>
   </div>
 </template>

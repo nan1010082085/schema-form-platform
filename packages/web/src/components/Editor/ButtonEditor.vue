@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * ButtonEditor — Structured CRUD editor for SchemaButtonConfig[].
+ * ButtonEditor -- Structured CRUD editor for SchemaButtonConfig[].
  *
  * Sprint 18: Replaces JSON textarea with per-action structured form.
  * Each action type shows conditional fields for its specific properties.
@@ -17,23 +17,23 @@ const emit = defineEmits<{
 }>()
 
 const buttonTypeOptions = [
-  { label: 'Default', value: '' as const },
-  { label: 'Primary', value: 'primary' as const },
-  { label: 'Success', value: 'success' as const },
-  { label: 'Warning', value: 'warning' as const },
-  { label: 'Danger', value: 'danger' as const },
-  { label: 'Info', value: 'info' as const },
+  { label: '默认', value: '' as const },
+  { label: '主要', value: 'primary' as const },
+  { label: '成功', value: 'success' as const },
+  { label: '警告', value: 'warning' as const },
+  { label: '危险', value: 'danger' as const },
+  { label: '信息', value: 'info' as const },
 ]
 
 const actionTypeOptions: { label: string; value: ActionType }[] = [
-  { label: 'Emit Event', value: 'emit' },
-  { label: 'Dialog', value: 'dialog' },
-  { label: 'API Request', value: 'api' },
-  { label: 'Navigate', value: 'navigate' },
-  { label: 'Submit Form', value: 'submit' },
-  { label: 'Reset Form', value: 'reset' },
-  { label: 'Upload', value: 'upload' },
-  { label: 'Validate', value: 'validate' },
+  { label: '触发事件', value: 'emit' },
+  { label: '弹窗', value: 'dialog' },
+  { label: '接口请求', value: 'api' },
+  { label: '页面跳转', value: 'navigate' },
+  { label: '提交表单', value: 'submit' },
+  { label: '重置表单', value: 'reset' },
+  { label: '上传', value: 'upload' },
+  { label: '校验', value: 'validate' },
 ]
 
 const apiMethodOptions = [
@@ -130,11 +130,11 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
 
 <template>
   <div class="button-editor">
-    <div v-if="buttons.length === 0" class="button-editor__empty">No buttons configured.</div>
+    <div v-if="buttons.length === 0" class="button-editor__empty">未配置按钮。</div>
 
     <div v-for="(btn, btnIdx) in buttons" :key="btnIdx" class="button-editor__item">
       <div class="button-editor__item-header">
-        <span class="button-editor__item-title">Button {{ btnIdx + 1 }}</span>
+        <span class="button-editor__item-title">按钮 {{ btnIdx + 1 }}</span>
         <div class="button-editor__item-actions">
           <el-button :icon="Top" size="small" text :disabled="btnIdx === 0" @click="moveUp(btnIdx)" />
           <el-button :icon="Bottom" size="small" text :disabled="btnIdx === buttons.length - 1" @click="moveDown(btnIdx)" />
@@ -143,12 +143,12 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
       </div>
 
       <div class="button-editor__field">
-        <label class="button-editor__label">Text</label>
-        <el-input :model-value="btn.text" size="small" placeholder="Button text" @update:model-value="updateButton(btnIdx, 'text', $event)" />
+        <label class="button-editor__label">文本</label>
+        <el-input :model-value="btn.text" size="small" placeholder="按钮文字" @update:model-value="updateButton(btnIdx, 'text', $event)" />
       </div>
 
       <div class="button-editor__field">
-        <label class="button-editor__label">Button Type</label>
+        <label class="button-editor__label">按钮类型</label>
         <el-select :model-value="btn.buttonType ?? ''" size="small" style="width: 100%" @update:model-value="updateButton(btnIdx, 'buttonType', $event)">
           <el-option v-for="opt in buttonTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
         </el-select>
@@ -157,15 +157,15 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
       <!-- Actions list -->
       <div class="button-editor__actions-section">
         <div class="button-editor__actions-header">
-          <span class="button-editor__label">Actions</span>
-          <el-button size="small" :icon="Plus" text @click="addAction(btnIdx)">Add</el-button>
+          <span class="button-editor__label">操作</span>
+          <el-button size="small" :icon="Plus" text @click="addAction(btnIdx)">添加</el-button>
         </div>
 
-        <div v-if="!btn.actions?.length" class="button-editor__help" style="margin-bottom:4px">No actions. Click "Add" to create one.</div>
+        <div v-if="!btn.actions?.length" class="button-editor__help" style="margin-bottom:4px">无操作。点击"添加"创建一个。</div>
 
         <div v-for="(action, aIdx) in (btn.actions ?? [])" :key="aIdx" class="button-editor__action-item">
           <div class="button-editor__action-header">
-            <span class="button-editor__action-title">Action {{ aIdx + 1 }}</span>
+            <span class="button-editor__action-title">操作 {{ aIdx + 1 }}</span>
             <div style="display:flex;gap:2px">
               <el-button :disabled="aIdx === 0" size="small" text @click="moveActionUp(btnIdx, aIdx)">
                 <el-icon><Top /></el-icon>
@@ -181,7 +181,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
 
           <!-- Type -->
           <div class="button-editor__field">
-            <label class="button-editor__label">Type</label>
+            <label class="button-editor__label">类型</label>
             <el-select :model-value="action.type" size="small" style="width:100%" @update:model-value="updateAction(btnIdx, aIdx, { type: $event as ActionType })">
               <el-option v-for="opt in actionTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
             </el-select>
@@ -189,24 +189,24 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
 
           <!-- Common: Label -->
           <div class="button-editor__field">
-            <label class="button-editor__label">Label</label>
-            <el-input :model-value="action.label ?? ''" size="small" placeholder="Action label" @update:model-value="updateAction(btnIdx, aIdx, { label: $event || undefined })" />
+            <label class="button-editor__label">标签</label>
+            <el-input :model-value="action.label ?? ''" size="small" placeholder="操作标签" @update:model-value="updateAction(btnIdx, aIdx, { label: $event || undefined })" />
           </div>
 
           <!-- Common: Confirm -->
           <div class="button-editor__field">
-            <label class="button-editor__label">Confirm Message</label>
-            <el-input :model-value="action.confirm ?? ''" size="small" placeholder="Confirmation prompt before execution" @update:model-value="updateAction(btnIdx, aIdx, { confirm: $event || undefined })" />
+            <label class="button-editor__label">确认提示</label>
+            <el-input :model-value="action.confirm ?? ''" size="small" placeholder="执行前的确认提示" @update:model-value="updateAction(btnIdx, aIdx, { confirm: $event || undefined })" />
           </div>
 
           <!-- emit: eventName + eventPayload -->
           <template v-if="action.type === 'emit'">
             <div class="button-editor__field">
-              <label class="button-editor__label">Event Name</label>
-              <el-input :model-value="action.eventName ?? ''" size="small" placeholder="e.g. save" @update:model-value="updateAction(btnIdx, aIdx, { eventName: $event || undefined })" />
+              <label class="button-editor__label">事件名称</label>
+              <el-input :model-value="action.eventName ?? ''" size="small" placeholder="例如: save" @update:model-value="updateAction(btnIdx, aIdx, { eventName: $event || undefined })" />
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">Event Payload (JSON)</label>
+              <label class="button-editor__label">事件参数 (JSON)</label>
               <el-input
                 :model-value="eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] ?? jsonText(action.eventPayload)"
                 type="textarea" :rows="2" size="small" placeholder='{"key":"value"}'
@@ -218,15 +218,15 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <!-- dialog: dialogTitle + dialogWidth + dialogSchema -->
           <template v-if="action.type === 'dialog'">
             <div class="button-editor__field">
-              <label class="button-editor__label">Dialog Title</label>
-              <el-input :model-value="action.dialogTitle ?? ''" size="small" placeholder="Dialog title" @update:model-value="updateAction(btnIdx, aIdx, { dialogTitle: $event || undefined })" />
+              <label class="button-editor__label">弹窗标题</label>
+              <el-input :model-value="action.dialogTitle ?? ''" size="small" placeholder="弹窗标题" @update:model-value="updateAction(btnIdx, aIdx, { dialogTitle: $event || undefined })" />
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">Dialog Width</label>
+              <label class="button-editor__label">弹窗宽度</label>
               <el-input :model-value="action.dialogWidth ?? ''" size="small" placeholder="600px" @update:model-value="updateAction(btnIdx, aIdx, { dialogWidth: $event || undefined })" />
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">Dialog Schema (JSON)</label>
+              <label class="button-editor__label">弹窗 Schema (JSON)</label>
               <el-input
                 :model-value="dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] ?? jsonText(action.dialogSchema)"
                 type="textarea" :rows="4" size="small" placeholder='[{"type":"input","field":"name","label":"Name"}]'
@@ -238,20 +238,20 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <!-- api: apiUrl + apiMethod + apiParams -->
           <template v-if="action.type === 'api'">
             <div class="button-editor__field">
-              <label class="button-editor__label">API URL</label>
+              <label class="button-editor__label">接口地址</label>
               <el-input :model-value="action.apiUrl ?? ''" size="small" placeholder="/api/endpoint" @update:model-value="updateAction(btnIdx, aIdx, { apiUrl: $event || undefined })" />
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">Method</label>
+              <label class="button-editor__label">请求方法</label>
               <el-select :model-value="action.apiMethod ?? 'post'" size="small" style="width:100%" @update:model-value="updateAction(btnIdx, aIdx, { apiMethod: $event as 'get' | 'post' })">
                 <el-option v-for="opt in apiMethodOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">API Params (JSON or "formData")</label>
+              <label class="button-editor__label">接口参数 (JSON 或 "formData")</label>
               <el-input
                 :model-value="apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] ?? (typeof action.apiParams === 'string' ? action.apiParams : jsonText(action.apiParams))"
-                type="textarea" :rows="2" size="small" placeholder='{"key":"value"} or "formData"'
+                type="textarea" :rows="2" size="small" placeholder='{"key":"value"} 或 "formData"'
                 @update:model-value="(v: string) => { apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] = v; updateAction(btnIdx, aIdx, { apiParams: v === 'formData' ? 'formData' : (parseJson(v) as Record<string, unknown> | undefined) }) }"
               />
             </div>
@@ -260,11 +260,11 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <!-- navigate: navigatePath + navigateQuery -->
           <template v-if="action.type === 'navigate'">
             <div class="button-editor__field">
-              <label class="button-editor__label">Navigate Path</label>
+              <label class="button-editor__label">跳转路径</label>
               <el-input :model-value="action.navigatePath ?? ''" size="small" placeholder="/detail/:id" @update:model-value="updateAction(btnIdx, aIdx, { navigatePath: $event || undefined })" />
             </div>
             <div class="button-editor__field">
-              <label class="button-editor__label">Navigate Query (JSON)</label>
+              <label class="button-editor__label">跳转参数 (JSON)</label>
               <el-input
                 :model-value="navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] ?? jsonText(action.navigateQuery)"
                 type="textarea" :rows="2" size="small" placeholder='{"from":"list"}'
@@ -279,7 +279,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
     </div>
 
     <el-button type="primary" :icon="Plus" size="small" plain style="width:100%;margin-top:8px" @click="addButton">
-      Add Button
+      添加按钮
     </el-button>
   </div>
 </template>
