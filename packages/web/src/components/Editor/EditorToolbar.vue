@@ -408,22 +408,19 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
       <!-- Group 8: Import / Export + More -->
       <div class="editor-toolbar__ops">
-        <el-tooltip content="导入 JSON" placement="bottom">
-          <el-button size="small" @click="handleImport">
-            <el-icon><Upload /></el-icon>
-          </el-button>
-        </el-tooltip>
-        <el-tooltip content="导出 JSON" placement="bottom">
-          <el-button size="small" @click="handleExport">
-            <el-icon><Download /></el-icon>
-          </el-button>
-        </el-tooltip>
+        <el-button size="small" @click="handleImport">
+          <el-icon><Upload /></el-icon>
+          导入
+        </el-button>
+        <el-button size="small" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          导出
+        </el-button>
         <el-dropdown trigger="click" @command="handleMoreCommand">
-          <el-tooltip content="更多操作" placement="bottom">
-            <el-button size="small">
-              <el-icon><MoreFilled /></el-icon>
-            </el-button>
-          </el-tooltip>
+          <el-button size="small">
+            <el-icon><MoreFilled /></el-icon>
+            更多
+          </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="load">从服务器加载</el-dropdown-item>

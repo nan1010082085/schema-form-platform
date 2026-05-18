@@ -678,7 +678,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
         <!-- Thumbnail mini-map -->
         <div v-if="showThumbnail && mode === 'edit'" class="editor-view__thumbnail" @click="handleThumbnailClick">
-          <div class="editor-view__thumbnail-inner">
+          <el-scrollbar class="editor-view__thumbnail-scroll">
             <div
               class="editor-view__thumbnail-content"
               :style="{
@@ -696,7 +696,7 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
               <!-- Viewport indicator -->
               <div class="editor-view__thumbnail-indicator" :style="indicatorStyle" />
             </div>
-          </div>
+          </el-scrollbar>
         </div>
       </div>
 
@@ -895,11 +895,9 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     &:hover { border-color: #409eff; }
   }
 
-  &__thumbnail-inner {
+  &__thumbnail-scroll {
     width: 100%;
     height: 100%;
-    overflow: auto;
-    position: relative;
   }
 
   &__thumbnail-content {
