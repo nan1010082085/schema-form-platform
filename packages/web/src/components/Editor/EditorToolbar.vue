@@ -414,10 +414,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           </el-tooltip>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="load">Load from Server</el-dropdown-item>
-              <el-dropdown-item command="import-json">Import JSON</el-dropdown-item>
-              <el-dropdown-item command="import-response">Import Response</el-dropdown-item>
-              <el-dropdown-item command="export-json">Export JSON</el-dropdown-item>
+              <el-dropdown-item command="load">从服务器加载</el-dropdown-item>
+              <el-dropdown-item command="import-json">导入 JSON</el-dropdown-item>
+              <el-dropdown-item command="import-response">导入响应</el-dropdown-item>
+              <el-dropdown-item command="export-json">导出 JSON</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
