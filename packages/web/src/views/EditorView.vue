@@ -6,7 +6,7 @@
  * 左侧面板通过 transform 收起，与画布同级布局；右侧为上层覆盖抽屉
  * 支持 30 步历史回退/前进
  */
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import { Fold, Expand } from '@element-plus/icons-vue'
@@ -338,7 +338,8 @@ function handleOpenProperties() {
 function handleTreeSelect(path: number[]) {
   selectedPath.value = path
   selectedPaths.value = [path]
-  drawerVisible.value = true
+  // 结构树点击总是打开属性抽屉
+  nextTick(() => { drawerVisible.value = true })
 }
 
 // ---- Property update ----
