@@ -1,6 +1,6 @@
-import mongoose, { type Document, type Model } from 'mongoose'
+import mongoose from 'mongoose'
 
-export interface IFormSchema extends Document {
+export interface IFormSchema {
   _id: string
   name: string
   json: Record<string, unknown>
@@ -8,7 +8,7 @@ export interface IFormSchema extends Document {
   updatedAt: Date
 }
 
-const formSchemaDef = new mongoose.Schema<IFormSchema>(
+const formSchemaDef = new mongoose.Schema(
   {
     _id: { type: String, required: true },
     name: { type: String, required: true },
@@ -17,7 +17,7 @@ const formSchemaDef = new mongoose.Schema<IFormSchema>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc: unknown, ret: Record<string, unknown>) {
         ret.id = ret._id
         delete ret._id
         delete ret.__v
@@ -26,5 +26,5 @@ const formSchemaDef = new mongoose.Schema<IFormSchema>(
   },
 )
 
-export const FormSchemaModel: Model<IFormSchema> =
+export const FormSchemaModel =
   mongoose.models.FormSchema ?? mongoose.model<IFormSchema>('FormSchema', formSchemaDef)
