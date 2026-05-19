@@ -38,7 +38,7 @@ const styleObj = computed(() => ({
     :disabled="disabled"
     :loading="loading"
     :style="styleObj"
-    class="fg-select"
+    :class="$style.select"
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <el-option
@@ -50,24 +50,24 @@ const styleObj = computed(() => ({
   </el-select>
 </template>
 
-<style scoped lang="scss">
-.fg-select {
+<style module lang="scss">
+.select {
   width: 100%;
   height: 100%;
 
-  :deep(.el-select__wrapper) {
+  :global(.el-select__wrapper) {
     height: 100%;
   }
 
-  :deep(.el-input) {
+  :global(.el-input) {
     height: 100%;
 
-    .el-input__wrapper {
+    :global(.el-input__wrapper) {
       height: 100%;
       box-sizing: border-box;
     }
 
-    .el-input__inner {
+    :global(.el-input__inner) {
       height: 100%;
     }
   }

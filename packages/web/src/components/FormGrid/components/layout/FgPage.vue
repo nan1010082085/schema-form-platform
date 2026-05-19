@@ -3,13 +3,13 @@
 </script>
 
 <template>
-  <div class="fg-page" :style="{ '--fg-page-bg': '#f5f7fa' }">
+  <div :class="$style.page" :style="{ '--fg-page-bg': '#f5f7fa' }">
     <slot />
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-page {
+<style module lang="scss">
+.page {
   min-height: 100vh;
   background: var(--fg-page-bg, #f5f7fa);
 }

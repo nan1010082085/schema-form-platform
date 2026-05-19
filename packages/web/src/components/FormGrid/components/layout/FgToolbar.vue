@@ -4,7 +4,7 @@
 
 <template>
   <div
-    class="fg-toolbar"
+    :class="$style.toolbar"
     :style="{
       '--fg-toolbar-gap': '12px',
       '--fg-toolbar-align': 'center',
@@ -16,8 +16,8 @@
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-toolbar {
+<style module lang="scss">
+.toolbar {
   position: fixed;
   top: 0;
   left: 0;

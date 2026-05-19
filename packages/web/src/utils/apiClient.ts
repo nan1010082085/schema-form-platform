@@ -15,6 +15,7 @@ import type {
   PaginatedResponse,
   SchemaListItem,
   SchemaDetail,
+  PublishedSchemaItem,
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
@@ -47,14 +48,12 @@ export function getBaseUrl(): string {
 // ---- 专用 API 方法 ----
 
 /**
- * GET /api/schemas?search=&type=&status=&publishId=&page=1&pageSize=20
+ * GET /api/schemas?search=&type=&page=1&pageSize=20
  */
 export function fetchSchemas(
   options?: {
     search?: string
     type?: string
-    status?: string
-    publishId?: string
     page?: number
     pageSize?: number
   },
@@ -64,8 +63,6 @@ export function fetchSchemas(
   params.set('pageSize', String(options?.pageSize ?? 20))
   if (options?.search) params.set('search', options.search)
   if (options?.type) params.set('type', options.type)
-  if (options?.status) params.set('status', options.status)
-  if (options?.publishId) params.set('publishId', options.publishId)
 
   return apiRequest<PaginatedResponse<SchemaListItem>>(
     'GET',
@@ -81,14 +78,27 @@ export function fetchSchemaById(id: string): Promise<SchemaDetail> {
 }
 
 /**
- * GET /api/schemas?publishId=xxx → returns the (first) published schema
+ * POST /api/schemas/:id/publish
+ *
+ * Publishes a draft schema to the PublishedSchema table (upsert).
  */
-export async function fetchSchemaByPublishId(publishId: string): Promise<SchemaDetail> {
-  const result = await fetchSchemas({ publishId, pageSize: 1 })
-  if (result.items.length === 0) {
-    throw new ApiError('Published schema not found', 404)
-  }
-  return fetchSchemaById(result.items[0].id)
+export function publishSchema(id: string): Promise<PublishedSchemaItem> {
+  return apiRequest<PublishedSchemaItem>(
+    'POST',
+    `/schemas/${encodeURIComponent(id)}/publish`,
+  )
+}
+
+/**
+ * GET /api/schemas/published/:sourceId
+ *
+ * Fetches the published version of a schema by its source FormSchema ID.
+ */
+export function fetchPublishedSchema(sourceId: string): Promise<PublishedSchemaItem> {
+  return apiRequest<PublishedSchemaItem>(
+    'GET',
+    `/schemas/published/${encodeURIComponent(sourceId)}`,
+  )
 }
 
 /**

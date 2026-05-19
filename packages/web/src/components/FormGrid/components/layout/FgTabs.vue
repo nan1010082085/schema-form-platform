@@ -31,6 +31,12 @@ const props = withDefaults(defineProps<{
   children?: FormSchemaItem[]
   /** 表单数据（由 SchemaRender 传入） */
   formData?: FormData
+  /** 编辑模式标识 */
+  editable?: boolean
+  /** 是否正在拖拽 */
+  isDragging?: boolean
+  /** 当前节点路径 */
+  path?: number[]
 }>(), {
   modelValue: '',
   tabPosition: 'top',
@@ -42,6 +48,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [name: string]
   'tab-change': [name: string]
+  'container-drop': [data: any]
 }>()
 
 // 内部激活 tab，支持受控和非受控模式
@@ -80,7 +87,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="fg-tabs">
+  <div :class="$style.tabs">
     <el-tabs
       :model-value="activeName"
       :tab-position="tabPosition"
@@ -99,12 +106,16 @@ defineExpose({
           v-for="(child, ci) in children"
           :key="ci"
           v-show="ci === getTabIndex(tab.name)"
-          class="fg-tabs__panel"
+          :class="$style.tabsPanel"
         >
           <SchemaRender
             v-if="ci === getTabIndex(tab.name) && !child.hidden"
             :schema="child"
             :form-data="formData"
+            :editable="editable"
+            :is-dragging="isDragging"
+            :path="[...(path ?? []), ci]"
+            @container-drop="emit('container-drop', $event)"
           />
         </div>
       </el-tab-pane>
@@ -112,40 +123,33 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-tabs {
+<style module lang="scss">
+.tabs {
   --fg-tabs-padding: 16px;
   --fg-tabs-panel-min-height: 100px;
 
   padding: var(--fg-tabs-padding);
 
-  &__panel {
-    min-height: var(--fg-tabs-panel-min-height);
-  }
-}
-</style>
-
-<!-- 非 scoped 块：穿透样式到 Element Plus 子组件和 grid 布局 -->
-<style lang="scss">
-.fg-tabs {
-  // el-tabs 内容区域样式穿透
-  .el-tab-pane {
+  // Deep: el-tabs 内容区域样式穿透
+  :global(.el-tab-pane) {
     width: 100%;
   }
 
-  // tab 面板内的 grid 布局需要继承宽度
-  .fg-tabs__panel {
-    > .fg-grid-row {
-      width: 100%;
-    }
-  }
-
-  // 左右布局时内容区域自适应
-  .el-tabs--left,
-  .el-tabs--right {
-    .el-tabs__content {
+  // Deep: 左右布局时内容区域自适应
+  :global(.el-tabs--left),
+  :global(.el-tabs--right) {
+    :global(.el-tabs__content) {
       overflow: visible;
     }
+  }
+}
+
+.tabsPanel {
+  min-height: var(--fg-tabs-panel-min-height);
+
+  // Deep: tab 面板内的 grid 布局需要继承宽度
+  > :global(.fg-grid-row) {
+    width: 100%;
   }
 }
 </style>

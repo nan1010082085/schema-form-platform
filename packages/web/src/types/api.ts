@@ -24,16 +24,14 @@ export interface ApiErrorDetail {
 // ---- Schema 资源类型 ----
 
 export type SchemaTypeValue = 'form' | 'search-list'
-export type SchemaStatusValue = 'draft' | 'published'
+export type SchemaStatusValue = 'draft'
 
-/** Schema 列表项 */
+/** Schema 列表项（编辑表 — 仅草稿） */
 export interface SchemaListItem {
   id: string
   name: string
   type: SchemaTypeValue
   status: SchemaStatusValue
-  publishId?: string | null
-  publishedAt?: string | null
   json?: FormSchemaItem[]
   createdAt: string
   updatedAt: string
@@ -42,6 +40,19 @@ export interface SchemaListItem {
 /** Schema 详情（含完整 JSON schema 定义） */
 export interface SchemaDetail extends SchemaListItem {
   json: FormSchemaItem[]
+}
+
+/** 发布 Schema（发布表 — 每个源 Schema 最多一条） */
+export interface PublishedSchemaItem {
+  id: string
+  sourceId: string
+  name: string
+  type: SchemaTypeValue
+  json: FormSchemaItem[]
+  publishId: string
+  publishedAt: string
+  createdAt: string
+  updatedAt: string
 }
 
 /** Schema 创建请求体 */
@@ -55,7 +66,6 @@ export interface SchemaCreatePayload {
 export interface SchemaUpdatePayload {
   name?: string
   json?: FormSchemaItem[]
-  status?: SchemaStatusValue
   type?: SchemaTypeValue
 }
 
@@ -67,8 +77,6 @@ export interface PaginationParams {
   pageSize?: number
   search?: string
   type?: SchemaTypeValue
-  status?: SchemaStatusValue
-  publishId?: string
 }
 
 /** 分页响应 */

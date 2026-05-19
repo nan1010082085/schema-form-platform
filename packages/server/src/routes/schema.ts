@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import { FormSchemaModel } from '../models/FormSchema.js'
+import { PublishedSchemaModel } from '../models/PublishedSchema.js'
 
 const router = new Router({ prefix: '/api/schemas' })
 
@@ -10,9 +11,11 @@ function escapeRegex(str: string): string {
 
 /**
  * GET /api/schemas
+ *
+ * Lists draft schemas with optional filters. Published data lives in PublishedSchema table.
  */
 router.get('/', async (ctx) => {
-  const { search, type, status, publishId, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
+  const { search, type, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
   const skip = (page - 1) * pageSize
@@ -20,8 +23,6 @@ router.get('/', async (ctx) => {
   const filter: Record<string, unknown> = {}
   if (search) filter.name = { $regex: escapeRegex(search as string), $options: 'i' }
   if (type && ['form', 'search_list'].includes(type as string)) filter.type = type as string
-  if (status && ['draft', 'published'].includes(status as string)) filter.status = status as string
-  if (publishId) filter.publishId = publishId as string
 
   const [items, total] = await Promise.all([
     FormSchemaModel.find(filter).skip(skip).limit(pageSize).sort({ updatedAt: -1 }),
@@ -72,6 +73,31 @@ router.post('/', async (ctx) => {
 })
 
 /**
+ * GET /api/schemas/published/:sourceId
+ *
+ * Reads published schema by source FormSchema ID. Must be registered before GET /:id.
+ */
+router.get('/published/:sourceId', async (ctx) => {
+  const { sourceId } = ctx.params
+
+  if (!uuidValidate(sourceId)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const published = await PublishedSchemaModel.findOne({ sourceId })
+
+  if (!published) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Published schema not found.' } }
+    return
+  }
+
+  ctx.body = { success: true, data: published }
+})
+
+/**
  * GET /api/schemas/:id
  */
 router.get('/:id', async (ctx) => {
@@ -96,6 +122,8 @@ router.get('/:id', async (ctx) => {
 
 /**
  * PUT /api/schemas/:id
+ *
+ * Updates a draft schema. Status changes to 'published' are not allowed — use POST /:id/publish instead.
  */
 router.put('/:id', async (ctx) => {
   const { id } = ctx.params
@@ -134,18 +162,12 @@ router.put('/:id', async (ctx) => {
     data.json = json
   }
   if (status !== undefined) {
-    if (!['draft', 'published'].includes(status as string)) {
+    if (status !== 'draft') {
       ctx.status = 400
-      ctx.body = { success: false, error: { message: 'Field "status" must be "draft" or "published".' } }
+      ctx.body = { success: false, error: { message: 'Cannot change status to "published". Use POST /:id/publish to publish a schema.' } }
       return
     }
     data.status = status
-    if (status === 'published') {
-      if (!existing.publishId) {
-        data.publishId = uuidv4()
-      }
-      data.publishedAt = new Date()
-    }
   }
   if (type !== undefined) {
     if (!['form', 'search_list'].includes(type as string)) {
@@ -158,13 +180,59 @@ router.put('/:id', async (ctx) => {
 
   if (Object.keys(data).length === 0) {
     ctx.status = 400
-    ctx.body = { success: false, error: { message: 'No fields to update. Provide name, json, status, and/or type.' } }
+    ctx.body = { success: false, error: { message: 'No fields to update. Provide name, json, and/or type.' } }
     return
   }
 
   const schema = await FormSchemaModel.findByIdAndUpdate(id, data, { new: true })
 
   ctx.body = { success: true, data: schema }
+})
+
+/**
+ * POST /api/schemas/:id/publish
+ *
+ * Publishes a draft schema: creates or updates PublishedSchema (upsert by sourceId).
+ * Only the latest published version is kept. FormSchema status remains 'draft'.
+ */
+router.post('/:id/publish', async (ctx) => {
+  const { id } = ctx.params
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const draft = await FormSchemaModel.findById(id)
+  if (!draft) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Schema not found.' } }
+    return
+  }
+
+  const now = new Date()
+  const newPublishId = uuidv4()
+
+  const published = await PublishedSchemaModel.findOneAndUpdate(
+    { sourceId: id },
+    {
+      $set: {
+        name: draft.name,
+        type: draft.type,
+        json: draft.json,
+        publishId: newPublishId,
+        publishedAt: now,
+      },
+      $setOnInsert: {
+        _id: uuidv4(),
+        sourceId: id,
+      },
+    },
+    { upsert: true, new: true, runValidators: true },
+  )
+
+  ctx.body = { success: true, data: published }
 })
 
 /**
@@ -186,6 +254,8 @@ router.delete('/:id', async (ctx) => {
     return
   }
 
+  // Also remove any published version for this schema
+  await PublishedSchemaModel.deleteOne({ sourceId: id })
   await FormSchemaModel.findByIdAndDelete(id)
 
   ctx.status = 200

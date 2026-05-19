@@ -24,6 +24,7 @@ import {
   ACTION_EMIT_KEY,
   FORM_GRID_LINKAGE_KEY,
   FORM_GRID_T_KEY,
+  FORM_GRID_READONLY_KEY,
 } from './types'
 import { useLinkage } from '@/composables/useLinkage'
 import { useFormData } from '@/composables/useFormData'
@@ -42,6 +43,8 @@ const props = defineProps<FormGridProps & {
   editable?: boolean
   /** 是否正在拖拽中（Sprint 11） */
   isDragging?: boolean
+  /** 只读模式：禁用所有表单输入，隐藏内部按钮（文件列表保留） */
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -133,6 +136,10 @@ provide(ACTION_EMIT_KEY, (event: string, payload?: unknown) => {
 // 联动状态
 const { stateMap: linkageStateMap } = useLinkage(props.schema, formData)
 provide(FORM_GRID_LINKAGE_KEY, linkageStateMap)
+
+// 只读模式注入（使用 toRef 保持响应式）
+const readonlyRef = computed(() => props.readonly ?? false)
+provide(FORM_GRID_READONLY_KEY, readonlyRef)
 
 // Build defaultValue map from schema tree for reset-fields linkage
 function collectDefaultValues(items: FormSchemaItem[]): Map<string, unknown> {
@@ -358,6 +365,7 @@ defineExpose({
               :form-data="formData"
               :editable="editable"
               :is-dragging="isDragging"
+              :readonly="readonly"
               :path="[idx]"
               @container-drop="emit('container-drop', $event)"
             />

@@ -19,6 +19,7 @@ import { ref, computed } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
 import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
 import { isFullWidthType } from '@/components/FormGrid/types'
+import type { InteractionMode } from '@/composables/useConstant'
 
 /** SchemaType → 中文标签映射（浮动标签 + 组件面板显示） */
 const TYPE_LABEL_ZH: Record<string, string> = {
@@ -36,11 +37,13 @@ const TYPE_LABEL_ZH: Record<string, string> = {
 }
 function typeLabel(type: string): string { return TYPE_LABEL_ZH[type] ?? type }
 
+const isReadonly = computed(() => props.mode === 'publish-readonly')
+
 const props = defineProps<{
   schema: FormSchemaItem[]
   selectedIndex: number | null
   selectedIndices: number[]
-  mode: 'edit' | 'preview'
+  mode: InteractionMode
   /** Phase 3: Canvas width for sizing awareness */
   canvasWidth?: number
   /** Phase 3: Canvas height for sizing awareness */
@@ -100,6 +103,14 @@ function createDefaultSchema(type: SchemaType): FormSchemaItem {
       type: 'tabs',
       props: { tabs: [{ title: '标签一' }] },
       children: [{ type: 'grid-row', children: [] }],
+    }
+  }
+  if (type === 'dialog') {
+    return {
+      type: 'dialog',
+      label: '对话框',
+      props: { title: '对话框', width: '600px' },
+      children: [],
     }
   }
 
@@ -341,9 +352,9 @@ function handleCanvasClick(event: Event) {
       </div>
     </div>
 
-    <!-- Preview mode: full FormGrid render -->
+    <!-- Preview / Publish mode: full FormGrid render -->
     <div v-else class="editor-canvas__inner editor-canvas__inner--preview">
-      <FormGrid v-if="schema.length > 0" :schema="schema" />
+      <FormGrid v-if="schema.length > 0" :schema="schema" :readonly="isReadonly" />
       <div v-else class="editor-canvas__empty">
         <p>预览模式无组件</p>
       </div>

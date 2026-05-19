@@ -15,7 +15,7 @@ import { FormGrid } from '@/components/FormGrid'
 import type { FormSchemaItem, FormData } from '@/components/FormGrid'
 import { useAppStore } from '@/stores/app'
 import { processSchema } from '@/utils/requestQueue'
-import { fetchSchemaById } from '@/utils/apiClient'
+import { fetchPublishedSchema } from '@/utils/apiClient'
 import { msaFormRegistry, type MsaFormSchemaConfig } from '@/schemas/msa-form'
 import { applyMode } from '@/schemas/msa-form-utils'
 import { demoSchemas } from '@/schemas/demo'
@@ -101,14 +101,10 @@ async function loadSchema(id: string) {
       }
       schemaName.value = id
     } else {
-      // 2) Fetch from server API — enforce published-only
-      const serverSchema = await fetchSchemaById(id)
-      if (serverSchema.status !== 'published') {
-        error.value = `Schema "${id}" 尚未发布，无法访问`
-        return
-      }
-      baseSchema.value = serverSchema.json
-      schemaName.value = serverSchema.name
+      // 2) Fetch from PublishedSchema table — only published schemas are accessible
+      const publishedSchema = await fetchPublishedSchema(id)
+      baseSchema.value = publishedSchema.json
+      schemaName.value = publishedSchema.name
     }
 
     await processSchema(schema.value)
