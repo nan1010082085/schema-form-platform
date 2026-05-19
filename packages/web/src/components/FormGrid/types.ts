@@ -320,6 +320,9 @@ export const FORM_GRID_LINKAGE_KEY: InjectionKey<ComputedRef<Map<string, Linkage
 /** 国际化翻译函数注入 Key */
 export const FORM_GRID_T_KEY: InjectionKey<TranslateFn> = Symbol('FormGridTranslate')
 
+/** 只读模式注入 Key — 禁用表单输入、隐藏内部按钮 */
+export const FORM_GRID_READONLY_KEY: InjectionKey<ComputedRef<boolean>> = Symbol('FormGridReadonly')
+
 /**
  * 生命周期钩子配置
  * 支持函数或字符串表达式两种模式（与 linkage.condition 共享沙箱模式）
@@ -480,10 +483,30 @@ export interface TableRowAction {
   confirm?: string
 }
 
+/** 组件样式配置 — 由 PropertyPanel 样式配置 tab 驱动 */
+export interface ComponentStyle {
+  width?: string
+  height?: string
+  margin?: string
+  padding?: string
+  textAlign?: 'left' | 'center' | 'right'
+  backgroundColor?: string
+  borderRadius?: string
+  boxShadow?: string
+  border?: string
+  borderTop?: string
+  borderRight?: string
+  borderBottom?: string
+  borderLeft?: string
+  customClass?: string
+}
+
 /** 表单 Schema 节点 */
 export interface FormSchemaItem {
   // 基础通用
   type: SchemaType
+  /** 组件唯一 ID — 拖拽入画布时生成，格式: 组件Key + 5位随机Hash，永久不变 */
+  componentId?: string
   field?: string
   label?: string
   defaultValue?: FormFieldValue
@@ -522,6 +545,17 @@ export interface FormSchemaItem {
   align?: 'left' | 'center' | 'right'
   border?: boolean
   hideBorder?: string[]
+
+  // 样式配置 (PropertyPanel 样式配置 tab)
+  style?: ComponentStyle
+
+  // 高级配置
+  /** 权限角色白配 — 允许访问的角色列表 */
+  permissionRoles?: string[]
+  /** 只读模式 — 组件在查看模式下是否只读 */
+  readonly?: boolean
+  /** 自定义 HTML 属性 */
+  customAttrs?: Record<string, string>
 
   // search-list 组件专用
   /** 列表数据请求配置 */

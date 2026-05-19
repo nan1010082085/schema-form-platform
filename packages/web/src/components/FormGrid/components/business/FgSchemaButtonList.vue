@@ -3,17 +3,19 @@
  * FgSchemaButtonList — Schema 驱动的按钮列表
  * 支持 action 联动：emit / dialog / upload / submit / reset / navigate / api / validate
  */
-import { inject } from 'vue'
+import { inject, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import FgButtonList from './FgButtonList.vue'
 import { executeActions, type ActionContext } from '@/utils/actionExecutor'
-import { ACTION_EMIT_KEY, FORM_GRID_API_KEY } from '../../types'
+import { ACTION_EMIT_KEY, FORM_GRID_API_KEY, FORM_GRID_READONLY_KEY } from '../../types'
 import type { SchemaButtonConfig, FormData } from '../../types'
 
 defineProps<{
   buttons?: SchemaButtonConfig[]
 }>()
 
+const isReadonly = inject(FORM_GRID_READONLY_KEY, undefined)
+const isReadonlyValue = computed(() => isReadonly?.value ?? false)
 const emitAction = inject(ACTION_EMIT_KEY, () => {})
 const formApi = inject(FORM_GRID_API_KEY, {
   validate: async () => true,
@@ -57,6 +59,7 @@ function toButtonConfig(btn: SchemaButtonConfig) {
 
 <template>
   <FgButtonList
+    v-if="!isReadonlyValue"
     :buttons="(buttons ?? []).map(toButtonConfig)"
     @click="(_btn, idx) => handleButtonClick((buttons ?? [])[idx])"
   />

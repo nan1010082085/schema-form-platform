@@ -3,6 +3,7 @@ dist/
 .turbo/
 *.log
 .claude/
+.codex/
 packages/*/node_modules/
 packages/*/dist/
 packages/*/.claude/

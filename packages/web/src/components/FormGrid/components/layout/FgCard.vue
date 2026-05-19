@@ -4,7 +4,7 @@
 
 <template>
   <div
-    class="fg-card"
+    :class="$style.card"
     :style="{
       '--fg-card-padding': '16px',
       '--fg-card-bg': '#fff',
@@ -15,8 +15,8 @@
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-card {
+<style module lang="scss">
+.card {
   background: var(--fg-card-bg, #fff);
   margin: 20px;
   border-radius: var(--fg-card-radius, 10px);

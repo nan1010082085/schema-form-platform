@@ -1,12 +1,13 @@
 <script setup lang="ts">
 /**
- * SchemaTree — Schema 结构树面板 (Sprint 10)
+ * SchemaTree — Schema 结构树面板
  *
  * 树形展示 schema 结构，支持：
  * - 容器节点可展开/折叠
  * - 点击节点选中对应画布组件
  * - 双向同步选中状态
- * - 显示节点类型标识、标签、字段名
+ * - 可见性/锁定快捷操作（hover 显示）
+ * - 拖拽排序
  */
 import { computed, watch, ref } from 'vue'
 import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
@@ -21,6 +22,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'select': [path: number[]]
   'reorder': [payload: { sourcePath: number[]; targetPath: number[]; position: 'before' | 'after' | 'inside' }]
+  'toggle-hidden': [path: number[], hidden: boolean]
 }>()
 
 // ---- Drag state ----
@@ -35,17 +37,14 @@ function handleNodeDragEnd() {
 }
 
 function allowDrag(_node: SchemaTreeNode): boolean {
-  // 允许拖拽所有节点
   return true
 }
 
 function allowDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, type: 'prev' | 'next' | 'inner'): boolean {
-  // 禁止拖入自身或其子节点
   const dragPath = draggingNode.path.join(',')
   const dropPath = dropNode.path.join(',')
   if (dragPath === dropPath) return false
   if (dropPath.startsWith(dragPath + ',')) return false
-  // 仅容器节点允许拖入内部(inner)
   if (type === 'inner') return dropNode.isContainer
   return true
 }
@@ -60,9 +59,6 @@ function handleNodeDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, 
     position = 'inside'
   } else if (dropType === 'before') {
     targetPath = [...dropNode.path]
-    // adjust: insert at the position, shift dropNode down
-    const last = targetPath[targetPath.length - 1]
-    targetPath[targetPath.length - 1] = last
     position = 'before'
   } else {
     targetPath = [...dropNode.path]
@@ -97,7 +93,6 @@ const treeData = computed(() => buildSchemaTree(props.schema))
 // ---- Track expanded state ----
 const expandedKeys = ref<Set<string>>(new Set())
 
-// When schema changes, expand all container nodes
 watch(
   () => treeData.value,
   (nodes) => {
@@ -111,7 +106,6 @@ watch(
       }
     }
     expandContainers(nodes)
-    // Keep previously expanded nodes that still exist
     expandedKeys.value = newExpanded
   },
   { immediate: true },
@@ -125,31 +119,54 @@ const selectedKey = computed(() => {
   return props.selectedPath.join('-')
 })
 
+// ---- Locked state (editor-only, not persisted in schema) ----
+const lockedNodes = ref<Set<string>>(new Set())
+
+function isLocked(nodeId: string): boolean {
+  return lockedNodes.value.has(nodeId)
+}
+
+function toggleLock(nodeId: string) {
+  const next = new Set(lockedNodes.value)
+  if (next.has(nodeId)) {
+    next.delete(nodeId)
+  } else {
+    next.add(nodeId)
+  }
+  lockedNodes.value = next
+}
+
+// ---- Hidden state helpers ----
+function isHidden(data: SchemaTreeNode): boolean {
+  // Walk the schema to find the hidden flag
+  const item = getSchemaItemByPath(props.schema, data.path)
+  return item?.hidden === true
+}
+
+function getSchemaItemByPath(items: FormSchemaItem[], path: number[]): FormSchemaItem | undefined {
+  if (path.length === 0) return undefined
+  let current: FormSchemaItem | undefined = items[path[0]]
+  for (let i = 1; i < path.length; i++) {
+    if (!current?.children) return undefined
+    current = current.children[path[i]]
+  }
+  return current
+}
+
+function handleToggleHidden(data: SchemaTreeNode, e: Event) {
+  e.stopPropagation()
+  const currentlyHidden = isHidden(data)
+  emit('toggle-hidden', data.path, !currentlyHidden)
+}
+
 // ---- Node icon mapping ----
 const NODE_ICONS: Record<string, string> = {
-  'grid-row': '蔊',
-  'grid-col': '▥',
-  'page': '📄',
-  'toolbar': '🔧',
-  'card': '🃏',
-  'title': 'T',
-  'divider': '—',
-  'spacer': '␣',
-  'steps': '👣',
-  'tabs': '📑',
-  'input': '✏️',
-  'number': '#',
-  'select': '▼',
-  'radio': '◉',
-  'checkbox': '☑',
-  'date': '📅',
-  'date-range': '📅',
-  'textarea': '📝',
-  'richtext': '📰',
-  'button-list': '🔘',
-  'upload': '📤',
-  'table': '📊',
-  'pagination': '📑',
+  'grid-row': '蔊', 'grid-col': '▥', 'page': '📄', 'toolbar': '🔧',
+  'card': '🃏', 'title': 'T', 'divider': '—', 'spacer': '␣',
+  'steps': '👣', 'tabs': '📑', 'input': '✏️', 'number': '#',
+  'select': '▼', 'radio': '◉', 'checkbox': '☑', 'date': '📅',
+  'date-range': '📅', 'textarea': '📝', 'richtext': '📰',
+  'button-list': '🔘', 'upload': '📤', 'table': '📊', 'pagination': '📑',
 }
 
 function getNodeIcon(type: SchemaType): string {
@@ -158,6 +175,7 @@ function getNodeIcon(type: SchemaType): string {
 
 // ---- Event handlers ----
 function handleNodeClick(node: SchemaTreeNode) {
+  if (isLocked(node.id)) return
   emit('select', node.path)
 }
 
@@ -198,14 +216,20 @@ function handleToggleExpand(node: SchemaTreeNode) {
           :class="{
             'schema-tree__node--selected': selectedKey === data.id,
             'schema-tree__node--container': data.isContainer,
+            'schema-tree__node--hidden': isHidden(data),
+            'schema-tree__node--locked': isLocked(data.id),
           }"
         >
           <span
             v-if="data.isContainer && data.children.length > 0"
             class="schema-tree__expand-icon"
+            @mousedown.stop
             @click.stop="handleToggleExpand(data)"
           >
-            {{ expandedKeys.has(data.id) ? '▼' : '▶' }}
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+              <path v-if="expandedKeys.has(data.id)" d="M2 3.5l3 3 3-3z"/>
+              <path v-else d="M3.5 2l3 3-3 3z"/>
+            </svg>
           </span>
           <span v-else class="schema-tree__expand-icon schema-tree__expand-icon--placeholder" />
 
@@ -214,6 +238,42 @@ function handleToggleExpand(node: SchemaTreeNode) {
           <span class="schema-tree__type-badge">{{ getTypeZh(data.type) }}</span>
 
           <span v-if="data.field" class="schema-tree__field">{{ data.field }}</span>
+
+          <!-- Hover actions -->
+          <span class="schema-tree__actions">
+            <button
+              class="schema-tree__action-btn"
+              title="切换可见性"
+              @click="handleToggleHidden(data, $event)"
+            >
+              <svg v-if="isHidden(data)" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z"/>
+                <circle cx="8" cy="8" r="2.5"/>
+                <line x1="2" y1="14" x2="14" y2="2"/>
+              </svg>
+              <svg v-else width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z"/>
+                <circle cx="8" cy="8" r="2.5"/>
+              </svg>
+            </button>
+            <button
+              class="schema-tree__action-btn"
+              :class="{ 'schema-tree__action-btn--locked': isLocked(data.id) }"
+              title="切换锁定"
+              @mousedown.stop
+              @click.stop="toggleLock(data.id)"
+            >
+              <svg v-if="isLocked(data.id)" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="7" width="10" height="7" rx="1.5"/>
+                <path d="M5 7V5a3 3 0 016 0v2"/>
+              </svg>
+              <svg v-else width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="7" width="10" height="7" rx="1.5"/>
+                <path d="M5 7V5a3 3 0 016 0v2"/>
+                <line x1="8" y1="10" x2="8" y2="12"/>
+              </svg>
+            </button>
+          </span>
         </div>
       </template>
     </el-tree>
@@ -224,15 +284,15 @@ function handleToggleExpand(node: SchemaTreeNode) {
 .schema-tree {
   width: 100%;
   height: 100%;
-  padding: 8px 0;
+  padding: 4px 0;
 
   &__empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100px;
-    color: #909399;
-    font-size: 13px;
+    height: 80px;
+    color: #c0c4cc;
+    font-size: 12px;
   }
 
   :deep(.el-tree) {
@@ -240,7 +300,7 @@ function handleToggleExpand(node: SchemaTreeNode) {
 
     .el-tree-node__content {
       height: auto;
-      padding: 4px 8px 4px 0;
+      padding: 3px 8px 3px 0;
     }
 
     .el-tree-node.is-current > .el-tree-node__content {
@@ -255,6 +315,7 @@ function handleToggleExpand(node: SchemaTreeNode) {
     padding: 2px 0;
     min-width: 0;
     width: 100%;
+    position: relative;
 
     &--selected {
       color: #409eff;
@@ -262,6 +323,14 @@ function handleToggleExpand(node: SchemaTreeNode) {
 
     &--container {
       font-weight: 500;
+    }
+
+    &--hidden {
+      opacity: 0.45;
+    }
+
+    &--locked {
+      cursor: not-allowed;
     }
   }
 
@@ -271,15 +340,12 @@ function handleToggleExpand(node: SchemaTreeNode) {
     justify-content: center;
     width: 16px;
     height: 16px;
-    font-size: 10px;
     color: #909399;
     cursor: pointer;
     flex-shrink: 0;
     user-select: none;
 
-    &:hover {
-      color: #409eff;
-    }
+    &:hover { color: #409eff; }
 
     &--placeholder {
       cursor: default;
@@ -298,13 +364,13 @@ function handleToggleExpand(node: SchemaTreeNode) {
 
   &__type-badge {
     display: inline-block;
-    padding: 1px 6px;
+    padding: 1px 5px;
     font-size: 11px;
     background: #f0f2f5;
     border-radius: 3px;
     color: #606266;
     white-space: nowrap;
-    max-width: 100px;
+    max-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 0;
@@ -317,6 +383,44 @@ function handleToggleExpand(node: SchemaTreeNode) {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    flex: 1;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  &__node:hover &__actions {
+    opacity: 1;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: #909399;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #f0f2f5;
+      color: #606266;
+    }
+
+    &--locked {
+      color: #e6a23c;
+    }
   }
 }
 </style>

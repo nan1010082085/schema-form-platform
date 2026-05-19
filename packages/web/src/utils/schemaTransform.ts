@@ -4,9 +4,10 @@
  * Provides group/ungroup, move, and path-based operations for the editor.
  */
 import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import { LAYOUT_CONTAINER_TYPES } from '@/composables/useConstant'
 
-/** Container types that support children */
-const CONTAINER_TYPES = new Set<SchemaType>(['card', 'page', 'toolbar'])
+/** Container types that support children — 统一引用 useConstant */
+const CONTAINER_TYPES = LAYOUT_CONTAINER_TYPES
 
 // ----------------------------------------------------------------
 // Path-based tree operations (Sprint 10)

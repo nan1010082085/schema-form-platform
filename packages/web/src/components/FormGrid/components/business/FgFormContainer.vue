@@ -17,11 +17,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="fg-form-container">
+  <div :class="$style.container">
     <!-- 工具栏 -->
-    <div v-if="showToolbar !== false" class="fg-form-container__toolbar">
-      <div class="fg-form-container__title">{{ title }}</div>
-      <div class="fg-form-container__actions">
+    <div v-if="showToolbar !== false" :class="$style.containerToolbar">
+      <div :class="$style.containerTitle">{{ title }}</div>
+      <div :class="$style.containerActions">
         <slot name="toolbar-actions">
           <el-button size="small" @click="emit('back')">返回</el-button>
           <el-button size="small" @click="emit('print')">打印</el-button>
@@ -32,43 +32,43 @@ const emit = defineEmits<{
     </div>
 
     <!-- 内容区 -->
-    <div class="fg-form-container__body">
+    <div :class="$style.containerBody">
       <slot />
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-form-container {
+<style module lang="scss">
+.container {
   min-height: 100vh;
   background: #f5f7fa;
+}
 
-  &__toolbar {
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 24px;
-    background: #fff;
-    border-bottom: 1px solid #d5dde3;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+.containerToolbar {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #d5dde3;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-  &__title {
-    font-size: 18px;
-    font-weight: 500;
-    color: #333;
-  }
+.containerTitle {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
 
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
+.containerActions {
+  display: flex;
+  gap: 8px;
+}
 
-  &__body {
-    padding: 16px;
-  }
+.containerBody {
+  padding: 16px;
 }
 </style>

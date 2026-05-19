@@ -16,6 +16,7 @@ import { ref, reactive, computed } from 'vue'
 import type {
   SchemaListItem,
   PaginatedResponse,
+  PublishedSchemaItem,
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
@@ -27,6 +28,8 @@ import {
   createSchema as apiCreateSchema,
   updateSchema as apiUpdateSchema,
   deleteSchema as apiDeleteSchema,
+  publishSchema as apiPublishSchema,
+  fetchPublishedSchema as apiFetchPublishedSchema,
 } from '@/utils/apiClient'
 import { useEditorStore } from './editor'
 
@@ -148,7 +151,6 @@ export const useSchemaStore = defineStore('schema', () => {
     pageSize?: number
     search?: string
     type?: string
-    status?: string
   }): Promise<PaginatedResponse<SchemaListItem> | null> {
     const page = params?.page ?? pagination.page
     const pageSize = params?.pageSize ?? pagination.pageSize
@@ -160,7 +162,6 @@ export const useSchemaStore = defineStore('schema', () => {
         page,
         pageSize,
         type: params?.type,
-        status: params?.status,
       }),
     )
 
@@ -374,6 +375,30 @@ export const useSchemaStore = defineStore('schema', () => {
     return idOrSchema
   }
 
+  // ================================================================
+  // 发布操作
+  // ================================================================
+
+  /**
+   * 发布 Schema — 将当前草稿写入 PublishedSchema 表（upsert）。
+   *
+   * @param id - FormSchema ID
+   * @returns 发布后的 PublishedSchema，失败返回 null
+   */
+  async function publishSchema(id: string): Promise<PublishedSchemaItem | null> {
+    return withLoading(() => apiPublishSchema(id))
+  }
+
+  /**
+   * 获取已发布的 Schema（按源 FormSchema ID 查询）。
+   *
+   * @param sourceId - FormSchema ID
+   * @returns PublishedSchema，未发布或失败返回 null
+   */
+  async function fetchPublishedSchema(sourceId: string): Promise<PublishedSchemaItem | null> {
+    return withErrorHandling(() => apiFetchPublishedSchema(sourceId))
+  }
+
   return {
     // 状态
     schemas,
@@ -400,6 +425,9 @@ export const useSchemaStore = defineStore('schema', () => {
     // 编辑器交互
     saveFromEditor,
     loadIntoEditor,
+    // 发布操作
+    publishSchema,
+    fetchPublishedSchema,
     // 错误管理
     clearError,
   }

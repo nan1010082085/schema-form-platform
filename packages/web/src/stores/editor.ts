@@ -58,6 +58,9 @@ export const useEditorStore = defineStore('editor', () => {
   /** 是否显示生成 schema 的使用方式选择对话框 */
   const showGenerateDialog = ref(false)
 
+  /** 正在编辑弹窗内容的 dialog 组件 ID（null = 无） */
+  const editingDialogComponentId = ref<string | null>(null)
+
   // ================================================================
   // 撤销/重做历史
   // ================================================================
@@ -649,6 +652,16 @@ export const useEditorStore = defineStore('editor', () => {
     selectedPaths.value = [newPath]
   }
 
+  /** 打开指定 dialog 组件的编辑模式 */
+  function openDialogEditor(componentId: string): void {
+    editingDialogComponentId.value = componentId
+  }
+
+  /** 关闭 dialog 编辑模式 */
+  function closeDialogEditor(): void {
+    editingDialogComponentId.value = null
+  }
+
   /** 将生成的字段作为表格列应用到当前选中的 search-list/table 节点 */
   function useGeneratedAsColumns(): void {
     if (!selectedPath.value || generatedSchema.value.length === 0) return
@@ -689,6 +702,7 @@ export const useEditorStore = defineStore('editor', () => {
     clipboard,
     generatedSchema,
     showGenerateDialog,
+    editingDialogComponentId,
     historyStack,
     historyPointer,
     // 计算属性
@@ -733,6 +747,8 @@ export const useEditorStore = defineStore('editor', () => {
     // 生成 schema
     setGeneratedSchema,
     closeGenerateDialog,
+    openDialogEditor,
+    closeDialogEditor,
     useGeneratedAsFormFields,
     useGeneratedAsColumns,
     // 校验

@@ -2,24 +2,28 @@
 /**
  * EditorView — 可视化 Schema 编辑器
  *
- * 三栏布局：左侧(可折叠组件面板/结构树) / 中间(el-scrollbar+画布) / 右侧(el-drawer 覆盖层)
- * 左侧面板通过 transform 收起，与画布同级布局；右侧为上层覆盖抽屉
+ * 三栏布局：顶部工具栏 / 左侧(组件面板/结构树) + 中间画布 + 右侧属性面板
+ * 左侧与右侧均为内联 flex 面板，通过工具栏按钮切换显隐
  * 支持 30 步历史回退/前进
  */
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
-import { Fold, Expand } from '@element-plus/icons-vue'
 import EditorToolbar from '@/components/Editor/EditorToolbar.vue'
 import ComponentPanel from '@/components/Editor/ComponentPanel.vue'
 import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
-import JsonImporter from '@/components/Editor/JsonImporter.vue'
 import SchemaTree from '@/components/Editor/SchemaTree.vue'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import { useHistory } from '@/composables/useHistory'
+import { MAX_HISTORY_SIZE } from '@/composables/useConstant'
+import { useModeControl } from '@/composables/useModeControl'
+import { useInteractionControl } from '@/composables/useInteractionControl'
+import { useEditorLayout } from '@/composables/useEditorLayout'
+import { useRightPanelConfig } from '@/composables/useRightPanelConfig'
+import { useLeftPanelManage } from '@/composables/useLeftPanelManage'
+import { useDragEditor } from '@/composables/useDragEditor'
 import { useSchemaStore } from '@/stores/schema'
-import { processSchema } from '@/utils/requestQueue'
 import {
   groupAsContainer,
   ungroupContainer,
@@ -27,7 +31,6 @@ import {
   getItemAtPath,
   removeAtPath,
   insertAtPath,
-  flattenToPaths,
   comparePaths,
 } from '@/utils/schemaTransform'
 import { validateSchema } from '@/utils/schemaValidate'
@@ -37,112 +40,47 @@ const router = useRouter()
 const schemaStore = useSchemaStore()
 
 // ---- History (30 steps) ----
-const { pushState, undo, redo, canUndo, canRedo } = useHistory({ maxSize: 30 })
+const { pushState, undo, redo, canUndo, canRedo } = useHistory({ maxSize: MAX_HISTORY_SIZE })
 
-// ---- Editor state ----
+// ---- Core editor state ----
 const schema = ref<FormSchemaItem[]>([])
-const mode = ref<'edit' | 'preview'>('edit')
-const leftTab = ref<'components' | 'structure'>('components')
-const leftCollapsed = ref(false)
+const selectedPath = ref<number[] | null>(null)
+const selectedPaths = ref<number[][]>([])
+
+// ---- Composables ----
+const currentSchemaId = ref<string | null>(null)
+const { mode, handlePreview } = useModeControl({ schema, currentSchemaId })
+const { previewMode } = useInteractionControl()
+const { leftPanelVisible, rightPanelVisible, leftTab } = useEditorLayout()
+const {
+  drawerVisible, selectedSchema, handleSelect, handleOpenProperties,
+  handlePropertyUpdate, replaceAtPath,
+} = useRightPanelConfig({ schema, selectedPath, selectedPaths, pushState })
+const { handleTreeSelect, handleTreeReorder, handleToggleHidden } = useLeftPanelManage({
+  schema, selectedPath, selectedPaths, drawerVisible, pushState, replaceAtPath,
+})
+const { handleDragReorder, handleDropToContainer, handleDragToContainer } = useDragEditor({
+  schema, selectedPath, selectedPaths, pushState,
+})
+
+// ---- Canvas ----
+const showThumbnail = ref(true)
+const canvasSizePreset = ref('1920x1080')
+
+const canvasSizeMap: Record<string, { w: number; h: number }> = {
+  '1920x1080': { w: 1920, h: 1080 },
+  '1440x900': { w: 1440, h: 900 },
+  '1366x768': { w: 1366, h: 768 },
+}
+const canvasWidth = computed(() => canvasSizeMap[canvasSizePreset.value]?.w ?? 1920)
+const canvasHeight = computed(() => canvasSizeMap[canvasSizePreset.value]?.h ?? 1080)
 
 // ---- Schema identity ----
-const currentSchemaId = ref<string | null>(null)
 const schemaName = ref('')
 const schemaType = ref<'form' | 'search-list'>('form')
 const schemaStatus = ref<'draft' | 'published'>('draft')
 const lastSavedJson = ref('')
 let lastSavedName = ''
-
-// ---- Canvas ----
-const showThumbnail = ref(true)
-const canvasSizePreset = ref('1920×1080')
-const canvasWidth = ref(1920)
-const canvasHeight = ref(1080)
-
-const canvasSizePresets = [
-  { label: '1920×1080', value: '1920×1080' },
-  { label: '1440×900', value: '1440×900' },
-  { label: '1366×768', value: '1366×768' },
-]
-
-// ---- Thumbnail linkage ----
-const canvasScrollRef = ref<InstanceType<typeof import('element-plus')['ElScrollbar']>>()
-const scrollLeft = ref(0)
-const scrollTop = ref(0)
-
-function handleCanvasScroll() {
-  const wrap = canvasScrollRef.value?.wrapRef
-  if (wrap) {
-    scrollLeft.value = wrap.scrollLeft
-    scrollTop.value = wrap.scrollTop
-  }
-}
-
-const thumbScale = 8 // canvas px → thumbnail px ratio
-
-const indicatorStyle = computed(() => {
-  const wrap = canvasScrollRef.value?.wrapRef
-  const vw = wrap?.clientWidth ?? window.innerWidth
-  const vh = wrap?.clientHeight ?? 300
-  return {
-    left: `${scrollLeft.value / thumbScale}px`,
-    top: `${scrollTop.value / thumbScale}px`,
-    width: `${Math.round(vw / thumbScale)}px`,
-    height: `${Math.round(vh / thumbScale)}px`,
-  }
-})
-
-function handleThumbnailClick(e: MouseEvent) {
-  const target = e.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  const wrap = canvasScrollRef.value?.wrapRef
-  if (wrap) {
-    wrap.scrollLeft = x * thumbScale - wrap.clientWidth / 2
-    wrap.scrollTop = y * thumbScale - wrap.clientHeight / 2
-  }
-}
-
-// Schema item color map for thumbnail preview
-const thumbColorMap: Record<string, string> = {
-  'page': '#e8f4fd', 'card': '#fff', 'toolbar': '#f5f7fa',
-  'grid-row': '#fafbfc', 'grid-col': '#fafbfc',
-  'title': '#e8f4fd', 'table': '#ecf5ff', 'search-list': '#ecf5ff',
-  'input': '#fff', 'number': '#fff', 'select': '#fff',
-}
-function thumbItemStyle(_item: FormSchemaItem) {
-  return { background: thumbColorMap[_item.type] ?? '#fafbfc' }
-}
-
-// ---- Right drawer (overlay) ----
-const drawerVisible = ref(false)
-
-// ---- Selection state ----
-const selectedPath = ref<number[] | null>(null)
-const selectedPaths = ref<number[][]>([])
-
-const selectedIndex = computed<number | null>(() => selectedPath.value?.[0] ?? null)
-
-const selectedIndices = computed<number[]>(() =>
-  selectedPaths.value.map((p) => p[0]),
-)
-
-const selectedSchema = computed<FormSchemaItem | null>(() => {
-  if (!selectedPath.value) return null
-  return getItemAtPath(schema.value, selectedPath.value) ?? null
-})
-
-const canGroup = computed(() => selectedPaths.value.length > 0)
-const canUngroup = computed(() => {
-  if (!selectedPath.value) return false
-  const item = getItemAtPath(schema.value, selectedPath.value)
-  return item !== undefined && isContainerType(item)
-})
-
-// ---- Validation ----
-const validationErrorCount = ref(0)
-const validationWarningCount = ref(0)
 
 // ---- Load schema from route query ----
 onMounted(async () => {
@@ -154,18 +92,14 @@ onMounted(async () => {
       currentSchemaId.value = detail.id
       schemaName.value = detail.name
       schemaType.value = detail.type
-      schemaStatus.value = detail.status
       lastSavedJson.value = JSON.stringify(detail.json)
       lastSavedName = detail.name
       pushState(schema.value)
-    }
-  }
-})
 
-// ---- processSchema on preview mode ----
-watch(mode, async (newMode) => {
-  if (newMode === 'preview' && schema.value.length > 0) {
-    await processSchema(schema.value)
+      // Check if a published version exists
+      const published = await schemaStore.fetchPublishedSchema(detail.id)
+      schemaStatus.value = published ? 'published' : 'draft'
+    }
   }
 })
 
@@ -201,7 +135,23 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   }
 })
 
-// ---- Save / Publish / Preview ----
+// ---- Selection derived state ----
+const selectedIndex = computed<number | null>(() => selectedPath.value?.[0] ?? null)
+const selectedIndices = computed<number[]>(() => selectedPaths.value.map((p) => p[0]))
+
+// ---- Validation ----
+const validationErrorCount = ref(0)
+const validationWarningCount = ref(0)
+
+// ---- Group/Ungroup ----
+const canGroup = computed(() => selectedPaths.value.length > 0)
+const canUngroup = computed(() => {
+  if (!selectedPath.value) return false
+  const item = getItemAtPath(schema.value, selectedPath.value)
+  return item !== undefined && isContainerType(item)
+})
+
+// ---- Save / Publish ----
 async function handleSaveDraft() {
   if (!schemaName.value.trim()) {
     try {
@@ -247,178 +197,74 @@ async function handlePublish() {
     await handleSaveDraft()
     if (!currentSchemaId.value) return
   }
+  if (isDirty.value) await handleSaveDraft()
 
-  if (isDirty.value) {
-    await handleSaveDraft()
-  }
-
-  const result = await schemaStore.updateSchema(currentSchemaId.value, {
-    json: schema.value,
-    status: 'published',
-  })
-
+  const result = await schemaStore.publishSchema(currentSchemaId.value)
   if (result) {
     schemaStatus.value = 'published'
     lastSavedJson.value = JSON.stringify(schema.value)
     ElMessage.success('已发布！')
+  } else {
+    ElMessage.error(schemaStore.error || '发布失败')
   }
 }
 
-function handlePreview() {
-  if (currentSchemaId.value) {
-    window.open(`/preview?id=${currentSchemaId.value}`, '_blank')
-  }
+// ---- Import / Export ----
+function handleImport(importedSchema: FormSchemaItem[]) {
+  pushState(schema.value)
+  schema.value = importedSchema
 }
 
+function handleLoadSchema(loadedSchema: FormSchemaItem[]) {
+  pushState(schema.value)
+  schema.value = loadedSchema
+}
+
+function handleExport() {
+  const json = JSON.stringify(schema.value, null, 2)
+  navigator.clipboard.writeText(json).then(() => {
+    ElMessage.success('Schema JSON 已复制到剪贴板')
+  }).catch(() => {
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'schema.json'; a.click()
+    URL.revokeObjectURL(url)
+  })
+}
+
+// ---- Canvas controls ----
 function handleToggleThumbnail() {
   showThumbnail.value = !showThumbnail.value
 }
 
-function toggleLeftPanel() {
-  leftCollapsed.value = !leftCollapsed.value
-}
-
-// ---- Canvas size ----
 function handleCanvasSizeChange(preset: string) {
   canvasSizePreset.value = preset
-  const [w, h] = preset.split('×').map(Number)
-  canvasWidth.value = w
-  canvasHeight.value = h
 }
 
-const canvasStyle = computed(() => ({
-  width: `${canvasWidth.value}px`,
-  height: `${canvasHeight.value}px`,
+// ---- Thumbnail ----
+const thumbScale = 12
+const thumbColorMap: Record<string, string> = {
+  'page': '#e8f4fd', 'card': '#fff', 'toolbar': '#f5f7fa',
+  'grid-row': '#fafbfc', 'grid-col': '#fafbfc',
+  'title': '#e8f4fd', 'table': '#ecf5ff', 'search-list': '#ecf5ff',
+  'input': '#fff', 'number': '#fff', 'select': '#fff',
+}
+function thumbItemStyle(item: FormSchemaItem) {
+  return { background: thumbColorMap[item.type] ?? '#fafbfc' }
+}
+const indicatorStyle = computed(() => ({
+  width: `${Math.round(canvasWidth.value / thumbScale)}px`,
+  height: `${Math.round(canvasHeight.value / thumbScale)}px`,
 }))
-
-// ---- Drawer ----
-function handleSelect(index: number | null, ctrl?: boolean, shift?: boolean) {
-  if (index === null) {
-    selectedPath.value = null
-    selectedPaths.value = []
-    drawerVisible.value = false
-    return
-  }
-
-  const clickedPath = [index]
-  if (shift && selectedPath.value && selectedPath.value.length === 1) {
-    const fromIdx = selectedPath.value[0]
-    const toIdx = index
-    const minIdx = Math.min(fromIdx, toIdx)
-    const maxIdx = Math.max(fromIdx, toIdx)
-    const allPaths = flattenToPaths(schema.value)
-    const topLevelPaths = allPaths.filter((p) => p.length === 1)
-    const rangePaths = topLevelPaths.filter((p) => p[0] >= minIdx && p[0] <= maxIdx)
-    selectedPaths.value = rangePaths
-    selectedPath.value = clickedPath
-  } else if (ctrl) {
-    const key = clickedPath.join(',')
-    const existingIdx = selectedPaths.value.findIndex((p) => p.join(',') === key)
-    if (existingIdx >= 0) {
-      selectedPaths.value = selectedPaths.value.filter((_, i) => i !== existingIdx)
-      if (selectedPath.value?.join(',') === key) {
-        selectedPath.value = selectedPaths.value.length > 0
-          ? selectedPaths.value[selectedPaths.value.length - 1]
-          : null
-      }
-    } else {
-      selectedPaths.value = [...selectedPaths.value, clickedPath]
-      selectedPath.value = clickedPath
-    }
-  } else {
-    selectedPath.value = clickedPath
-    selectedPaths.value = [clickedPath]
-  }
-}
-
-function handleOpenProperties() {
-  if (selectedPath.value) drawerVisible.value = true
-}
-
-function handleTreeSelect(path: number[]) {
-  selectedPath.value = path
-  selectedPaths.value = [path]
-  // 结构树点击总是打开属性抽屉
-  nextTick(() => { drawerVisible.value = true })
-}
-
-function handleTreeReorder(payload: { sourcePath: number[]; targetPath: number[]; position: 'before' | 'after' | 'inside' }) {
-  pushState(schema.value)
-  const { sourcePath, targetPath, position } = payload
-
-  // 获取被拖拽的项
-  const item = getItemAtPath(schema.value, sourcePath)
-  if (!item) return
-
-  // 计算插入位置
-  let insertParentPath: number[]
-  let insertIndex: number
-  if (position === 'inside') {
-    insertParentPath = targetPath
-    insertIndex = 0
-  } else if (position === 'before') {
-    insertParentPath = targetPath.slice(0, -1)
-    insertIndex = targetPath[targetPath.length - 1]
-  } else {
-    insertParentPath = targetPath.slice(0, -1)
-    insertIndex = targetPath[targetPath.length - 1] + 1
-  }
-
-  // 调整索引：如果源和目标在同一父级，且源在目标之前，移除后索引需减 1
-  const sourceParent = sourcePath.slice(0, -1)
-  const sourceIdx = sourcePath[sourcePath.length - 1]
-  if (sourceParent.join(',') === insertParentPath.join(',') && sourceIdx < insertIndex) {
-    insertIndex--
-  }
-
-  // 先移除，再插入
-  schema.value = removeAtPath(schema.value, sourcePath)
-  schema.value = insertAtPath(schema.value, insertParentPath, insertIndex, JSON.parse(JSON.stringify(item)))
-  selectedPath.value = [...insertParentPath, insertIndex]
-  selectedPaths.value = [selectedPath.value]
-}
-
-// ---- Property update ----
-function handlePropertyUpdate(updatedItem: FormSchemaItem) {
-  if (!selectedPath.value) return
-  pushState(schema.value)
-  schema.value = replaceAtPath(schema.value, selectedPath.value, updatedItem)
-}
-
-function replaceAtPath(items: FormSchemaItem[], path: number[], newItem: FormSchemaItem): FormSchemaItem[] {
-  if (path.length === 0) return items
-  const result = JSON.parse(JSON.stringify(items)) as FormSchemaItem[]
-  if (path.length === 1) {
-    result[path[0]] = newItem
-    return result
-  }
-  const parent = getItemAtPath(result, path.slice(0, -1))
-  if (parent?.children) {
-    parent.children[path[path.length - 1]] = newItem
-  }
-  return result
+function handleThumbnailClick(_e: MouseEvent) {
+  // Scroll to corresponding position (simplified)
 }
 
 // ---- Toolbar operations ----
-function handleModeChange(newMode: 'edit' | 'preview') { mode.value = newMode }
-
 function handleSchemaUpdate(newSchema: FormSchemaItem[]) {
   pushState(schema.value)
   schema.value = newSchema
-}
-
-function handleImport(newSchema: FormSchemaItem[]) {
-  pushState(schema.value)
-  schema.value = newSchema
-  selectedPath.value = null
-  selectedPaths.value = []
-}
-
-function handleLoadSchema(loaded: FormSchemaItem[]) {
-  schema.value = loaded
-  pushState(schema.value)
-  selectedPath.value = null
-  selectedPaths.value = []
 }
 
 function handleCopy() {
@@ -514,75 +360,6 @@ function handleValidate() {
     ElNotification({ title: 'Schema 校验失败', message: msgs, type: 'error', duration: 6000 })
   }
 }
-
-// ---- Drag-and-drop ----
-function handleDragReorder(fromIndex: number, toIndex: number) {
-  pushState(schema.value)
-  const arr = [...schema.value]
-  const [moved] = arr.splice(fromIndex, 1)
-  arr.splice(toIndex, 0, moved)
-  schema.value = arr
-  selectedPath.value = [toIndex]
-  selectedPaths.value = [selectedPath.value]
-}
-
-function handleDropToContainer(parentPath: number[], index: number, item: FormSchemaItem) {
-  pushState(schema.value)
-  schema.value = insertAtPath(schema.value, parentPath, index, item)
-  selectedPath.value = [...parentPath, index]
-  selectedPaths.value = [selectedPath.value]
-}
-
-function handleDragToContainer(sourcePath: number[], targetPath: number[], targetIndex: number) {
-  const targetStr = targetPath.join(',')
-  const sourceStr = sourcePath.join(',')
-  if (targetStr.startsWith(sourceStr + ',') || targetStr === sourceStr) return
-  const item = getItemAtPath(schema.value, sourcePath)
-  if (!item) return
-  pushState(schema.value)
-  const clonedItem = JSON.parse(JSON.stringify(item)) as FormSchemaItem
-  let newSchema = removeAtPath(schema.value, sourcePath)
-  const adjustedTargetPath = adjustTarget(sourcePath, targetPath)
-  schema.value = insertAtPath(newSchema, adjustedTargetPath, targetIndex, clonedItem)
-  selectedPath.value = [...adjustedTargetPath, targetIndex]
-  selectedPaths.value = [selectedPath.value]
-}
-
-function adjustTarget(sourcePath: number[], targetPath: number[]): number[] {
-  const minLen = Math.min(sourcePath.length, targetPath.length)
-  for (let level = 0; level < minLen; level++) {
-    if (sourcePath[level] !== targetPath[level]) {
-      if (level === sourcePath.length - 1 && level === targetPath.length - 1 && sourcePath[level] < targetPath[level]) {
-        const adjusted = [...targetPath]
-        adjusted[level]--
-        return adjusted
-      }
-      return targetPath
-    }
-  }
-  return targetPath
-}
-
-// ---- Import / Export ----
-function handleExport() {
-  const json = JSON.stringify(schema.value, null, 2)
-  navigator.clipboard.writeText(json).then(() => {
-    ElMessage.success('Schema JSON 已复制到剪贴板')
-  }).catch(() => {
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'schema.json'; a.click()
-    URL.revokeObjectURL(url)
-  })
-}
-
-const jsonImporterRef = ref<InstanceType<typeof JsonImporter> | null>(null)
-function handleOpenJsonImporter() { jsonImporterRef.value?.open() }
-function handleJsonImport(newSchema: FormSchemaItem[]) {
-  pushState(schema.value)
-  schema.value = [...schema.value, ...newSchema]
-}
 </script>
 
 <template>
@@ -599,6 +376,9 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
     <EditorToolbar
       :mode="mode"
+      :schema="schema"
+      :schema-name="schemaName"
+      :schema-id="currentSchemaId"
       :selected-index="selectedIndex"
       :selected-indices="selectedIndices"
       :schema-length="schema.length"
@@ -606,22 +386,23 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
       :can-redo="canRedo"
       :can-group="canGroup"
       :can-ungroup="canUngroup"
-      :schema="schema"
-      :schema-name="schemaName || ''"
-      :schema-id="currentSchemaId"
-      :show-thumbnail="showThumbnail"
-      :canvas-size-preset="canvasSizePreset"
       :validation-error-count="validationErrorCount"
       :validation-warning-count="validationWarningCount"
+      :left-panel-visible="leftPanelVisible"
+      :right-panel-visible="rightPanelVisible"
+      :preview-mode="previewMode"
+      :show-thumbnail="showThumbnail"
+      :canvas-size-preset="canvasSizePreset"
+      @update:schema-name="schemaName = $event"
+      @update:left-panel-visible="leftPanelVisible = $event"
+      @update:right-panel-visible="rightPanelVisible = $event"
+      @update:mode="mode = $event"
+      @update:preview-mode="previewMode = $event"
       @save-draft="handleSaveDraft"
       @publish="handlePublish"
       @preview="handlePreview"
-      @toggle-thumbnail="handleToggleThumbnail"
-      @canvas-size-change="handleCanvasSizeChange"
-      @import="handleImport"
-      @import-response="handleOpenJsonImporter"
       @export="handleExport"
-      @update:mode="handleModeChange"
+      @import="handleImport"
       @load-schema="handleLoadSchema"
       @copy="handleCopy"
       @delete="handleDelete"
@@ -633,46 +414,48 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
       @group="handleGroup"
       @ungroup="handleUngroup"
       @validate="handleValidate"
+      @toggle-thumbnail="handleToggleThumbnail"
+      @canvas-size-change="handleCanvasSizeChange"
     />
 
     <div class="editor-view__body">
-      <!-- Left panel: same layout level as canvas, collapses with transform -->
+      <!-- Left panel -->
       <aside
-        v-if="mode === 'edit'"
+        v-if="mode === 'edit' && leftPanelVisible"
         class="editor-view__left"
-        :class="{ 'editor-view__left--collapsed': leftCollapsed }"
       >
-        <div class="editor-view__name-area">
-          <el-input
-            v-model="schemaName"
-            placeholder="未命名实例"
-            size="large"
-            class="editor-view__name-input"
-          />
-          <div v-if="currentSchemaId" class="editor-view__meta">
-            <el-tag size="small" :type="schemaStatus === 'published' ? 'success' : 'info'">
-              {{ schemaStatus === 'published' ? '已发布' : '草稿' }}
-            </el-tag>
-            <el-tag size="small" :type="schemaType === 'form' ? '' : 'success'">
-              {{ schemaType === 'form' ? '表单' : '搜索列表' }}
-            </el-tag>
-          </div>
-        </div>
-
         <div class="editor-view__tabs">
           <button
             class="editor-view__tab"
             :class="{ 'editor-view__tab--active': leftTab === 'components' }"
             @click="leftTab = 'components'"
-          >组件</button>
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="1" width="6" height="6" rx="1"/>
+              <rect x="9" y="1" width="6" height="6" rx="1"/>
+              <rect x="1" y="9" width="6" height="6" rx="1"/>
+              <rect x="9" y="9" width="6" height="6" rx="1"/>
+            </svg>
+            <span>组件库</span>
+          </button>
           <button
             class="editor-view__tab"
             :class="{ 'editor-view__tab--active': leftTab === 'structure' }"
             @click="leftTab = 'structure'"
-          >结构</button>
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="1" y1="4" x2="6" y2="4"/>
+              <line x1="1" y1="8" x2="10" y2="8"/>
+              <line x1="1" y1="12" x2="8" y2="12"/>
+              <circle cx="12" cy="4" r="2"/>
+              <circle cx="14" cy="8" r="2"/>
+              <circle cx="10" cy="12" r="2"/>
+            </svg>
+            <span>结构</span>
+          </button>
         </div>
 
-        <el-scrollbar class="editor-view__left-scrollbar">
+        <div class="editor-view__left-content">
           <ComponentPanel v-show="leftTab === 'components'" />
           <SchemaTree
             v-show="leftTab === 'structure'"
@@ -680,23 +463,25 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
             :selected-path="selectedPath"
             @select="handleTreeSelect"
             @reorder="handleTreeReorder"
+            @toggle-hidden="handleToggleHidden"
           />
-        </el-scrollbar>
-      </aside>
+        </div>
 
-      <!-- Collapse toggle button -->
-      <button
-        v-if="mode === 'edit'"
-        class="editor-view__left-toggle"
-        @click="toggleLeftPanel"
-      >
-        <el-icon :size="14"><Fold v-if="!leftCollapsed" /><Expand v-else /></el-icon>
-      </button>
+        <!-- Status bar at bottom of left panel -->
+        <div v-if="currentSchemaId" class="editor-view__status-bar">
+          <span class="editor-view__status-tag" :class="`editor-view__status-tag--${schemaStatus}`">
+            {{ schemaStatus === 'published' ? '已发布' : '草稿' }}
+          </span>
+          <span class="editor-view__status-tag" :class="`editor-view__status-tag--${schemaType}`">
+            {{ schemaType === 'form' ? '表单' : '搜索列表' }}
+          </span>
+        </div>
+      </aside>
 
       <!-- Center canvas -->
       <div class="editor-view__center">
-        <el-scrollbar ref="canvasScrollRef" class="editor-view__scrollbar" @scroll="handleCanvasScroll">
-          <div class="editor-view__canvas" :style="canvasStyle">
+        <div class="editor-view__canvas-wrapper">
+          <div class="editor-view__canvas">
             <EditorCanvas
               :schema="schema"
               :selected-index="selectedIndex"
@@ -712,47 +497,41 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
               @drag-to-container="handleDragToContainer"
             />
           </div>
-        </el-scrollbar>
+        </div>
 
-        <!-- Thumbnail mini-map -->
-        <div v-if="showThumbnail && mode === 'edit'" class="editor-view__thumbnail" @click="handleThumbnailClick">
-          <el-scrollbar class="editor-view__thumbnail-scroll">
+        <!-- Thumbnail overlay -->
+        <div v-if="showThumbnail && schema.length > 0" class="editor-view__thumbnail" @click="handleThumbnailClick">
+          <div class="editor-view__thumbnail-canvas">
             <div
-              class="editor-view__thumbnail-content"
-              :style="{
-                width: `${Math.round(canvasWidth / thumbScale)}px`,
-                height: `${Math.round(canvasHeight / thumbScale)}px`,
-              }"
-            >
-              <!-- Simplified schema preview -->
-              <div
-                v-for="(item, idx) in schema"
-                :key="idx"
-                class="editor-view__thumbnail-block"
-                :style="thumbItemStyle(item)"
-              />
-              <!-- Viewport indicator -->
-              <div class="editor-view__thumbnail-indicator" :style="indicatorStyle" />
-            </div>
-          </el-scrollbar>
+              v-for="(item, idx) in schema"
+              :key="idx"
+              class="editor-view__thumbnail-item"
+              :style="thumbItemStyle(item)"
+            />
+          </div>
+          <div class="editor-view__thumbnail-indicator" :style="indicatorStyle" />
         </div>
       </div>
 
-      <!-- Right drawer: overlay layer, not in layout flow -->
-      <el-drawer
-        v-model="drawerVisible"
-        direction="rtl"
-        size="380px"
-        :close-on-click-modal="true"
-        :modal="true"
-        append-to-body
+      <!-- Right property panel (inline) -->
+      <aside
+        v-if="mode === 'edit' && rightPanelVisible && (drawerVisible || selectedSchema)"
+        class="editor-view__right"
       >
-        <template #header>
-          <span v-if="selectedSchema" class="editor-view__drawer-title">
-            {{ (selectedSchema as any).label || selectedSchema?.type || '组件' }} 配置
-          </span>
+        <div class="editor-view__right-header">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="6"/>
+            <path d="M8 5v3l2 1"/>
+          </svg>
+          <span v-if="selectedSchema">{{ (selectedSchema as any).label || selectedSchema?.type || '组件' }} 配置</span>
           <span v-else>编辑器配置</span>
-        </template>
+          <button class="editor-view__right-close" @click="drawerVisible = false">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <line x1="4" y1="4" x2="12" y2="12"/>
+              <line x1="12" y1="4" x2="4" y2="12"/>
+            </svg>
+          </button>
+        </div>
 
         <PropertyPanel
           v-if="selectedSchema"
@@ -762,31 +541,10 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
         />
 
         <div v-else class="editor-view__global-config">
-          <h3>全局设置</h3>
-          <el-form label-position="top">
-            <el-form-item label="画布尺寸">
-              <el-select v-model="canvasSizePreset" @change="handleCanvasSizeChange">
-                <el-option
-                  v-for="p in canvasSizePresets"
-                  :key="p.value"
-                  :label="p.label"
-                  :value="p.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="显示缩略图">
-              <el-switch v-model="showThumbnail" />
-            </el-form-item>
-          </el-form>
-          <el-divider />
-          <el-button type="primary" @click="router.push('/instances')">
-            返回实例管理
-          </el-button>
+          <p class="editor-view__global-hint">选择画布中的组件查看和编辑属性</p>
         </div>
-      </el-drawer>
+      </aside>
     </div>
-
-    <JsonImporter ref="jsonImporterRef" @import="handleJsonImport" />
   </div>
 </template>
 
@@ -803,48 +561,22 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    position: relative;
   }
 
-  // ---- Left panel: same level as canvas, collapse via transform ----
+  // ---- Left panel ----
   &__left {
-    width: 260px;
+    width: 240px;
     flex-shrink: 0;
     background: #fff;
     border-right: 1px solid #e4e7ed;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.3s ease;
     z-index: 2;
-
-    &--collapsed {
-      width: 0;
-      transform: translateX(-100%);
-      overflow: hidden;
-      opacity: 0;
-    }
   }
 
   &__error {
     margin: 8px 16px 0;
     flex-shrink: 0;
-  }
-
-  &__name-area {
-    padding: 14px 12px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  &__name-input {
-    :deep(.el-input__inner) { font-weight: 600; font-size: 15px; height: 40px; }
-  }
-
-  &__meta {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
   }
 
   &__tabs {
@@ -855,8 +587,12 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
 
   &__tab {
     flex: 1;
-    padding: 10px 8px;
-    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    font-size: 12px;
     font-weight: 500;
     color: #606266;
     background: transparent;
@@ -866,53 +602,57 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     transition: all 0.2s;
 
     &:hover { color: #409eff; background: #f5f7fa; }
-    &--active { color: #409eff; border-bottom-color: #409eff; }
+    &--active {
+      color: #409eff;
+      border-bottom-color: #409eff;
+      background: #ecf5ff;
+    }
   }
 
-  &__left-scrollbar {
+  &__left-content {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
 
-  // ---- Left panel collapse toggle ----
-  &__left-toggle {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    width: 22px;
-    height: 48px;
+  &__status-bar {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border: 1px solid #e4e7ed;
-    border-left: none;
-    border-radius: 0 6px 6px 0;
-    cursor: pointer;
-    color: #909399;
-    transition: all 0.2s;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid #f0f2f5;
+    flex-shrink: 0;
+  }
 
-    &:hover { color: #409eff; background: #ecf5ff; }
+  &__status-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+
+    &--draft { background: #f0f2f5; color: #909399; }
+    &--published { background: #f0f9eb; color: #67c23a; }
+    &--form { background: #ecf5ff; color: #409eff; }
+    &--search-list { background: #ecf5ff; color: #409eff; }
   }
 
   // ---- Center canvas ----
   &__center {
     flex: 1;
     min-width: 0;
+    overflow: auto;
+    background: #e8eaed;
+    padding: 24px;
     position: relative;
-    background: #e0e3e8;
   }
 
-  &__scrollbar {
-    height: 100%;
+  &__canvas-wrapper {
+    margin: 0 auto;
   }
 
   &__canvas {
     background: #fff;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-    margin: 24px;
+    border: 1px solid #dcdfe6;
+    min-height: 600px;
   }
 
   // ---- Thumbnail ----
@@ -920,62 +660,96 @@ function handleJsonImport(newSchema: FormSchemaItem[]) {
     position: absolute;
     bottom: 16px;
     right: 16px;
-    width: 200px;
-    height: 140px;
+    width: 160px;
     background: #fff;
-    border: 2px solid #dcdfe6;
-    border-radius: 8px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    z-index: 10;
     cursor: pointer;
-    transition: border-color 0.2s;
-    &:hover { border-color: #409eff; }
+    z-index: 10;
   }
 
-  &__thumbnail-scroll {
-    width: 100%;
-    height: 100%;
+  &__thumbnail-canvas {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
   }
 
-  &__thumbnail-content {
-    background: #fafbfc;
-    border: 1px solid #e8ecf1;
-    margin: 8px auto;
-    position: relative;
-  }
-
-  &__thumbnail-block {
+  &__thumbnail-item {
     height: 4px;
-    margin: 1px 2px;
     border-radius: 1px;
-    border: 1px solid #e0e4e8;
+    border: 1px solid #ebeef5;
   }
 
   &__thumbnail-indicator {
     position: absolute;
-    top: 0;
-    left: 0;
-    border: 2px solid #f56c6c;
-    background: rgba(245, 108, 108, 0.06);
+    top: 4px;
+    left: 4px;
+    border: 1.5px solid #409eff;
+    background: rgba(64, 158, 255, 0.08);
+    border-radius: 2px;
     pointer-events: none;
-    transition: left 0.1s, top 0.1s;
   }
 
-  // ---- Drawer title ----
-  &__drawer-title {
+  // ---- Right property panel (inline) ----
+  &__right {
+    width: 280px;
+    flex-shrink: 0;
+    background: #fff;
+    border-left: 1px solid #e4e7ed;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  &__right-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
     font-weight: 600;
-    font-size: 15px;
+    color: #303133;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
   }
 
-  // ---- Global config (shown when nothing selected) ----
+  &__right-close {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: #909399;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #f0f2f5;
+      color: #606266;
+    }
+  }
+
   &__global-config {
-    padding: 8px 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
 
-    h3 { font-size: 16px; margin: 0 0 16px; color: #303133; }
-
-    :deep(.el-input__inner) { height: 32px; font-size: 14px; }
-    :deep(.el-select .el-input__inner) { height: 32px; }
+  &__global-hint {
+    text-align: center;
+    color: #c0c4cc;
+    font-size: 13px;
+    line-height: 1.6;
   }
 }
 </style>

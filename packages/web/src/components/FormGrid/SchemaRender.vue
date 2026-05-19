@@ -14,6 +14,7 @@ import type {
 import {
   ACTION_EMIT_KEY as ACTION_EMIT_INJECTION_KEY,
   FORM_GRID_LINKAGE_KEY,
+  FORM_GRID_READONLY_KEY,
   isFullWidthType,
 } from './types'
 
@@ -24,6 +25,8 @@ const props = defineProps<{
   editable?: boolean
   /** 是否正在拖拽中（Sprint 11） */
   isDragging?: boolean
+  /** 只读模式：禁用表单输入，隐藏内部按钮 */
+  readonly?: boolean
   /** 当前节点在 schema 树中的路径（Sprint 11） */
   path?: number[]
 }>()
@@ -34,6 +37,8 @@ const emit = defineEmits<{
 
 const emitAction = inject(ACTION_EMIT_INJECTION_KEY, undefined)
 const linkageStateMap = inject(FORM_GRID_LINKAGE_KEY, undefined)
+const injectedReadonly = inject(FORM_GRID_READONLY_KEY, undefined)
+const effectiveReadonly = computed(() => props.readonly ?? injectedReadonly?.value ?? false)
 
 // 响应式断点
 const { resolveSpan } = useBreakpoint()
@@ -134,7 +139,7 @@ const effectiveRules = computed<SchemaRules | undefined>(() => {
 
 const isLayoutRow = computed(() => props.schema.type === 'grid-row')
 const isLayoutCol = computed(() => props.schema.type === 'grid-col')
-const LAYOUT_TYPES = new Set(['page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs'])
+const LAYOUT_TYPES = new Set(['page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog'])
 const isLayoutComponent = computed(() => LAYOUT_TYPES.has(props.schema.type))
 const isComponent = computed(() => !isLayoutRow.value && !isLayoutCol.value && !isLayoutComponent.value)
 
@@ -190,16 +195,20 @@ const componentAlignStyle = computed(() => {
 })
 
 // ---- Editor: Container drag-and-drop (Sprint 11) ----
-const EDITABLE_CONTAINER_TYPES = new Set(['card', 'page', 'toolbar', 'grid-row', 'grid-col'])
+import { EDITABLE_CONTAINER_TYPES } from '@/composables/useConstant'
 const isContainerType = computed(() => EDITABLE_CONTAINER_TYPES.has(props.schema.type))
 const isHovered = ref(false)
+const localDragActive = ref(false)
 
 /** 当前节点路径字符串，供 ErrorBoundary 日志使用 */
 const nodePathStr = computed(() => props.path?.join(',') ?? '')
 
 // Reset hover state when drag ends
 watch(() => props.isDragging, (dragging) => {
-  if (!dragging) isHovered.value = false
+  if (!dragging) {
+    isHovered.value = false
+    localDragActive.value = false
+  }
 })
 
 function onContainerDragOver(event: DragEvent) {
@@ -208,25 +217,42 @@ function onContainerDragOver(event: DragEvent) {
   isHovered.value = true
 }
 
+function onContainerDragEnter(event: DragEvent) {
+  event.preventDefault()
+  localDragActive.value = true
+}
+
 function onContainerDragLeave(event: DragEvent) {
   const related = event.relatedTarget as HTMLElement | null
   const current = event.currentTarget as HTMLElement
-  // Only clear hover if we actually left this container (not entering a child)
   if (related && current.contains(related)) return
   isHovered.value = false
+  localDragActive.value = false
 }
 
 function onContainerDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
   isHovered.value = false
+  localDragActive.value = false
   const raw = event.dataTransfer?.getData('application/schema-drag')
-  if (!raw) return
-  emit('container-drop', {
-    parentPath: props.path ?? [],
-    index: props.schema.children?.length ?? 0,
-    dragDataRaw: raw,
-  })
+  if (raw) {
+    emit('container-drop', {
+      parentPath: props.path ?? [],
+      index: props.schema.children?.length ?? 0,
+      dragDataRaw: raw,
+    })
+    return
+  }
+  // Fallback: palette drag only sets 'schema-type'
+  const schemaType = event.dataTransfer?.getData('schema-type')
+  if (schemaType) {
+    emit('container-drop', {
+      parentPath: props.path ?? [],
+      index: props.schema.children?.length ?? 0,
+      dragDataRaw: JSON.stringify({ source: 'panel', type: schemaType }),
+    })
+  }
 }
 
 function getFieldValue(): FormFieldValue {
@@ -287,6 +313,7 @@ watch(
           :form-data="formData"
           :editable="editable"
           :is-dragging="isDragging"
+          :readonly="effectiveReadonly"
           :path="[...(path ?? []), idx]"
           @container-drop="emit('container-drop', $event)"
         />
@@ -324,6 +351,7 @@ watch(
               :form-data="formData"
               :editable="editable"
               :is-dragging="isDragging"
+              :readonly="effectiveReadonly"
               :path="[...(path ?? []), idx]"
               @container-drop="emit('container-drop', $event)"
             />
@@ -333,26 +361,91 @@ watch(
     </div>
   </div>
 
-  <!-- 布局组件：page / toolbar / card / title / divider / spacer / steps / tabs -->
+  <!-- 布局组件：page / toolbar / card / title / divider / spacer / steps / tabs / dialog -->
   <template v-else-if="isLayoutComponent">
-    <!-- steps/tabs 组件：children 作为 prop 传入 -->
-    <ErrorBoundary
+    <!-- steps/tabs 组件：children 作为 prop 传入，带拖放区域 -->
+    <div
       v-if="schema.type === 'steps' || schema.type === 'tabs'"
-      :node-type="schema.type"
-      :node-field="schema.field"
-      :node-path="nodePathStr"
+      class="fg-container-edit-wrap"
+      @dragenter.prevent="onContainerDragEnter"
+      @dragover.prevent="onContainerDragOver"
+      @dragleave="onContainerDragLeave"
+      @drop.prevent.stop="onContainerDrop"
     >
-      <component
-        :is="comp"
-        v-bind="schema.props || {}"
-        :children="schema.children"
-        :form-data="formData"
-      />
-    </ErrorBoundary>
+      <ErrorBoundary
+        :node-type="schema.type"
+        :node-field="schema.field"
+        :node-path="nodePathStr"
+      >
+        <component
+          :is="comp"
+          v-bind="schema.props || {}"
+          :children="schema.children"
+          :form-data="formData"
+          :editable="editable"
+          :is-dragging="isDragging"
+          :path="path"
+          @container-drop="emit('container-drop', $event)"
+        />
+      </ErrorBoundary>
+      <div
+        class="fg-container-drop-zone"
+        :class="{
+          'fg-container-drop-zone--active': localDragActive || isDragging,
+          'fg-container-drop-zone--hover': isHovered,
+        }"
+      >
+        <span class="fg-container-drop-zone__text">Drop here to add inside</span>
+      </div>
+    </div>
+    <!-- 弹窗组件：edit 模式显示预览卡，preview/runtime 正常渲染 -->
+    <template v-else-if="schema.type === 'dialog'">
+      <ErrorBoundary
+        :node-type="schema.type"
+        :node-field="schema.field"
+        :node-path="nodePathStr"
+      >
+        <component
+          :is="comp"
+          :model-value="false"
+          :title="schema.props?.title ?? schema.label ?? 'Dialog'"
+          :width="schema.props?.width"
+          :dialog-schema="schema.props?.dialogSchema"
+          :component-id="schema.componentId"
+          :editable="editable"
+          :is-dragging="isDragging"
+          :path="path"
+          :children="schema.children"
+          @container-drop="emit('container-drop', $event)"
+        >
+          <template v-if="schema.children?.length" #default>
+            <template v-for="(child, ci) in schema.children" :key="ci">
+              <ErrorBoundary
+                v-if="!child.hidden"
+                :node-type="child.type"
+                :node-field="child.field"
+                :node-path="[...(path ?? []), ci].join(',')"
+              >
+                <SchemaRender
+                  :schema="child"
+                  :form-data="formData"
+                  :editable="editable"
+                  :is-dragging="isDragging"
+                  :readonly="effectiveReadonly"
+                  :path="[...(path ?? []), ci]"
+                  @container-drop="emit('container-drop', $event)"
+                />
+              </ErrorBoundary>
+            </template>
+          </template>
+        </component>
+      </ErrorBoundary>
+    </template>
     <!-- 可编辑容器 (card/page/toolbar)：添加拖放区域 (Sprint 11) -->
     <div
       v-else-if="editable && isContainerType"
       class="fg-container-edit-wrap"
+      @dragenter.prevent="onContainerDragEnter"
       @dragover.prevent="onContainerDragOver"
       @dragleave="onContainerDragLeave"
       @drop.prevent.stop="onContainerDrop"
@@ -380,6 +473,7 @@ watch(
                   :form-data="formData"
                   :editable="editable"
                   :is-dragging="isDragging"
+                  :readonly="effectiveReadonly"
                   :path="[...(path ?? []), ci]"
                   @container-drop="emit('container-drop', $event)"
                 />
@@ -391,7 +485,7 @@ watch(
       <div
         class="fg-container-drop-zone"
         :class="{
-          'fg-container-drop-zone--active': isDragging,
+          'fg-container-drop-zone--active': localDragActive || isDragging,
           'fg-container-drop-zone--hover': isHovered,
         }"
       >
@@ -423,6 +517,7 @@ watch(
                 :form-data="formData"
                 :editable="editable"
                 :is-dragging="isDragging"
+                :readonly="effectiveReadonly"
                 :path="[...(path ?? []), ci]"
                 @container-drop="emit('container-drop', $event)"
               />
@@ -446,17 +541,17 @@ watch(
         :is="comp"
         :form-data="formData"
         :schema="schema"
-        :disabled="isDisabled"
+        :disabled="isDisabled || effectiveReadonly"
       />
-      <!-- 按钮列表：不包裹 el-form-item -->
+      <!-- 按钮列表：不包裹 el-form-item；只读模式隐藏 -->
       <component
-        v-else-if="schema.type === 'button-list'"
+        v-else-if="schema.type === 'button-list' && !effectiveReadonly"
         :is="comp"
         :buttons="schema.buttons"
       />
-      <!-- 工具栏按钮：居中对齐，不包裹 el-form-item -->
+      <!-- 工具栏按钮：居中对齐，不包裹 el-form-item；只读模式隐藏 -->
       <component
-        v-else-if="schema.type === 'toolbar-buttons'"
+        v-else-if="schema.type === 'toolbar-buttons' && !effectiveReadonly"
         :is="comp"
         :buttons="schema.buttons"
         :background="schema.props?.background"
@@ -512,7 +607,7 @@ watch(
           :is="comp"
           :model-value="getFieldValue()"
           :placeholder="schema.props?.placeholder"
-          :disabled="isDisabled || schema.props?.disabled"
+          :disabled="isDisabled || schema.props?.disabled || effectiveReadonly"
           :readonly="schema.props?.readonly"
           :options="effectiveOptions"
           :api="effectiveApi"

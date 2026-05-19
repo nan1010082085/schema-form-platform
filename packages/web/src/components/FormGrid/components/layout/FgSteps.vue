@@ -29,6 +29,12 @@ const props = withDefaults(defineProps<{
   children?: FormSchemaItem[]
   /** 表单数据（由 SchemaRender 传入） */
   formData?: FormData
+  /** 编辑模式标识 */
+  editable?: boolean
+  /** 是否正在拖拽 */
+  isDragging?: boolean
+  /** 当前节点路径 */
+  path?: number[]
 }>(), {
   active: 0,
   direction: 'horizontal',
@@ -40,6 +46,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:active': [step: number]
   'step-change': [step: number, prevStep: number]
+  'container-drop': [data: any]
 }>()
 
 const formGridApi = inject(FORM_GRID_API_KEY, undefined)
@@ -118,13 +125,13 @@ defineExpose({
 </script>
 
 <template>
-  <div class="fg-steps" :class="{ 'fg-steps--vertical': direction === 'vertical' }">
+  <div :class="[$style.steps, direction === 'vertical' ? $style['steps--vertical'] : '']">
     <!-- 步骤头 -->
     <el-steps
       :active="currentStep"
       :direction="direction"
       finish-status="success"
-      class="fg-steps__header"
+      :class="$style.stepsHeader"
     >
       <el-step
         v-for="(step, idx) in steps"
@@ -135,23 +142,27 @@ defineExpose({
     </el-steps>
 
     <!-- 步骤内容：使用 v-show 保持挂载 -->
-    <div class="fg-steps__content">
+    <div :class="$style.stepsContent">
       <div
         v-for="(child, idx) in children"
         :key="idx"
         v-show="idx === currentStep"
-        class="fg-steps__panel"
+        :class="$style.stepsPanel"
       >
         <SchemaRender
           v-if="!child.hidden"
           :schema="child"
           :form-data="formData"
+          :editable="editable"
+          :is-dragging="isDragging"
+          :path="[...(path ?? []), idx]"
+          @container-drop="emit('container-drop', $event)"
         />
       </div>
     </div>
 
     <!-- 步骤操作栏 -->
-    <div class="fg-steps__actions">
+    <div :class="$style.stepsActions">
       <el-button v-if="currentStep > 0" @click="prevStep">
         上一步
       </el-button>
@@ -166,8 +177,8 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss" scoped>
-.fg-steps {
+<style module lang="scss">
+.steps {
   --fg-steps-gap: 24px;
   --fg-steps-padding: 16px;
   --fg-steps-content-min-height: 200px;
@@ -178,56 +189,47 @@ defineExpose({
   gap: var(--fg-steps-gap);
   padding: var(--fg-steps-padding);
 
-  &--vertical {
-    flex-direction: row;
-    align-items: flex-start;
-
-    .fg-steps__header {
-      flex-shrink: 0;
-      min-width: 160px;
-    }
-
-    .fg-steps__content {
-      flex: 1;
-      min-width: 0;
-    }
-  }
-
-  &__header {
+  // Deep: el-steps 内部样式穿透
+  :global(.el-steps) {
     margin-bottom: 8px;
-  }
-
-  &__content {
-    min-height: var(--fg-steps-content-min-height);
-  }
-
-  &__panel {
-    // v-show 隐藏时保持布局占位
-  }
-
-  &__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--fg-steps-border-color);
   }
 }
-</style>
 
-<!-- 非 scoped 块：穿透样式到 Element Plus 子组件和 grid 布局 -->
-<style lang="scss">
-.fg-steps {
-  // el-steps 内部样式穿透
-  .el-steps {
-    margin-bottom: 8px;
-  }
+.steps--vertical {
+  flex-direction: row;
+  align-items: flex-start;
+}
 
-  // 步骤面板内的 grid 布局需要继承宽度
-  .fg-steps__panel {
-    > .fg-grid-row {
-      width: 100%;
-    }
+.steps--vertical .stepsHeader {
+  flex-shrink: 0;
+  min-width: 160px;
+}
+
+.steps--vertical .stepsContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.stepsHeader {
+  margin-bottom: 8px;
+}
+
+.stepsContent {
+  min-height: var(--fg-steps-content-min-height);
+}
+
+.stepsPanel {
+  // Deep: 步骤面板内的 grid 布局需要继承宽度
+  > :global(.fg-grid-row) {
+    width: 100%;
   }
+}
+
+.stepsActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fg-steps-border-color);
 }
 </style>

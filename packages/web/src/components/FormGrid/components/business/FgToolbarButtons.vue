@@ -3,11 +3,11 @@
  * FgToolbarButtons — 居中对齐的工具栏按钮组
  * 支持动态背景色，用于页面顶部操作区
  */
-import { inject } from 'vue'
+import { inject, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import FgButtonList from './FgButtonList.vue'
 import { executeActions, type ActionContext } from '@/utils/actionExecutor'
-import { ACTION_EMIT_KEY, FORM_GRID_API_KEY } from '../../types'
+import { ACTION_EMIT_KEY, FORM_GRID_API_KEY, FORM_GRID_READONLY_KEY } from '../../types'
 import type { SchemaButtonConfig, FormData } from '../../types'
 
 defineProps<{
@@ -15,6 +15,8 @@ defineProps<{
   background?: string
 }>()
 
+const isReadonly = inject(FORM_GRID_READONLY_KEY, undefined)
+const isReadonlyValue = computed(() => isReadonly?.value ?? false)
 const emitAction = inject(ACTION_EMIT_KEY, () => {})
 const formApi = inject(FORM_GRID_API_KEY, {
   validate: async () => true,
@@ -57,6 +59,7 @@ function toButtonConfig(btn: SchemaButtonConfig) {
 
 <template>
   <div
+    v-if="!isReadonlyValue"
     class="fg-toolbar-buttons"
     :style="background ? { background } : undefined"
   >

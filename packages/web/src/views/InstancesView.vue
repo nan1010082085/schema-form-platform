@@ -18,7 +18,7 @@ const searchInput = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 // ---- Filter & Sort ----
-const activeTab = ref<'all' | 'form' | 'search-list' | 'draft' | 'published'>('all')
+const activeTab = ref<'all' | 'form' | 'search-list'>('all')
 const sortBy = ref<'newest' | 'oldest' | 'name'>('newest')
 const bulkMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
@@ -27,8 +27,6 @@ const filterTabs = [
   { label: '全部', value: 'all' as const },
   { label: '表单', value: 'form' as const },
   { label: '搜索列表', value: 'search-list' as const },
-  { label: '草稿', value: 'draft' as const },
-  { label: '已发布', value: 'published' as const },
 ]
 
 const sortOptions = [
@@ -77,12 +75,10 @@ function handleSearch(val: string) {
   }, 300)
 }
 
-function buildFilter(): { type?: string; status?: string } {
-  const filter: { type?: string; status?: string } = {}
+function buildFilter(): { type?: string } {
+  const filter: { type?: string } = {}
   if (activeTab.value === 'form') filter.type = 'form'
   else if (activeTab.value === 'search-list') filter.type = 'search_list'
-  else if (activeTab.value === 'draft') filter.status = 'draft'
-  else if (activeTab.value === 'published') filter.status = 'published'
   return filter
 }
 
@@ -174,14 +170,6 @@ function typeLabel(type: string): string {
 
 function typeTagType(type: string): '' | 'success' | 'info' | 'warning' | 'danger' {
   return type === 'form' ? '' : 'success'
-}
-
-function statusLabel(status: string): string {
-  return status === 'published' ? '已发布' : '草稿'
-}
-
-function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'danger' {
-  return status === 'published' ? 'success' : 'info'
 }
 
 const isFiltered = computed(() =>
@@ -312,19 +300,6 @@ const isFiltered = computed(() =>
               <h3 class="fg-instances-card__name">{{ item.name }}</h3>
               <div class="fg-instances-card__meta">
                 <el-tag :type="typeTagType(item.type)" size="small">{{ typeLabel(item.type) }}</el-tag>
-                <el-tag :type="statusTagType(item.status)" size="small">{{ statusLabel(item.status) }}</el-tag>
-                <!-- Publish ID -->
-                <el-popover
-                  v-if="item.status === 'published' && item.publishId"
-                  trigger="hover"
-                  :width="280"
-                  placement="top"
-                >
-                  <template #reference>
-                    <code class="fg-instances-card__pub-badge">{{ item.publishId.slice(0, 8) }}</code>
-                  </template>
-                  <div style="font-size:12px; word-break:break-all;">{{ item.publishId }}</div>
-                </el-popover>
                 <!-- Component count -->
                 <span v-if="item.json?.length" class="fg-instances-card__count">
                   {{ item.json.length }} 个组件
@@ -336,7 +311,6 @@ const isFiltered = computed(() =>
               <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)">编辑</el-button>
               <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)">预览</el-button>
               <el-button
-                v-if="item.status === 'draft'"
                 size="small"
                 text
                 type="success"
@@ -598,16 +572,6 @@ const isFiltered = computed(() =>
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-  }
-
-  &__pub-badge {
-    font-size: 11px;
-    background: #f0f2f5;
-    color: #909399;
-    padding: 2px 6px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: monospace;
   }
 
   &__count {

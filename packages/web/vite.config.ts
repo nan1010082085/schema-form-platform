@@ -18,7 +18,7 @@ export default defineConfig({
     headers: { 'Access-Control-Allow-Origin': '*' },
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://schema-form-platform.vercel.app',
         changeOrigin: true,
       }
     }

@@ -2,11 +2,11 @@
 /**
  * ComponentPanel — 左侧组件面板
  *
- * 按分类展示可拖拽的 SchemaType 组件列表。
- * 拖拽 dataTransfer 中携带 SchemaType 字符串。
- * 使用 el-scrollbar 替代原生滚动条。
+ * 搜索 + 分类标签页 + 可拖拽组件列表
+ * 拖拽 dataTransfer 中携带 SchemaType 字符串
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import type { SchemaType } from '@/components/FormGrid/types'
 
 const TYPE_ZH: Record<string, string> = {
@@ -26,143 +26,187 @@ const TYPE_ZH: Record<string, string> = {
 interface ComponentItem {
   type: SchemaType
   label: string
+  category: string
 }
 
-interface ComponentCategory {
-  name: string
-  items: ComponentItem[]
-}
-
-/** el-collapse v-model: array of currently expanded category names */
-const activeNames = ref<string[]>(['布局'])
-
-const categories: ComponentCategory[] = [
-  {
-    name: '布局',
-    items: [
-      { type: 'grid-row', label: '行容器' },
-      { type: 'grid-col', label: '列容器' },
-      { type: 'page', label: '页面' },
-      { type: 'card', label: '卡片' },
-      { type: 'toolbar', label: '工具栏' },
-      { type: 'title', label: '标题' },
-      { type: 'divider', label: '分割线' },
-      { type: 'spacer', label: '间距' },
-      { type: 'steps', label: '步骤条' },
-      { type: 'tabs', label: '标签页' },
-    ],
-  },
-  {
-    name: '基础表单',
-    items: [
-      { type: 'input', label: '输入框' },
-      { type: 'number', label: '数字' },
-      { type: 'select', label: '下拉选择' },
-      { type: 'radio', label: '单选' },
-      { type: 'checkbox', label: '多选' },
-      { type: 'date', label: '日期' },
-      { type: 'date-range', label: '日期范围' },
-      { type: 'textarea', label: '多行文本' },
-      { type: 'richtext', label: '富文本' },
-    ],
-  },
-  {
-    name: '业务组件',
-    items: [
-      { type: 'button-list', label: '按钮列表' },
-      { type: 'toolbar-buttons', label: '工具栏按钮' },
-      { type: 'upload', label: '上传' },
-      { type: 'table', label: '表格' },
-      { type: 'pagination', label: '分页' },
-      { type: 'file-list', label: '文件列表' },
-      { type: 'person-select', label: '人员选择' },
-      { type: 'dept-select', label: '部门选择' },
-      { type: 'transfer', label: '穿梭框' },
-      { type: 'detail-form', label: '详情表单' },
-      { type: 'banner', label: '横幅' },
-      { type: 'tree-layout', label: '树形布局' },
-      { type: 'date-time-slot', label: '日期时间段' },
-      { type: 'dialog', label: '对话框' },
-      { type: 'search-list', label: '搜索列表' },
-    ],
-  },
+const allItems: ComponentItem[] = [
+  // 布局
+  { type: 'grid-row', label: '行容器', category: '布局' },
+  { type: 'grid-col', label: '列容器', category: '布局' },
+  { type: 'page', label: '页面', category: '布局' },
+  { type: 'card', label: '卡片', category: '布局' },
+  { type: 'toolbar', label: '工具栏', category: '布局' },
+  { type: 'title', label: '标题', category: '布局' },
+  { type: 'divider', label: '分割线', category: '布局' },
+  { type: 'spacer', label: '间距', category: '布局' },
+  { type: 'steps', label: '步骤条', category: '布局' },
+  { type: 'tabs', label: '标签页', category: '布局' },
+  // 基础表单
+  { type: 'input', label: '输入框', category: '基础表单' },
+  { type: 'number', label: '数字', category: '基础表单' },
+  { type: 'select', label: '下拉选择', category: '基础表单' },
+  { type: 'radio', label: '单选', category: '基础表单' },
+  { type: 'checkbox', label: '多选', category: '基础表单' },
+  { type: 'date', label: '日期', category: '基础表单' },
+  { type: 'date-range', label: '日期范围', category: '基础表单' },
+  { type: 'textarea', label: '多行文本', category: '基础表单' },
+  { type: 'richtext', label: '富文本', category: '基础表单' },
+  // 业务组件
+  { type: 'button-list', label: '按钮列表', category: '业务组件' },
+  { type: 'toolbar-buttons', label: '工具栏按钮', category: '业务组件' },
+  { type: 'upload', label: '上传', category: '业务组件' },
+  { type: 'table', label: '表格', category: '业务组件' },
+  { type: 'pagination', label: '分页', category: '业务组件' },
+  { type: 'file-list', label: '文件列表', category: '业务组件' },
+  { type: 'person-select', label: '人员选择', category: '业务组件' },
+  { type: 'dept-select', label: '部门选择', category: '业务组件' },
+  { type: 'transfer', label: '穿梭框', category: '业务组件' },
+  { type: 'detail-form', label: '详情表单', category: '业务组件' },
+  { type: 'banner', label: '横幅', category: '业务组件' },
+  { type: 'tree-layout', label: '树形布局', category: '业务组件' },
+  { type: 'date-time-slot', label: '日期时间段', category: '业务组件' },
+  { type: 'dialog', label: '对话框', category: '业务组件' },
+  { type: 'search-list', label: '搜索列表', category: '业务组件' },
 ]
+
+const categories = ['全部', '布局', '基础表单', '业务组件']
+
+const searchQuery = ref('')
+const selectedCategory = ref('全部')
+
+const filteredItems = computed(() => {
+  return allItems.filter((item) => {
+    const matchesCategory = selectedCategory.value === '全部' || item.category === selectedCategory.value
+    const matchesSearch = !searchQuery.value ||
+      TYPE_ZH[item.type]?.includes(searchQuery.value) ||
+      item.type.includes(searchQuery.value.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+})
 
 function handleDragStart(event: DragEvent, type: SchemaType) {
   event.dataTransfer?.setData('schema-type', type)
+  event.dataTransfer?.setData('application/schema-drag', JSON.stringify({ source: 'panel', type }))
   event.dataTransfer!.effectAllowed = 'copy'
 }
 </script>
 
 <template>
-  <el-scrollbar class="component-panel">
-    <div class="component-panel__body">
-      <el-collapse v-model="activeNames" class="component-panel__collapse">
-        <el-collapse-item
-          v-for="category in categories"
-          :key="category.name"
-          :name="category.name"
-          :title="category.name"
-        >
-          <!-- v-if so collapsed categories render zero DOM nodes (~15 items instead of ~35 initially) -->
-          <div
-            v-if="activeNames.includes(category.name)"
-            class="component-panel__list"
-          >
-            <div
-              v-for="item in category.items"
-              :key="item.type"
-              class="component-panel__item"
-              draggable="true"
-              @dragstart="handleDragStart($event, item.type)"
-            >
-              <span class="component-panel__item-label">{{ TYPE_ZH[item.type] ?? item.label }}</span>
-            </div>
-          </div>
-        </el-collapse-item>
-      </el-collapse>
+  <div class="component-panel">
+    <!-- Search -->
+    <div class="component-panel__search">
+      <el-input
+        v-model="searchQuery"
+        size="small"
+        placeholder="搜索组件..."
+        clearable
+      >
+        <template #prefix>
+          <el-icon :size="12"><Search /></el-icon>
+        </template>
+      </el-input>
     </div>
-  </el-scrollbar>
+
+    <!-- Category tabs -->
+    <div class="component-panel__categories">
+      <button
+        v-for="cat in categories"
+        :key="cat"
+        class="component-panel__cat-btn"
+        :class="{ 'component-panel__cat-btn--active': selectedCategory === cat }"
+        @click="selectedCategory = cat"
+      >
+        {{ cat }}
+      </button>
+    </div>
+
+    <!-- Component list -->
+    <el-scrollbar class="component-panel__scroll">
+      <div class="component-panel__list">
+        <div
+          v-for="item in filteredItems"
+          :key="item.type"
+          class="component-panel__item"
+          draggable="true"
+          @dragstart="handleDragStart($event, item.type)"
+        >
+          <span class="component-panel__item-label">{{ TYPE_ZH[item.type] ?? item.label }}</span>
+        </div>
+      </div>
+      <div v-if="filteredItems.length === 0" class="component-panel__empty">
+        无匹配组件
+      </div>
+    </el-scrollbar>
+  </div>
 </template>
 
 <style scoped lang="scss">
 .component-panel {
+  display: flex;
+  flex-direction: column;
   height: 100%;
 
-  &__body {
-    padding: 12px;
+  &__search {
+    padding: 8px 10px;
+    flex-shrink: 0;
   }
 
-  &__collapse {
-    // Remove default el-collapse top/bottom borders so it blends with the panel
-    border-top: none;
-    border-bottom: none;
+  &__categories {
+    display: flex;
+    gap: 0;
+    padding: 0 10px;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
+    overflow-x: auto;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  &__cat-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #606266;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+
+    &:hover { color: #409eff; }
+
+    &--active {
+      color: #409eff;
+      border-bottom-color: #409eff;
+    }
+  }
+
+  &__scroll {
+    flex: 1;
+    min-height: 0;
   }
 
   &__list {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
-    padding-bottom: 8px;
+    padding: 10px;
   }
 
   &__item {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    // Grid handles width; item fills its column cell
-    padding: 10px 4px;
+    padding: 8px 4px;
     border: 1px solid #e4e7ed;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: grab;
-    transition: all 0.2s;
+    transition: all 0.15s;
     background: #fafbfc;
 
     &:hover {
       border-color: #409eff;
       background: #ecf5ff;
-      box-shadow: 0 1px 4px rgba(64, 158, 255, 0.15);
     }
 
     &:active {
@@ -176,6 +220,13 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
     color: #303133;
     font-weight: 500;
     text-align: center;
+  }
+
+  &__empty {
+    padding: 24px;
+    text-align: center;
+    color: #c0c4cc;
+    font-size: 12px;
   }
 }
 </style>

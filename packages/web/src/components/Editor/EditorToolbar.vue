@@ -1,26 +1,19 @@
 <script setup lang="ts">
 /**
- * EditorToolbar — 编辑器顶部工具栏 (Phase 4-5 redesign)
+ * EditorToolbar — 顶部工具栏
  *
- * Layout: full-width evenly distributed groups (no left-right split).
- * Icons: L/C/R text replaced with inline SVG alignment icons.
- * Low-frequency ops (Load/Import/Export) moved into a "More" dropdown.
- *
- * Group order (left to right):
- *   Undo/Redo | Copy/Delete/MoveUp/MoveDown | AlignLeft/Center/Right
- *   | Group/Ungroup | Validate
- * Right side:
- *   Save/Publish/Preview | CanvasSize/Thumbnail | More(···)
+ * 布局：左侧(返回/名称/面板切换) | 中间(编辑操作按钮组) | 右侧(画布/预览/保存)
+ * 保留新版设计风格，恢复旧版关键功能
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
+  RefreshLeft,
+  RefreshRight,
   CopyDocument,
   Delete,
   Top,
   Bottom,
-  RefreshLeft,
-  RefreshRight,
   FolderAdd,
   FolderRemove,
   CircleCheck,
@@ -28,16 +21,23 @@ import {
   View,
   FullScreen,
   Promotion,
-  MoreFilled,
   Upload,
   Download,
+  MoreFilled,
+  EditPen,
+  Lock,
+  Monitor,
 } from '@element-plus/icons-vue'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import type { SchemaListItem } from '@/types/api'
+import type { InteractionMode } from '@/composables/useConstant'
 import { useSchemaStore } from '@/stores/schema'
 
 const props = defineProps<{
-  mode: 'edit' | 'preview'
+  mode: InteractionMode
+  schema: FormSchemaItem[]
+  schemaName?: string
+  schemaId?: string | null
   selectedIndex: number | null
   selectedIndices: number[]
   schemaLength: number
@@ -45,66 +45,75 @@ const props = defineProps<{
   canRedo: boolean
   canGroup: boolean
   canUngroup: boolean
-  /** Current editor schema array (for server operations) */
-  schema: FormSchemaItem[]
-  /** Validation error count */
   validationErrorCount?: number
-  /** Validation warning count */
   validationWarningCount?: number
-  /** Schema name for display */
-  schemaName?: string
-  /** Current schema ID (null when new) */
-  schemaId?: string | null
-  /** Thumbnail toggle state */
+  leftPanelVisible: boolean
+  rightPanelVisible: boolean
+  previewMode?: 'desktop' | 'tablet' | 'mobile'
   showThumbnail?: boolean
-  /** Current canvas size preset */
   canvasSizePreset?: string
 }>()
 
 const emit = defineEmits<{
+  'update:schemaName': [name: string]
+  'update:leftPanelVisible': [visible: boolean]
+  'update:rightPanelVisible': [visible: boolean]
+  'update:previewMode': [mode: 'desktop' | 'tablet' | 'mobile']
+  'update:mode': [mode: InteractionMode]
+  'save-draft': []
+  'publish': []
+  'preview': []
+  'export': []
   'import': [schema: FormSchemaItem[]]
   'import-response': []
-  'export': []
-  'update:mode': [mode: 'edit' | 'preview']
+  'undo': []
+  'redo': []
   'copy': []
   'delete': []
   'move-up': []
   'move-down': []
   'align': [align: 'left' | 'center' | 'right']
-  'undo': []
-  'redo': []
   'group': [containerType: 'card' | 'page' | 'toolbar']
   'ungroup': []
   'validate': []
-  'save-draft': []
-  'publish': []
-  'preview': []
   'toggle-thumbnail': []
   'canvas-size-change': [preset: string]
   'load-schema': [schema: FormSchemaItem[]]
 }>()
 
-// ---- Computed disabled states ----
+// ---- Mode switcher ----
+const modeLabels: Record<InteractionMode, string> = {
+  'edit': '编辑',
+  'preview': '预览',
+  'publish-interactive': '发布(交互)',
+  'publish-readonly': '发布(只读)',
+}
+
+const modeOptions: { value: InteractionMode; label: string; icon: typeof EditPen }[] = [
+  { value: 'edit', label: '编辑模式', icon: EditPen },
+  { value: 'preview', label: '预览模式', icon: View },
+  { value: 'publish-interactive', label: '发布(交互)', icon: Monitor },
+  { value: 'publish-readonly', label: '发布(只读)', icon: Lock },
+]
+
+// ---- Computed states ----
 const hasSelection = computed(() => props.selectedIndices.length > 0)
 const selectionCount = computed(() => props.selectedIndices.length)
 const isFirstItem = computed(() => props.selectedIndex === 0)
 const isLastItem = computed(() => props.selectedIndex === props.schemaLength - 1)
 
-/** Display title — shows schema name when editing an existing schema */
-const displayTitle = computed(() => {
-  if (props.schemaName) return props.schemaName
-  return 'Schema 编辑器'
-})
-
-// ---- Tooltip helpers ----
 function batchLabel(action: string): string {
-  if (selectionCount.value > 1) {
-    return `${action} (${selectionCount.value} selected)`
-  }
-  return action
+  return selectionCount.value > 1 ? `${action} (${selectionCount.value})` : action
 }
 
-// ---- Import / Export ----
+// ---- Canvas size ----
+const canvasSizePresets = [
+  { label: '1920x1080', value: '1920x1080' },
+  { label: '1440x900', value: '1440x900' },
+  { label: '1366x768', value: '1366x768' },
+]
+
+// ---- Import ----
 const showImportDialog = ref(false)
 const importJson = ref('')
 
@@ -116,52 +125,14 @@ function handleImport() {
 function confirmImport() {
   try {
     const parsed = JSON.parse(importJson.value) as unknown
-    if (!Array.isArray(parsed)) {
-      ElMessage.error('JSON Schema must be an array')
-      return
-    }
+    if (!Array.isArray(parsed)) { ElMessage.error('JSON 必须是数组'); return }
     emit('import', parsed as FormSchemaItem[])
     showImportDialog.value = false
-    ElMessage.success('Schema imported successfully')
-  } catch {
-    ElMessage.error('Invalid JSON format')
-  }
+    ElMessage.success('Schema 导入成功')
+  } catch { ElMessage.error('JSON 格式错误') }
 }
 
-function handleExport() {
-  emit('export')
-}
-
-// ---- Save / Publish / Preview ----
-function handleSaveDraft() {
-  emit('save-draft')
-}
-
-function handlePublish() {
-  emit('publish')
-}
-
-function handlePreview() {
-  emit('preview')
-}
-
-function handleToggleThumbnail() {
-  emit('toggle-thumbnail')
-}
-
-// ---- Canvas size presets ----
-const canvasSizePresets = [
-  { label: '1920x1080', value: '1920x1080' },
-  { label: '1440x900', value: '1440x900' },
-  { label: '1366x768', value: '1366x768' },
-  { label: 'Custom', value: 'custom' },
-]
-
-function handleCanvasSizeChange(preset: string) {
-  emit('canvas-size-change', preset)
-}
-
-// ---- Load from Server ----
+// ---- Load from server ----
 const schemaStore = useSchemaStore()
 const showLoadDialog = ref(false)
 const loadSchemaList = ref<SchemaListItem[]>([])
@@ -171,49 +142,41 @@ async function handleOpenLoadDialog() {
   showLoadDialog.value = true
   loadSchemaLoading.value = true
   const result = await schemaStore.fetchSchemas({ page: 1, pageSize: 100 })
-  if (result) {
-    loadSchemaList.value = result.items
-  }
+  if (result) loadSchemaList.value = result.items
   loadSchemaLoading.value = false
 }
 
 async function handleLoadSchema(item: SchemaListItem) {
   const detail = await schemaStore.fetchSchemaById(item.id)
   if (detail) {
-    if (!detail.json) { ElMessage.error('Schema data is empty'); return }
+    if (!detail.json) { ElMessage.error('Schema 数据为空'); return }
     const loaded = schemaStore.loadIntoEditor(detail.json)
     emit('load-schema', loaded)
     showLoadDialog.value = false
-    ElMessage.success(`Schema "${item.name}" loaded`)
+    ElMessage.success(`Schema "${item.name}" 已加载`)
   }
 }
 
-// ---- Edit operations ----
-function handleCopy() { if (!hasSelection.value) return; emit('copy') }
-function handleDelete() { if (!hasSelection.value) return; emit('delete') }
-function handleMoveUp() { if (!hasSelection.value || isFirstItem.value) return; emit('move-up') }
-function handleMoveDown() { if (!hasSelection.value || isLastItem.value) return; emit('move-down') }
-function handleAlign(align: 'left' | 'center' | 'right') {
-  if (!hasSelection.value) return
-  emit('align', align)
-}
-function handleUndo() { if (!props.canUndo) return; emit('undo') }
-function handleRedo() { if (!props.canRedo) return; emit('redo') }
-function handleGroup(type: 'card' | 'page' | 'toolbar') {
-  if (!props.canGroup) return
-  emit('group', type)
-}
-function handleUngroup() { if (!props.canUngroup) return; emit('ungroup') }
-
-// ---- More dropdown handler ----
+// ---- More dropdown ----
 function handleMoreCommand(command: string) {
   switch (command) {
     case 'load': handleOpenLoadDialog(); break
     case 'import-json': handleImport(); break
     case 'import-response': emit('import-response'); break
-    case 'export-json': handleExport(); break
+    case 'export-json': emit('export'); break
   }
 }
+
+// ---- Edit operations ----
+function handleCopy() { if (hasSelection.value) emit('copy') }
+function handleDelete() { if (hasSelection.value) emit('delete') }
+function handleMoveUp() { if (hasSelection.value && !isFirstItem.value) emit('move-up') }
+function handleMoveDown() { if (hasSelection.value && !isLastItem.value) emit('move-down') }
+function handleAlign(align: 'left' | 'center' | 'right') { if (hasSelection.value) emit('align', align) }
+function handleUndo() { if (props.canUndo) emit('undo') }
+function handleRedo() { if (props.canRedo) emit('redo') }
+function handleGroup(type: 'card' | 'page' | 'toolbar') { if (props.canGroup) emit('group', type) }
+function handleUngroup() { if (props.canUngroup) emit('ungroup') }
 
 // ---- Keyboard shortcuts ----
 function handleKeydown(event: KeyboardEvent) {
@@ -222,17 +185,11 @@ function handleKeydown(event: KeyboardEvent) {
 
   if (event.ctrlKey || event.metaKey) {
     if (event.key === 'c') { event.preventDefault(); handleCopy() }
-    if (event.key === 's') { event.preventDefault(); handleSaveDraft() }
-    if (event.key === 'z') {
-      event.preventDefault()
-      event.shiftKey ? handleRedo() : handleUndo()
-    }
+    if (event.key === 's') { event.preventDefault(); emit('save-draft') }
+    if (event.key === 'z') { event.preventDefault(); event.shiftKey ? handleRedo() : handleUndo() }
     if (event.key === 'y') { event.preventDefault(); handleRedo() }
   }
-  if (event.key === 'Delete' || event.key === 'Backspace') {
-    event.preventDefault()
-    handleDelete()
-  }
+  if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); handleDelete() }
   if (event.key === 'ArrowUp' && event.altKey) { event.preventDefault(); handleMoveUp() }
   if (event.key === 'ArrowDown' && event.altKey) { event.preventDefault(); handleMoveDown() }
 }
@@ -243,118 +200,137 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
 <template>
   <div class="editor-toolbar">
-    <!-- Brand: title + schema ID + save/publish/preview -->
-    <div class="editor-toolbar__brand">
-      <h2 class="editor-toolbar__title">{{ displayTitle }}</h2>
-      <span v-if="schemaId" class="editor-toolbar__id-badge">{{ schemaId.slice(0, 8) }}</span>
-      <div class="editor-toolbar__ops editor-toolbar__ops--actions">
-        <el-button type="primary" size="small" @click="handleSaveDraft">保存草稿</el-button>
-        <el-button type="success" size="small" @click="handlePublish">
-          <el-icon><Promotion /></el-icon>发布
-        </el-button>
-        <el-button size="small" @click="handlePreview">
-          <el-icon><View /></el-icon>预览
-        </el-button>
-      </div>
+    <!-- 左侧：返回 / 名称 / 面板切换 -->
+    <div class="editor-toolbar__left">
+      <button class="editor-toolbar__icon-btn" title="返回">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 12L6 8l4-4"/>
+        </svg>
+      </button>
+      <div class="editor-toolbar__divider" />
+      <input
+        :value="schemaName"
+        class="editor-toolbar__name-input"
+        placeholder="未命名实例"
+        @input="emit('update:schemaName', ($event.target as HTMLInputElement).value)"
+      />
+      <div class="editor-toolbar__divider" />
+      <button
+        class="editor-toolbar__icon-btn"
+        :class="{ 'editor-toolbar__icon-btn--active': leftPanelVisible }"
+        title="组件面板"
+        @click="emit('update:leftPanelVisible', !leftPanelVisible)"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
+          <line x1="5.5" y1="2" x2="5.5" y2="14"/>
+        </svg>
+      </button>
+      <button
+        class="editor-toolbar__icon-btn"
+        :class="{ 'editor-toolbar__icon-btn--active': rightPanelVisible }"
+        title="属性面板"
+        @click="emit('update:rightPanelVisible', !rightPanelVisible)"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
+          <line x1="10.5" y1="2" x2="10.5" y2="14"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- Button groups evenly distributed across remaining width -->
-    <div class="editor-toolbar__groups">
-      <!-- Group 1: Undo / Redo -->
-      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+    <!-- 中间：编辑操作按钮组（仅编辑模式显示） -->
+    <div v-if="mode === 'edit'" class="editor-toolbar__center">
+      <div class="editor-toolbar__btn-group">
         <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
-          <el-button :disabled="!canUndo" size="small" @click="handleUndo">
-            <el-icon><RefreshLeft /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!canUndo" @click="handleUndo">
+            <el-icon :size="14"><RefreshLeft /></el-icon>
+          </button>
         </el-tooltip>
         <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
-          <el-button :disabled="!canRedo" size="small" @click="handleRedo">
-            <el-icon><RefreshRight /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!canRedo" @click="handleRedo">
+            <el-icon :size="14"><RefreshRight /></el-icon>
+          </button>
         </el-tooltip>
       </div>
 
-      <!-- Group 2: Copy / Delete / Move Up / Move Down -->
-      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+      <div class="editor-toolbar__btn-group">
         <el-tooltip :content="batchLabel('复制 (Ctrl+C)')" placement="bottom">
-          <el-button :disabled="!hasSelection" size="small" @click="handleCopy">
-            <el-icon><CopyDocument /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleCopy">
+            <el-icon :size="14"><CopyDocument /></el-icon>
+          </button>
         </el-tooltip>
         <el-tooltip :content="batchLabel('删除 (Del)')" placement="bottom">
-          <el-button :disabled="!hasSelection" size="small" @click="handleDelete">
-            <el-icon><Delete /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleDelete">
+            <el-icon :size="14"><Delete /></el-icon>
+          </button>
         </el-tooltip>
         <el-tooltip content="上移 (Alt+Up)" placement="bottom">
-          <el-button :disabled="!hasSelection || isFirstItem" size="small" @click="handleMoveUp">
-            <el-icon><Top /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isFirstItem" @click="handleMoveUp">
+            <el-icon :size="14"><Top /></el-icon>
+          </button>
         </el-tooltip>
         <el-tooltip content="下移 (Alt+Down)" placement="bottom">
-          <el-button :disabled="!hasSelection || isLastItem" size="small" @click="handleMoveDown">
-            <el-icon><Bottom /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isLastItem" @click="handleMoveDown">
+            <el-icon :size="14"><Bottom /></el-icon>
+          </button>
         </el-tooltip>
       </div>
 
-      <!-- Group 3: Align Left / Center / Right -->
-      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+      <div class="editor-toolbar__btn-group">
         <el-tooltip content="左对齐" placement="bottom">
-          <el-button :disabled="!hasSelection" size="small" @click="handleAlign('left')">
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('left')">
             <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
               <rect x="1" y="2" width="14" height="2" rx="0.5"/>
               <rect x="1" y="7" width="10" height="2" rx="0.5"/>
               <rect x="1" y="12" width="12" height="2" rx="0.5"/>
             </svg>
-          </el-button>
+          </button>
         </el-tooltip>
         <el-tooltip content="居中对齐" placement="bottom">
-          <el-button :disabled="!hasSelection" size="small" @click="handleAlign('center')">
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('center')">
             <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
               <rect x="1" y="2" width="14" height="2" rx="0.5"/>
               <rect x="3" y="7" width="10" height="2" rx="0.5"/>
               <rect x="2" y="12" width="12" height="2" rx="0.5"/>
             </svg>
-          </el-button>
+          </button>
         </el-tooltip>
         <el-tooltip content="右对齐" placement="bottom">
-          <el-button :disabled="!hasSelection" size="small" @click="handleAlign('right')">
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('right')">
             <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
               <rect x="1" y="2" width="14" height="2" rx="0.5"/>
               <rect x="5" y="7" width="10" height="2" rx="0.5"/>
               <rect x="3" y="12" width="12" height="2" rx="0.5"/>
             </svg>
-          </el-button>
+          </button>
         </el-tooltip>
       </div>
 
-      <!-- Group 4: Group / Ungroup -->
-      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+      <div class="editor-toolbar__btn-group">
         <el-dropdown :disabled="!canGroup" trigger="click" @command="handleGroup">
-          <el-button :disabled="!canGroup" size="small">
-            <el-icon><FolderAdd /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!canGroup">
+            <el-icon :size="14"><FolderAdd /></el-icon>
+          </button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="card">Group as Card</el-dropdown-item>
-              <el-dropdown-item command="page">Group as Page</el-dropdown-item>
-              <el-dropdown-item command="toolbar">Group as Toolbar</el-dropdown-item>
+              <el-dropdown-item command="card">分组为卡片</el-dropdown-item>
+              <el-dropdown-item command="page">分组为页面</el-dropdown-item>
+              <el-dropdown-item command="toolbar">分组为工具栏</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
         <el-tooltip content="取消分组" placement="bottom">
-          <el-button :disabled="!canUngroup" size="small" @click="handleUngroup">
-            <el-icon><FolderRemove /></el-icon>
-          </el-button>
+          <button class="editor-toolbar__icon-btn" :disabled="!canUngroup" @click="handleUngroup">
+            <el-icon :size="14"><FolderRemove /></el-icon>
+          </button>
         </el-tooltip>
       </div>
 
-      <!-- Group 5: Validate -->
-      <div v-if="mode === 'edit'" class="editor-toolbar__ops">
+      <div class="editor-toolbar__btn-group">
         <el-tooltip content="校验 Schema" placement="bottom">
-          <el-button size="small" @click="emit('validate')">
-            <el-icon>
+          <button class="editor-toolbar__icon-btn" @click="emit('validate')">
+            <el-icon :size="14">
               <Warning v-if="(validationErrorCount ?? 0) > 0" style="color: #e6a23c" />
               <CircleCheck v-else style="color: #67c23a" />
             </el-icon>
@@ -364,97 +340,191 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             <span v-if="(validationWarningCount ?? 0) > 0" class="editor-toolbar__badge editor-toolbar__badge--warning">
               {{ validationWarningCount }}
             </span>
-          </el-button>
+          </button>
         </el-tooltip>
-      </div>
-
-      <!-- Group 6: Canvas Size / Thumbnail -->
-      <div class="editor-toolbar__ops">
-        <el-dropdown trigger="click" @command="handleCanvasSizeChange">
-          <el-button size="small">
-            <el-icon><FullScreen /></el-icon>
-            {{ canvasSizePreset ?? '1920x1080' }}
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="preset in canvasSizePresets"
-                :key="preset.value"
-                :command="preset.value"
-              >
-                {{ preset.label }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-        <el-tooltip content="切换缩略图" placement="bottom">
-          <el-button
-            size="small"
-            :type="showThumbnail ? 'primary' : 'default'"
-            @click="handleToggleThumbnail"
-          >
-            缩略图
-          </el-button>
-        </el-tooltip>
-      </div>
-
-      <!-- Group 8: Import / Export + More -->
-      <div class="editor-toolbar__ops">
-        <el-button size="small" @click="handleImport">
-          <el-icon><Upload /></el-icon>
-          导入
-        </el-button>
-        <el-button size="small" @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-        <el-dropdown trigger="click" @command="handleMoreCommand">
-          <el-button size="small">
-            <el-icon><MoreFilled /></el-icon>
-            更多
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="load">从服务器加载</el-dropdown-item>
-              <el-dropdown-item command="import-response">导入响应</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
       </div>
     </div>
 
-    <!-- Load from Server Dialog -->
-    <el-dialog v-model="showLoadDialog" title="从服务器加载 Schema" width="560px">
-      <el-table
-        :data="loadSchemaList"
-        v-loading="loadSchemaLoading"
-        highlight-current-row
-        height="300"
-        @row-click="handleLoadSchema"
-      >
-        <el-table-column prop="name" label="名称" />
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-      </el-table>
-      <p v-if="!loadSchemaLoading && loadSchemaList.length === 0"
-        style="text-align:center; color:#909399; padding: 24px 0;">
-        服务器上未找到 Schema
-      </p>
-    </el-dialog>
+    <!-- 右侧：模式切换/画布/缩略图/导出/预览/保存/发布 -->
+    <div class="editor-toolbar__right">
+      <!-- 模式切换下拉 -->
+      <el-dropdown trigger="click" @command="(m: InteractionMode) => emit('update:mode', m)">
+        <button class="editor-toolbar__mode-indicator" :class="`editor-toolbar__mode-indicator--${mode}`">
+          <el-icon :size="12">
+            <EditPen v-if="mode === 'edit'" />
+            <View v-else-if="mode === 'preview'" />
+            <Monitor v-else-if="mode === 'publish-interactive'" />
+            <Lock v-else />
+          </el-icon>
+          <span>{{ modeLabels[mode] }}</span>
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
+        </button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="m in modeOptions"
+              :key="m.value"
+              :command="m.value"
+              :class="{ 'is-active': mode === m.value }"
+            >
+              <el-icon :size="14"><component :is="m.icon" /></el-icon>
+              {{ m.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
-    <!-- Import Dialog -->
-    <el-dialog v-model="showImportDialog" title="导入 JSON Schema" width="600px">
-      <el-input
-        v-model="importJson"
-        type="textarea"
-        :rows="16"
-        placeholder="在此粘贴 FormSchemaItem[] JSON..."
-      />
-      <template #footer>
-        <el-button @click="showImportDialog = false">Cancel</el-button>
-        <el-button type="primary" @click="confirmImport">Import</el-button>
-      </template>
-    </el-dialog>
+      <div class="editor-toolbar__divider" />
+
+      <!-- 画布尺寸 -->
+      <el-dropdown trigger="click" @command="(v: string) => emit('canvas-size-change', v)">
+        <button class="editor-toolbar__icon-btn" title="画布尺寸">
+          <el-icon :size="14"><FullScreen /></el-icon>
+        </button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="preset in canvasSizePresets"
+              :key="preset.value"
+              :command="preset.value"
+              :class="{ 'is-active': canvasSizePreset === preset.value }"
+            >
+              {{ preset.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <!-- 缩略图开关 -->
+      <el-tooltip content="缩略图" placement="bottom">
+        <button
+          class="editor-toolbar__icon-btn"
+          :class="{ 'editor-toolbar__icon-btn--active': showThumbnail }"
+          @click="emit('toggle-thumbnail')"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="1" width="14" height="14" rx="1.5"/>
+            <rect x="3" y="3" width="4" height="3" rx="0.5"/>
+            <path d="M3 12l3-4 2 2 3-4 4 6"/>
+          </svg>
+        </button>
+      </el-tooltip>
+
+      <!-- 更多 -->
+      <el-dropdown trigger="click" @command="handleMoreCommand">
+        <button class="editor-toolbar__icon-btn" title="更多">
+          <el-icon :size="14"><MoreFilled /></el-icon>
+        </button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="load">
+              <el-icon><Download /></el-icon>从服务器加载
+            </el-dropdown-item>
+            <el-dropdown-item command="import-json">
+              <el-icon><Upload /></el-icon>导入 JSON
+            </el-dropdown-item>
+            <el-dropdown-item command="import-response">导入响应</el-dropdown-item>
+            <el-dropdown-item divided command="export-json">
+              <el-icon><Download /></el-icon>导出 JSON
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <div class="editor-toolbar__divider" />
+
+      <!-- 预览模式切换 -->
+      <div class="editor-toolbar__mode-switcher">
+        <button
+          class="editor-toolbar__mode-btn"
+          :class="{ 'editor-toolbar__mode-btn--active': previewMode === 'desktop' }"
+          title="桌面"
+          @click="emit('update:previewMode', 'desktop')"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="2" width="14" height="10" rx="1"/>
+            <line x1="5" y1="14" x2="11" y2="14"/>
+            <line x1="8" y1="12" x2="8" y2="14"/>
+          </svg>
+        </button>
+        <button
+          class="editor-toolbar__mode-btn"
+          :class="{ 'editor-toolbar__mode-btn--active': previewMode === 'tablet' }"
+          title="平板"
+          @click="emit('update:previewMode', 'tablet')"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="1" width="12" height="14" rx="1.5"/>
+            <circle cx="8" cy="12.5" r="0.8" fill="currentColor"/>
+          </svg>
+        </button>
+        <button
+          class="editor-toolbar__mode-btn"
+          :class="{ 'editor-toolbar__mode-btn--active': previewMode === 'mobile' }"
+          title="移动端"
+          @click="emit('update:previewMode', 'mobile')"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="1" width="8" height="14" rx="1.5"/>
+            <circle cx="8" cy="12.5" r="0.8" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="editor-toolbar__divider" />
+
+      <!-- 预览 -->
+      <button class="editor-toolbar__btn editor-toolbar__btn--outline" @click="emit('preview')">
+        <el-icon :size="12"><View /></el-icon>
+        <span>预览</span>
+      </button>
+
+      <!-- 发布 -->
+      <button class="editor-toolbar__btn editor-toolbar__btn--success" @click="emit('publish')">
+        <el-icon :size="12"><Promotion /></el-icon>
+        <span>发布</span>
+      </button>
+
+      <!-- 保存 -->
+      <button class="editor-toolbar__btn editor-toolbar__btn--primary" @click="emit('save-draft')">
+        <span>保存</span>
+      </button>
+    </div>
   </div>
+
+  <!-- 从服务器加载弹窗 -->
+  <el-dialog v-model="showLoadDialog" title="从服务器加载 Schema" width="560px">
+    <el-table
+      :data="loadSchemaList"
+      v-loading="loadSchemaLoading"
+      highlight-current-row
+      height="300"
+      @row-click="handleLoadSchema"
+    >
+      <el-table-column prop="name" label="名称" />
+      <el-table-column prop="updatedAt" label="更新时间" width="180" />
+    </el-table>
+    <p v-if="!loadSchemaLoading && loadSchemaList.length === 0"
+      style="text-align:center; color:#909399; padding: 24px 0;">
+      服务器上未找到 Schema
+    </p>
+  </el-dialog>
+
+  <!-- 导入弹窗 -->
+  <el-dialog v-model="showImportDialog" title="导入 JSON Schema" width="600px">
+    <el-input
+      v-model="importJson"
+      type="textarea"
+      :rows="16"
+      placeholder="在此粘贴 FormSchemaItem[] JSON..."
+    />
+    <template #footer>
+      <el-button @click="showImportDialog = false">取消</el-button>
+      <el-button type="primary" @click="confirmImport">导入</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -466,96 +536,218 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   background: #fff;
   border-bottom: 1px solid #e4e7ed;
   flex-shrink: 0;
-  gap: 6px;
+  gap: 4px;
   position: sticky;
   top: 0;
   z-index: 100;
 
-  &__brand {
+  &__divider {
+    width: 1px;
+    height: 20px;
+    background: #dcdfe6;
+    flex-shrink: 0;
+    margin: 0 2px;
+  }
+
+  // ---- Left section ----
+  &__left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     flex-shrink: 0;
-    min-width: 140px;
   }
 
-  &__title {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
+  &__name-input {
+    width: 128px;
+    padding: 4px 8px;
+    border: 1px solid #dcdfe6;
+    font-size: 12px;
     color: #303133;
-    white-space: nowrap;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    background: transparent;
+    outline: none;
+    transition: border-color 0.2s;
+    flex-shrink: 0;
+
+    &:focus { border-color: #409eff; }
+    &::placeholder { color: #c0c4cc; }
   }
 
-  &__id-badge {
-    font-size: 11px;
-    color: #909399;
-    background: #f0f2f5;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    white-space: nowrap;
-  }
-
-  // Groups container: fills remaining space, distributes children evenly
-  &__groups {
+  // ---- Center section (edit operations) ----
+  &__center {
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: center;
     gap: 2px;
+    min-width: 0;
   }
 
-  // Each functional button cluster
-  &__ops {
+  &__btn-group {
     display: flex;
     align-items: center;
     gap: 0;
-    flex-shrink: 0;
-    padding: 2px 4px;
+    padding: 2px 3px;
     background: #fafafa;
     border-radius: 6px;
+    flex-shrink: 0;
+  }
 
-    // Right-side clusters use a slightly different bg to visually separate
-    &--actions {
-      background: transparent;
-      padding: 4px 2px;
+  // ---- Right section ----
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  // ---- Icon button ----
+  &__icon-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #606266;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+      background: #f0f2f5;
+      color: #303133;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    &--active {
+      color: #409eff;
+      background: #ecf5ff;
+
+      &:hover { background: #d9ecff; }
     }
   }
 
-  // Alignment icons: three horizontal lines at varying widths
   &__align-icon {
     display: block;
     opacity: 0.75;
-
-    &:hover {
-      opacity: 1;
-    }
+    &:hover { opacity: 1; }
   }
 
   &__badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    font-size: 10px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 9px;
     font-weight: 600;
     line-height: 1;
-    border-radius: 8px;
-    margin-left: 4px;
+    border-radius: 7px;
     color: #fff;
 
-    &--error {
-      background: #f56c6c;
+    &--error { background: #f56c6c; }
+    &--warning { background: #e6a23c; }
+  }
+
+  // ---- Mode switcher ----
+  &__mode-switcher {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    background: #f0f2f5;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  &__mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #909399;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+
+    &:hover { color: #606266; }
+
+    &--active {
+      background: #fff;
+      color: #409eff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  // ---- Mode indicator ----
+  &__mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+
+    &:hover { border-color: #c0c4cc; background: #f5f7fa; }
+
+    &--edit { color: #409eff; border-color: #b3d8ff; }
+    &--preview { color: #e6a23c; border-color: #f3d19e; }
+    &--publish-interactive { color: #67c23a; border-color: #b3e19d; }
+    &--publish-readonly { color: #909399; border-color: #c8c9cc; }
+  }
+
+  // ---- Text buttons ----
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    white-space: nowrap;
+
+    &--outline {
+      background: #fff;
+      border: 1px solid #dcdfe6;
+      color: #606266;
+      &:hover { border-color: #c0c4cc; background: #f5f7fa; }
     }
 
-    &--warning {
-      background: #e6a23c;
+    &--success {
+      background: #67c23a;
+      border: 1px solid #67c23a;
+      color: #fff;
+      &:hover { background: #85ce61; border-color: #85ce61; }
+    }
+
+    &--primary {
+      background: #409eff;
+      border: 1px solid #409eff;
+      color: #fff;
+      &:hover { background: #66b1ff; border-color: #66b1ff; }
     }
   }
 }
