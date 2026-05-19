@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * PropertyPanel -- Right-side property panel (5-tab layout rewrite)
+ * PropertyPanel -- Right-side property panel (accordion layout)
  *
- * Tabs: Basic / Style / Data / Events / Advanced
+ * Sections: Basic / Style / Data / Events / Advanced (el-collapse accordion)
  * Footer: JSON preview (collapsible) + action buttons
  */
 import { computed, watch, ref } from 'vue'
@@ -35,8 +35,8 @@ const editorStore = useEditorStore()
 // Local editing copy to avoid mutating props directly
 const localSchema = ref<FormSchemaItem | null>(null)
 
-// Active tab
-const activeTab = ref('basic')
+// Active collapse section (accordion mode)
+const activeCollapse = ref('basic')
 
 // JSON preview collapse state
 const jsonPreviewOpen = ref(false)
@@ -264,10 +264,10 @@ const validationResult = computed(() => {
           </div>
         </div>
 
-        <el-tabs v-model="activeTab" type="card" :class="$style.tabs">
-          <!-- Tab 1: 基础配置 -->
-          <el-tab-pane label="基础" name="basic">
-            <div :class="$style.tabContent">
+        <el-collapse v-model="activeCollapse" accordion :class="$style.collapse">
+          <!-- Section 1: 基础配置 -->
+          <el-collapse-item name="basic" title="基础配置">
+            <div :class="$style.sectionContent">
               <!-- 类型 -->
               <div :class="$style.field">
                 <label :class="$style.label">类型</label>
@@ -392,11 +392,11 @@ const validationResult = computed(() => {
                 </div>
               </template>
             </div>
-          </el-tab-pane>
+          </el-collapse-item>
 
-          <!-- Tab 2: 样式配置 -->
-          <el-tab-pane label="样式" name="style">
-            <div :class="$style.tabContent">
+          <!-- Section 2: 样式配置 -->
+          <el-collapse-item name="style" title="样式配置">
+            <div :class="$style.sectionContent">
               <div :class="$style.field">
                 <label :class="$style.label">宽度</label>
                 <el-input
@@ -500,11 +500,11 @@ const validationResult = computed(() => {
                 />
               </div>
             </div>
-          </el-tab-pane>
+          </el-collapse-item>
 
-          <!-- Tab 3: 数据配置 -->
-          <el-tab-pane label="数据" name="data">
-            <div :class="$style.tabContent">
+          <!-- Section 3: 数据配置 -->
+          <el-collapse-item name="data" title="数据配置">
+            <div :class="$style.sectionContent">
               <!-- API-supported types: inline ApiConfig -->
               <template v-if="supportsApi">
                 <ApiConfig
@@ -621,22 +621,22 @@ const validationResult = computed(() => {
                 当前组件不支持数据配置
               </div>
             </div>
-          </el-tab-pane>
+          </el-collapse-item>
 
-          <!-- Tab 4: 事件&联动 -->
-          <el-tab-pane name="events">
-            <template #label>
+          <!-- Section 4: 事件&联动 -->
+          <el-collapse-item name="events">
+            <template #title>
               <span>事件&联动</span>
               <el-tag
                 v-if="localSchema.linkages?.length"
                 size="small"
                 type="warning"
-                :class="$style.tabTag"
+                :class="$style.collapseTag"
               >
                 {{ localSchema.linkages.length }}
               </el-tag>
             </template>
-            <div :class="$style.tabContent">
+            <div :class="$style.sectionContent">
               <template v-if="hasEventsConfig">
                 <LinkageConfig
                   :linkages="localSchema.linkages ?? []"
@@ -648,11 +648,11 @@ const validationResult = computed(() => {
                 当前组件不支持事件联动
               </div>
             </div>
-          </el-tab-pane>
+          </el-collapse-item>
 
-          <!-- Tab 5: 高级配置 -->
-          <el-tab-pane label="高级" name="advanced">
-            <div :class="$style.tabContent">
+          <!-- Section 5: 高级配置 -->
+          <el-collapse-item name="advanced" title="高级配置">
+            <div :class="$style.sectionContent">
               <!-- 校验规则 -->
               <template v-if="!isLayoutType && !isButtonType">
                 <div :class="$style.sectionTitle">校验规则</div>
@@ -771,8 +771,8 @@ const validationResult = computed(() => {
                 </div>
               </div>
             </div>
-          </el-tab-pane>
-        </el-tabs>
+          </el-collapse-item>
+        </el-collapse>
       </el-scrollbar>
 
       <!-- Footer: fixed at bottom -->
@@ -824,12 +824,12 @@ const validationResult = computed(() => {
   padding: 4px 0;
 }
 
-.tabs {
+.collapse {
   padding: 0 12px;
 }
 
-.tabContent {
-  padding: 8px 0;
+.sectionContent {
+  padding: 4px 0 8px;
 }
 
 .field {
@@ -897,7 +897,7 @@ const validationResult = computed(() => {
   border-left: 2px solid #e6a23c;
 }
 
-.tabTag {
+.collapseTag {
   margin-left: 4px;
   vertical-align: middle;
 }
@@ -947,25 +947,26 @@ const validationResult = computed(() => {
   line-height: 1.4;
 }
 
-// Element Plus overrides
-:global(.el-tabs--card > .el-tabs__header .el-tabs__nav) {
-  border-radius: 4px 4px 0 0;
-}
-:global(.el-tabs--card > .el-tabs__header .el-tabs__item) {
-  font-size: 12px;
-  padding: 0 12px;
-  height: 30px;
-  line-height: 30px;
-}
-:global(.el-tabs__content) {
-  padding: 0;
-}
+// Element Plus overrides — accordion collapse
 :global(.el-collapse-item__header) {
   font-size: 12px;
-  height: 32px;
-  line-height: 32px;
+  font-weight: 600;
+  height: 36px;
+  line-height: 36px;
+  color: #303133;
+  background: #fafafa;
+  padding: 0 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+:global(.el-collapse-item__wrap) {
+  border-bottom: none;
 }
 :global(.el-collapse-item__content) {
-  padding-bottom: 8px;
+  padding: 0 4px 8px;
+}
+:global(.el-collapse) {
+  border-top: none;
+  border-bottom: none;
 }
 </style>

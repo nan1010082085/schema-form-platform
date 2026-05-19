@@ -14,6 +14,8 @@ import {
   Delete,
   Top,
   Bottom,
+  SortUp,
+  SortDown,
   FolderAdd,
   FolderRemove,
   CircleCheck,
@@ -52,6 +54,7 @@ const props = defineProps<{
   previewMode?: 'desktop' | 'tablet' | 'mobile'
   showThumbnail?: boolean
   canvasSizePreset?: string
+  selectedZIndex?: number
 }>()
 
 const emit = defineEmits<{
@@ -72,6 +75,8 @@ const emit = defineEmits<{
   'delete': []
   'move-up': []
   'move-down': []
+  'zindex-up': []
+  'zindex-down': []
   'align': [align: 'left' | 'center' | 'right']
   'group': [containerType: 'card' | 'page' | 'toolbar']
   'ungroup': []
@@ -172,6 +177,8 @@ function handleCopy() { if (hasSelection.value) emit('copy') }
 function handleDelete() { if (hasSelection.value) emit('delete') }
 function handleMoveUp() { if (hasSelection.value && !isFirstItem.value) emit('move-up') }
 function handleMoveDown() { if (hasSelection.value && !isLastItem.value) emit('move-down') }
+function handleZIndexUp() { if (hasSelection.value) emit('zindex-up') }
+function handleZIndexDown() { if (hasSelection.value) emit('zindex-down') }
 function handleAlign(align: 'left' | 'center' | 'right') { if (hasSelection.value) emit('align', align) }
 function handleUndo() { if (props.canUndo) emit('undo') }
 function handleRedo() { if (props.canRedo) emit('redo') }
@@ -190,8 +197,12 @@ function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'y') { event.preventDefault(); handleRedo() }
   }
   if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); handleDelete() }
-  if (event.key === 'ArrowUp' && event.altKey) { event.preventDefault(); handleMoveUp() }
-  if (event.key === 'ArrowDown' && event.altKey) { event.preventDefault(); handleMoveDown() }
+  // Alt+Up/Down: z-index (bring forward / send backward)
+  if (event.key === 'ArrowUp' && event.altKey) { event.preventDefault(); handleZIndexUp() }
+  if (event.key === 'ArrowDown' && event.altKey) { event.preventDefault(); handleZIndexDown() }
+  // Ctrl+Up/Down: array reorder (move up / move down)
+  if (event.key === 'ArrowUp' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); handleMoveUp() }
+  if (event.key === 'ArrowDown' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); handleMoveDown() }
 }
 
 onMounted(() => { document.addEventListener('keydown', handleKeydown) })
@@ -265,14 +276,27 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
             <el-icon :size="14"><Delete /></el-icon>
           </button>
         </el-tooltip>
-        <el-tooltip content="上移 (Alt+Up)" placement="bottom">
+        <el-tooltip content="上移 (Ctrl+Up)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isFirstItem" @click="handleMoveUp">
             <el-icon :size="14"><Top /></el-icon>
           </button>
         </el-tooltip>
-        <el-tooltip content="下移 (Alt+Down)" placement="bottom">
+        <el-tooltip content="下移 (Ctrl+Down)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isLastItem" @click="handleMoveDown">
             <el-icon :size="14"><Bottom /></el-icon>
+          </button>
+        </el-tooltip>
+      </div>
+
+      <div class="editor-toolbar__btn-group">
+        <el-tooltip :content="`上移一层 · z=${(selectedZIndex ?? 1) + 1} (Alt+Up)`" placement="bottom">
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleZIndexUp">
+            <el-icon :size="14"><SortUp /></el-icon>
+          </button>
+        </el-tooltip>
+        <el-tooltip :content="`下移一层 · z=${Math.max(1, (selectedZIndex ?? 1) - 1)} (Alt+Down)`" placement="bottom">
+          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleZIndexDown">
+            <el-icon :size="14"><SortDown /></el-icon>
           </button>
         </el-tooltip>
       </div>

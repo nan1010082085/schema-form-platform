@@ -10,6 +10,8 @@ import type {
   FormFieldValue,
   LinkageState,
   SchemaRules,
+  ComponentNode,
+  ComponentStyle,
 } from './types'
 import {
   ACTION_EMIT_KEY as ACTION_EMIT_INJECTION_KEY,
@@ -19,8 +21,12 @@ import {
 } from './types'
 
 const props = defineProps<{
-  schema: FormSchemaItem
-  formData: FormData
+  schema?: FormSchemaItem
+  /** 画布节点（新模型）— 与 schema 二选一 */
+  node?: ComponentNode
+  formData?: FormData
+  /** 画布模式 */
+  mode?: 'edit' | 'preview' | 'publish-interactive' | 'publish-readonly'
   /** 编辑器模式：启用容器拖放区域（Sprint 11） */
   editable?: boolean
   /** 是否正在拖拽中（Sprint 11） */
@@ -33,12 +39,113 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'container-drop': [payload: { parentPath: number[]; index: number; dragDataRaw: string }]
+  'node-select': [id: string]
 }>()
 
 const emitAction = inject(ACTION_EMIT_INJECTION_KEY, undefined)
 const linkageStateMap = inject(FORM_GRID_LINKAGE_KEY, undefined)
 const injectedReadonly = inject(FORM_GRID_READONLY_KEY, undefined)
 const effectiveReadonly = computed(() => props.readonly ?? injectedReadonly?.value ?? false)
+
+// ---- ComponentNode (new model) rendering support ----
+const isNodeModel = computed(() => !!props.node)
+/** Non-null schema for legacy rendering path (always provided when isNodeModel is false) */
+const safeSchema = computed(() => props.schema!)
+
+/** Evaluate visibility from linkage.visibleOn expression */
+const nodeVisible = computed(() => {
+  if (!props.node) return true
+  const visibleOn = props.node.linkage?.visibleOn
+  if (!visibleOn) return true
+  // Simple expression evaluation: check if visibleOn is a field reference
+  // For now, treat as always visible (expression engine integration is separate)
+  return true
+})
+
+/** ComponentNode style: transform + ComponentStyle */
+const nodeWrapperStyle = computed(() => {
+  if (!props.node) return {}
+  const t = props.node.transform
+  const style: Record<string, string> = {
+    position: 'absolute',
+    left: `${t.x}px`,
+    top: `${t.y}px`,
+    width: `${t.w}px`,
+    height: `${t.h}px`,
+    zIndex: String(props.node.zIndex),
+  }
+  // Apply ComponentStyle CSS
+  const cs = props.node.style
+  if (cs.width) style.width = cs.width
+  if (cs.height) style.height = cs.height
+  if (cs.margin) style.margin = cs.margin
+  if (cs.padding) style.padding = cs.padding
+  if (cs.textAlign) style.textAlign = cs.textAlign
+  if (cs.backgroundColor) style.backgroundColor = cs.backgroundColor
+  if (cs.borderRadius) style.borderRadius = cs.borderRadius
+  if (cs.boxShadow) style.boxShadow = cs.boxShadow
+  if (cs.border) style.border = cs.border
+  if (cs.borderTop) style.borderTop = cs.borderTop
+  if (cs.borderRight) style.borderRight = cs.borderRight
+  if (cs.borderBottom) style.borderBottom = cs.borderBottom
+  if (cs.borderLeft) style.borderLeft = cs.borderLeft
+  if (cs.opacity !== undefined) style.opacity = String(cs.opacity)
+  if (cs.fontSize) style.fontSize = cs.fontSize
+  if (cs.fontWeight) style.fontWeight = cs.fontWeight
+  if (cs.color) style.color = cs.color
+  return style
+})
+
+/** Resolve component from compMap for ComponentNode */
+const nodeComponent = computed(() => {
+  if (!props.node) return null
+  return compMap[props.node.type]
+})
+
+/** Build props for the ComponentNode's rendered component */
+const nodeComponentProps = computed(() => {
+  if (!props.node) return {}
+  const p: Record<string, unknown> = { ...props.node.props }
+  if (props.node.data.options?.length) {
+    p.options = props.node.data.options
+  }
+  // Disable in edit mode
+  if (props.mode === 'edit') {
+    p.disabled = true
+  }
+  // Disable in readonly mode
+  if (props.mode === 'publish-readonly') {
+    p.readonly = true
+  }
+  return p
+})
+
+/** Is grid container (flex layout for children) */
+const isNodeGrid = computed(() => {
+  if (!props.node) return false
+  return props.node.type === 'grid-row' || props.node.type === 'grid-col'
+})
+
+/** Grid container inner style */
+const nodeGridStyle = computed(() => {
+  if (!isNodeGrid.value || !props.node) return {}
+  return {
+    display: 'flex',
+    flexDirection: (props.node.type === 'grid-row' ? 'row' : 'column') as 'row' | 'column',
+    flexWrap: 'wrap',
+    gap: '8px',
+    width: '100%',
+    height: '100%',
+    position: 'relative' as const,
+  }
+})
+
+function handleNodeClick(event: MouseEvent) {
+  event.stopPropagation()
+  if (props.node) {
+    emit('node-select', props.node.id)
+  }
+}
 
 // 响应式断点
 const { resolveSpan } = useBreakpoint()
@@ -289,8 +396,57 @@ watch(
 </script>
 
 <template>
+  <!-- ====== ComponentNode (new model) rendering branch ====== -->
+  <template v-if="isNodeModel && node">
+    <!-- Not visible: skip rendering -->
+    <template v-if="!nodeVisible" />
+    <!-- Grid container: flex layout for children -->
+    <div
+      v-else-if="isNodeGrid"
+      :class="$style.nodeWrapper"
+      :style="nodeWrapperStyle"
+      @click.stop="handleNodeClick"
+    >
+      <div :style="nodeGridStyle">
+        <SchemaRender
+          v-for="child in node.children"
+          :key="child.id"
+          :node="child"
+          :mode="mode"
+          @node-select="(id) => emit('node-select', id)"
+        />
+      </div>
+    </div>
+    <!-- Container with children: absolutely positioned children -->
+    <div
+      v-else-if="node.children?.length"
+      :class="$style.nodeWrapper"
+      :style="nodeWrapperStyle"
+      @click.stop="handleNodeClick"
+    >
+      <component :is="nodeComponent" v-bind="nodeComponentProps" />
+      <SchemaRender
+        v-for="child in node.children"
+        :key="child.id"
+        :node="child"
+        :mode="mode"
+        @node-select="(id) => emit('node-select', id)"
+      />
+    </div>
+    <!-- Leaf component -->
+    <div
+      v-else
+      :class="$style.nodeWrapper"
+      :style="nodeWrapperStyle"
+      @click.stop="handleNodeClick"
+    >
+      <component :is="nodeComponent" v-bind="nodeComponentProps" />
+    </div>
+  </template>
+
+  <!-- ====== FormSchemaItem (legacy model) rendering branch ====== -->
   <!-- 联动不可见：不渲染 DOM -->
-  <template v-if="!isVisible" />
+  <template v-else-if="!isVisible" />
 
   <!-- 布局节点：行 -->
   <div
@@ -301,7 +457,7 @@ watch(
     @dragleave="editable && isContainerType ? onContainerDragLeave($event) : undefined"
     @drop.prevent.stop="editable && isContainerType ? onContainerDrop($event) : undefined"
   >
-    <template v-for="(child, idx) in schema.children" :key="idx">
+    <template v-for="(child, idx) in schema?.children" :key="idx">
       <ErrorBoundary
         v-if="!child.hidden"
         :node-type="child.type"
@@ -332,14 +488,14 @@ watch(
   >
     <!-- 纯标签单元格 -->
     <div v-if="isLabelOnly" class="fg-cell--label-only" :class="cellAlignClass">
-      {{ schema.label }}
+      {{ schema?.label }}
     </div>
 
     <!-- 标签 + 内容单元格 -->
     <div v-else class="fg-cell" :class="cellAlignClass">
-      <span v-if="schema.label" class="fg-cell-label">{{ schema.label }}</span>
+      <span v-if="schema?.label" class="fg-cell-label">{{ schema?.label }}</span>
       <div class="fg-cell-content">
-        <template v-for="(child, idx) in schema.children" :key="idx">
+        <template v-for="(child, idx) in schema?.children" :key="idx">
           <ErrorBoundary
             v-if="!child.hidden"
             :node-type="child.type"
@@ -365,7 +521,7 @@ watch(
   <template v-else-if="isLayoutComponent">
     <!-- steps/tabs 组件：children 作为 prop 传入，带拖放区域 -->
     <div
-      v-if="schema.type === 'steps' || schema.type === 'tabs'"
+      v-if="schema?.type === 'steps' || schema?.type === 'tabs'"
       class="fg-container-edit-wrap"
       @dragenter.prevent="onContainerDragEnter"
       @dragover.prevent="onContainerDragOver"
@@ -373,14 +529,14 @@ watch(
       @drop.prevent.stop="onContainerDrop"
     >
       <ErrorBoundary
-        :node-type="schema.type"
-        :node-field="schema.field"
+        :node-type="schema?.type"
+        :node-field="schema?.field"
         :node-path="nodePathStr"
       >
         <component
           :is="comp"
-          v-bind="schema.props || {}"
-          :children="schema.children"
+          v-bind="schema?.props || {}"
+          :children="schema?.children"
           :form-data="formData"
           :editable="editable"
           :is-dragging="isDragging"
@@ -399,27 +555,27 @@ watch(
       </div>
     </div>
     <!-- 弹窗组件：edit 模式显示预览卡，preview/runtime 正常渲染 -->
-    <template v-else-if="schema.type === 'dialog'">
+    <template v-else-if="schema?.type === 'dialog'">
       <ErrorBoundary
-        :node-type="schema.type"
-        :node-field="schema.field"
+        :node-type="schema?.type"
+        :node-field="schema?.field"
         :node-path="nodePathStr"
       >
         <component
           :is="comp"
           :model-value="false"
-          :title="schema.props?.title ?? schema.label ?? 'Dialog'"
-          :width="schema.props?.width"
-          :dialog-schema="schema.props?.dialogSchema"
-          :component-id="schema.componentId"
+          :title="schema?.props?.title ?? schema?.label ?? 'Dialog'"
+          :width="schema?.props?.width"
+          :dialog-schema="schema?.props?.dialogSchema"
+          :component-id="schema?.componentId"
           :editable="editable"
           :is-dragging="isDragging"
           :path="path"
-          :children="schema.children"
+          :children="schema?.children"
           @container-drop="emit('container-drop', $event)"
         >
-          <template v-if="schema.children?.length" #default>
-            <template v-for="(child, ci) in schema.children" :key="ci">
+          <template v-if="schema?.children?.length" #default>
+            <template v-for="(child, ci) in schema?.children" :key="ci">
               <ErrorBoundary
                 v-if="!child.hidden"
                 :node-type="child.type"
@@ -451,17 +607,17 @@ watch(
       @drop.prevent.stop="onContainerDrop"
     >
       <ErrorBoundary
-        :node-type="schema.type"
-        :node-field="schema.field"
+        :node-type="schema?.type"
+        :node-field="schema?.field"
         :node-path="nodePathStr"
       >
         <component
           :is="comp"
-          v-bind="schema.props || {}"
-          :label="schema.props?.label ?? schema.label"
+          v-bind="schema?.props || {}"
+          :label="schema?.props?.label ?? schema?.label"
         >
-          <template v-if="schema.children?.length" #default>
-            <template v-for="(child, ci) in schema.children" :key="ci">
+          <template v-if="schema?.children?.length" #default>
+            <template v-for="(child, ci) in schema?.children" :key="ci">
               <ErrorBoundary
                 v-if="!child.hidden"
                 :node-type="child.type"
@@ -495,17 +651,17 @@ watch(
     <!-- 其他布局组件：children 通过 slot 递归渲染 -->
     <ErrorBoundary
       v-else
-      :node-type="schema.type"
-      :node-field="schema.field"
+      :node-type="schema?.type"
+      :node-field="schema?.field"
       :node-path="nodePathStr"
     >
       <component
         :is="comp"
-        v-bind="schema.props || {}"
-        :label="schema.props?.label ?? schema.label"
+        v-bind="schema?.props || {}"
+        :label="schema?.props?.label ?? schema?.label"
       >
-        <template v-if="schema.children?.length" #default>
-          <template v-for="(child, ci) in schema.children" :key="ci">
+        <template v-if="schema?.children?.length" #default>
+          <template v-for="(child, ci) in schema?.children" :key="ci">
             <ErrorBoundary
               v-if="!child.hidden"
               :node-type="child.type"
@@ -531,13 +687,13 @@ watch(
   <!-- 组件节点 -->
   <div v-else-if="isComponent" class="fg-component" :style="componentAlignStyle">
     <ErrorBoundary
-      :node-type="schema.type"
-      :node-field="schema.field"
+      :node-type="schema?.type"
+      :node-field="schema?.field"
       :node-path="nodePathStr"
     >
       <!-- 日期范围：直接传 formData -->
       <component
-        v-if="schema.type === 'date-range'"
+        v-if="schema?.type === 'date-range'"
         :is="comp"
         :form-data="formData"
         :schema="schema"
@@ -545,79 +701,87 @@ watch(
       />
       <!-- 按钮列表：不包裹 el-form-item；只读模式隐藏 -->
       <component
-        v-else-if="schema.type === 'button-list' && !effectiveReadonly"
+        v-else-if="schema?.type === 'button-list' && !effectiveReadonly"
         :is="comp"
-        :buttons="schema.buttons"
+        :buttons="schema?.buttons"
       />
       <!-- 工具栏按钮：居中对齐，不包裹 el-form-item；只读模式隐藏 -->
       <component
-        v-else-if="schema.type === 'toolbar-buttons' && !effectiveReadonly"
+        v-else-if="schema?.type === 'toolbar-buttons' && !effectiveReadonly"
         :is="comp"
-        :buttons="schema.buttons"
-        :background="schema.props?.background"
+        :buttons="schema?.buttons"
+        :background="schema?.props?.background"
       />
       <!-- 表格：不包裹 el-form-item；有 field 时使用 v-model 双向绑定 -->
       <component
-        v-else-if="schema.type === 'table'"
+        v-else-if="schema?.type === 'table'"
         :is="comp"
-        :model-value="schema.field ? (formData[schema.field] as any[] ?? []) : undefined"
-        :column-schema="schema.props?.columnSchema"
-        :add-default="schema.props?.addDefault"
-        :show-actions="schema.props?.showActions"
-        :actions="schema.props?.actions"
-        v-bind="schema.props"
-        @update:model-value="schema.field ? setFieldValue($event) : undefined"
+        :model-value="schema?.field ? ((formData as any)?.[schema?.field] ?? []) : undefined"
+        :column-schema="schema?.props?.columnSchema"
+        :add-default="schema?.props?.addDefault"
+        :show-actions="schema?.props?.showActions"
+        :actions="schema?.props?.actions"
+        v-bind="schema?.props"
+        @update:model-value="schema?.field ? setFieldValue($event) : undefined"
       />
       <!-- 可编辑表格：独占一行，不包裹 el-form-item -->
       <component
-        v-else-if="schema.type === 'editable-table'"
+        v-else-if="schema?.type === 'editable-table'"
         :is="comp"
-        :model-value="schema.field ? (formData[schema.field] as Record<string, unknown>[] ?? []) : []"
+        :model-value="schema?.field ? ((formData as any)?.[schema?.field] ?? []) : []"
         :schema="schema"
-        @update:model-value="schema.field ? setFieldValue($event) : undefined"
+        @update:model-value="schema?.field ? setFieldValue($event) : undefined"
       />
       <!-- 文件列表：不包裹 el-form-item -->
       <component
-        v-else-if="schema.type === 'file-list'"
+        v-else-if="schema?.type === 'file-list'"
         :is="comp"
-        v-bind="schema.props"
+        v-bind="schema?.props"
       />
       <!-- 人员选择：不包裹 el-form-item -->
       <component
-        v-else-if="schema.type === 'person-select'"
+        v-else-if="schema?.type === 'person-select'"
         :is="comp"
-        v-bind="schema.props"
+        v-bind="schema?.props"
       />
       <!-- 搜索列表：自包含列表页面，不包裹 el-form-item -->
       <component
-        v-else-if="schema.type === 'search-list'"
+        v-else-if="schema?.type === 'search-list'"
         :is="comp"
         :schema="schema"
         @action="(payload: unknown) => emitAction?.('action', payload)"
       />
       <!-- 普通组件：单字段 v-model -->
       <el-form-item
-        v-else-if="schema.field"
-        :prop="schema.field"
+        v-else-if="schema?.field"
+        :prop="schema?.field"
         :rules="effectiveRules"
-        :label="schema.label ?? ''"
+        :label="schema?.label ?? ''"
         style="width: 100%; margin-bottom: 0"
       >
         <component
           :is="comp"
           :model-value="getFieldValue()"
-          :placeholder="schema.props?.placeholder"
-          :disabled="isDisabled || schema.props?.disabled || effectiveReadonly"
-          :readonly="schema.props?.readonly"
+          :placeholder="schema?.props?.placeholder"
+          :disabled="isDisabled || schema?.props?.disabled || effectiveReadonly"
+          :readonly="schema?.props?.readonly"
           :options="effectiveOptions"
           :api="effectiveApi"
-          v-bind="schema.props"
+          v-bind="schema?.props"
           @update:model-value="setFieldValue"
         />
       </el-form-item>
     </ErrorBoundary>
   </div>
 </template>
+
+<style lang="scss" module>
+.nodeWrapper {
+  box-sizing: border-box;
+  pointer-events: auto;
+  user-select: none;
+}
+</style>
 
 <style scoped lang="scss">
 .fg-container-edit-wrap {
