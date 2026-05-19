@@ -489,15 +489,19 @@ export interface ComponentStyle {
   height?: string
   margin?: string
   padding?: string
-  textAlign?: 'left' | 'center' | 'right'
-  backgroundColor?: string
-  borderRadius?: string
-  boxShadow?: string
   border?: string
   borderTop?: string
   borderRight?: string
   borderBottom?: string
   borderLeft?: string
+  backgroundColor?: string
+  borderRadius?: string
+  boxShadow?: string
+  opacity?: number
+  fontSize?: string
+  fontWeight?: string
+  color?: string
+  textAlign?: 'left' | 'center' | 'right'
   customClass?: string
 }
 
@@ -579,4 +583,70 @@ export interface FormGridTelemetry {
   onApiError?: (info: { url: string; error: string }) => void
   /** Schema 校验失败时调用 */
   onSchemaError?: (info: { errors: unknown[]; count: number }) => void
+}
+
+// =====================================================================
+// 画布编辑器新类型系统 — ComponentNode 树结构
+// =====================================================================
+
+/** 位置与尺寸 */
+export interface Transform {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/** 事件动作定义 */
+export interface ActionDef {
+  type: 'dialog' | 'navigate' | 'emit' | 'api'
+  dialogId?: string
+  sendData?: Record<string, unknown>
+  path?: string
+  query?: Record<string, string>
+  eventName?: string
+  payload?: unknown
+  apiUrl?: string
+  apiMethod?: 'get' | 'post'
+}
+
+/** 联动配置 */
+export interface LinkageDef {
+  visibleOn?: string
+  disabledOn?: string
+  requiredOn?: string
+  watchFields?: string[]
+  dialogBinding?: {
+    dialogId: string
+    receiveFields: Record<string, string>
+  }
+  rules?: SchemaLinkage[]
+}
+
+/** 通用界面编辑器组件节点 */
+export interface ComponentNode {
+  id: string
+  type: SchemaType
+  field?: string
+  transform: Transform
+  zIndex: number
+  style: ComponentStyle
+  data: {
+    api?: SchemaApiConfig
+    options?: DictItem[]
+    defaultValue?: unknown
+    fieldMap?: Record<string, string>
+  }
+  events: Record<string, ActionDef[]>
+  linkage: LinkageDef
+  props: Record<string, unknown>
+  children?: ComponentNode[]
+}
+
+/** 画布配置 */
+export interface CanvasConfig {
+  width: number
+  height: number
+  backgroundColor: string
+  padding: string
 }

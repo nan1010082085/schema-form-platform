@@ -4,8 +4,9 @@
  * Extracted from EditorCanvas.vue createDefaultSchema() so it can be shared
  * between the editor store and editor canvas component.
  */
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import type { FormSchemaItem, SchemaType, ComponentNode, Transform, ComponentStyle } from '@/components/FormGrid/types'
 import { isFullWidthType } from '@/components/FormGrid/types'
+import { generateComponentId } from '@/composables/useIdGenerate'
 
 /**
  * Create a default FormSchemaItem for a given component type.
@@ -186,4 +187,40 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
   }
 
   return item
+}
+
+// =====================================================================
+// 画布编辑器 ComponentNode 工厂函数
+// =====================================================================
+
+const DEFAULT_TRANSFORMS: Record<string, Transform> = {
+  'grid-row': { x: 0, y: 0, w: 1920, h: 44 },
+  'grid-col': { x: 0, y: 0, w: 960, h: 44 },
+  'card': { x: 0, y: 0, w: 400, h: 300 },
+  'tabs': { x: 0, y: 0, w: 400, h: 300 },
+}
+
+const DEFAULT_STYLE: ComponentStyle = {}
+
+const FORM_COMPONENT_STYLE: ComponentStyle = {
+  width: '150px',
+  height: '44px',
+}
+
+export function createComponentNode(type: SchemaType): ComponentNode {
+  const isFormComponent = ['input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range', 'textarea', 'richtext'].includes(type)
+  const isLayoutComponent = ['grid-row', 'grid-col', 'card', 'tabs'].includes(type)
+
+  return {
+    id: generateComponentId(type),
+    type,
+    transform: DEFAULT_TRANSFORMS[type] ?? { x: 0, y: 0, w: 150, h: 44 },
+    zIndex: 1,
+    style: isFormComponent ? { ...FORM_COMPONENT_STYLE } : { ...DEFAULT_STYLE },
+    data: {},
+    events: {},
+    linkage: {},
+    props: {},
+    ...(isLayoutComponent ? { children: [] } : {}),
+  }
 }

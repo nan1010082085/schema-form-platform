@@ -44,3 +44,22 @@ export type InteractionMode = (typeof INTERACTION_MODES)[number]
 export function canNest(type: SchemaType): boolean {
   return LAYOUT_CONTAINER_TYPES.has(type)
 }
+
+/** 布局/容器组件 */
+export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
+  'grid-row', 'grid-col', 'card', 'tabs',
+])
+
+/** 基础组件 */
+export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
+  'input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range',
+  'textarea', 'richtext', 'title', 'divider', 'spacer',
+  'button-list', 'table', 'pagination', 'dialog',
+])
+
+/** 业务组件（不参与本次重构） */
+export const BUSINESS_TYPES: ReadonlySet<SchemaType> = new Set([
+  'upload', 'file-list', 'person-select', 'dept-select', 'transfer',
+  'detail-form', 'banner', 'tree-layout', 'date-time-slot',
+  'toolbar-buttons', 'search-list', 'editable-table',
+])

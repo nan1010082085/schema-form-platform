@@ -1,450 +1,521 @@
 <script setup lang="ts">
 /**
- * EditorCanvas — 中间画布 (Phase 3)
+ * EditorCanvas — 画布引擎 (Phase 2)
  *
- * 功能：
- * 1. 复用 FormGrid 实时渲染 schema
- * 2. 支持从组件面板拖拽添加组件（含嵌套容器）
- * 3. 支持选中高亮（点击选中，Ctrl/Shift 多选）
- * 4. 支持容器内拖拽放置（card/page/toolbar）
- * 5. 跨层级拖拽移动
- *
- * Phase 3: 接受 canvasWidth/canvasHeight props，画布填充固定尺寸父容器
- *
- * Phase 3.1: 浮动属性标签
- * - 点击组件显示浮动标签，点击标签才打开属性抽屉
- * - 拖拽放置不再自动选中或打开抽屉
+ * 新架构：
+ * - 渲染层：复用 CanvasNode 渲染所有 ComponentNode
+ * - 交互层：选中框 + 8 个缩放手柄
+ * - 支持拖拽放置新组件、选中、移动、缩放
  */
-import { ref, computed } from 'vue'
-import FormGrid from '@/components/FormGrid/index.vue'
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
-import { isFullWidthType } from '@/components/FormGrid/types'
-import type { InteractionMode } from '@/composables/useConstant'
-
-/** SchemaType → 中文标签映射（浮动标签 + 组件面板显示） */
-const TYPE_LABEL_ZH: Record<string, string> = {
-  'grid-row': '行容器', 'grid-col': '列容器', 'page': '页面', 'card': '卡片',
-  'toolbar': '工具栏', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
-  'steps': '步骤条', 'tabs': '标签页',
-  'input': '输入框', 'number': '数字', 'select': '下拉选择', 'radio': '单选',
-  'checkbox': '多选', 'date': '日期', 'date-range': '日期范围',
-  'textarea': '多行文本', 'richtext': '富文本',
-  'button-list': '按钮列表', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
-  'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
-  'person-select': '人员选择', 'dept-select': '部门选择', 'transfer': '穿梭框',
-  'detail-form': '详情表单', 'banner': '横幅', 'tree-layout': '树形布局',
-  'date-time-slot': '日期时间段', 'dialog': '对话框', 'search-list': '搜索列表',
-}
-function typeLabel(type: string): string { return TYPE_LABEL_ZH[type] ?? type }
-
-const isReadonly = computed(() => props.mode === 'publish-readonly')
+import { computed, ref } from 'vue'
+import CanvasNode from './CanvasNode.vue'
+import type { ComponentNode, CanvasConfig, Transform, SchemaType } from '@/components/FormGrid/types'
 
 const props = defineProps<{
-  schema: FormSchemaItem[]
-  selectedIndex: number | null
-  selectedIndices: number[]
-  mode: InteractionMode
-  /** Phase 3: Canvas width for sizing awareness */
-  canvasWidth?: number
-  /** Phase 3: Canvas height for sizing awareness */
-  canvasHeight?: number
+  schema: ComponentNode[]
+  canvasConfig: CanvasConfig
+  selectedId: string | null
+  mode: 'edit' | 'preview' | 'publish-interactive' | 'publish-readonly'
 }>()
 
 const emit = defineEmits<{
-  'update:schema': [schema: FormSchemaItem[]]
-  'select': [index: number | null, ctrl?: boolean, shift?: boolean]
-  'open-properties': []
-  'drag-reorder': [fromIndex: number, toIndex: number]
-  'drop-to-container': [parentPath: number[], index: number, item: FormSchemaItem]
-  'drag-to-container': [sourcePath: number[], targetPath: number[], targetIndex: number]
+  'select': [id: string | null]
+  'toggle-select': [id: string]
+  'move': [id: string, transform: Transform]
+  'resize': [id: string, w: number, h: number]
+  'drop-new': [type: SchemaType, x: number, y: number, parentId: string | null]
+  'update:schema': [schema: ComponentNode[]]
 }>()
 
-// ---- Combined drag state ----
-const isDragActive = computed(() => isDragging.value || isDragOver.value)
+// ---- Layout container types that can accept children ----
+const LAYOUT_CONTAINER_TYPES = new Set([
+  'grid-row', 'grid-col', 'card', 'tabs',
+  'page', 'toolbar', 'steps', 'dialog',
+])
 
-// ---- Top-level drag from component panel ----
-const isDragOver = ref(false)
+// ---- Canvas style ----
+const canvasStyle = computed(() => ({
+  width: `${props.canvasConfig.width}px`,
+  height: `${props.canvasConfig.height}px`,
+  backgroundColor: props.canvasConfig.backgroundColor,
+  padding: props.canvasConfig.padding,
+  position: 'relative' as const,
+  overflow: 'hidden',
+}))
+
+// ---- Selected node lookup ----
+const selectedNode = computed(() => {
+  if (!props.selectedId) return null
+  return findNodeById(props.schema, props.selectedId)
+})
+
+function findNodeById(nodes: ComponentNode[], id: string): ComponentNode | null {
+  for (const node of nodes) {
+    if (node.id === id) return node
+    if (node.children) {
+      const found = findNodeById(node.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// ---- Selection box style ----
+const selectionStyle = computed(() => {
+  if (!selectedNode.value) return { display: 'none' }
+  const t = selectedNode.value.transform
+  return {
+    left: `${t.x}px`,
+    top: `${t.y}px`,
+    width: `${t.w}px`,
+    height: `${t.h}px`,
+  }
+})
+
+// ---- Is edit mode ----
+const isEditMode = computed(() => props.mode === 'edit')
+
+// ---- Drag state for move ----
 const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartY = ref(0)
+const dragNodeStartX = ref(0)
+const dragNodeStartY = ref(0)
 
-function handleDragOver(event: DragEvent) {
-  event.preventDefault()
-  event.dataTransfer!.dropEffect = 'copy'
-  isDragOver.value = true
+// ---- Resize state ----
+const isResizing = ref(false)
+const resizeHandle = ref<string | null>(null)
+const resizeStartX = ref(0)
+const resizeStartY = ref(0)
+const resizeStartW = ref(0)
+const resizeStartH = ref(0)
+const resizeStartNodeX = ref(0)
+const resizeStartNodeY = ref(0)
+
+// ---- Container hit-test result ----
+interface ContainerHit {
+  node: ComponentNode
+  absX: number
+  absY: number
 }
 
-function handleDragLeave() {
-  isDragOver.value = false
-}
+const dragOverTarget = ref<ContainerHit | null>(null)
+
+const dropHighlightStyle = computed(() => {
+  if (!dragOverTarget.value) return { display: 'none' }
+  const { node, absX, absY } = dragOverTarget.value
+  return {
+    left: `${absX}px`,
+    top: `${absY}px`,
+    width: `${node.transform.w}px`,
+    height: `${node.transform.h}px`,
+  }
+})
 
 /**
- * 根据 SchemaType 创建默认的 FormSchemaItem
+ * Find the deepest layout container whose bounds contain the given canvas point.
+ * Accumulates parent offsets so nested node coordinates resolve correctly.
  */
-function createDefaultSchema(type: SchemaType): FormSchemaItem {
-  if (type === 'grid-row') return { type: 'grid-row', children: [] }
-  if (type === 'grid-col') return { type: 'grid-col', span: 12, children: [] }
-  if (type === 'card' || type === 'page' || type === 'toolbar') {
-    return { type, label: type === 'card' ? '卡片' : undefined, children: [] }
-  }
-  if (type === 'title') return { type: 'title', label: '标题' }
-  if (type === 'divider') return { type: 'divider' }
-  if (type === 'spacer') return { type: 'spacer' }
-  if (type === 'steps') {
-    return {
-      type: 'steps',
-      props: { steps: [{ title: '步骤一' }, { title: '步骤二' }] },
-      children: [
-        { type: 'grid-row', children: [] },
-        { type: 'grid-row', children: [] },
-      ],
+function findDeepestContainer(
+  nodes: ComponentNode[],
+  canvasX: number,
+  canvasY: number,
+  offsetX = 0,
+  offsetY = 0,
+): ContainerHit | null {
+  for (const node of nodes) {
+    const absX = offsetX + node.transform.x
+    const absY = offsetY + node.transform.y
+    const { w, h } = node.transform
+
+    if (canvasX < absX || canvasX > absX + w || canvasY < absY || canvasY > absY + h) {
+      continue
+    }
+
+    // Recurse into children first — deeper match wins
+    if (node.children?.length) {
+      const childHit = findDeepestContainer(node.children, canvasX, canvasY, absX, absY)
+      if (childHit) return childHit
+    }
+
+    // No deeper match — return this container if it qualifies
+    if (LAYOUT_CONTAINER_TYPES.has(node.type)) {
+      return { node, absX, absY }
     }
   }
-  if (type === 'tabs') {
-    return {
-      type: 'tabs',
-      props: { tabs: [{ title: '标签一' }] },
-      children: [{ type: 'grid-row', children: [] }],
-    }
-  }
-  if (type === 'dialog') {
-    return {
-      type: 'dialog',
-      label: '对话框',
-      props: { title: '对话框', width: '600px' },
-      children: [],
-    }
-  }
-
-  const field = `field_${Date.now().toString(36)}`
-  const base: FormSchemaItem = { type, field }
-
-  let item: FormSchemaItem
-  switch (type) {
-    case 'input':
-    case 'textarea':
-      item = { ...base, label: '输入框', props: { placeholder: '请输入' } }
-      break
-    case 'number':
-      item = { ...base, label: '数字', props: { placeholder: '请输入' } }
-      break
-    case 'select':
-      item = { ...base, label: '下拉选择', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
-      break
-    case 'radio':
-      item = { ...base, label: '单选', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
-      break
-    case 'checkbox':
-      item = { ...base, label: '多选', options: [{ label: '选项一', value: 'a' }, { label: '选项二', value: 'b' }] }
-      break
-    case 'date':
-      item = { ...base, label: '日期' }
-      break
-    case 'date-range':
-      item = { ...base, label: '日期范围' }
-      break
-    case 'button-list':
-      item = {
-        type: 'button-list',
-        buttons: [
-          { text: '提交', buttonType: 'primary', actions: [{ type: 'submit' }] },
-          { text: '重置', actions: [{ type: 'reset' }] },
-        ],
-      }
-      break
-    case 'upload':
-      item = { ...base, label: '上传' }
-      break
-    case 'table':
-      item = { ...base, label: '表格', props: { columnSchema: [], showActions: true } }
-      break
-    case 'pagination':
-      item = { type: 'pagination', props: { currentPage: 1, pageSize: 10, total: 0 } }
-      break
-    case 'search-list':
-      item = {
-        type: 'search-list', label: '搜索列表',
-        props: { pageSize: 10, rowKey: 'id', showSelection: false, showIndex: true, border: true, stripe: true },
-        listApi: { url: '/api/list', method: 'post' },
-        searchFields: [
-          { type: 'input', field: 'keyword', label: '关键词', span: 6 },
-          { type: 'date-range', field: 'dateRange', label: '日期', span: 8 },
-        ],
-        columns: [
-          { prop: 'name', label: '名称', width: 120 },
-          { prop: 'status', label: '状态', width: 100, render: 'tag', colorMap: { active: 'success', inactive: 'danger' } },
-        ],
-        rowActions: [{ label: '编辑', type: 'emit', emitEvent: 'edit-row' }],
-        buttons: [{ text: '新增', buttonType: 'primary', actions: [{ type: 'emit', eventName: 'add-item' }] }],
-      }
-      break
-    default:
-      item = { type, field }
-  }
-
-  if (isFullWidthType(type)) item.span = 24
-  return item
+  return null
 }
 
-/**
- * 拖放组件到画布 — 不再自动选中或打开属性抽屉
- */
-function handleDrop(event: DragEvent) {
-  event.preventDefault()
-  isDragOver.value = false
+// ---- Event handlers ----
+function handleSelect(id: string | null) {
+  emit('select', id)
+}
 
-  const raw = event.dataTransfer?.getData('application/schema-drag')
-  if (!raw) {
-    const type = event.dataTransfer?.getData('schema-type') as SchemaType | undefined
-    if (!type) return
-    const newItem = createDefaultSchema(type)
-    emit('update:schema', [...props.schema, newItem])
-    return
+function handleCanvasClick(event: MouseEvent) {
+  // Click on canvas background deselects
+  const target = event.target as HTMLElement
+  if (target === event.currentTarget || target.classList.contains('canvas__render-layer')) {
+    emit('select', null)
+  }
+}
+
+function handleNodeMouseDown(id: string, event: MouseEvent) {
+  if (!isEditMode.value) return
+  // Only left mouse button
+  if (event.button !== 0) return
+
+  // Ctrl+Click: toggle multi-select
+  if (event.ctrlKey || event.metaKey) {
+    emit('toggle-select', id)
+  } else {
+    emit('select', id)
   }
 
-  try {
-    const data = JSON.parse(raw) as { source: 'panel' | 'canvas'; type: SchemaType; sourcePath?: number[] }
-    if (data.source === 'panel') {
-      const newItem = createDefaultSchema(data.type)
-      emit('update:schema', [...props.schema, newItem])
-    }
-  } catch { /* ignore malformed data */ }
-}
+  const node = findNodeById(props.schema, id)
+  if (!node) return
 
-// ---- Click-to-select with modifier keys ----
-function handleItemClick(event: MouseEvent, idx: number) {
-  emit('select', idx, event.ctrlKey || event.metaKey, event.shiftKey)
-}
-
-// ---- Top-level drag reordering ----
-const dragIndex = ref<number | null>(null)
-const dragOverIndex = ref<number | null>(null)
-const dropPosition = ref<'top' | 'bottom' | null>(null)
-
-function handleItemDragStart(event: DragEvent, index: number) {
   isDragging.value = true
-  dragIndex.value = index
-  event.dataTransfer!.effectAllowed = 'move'
-  event.dataTransfer!.setData('text/plain', String(index))
-  event.dataTransfer!.setData('application/schema-drag', JSON.stringify({
-    source: 'canvas',
-    type: props.schema[index]?.type,
-    sourcePath: [index],
-  }))
+  dragStartX.value = event.clientX
+  dragStartY.value = event.clientY
+  dragNodeStartX.value = node.transform.x
+  dragNodeStartY.value = node.transform.y
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!isDragging.value) return
+    const dx = e.clientX - dragStartX.value
+    const dy = e.clientY - dragStartY.value
+    const newX = clampX(dragNodeStartX.value + dx, node!.transform.w)
+    const newY = clampY(dragNodeStartY.value + dy, node!.transform.h)
+    emit('move', id, { x: newX, y: newY, w: node!.transform.w, h: node!.transform.h })
+  }
+
+  const onMouseUp = () => {
+    isDragging.value = false
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
 }
 
-function handleItemDragOver(event: DragEvent, index: number) {
-  event.preventDefault()
-  event.dataTransfer!.dropEffect = 'move'
-  dragOverIndex.value = index
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  const midY = rect.top + rect.height / 2
-  dropPosition.value = event.clientY < midY ? 'top' : 'bottom'
-}
-
-function handleItemDragLeave() {
-  dragOverIndex.value = null
-  dropPosition.value = null
-}
-
-function handleItemDrop(event: DragEvent, toIndex: number) {
+function handleResizeStart(handle: string, event: MouseEvent) {
+  if (!isEditMode.value || !selectedNode.value) return
   event.preventDefault()
   event.stopPropagation()
 
+  isResizing.value = true
+  resizeHandle.value = handle
+  resizeStartX.value = event.clientX
+  resizeStartY.value = event.clientY
+  resizeStartW.value = selectedNode.value.transform.w
+  resizeStartH.value = selectedNode.value.transform.h
+  resizeStartNodeX.value = selectedNode.value.transform.x
+  resizeStartNodeY.value = selectedNode.value.transform.y
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!isResizing.value || !selectedNode.value) return
+    const dx = e.clientX - resizeStartX.value
+    const dy = e.clientY - resizeStartY.value
+
+    let newW = resizeStartW.value
+    let newH = resizeStartH.value
+    let newX = resizeStartNodeX.value
+    let newY = resizeStartNodeY.value
+
+    // Calculate new dimensions based on handle direction
+    if (handle.includes('e')) newW = Math.max(20, resizeStartW.value + dx)
+    if (handle.includes('w')) {
+      newW = Math.max(20, resizeStartW.value - dx)
+      newX = resizeStartNodeX.value + dx
+    }
+    if (handle.includes('s')) newH = Math.max(20, resizeStartH.value + dy)
+    if (handle.includes('n')) {
+      newH = Math.max(20, resizeStartH.value - dy)
+      newY = resizeStartNodeY.value + dy
+    }
+
+    // Clamp to canvas bounds
+    newX = clampX(newX, newW)
+    newY = clampY(newY, newH)
+    newW = Math.min(newW, props.canvasConfig.width)
+    newH = Math.min(newH, props.canvasConfig.height)
+
+    emit('resize', selectedNode.value!.id, newW, newH)
+    if (handle.includes('w') || handle.includes('n')) {
+      emit('move', selectedNode.value!.id, { x: newX, y: newY, w: newW, h: newH })
+    }
+  }
+
+  const onMouseUp = () => {
+    isResizing.value = false
+    resizeHandle.value = null
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
+
+// ---- Drop handling ----
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  event.dataTransfer!.dropEffect = 'copy'
+  if (!isEditMode.value) return
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  dragOverTarget.value = findDeepestContainer(props.schema, x, y)
+}
+
+function handleDragLeave(event: DragEvent) {
+  // Only clear when the cursor truly leaves the canvas (not when entering a child element)
+  const related = event.relatedTarget as HTMLElement | null
+  if (related && (event.currentTarget as HTMLElement).contains(related)) return
+  dragOverTarget.value = null
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // Extract SchemaType from dataTransfer
+  let type: SchemaType | undefined
   const raw = event.dataTransfer?.getData('application/schema-drag')
   if (raw) {
     try {
-      const data = JSON.parse(raw) as { source: 'panel' | 'canvas'; type: SchemaType; sourcePath?: number[] }
-      if (data.source === 'panel') {
-        const newItem = createDefaultSchema(data.type)
-        emit('drop-to-container', [], toIndex, newItem)
-        handleItemDragEnd()
-        return
-      }
-    } catch { /* ignore */ }
+      const data = JSON.parse(raw) as { source: 'panel'; type: SchemaType }
+      if (data.source === 'panel') type = data.type
+    } catch { /* ignore malformed data */ }
+  }
+  if (!type) {
+    type = event.dataTransfer?.getData('schema-type') as SchemaType | undefined
+  }
+  if (!type) { dragOverTarget.value = null; return }
+
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+
+  // Detect deepest container at drop point
+  const container = findDeepestContainer(props.schema, x, y)
+
+  if (container) {
+    // Convert canvas coords to container-local coords
+    emit('drop-new', type, x - container.absX, y - container.absY, container.node.id)
+  } else {
+    emit('drop-new', type, x, y, null)
   }
 
-  const fromIndex = dragIndex.value
-  if (fromIndex === null || fromIndex === toIndex) { handleItemDragEnd(); return }
-
-  let targetIndex = dropPosition.value === 'bottom' ? toIndex + 1 : toIndex
-  if (fromIndex < targetIndex) targetIndex--
-  if (fromIndex !== targetIndex) emit('drag-reorder', fromIndex, targetIndex)
-
-  handleItemDragEnd()
+  dragOverTarget.value = null
 }
 
-function handleItemDragEnd() {
-  isDragging.value = false
-  dragIndex.value = null
-  dragOverIndex.value = null
-  dropPosition.value = null
+// ---- Boundary clamping ----
+function clampX(x: number, w: number): number {
+  return Math.max(0, Math.min(x, props.canvasConfig.width - w))
 }
 
-// ---- Nested container drop handler ----
-function handleNestedContainerDrop(payload: { parentPath: number[]; index: number; dragDataRaw: string }) {
-  try {
-    const data = JSON.parse(payload.dragDataRaw) as { source: 'panel' | 'canvas'; type: SchemaType; sourcePath?: number[] }
-    if (data.source === 'panel') {
-      const newItem = createDefaultSchema(data.type)
-      emit('drop-to-container', payload.parentPath, payload.index, newItem)
-    } else if (data.source === 'canvas' && data.sourcePath) {
-      emit('drag-to-container', data.sourcePath, payload.parentPath, payload.index)
-    }
-  } catch { /* ignore malformed data */ }
-}
-
-// ---- Canvas click (deselect) ----
-function handleCanvasClick(event: Event) {
-  const target = event.target as HTMLElement
-  if (target.classList.contains('editor-canvas__inner') || target.classList.contains('editor-canvas')) {
-    emit('select', null)
-  }
+function clampY(y: number, h: number): number {
+  return Math.max(0, Math.min(y, props.canvasConfig.height - h))
 }
 </script>
 
 <template>
   <div
-    class="editor-canvas"
-    :class="{ 'editor-canvas--drag-over': isDragOver }"
-    @dragover="handleDragOver"
-    @dragleave="handleDragLeave"
-    @drop="handleDrop"
+    :class="$style.canvas"
+    :style="canvasStyle"
     @click="handleCanvasClick"
+    @dragover="isEditMode ? handleDragOver($event) : undefined"
+    @dragleave="isEditMode ? handleDragLeave($event) : undefined"
+    @drop="isEditMode ? handleDrop($event) : undefined"
   >
-    <!-- Edit mode: click overlay for selection -->
-    <div v-if="mode === 'edit'" class="editor-canvas__inner">
-      <div v-if="schema.length === 0" class="editor-canvas__empty">
-        <p>拖拽组件到此处构建表单</p>
-      </div>
+    <!-- Render layer: all nodes -->
+    <div :class="$style.renderLayer">
+      <CanvasNode
+        v-for="node in schema"
+        :key="node.id"
+        :node="node"
+        :disabled="isEditMode"
+        @select="handleSelect"
+        @mousedown="handleNodeMouseDown"
+      />
 
-      <div
-        v-for="(item, idx) in schema"
-        :key="idx"
-        class="editor-canvas__item"
-        :class="{
-          'editor-canvas__item--selected': selectedIndex === idx,
-          'editor-canvas__item--multi-selected': selectedIndices.includes(idx) && selectedIndex !== idx,
-          'editor-canvas__item--dragging': dragIndex === idx,
-          'editor-canvas__drop-indicator--top': dragOverIndex === idx && dropPosition === 'top',
-          'editor-canvas__drop-indicator--bottom': dragOverIndex === idx && dropPosition === 'bottom',
-        }"
-        draggable="true"
-        @click.stop="handleItemClick($event, idx)"
-        @dragstart="handleItemDragStart($event, idx)"
-        @dragover="handleItemDragOver($event, idx)"
-        @dragleave="handleItemDragLeave"
-        @drop="handleItemDrop($event, idx)"
-        @dragend="handleItemDragEnd"
-      >
-        <!-- Floating property tag: only shown when selected, clicking opens drawer -->
-        <div
-          v-if="selectedIndex === idx"
-          class="editor-canvas__item-tag"
-          @click.stop="emit('open-properties')"
-        >
-          {{ typeLabel(item.type) }}
-        </div>
-        <FormGrid
-          :schema="[item]"
-          :editable="true"
-          :is-dragging="isDragActive"
-          @container-drop="(e) => handleNestedContainerDrop({ ...e, parentPath: e.parentPath.length ? [idx, ...e.parentPath.slice(1)] : [] })"
-        />
+      <!-- Empty state -->
+      <div v-if="schema.length === 0 && isEditMode" :class="$style.empty">
+        拖拽组件到此处构建表单
       </div>
     </div>
 
-    <!-- Preview / Publish mode: full FormGrid render -->
-    <div v-else class="editor-canvas__inner editor-canvas__inner--preview">
-      <FormGrid v-if="schema.length > 0" :schema="schema" :readonly="isReadonly" />
-      <div v-else class="editor-canvas__empty">
-        <p>预览模式无组件</p>
+    <!-- Drop target highlight overlay -->
+    <div
+      v-if="isEditMode && dragOverTarget"
+      :class="$style.dropHighlight"
+      :style="dropHighlightStyle"
+    />
+
+    <!-- Interaction layer: selection box + resize handles -->
+    <div
+      v-if="isEditMode && selectedNode"
+      :class="$style.interactionLayer"
+    >
+      <div :class="$style.selectionBox" :style="selectionStyle">
+        <!-- 8 resize handles -->
+        <div
+          :class="[$style.handle, $style.handleNw]"
+          @mousedown.stop="handleResizeStart('nw', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleN]"
+          @mousedown.stop="handleResizeStart('n', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleNe]"
+          @mousedown.stop="handleResizeStart('ne', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleE]"
+          @mousedown.stop="handleResizeStart('e', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleSe]"
+          @mousedown.stop="handleResizeStart('se', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleS]"
+          @mousedown.stop="handleResizeStart('s', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleSw]"
+          @mousedown.stop="handleResizeStart('sw', $event)"
+        />
+        <div
+          :class="[$style.handle, $style.handleW]"
+          @mousedown.stop="handleResizeStart('w', $event)"
+        />
       </div>
     </div>
   </div>
 </template>
 
-<style scoped lang="scss">
-.editor-canvas {
+<style lang="scss" module>
+.canvas {
+  box-sizing: border-box;
+}
+
+.renderLayer {
+  position: relative;
   width: 100%;
   height: 100%;
+}
+
+.interactionLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.selectionBox {
+  position: absolute;
+  border: 2px solid #409eff;
+  pointer-events: none;
+}
+
+.dropHighlight {
+  position: absolute;
+  border: 2px dashed #409eff;
+  background: rgba(64, 158, 255, 0.08);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 999;
+  transition: left 0.08s ease, top 0.08s ease, width 0.08s ease, height 0.08s ease;
+}
+
+.handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
   background: #fff;
-  outline: none;
+  border: 1.5px solid #409eff;
+  border-radius: 2px;
+  pointer-events: auto;
+  z-index: 1001;
+}
 
-  &--drag-over {
-    background: #ecf5ff;
-  }
+// NW handle
+.handleNw {
+  top: -4px;
+  left: -4px;
+  cursor: nw-resize;
+}
 
-  &__inner {
-    width: 100%;
-    min-height: 100%;
-    padding: 10px;
+// N handle
+.handleN {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
 
-    &--preview {
-      max-width: 960px;
-      margin: 0 auto;
-    }
-  }
+// NE handle
+.handleNe {
+  top: -4px;
+  right: -4px;
+  cursor: ne-resize;
+}
 
-  &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    border: 2px dashed #dcdfe6;
-    border-radius: 8px;
-    color: #909399;
-    font-size: 14px;
-  }
+// E handle
+.handleE {
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
 
-  &__item {
-    position: relative;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    transition: border-color 0.2s;
-    margin-bottom: 8px;
+// SE handle
+.handleSe {
+  bottom: -4px;
+  right: -4px;
+  cursor: se-resize;
+}
 
-    &:hover {
-      border-color: #c0c4cc;
-    }
+// S handle
+.handleS {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
+}
 
-    &--selected {
-      border-color: #409eff;
-    }
+// SW handle
+.handleSw {
+  bottom: -4px;
+  left: -4px;
+  cursor: sw-resize;
+}
 
-    &--multi-selected {
-      border-color: #79bbff;
-    }
+// W handle
+.handleW {
+  top: 50%;
+  left: -4px;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
 
-    &--dragging {
-      opacity: 0.4;
-    }
-  }
-
-  &__drop-indicator--top {
-    box-shadow: 0 -2px 0 0 #409eff;
-  }
-
-  &__drop-indicator--bottom {
-    box-shadow: 0 2px 0 0 #409eff;
-  }
-
-  // Floating property tag — shown on selected item, click to open drawer
-  &__item-tag {
-    position: absolute;
-    top: -24px;
-    left: 0;
-    padding: 2px 10px;
-    font-size: 12px;
-    background: rgba(64, 158, 255, 0.85);
-    color: #fff;
-    border-radius: 10px;
-    z-index: 3;
-    cursor: pointer;
-    white-space: nowrap;
-    user-select: none;
-
-    &:hover {
-      background: rgba(64, 158, 255, 1);
-    }
-  }
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
+  color: #909399;
+  font-size: 14px;
+  user-select: none;
 }
 </style>
