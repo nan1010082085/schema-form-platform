@@ -11,7 +11,6 @@ import type {
   LinkageState,
   SchemaRules,
   ComponentNode,
-  ComponentStyle,
 } from './types'
 import {
   ACTION_EMIT_KEY as ACTION_EMIT_INJECTION_KEY,
@@ -49,8 +48,6 @@ const effectiveReadonly = computed(() => props.readonly ?? injectedReadonly?.val
 
 // ---- ComponentNode (new model) rendering support ----
 const isNodeModel = computed(() => !!props.node)
-/** Non-null schema for legacy rendering path (always provided when isNodeModel is false) */
-const safeSchema = computed(() => props.schema!)
 
 /** Evaluate visibility from linkage.visibleOn expression */
 const nodeVisible = computed(() => {
@@ -132,7 +129,7 @@ const nodeGridStyle = computed(() => {
   return {
     display: 'flex',
     flexDirection: (props.node.type === 'grid-row' ? 'row' : 'column') as 'row' | 'column',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
     gap: '8px',
     width: '100%',
     height: '100%',
@@ -152,7 +149,7 @@ const { resolveSpan } = useBreakpoint()
 
 // 当前字段的联动状态
 const linkageState = computed<LinkageState | undefined>(() => {
-  const field = props.schema.field
+  const field = props.schema!.field
   if (!field || !linkageStateMap) return undefined
   return linkageStateMap.value.get(field)
 })
@@ -173,29 +170,29 @@ const expressionState = computed<ExpressionState>(() => {
     required: undefined,
   }
 
-  const ctx = { formData: props.formData }
+  const ctx = { formData: props.formData! }
 
-  if (props.schema.visibleOn) {
+  if (props.schema!.visibleOn) {
     try {
-      state.visible = evaluateExpression<boolean>(props.schema.visibleOn, ctx)
+      state.visible = evaluateExpression<boolean>(props.schema!.visibleOn, ctx)
     } catch (err) {
       console.warn(`[SchemaRender] visibleOn 求值失败，降级为默认可见:`, err)
       state.visible = true // 降级：默认可见
     }
   }
 
-  if (props.schema.disabledOn) {
+  if (props.schema!.disabledOn) {
     try {
-      state.disabled = evaluateExpression<boolean>(props.schema.disabledOn, ctx)
+      state.disabled = evaluateExpression<boolean>(props.schema!.disabledOn, ctx)
     } catch (err) {
       console.warn(`[SchemaRender] disabledOn 求值失败，降级为默认不禁用:`, err)
       state.disabled = false // 降级：默认不禁用
     }
   }
 
-  if (props.schema.requiredOn) {
+  if (props.schema!.requiredOn) {
     try {
-      state.required = evaluateExpression<boolean>(props.schema.requiredOn, ctx)
+      state.required = evaluateExpression<boolean>(props.schema!.requiredOn, ctx)
     } catch (err) {
       console.warn(`[SchemaRender] requiredOn 求值失败，降级为默认非必填:`, err)
       state.required = false // 降级：默认非必填
@@ -207,7 +204,7 @@ const expressionState = computed<ExpressionState>(() => {
 
 // 优先级：hidden(硬隐藏) > visibleOn(表达式) > linkages(联动) > 默认可见
 const isVisible = computed(() => {
-  if (props.schema.hidden) return false
+  if (props.schema!.hidden) return false
   if (expressionState.value.visible !== undefined) return expressionState.value.visible
   if (linkageState.value) return linkageState.value.visible
   return true
@@ -223,37 +220,37 @@ const isDisabled = computed(() => {
 // 联动后的选项覆盖
 const effectiveOptions = computed(() => {
   if (linkageState.value?.options) return linkageState.value.options
-  return props.schema.options
+  return props.schema!.options
 })
 
 const effectiveApi = computed(() => {
   if (linkageState.value?.optionsApi) return linkageState.value.optionsApi
-  return props.schema.api
+  return props.schema!.api
 })
 
 // 校验规则：requiredOn 表达式优先，其次 linkages 联动
 const effectiveRules = computed<SchemaRules | undefined>(() => {
   const isRequired = expressionState.value.required ?? linkageState.value?.required ?? false
-  if (!isRequired) return props.schema.rules
-  const baseRules = props.schema.rules ? [...props.schema.rules] : []
+  if (!isRequired) return props.schema!.rules
+  const baseRules = props.schema!.rules ? [...props.schema!.rules] : []
   // 如果已有 required 规则则不重复添加
   const hasRequired = baseRules.some((r) => r.required === true)
   if (!hasRequired) {
-    baseRules.unshift({ required: true, message: `请填写${props.schema.label ?? ''}`, trigger: 'blur' })
+    baseRules.unshift({ required: true, message: `请填写${props.schema!.label ?? ''}`, trigger: 'blur' })
   }
   return baseRules
 })
 
-const isLayoutRow = computed(() => props.schema.type === 'grid-row')
-const isLayoutCol = computed(() => props.schema.type === 'grid-col')
+const isLayoutRow = computed(() => props.schema!.type === 'grid-row')
+const isLayoutCol = computed(() => props.schema!.type === 'grid-col')
 const LAYOUT_TYPES = new Set(['page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog'])
-const isLayoutComponent = computed(() => LAYOUT_TYPES.has(props.schema.type))
+const isLayoutComponent = computed(() => LAYOUT_TYPES.has(props.schema!.type))
 const isComponent = computed(() => !isLayoutRow.value && !isLayoutCol.value && !isLayoutComponent.value)
 
-const comp = computed(() => compMap[props.schema.type])
+const comp = computed(() => compMap[props.schema!.type])
 
 const colSpan = computed(() => {
-  const s = props.schema
+  const s = props.schema!
   if (s.colspan) return s.colspan
   // 全宽组件强制占满整行（响应式断点仍生效：如果用户显式指定了响应式 span 则尊重配置）
   if (isFullWidthType(s.type) && s.span === undefined) return 24
@@ -263,7 +260,7 @@ const colSpan = computed(() => {
 })
 
 const colStyle = computed(() => {
-  const s = props.schema
+  const s = props.schema!
   const style: Record<string, string> = {}
   style.width = s.width ?? `calc(${colSpan.value} / 24 * 100%)`
   style.flex = `0 0 calc(${colSpan.value} / 24 * 100%)`
@@ -278,32 +275,32 @@ const colStyle = computed(() => {
 
 const colClass = computed(() => {
   const cls: string[] = ['fg-grid-col']
-  if (props.schema.border === false) cls.push('no-border')
+  if (props.schema!.border === false) cls.push('no-border')
   return cls
 })
 
 // 单元格对齐方式
 const cellAlignClass = computed(() => {
-  const align = props.schema.align
+  const align = props.schema!.align
   if (!align) return 'fg-cell--left'
   return `fg-cell--${align}`
 })
 
 // 是否为纯标签单元格（无 children）
 const isLabelOnly = computed(() => {
-  return props.schema.label && (!props.schema.children || props.schema.children.length === 0)
+  return props.schema!.label && (!props.schema!.children || props.schema!.children.length === 0)
 })
 
 // 组件节点的对齐样式（非 grid-col 路径时，通过 text-align 生效）
 const componentAlignStyle = computed(() => {
-  const align = props.schema.align
+  const align = props.schema!.align
   if (!align) return {}
   return { textAlign: align }
 })
 
 // ---- Editor: Container drag-and-drop (Sprint 11) ----
 import { EDITABLE_CONTAINER_TYPES } from '@/composables/useConstant'
-const isContainerType = computed(() => EDITABLE_CONTAINER_TYPES.has(props.schema.type))
+const isContainerType = computed(() => EDITABLE_CONTAINER_TYPES.has(props.schema!.type))
 const isHovered = ref(false)
 const localDragActive = ref(false)
 
@@ -346,7 +343,7 @@ function onContainerDrop(event: DragEvent) {
   if (raw) {
     emit('container-drop', {
       parentPath: props.path ?? [],
-      index: props.schema.children?.length ?? 0,
+      index: props.schema!.children?.length ?? 0,
       dragDataRaw: raw,
     })
     return
@@ -356,22 +353,22 @@ function onContainerDrop(event: DragEvent) {
   if (schemaType) {
     emit('container-drop', {
       parentPath: props.path ?? [],
-      index: props.schema.children?.length ?? 0,
+      index: props.schema!.children?.length ?? 0,
       dragDataRaw: JSON.stringify({ source: 'panel', type: schemaType }),
     })
   }
 }
 
 function getFieldValue(): FormFieldValue {
-  const field = props.schema.field
+  const field = props.schema!.field
   if (!field) return undefined
-  return props.formData[field]
+  return props.formData![field]
 }
 
 function setFieldValue(val: FormFieldValue) {
-  const field = props.schema.field
+  const field = props.schema!.field
   if (field) {
-    props.formData[field] = val
+    props.formData![field] = val
   }
 }
 
@@ -381,12 +378,12 @@ watch(
   () => linkageState.value?.elseValue ?? linkageState.value?.targetValue,
   (newVal) => {
     if (applyingLinkageValue) return
-    if (newVal !== undefined && newVal !== props.formData[props.schema.field ?? '']) {
+    if (newVal !== undefined && newVal !== props.formData![props.schema!.field ?? '']) {
       applyingLinkageValue = true
       nextTick(() => {
-        const field = props.schema.field
-        if (field && newVal !== props.formData[field]) {
-          props.formData[field] = newVal
+        const field = props.schema!.field
+        if (field && newVal !== props.formData![field]) {
+          props.formData![field] = newVal
         }
         applyingLinkageValue = false
       })

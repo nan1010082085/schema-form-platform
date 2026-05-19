@@ -47,8 +47,8 @@ const containerStyle = computed(() => {
   if (!isGridComponent.value) return {}
   return {
     display: 'flex',
-    flexDirection: props.node.type === 'grid-row' ? 'row' : 'column',
-    flexWrap: 'wrap',
+    flexDirection: (props.node.type === 'grid-row' ? 'row' : 'column') as 'row' | 'column',
+    flexWrap: 'wrap' as const,
     gap: '8px',
     width: '100%',
     height: '100%',
