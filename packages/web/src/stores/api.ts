@@ -1,12 +1,13 @@
 /**
- * useSchemaStore — Schema CRUD 与 API 交互状态管理
+ * useApiStore — Schema API CRUD 状态管理
  *
- * 负责：
+ * 职责：
  * - Schema 清单的获取、分页、搜索
  * - Schema 详情的加载、创建、更新、删除
- * - 与 useEditorStore 协作：加载 schema 到编辑器 / 从编辑器保存
+ * - 发布操作
  *
  * 设计原则：
+ * - 纯 API 层，不持有画布状态
  * - 异步操作用 loading/error 模式管理
  * - 分页状态与搜索词独立管理，互不干扰
  * - 与 apiClient 解耦：依赖 configureApiClient() 完成初始化
@@ -31,12 +32,11 @@ import {
   publishSchema as apiPublishSchema,
   fetchPublishedSchema as apiFetchPublishedSchema,
 } from '@/utils/apiClient'
-import { useEditorStore } from './editor'
 
 /** 默认分页大小 */
 const DEFAULT_PAGE_SIZE = 20
 
-export const useSchemaStore = defineStore('schema', () => {
+export const useApiStore = defineStore('schema', () => {
   // ================================================================
   // 状态
   // ================================================================
@@ -297,82 +297,31 @@ export const useSchemaStore = defineStore('schema', () => {
   /**
    * 保存 schema 到后端。
    *
-   * 重载 1: 从 editorStore 读取（现有编辑器集成）
-   * @param name     - Schema 名称
-   * @param schemaId - 可选：要更新的 Schema ID
-   *
-   * 重载 2: 直接传入 schema 数组（EditorView 本地 ref 模式）
    * @param schema   - 要保存的 FormSchemaItem 数组
    * @param name     - Schema 名称
    * @param schemaId - 可选：要更新的 Schema ID
-   *
    * @returns 保存后的 Schema，失败返回 null
    */
-  async function saveFromEditor(schema: FormSchemaItem[], name: string, schemaId?: string): Promise<SchemaListItem | null>
-  async function saveFromEditor(name: string, schemaId?: string): Promise<SchemaListItem | null>
-  async function saveFromEditor(
-    nameOrSchema: string | FormSchemaItem[],
-    nameOrId?: string,
+  async function saveSchema(
+    schema: FormSchemaItem[],
+    name: string,
     schemaId?: string,
   ): Promise<SchemaListItem | null> {
-    let json: FormSchemaItem[]
-    let name: string
-    let id: string | undefined
-
-    if (Array.isArray(nameOrSchema)) {
-      // 重载 2: 调用方直接传入 schema 数组
-      json = nameOrSchema
-      name = nameOrId!
-      id = schemaId
+    if (schemaId) {
+      return updateSchema(schemaId, { name, json: schema })
     } else {
-      // 重载 1: 从 editorStore 读取
-      const editorStore = useEditorStore()
-      json = editorStore.schema
-      name = nameOrSchema
-      id = nameOrId
-    }
-
-    if (id) {
-      return updateSchema(id, { name, json })
-    } else {
-      return createSchema({ name, type: "form" as const, json })
+      return createSchema({ name, type: 'form' as const, json: schema })
     }
   }
 
   /**
-   * 从后端加载 Schema 并填充到编辑器（现有 editorStore 集成）。
+   * 从后端加载 Schema 详情。
    *
    * @param id - Schema ID
-   * @returns 是否加载成功
+   * @returns Schema 详情，失败返回 null
    */
-  async function loadIntoEditor(id: string): Promise<boolean>
-  /**
-   * 将已加载的 schema 数据传入（EditorView 本地 ref 模式，passthrough）。
-   *
-   * @param schema - 已从后端获取的 FormSchemaItem 数组
-   * @returns 传入的 schema（供调用方赋值到本地 ref）
-   */
-  function loadIntoEditor(schema: FormSchemaItem[]): FormSchemaItem[]
-  function loadIntoEditor(
-    idOrSchema: string | FormSchemaItem[],
-  ): Promise<boolean> | FormSchemaItem[] {
-    if (typeof idOrSchema === 'string') {
-      // 重载 1: 从服务器按 ID 加载，推送到 editorStore
-      return (async () => {
-        const detail = await fetchSchemaById(idOrSchema)
-        if (!detail) return false
-
-        const editorStore = useEditorStore()
-        editorStore.importSchema(detail.json!)
-        editorStore.clearHistory()
-        // 记录第一个快照（加载后的初始状态）
-        editorStore.pushState()
-
-        return true
-      })()
-    }
-    // 重载 2: passthrough — 调用方自行赋值到本地 ref
-    return idOrSchema
+  async function loadSchema(id: string): Promise<SchemaListItem | null> {
+    return fetchSchemaById(id)
   }
 
   // ================================================================
@@ -422,9 +371,9 @@ export const useSchemaStore = defineStore('schema', () => {
     createSchema,
     updateSchema,
     deleteSchema,
-    // 编辑器交互
-    saveFromEditor,
-    loadIntoEditor,
+    // Schema 保存/加载
+    saveSchema,
+    loadSchema,
     // 发布操作
     publishSchema,
     fetchPublishedSchema,

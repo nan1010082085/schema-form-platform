@@ -3,9 +3,11 @@ packages:
 allowBuilds:
   /: true
   '@': true
+  '@parcel/watcher': set this to true or false
   a: true
   c: true
   e: true
+  esbuild: set this to true or false
   i: true
   l: true
   m: true
@@ -14,3 +16,4 @@ allowBuilds:
   r: true
   s: true
   t: true
+  vue-demi: set this to true or false

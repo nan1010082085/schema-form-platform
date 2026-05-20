@@ -45,16 +45,17 @@ export function canNest(type: SchemaType): boolean {
   return LAYOUT_CONTAINER_TYPES.has(type)
 }
 
-/** 布局/容器组件 */
+/** 布局/容器组件（单一数据源：所有布局类组件类型） */
 export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
-  'grid-row', 'grid-col', 'card', 'tabs',
+  'grid-row', 'grid-col',
+  'page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
 ])
 
 /** 基础组件 */
 export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range',
-  'textarea', 'richtext', 'title', 'divider', 'spacer',
-  'button-list', 'table', 'pagination', 'dialog',
+  'textarea', 'richtext',
+  'button-list', 'table', 'pagination',
 ])
 
 /** 业务组件（不参与本次重构） */
