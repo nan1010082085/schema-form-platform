@@ -33,7 +33,7 @@ import {
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
-import { useSchemaStore } from '@/stores/schema'
+import { useApiStore } from '@/stores/api'
 
 const props = defineProps<{
   mode: InteractionMode
@@ -138,7 +138,7 @@ function confirmImport() {
 }
 
 // ---- Load from server ----
-const schemaStore = useSchemaStore()
+const apiStore = useApiStore()
 const showLoadDialog = ref(false)
 const loadSchemaList = ref<SchemaListItem[]>([])
 const loadSchemaLoading = ref(false)
@@ -146,17 +146,16 @@ const loadSchemaLoading = ref(false)
 async function handleOpenLoadDialog() {
   showLoadDialog.value = true
   loadSchemaLoading.value = true
-  const result = await schemaStore.fetchSchemas({ page: 1, pageSize: 100 })
+  const result = await apiStore.fetchSchemas({ page: 1, pageSize: 100 })
   if (result) loadSchemaList.value = result.items
   loadSchemaLoading.value = false
 }
 
 async function handleLoadSchema(item: SchemaListItem) {
-  const detail = await schemaStore.fetchSchemaById(item.id)
+  const detail = await apiStore.fetchSchemaById(item.id)
   if (detail) {
     if (!detail.json) { ElMessage.error('Schema 数据为空'); return }
-    const loaded = schemaStore.loadIntoEditor(detail.json)
-    emit('load-schema', loaded)
+    emit('load-schema', detail.json)
     showLoadDialog.value = false
     ElMessage.success(`Schema "${item.name}" 已加载`)
   }

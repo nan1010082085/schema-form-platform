@@ -22,8 +22,8 @@ import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
 import SchemaTree from '@/components/Editor/SchemaTree.vue'
 import type { FormSchemaItem, ComponentNode, Transform, SchemaType } from '@/components/FormGrid/types'
-import { useSchemaStore as useCanvasStore } from '@/stores/schemaStore'
-import { useSchemaStore as useApiStore } from '@/stores/schema'
+import { useCanvasStore } from '@/stores/canvas'
+import { useApiStore } from '@/stores/api'
 import { createComponentNode } from '@/utils/schemaDefaults'
 import { processSchema } from '@/utils/requestQueue'
 import { validateSchema } from '@/utils/schemaValidate'
@@ -271,7 +271,7 @@ async function handleSaveDraft() {
     } catch { return }
   }
 
-  const result = await apiStore.saveFromEditor(
+  const result = await apiStore.saveSchema(
     computedFormSchema.value,
     schemaName.value,
     currentSchemaId.value ?? undefined,

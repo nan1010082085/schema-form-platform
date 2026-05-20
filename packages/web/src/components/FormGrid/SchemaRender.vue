@@ -18,6 +18,7 @@ import {
   FORM_GRID_READONLY_KEY,
   isFullWidthType,
 } from './types'
+import { LAYOUT_TYPES } from '@/composables/useConstant'
 
 const props = defineProps<{
   schema?: FormSchemaItem
@@ -243,8 +244,10 @@ const effectiveRules = computed<SchemaRules | undefined>(() => {
 
 const isLayoutRow = computed(() => props.schema!.type === 'grid-row')
 const isLayoutCol = computed(() => props.schema!.type === 'grid-col')
-const LAYOUT_TYPES = new Set(['page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog'])
-const isLayoutComponent = computed(() => LAYOUT_TYPES.has(props.schema!.type))
+const NON_GRID_LAYOUT_TYPES: ReadonlySet<string> = new Set(
+  [...LAYOUT_TYPES].filter(t => t !== 'grid-row' && t !== 'grid-col'),
+)
+const isLayoutComponent = computed(() => NON_GRID_LAYOUT_TYPES.has(props.schema!.type))
 const isComponent = computed(() => !isLayoutRow.value && !isLayoutCol.value && !isLayoutComponent.value)
 
 const comp = computed(() => compMap[props.schema!.type])

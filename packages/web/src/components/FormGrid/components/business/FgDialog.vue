@@ -11,7 +11,7 @@
  */
 import { reactive, provide, inject, watch, ref, computed } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
-import { useEditorStore } from '@/stores/editor'
+import { useCanvasStore } from '@/stores/canvas'
 import {
   FORM_GRID_FORM_KEY,
   FORM_GRID_CONTEXT_KEY,
@@ -59,7 +59,7 @@ const emit = defineEmits<{
 }>()
 
 // ---- Editor store integration ----
-const editorStore = useEditorStore()
+const canvasStore = useCanvasStore()
 
 // ---- Local dialog visibility (edit mode manages its own open/close) ----
 const localVisible = ref(props.modelValue)
@@ -69,7 +69,7 @@ watch(() => props.modelValue, (val) => {
 })
 
 // Auto-open when editor store targets this dialog
-watch(() => editorStore.editingDialogComponentId, (id) => {
+watch(() => canvasStore.editingDialogComponentId, (id) => {
   if (id && id === props.componentId) {
     localVisible.value = true
   }
@@ -78,7 +78,7 @@ watch(() => editorStore.editingDialogComponentId, (id) => {
 function handleLocalClose() {
   localVisible.value = false
   if (props.editable && props.componentId) {
-    editorStore.closeDialogEditor()
+    canvasStore.closeDialogEditor()
   }
   emit('update:modelValue', false)
   emit('close')

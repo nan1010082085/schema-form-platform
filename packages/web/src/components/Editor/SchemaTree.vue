@@ -13,6 +13,7 @@ import { computed, watch, ref } from 'vue'
 import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
 import { buildSchemaTree } from '@/utils/schemaTransform'
 import type { SchemaTreeNode } from '@/utils/schemaTransform'
+import { BASIC_TYPES, BUSINESS_TYPES } from '@/composables/useConstant'
 
 const props = defineProps<{
   schema: FormSchemaItem[]
@@ -40,13 +41,46 @@ function allowDrag(_node: SchemaTreeNode): boolean {
   return true
 }
 
+/** Get the category of a component type for nesting validation */
+function getCategory(type: SchemaType): 'basic' | 'business' | 'layout' {
+  if (BASIC_TYPES.has(type)) return 'basic'
+  if (BUSINESS_TYPES.has(type)) return 'business'
+  return 'layout'
+}
+
 function allowDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, type: 'prev' | 'next' | 'inner'): boolean {
   const dragPath = draggingNode.path.join(',')
   const dropPath = dropNode.path.join(',')
   if (dragPath === dropPath) return false
   if (dropPath.startsWith(dragPath + ',')) return false
-  if (type === 'inner') return dropNode.isContainer
+  if (type === 'inner') {
+    if (!dropNode.isContainer) return false
+    // Nesting rule: basic/business components cannot nest inside each other
+    const dragCat = getCategory(draggingNode.type)
+    const dropCat = getCategory(dropNode.type)
+    if (dragCat !== 'layout' && dropCat !== 'layout' && dragCat !== dropCat) return false
+    return true
+  }
+  // For 'prev'/'after' drops, the parent of dropNode is the container
+  // Find the parent node from the tree data
+  const parentPath = dropNode.path.slice(0, -1)
+  if (parentPath.length === 0) return true // dropping at root level
+  const parentNode = findNodeByPath(treeData.value, parentPath)
+  if (!parentNode) return true
+  const dragCat = getCategory(draggingNode.type)
+  const parentCat = getCategory(parentNode.type)
+  if (dragCat !== 'layout' && parentCat !== 'layout' && dragCat !== parentCat) return false
   return true
+}
+
+/** Find a node in the tree by its path */
+function findNodeByPath(nodes: SchemaTreeNode[], path: number[]): SchemaTreeNode | null {
+  let current: SchemaTreeNode | undefined = nodes[path[0]]
+  for (let i = 1; i < path.length; i++) {
+    if (!current?.children) return null
+    current = current.children[path[i]]
+  }
+  return current ?? null
 }
 
 function handleNodeDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, dropType: 'before' | 'after' | 'inner', _event: DragEvent) {

@@ -36,6 +36,8 @@ import tabs from './tabs'
 import filePreview from './file-preview'
 import searchList from './search-list'
 import editableTable from './editable-table'
+import formContainer from './form-container'
+import workflowForm from './workflow-form'
 import linkage from './linkage'
 
 export type { ComponentDoc, PropDoc, EventDoc, SlotDoc, ExposeDoc, SchemaExample } from './types'
@@ -77,6 +79,8 @@ export const componentDocs: ComponentDoc[] = [
   toolbarButtons,
   searchList,
   editableTable,
+  formContainer,
+  workflowForm,
   linkage,
 ]
 

@@ -242,4 +242,143 @@ describe('validateSchema', () => {
     const missingErrors = result.errors.filter((e) => e.type === 'missing-field')
     expect(missingErrors).toHaveLength(0)
   })
+
+  // ---------- nesting violation ----------
+
+  it('detects basic component nested inside business component', () => {
+    // upload is business, input is basic
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'upload',
+        field: 'files',
+        label: 'Files',
+        children: [
+          { type: 'input', field: 'desc', label: 'Description' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(1)
+    expect(nestingErrors[0].severity).toBe('error')
+    expect(nestingErrors[0].message).toContain('upload')
+    expect(nestingErrors[0].message).toContain('input')
+  })
+
+  it('detects business component nested inside basic component', () => {
+    // button-list is basic, upload is business
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'button-list',
+        buttons: [{ text: 'Submit' }],
+        children: [
+          { type: 'upload', field: 'file', label: 'File' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(1)
+    expect(nestingErrors[0].severity).toBe('error')
+    expect(nestingErrors[0].message).toContain('button-list')
+    expect(nestingErrors[0].message).toContain('upload')
+  })
+
+  it('allows basic components nested inside layout containers', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'card',
+        children: [
+          { type: 'input', field: 'name', label: 'Name' },
+          { type: 'select', field: 'status', label: 'Status' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(0)
+  })
+
+  it('allows business components nested inside layout containers', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'card',
+        children: [
+          { type: 'upload', field: 'file', label: 'File' },
+          { type: 'person-select', field: 'user', label: 'User' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(0)
+  })
+
+  it('allows mixed basic and business inside layout containers', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'grid-row',
+        children: [
+          { type: 'input', field: 'name', label: 'Name' },
+          { type: 'upload', field: 'file', label: 'File' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(0)
+  })
+
+  it('detects nesting violations in deeply nested structures', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'card',
+        children: [
+          {
+            type: 'upload',
+            field: 'files',
+            label: 'Files',
+            children: [
+              { type: 'input', field: 'desc', label: 'Desc' },
+            ],
+          },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(1)
+  })
+
+  it('allows same-category nesting (basic inside basic)', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'table',
+        field: 'tbl',
+        label: 'Table',
+        children: [
+          { type: 'input', field: 'cell', label: 'Cell' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(0)
+  })
+
+  it('allows same-category nesting (business inside business)', () => {
+    const schema: FormSchemaItem[] = [
+      {
+        type: 'detail-form',
+        field: 'detail',
+        label: 'Detail',
+        children: [
+          { type: 'upload', field: 'file', label: 'File' },
+        ],
+      },
+    ]
+    const result = validateSchema(schema)
+    const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
+    expect(nestingErrors).toHaveLength(0)
+  })
 })

@@ -9,11 +9,11 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete, Edit, View, Promotion, List, Document, Sort } from '@element-plus/icons-vue'
-import { useSchemaStore } from '@/stores/schema'
+import { useApiStore } from '@/stores/api'
 import type { SchemaListItem } from '@/types/api'
 
 const router = useRouter()
-const store = useSchemaStore()
+const store = useApiStore()
 const searchInput = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 

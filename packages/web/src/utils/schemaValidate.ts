@@ -7,6 +7,7 @@
  */
 import { compMap } from '@/components/FormGrid/compMap'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
+import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useConstant'
 
 /** Valid SchemaType values — dynamically generated from compMap */
 const VALID_SCHEMA_TYPES = new Set(Object.keys(compMap))
@@ -14,10 +15,12 @@ const VALID_SCHEMA_TYPES = new Set(Object.keys(compMap))
 /** Types that are containers (support children) */
 const CONTAINER_TYPES = new Set<string>(['card', 'page', 'toolbar'])
 
-/** Types that are layout components and don't require a `field` property */
-const LAYOUT_TYPES = new Set<string>([
-  'grid-row', 'grid-col', 'page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs',
-])
+/** Get the category of a component type: 'basic', 'business', or 'layout' */
+function getComponentCategory(type: string): 'basic' | 'business' | 'layout' {
+  if (BASIC_TYPES.has(type as never)) return 'basic'
+  if (BUSINESS_TYPES.has(type as never)) return 'business'
+  return 'layout'
+}
 
 /** Types that don't require a `field` property even though they're not layout types */
 const NO_FIELD_TYPES = new Set<string>(['button-list', 'pagination', 'file-list', 'file-preview', 'toolbar-buttons', 'search-list'])
@@ -29,6 +32,7 @@ export interface ValidationError {
   path: number[]
   type: 'duplicate-field' | 'empty-container' | 'deep-nesting' | 'invalid-type' | 'missing-field'
     | 'required-field-missing-label' | 'options-empty-on-select' | 'api-config-invalid' | 'circular-linkage'
+    | 'nesting-violation'
   severity: 'error' | 'warning'
   message: string
   /** For duplicate-field: first occurrence path */
@@ -159,7 +163,26 @@ export function validateSchema(schema: FormSchemaItem[]): ValidationResult {
         })
       }
 
-      // 6. [S17] required-field-missing-label
+      // 6. Nesting violation: basic/business components cannot nest inside each other
+      if (item.children?.length) {
+        const parentCategory = getComponentCategory(item.type)
+        if (parentCategory !== 'layout') {
+          for (let j = 0; j < item.children.length; j++) {
+            const child = item.children[j]
+            const childCategory = getComponentCategory(child.type)
+            if (childCategory !== 'layout' && childCategory !== parentCategory) {
+              errors.push({
+                path: [...itemPath, j],
+                type: 'nesting-violation',
+                severity: 'error',
+                message: `${parentCategory === 'basic' ? '基础' : '业务'}组件 "${item.type}" 不允许嵌套${childCategory === 'basic' ? '基础' : '业务'}组件 "${child.type}"`,
+              })
+            }
+          }
+        }
+      }
+
+      // 7. [S17] required-field-missing-label
       if (item.field && item.linkages?.some(l => l.type === 'required') && !item.label) {
         errors.push({
           path: itemPath,

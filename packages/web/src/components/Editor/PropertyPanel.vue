@@ -6,7 +6,7 @@
  * Footer: JSON preview (collapsible) + action buttons
  */
 import { computed, watch, ref } from 'vue'
-import { useEditorStore } from '@/stores/editor'
+import { useCanvasStore } from '@/stores/canvas'
 import LinkageConfig from '@/components/Editor/LinkageConfig.vue'
 import ApiConfig from '@/components/Editor/ApiConfig.vue'
 import ColumnsEditor from '@/components/Editor/ColumnsEditor.vue'
@@ -30,7 +30,7 @@ const emit = defineEmits<{
   'generate-schema': [schema: import('@/components/FormGrid/types').FormSchemaItem[]]
 }>()
 
-const editorStore = useEditorStore()
+const canvasStore = useCanvasStore()
 
 // Local editing copy to avoid mutating props directly
 const localSchema = ref<FormSchemaItem | null>(null)
@@ -94,7 +94,7 @@ const isDialogType = computed(() => localSchema.value?.type === 'dialog')
 /** Open the dialog editor (triggers FgDialog via editor store) */
 function openDialogEditor() {
   if (localSchema.value?.componentId) {
-    editorStore.openDialogEditor(localSchema.value.componentId)
+    canvasStore.openDialogEditor(localSchema.value.componentId)
   }
 }
 
