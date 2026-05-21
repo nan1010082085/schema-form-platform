@@ -13,7 +13,7 @@
  * appears that infers FormSchemaItem[] from the response data.
  */
 import { ref, computed } from 'vue'
-import { Connection } from '@element-plus/icons-vue'
+import { Connection, Check, WarningFilled } from '@element-plus/icons-vue'
 import { getRequestInstance } from '@/utils/request'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
@@ -38,15 +38,19 @@ const paramsError = ref('')
 
 // ---- Test connection state ----
 const testing = ref(false)
-const testResult = ref<{ success: boolean; message: string } | null>(null)
+interface TestResult {
+  success: boolean
+  message: string
+  responsePreview?: string
+  suggestedDataPath?: string
+  parsedOptions?: Array<{ label: string; value: string }>
+}
+const testResult = ref<TestResult | null>(null)
 /** Raw response data from the last successful test connection, stored for analysis */
 const rawResponse = ref<unknown>(null)
 
 // ---- Computed ----
 const hasApi = computed(() => !!props.api)
-
-/** Whether the analyze/generate button should be shown */
-const showAnalyze = computed(() => testResult.value?.success === true && rawResponse.value !== null)
 
 // ---- Emit helpers ----
 function emitApi(patch: Partial<SchemaApiConfig>) {
@@ -90,6 +94,54 @@ function handleParamsChange(text: string) {
 }
 
 // ---- Test connection ----
+/** Recursively find all dot-paths leading to arrays in an object */
+function findArrayPaths(obj: unknown, prefix = ''): string[] {
+  if (!obj || typeof obj !== 'object') return []
+  const paths: string[] = []
+  const keys = ['data', 'list', 'rows', 'items', 'records', 'result'] as const
+  for (const key of keys) {
+    if (key in (obj as Record<string, unknown>)) {
+      const path = prefix ? `${prefix}.${key}` : key
+      const val = (obj as Record<string, unknown>)[key]
+      if (Array.isArray(val)) {
+        paths.push(path)
+      } else if (val && typeof val === 'object') {
+        paths.push(...findArrayPaths(val, path))
+      }
+    }
+  }
+  return paths
+}
+
+/** Format raw response as truncated JSON preview (first 200 chars) */
+function formatResponsePreview(res: unknown): string {
+  try {
+    const str = JSON.stringify(res, null, 2)
+    return str.length > 200 ? str.slice(0, 200) + '...' : str
+  } catch {
+    return String(res).slice(0, 200)
+  }
+}
+
+/** Detect common wrapper keys and suggest dataPath if needed */
+function detectSuggestedDataPath(
+  res: unknown,
+  currentDataPath: string | undefined,
+  extractedData: unknown[],
+): string | undefined {
+  if (extractedData.length > 0 && currentDataPath) return undefined
+
+  if (!res || typeof res !== 'object' || Array.isArray(res)) return undefined
+
+  const paths = findArrayPaths(res)
+  // Filter out paths that match current dataPath
+  const filtered = currentDataPath
+    ? paths.filter(p => p !== currentDataPath)
+    : paths
+
+  return filtered.length > 0 ? filtered[0] : undefined
+}
+
 async function testConnection() {
   if (!props.api?.url) return
 
@@ -103,16 +155,56 @@ async function testConnection() {
       ? await http.get(props.api.url, { params: props.api.params })
       : await http.post(props.api.url, props.api.params)
 
-    // Store raw response for analysis
     rawResponse.value = res
 
-    const { data } = normalizeListResponse(res, { dataPath: props.api.dataPath })
-    testResult.value = { success: true, message: `成功: ${data.length} 条数据返回` }
+    const { data: extractedData } = normalizeListResponse(res, { dataPath: props.api.dataPath })
+
+    // Parse first 5 items for preview
+    const parsedOptions = extractedData.slice(0, 5).map(item => ({
+      label: String(item[props.api?.labelKey ?? 'label'] ?? ''),
+      value: String(item[props.api?.valueKey ?? 'value'] ?? ''),
+    }))
+
+    const responsePreview = formatResponsePreview(res)
+
+    // Detect common wrapper keys for auto-suggest
+    const suggestedDataPath = detectSuggestedDataPath(res, props.api.dataPath, extractedData)
+
+    if (extractedData.length === 0) {
+      // Data extraction failed — provide structured error
+      const errorParts = ['未找到数据数组']
+      if (suggestedDataPath) {
+        errorParts.push(`建议设置数据路径为 "${suggestedDataPath}"`)
+      } else if (res && typeof res === 'object' && !Array.isArray(res)) {
+        const keys = Object.keys(res as Record<string, unknown>)
+        errorParts.push(`响应包含字段: ${keys.join(', ')}`)
+      }
+      testResult.value = {
+        success: false,
+        message: errorParts.join('。'),
+        responsePreview,
+      }
+    } else {
+      testResult.value = {
+        success: true,
+        message: `成功: ${extractedData.length} 条数据返回`,
+        responsePreview,
+        suggestedDataPath,
+        parsedOptions,
+      }
+    }
   } catch (e: unknown) {
     rawResponse.value = null
     testResult.value = { success: false, message: e instanceof Error ? e.message : '请求失败' }
   } finally {
     testing.value = false
+  }
+}
+
+/** Apply suggested dataPath to the config */
+function applySuggestedDataPath() {
+  if (testResult.value?.suggestedDataPath) {
+    emitApiField('dataPath', testResult.value.suggestedDataPath)
   }
 }
 
@@ -266,22 +358,68 @@ defineExpose({ testConnection })
         >
           测试连接
         </el-button>
-        <div
-          v-if="testResult"
-          class="api-config__test-result"
-          :class="testResult.success ? 'api-config__test-result--success' : 'api-config__test-result--error'"
-        >
-          <span>{{ testResult.message }}</span>
-          <el-button
-            v-if="showAnalyze"
-            size="small"
-            type="success"
-            plain
-            style="margin-left: 8px"
-            @click="analyzeAndGenerateSchema"
-          >
-            分析并生成 Schema
-          </el-button>
+
+        <!-- Test Result: Success -->
+        <div v-if="testResult?.success" class="api-config__test-result api-config__test-result--success">
+          <div class="api-config__test-header">
+            <el-icon><Check /></el-icon>
+            <span>{{ testResult.message }}</span>
+            <el-button
+              size="small"
+              type="success"
+              plain
+              @click="analyzeAndGenerateSchema"
+            >
+              分析并生成 Schema
+            </el-button>
+          </div>
+
+          <!-- Response preview -->
+          <div v-if="testResult.responsePreview" class="api-config__preview">
+            <div class="api-config__preview-label">响应结构 (前 200 字符)</div>
+            <pre class="api-config__preview-code">{{ testResult.responsePreview }}</pre>
+          </div>
+
+          <!-- Suggested dataPath -->
+          <div v-if="testResult.suggestedDataPath" class="api-config__suggestion">
+            <span>检测到数据路径: <code>{{ testResult.suggestedDataPath }}</code></span>
+            <el-button size="small" type="primary" link @click="applySuggestedDataPath">
+              应用
+            </el-button>
+          </div>
+
+          <!-- Parsed options preview -->
+          <div v-if="testResult.parsedOptions && testResult.parsedOptions.length > 0" class="api-config__preview">
+            <div class="api-config__preview-label">解析预览 (前 5 项)</div>
+            <div class="api-config__options-list">
+              <div v-for="(opt, idx) in testResult.parsedOptions" :key="idx" class="api-config__option-item">
+                <span class="api-config__option-label">{{ opt.label }}</span>
+                <span class="api-config__option-value">{{ opt.value }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Result: Error -->
+        <div v-else-if="testResult" class="api-config__test-result api-config__test-result--error">
+          <div class="api-config__test-header">
+            <el-icon><WarningFilled /></el-icon>
+            <span>{{ testResult.message }}</span>
+          </div>
+
+          <!-- Response preview on error too -->
+          <div v-if="testResult.responsePreview" class="api-config__preview">
+            <div class="api-config__preview-label">响应内容 (前 200 字符)</div>
+            <pre class="api-config__preview-code api-config__preview-code--error">{{ testResult.responsePreview }}</pre>
+          </div>
+
+          <!-- Suggested dataPath on error -->
+          <div v-if="testResult.suggestedDataPath" class="api-config__suggestion api-config__suggestion--error">
+            <span>检测到数据路径: <code>{{ testResult.suggestedDataPath }}</code></span>
+            <el-button size="small" type="primary" link @click="applySuggestedDataPath">
+              应用
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -336,21 +474,119 @@ defineExpose({ testConnection })
   &__test-result {
     font-size: 12px;
     margin-top: 6px;
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    line-height: 1.5;
 
     &--success {
       color: #67c23a;
       background: #f0f9eb;
+      border: 1px solid #e1f3d8;
     }
 
     &--error {
       color: #f56c6c;
       background: #fef0f0;
+      border: 1px solid #fde2e2;
     }
+  }
+
+  &__test-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+
+    .el-button {
+      margin-left: auto;
+    }
+  }
+
+  &__preview {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &__preview-label {
+    font-size: 11px;
+    color: #909399;
+    margin-bottom: 4px;
+  }
+
+  &__preview-code {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+    padding: 6px 8px;
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+    max-height: 120px;
+    overflow-y: auto;
+    color: #303133;
+
+    &--error {
+      color: #909399;
+    }
+  }
+
+  &__suggestion {
+    margin-top: 6px;
+    padding: 4px 8px;
+    background: rgba(64, 158, 255, 0.06);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #409eff;
+
+    code {
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      background: rgba(64, 158, 255, 0.1);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    &--error {
+      background: rgba(245, 108, 108, 0.06);
+      color: #f56c6c;
+
+      code {
+        background: rgba(245, 108, 108, 0.1);
+      }
+    }
+  }
+
+  &__options-list {
+    margin-top: 4px;
+  }
+
+  &__option-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__option-label {
+    color: #303133;
+    font-weight: 500;
+  }
+
+  &__option-value {
+    color: #909399;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 10px;
   }
 
   .is-error :deep(.el-textarea__inner) {
