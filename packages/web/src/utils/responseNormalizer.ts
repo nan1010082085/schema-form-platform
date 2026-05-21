@@ -4,6 +4,7 @@
  * Consolidates duplicated response-parsing logic from:
  *   useDynamicOptions.ts, useListData.ts, ApiConfig.vue, FgSearchList.vue
  */
+import { JSONPath } from 'jsonpath-plus'
 import { useLogger } from '@/composables/useLogger'
 
 const logger = useLogger('ResponseNormalizer')
@@ -14,6 +15,25 @@ export function getNestedValue(obj: unknown, path: string): unknown {
     if (acc && typeof acc === 'object') return (acc as Record<string, unknown>)[key]
     return undefined
   }, obj)
+}
+
+/**
+ * Extract a value from an object by path expression.
+ *
+ * - Empty string → returns data as-is
+ * - Starts with `$` → treated as JSONPath expression (e.g. `$.data.list[*].name`)
+ * - Otherwise → dot-separated path via getNestedValue
+ */
+export function extractByPath(data: unknown, path: string): unknown {
+  if (!path) return data
+  if (path.startsWith('$')) {
+    try {
+      return JSONPath({ path, json: data, wrap: false })
+    } catch {
+      return undefined
+    }
+  }
+  return getNestedValue(data, path)
 }
 
 /**
@@ -40,9 +60,9 @@ export function normalizeListResponse(
   } else if (res && typeof res === 'object') {
     const obj = res as Record<string, unknown>
 
-    // 2. Use configured dataPath
+    // 2. Use configured dataPath (supports both dot-path and JSONPath)
     if (options?.dataPath) {
-      const nested = getNestedValue(obj, options.dataPath)
+      const nested = extractByPath(obj, options.dataPath)
       data = Array.isArray(nested) ? (nested as Record<string, unknown>[]) : []
     } else {
       // 3. Fallback: try common wrapper keys
