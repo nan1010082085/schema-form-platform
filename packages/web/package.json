@@ -9,8 +9,6 @@
     "build:widgets": "vite build --config vite.widget.config.ts",
     "build:microapp": "vite build --config vite.microapp.config.ts",
     "preview": "vite preview",
-    "lint": "eslint . --fix",
-    "lint:check": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,vue,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,vue,scss,json}\"",
     "test": "vitest run",
@@ -28,10 +26,8 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.13.2",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/test-utils": "^2.4.6",
-    "eslint": "^9.27.0",
     "jsdom": "^26.1.0",
     "prettier": "^3.5.3",
     "sass": "^1.99.0",
