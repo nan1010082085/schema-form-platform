@@ -16,7 +16,7 @@ import type { Widget, SchemaType } from '../../widgets/base/types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
-import { computeWidgetRenderState } from '../../engine/ruleEngine'
+import { useLinkage } from '../../composables/useLinkage'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
@@ -129,10 +129,20 @@ const formData = computed(() => {
 /**
  * 规则引擎输出：visible / disabled / required。
  * SchemaNode 用此结果控制渲染条件，Widget 通过 inject 获取。
+ *
+ * 基于 useLinkage composable，按 field 查找联动状态。
+ * widget.hidden 作为静态可见性覆盖（优先于联动状态）。
  */
-const renderState = computed(() =>
-  computeWidgetRenderState(props.widget, formData.value),
-)
+const linkage = useLinkage(widgetStore.widgets, formData)
+const renderState = computed(() => {
+  const linkageState = linkage.stateMap.value.get(props.widget.field ?? '')
+  const base = linkageState ?? { visible: true, disabled: false, required: false }
+  // hidden 静态属性覆盖：hidden=true 时强制不可见
+  if (props.widget.hidden) {
+    return { ...base, visible: false }
+  }
+  return base
+})
 
 provide(widgetRenderStateKey, renderState)
 

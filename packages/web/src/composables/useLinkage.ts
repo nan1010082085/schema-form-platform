@@ -8,7 +8,7 @@
  * 3. condition 支持函数和字符串表达式两种模式
  * 4. DFS 检测循环依赖，发现后降级处理
  */
-import { computed, type ComputedRef } from 'vue'
+import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import type {
   FormSchemaItem,
   FormData,
@@ -171,12 +171,12 @@ const DEFAULT_STATE: LinkageState = {
  * useLinkage composable
  *
  * @param schema - 表单 schema 定义
- * @param formData - 响应式表单数据
+ * @param formData - 响应式表单数据（reactive 对象、ref 或 getter）
  * @returns stateMap - 所有联动字段的状态映射
  */
 export function useLinkage(
   schema: FormSchemaItem[],
-  formData: FormData,
+  formData: MaybeRefOrGetter<FormData>,
 ): { stateMap: ComputedRef<Map<string, LinkageState>> } {
   // 收集所有联动节点（静态，不依赖 formData）
   const entries = computed(() => collectLinkageEntries(schema))
@@ -191,6 +191,7 @@ export function useLinkage(
   // 通过在 computed 内部读取 formData[watchField] 建立响应式依赖
   // 当任何 watchField 的值变化时，此 computed 会自动重算
   const stateMap = computed<Map<string, LinkageState>>(() => {
+    const currentFormData = toValue(formData)
     const currentEntries = entries.value
     const cyclic = cyclicFields.value
     const map = new Map<string, LinkageState>()
@@ -208,10 +209,10 @@ export function useLinkage(
         // 读取 watchFields 建立响应式依赖
         for (const watchField of linkage.watchFields) {
           // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          formData[watchField]
+          currentFormData[watchField]
         }
 
-        const result = evaluateCondition(linkage, formData)
+        const result = evaluateCondition(linkage, currentFormData)
 
         switch (linkage.type) {
           case 'visible':
@@ -241,7 +242,7 @@ export function useLinkage(
           case 'set-value':
             if (result) {
               if (linkage.valueSource) {
-                state.targetValue = formData[linkage.valueSource]
+                state.targetValue = currentFormData[linkage.valueSource]
               } else if (linkage.thenValue !== undefined) {
                 state.targetValue = linkage.thenValue
               }

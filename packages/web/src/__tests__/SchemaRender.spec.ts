@@ -17,6 +17,7 @@ import ElementPlus from 'element-plus'
 import type { Widget, SchemaType } from '@/widgets/base/types'
 import { widgetDataKey } from '@/widgets/base/types'
 import SchemaRenderComponent from '@/components/FormGrid/SchemaRender.vue'
+import { useWidgetStore } from '@/stores/widget'
 
 // ---------------------------------------------------------------------------
 // Mock registry — provide stub components for all types SchemaNode resolves.
@@ -105,7 +106,7 @@ vi.mock('@/widgets/registry', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Mock ruleEngine — return static render state by default
+// Mock ruleEngine — kept for backward compatibility (not used by SchemaNode anymore)
 // ---------------------------------------------------------------------------
 vi.mock('@/engine/ruleEngine', () => ({
   computeWidgetRenderState: vi.fn((widget: Widget) => ({
@@ -142,6 +143,10 @@ function makeContainerWidget(type: SchemaType, children: Widget[] = [], override
 }
 
 function mountSchemaRender(widgets: Widget[], props: Record<string, unknown> = {}) {
+  // Populate widgetStore so useLinkage can find linkage rules
+  const widgetStore = useWidgetStore()
+  widgetStore.widgets = widgets
+
   return mount(SchemaRenderComponent, {
     props: {
       widgets,
@@ -370,33 +375,10 @@ describe('SchemaRender', () => {
   })
 
   // =========================================================================
-  // 5. Rule engine integration
+  // 5. Linkage integration (useLinkage)
   // =========================================================================
-  describe('Rule engine integration', () => {
-    it('hides widget when computeWidgetRenderState returns visible=false', async () => {
-      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
-      // Use mockReturnValue (not Once) since the computed may call it multiple times
-      vi.mocked(computeWidgetRenderState).mockReturnValue({
-        visible: false,
-        disabled: false,
-        required: false,
-      })
-
-      const wrapper = mountSchemaRender([
-        makeWidget({ type: 'input', id: 'w1' }),
-      ])
-
-      expect(wrapper.find('.stub-input').exists()).toBe(false)
-    })
-
-    it('shows widget when computeWidgetRenderState returns visible=true', async () => {
-      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
-      vi.mocked(computeWidgetRenderState).mockReturnValue({
-        visible: true,
-        disabled: false,
-        required: false,
-      })
-
+  describe('Linkage integration', () => {
+    it('shows widget by default when no linkages defined', () => {
       const wrapper = mountSchemaRender([
         makeWidget({ type: 'input', id: 'w1' }),
       ])
@@ -404,25 +386,40 @@ describe('SchemaRender', () => {
       expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('computeWidgetRenderState is called for each widget', async () => {
-      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
-      vi.mocked(computeWidgetRenderState).mockClear()
-      // Restore default behavior for counting
-      vi.mocked(computeWidgetRenderState).mockImplementation(
-        (widget: Widget) => ({
-          visible: !widget.hidden,
-          disabled: (widget.props?.disabled as boolean) ?? false,
-          required: widget.validationRules?.some((r: { required?: boolean }) => r.required) ?? false,
+    it('hides widget when linkage condition hides it', () => {
+      // useLinkage evaluates linkage rules; a visible=false linkage hides the widget
+      const wrapper = mountSchemaRender([
+        makeWidget({
+          type: 'input',
+          id: 'w1',
+          field: 'target',
+          linkages: [{
+            type: 'visible',
+            watchFields: ['source'],
+            condition: 'values.source === "show"',
+          }],
         }),
-      )
+        makeWidget({
+          type: 'select',
+          id: 'w2',
+          field: 'source',
+          options: [{ label: 'A', value: 'a' }],
+        }),
+      ])
 
-      mountSchemaRender([
+      // source is undefined by default, condition evaluates to false → visible=false
+      expect(wrapper.find('.stub-input').exists()).toBe(false)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+    })
+
+    it('multiple widgets without linkages all render', () => {
+      const wrapper = mountSchemaRender([
         makeWidget({ type: 'input', id: 'w1' }),
         makeWidget({ type: 'select', id: 'w2' }),
       ])
 
-      // SchemaNode calls computeWidgetRenderState for each widget
-      expect(computeWidgetRenderState).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
     })
   })
 
