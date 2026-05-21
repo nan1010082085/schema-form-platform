@@ -14,8 +14,6 @@ import {
   Delete,
   Top,
   Bottom,
-  SortUp,
-  SortDown,
   FolderAdd,
   FolderRemove,
   CircleCheck,
@@ -168,6 +166,11 @@ function handleMoreCommand(command: string) {
     case 'import-json': handleImport(); break
     case 'import-response': emit('import-response'); break
     case 'export-json': emit('export'); break
+    case 'zindex-up': handleZIndexUp(); break
+    case 'zindex-down': handleZIndexDown(); break
+    case 'align-left': handleAlign('left'); break
+    case 'align-center': handleAlign('center'); break
+    case 'align-right': handleAlign('right'); break
   }
 }
 
@@ -228,7 +231,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       <button
         class="editor-toolbar__icon-btn"
         :class="{ 'editor-toolbar__icon-btn--active': leftPanelVisible }"
-        title="组件面板"
+        title="部件面板"
         @click="emit('update:leftPanelVisible', !leftPanelVisible)"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
@@ -288,46 +291,30 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       </div>
 
       <div class="editor-toolbar__btn-group">
-        <el-tooltip :content="`上移一层 · z=${(selectedZIndex ?? 1) + 1} (Alt+Up)`" placement="bottom">
-          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleZIndexUp">
-            <el-icon :size="14"><SortUp /></el-icon>
+        <el-dropdown trigger="click" @command="handleMoreCommand">
+          <button class="editor-toolbar__icon-btn" title="更多操作">
+            <el-icon :size="14"><MoreFilled /></el-icon>
           </button>
-        </el-tooltip>
-        <el-tooltip :content="`下移一层 · z=${Math.max(1, (selectedZIndex ?? 1) - 1)} (Alt+Down)`" placement="bottom">
-          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleZIndexDown">
-            <el-icon :size="14"><SortDown /></el-icon>
-          </button>
-        </el-tooltip>
-      </div>
-
-      <div class="editor-toolbar__btn-group">
-        <el-tooltip content="左对齐" placement="bottom">
-          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('left')">
-            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
-              <rect x="1" y="7" width="10" height="2" rx="0.5"/>
-              <rect x="1" y="12" width="12" height="2" rx="0.5"/>
-            </svg>
-          </button>
-        </el-tooltip>
-        <el-tooltip content="居中对齐" placement="bottom">
-          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('center')">
-            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
-              <rect x="3" y="7" width="10" height="2" rx="0.5"/>
-              <rect x="2" y="12" width="12" height="2" rx="0.5"/>
-            </svg>
-          </button>
-        </el-tooltip>
-        <el-tooltip content="右对齐" placement="bottom">
-          <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleAlign('right')">
-            <svg class="editor-toolbar__align-icon" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-              <rect x="1" y="2" width="14" height="2" rx="0.5"/>
-              <rect x="5" y="7" width="10" height="2" rx="0.5"/>
-              <rect x="3" y="12" width="12" height="2" rx="0.5"/>
-            </svg>
-          </button>
-        </el-tooltip>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item :disabled="!hasSelection" command="zindex-up">
+                上移一层 (Alt+↑)
+              </el-dropdown-item>
+              <el-dropdown-item :disabled="!hasSelection" command="zindex-down">
+                下移一层 (Alt+↓)
+              </el-dropdown-item>
+              <el-dropdown-item divided :disabled="!hasSelection" command="align-left">
+                左对齐
+              </el-dropdown-item>
+              <el-dropdown-item :disabled="!hasSelection" command="align-center">
+                居中对齐
+              </el-dropdown-item>
+              <el-dropdown-item :disabled="!hasSelection" command="align-right">
+                右对齐
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
 
       <div class="editor-toolbar__btn-group">
@@ -556,8 +543,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   align-items: center;
   height: 44px;
   padding: 0 8px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   flex-shrink: 0;
   gap: 4px;
   position: sticky;
@@ -567,7 +554,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   &__divider {
     width: 1px;
     height: 20px;
-    background: #dcdfe6;
+    background: var(--el-border-color-lighter);
     flex-shrink: 0;
     margin: 0 2px;
   }
@@ -583,16 +570,16 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   &__name-input {
     width: 128px;
     padding: 4px 8px;
-    border: 1px solid #dcdfe6;
-    font-size: 12px;
-    color: #303133;
+    border: 1px solid var(--el-border-color);
+    font-size: var(--el-font-size-small);
+    color: var(--el-text-color-primary);
     background: transparent;
     outline: none;
     transition: border-color 0.2s;
     flex-shrink: 0;
 
-    &:focus { border-color: #409eff; }
-    &::placeholder { color: #c0c4cc; }
+    &:focus { border-color: var(--el-color-primary); }
+    &::placeholder { color: var(--el-text-color-placeholder); }
   }
 
   // ---- Center section (edit operations) ----
@@ -610,9 +597,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 0;
     padding: 2px 3px;
-    background: #fafafa;
+    background: var(--el-fill-color-light);
     border-radius: 6px;
-    flex-shrink: 0;
   }
 
   // ---- Right section ----
@@ -633,15 +619,15 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     height: 28px;
     border: none;
     background: transparent;
-    color: #606266;
+    color: var(--el-text-color-regular);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: var(--el-border-radius-small);
     transition: all 0.15s;
     flex-shrink: 0;
 
     &:hover:not(:disabled) {
-      background: #f0f2f5;
-      color: #303133;
+      background: var(--el-fill-color-light);
+      color: var(--el-text-color-primary);
     }
 
     &:disabled {
@@ -650,17 +636,11 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     }
 
     &--active {
-      color: #409eff;
-      background: #ecf5ff;
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
 
-      &:hover { background: #d9ecff; }
+      &:hover { background: var(--el-color-primary-light-8); }
     }
-  }
-
-  &__align-icon {
-    display: block;
-    opacity: 0.75;
-    &:hover { opacity: 1; }
   }
 
   &__badge {
@@ -677,10 +657,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     font-weight: 600;
     line-height: 1;
     border-radius: 7px;
-    color: #fff;
+    color: var(--el-color-white);
 
-    &--error { background: #f56c6c; }
-    &--warning { background: #e6a23c; }
+    &--error { background: var(--el-color-danger); }
+    &--warning { background: var(--el-color-warning); }
   }
 
   // ---- Mode switcher ----
@@ -689,8 +669,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 2px;
     padding: 2px;
-    background: #f0f2f5;
-    border-radius: 4px;
+    background: var(--el-fill-color-light);
+    border-radius: var(--el-border-radius-small);
     flex-shrink: 0;
   }
 
@@ -702,16 +682,16 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     height: 24px;
     border: none;
     background: transparent;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     cursor: pointer;
     border-radius: 3px;
     transition: all 0.15s;
 
-    &:hover { color: #606266; }
+    &:hover { color: var(--el-text-color-regular); }
 
     &--active {
-      background: #fff;
-      color: #409eff;
+      background: var(--el-bg-color);
+      color: var(--el-color-primary);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
     }
   }
@@ -722,21 +702,21 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: var(--el-font-size-small);
     font-weight: 500;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    background: #fff;
+    border: 1px solid var(--el-border-color);
+    border-radius: var(--el-border-radius-small);
+    background: var(--el-bg-color);
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
 
-    &:hover { border-color: #c0c4cc; background: #f5f7fa; }
+    &:hover { border-color: var(--el-border-color-hover); background: var(--el-fill-color-lighter); }
 
-    &--edit { color: #409eff; border-color: #b3d8ff; }
-    &--preview { color: #e6a23c; border-color: #f3d19e; }
-    &--publish-interactive { color: #67c23a; border-color: #b3e19d; }
-    &--publish-readonly { color: #909399; border-color: #c8c9cc; }
+    &--edit { color: var(--el-color-primary); border-color: var(--el-color-primary-light-5); }
+    &--preview { color: var(--el-color-warning); border-color: var(--el-color-warning-light-5); }
+    &--publish-interactive { color: var(--el-color-success); border-color: var(--el-color-success-light-5); }
+    &--publish-readonly { color: var(--el-text-color-secondary); border-color: var(--el-border-color); }
   }
 
   // ---- Text buttons ----
@@ -745,32 +725,32 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 4px;
     padding: 5px 12px;
-    font-size: 12px;
-    border-radius: 4px;
+    font-size: var(--el-font-size-small);
+    border-radius: var(--el-border-radius-small);
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
     white-space: nowrap;
 
     &--outline {
-      background: #fff;
-      border: 1px solid #dcdfe6;
-      color: #606266;
-      &:hover { border-color: #c0c4cc; background: #f5f7fa; }
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color);
+      color: var(--el-text-color-regular);
+      &:hover { border-color: var(--el-border-color-hover); background: var(--el-fill-color-lighter); }
     }
 
     &--success {
-      background: #67c23a;
-      border: 1px solid #67c23a;
-      color: #fff;
-      &:hover { background: #85ce61; border-color: #85ce61; }
+      background: var(--el-color-success);
+      border: 1px solid var(--el-color-success);
+      color: var(--el-color-white);
+      &:hover { background: var(--el-color-success-light-3); border-color: var(--el-color-success-light-3); }
     }
 
     &--primary {
-      background: #409eff;
-      border: 1px solid #409eff;
-      color: #fff;
-      &:hover { background: #66b1ff; border-color: #66b1ff; }
+      background: var(--el-color-primary);
+      border: 1px solid var(--el-color-primary);
+      color: var(--el-color-white);
+      &:hover { background: var(--el-color-primary-light-3); border-color: var(--el-color-primary-light-3); }
     }
   }
 }
