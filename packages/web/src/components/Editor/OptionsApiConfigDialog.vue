@@ -8,6 +8,7 @@
 import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
+import type { InstanceType } from 'vue'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{
@@ -35,8 +36,14 @@ watch(
 
 // ---- ApiConfig 事件处理 ----
 
+const apiConfigRef = ref<InstanceType<typeof ApiConfig> | null>(null)
+
 function handleApiUpdate(api: SchemaApiConfig | undefined) {
   localApi.value = api
+}
+
+function testConnection() {
+  apiConfigRef.value?.testConnection()
 }
 
 // ---- 保存 / 关闭 ----
@@ -60,14 +67,18 @@ function handleClose() {
   >
     <div :class="$style.body">
       <ApiConfig
+        ref="apiConfigRef"
         :api="localApi"
         @update:api="handleApiUpdate"
       />
     </div>
 
     <template #footer>
-      <el-button size="small" @click="handleClose">取消</el-button>
-      <el-button type="primary" size="small" @click="handleSave">保存</el-button>
+      <div :class="$style.footer">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" plain @click="testConnection">测试连接</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
+      </div>
     </template>
   </EnhancedDialog>
 </template>
@@ -76,5 +87,10 @@ function handleClose() {
 .body {
   max-height: 60vh;
   overflow-y: auto;
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 </style>
