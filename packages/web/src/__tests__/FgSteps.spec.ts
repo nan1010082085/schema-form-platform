@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { reactive, defineComponent, h, provide } from 'vue'
+import { reactive, defineComponent, h, provide, computed } from 'vue'
 import ElementPlus from 'element-plus'
 import FgSteps from '@/components/FormGrid/components/layout/FgSteps.vue'
 import { FORM_GRID_API_KEY } from '@/components/FormGrid/types'
@@ -49,6 +49,24 @@ function makeStepSchema(stepIndex: number): FormSchemaItem {
   }
 }
 
+/** SchemaRender stub: recursively renders schema labels */
+const SchemaRenderStub = defineComponent({
+  props: ['schema', 'formData', 'editable', 'isDragging', 'path'],
+  setup(props) {
+    const text = computed(() => {
+      const labels: string[] = []
+      const walk = (item: any) => {
+        if (item?.label) labels.push(item.label)
+        if (item?.children) item.children.forEach(walk)
+      }
+      if (props.schema) walk(props.schema)
+      return labels.join(' ')
+    })
+    return { text }
+  },
+  template: '<div class="mock-schema-render">{{ text }}</div>',
+})
+
 /** Helper: mount FgSteps with optional API provider */
 function mountSteps(options: {
   steps?: Array<{ title: string; description?: string }>
@@ -85,6 +103,9 @@ function mountSteps(options: {
   return mount(Wrapper, {
     global: {
       plugins: [ElementPlus],
+      stubs: {
+        SchemaRender: SchemaRenderStub,
+      },
     },
   })
 }
@@ -119,8 +140,12 @@ describe('FgSteps', () => {
 
     it('renders correct number of step panels', () => {
       const wrapper = mountSteps()
-      const panels = wrapper.findAll('.fg-steps__panel')
-      expect(panels).toHaveLength(3)
+      // Find panels by structure: content area is the second child div of root
+      // (after el-steps which is the first child)
+      const stepsEl = wrapper.find('.el-steps')
+      const rootDiv = stepsEl.element.parentElement!
+      const contentDiv = rootDiv.children[1] as HTMLElement
+      expect(contentDiv.children).toHaveLength(3)
     })
 
     it('shows prev/next buttons', () => {

@@ -4,9 +4,8 @@
  * Extracted from EditorCanvas.vue createDefaultSchema() so it can be shared
  * between the editor store and editor canvas component.
  */
-import type { FormSchemaItem, SchemaType, ComponentNode, Transform, ComponentStyle } from '@/components/FormGrid/types'
+import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
 import { isFullWidthType } from '@/components/FormGrid/types'
-import { generateComponentId } from '@/composables/useIdGenerate'
 
 /**
  * Create a default FormSchemaItem for a given component type.
@@ -23,7 +22,7 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
     return { type: 'grid-col', span: 12, children: [], style: { height: '44px' } }
   }
   if (type === 'card') {
-    return { type: 'card', label: 'Card', children: [], style: { padding: '16px', borderRadius: '4px' } }
+    return { type: 'card', label: 'Card', children: [], style: { padding: '16px', borderRadius: '4px', backgroundColor: '#f5f7fa' } }
   }
   if (type === 'page') {
     return { type: 'page', children: [], style: { padding: '24px' } }
@@ -57,14 +56,16 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
       type: 'tabs',
       props: { tabs: [{ title: 'Tab 1' }] },
       children: [{ type: 'grid-row', children: [] }],
+      style: { backgroundColor: '#f5f7fa' },
     }
   }
   if (type === 'dialog') {
     return {
       type: 'dialog',
       label: 'Dialog',
-      props: { title: 'Dialog', width: '600px' },
+      props: { title: 'Dialog', width: '400px' },
       children: [],
+      style: { backgroundColor: '#f5f7fa' },
     }
   }
 
@@ -77,10 +78,10 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
   switch (type) {
     case 'input':
     case 'textarea':
-      item = { ...base, label: 'Input', props: { placeholder: 'Please enter' }, style: { width: '100%', height: '44px' } }
+      item = { ...base, label: 'Input', props: { placeholder: 'Please enter' }, style: { height: '40px' } }
       break
     case 'number':
-      item = { ...base, label: 'Number', props: { placeholder: 'Please enter' }, style: { width: '100%', height: '44px' } }
+      item = { ...base, label: 'Number', props: { placeholder: 'Please enter' }, style: { height: '40px' } }
       break
     case 'select':
       item = {
@@ -90,7 +91,7 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
           { label: 'Option A', value: 'a' },
           { label: 'Option B', value: 'b' },
         ],
-        style: { width: '100%', height: '44px' },
+        style: { height: '40px' },
       }
       break
     case 'radio':
@@ -101,7 +102,7 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
           { label: 'Option A', value: 'a' },
           { label: 'Option B', value: 'b' },
         ],
-        style: { width: '100%', height: '44px' },
+        style: { height: '40px' },
       }
       break
     case 'checkbox':
@@ -112,14 +113,17 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
           { label: 'Option A', value: 'a' },
           { label: 'Option B', value: 'b' },
         ],
-        style: { width: '100%', height: '44px' },
+        style: { height: '40px' },
       }
       break
     case 'date':
-      item = { ...base, label: 'Date', style: { width: '100%', height: '44px' } }
+      item = { ...base, label: 'Date', style: { height: '40px' } }
       break
     case 'date-range':
-      item = { ...base, label: 'Date Range', style: { width: '100%', height: '44px' } }
+      item = { ...base, label: 'Date Range', style: { height: '40px' } }
+      break
+    case 'richtext':
+      item = { ...base, label: 'Rich Text', style: { height: '120px' } }
       break
     case 'button-list':
       item = {
@@ -131,10 +135,10 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
       }
       break
     case 'upload':
-      item = { ...base, label: 'Upload', style: { width: '100%' } }
+      item = { ...base, label: 'Upload' }
       break
     case 'table':
-      item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true }, style: { width: '100%' } }
+      item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true } }
       break
     case 'pagination':
       item = { type: 'pagination', props: { currentPage: 1, pageSize: 10, total: 0 } }
@@ -187,40 +191,4 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
   }
 
   return item
-}
-
-// =====================================================================
-// 画布编辑器 ComponentNode 工厂函数
-// =====================================================================
-
-const DEFAULT_TRANSFORMS: Record<string, Transform> = {
-  'grid-row': { x: 0, y: 0, w: 1920, h: 44 },
-  'grid-col': { x: 0, y: 0, w: 960, h: 44 },
-  'card': { x: 0, y: 0, w: 400, h: 300 },
-  'tabs': { x: 0, y: 0, w: 400, h: 300 },
-}
-
-const DEFAULT_STYLE: ComponentStyle = {}
-
-const FORM_COMPONENT_STYLE: ComponentStyle = {
-  width: '150px',
-  height: '44px',
-}
-
-export function createComponentNode(type: SchemaType): ComponentNode {
-  const isFormComponent = ['input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range', 'textarea', 'richtext'].includes(type)
-  const isLayoutComponent = ['grid-row', 'grid-col', 'card', 'tabs'].includes(type)
-
-  return {
-    id: generateComponentId(type),
-    type,
-    transform: DEFAULT_TRANSFORMS[type] ?? { x: 0, y: 0, w: 150, h: 44 },
-    zIndex: 1,
-    style: isFormComponent ? { ...FORM_COMPONENT_STYLE } : { ...DEFAULT_STYLE },
-    data: {},
-    events: {},
-    linkage: {},
-    props: {},
-    ...(isLayoutComponent ? { children: [] } : {}),
-  }
 }

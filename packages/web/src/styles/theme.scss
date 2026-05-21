@@ -46,7 +46,7 @@
   --el-border-radius-circle: 100%;
 
   // ---- 高度 ----
-  --el-component-size: 32px;
+  --el-component-size: 44px;
   --el-component-size-small: 24px;
   --el-component-size-large: 40px;
 
@@ -94,16 +94,6 @@
 
 .el-form-item.is-error .el-input__wrapper {
   box-shadow: none;
-}
-
-.el-input__inner {
-  height: $fg-input-height;
-  font-size: $fg-font-size-body;
-  color: $fg-text-primary;
-
-  &::placeholder {
-    color: $fg-text-hint;
-  }
 }
 
 // ---- Textarea 文本域（无外边框，由栅格单元格统一管理） ----
@@ -156,10 +146,29 @@
 }
 
 // ---- InputNumber 数字输入 ----
-.el-input-number .el-input__wrapper {
-  border-radius: $fg-input-radius;
-  box-shadow: none;
-  border: none;
+.el-input-number {
+  overflow: hidden;
+
+  .el-input__wrapper {
+    border-radius: $fg-input-radius;
+    box-shadow: none;
+    border: none;
+  }
+
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    height: 50% !important;
+    line-height: 1 !important;
+    top: 0 !important;
+  }
+
+  .el-input-number__increase {
+    top: 0 !important;
+  }
+
+  .el-input-number__decrease {
+    top: 50% !important;
+  }
 }
 
 // ---- Button 按钮（对齐 common/style：统一 32px 高度、padding 8px 16px） ----
@@ -222,12 +231,13 @@
 
 // ---- Dialog 弹窗（对齐 common/style：蓝底白字头部） ----
 .el-dialog {
+  --el-dialog-border-radius: 0;
   padding: 0 !important;
 
   .el-dialog__header {
     background: $color-primary;
     padding: 0 $spacing-md !important;
-    border-radius: $border-radius-md $border-radius-md 0 0;
+    border-radius: 0;
     height: $detail-item-height;
     line-height: $detail-item-height;
     margin-right: 0;

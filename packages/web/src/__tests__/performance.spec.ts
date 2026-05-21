@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { nextTick } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
@@ -26,8 +27,10 @@ function setupMatchMediaStub() {
 
 function mountWithEl(component: any, options: any = {}) {
   setupMatchMediaStub()
+  const pinia = createPinia()
+  setActivePinia(pinia)
   return mount(component, {
-    global: { plugins: [ElementPlus], stubs: { 'el-form-item': { template: '<div><slot /></div>' } } },
+    global: { plugins: [pinia, ElementPlus], stubs: { 'el-form-item': { template: '<div><slot /></div>' } } },
     ...options,
   })
 }

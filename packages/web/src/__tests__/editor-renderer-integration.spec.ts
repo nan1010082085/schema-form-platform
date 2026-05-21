@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { ref } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import FgSearchList from '@/components/FormGrid/components/business/FgSearchList.vue'
 import SearchFieldsEditor from '@/components/Editor/SearchFieldsEditor.vue'
@@ -70,10 +71,12 @@ vi.mock('@/utils/request', () => ({
 /** Shared mount options with ElementPlus plugin + router mock */
 function mountWithEl(component: any, options: any = {}): VueWrapper<any> {
   const { global: globalOpts = {}, ...rest } = options
+  const pinia = createPinia()
+  setActivePinia(pinia)
   return mount(component, {
     ...rest,
     global: {
-      plugins: [ElementPlus],
+      plugins: [pinia, ElementPlus],
       ...globalOpts,
       provide: {
         // Router mock (needed by FgSearchList for navigate row actions)
