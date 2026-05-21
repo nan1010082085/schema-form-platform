@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * RuleConfigDialog -- WidgetRule[] 配置对话框
+ * LinkageConfigDialog -- WidgetRule[] 配置对话框
  *
  * 对每条规则支持：
  * - watches[]: 监听源列表（type + source）

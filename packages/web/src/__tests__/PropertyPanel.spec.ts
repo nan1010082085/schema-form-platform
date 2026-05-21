@@ -87,7 +87,7 @@ const stubs = {
   ElTooltip: elTooltipStub,
   ElIcon: elIconStub,
   EventConfigDialog: { template: '<div />', props: ['visible', 'events'], emits: ['update:visible', 'save'] },
-  RuleConfigDialog: { template: '<div />', props: ['visible', 'rules'], emits: ['update:visible', 'save'] },
+  LinkageConfigDialog: { template: '<div />', props: ['visible', 'rules'], emits: ['update:visible', 'save'] },
   OptionsApiConfigDialog: { template: '<div />', props: ['visible', 'api'], emits: ['update:visible', 'save'] },
 }
 

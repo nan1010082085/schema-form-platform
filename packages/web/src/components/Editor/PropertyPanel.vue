@@ -21,7 +21,7 @@ import type { TableColumn } from '../../widgets/table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
 import OptionsEditor from './OptionsEditor.vue'
 import EventConfigDialog from './EventConfigDialog.vue'
-import RuleConfigDialog from './RuleConfigDialog.vue'
+import LinkageConfigDialog from './LinkageConfigDialog.vue'
 import OptionsApiConfigDialog from './OptionsApiConfigDialog.vue'
 import { usePropertyAdapters } from '../../composables/usePropertyAdapters'
 
@@ -424,7 +424,7 @@ function updateBoardProperty(key: string, value: unknown) {
         @save="handleEventSave"
       />
 
-      <RuleConfigDialog
+      <LinkageConfigDialog
         :visible="ruleDialogVisible"
         :rules="selectedWidget.rules ?? []"
         @update:visible="ruleDialogVisible = $event"
