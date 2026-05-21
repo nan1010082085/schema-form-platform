@@ -80,7 +80,7 @@ function replaceFieldRefs(expression: string): string {
  * Check expression string against security blocklist
  * @returns error message if blocked, null if safe
  */
-function checkSecurity(expression: string): string | null {
+export function checkSecurity(expression: string): string | null {
   for (const { pattern, message } of BLOCKED_PATTERNS) {
     if (pattern.test(expression)) {
       return message
