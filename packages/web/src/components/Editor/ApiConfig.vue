@@ -124,6 +124,8 @@ function analyzeAndGenerateSchema() {
   const schema = fieldInferencesToSchema(inferences)
   emit('generate-schema', schema)
 }
+
+defineExpose({ testConnection })
 </script>
 
 <template>
