@@ -8,7 +8,7 @@
  * - 每行一个属性：label + value 水平排列
  */
 import { computed, ref } from 'vue'
-import { ArrowRight, ArrowDown } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, QuestionFilled } from '@element-plus/icons-vue'
 import { useEditorStore } from '../../stores/editor'
 import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
@@ -19,6 +19,7 @@ import PropertyField from './PropertyField.vue'
 import TableColumnsEditor from './TableColumnsEditor.vue'
 import type { TableColumn } from '../../widgets/table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
+import OptionsEditor from './OptionsEditor.vue'
 import EventConfigDialog from './EventConfigDialog.vue'
 import RuleConfigDialog from './RuleConfigDialog.vue'
 import OptionsApiConfigDialog from './OptionsApiConfigDialog.vue'
@@ -319,9 +320,42 @@ function updateBoardProperty(key: string, value: unknown) {
     </template>
 
     <template v-else>
-      <div :class="$style.widgetInfo">
+      <div :class="$style.widgetNameRow">
         <span :class="$style.widgetType">{{ widgetConfig?.displayName }}</span>
-        <span :class="$style.widgetId">{{ selectedWidget.id }}</span>
+        <ElTooltip
+          v-if="widgetConfig?.config.description"
+          :content="widgetConfig.config.description"
+          placement="top"
+          :show-after="500"
+        >
+          <el-icon :class="$style.questionIcon"><QuestionFilled /></el-icon>
+        </ElTooltip>
+      </div>
+
+      <!-- 动态配置入口（由 widget config.configPanels 声明驱动）—— 顶部横向按钮 -->
+      <div v-if="configPanels.length" :class="$style.configActions">
+        <el-scrollbar>
+          <div :class="$style.configButtons">
+            <template v-for="panel in configPanels" :key="panel">
+              <el-button v-if="panel === 'events'" size="small" plain @click="openEventDialog">
+                事件配置
+                <span v-if="selectedWidget.events?.length" :class="$style.badge">
+                  {{ selectedWidget.events.length }}
+                </span>
+              </el-button>
+              <el-button v-if="panel === 'rules'" size="small" plain @click="openRuleDialog">
+                规则配置
+                <span v-if="selectedWidget.rules?.length" :class="$style.badge">
+                  {{ selectedWidget.rules.length }}
+                </span>
+              </el-button>
+              <el-button v-if="panel === 'api'" size="small" plain @click="openApiDialog">
+                数据源
+                <span v-if="selectedWidget.api" :class="$style.badge">1</span>
+              </el-button>
+            </template>
+          </div>
+        </el-scrollbar>
       </div>
 
       <el-scrollbar :class="$style.scroll">
@@ -362,6 +396,13 @@ function updateBoardProperty(key: string, value: unknown) {
                   @update="(v: unknown[]) => updateProperty(item.key, v)"
                 />
               </div>
+              <!-- 选项编辑器（select/radio/checkbox 的选项配置） -->
+              <OptionsEditor
+                v-else-if="item.type === 'options'"
+                :label="item.label"
+                :value="item.value"
+                @update="(v: unknown) => updateProperty(item.key, v)"
+              />
               <PropertyField
                 v-else
                 :label="item.label"
@@ -375,28 +416,6 @@ function updateBoardProperty(key: string, value: unknown) {
           </div>
         </div>
       </el-scrollbar>
-
-      <!-- 动态配置入口（由 widget config.configPanels 声明驱动） -->
-      <div v-if="configPanels.length" :class="$style.configActions">
-        <template v-for="panel in configPanels" :key="panel">
-          <el-button v-if="panel === 'events'" size="small" plain @click="openEventDialog">
-            事件配置
-            <span v-if="selectedWidget.events?.length" :class="$style.badge">
-              {{ selectedWidget.events.length }}
-            </span>
-          </el-button>
-          <el-button v-if="panel === 'rules'" size="small" plain @click="openRuleDialog">
-            规则配置
-            <span v-if="selectedWidget.rules?.length" :class="$style.badge">
-              {{ selectedWidget.rules.length }}
-            </span>
-          </el-button>
-          <el-button v-if="panel === 'api'" size="small" plain @click="openApiDialog">
-            数据源
-            <span v-if="selectedWidget.api" :class="$style.badge">1</span>
-          </el-button>
-        </template>
-      </div>
 
       <EventConfigDialog
         :visible="eventDialogVisible"
@@ -450,10 +469,10 @@ function updateBoardProperty(key: string, value: unknown) {
   font-size: 13px;
 }
 
-.widgetInfo {
+.widgetNameRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 4px;
   padding: 8px 16px;
   border-bottom: 1px solid #f0f2f5;
   flex-shrink: 0;
@@ -465,9 +484,14 @@ function updateBoardProperty(key: string, value: unknown) {
   color: #303133;
 }
 
-.widgetId {
-  color: #909399;
-  font-size: 11px;
+.questionIcon {
+  color: var(--el-text-color-placeholder);
+  cursor: help;
+  font-size: 14px;
+}
+
+.questionIcon:hover {
+  color: var(--el-color-primary);
 }
 
 .scroll {
@@ -530,11 +554,15 @@ function updateBoardProperty(key: string, value: unknown) {
 }
 
 .configActions {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  flex-shrink: 0;
+}
+
+.configButtons {
   display: flex;
   gap: 8px;
-  padding: 8px 16px 12px;
-  border-top: 1px solid #f0f2f5;
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .badge {

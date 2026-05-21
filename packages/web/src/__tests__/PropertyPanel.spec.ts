@@ -8,7 +8,7 @@
  * - Style property rendering (public + widget-specific)
  * - Widget-specific props rendering (from propertyPanel.props)
  * - Property update dispatches to widgetStore.updateWidget
- * - Widget info display (displayName, id)
+ * - Widget info display (displayName, no id)
  * - Event/rule config buttons
  * - Transition from selection to no-selection
  */
@@ -66,6 +66,16 @@ const elButtonStub = {
   emits: ['click'],
 }
 
+const elTooltipStub = {
+  template: '<span><slot /></span>',
+  props: ['content', 'placement', 'showAfter'],
+}
+
+const elIconStub = {
+  template: '<span><slot /></span>',
+  props: ['size', 'class'],
+}
+
 const stubs = {
   ElInput: elInputStub,
   ElInputNumber: elInputNumberStub,
@@ -74,6 +84,8 @@ const stubs = {
   ElOption: elOptionStub,
   ElColorPicker: elColorPickerStub,
   ElButton: elButtonStub,
+  ElTooltip: elTooltipStub,
+  ElIcon: elIconStub,
   EventConfigDialog: { template: '<div />', props: ['visible', 'events'], emits: ['update:visible', 'save'] },
   RuleConfigDialog: { template: '<div />', props: ['visible', 'rules'], emits: ['update:visible', 'save'] },
   OptionsApiConfigDialog: { template: '<div />', props: ['visible', 'api'], emits: ['update:visible', 'save'] },
@@ -204,12 +216,12 @@ describe('PropertyPanel', () => {
     expect(wrapper.text()).toContain('输入框')
   })
 
-  it('shows widget id when selected', () => {
+  it('does not show widget id when selected', () => {
     widgetStore.addWidget(createTestWidget())
     editorStore.select('input_test1')
 
     const wrapper = mountPanel()
-    expect(wrapper.text()).toContain('input_test1')
+    expect(wrapper.text()).not.toContain('input_test1')
   })
 
   // ---------- Basic properties ----------
