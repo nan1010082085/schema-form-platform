@@ -44,6 +44,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - API/数据库/部署 → 服务端工程师 Agent
 - 需求/体验/优先级 → 产品经理 Agent# 低代码编辑器&渲染器 完整重构最终规范文档
 
+### 编码
+
+- 使用兜底写法时，应该分析上下文，分析兜底写法是否是必要的
+
 ## 项目概览
 
 pnpm monorepo：schema-driven form engine，包含可视化编辑器和后端 API 服务。部署于 Vercel（SPA + Serverless Functions）。
