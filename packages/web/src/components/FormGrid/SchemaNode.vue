@@ -17,6 +17,8 @@ import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import { computeWidgetRenderState } from '../../engine/ruleEngine'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
+import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
 
 const props = defineProps<{
@@ -49,6 +51,22 @@ const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
 const INTERACTIVE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
   'tabs', 'dialog',
 ])
+
+// ---- 组件类型集合 ----
+
+/** 表单类组件（支持 change 事件） */
+const FORM_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
+  'input', 'select', 'number', 'radio', 'checkbox',
+  'date', 'textarea', 'richtext', 'upload',
+  'date-time-slot', 'person-select', 'dept-select',
+])
+
+/** 输入类组件（支持 focus/blur 事件） */
+const INPUT_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
+  'input', 'select', 'number', 'textarea', 'richtext',
+])
+
+const logger = useLogger('SchemaNode')
 
 // ---- Provide/Inject ----
 
@@ -86,6 +104,16 @@ const editorStore = useEditorStore()
 /** 交互式容器空白区域点击 → 选中容器 */
 function handleInteractiveContainerClick() {
   editorStore.select(props.widget.id)
+}
+
+/** 统一事件触发：由 SchemaNode 拦截并分发，部件无需自行调用 */
+function handleWidgetEvent(trigger: string, value?: unknown) {
+  logger.debug(`trigger=${trigger}`, props.widget.id)
+  triggerWidgetEvent(props.widget, trigger, {
+    widgetStore,
+    formData: formData.value,
+    value,
+  })
 }
 
 /**
@@ -177,6 +205,10 @@ const wrapperStyle = computed(() => {
       v-else
       :class="[$style.nodeWrapper, { [$style.nodeWrapperEdit]: isEditMode }]"
       :style="wrapperStyle"
+      @change="FORM_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('change', $event)"
+      @focus="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('focus')"
+      @blur="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('blur')"
+      @click="widget.type === 'button' && handleWidgetEvent('click')"
     >
       <!-- 表单校验：有 field + validationRules 时包裹 el-form-item -->
       <el-form-item

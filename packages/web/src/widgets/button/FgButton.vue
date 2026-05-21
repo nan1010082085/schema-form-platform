@@ -2,7 +2,6 @@
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
-import { triggerWidgetEvent } from '../../engine/eventEngine'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
@@ -22,10 +21,6 @@ const isPlain = computed(() => Boolean(widgetData.value.props?.plain))
 const isRound = computed(() => Boolean(widgetData.value.props?.round))
 const isCircle = computed(() => Boolean(widgetData.value.props?.circle))
 const buttonText = computed(() => widgetData.value.label || widgetData.value.props?.text || '按钮')
-
-function handleClick() {
-  triggerWidgetEvent(widgetData.value, 'click')
-}
 </script>
 
 <template>
@@ -37,7 +32,6 @@ function handleClick() {
     :round="isRound"
     :circle="isCircle"
     :disabled="isDisabled"
-    @click="handleClick"
   >
     {{ buttonText }}
   </el-button>
