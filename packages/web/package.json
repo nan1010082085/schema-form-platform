@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:widgets": "vite build --config vite.widget.config.ts",
+    "build:microapp": "vite build --config vite.microapp.config.ts",
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
