@@ -337,6 +337,14 @@ function handleToggleExpand(node: SchemaTreeNode) {
       padding: 3px 8px 3px 0;
     }
 
+    .el-tree-node__expand-icon {
+      display: none !important;
+      width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
     .el-tree-node.is-current > .el-tree-node__content {
       background-color: #ecf5ff;
     }
