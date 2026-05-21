@@ -18,6 +18,18 @@ import { FgSpacer, createSpacerWidget, spacerConfig } from './spacer'
 import { FgToolbarButtons, createToolbarButtonsWidget, toolbarButtonsConfig } from './toolbar-buttons'
 import { FgButton, createButtonWidget, buttonConfig } from './button'
 import { FgTable, createTableWidget, tableConfig } from './table'
+import { FgRichtext, createRichtextWidget, richtextConfig } from './richtext'
+import { FgUpload, createUploadWidget, uploadConfig } from './upload'
+import { FgBanner, createBannerWidget, bannerConfig } from './banner'
+import { FgTreeLayout, createTreeLayoutWidget, treeLayoutConfig } from './tree-layout'
+import { FgDateTimeSlot, createDateTimeSlotWidget, dateTimeSlotConfig } from './date-time-slot'
+import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
+import { FgPersonSelect, createPersonSelectWidget, personSelectConfig } from './person-select'
+import { FgDeptSelect, createDeptSelectWidget, deptSelectConfig } from './dept-select'
+import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
+import { FgDetailForm, createDetailFormWidget, detailFormConfig } from './detail-form'
+import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
+import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
 
 export function registerAllWidgets() {
   // Container widgets
@@ -212,4 +224,18 @@ export function registerAllWidgets() {
     create: createTableWidget,
     config: tableConfig,
   })
+
+  // New widgets
+  registerWidget({ name: richtextConfig.name, displayName: richtextConfig.displayName, type: 'richtext', group: 'form', component: FgRichtext, create: createRichtextWidget, config: richtextConfig })
+  registerWidget({ name: uploadConfig.name, displayName: uploadConfig.displayName, type: 'upload', group: 'form', component: FgUpload, create: createUploadWidget, config: uploadConfig })
+  registerWidget({ name: bannerConfig.name, displayName: bannerConfig.displayName, type: 'banner', group: 'basic', component: FgBanner, create: createBannerWidget, config: bannerConfig })
+  registerWidget({ name: treeLayoutConfig.name, displayName: treeLayoutConfig.displayName, type: 'tree-layout', group: 'basic', component: FgTreeLayout, create: createTreeLayoutWidget, config: treeLayoutConfig })
+  registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
+  registerWidget({ name: fileListConfig.name, displayName: fileListConfig.displayName, type: 'file-list', group: 'basic', component: FgFileList, create: createFileListWidget, config: fileListConfig })
+  registerWidget({ name: personSelectConfig.name, displayName: personSelectConfig.displayName, type: 'person-select', group: 'form', component: FgPersonSelect, create: createPersonSelectWidget, config: personSelectConfig })
+  registerWidget({ name: deptSelectConfig.name, displayName: deptSelectConfig.displayName, type: 'dept-select', group: 'form', component: FgDeptSelect, create: createDeptSelectWidget, config: deptSelectConfig })
+  registerWidget({ name: transferConfig.name, displayName: transferConfig.displayName, type: 'transfer', group: 'basic', component: FgTransfer, create: createTransferWidget, config: transferConfig })
+  registerWidget({ name: detailFormConfig.name, displayName: detailFormConfig.displayName, type: 'detail-form', group: 'basic', component: FgDetailForm, create: createDetailFormWidget, config: detailFormConfig })
+  registerWidget({ name: searchListConfig.name, displayName: searchListConfig.displayName, type: 'search-list', group: 'table', component: FgSearchList, create: createSearchListWidget, config: searchListConfig })
+  registerWidget({ name: editableTableConfig.name, displayName: editableTableConfig.displayName, type: 'editable-table', group: 'table', component: FgEditableTable, create: createEditableTableWidget, config: editableTableConfig })
 }

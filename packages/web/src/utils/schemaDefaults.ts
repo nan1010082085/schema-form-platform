@@ -137,6 +137,33 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
     case 'upload':
       item = { ...base, label: 'Upload' }
       break
+    case 'banner':
+      item = { type: 'banner', props: { text: '提示信息', type: 'info', closable: true } }
+      break
+    case 'tree-layout':
+      item = { type: 'tree-layout', label: '树形布局', props: { title: '树形布局', showSearch: true }, children: [] }
+      break
+    case 'date-time-slot':
+      item = { ...base, label: '日期时间区间', props: { startPlaceholder: '开始时间', endPlaceholder: '结束时间', format: 'YYYY-MM-DD HH:mm:ss', rangeSeparator: '至' } }
+      break
+    case 'file-list':
+      item = { type: 'file-list', props: { title: '附件', allowDelete: true, allowPreview: true } }
+      break
+    case 'person-select':
+      item = { ...base, label: '人员选择', props: { placeholder: '请选择人员', clearable: true, multiple: false } }
+      break
+    case 'dept-select':
+      item = { ...base, label: '部门选择', props: { placeholder: '请选择部门', clearable: true, multiple: false } }
+      break
+    case 'transfer':
+      item = { type: 'transfer', props: { titles: ['待选', '已选'], filterable: true } }
+      break
+    case 'detail-form':
+      item = { type: 'detail-form', label: '详情', props: { title: '详情', columns: 2, bordered: true }, children: [] }
+      break
+    case 'editable-table':
+      item = { ...base, label: '可编辑表格', props: { title: '可编辑表格', addButtonText: '添加行', showAddButton: true, showDeleteButton: true, maxRows: 0 } }
+      break
     case 'table':
       item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true } }
       break

@@ -377,21 +377,35 @@ const dynamicStyle = computed(() => {
 
 ## 注册组件
 
-新 Widget 开发完成后，需要在 Widget 注册表中注册：
+新 Widget 开发完成后，需要在 `widgets/index.ts` 中注册：
 
 ```typescript
-// widgets/registry.ts
-import { createInputSchema, inputConfig } from './input'
-import { createSelectSchema, selectConfig } from './select'
-import { createMyWidgetSchema, myWidgetConfig } from './my-widget'
-// ...
+// widgets/index.ts
+import { registerWidget } from './registry'
+import { FgMyWidget, createMyWidget, myWidgetConfig } from './my-widget'
 
-export const widgetRegistry = {
-  'input': { create: createInputSchema, config: inputConfig },
-  'select': { create: createSelectSchema, config: selectConfig },
-  'my-widget': { create: createMyWidgetSchema, config: myWidgetConfig },
-  // ...
+export function registerAllWidgets() {
+  // ... 其他组件
+
+  registerWidget({
+    name: myWidgetConfig.name,
+    displayName: myWidgetConfig.displayName,
+    type: 'my-widget',                  // SchemaType
+    group: 'form',                      // 'container' | 'form' | 'basic' | 'table'
+    component: FgMyWidget,
+    create: createMyWidget,
+    config: myWidgetConfig,
+  })
 }
 ```
 
-组件面板从 `widgetRegistry` 读取可拖拽的 Widget 列表。
+`registerWidget` 将组件注册到内部 Map，组件面板从 `getAllWidgets()` / `getWidgetsByGroup()` 读取可拖拽列表。
+
+### Widget 分组
+
+| group | 说明 | 包含组件 |
+|---|---|---|
+| `container` | 容器组件 | form, card, row-col, tabs, dialog |
+| `form` | 表单组件 | input, select, number, radio, checkbox, date, textarea, richtext, upload, date-time-slot, person-select, dept-select |
+| `basic` | 基础组件 | button-list, title, divider, spacer, toolbar-buttons, button, banner, tree-layout, file-list, transfer, detail-form |
+| `table` | 表格组件 | table, search-list, editable-table |
