@@ -340,12 +340,18 @@ export const useApiStore = defineStore('schema', () => {
 
   /**
    * 获取已发布的 Schema（按源 FormSchema ID 查询）。
+   * 未发布返回 null，不设置全局 error。
    *
    * @param sourceId - FormSchema ID
-   * @returns PublishedSchema，未发布或失败返回 null
+   * @returns PublishedSchema，未发布返回 null
    */
   async function fetchPublishedSchema(sourceId: string): Promise<PublishedSchemaItem | null> {
-    return withErrorHandling(() => apiFetchPublishedSchema(sourceId))
+    try {
+      return await apiFetchPublishedSchema(sourceId)
+    } catch {
+      // Never pollute global error for "not published" queries
+      return null
+    }
   }
 
   return {
