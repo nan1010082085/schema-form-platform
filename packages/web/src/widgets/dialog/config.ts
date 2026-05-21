@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const dialogConfig: WidgetConfig = {
   name: 'FgDialog',
   displayName: '弹窗容器',
+  description: '弹窗容器，支持编辑模式和微前端模式，可配置标题、宽度、按钮',
   defaultStyle: {},
   defaultProps: {
     title: '弹窗标题',

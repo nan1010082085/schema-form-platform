@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const tabsConfig: WidgetConfig = {
   name: 'FgTabs',
   displayName: '页签容器',
+  description: '页签容器，支持动态增删标签页，组件绑定到指定标签',
   defaultStyle: {
     width: '100%',
   },

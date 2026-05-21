@@ -8,6 +8,7 @@ export interface ButtonItem {
 export const buttonListConfig: WidgetConfig = {
   name: 'FgButtonList',
   displayName: '按钮列表',
+  description: '按钮列表，支持提交、重置等操作按钮组合',
   defaultStyle: {
     width: '240px',
     fontSize: '14px',

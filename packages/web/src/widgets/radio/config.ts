@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const radioConfig: WidgetConfig = {
   name: 'FgRadio',
   displayName: '单选',
+  description: '单选框组，支持静态选项和动态数据源',
   defaultStyle: {
     width: '240px',
     height: '32px',

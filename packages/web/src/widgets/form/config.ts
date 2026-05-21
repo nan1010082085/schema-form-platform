@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const formConfig: WidgetConfig = {
   name: 'FgForm',
   displayName: '表单容器',
+  description: '表单容器，包裹 el-form，支持表单提交、校验和数据收集',
   defaultStyle: {
     width: '100%',
     padding: '16px',

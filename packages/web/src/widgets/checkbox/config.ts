@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const checkboxConfig: WidgetConfig = {
   name: 'FgCheckbox',
   displayName: '多选',
+  description: '多选框组，支持静态选项和动态数据源',
   defaultStyle: {
     width: '240px',
     height: '32px',
