@@ -8,6 +8,7 @@ import type { Widget, SchemaEventAction } from '../widgets/base/types'
 import { useWidgetStore } from '../stores/widget'
 import { useEditorStore } from '../stores/editor'
 import { useLogger } from '@/composables/useLogger'
+import { checkSecurity } from '@/utils/expression'
 
 const logger = useLogger('EventEngine')
 
@@ -89,10 +90,10 @@ export function triggerWidgetEvent(
 }
 
 /**
- * 简单表达式求值。
+ * 条件表达式求值 — 委托给 expression.ts 安全引擎。
  *
- * 将 context 的 key 作为形参、expression 作为函数体，
- * 通过 new Function 执行并返回布尔结果。
+ * 复用 utils/expression 的安全检查（blocklist + 长度限制），
+ * 保持原有 API：context 的 key 作为形参、expression 作为函数体。
  *
  * @param expression - 条件表达式字符串
  * @param context - 变量上下文
@@ -102,10 +103,19 @@ export function evaluateCondition(
   expression: string,
   context: Record<string, unknown>,
 ): boolean {
+  if (!expression || typeof expression !== 'string') return false
+  if (expression.length > 500) return false
+
+  const securityError = checkSecurity(expression)
+  if (securityError) {
+    logger.warn(`Blocked unsafe expression: ${expression} (${securityError})`)
+    return false
+  }
+
   try {
     const keys = Object.keys(context)
     const values = Object.values(context)
-    const fn = new Function(...keys, `return ${expression}`)
+    const fn = new Function(...keys, `return (${expression})`)
     return Boolean(fn(...values))
   } catch {
     logger.warn(`Expression evaluation failed: ${expression}`)
