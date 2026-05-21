@@ -10,6 +10,9 @@ import type { SchemaApiConfig, DictItem, FormData } from '@/components/FormGrid/
 import { getRequestInstance } from '@/utils/request'
 import { getCachedOptions, setCachedOptions } from '@/utils/optionsCache'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('DynamicOptions')
 
 export interface DynamicOptionsResult {
   options: Ref<DictItem[]>
@@ -107,7 +110,7 @@ export function useDynamicOptions(apiConfig: MaybeRefOrGetter<SchemaApiConfig | 
       setCachedOptions(config.url, resolvedParams, options.value, config.ttl ?? 0)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '加载选项失败'
-      console.error('[useDynamicOptions]', error.value)
+      logger.api(error.value)
     } finally {
       loading.value = false
     }

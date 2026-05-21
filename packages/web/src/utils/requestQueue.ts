@@ -5,6 +5,9 @@
 import type { FormSchemaItem, DictItem } from '@/components/FormGrid/types'
 import { getRequestInstance } from './request'
 import { setCachedOptions, getCachedOptions } from './optionsCache'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('RequestQueue')
 
 interface QueueTask {
   key: string
@@ -83,7 +86,7 @@ export async function executeQueue(tasks: QueueTask[]): Promise<Map<string, Dict
       setCachedOptions(task.url, task.params, options)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '未知错误'
-      console.error(`[RequestQueue] ${task.url} 加载失败:`, message)
+      logger.api(`${task.url} 加载失败:`, message)
       results.set(task.key, [])
     }
   }

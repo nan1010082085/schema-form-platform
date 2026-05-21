@@ -4,6 +4,9 @@
  * Consolidates duplicated response-parsing logic from:
  *   useDynamicOptions.ts, useListData.ts, ApiConfig.vue, FgSearchList.vue
  */
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('ResponseNormalizer')
 
 /** Traverse object by dot-separated path (e.g. "result.records" traverses { result: { records: [...] } }) */
 export function getNestedValue(obj: unknown, path: string): unknown {
@@ -47,7 +50,7 @@ export function normalizeListResponse(
       if (!Array.isArray(data)) data = []
 
       if (data.length === 0 && !(obj.data || obj.list || obj.rows || obj.items || obj.records)) {
-        console.warn('[responseNormalizer] Could not find a data array in the response. Set `dataPath` to specify the exact path.', { responseKeys: Object.keys(obj) })
+        logger.api('Could not find a data array in the response. Set `dataPath` to specify the exact path.', { responseKeys: Object.keys(obj) })
       }
     }
 

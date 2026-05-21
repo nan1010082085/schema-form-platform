@@ -3,6 +3,9 @@
  * 支持独立运行和 qiankun 子应用模式
  */
 import axios, { type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('Request')
 
 let instance: AxiosInstance | null = null
 let tokenGetter: (() => string) | null = null
@@ -36,7 +39,7 @@ export function createRequestInstance(config: {
     (res) => res.data,
     (err) => {
       const msg = err.response?.data?.message ?? err.message ?? '请求失败'
-      console.error('[FormGrid Request]', msg)
+      logger.api(msg)
       return Promise.reject(err)
     }
   )
