@@ -19,9 +19,11 @@ import { ref, computed } from 'vue'
 import { getRequestInstance } from '@/utils/request'
 import type { FormSchemaItem, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
 import type { CacheEntry, PrefetchTask } from '@/types/api'
+import { useLogger } from '@/composables/useLogger'
 
 /** 默认 TTL：5 分钟 */
 const DEFAULT_TTL = 5 * 60 * 1000
+const logger = useLogger('RequestStore')
 
 export const useRequestStore = defineStore('request', () => {
   // ================================================================
@@ -364,7 +366,7 @@ export const useRequestStore = defineStore('request', () => {
         cacheSet(task.url, task.params, options)
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'
-        console.error(`[RequestStore] Prefetch failed for ${task.url}:`, message)
+        logger.error(`Prefetch failed for ${task.url}:`, message)
         untrackRequest(task.method, task.url, task.params)
         results.set(task.key, [])
       }
