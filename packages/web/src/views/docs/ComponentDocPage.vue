@@ -8,11 +8,12 @@
  * 支持交互式弹窗联动：当 doc 示例设置 dialogMode: 'external' 时，
  * 弹窗由 ComponentDocPage 在页面顶层渲染，实现跨组件弹窗联动效果。
  */
-import { computed, provide, ref } from 'vue'
+import { computed, provide, ref, reactive, watch } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
-import FgDialog from '@/components/FormGrid/components/business/FgDialog.vue'
+import SchemaRender from '@/components/FormGrid/SchemaRender.vue'
 import {
   FORM_GRID_CONTEXT_KEY,
+  FORM_GRID_FORM_KEY,
   FORM_GRID_API_KEY,
   type FormGridContext,
   type FormSchemaItem,
@@ -69,6 +70,7 @@ provide(FORM_GRID_API_KEY, {
   getFormData: () => ({}),
   resetFields: () => {},
 })
+provide(FORM_GRID_FORM_KEY, dialogFormData)
 
 const previewDialogVisible = ref(false)
 const previewDialogTitle = ref('')
@@ -84,11 +86,16 @@ interface OpenDialogConfig {
   initialData?: FormData
 }
 
+const dialogFormData = reactive<FormData>({})
+
 function handleOpenDialog(config: OpenDialogConfig) {
   previewDialogTitle.value = config.title
   previewDialogWidth.value = config.width ?? '600px'
   previewDialogSchema.value = config.schema ?? []
   previewDialogInitialData.value = config.initialData
+  // Reset and populate dialog formData
+  Object.keys(dialogFormData).forEach(k => delete dialogFormData[k])
+  if (config.initialData) Object.assign(dialogFormData, config.initialData)
   previewDialogVisible.value = true
 }
 
@@ -279,15 +286,27 @@ function handlePreviewDialogCancel() {
   </div>
 
   <!-- Preview-level dialog: 渲染 external 模式下委托的弹窗，支持跨组件弹窗联动 -->
-  <FgDialog
+  <el-dialog
     v-model="previewDialogVisible"
     :title="previewDialogTitle"
     :width="previewDialogWidth"
-    :dialog-schema="previewDialogSchema"
-    :initial-data="previewDialogInitialData"
-    @confirm="handlePreviewDialogConfirm"
-    @cancel="handlePreviewDialogCancel"
-  />
+    append-to-body
+    @close="handlePreviewDialogCancel"
+  >
+    <el-form v-if="previewDialogSchema.length" :model="dialogFormData">
+      <SchemaRender
+        v-for="(item, dIdx) in previewDialogSchema"
+        :key="dIdx"
+        :schema="item"
+        :form-data="dialogFormData"
+        :path="[dIdx]"
+      />
+    </el-form>
+    <template #footer>
+      <el-button @click="handlePreviewDialogCancel">取消</el-button>
+      <el-button type="primary" @click="handlePreviewDialogConfirm(dialogFormData)">确定</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style lang="scss" scoped>

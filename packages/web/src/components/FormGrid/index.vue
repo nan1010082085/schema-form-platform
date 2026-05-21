@@ -6,7 +6,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import SchemaRender from './SchemaRender.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
-import FgDialog from '@/components/FormGrid/components/business/FgDialog.vue'
+// FgDialog import removed — internal dialog rendered inline below
 import type {
   FormSchemaItem,
   FormGridContext,
@@ -374,16 +374,28 @@ defineExpose({
       </el-form>
 
       <!-- Built-in dialog (internal mode only): renders dialogSchema from button actions -->
-      <FgDialog
+      <el-dialog
         v-if="dialogMode === 'internal'"
         v-model="dialogVisible"
         :title="dialogTitle"
-        :width="dialogWidth"
-        :dialog-schema="dialogSchema"
-        :initial-data="dialogInitialData"
-        @confirm="handleDialogConfirm"
-        @cancel="handleDialogCancel"
-      />
+        :width="dialogWidth ?? '600px'"
+        append-to-body
+        @close="handleDialogCancel"
+      >
+        <el-form v-if="dialogSchema?.length" :model="formData">
+          <SchemaRender
+            v-for="(item, dIdx) in dialogSchema"
+            :key="dIdx"
+            :schema="item"
+            :form-data="formData"
+            :path="[dIdx]"
+          />
+        </el-form>
+        <template #footer>
+          <el-button @click="handleDialogCancel">取消</el-button>
+          <el-button type="primary" @click="handleDialogConfirm">确定</el-button>
+        </template>
+      </el-dialog>
     </div>
   </el-config-provider>
 </template>

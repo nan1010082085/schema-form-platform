@@ -5,12 +5,37 @@
  * Sprint 17 added: required-field-missing-label, options-empty-on-select,
  *   api-config-invalid, circular-linkage + P2 improvements
  */
-import { compMap } from '@/components/FormGrid/compMap'
+import { getComponentMap } from '@/widgets/registry'
 import type { FormSchemaItem } from '@/components/FormGrid/types'
 import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useConstant'
 
-/** Valid SchemaType values — dynamically generated from compMap */
-const VALID_SCHEMA_TYPES = new Set(Object.keys(compMap))
+/**
+ * Fallback set of known schema types when the widget registry is not yet populated
+ * (e.g. in test environments where registerAllWidgets() has not been called).
+ * Must be kept in sync with widgets/index.ts registrations.
+ */
+const FALLBACK_SCHEMA_TYPES = new Set([
+  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea',
+  'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
+  'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
+  'file-list', 'person-select', 'dept-select', 'transfer', 'detail-form',
+  'search-list', 'editable-table',
+  // Legacy types still accepted by the renderer
+  'page', 'toolbar', 'steps', 'date-range', 'file-preview', 'pagination',
+  'grid-row', 'grid-col',
+])
+
+/** Valid SchemaType values — lazily generated from widget registry */
+let _validTypes: Set<string> | null = null
+function getValidSchemaTypes(): Set<string> {
+  if (!_validTypes) {
+    const map = getComponentMap()
+    const keys = Object.keys(map)
+    _validTypes = keys.length > 0 ? new Set(keys) : FALLBACK_SCHEMA_TYPES
+  }
+  return _validTypes
+}
 
 /** Types that are containers (support children) */
 const CONTAINER_TYPES = new Set<string>(['card', 'page', 'toolbar'])
@@ -119,7 +144,7 @@ export function validateSchema(schema: FormSchemaItem[]): ValidationResult {
       const itemPath = [...path, i]
 
       // 1. Invalid type
-      if (!VALID_SCHEMA_TYPES.has(item.type)) {
+      if (!getValidSchemaTypes().has(item.type)) {
         errors.push({
           path: itemPath,
           type: 'invalid-type',
