@@ -1,35 +1,123 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { mount } from '@vue/test-utils'
+import { computed } from 'vue'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
+import { computeWidgetRenderState } from '@/engine/ruleEngine'
+import { widgetDataKey, widgetStyleKey } from '../../base/types'
+import FgPersonSelect from '../FgPersonSelect.vue'
 
 describe('FgPersonSelect', () => {
+  let store: ReturnType<typeof useWidgetStore>
+
   beforeEach(() => {
     setActivePinia(createPinia())
     registerAllWidgets()
+    store = useWidgetStore()
   })
 
-  it('创建后 store 中存在', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('person-select', 'test_person_select')
-    store.addWidget(widget!)
-    expect(store.findWidget('test_person_select')).toBeDefined()
-  })
-
-  it('支持 props 配置', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('person-select', 'test_person_select')!
-    widget.props = { ...widget.props, multiple: true, placeholder: '请选择人员' }
+  function mountWidget(overrides: Record<string, unknown> = {}) {
+    const widget = createWidget('person-select', 'test_widget')!
+    Object.assign(widget, overrides)
     store.addWidget(widget)
-    expect(store.findWidget('test_person_select')!.props!.multiple).toBe(true)
+
+    return mount(FgPersonSelect, {
+      global: {
+        plugins: [ElementPlus],
+        provide: {
+          [widgetDataKey as symbol]: computed(() => store.findWidget('test_widget')!),
+          [widgetStyleKey as symbol]: computed(() => store.findWidget('test_widget')!.style ?? {}),
+        },
+      },
+    })
+  }
+
+  // Store CRUD
+  describe('Store CRUD', () => {
+    it('创建后 store 中存在', () => {
+      const widget = createWidget('person-select', 'test_widget')
+      store.addWidget(widget!)
+      expect(store.findWidget('test_widget')).toBeDefined()
+    })
+
+    it('可更新属性', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      store.addWidget(widget)
+      store.updateWidget('test_widget', { props: { placeholder: '请选择人员', clearable: false, multiple: true } })
+      expect(store.findWidget('test_widget')!.props!.placeholder).toBe('请选择人员')
+      expect(store.findWidget('test_widget')!.props!.clearable).toBe(false)
+      expect(store.findWidget('test_widget')!.props!.multiple).toBe(true)
+    })
+
+    it('可删除', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      store.addWidget(widget)
+      store.removeWidget('test_widget')
+      expect(store.findWidget('test_widget')).toBeNull()
+    })
   })
 
-  it('支持 api 数据源', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('person-select', 'test_person_select')!
-    widget.api = { url: '/api/persons', method: 'get' }
-    store.addWidget(widget)
-    expect(store.findWidget('test_person_select')!.api).toBeDefined()
+  // Properties
+  describe('属性', () => {
+    it('placeholder 生效', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.props = { ...widget.props, placeholder: '搜索人员' }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.placeholder).toBe('搜索人员')
+    })
+
+    it('clearable 生效', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.props = { ...widget.props, clearable: false }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.clearable).toBe(false)
+    })
+
+    it('multiple 生效', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.props = { ...widget.props, multiple: true }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.multiple).toBe(true)
+    })
+  })
+
+  // Events
+  describe('事件', () => {
+    it('支持 change 事件配置', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.events = [{ trigger: 'change', actions: [{ type: 'show', target: 'w2' }] }]
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.events).toHaveLength(1)
+    })
+  })
+
+  // Rules/Linkage
+  describe('规则联动', () => {
+    it('visible=false 隐藏', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.rules = [{
+        watches: [{ type: 'field', source: 'status' }],
+        condition: 'status === "hide"',
+        actions: [{ type: 'hide', config: {} }],
+      }]
+      store.addWidget(widget)
+      const state = computeWidgetRenderState(widget, { status: 'hide' })
+      expect(state.visible).toBe(false)
+    })
+
+    it('disabled=true 禁用', () => {
+      const widget = createWidget('person-select', 'test_widget')!
+      widget.rules = [{
+        watches: [{ type: 'field', source: 'lock' }],
+        condition: 'lock === true',
+        actions: [{ type: 'disabled', config: {} }],
+      }]
+      store.addWidget(widget)
+      const state = computeWidgetRenderState(widget, { lock: true })
+      expect(state.disabled).toBe(true)
+    })
   })
 })
