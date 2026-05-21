@@ -13,6 +13,7 @@
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import type { WidgetEvent, EventActionType } from '../../widgets/base/types'
+import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -97,12 +98,10 @@ function handleClose() {
 </script>
 
 <template>
-  <el-dialog
+  <EnhancedDialog
     :model-value="visible"
     title="事件配置"
     width="640px"
-    :close-on-click-modal="false"
-    destroy-on-close
     @update:model-value="emit('update:visible', $event)"
   >
     <div :class="$style.body">
@@ -253,7 +252,7 @@ function handleClose() {
       <el-button size="small" @click="handleClose">取消</el-button>
       <el-button type="primary" size="small" @click="handleSave">保存</el-button>
     </template>
-  </el-dialog>
+  </EnhancedDialog>
 </template>
 
 <style module>
