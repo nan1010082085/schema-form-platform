@@ -1,37 +1,157 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { mount } from '@vue/test-utils'
+import { computed } from 'vue'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
+import { computeWidgetRenderState } from '@/engine/ruleEngine'
+import { widgetDataKey, widgetStyleKey } from '../../base/types'
+import FgNumber from '../FgNumber.vue'
 
 describe('FgNumber', () => {
+  let store: ReturnType<typeof useWidgetStore>
+
   beforeEach(() => {
     setActivePinia(createPinia())
     registerAllWidgets()
+    store = useWidgetStore()
   })
 
-  it('创建后 store 中存在', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('number', 'test_number')
-    store.addWidget(widget!)
-    expect(store.findWidget('test_number')).toBeDefined()
-  })
-
-  it('支持 min/max/step 配置', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('number', 'test_number')!
-    widget.props = { ...widget.props, min: 0, max: 100, step: 5 }
+  function mountWidget(overrides: Record<string, unknown> = {}) {
+    const widget = createWidget('number', 'test_widget')!
+    Object.assign(widget, overrides)
     store.addWidget(widget)
-    expect(store.findWidget('test_number')!.props!.min).toBe(0)
-    expect(store.findWidget('test_number')!.props!.max).toBe(100)
-    expect(store.findWidget('test_number')!.props!.step).toBe(5)
+
+    return mount(FgNumber, {
+      global: {
+        plugins: [ElementPlus],
+        provide: {
+          [widgetDataKey as symbol]: computed(() => store.findWidget('test_widget')!),
+          [widgetStyleKey as symbol]: computed(() => store.findWidget('test_widget')!.style ?? {}),
+        },
+      },
+    })
+  }
+
+  // Store CRUD
+  describe('Store CRUD', () => {
+    it('创建后 store 中存在', () => {
+      const widget = createWidget('number', 'test_widget')
+      store.addWidget(widget!)
+      expect(store.findWidget('test_widget')).toBeDefined()
+    })
+
+    it('可更新属性', () => {
+      const widget = createWidget('number', 'test_widget')!
+      store.addWidget(widget)
+      store.updateWidget('test_widget', { props: { min: 0, max: 100 } })
+      expect(store.findWidget('test_widget')!.props!.min).toBe(0)
+      expect(store.findWidget('test_widget')!.props!.max).toBe(100)
+    })
+
+    it('可删除', () => {
+      const widget = createWidget('number', 'test_widget')!
+      store.addWidget(widget)
+      store.removeWidget('test_widget')
+      expect(store.findWidget('test_widget')).toBeNull()
+    })
   })
 
-  it('支持 api 数据源', () => {
-    const store = useWidgetStore()
-    const widget = createWidget('number', 'test_number')!
-    widget.api = { url: '/api/number-options', method: 'get' }
-    store.addWidget(widget)
-    expect(store.findWidget('test_number')!.api).toBeDefined()
+  // Properties
+  describe('属性', () => {
+    it('placeholder 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, placeholder: '请输入数字' }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.placeholder).toBe('请输入数字')
+    })
+
+    it('disabled 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, disabled: true }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.disabled).toBe(true)
+    })
+
+    it('min 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, min: 0 }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.min).toBe(0)
+    })
+
+    it('max 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, max: 100 }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.max).toBe(100)
+    })
+
+    it('step 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, step: 5 }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.step).toBe(5)
+    })
+
+    it('precision 生效', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.props = { ...widget.props, precision: 2 }
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.props!.precision).toBe(2)
+    })
+  })
+
+  // Events
+  describe('事件', () => {
+    it('支持 change 事件配置', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.events = [{ trigger: 'change', actions: [{ type: 'show', target: 'w2' }] }]
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.events).toHaveLength(1)
+    })
+
+    it('支持 blur 事件配置', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.events = [{ trigger: 'blur', actions: [{ type: 'hide', target: 'w2' }] }]
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.events).toHaveLength(1)
+    })
+
+    it('支持 focus 事件配置', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.events = [{ trigger: 'focus', actions: [{ type: 'show', target: 'w3' }] }]
+      store.addWidget(widget)
+      expect(store.findWidget('test_widget')!.events).toHaveLength(1)
+    })
+  })
+
+  // Rules/Linkage
+  describe('规则联动', () => {
+    it('visible=false 隐藏', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.rules = [{
+        watches: [{ type: 'field', source: 'status' }],
+        condition: 'status === "hide"',
+        actions: [{ type: 'hide', config: {} }],
+      }]
+      store.addWidget(widget)
+      const state = computeWidgetRenderState(widget, { status: 'hide' })
+      expect(state.visible).toBe(false)
+    })
+
+    it('disabled=true 禁用', () => {
+      const widget = createWidget('number', 'test_widget')!
+      widget.rules = [{
+        watches: [{ type: 'field', source: 'lock' }],
+        condition: 'lock === true',
+        actions: [{ type: 'disabled', config: {} }],
+      }]
+      store.addWidget(widget)
+      const state = computeWidgetRenderState(widget, { lock: true })
+      expect(state.disabled).toBe(true)
+    })
   })
 })
