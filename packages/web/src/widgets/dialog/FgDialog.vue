@@ -9,6 +9,7 @@
  */
 import { inject, ref } from 'vue'
 import { widgetDataKey } from '../base/types'
+import EnhancedDialog from '../../components/EnhancedDialog.vue'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
@@ -42,12 +43,14 @@ defineExpose({ open })
     </div>
   </div>
 
-  <!-- 预览/运行时模式：el-dialog（teleport 到 body） -->
-  <el-dialog
+  <!-- 预览/运行时模式：EnhancedDialog（teleport 到 body） -->
+  <EnhancedDialog
     v-else
     v-model="visible"
     :title="(widgetData.props?.title as string) || '弹窗标题'"
     :width="(widgetData.props?.width as string) || '600px'"
+    :draggable="widgetData.props?.draggable !== false"
+    :show-fullscreen-btn="widgetData.props?.showFullscreenBtn !== false"
     :destroy-on-close="widgetData.props?.destroyOnClose !== false"
     :close-on-click-modal="widgetData.props?.closeOnClickModal === true"
   >
@@ -58,5 +61,5 @@ defineExpose({ open })
         <el-button type="primary" @click="handleConfirm">{{ (widgetData.props?.confirmText as string) || '确定' }}</el-button>
       </div>
     </template>
-  </el-dialog>
+  </EnhancedDialog>
 </template>

@@ -12,6 +12,8 @@ export const dialogConfig: WidgetConfig = {
     contentMode: 'edit' as const,
     showFooter: true,
     closeOnClickModal: false,
+    draggable: true,
+    showFullscreenBtn: true,
   },
   propertyPanel: {
     basic: [
@@ -50,6 +52,9 @@ export const dialogConfig: WidgetConfig = {
       },
     ],
     style: [],
-    props: [],
+    props: [
+      { key: 'draggable', label: '可拖拽', type: 'switch', default: true },
+      { key: 'showFullscreenBtn', label: '显示全屏按钮', type: 'switch', default: true },
+    ],
   },
 }
