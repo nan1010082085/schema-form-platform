@@ -12,7 +12,6 @@
     "build:server": "pnpm --filter @schema-form/server build",
     "db:up": "pnpm --filter @schema-form/server db:up",
     "db:down": "pnpm --filter @schema-form/server db:down",
-    "lint": "pnpm -r lint",
     "format": "pnpm -r format",
     "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo"
   },
