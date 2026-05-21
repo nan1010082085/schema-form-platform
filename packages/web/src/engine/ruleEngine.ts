@@ -1,3 +1,4 @@
+/** @deprecated 此模块已废弃，请使用 useLinkage composable */
 /**
  * ruleEngine — 规则引擎
  *
