@@ -19,6 +19,7 @@ import { useResize } from '../../composables/useResize'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { ResizeHandle } from '../../composables/useResize'
 import SchemaRender from '../FormGrid/SchemaRender.vue'
+import WidgetContextMenu from './WidgetContextMenu.vue'
 
 // ================================================================
 // 递归展开 Widget 树，子组件坐标转为画布绝对坐标
@@ -48,6 +49,12 @@ function flattenWidgets(widgets: Widget[], offsetX = 0, offsetY = 0, depth = 0):
   return result
 }
 
+const emit = defineEmits<{
+  openEvent: [widget: Widget]
+  openRule: [widget: Widget]
+  openApi: [widget: Widget]
+}>()
+
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
 const dragStore = useDragStore()
@@ -63,6 +70,36 @@ const INTERACTIVE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set(['tabs', 'd
 const { startResize, updateResize, endResize } = useResize()
 
 const overlayRef = ref<HTMLElement>()
+
+// ================================================================
+// 右键上下文菜单
+// ================================================================
+
+const contextMenu = ref({ visible: false, x: 0, y: 0, widget: null as Widget | null })
+
+function showContextMenu(e: MouseEvent, widget: Widget) {
+  contextMenu.value = { visible: true, x: e.clientX, y: e.clientY, widget }
+}
+
+function handleCopyWidget(widget: Widget) {
+  const copy = JSON.parse(JSON.stringify(widget)) as Widget
+  copy.id = `${widget.type}_${Date.now()}`
+  copy.name = `${widget.name}_copy`
+  if (copy.position) {
+    copy.position.x += 20
+    copy.position.y += 20
+  }
+  widgetStore.addWidget(copy)
+}
+
+function handleDeleteWidget(widget: Widget) {
+  widgetStore.removeWidget(widget.id)
+  editorStore.select(null)
+}
+
+function handleOpenEvent(widget: Widget) { emit('openEvent', widget) }
+function handleOpenRule(widget: Widget) { emit('openRule', widget) }
+function handleOpenApi(widget: Widget) { emit('openApi', widget) }
 
 // ================================================================
 // 选中 Widget
@@ -281,6 +318,7 @@ function handleDrop(e: DragEvent) {
       }"
       @mousedown.stop="handleWidgetMouseDown($event, fw.widget)"
       @click.stop="INTERACTIVE_CONTAINER_TYPES.has(fw.widget.type) && handleInteractiveClick($event, fw.widget)"
+      @contextmenu.prevent="showContextMenu($event, fw.widget)"
     />
 
     <!-- 容器高亮 -->
@@ -320,6 +358,20 @@ function handleDrop(e: DragEvent) {
         stroke-dasharray="4,4"
       />
     </svg>
+
+    <!-- 右键上下文菜单 -->
+    <WidgetContextMenu
+      :visible="contextMenu.visible"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :widget="contextMenu.widget"
+      @close="contextMenu.visible = false"
+      @copy="handleCopyWidget"
+      @delete="handleDeleteWidget"
+      @open-event="handleOpenEvent"
+      @open-rule="handleOpenRule"
+      @open-api="handleOpenApi"
+    />
   </div>
 </template>
 

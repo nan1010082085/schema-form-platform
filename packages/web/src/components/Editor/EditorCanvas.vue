@@ -16,6 +16,13 @@ import { useEditorStore } from '../../stores/editor'
 import EditorOverlay from './EditorOverlay.vue'
 import SchemaRender from '../FormGrid/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
+import type { Widget } from '../../widgets/base/types'
+
+const emit = defineEmits<{
+  openEvent: [widget: Widget]
+  openRule: [widget: Widget]
+  openApi: [widget: Widget]
+}>()
 
 const boardStore = useBoardStore()
 const editorStore = useEditorStore()
@@ -40,7 +47,12 @@ const canvasStyle = computed(() => ({
     <!-- 预览模式：纯净渲染，无编辑交互层 -->
     <SchemaRender v-if="isPreview" :widgets="widgetStore.widgets" />
     <!-- 编辑模式：带选中、拖拽、缩放的交互层 -->
-    <EditorOverlay v-else />
+    <EditorOverlay
+      v-else
+      @open-event="emit('openEvent', $event)"
+      @open-rule="emit('openRule', $event)"
+      @open-api="emit('openApi', $event)"
+    />
   </div>
 </template>
 

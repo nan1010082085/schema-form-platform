@@ -19,6 +19,7 @@ import { registerAllWidgets } from '@/widgets'
 import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
 import EditorLeftPanel from '@/components/Editor/EditorLeftPanel.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
+import type { Widget } from '@/widgets/base/types'
 import {
   RefreshLeft,
   RefreshRight,
@@ -124,6 +125,18 @@ function handleKeyDown(e: KeyboardEvent) {
     }
   }
 }
+
+// ================================================================
+// Context menu dialog targets
+// ================================================================
+
+const eventDialogTarget = ref<Widget | null>(null)
+const ruleDialogTarget = ref<Widget | null>(null)
+const apiDialogTarget = ref<Widget | null>(null)
+
+function handleOpenEvent(widget: Widget) { eventDialogTarget.value = widget }
+function handleOpenRule(widget: Widget) { ruleDialogTarget.value = widget }
+function handleOpenApi(widget: Widget) { apiDialogTarget.value = widget }
 
 // ================================================================
 // Toolbar actions
@@ -335,7 +348,11 @@ function handleClearCanvas() {
 
       <!-- Center: canvas -->
       <div class="editor-view__center">
-        <EditorCanvas />
+        <EditorCanvas
+          @open-event="handleOpenEvent"
+          @open-rule="handleOpenRule"
+          @open-api="handleOpenApi"
+        />
       </div>
 
       <!-- Right panel -->
