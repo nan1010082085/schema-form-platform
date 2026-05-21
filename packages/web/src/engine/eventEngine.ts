@@ -53,6 +53,38 @@ export function executeEventAction(
       }
       break
     }
+    case 'set-value': {
+      if (action.target) {
+        const targetWidget = widgetStore.findWidget(action.target)
+        if (targetWidget) {
+          widgetStore.updateWidget(action.target, { defaultValue: action.value })
+        }
+      }
+      break
+    }
+    case 'submit': {
+      const formWidget = widgetStore.widgets.find((w: Widget) => w.type === 'form')
+      if (formWidget) {
+        const values = widgetStore.collectFormValues(formWidget.id)
+        logger.event('Form submit:', values)
+      }
+      break
+    }
+    case 'reset': {
+      const form = widgetStore.widgets.find((w: Widget) => w.type === 'form')
+      if (form && form.children) {
+        for (const child of form.children) {
+          if (child.field) {
+            widgetStore.updateWidget(child.id, { defaultValue: child.defaultValue })
+          }
+        }
+      }
+      break
+    }
+    case 'emit': {
+      logger.event('Emit custom event:', action.value)
+      break
+    }
   }
 }
 
