@@ -8,6 +8,7 @@
 import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
+import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -51,12 +52,10 @@ function handleClose() {
 </script>
 
 <template>
-  <el-dialog
+  <EnhancedDialog
     :model-value="visible"
     title="数据源配置"
     width="560px"
-    :close-on-click-modal="false"
-    destroy-on-close
     @update:model-value="emit('update:visible', $event)"
   >
     <div :class="$style.body">
@@ -70,7 +69,7 @@ function handleClose() {
       <el-button size="small" @click="handleClose">取消</el-button>
       <el-button type="primary" size="small" @click="handleSave">保存</el-button>
     </template>
-  </el-dialog>
+  </EnhancedDialog>
 </template>
 
 <style module>
