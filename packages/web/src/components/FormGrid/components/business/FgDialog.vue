@@ -2,16 +2,20 @@
 /**
  * FgDialog -- Schema-aware dialog component.
  *
- * Supports two modes:
+ * Supports three modes:
  * - Edit mode (editable=true): Shows a compact preview card on the canvas.
  *   The actual dialog opens via the editor store (editingDialogComponentId)
  *   and renders a mini-canvas with drag-drop support for editing children.
  * - Preview/Runtime mode: Renders normally as an el-dialog with
  *   dialogSchema rendered via SchemaRender.
+ * - Microapp mode (contentMode='microapp'): Loads a published form via
+ *   iframe and communicates via postMessage.
  */
-import { reactive, provide, inject, watch, ref, computed } from 'vue'
+import { reactive, provide, inject, watch, ref, computed, onBeforeUnmount } from 'vue'
+import { Loading, CircleCloseFilled } from '@element-plus/icons-vue'
 import FormGrid from '@/components/FormGrid/index.vue'
-import { useCanvasStore } from '@/stores/canvas'
+import { useEditorStore } from '@/stores/editor'
+import { createMicroappHost, type MicroappHostApi } from '@/microapp/postMessage'
 import {
   FORM_GRID_FORM_KEY,
   FORM_GRID_CONTEXT_KEY,
@@ -43,11 +47,28 @@ const props = withDefaults(defineProps<{
   path?: number[]
   /** Children schema items for edit mode (from schema.children) */
   children?: FormSchemaItem[]
+  /**
+   * 内容模式
+   * - 'edit'（默认）：渲染 children/dialogSchema 子组件
+   * - 'microapp'：通过 iframe 加载已发布的表单
+   */
+  contentMode?: 'edit' | 'microapp'
+  /**
+   * microapp 模式下的已发布 Schema publishId。
+   * 必须与 contentMode='microapp' 配合使用。
+   */
+  publishId?: string
+  /**
+   * microapp 的 API 基础 URL。
+   * 未指定时使用当前页面的 origin。
+   */
+  microappBaseUrl?: string
 }>(), {
   width: '600px',
   showFooter: true,
   confirmText: '确定',
   cancelText: '取消',
+  contentMode: 'edit',
 })
 
 const emit = defineEmits<{
@@ -59,7 +80,121 @@ const emit = defineEmits<{
 }>()
 
 // ---- Editor store integration ----
-const canvasStore = useCanvasStore()
+const editorStore = useEditorStore()
+
+// ---- Microapp mode state ----
+const microappLoading = ref(false)
+const microappError = ref('')
+const microappIframeRef = ref<HTMLIFrameElement | null>(null)
+let microappHost: MicroappHostApi | null = null
+
+/** script 闭合标签 — 拆分避免 Vue SFC 解析器误判 */
+const SC = '<' + '/script>'
+const SO = '<script'
+
+/**
+ * 构建 microapp 的 iframe HTML 内容。
+ * 使用 blob URL 避免 srcdoc 中 script 标签的解析问题。
+ */
+function buildMicroappHtml(publishId: string, baseUrl: string): string {
+  return '<!DOCTYPE html>\n<html>\n<head>\n'
+    + '<meta charset="utf-8">\n'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+    + '<link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">\n'
+    + '<style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif}</style>\n'
+    + '</head>\n<body>\n'
+    + '<div id="microapp-root"></div>\n'
+    + SO + ' src="https://unpkg.com/vue@3/dist/vue.global.prod.js">' + SC + '\n'
+    + SO + ' src="https://unpkg.com/element-plus/dist/index.full.min.js">' + SC + '\n'
+    + SO + ' src="' + baseUrl + '/microapp/schema-form-microapp.umd.js">' + SC + '\n'
+    + SO + '>\n'
+    + '  SchemaFormMicroapp.loadMicroapp({\n'
+    + "    publishId: '" + publishId + "',\n"
+    + "    container: '#microapp-root',\n"
+    + "    baseUrl: '" + baseUrl + "/api',\n"
+    + '  })\n'
+    + SC + '\n'
+    + '</body>\n</html>'
+}
+
+/** iframe onload 回调：初始化 postMessage host */
+function handleMicroappIframeLoad() {
+  const iframe = microappIframeRef.value
+  if (!iframe) return
+
+  microappHost = createMicroappHost(iframe)
+
+  microappHost.on('ready', () => {
+    microappLoading.value = false
+    microappError.value = ''
+  })
+
+  microappHost.on('submitSuccess', (data) => {
+    emit('confirm', data as FormData)
+    emit('update:modelValue', false)
+  })
+
+  microappHost.on('submitError', (error) => {
+    microappError.value = String(error)
+  })
+
+  microappHost.on('error', (error) => {
+    microappError.value = String(error)
+    microappLoading.value = false
+  })
+}
+
+/** 当前 blob URL（用于清理） */
+let currentBlobUrl: string | null = null
+
+/** 启动 microapp 加载 */
+function startMicroappLoad() {
+  if (props.contentMode !== 'microapp' || !props.publishId) return
+  microappLoading.value = true
+  microappError.value = ''
+  // 释放旧 blob URL
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl)
+    currentBlobUrl = null
+  }
+}
+
+/** 清理 microapp 资源 */
+function cleanupMicroapp() {
+  if (microappHost) {
+    microappHost.destroy()
+    microappHost = null
+  }
+  if (currentBlobUrl) {
+    URL.revokeObjectURL(currentBlobUrl)
+    currentBlobUrl = null
+  }
+  microappLoading.value = false
+  microappError.value = ''
+}
+
+/** 构建 iframe 的 blob URL src */
+const microappSrc = computed(() => {
+  if (props.contentMode !== 'microapp' || !props.publishId) return ''
+  const baseUrl = props.microappBaseUrl || window.location.origin
+  const html = buildMicroappHtml(props.publishId, baseUrl)
+  const blob = new Blob([html], { type: 'text/html' })
+  currentBlobUrl = URL.createObjectURL(blob)
+  return currentBlobUrl
+})
+
+// 监听 dialog 打开，启动 microapp 加载
+watch(() => props.modelValue, (open) => {
+  if (open && props.contentMode === 'microapp') {
+    startMicroappLoad()
+  } else if (!open) {
+    cleanupMicroapp()
+  }
+})
+
+onBeforeUnmount(() => {
+  cleanupMicroapp()
+})
 
 // ---- Local dialog visibility (edit mode manages its own open/close) ----
 const localVisible = ref(props.modelValue)
@@ -69,7 +204,7 @@ watch(() => props.modelValue, (val) => {
 })
 
 // Auto-open when editor store targets this dialog
-watch(() => canvasStore.editingDialogComponentId, (id) => {
+watch(() => editorStore.editingDialogId, (id) => {
   if (id && id === props.componentId) {
     localVisible.value = true
   }
@@ -78,7 +213,7 @@ watch(() => canvasStore.editingDialogComponentId, (id) => {
 function handleLocalClose() {
   localVisible.value = false
   if (props.editable && props.componentId) {
-    canvasStore.closeDialogEditor()
+    editorStore.closeDialogEditor()
   }
   emit('update:modelValue', false)
   emit('close')
@@ -188,7 +323,7 @@ function childrenCount(): number {
 
   <!--
     Preview/Runtime mode: render as actual el-dialog.
-    Children are rendered via slot (provided by SchemaRender).
+    Supports contentMode: 'edit' (default) and 'microapp'.
   -->
   <el-dialog
     v-else
@@ -202,7 +337,30 @@ function childrenCount(): number {
     :class="$style.dialog"
     @close="handleLocalClose"
   >
-    <div :class="$style.dialogBody">
+    <!-- Microapp mode: iframe 加载已发布表单 -->
+    <div v-if="contentMode === 'microapp'" :class="$style.microappContainer">
+      <div v-if="microappLoading" :class="$style.microappLoading">
+        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+        <span>加载表单中...</span>
+      </div>
+      <div v-if="microappError" :class="$style.microappError">
+        <el-icon :size="24" color="#E50113"><CircleCloseFilled /></el-icon>
+        <p>{{ microappError }}</p>
+      </div>
+      <iframe
+        v-if="publishId && microappSrc"
+        ref="microappIframeRef"
+        :src="microappSrc"
+        :class="$style.microappIframe"
+        @load="handleMicroappIframeLoad"
+      />
+      <div v-if="!publishId" :class="$style.microappError">
+        <p>未配置 publishId，无法加载微应用</p>
+      </div>
+    </div>
+
+    <!-- Edit mode: render children via slot -->
+    <div v-else :class="$style.dialogBody">
       <el-form :model="dialogFormData">
         <slot />
       </el-form>
@@ -292,5 +450,38 @@ function childrenCount(): number {
 /* ---- Preview/Runtime dialog ---- */
 .dialogBody {
   padding: 16px 0;
+}
+
+/* ---- Microapp mode ---- */
+.microappContainer {
+  position: relative;
+  min-height: 200px;
+}
+
+.microappLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: #909399;
+}
+
+.microappError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 0;
+  color: #f56c6c;
+  text-align: center;
+}
+
+.microappIframe {
+  width: 100%;
+  min-height: 400px;
+  border: none;
 }
 </style>

@@ -1,0 +1,29 @@
+/* ---- Edit mode dialog shell ---- */
+.dialogShell {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dialogHeader {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebeef5;
+  background: #f5f7fa;
+}
+
+.dialogTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
