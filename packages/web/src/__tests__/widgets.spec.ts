@@ -37,6 +37,18 @@ import { spacerConfig } from '@/widgets/spacer/config'
 import { toolbarButtonsConfig } from '@/widgets/toolbar-buttons/config'
 import { tableConfig } from '@/widgets/table/config'
 import { buttonConfig } from '@/widgets/button/config'
+import { richtextConfig } from '@/widgets/richtext/config'
+import { uploadConfig } from '@/widgets/upload/config'
+import { bannerConfig } from '@/widgets/banner/config'
+import { treeLayoutConfig } from '@/widgets/tree-layout/config'
+import { dateTimeSlotConfig } from '@/widgets/date-time-slot/config'
+import { fileListConfig } from '@/widgets/file-list/config'
+import { personSelectConfig } from '@/widgets/person-select/config'
+import { deptSelectConfig } from '@/widgets/dept-select/config'
+import { transferConfig } from '@/widgets/transfer/config'
+import { detailFormConfig } from '@/widgets/detail-form/config'
+import { searchListConfig } from '@/widgets/search-list/config'
+import { editableTableConfig } from '@/widgets/editable-table/config'
 
 // --- createDefaultSchema ---
 import { createDefaultSchema } from '@/utils/schemaDefaults'
@@ -58,6 +70,9 @@ const REGISTERED_TYPES: SchemaType[] = [
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'button-list', 'title', 'divider',
   'spacer', 'toolbar-buttons', 'table', 'button',
+  'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
+  'file-list', 'person-select', 'dept-select', 'transfer',
+  'detail-form', 'search-list', 'editable-table',
 ]
 
 const ALL_CONFIGS = [
@@ -80,6 +95,18 @@ const ALL_CONFIGS = [
   { name: 'toolbar-buttons', config: toolbarButtonsConfig },
   { name: 'table', config: tableConfig },
   { name: 'button', config: buttonConfig },
+  { name: 'richtext', config: richtextConfig },
+  { name: 'upload', config: uploadConfig },
+  { name: 'banner', config: bannerConfig },
+  { name: 'tree-layout', config: treeLayoutConfig },
+  { name: 'date-time-slot', config: dateTimeSlotConfig },
+  { name: 'file-list', config: fileListConfig },
+  { name: 'person-select', config: personSelectConfig },
+  { name: 'dept-select', config: deptSelectConfig },
+  { name: 'transfer', config: transferConfig },
+  { name: 'detail-form', config: detailFormConfig },
+  { name: 'search-list', config: searchListConfig },
+  { name: 'editable-table', config: editableTableConfig },
 ]
 
 // =====================================================================
@@ -92,9 +119,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 19 widget types', () => {
+  it('registers exactly 31 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(19)
+    expect(all).toHaveLength(31)
   })
 
   it('getComponentMap returns a component for every registered type', () => {
@@ -175,6 +202,11 @@ describe('Widget Config Validation', () => {
         expect((config.displayName as string).length).toBeGreaterThan(0)
       })
 
+      it('has description (string)', () => {
+        expect(typeof config.description).toBe('string')
+        expect((config.description as string).length).toBeGreaterThan(0)
+      })
+
       it('has propertyPanel with basic, style, and props arrays', () => {
         expect(config.propertyPanel).toBeDefined()
         expect(Array.isArray((config.propertyPanel as any).basic)).toBe(true)
@@ -238,12 +270,18 @@ describe('Widget Config Validation', () => {
 describe('Widget Default Schema', () => {
   const formComponentTypes: SchemaType[] = [
     'input', 'number', 'select', 'radio', 'checkbox',
-    'date', 'textarea',
+    'date', 'textarea', 'richtext', 'upload', 'date-time-slot',
+    'person-select', 'dept-select', 'editable-table',
   ]
 
   const layoutTypes: SchemaType[] = [
     'grid-row', 'grid-col', 'card', 'page', 'toolbar',
     'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
+    'tree-layout', 'detail-form',
+  ]
+
+  const noFieldTypes: SchemaType[] = [
+    'banner', 'file-list', 'transfer',
   ]
 
   for (const type of formComponentTypes) {
@@ -269,6 +307,16 @@ describe('Widget Default Schema', () => {
       it('creates a valid schema with correct type', () => {
         const schema = createDefaultSchema(type)
         expect(schema.type).toBe(type)
+      })
+    })
+  }
+
+  for (const type of noFieldTypes) {
+    describe(`type="${type}"`, () => {
+      it('creates a valid schema with correct type and no field', () => {
+        const schema = createDefaultSchema(type)
+        expect(schema.type).toBe(type)
+        expect(schema.field).toBeUndefined()
       })
     })
   }
@@ -356,6 +404,82 @@ describe('Widget Default Schema', () => {
     expect(schema.columns!.length).toBeGreaterThan(0)
     expect(schema.rowActions).toBeDefined()
     expect(schema.buttons).toBeDefined()
+  })
+
+  it('banner has props with text, type, closable', () => {
+    const schema = createDefaultSchema('banner')
+    expect(schema.type).toBe('banner')
+    expect(schema.props).toBeDefined()
+    expect(schema.props!.text).toBe('提示信息')
+    expect(schema.props!.type).toBe('info')
+    expect(schema.props!.closable).toBe(true)
+  })
+
+  it('tree-layout has children and props', () => {
+    const schema = createDefaultSchema('tree-layout')
+    expect(schema.type).toBe('tree-layout')
+    expect(schema.props!.title).toBe('树形布局')
+    expect(schema.props!.showSearch).toBe(true)
+    expect(Array.isArray(schema.children)).toBe(true)
+  })
+
+  it('date-time-slot has field and props', () => {
+    const schema = createDefaultSchema('date-time-slot')
+    expect(schema.type).toBe('date-time-slot')
+    expect(schema.field).toBeDefined()
+    expect(schema.props!.startPlaceholder).toBe('开始时间')
+    expect(schema.props!.endPlaceholder).toBe('结束时间')
+    expect(schema.props!.format).toBe('YYYY-MM-DD HH:mm:ss')
+  })
+
+  it('file-list has props with title and permissions', () => {
+    const schema = createDefaultSchema('file-list')
+    expect(schema.type).toBe('file-list')
+    expect(schema.props!.title).toBe('附件')
+    expect(schema.props!.allowDelete).toBe(true)
+    expect(schema.props!.allowPreview).toBe(true)
+  })
+
+  it('person-select has field and props', () => {
+    const schema = createDefaultSchema('person-select')
+    expect(schema.type).toBe('person-select')
+    expect(schema.field).toBeDefined()
+    expect(schema.props!.placeholder).toBe('请选择人员')
+    expect(schema.props!.multiple).toBe(false)
+  })
+
+  it('dept-select has field and props', () => {
+    const schema = createDefaultSchema('dept-select')
+    expect(schema.type).toBe('dept-select')
+    expect(schema.field).toBeDefined()
+    expect(schema.props!.placeholder).toBe('请选择部门')
+    expect(schema.props!.multiple).toBe(false)
+  })
+
+  it('transfer has props with titles and filterable', () => {
+    const schema = createDefaultSchema('transfer')
+    expect(schema.type).toBe('transfer')
+    expect(schema.props!.titles).toEqual(['待选', '已选'])
+    expect(schema.props!.filterable).toBe(true)
+  })
+
+  it('detail-form has children and props', () => {
+    const schema = createDefaultSchema('detail-form')
+    expect(schema.type).toBe('detail-form')
+    expect(schema.props!.title).toBe('详情')
+    expect(schema.props!.columns).toBe(2)
+    expect(schema.props!.bordered).toBe(true)
+    expect(Array.isArray(schema.children)).toBe(true)
+  })
+
+  it('editable-table has field and props', () => {
+    const schema = createDefaultSchema('editable-table')
+    expect(schema.type).toBe('editable-table')
+    expect(schema.field).toBeDefined()
+    expect(schema.props!.title).toBe('可编辑表格')
+    expect(schema.props!.showAddButton).toBe(true)
+    expect(schema.props!.showDeleteButton).toBe(true)
+    expect(schema.props!.maxRows).toBe(0)
   })
 })
 
