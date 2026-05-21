@@ -32,14 +32,14 @@ widgetConfig.propertyPanel
 | `color` | `el-color-picker` | 颜色选择（backgroundColor、color） |
 | `select` | `el-select` | 下拉选择（type 枚举、textAlign） |
 | `switch` | `el-switch` | 布尔开关（hidden、disabled、clearable） |
-| `options` | PropertyField 内联 | 选项列表编辑（DictItem[]） |
+| `options` | `OptionsEditor` | 选项列表编辑（DictItem[]），独立行组件 |
 | `rules` | PropertyField 内联 | 校验规则编辑 |
 | `columns` | `TableColumnsEditor` | 表格列配置 |
 | `array-editor` | `GenericArrayEditor` | 通用数组 CRUD（tabs、button-list 等） |
 
 ### configPanels 声明式配置入口
 
-属性面板底部的配置入口按钮（事件、规则、数据源）由 Widget config 的 `configPanels` 数组声明驱动：
+属性面板顶部的配置入口按钮（事件、规则、数据源）由 Widget config 的 `configPanels` 数组声明驱动，使用 `el-scrollbar` 包裹实现横向超出滚动：
 
 ```typescript
 // Widget config.ts
@@ -91,16 +91,27 @@ interface ArrayFieldSchema {
 
 ```
 ┌──────────────────────────────────┐
-│ 标题:  [________________]        │
-│ 宽度:  [120]px                   │
-│ 字号:  [14]px                    │
-│ 颜色:  [#333333]  🎨             │
-│ 对齐:  ○ 左  ● 中  ○ 右          │
-│ 选项:  [+ 添加]                  │
-│   ├ label: [___] value: [___]    │
-│   └ label: [___] value: [___]    │
-│ 事件:  [已配置 2 个]  [编辑]      │
-│ 规则:  [已配置 1 条]  [编辑]      │
+│ 属性配置                         │
+├──────────────────────────────────┤
+│ 输入框                field_abc  │
+├──────────────────────────────────┤
+│ [事件配置] [规则配置] [数据源]    │  ← 顶部横向按钮（el-scrollbar）
+├──────────────────────────────────┤
+│ ▼ 基础属性 (3)                   │
+│   字段名: [________________]     │
+│   标签:   [________________]     │
+│   默认值: [________________]     │
+│ ▼ 位置 (5)                       │
+│   X: [0]  Y: [0]                │
+│   宽: [240]  高: [40]           │
+│ ▼ 样式 (10)                      │
+│   宽度: [100%]                   │
+│   高度: [40px]                   │
+│ ▼ 组件属性 (2)                   │
+│   占位文字: [请输入]              │
+│   选项:                          │  ← OptionsEditor 独立行组件
+│     ├ label: [___] value: [___]  │
+│     └ label: [___] value: [___]  │
 └──────────────────────────────────┘
 ```
 

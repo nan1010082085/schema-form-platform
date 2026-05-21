@@ -369,12 +369,24 @@ widgets/
 │   ├── style.module.scss
 │   └── index.ts                       # 唯一对外入口
 │
-├── dialog/                            # 弹窗容器 Widget（支持微前端）
+├── dialog/                            # 弹窗容器 Widget
 │   ├── FgDialog.vue
 │   ├── schema.ts
 │   ├── config.ts
 │   ├── style.module.scss
 │   └── index.ts
+│
+├── richtext/                          # 富文本 Widget
+├── upload/                            # 上传 Widget
+├── banner/                            # 横幅 Widget
+├── tree-layout/                       # 树形布局 Widget
+├── date-time-slot/                    # 日期时间区间 Widget
+├── file-list/                         # 文件列表 Widget
+├── person-select/                     # 人员选择 Widget
+├── dept-select/                       # 部门选择 Widget
+├── transfer/                          # 穿梭框 Widget
+├── detail-form/                       # 详情表单 Widget
+├── editable-table/                    # 可编辑表格 Widget
 │
 └── ...
 ```
