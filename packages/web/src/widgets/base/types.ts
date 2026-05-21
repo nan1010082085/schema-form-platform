@@ -1,4 +1,5 @@
 import type { InjectionKey, ComputedRef, Ref } from 'vue'
+import type { SchemaLinkage } from '@/components/FormGrid/types'
 
 // ============================================================
 // SchemaType — 组件类型枚举
@@ -154,7 +155,7 @@ export interface WidgetRuleAction {
   onError?: SchemaEventAction[]
 }
 
-/** Widget 业务规则 */
+/** @deprecated 使用 SchemaLinkage 替代 */
 export interface WidgetRule {
   /** 监听源列表 */
   watches: WidgetRuleWatch[]
@@ -284,6 +285,10 @@ export interface Widget {
   // === 规则 ===
   /** 组件业务规则列表 */
   rules?: WidgetRule[]
+
+  // === 联动 ===
+  /** 组件联动规则列表（SchemaLinkage） */
+  linkages?: SchemaLinkage[]
 
   // === 数据源 ===
   /** API 数据源配置（用于动态加载 options 等） */
