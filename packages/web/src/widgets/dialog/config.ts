@@ -1,0 +1,55 @@
+import type { WidgetConfig } from '../base/types'
+export const dialogConfig: WidgetConfig = {
+  name: 'FgDialog',
+  displayName: '弹窗容器',
+  defaultStyle: {},
+  defaultProps: {
+    title: '弹窗标题',
+    width: '600px',
+    confirmText: '确定',
+    cancelText: '取消',
+    destroyOnClose: true,
+    contentMode: 'edit' as const,
+    showFooter: true,
+    closeOnClickModal: false,
+  },
+  propertyPanel: {
+    basic: [
+      { key: 'title', label: '标题', type: 'input', default: '弹窗标题' },
+      { key: '', label: '宽度', type: 'input', default: '600px' },
+      { key: 'confirmText', label: '确认按钮文字', type: 'input', default: '确定' },
+      { key: 'cancelText', label: '取消按钮文字', type: 'input', default: '取消' },
+      { key: 'destroyOnClose', label: '关闭时销毁', type: 'switch', default: true },
+      { key: 'showFooter', label: '显示底部按钮', type: 'switch', default: true },
+      { key: 'closeOnClickModal', label: '点击遮罩关闭', type: 'switch', default: false },
+      {
+        key: 'contentMode',
+        label: '内容模式',
+        type: 'select',
+        options: [
+          { label: '编辑模式', value: 'edit' },
+          { label: '微应用模式', value: 'microapp' },
+        ],
+        default: 'edit',
+      },
+      {
+        key: 'publishId',
+        label: '发布 ID',
+        type: 'input',
+        default: '',
+        placeholder: '已发布 Schema 的 publishId',
+        visibleOn: "props.contentMode === 'microapp'",
+      },
+      {
+        key: 'microappBaseUrl',
+        label: 'API 基础 URL',
+        type: 'input',
+        default: '',
+        placeholder: '留空使用当前域名',
+        visibleOn: "props.contentMode === 'microapp'",
+      },
+    ],
+    style: [],
+    props: [],
+  },
+}

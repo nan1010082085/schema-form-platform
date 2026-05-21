@@ -209,19 +209,9 @@ export function isFullWidthType(type: SchemaType): boolean {
   return (FULL_WIDTH_TYPES as readonly string[]).includes(type)
 }
 
-/** 动态数据请求配置 */
-export interface SchemaApiConfig {
-  url: string
-  method?: 'get' | 'post'
-  params?: Record<string, unknown>
-  dataPath?: string      // dot-notation path to data array (e.g. "result.records"). Falls back to data > list > rows > items > records
-  labelKey?: string      // 默认 'label'
-  valueKey?: string      // 默认 'value'
-  childrenKey?: string   // 树形数据子节点字段（保留树形结构不拍平）
-  ttl?: number           // 缓存 TTL（毫秒），默认 0 = 永不过期
-  immediate?: boolean    // 默认 true，挂载时加载
-  dictCode?: string      // 从 global.dictMap 查找（优先于 url）
-}
+/** 动态数据请求配置 — 从 widgets/base/types 统一导出 */
+import type { SchemaApiConfig } from '../../widgets/base/types'
+export type { SchemaApiConfig }
 
 /** 按钮动作类型 */
 export type ActionType = 'emit' | 'dialog' | 'upload' | 'submit' | 'reset' | 'navigate' | 'api' | 'validate' | 'confirm'
@@ -583,70 +573,4 @@ export interface FormGridTelemetry {
   onApiError?: (info: { url: string; error: string }) => void
   /** Schema 校验失败时调用 */
   onSchemaError?: (info: { errors: unknown[]; count: number }) => void
-}
-
-// =====================================================================
-// 画布编辑器新类型系统 — ComponentNode 树结构
-// =====================================================================
-
-/** 位置与尺寸 */
-export interface Transform {
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-/** 事件动作定义 */
-export interface ActionDef {
-  type: 'dialog' | 'navigate' | 'emit' | 'api'
-  dialogId?: string
-  sendData?: Record<string, unknown>
-  path?: string
-  query?: Record<string, string>
-  eventName?: string
-  payload?: unknown
-  apiUrl?: string
-  apiMethod?: 'get' | 'post'
-}
-
-/** 联动配置 */
-export interface LinkageDef {
-  visibleOn?: string
-  disabledOn?: string
-  requiredOn?: string
-  watchFields?: string[]
-  dialogBinding?: {
-    dialogId: string
-    receiveFields: Record<string, string>
-  }
-  rules?: SchemaLinkage[]
-}
-
-/** 通用界面编辑器组件节点 */
-export interface ComponentNode {
-  id: string
-  type: SchemaType
-  field?: string
-  transform: Transform
-  zIndex: number
-  style: ComponentStyle
-  data: {
-    api?: SchemaApiConfig
-    options?: DictItem[]
-    defaultValue?: unknown
-    fieldMap?: Record<string, string>
-  }
-  events: Record<string, ActionDef[]>
-  linkage: LinkageDef
-  props: Record<string, unknown>
-  children?: ComponentNode[]
-}
-
-/** 画布配置 */
-export interface CanvasConfig {
-  width: number
-  height: number
-  backgroundColor: string
-  padding: string
 }

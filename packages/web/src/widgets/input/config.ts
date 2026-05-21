@@ -1,0 +1,32 @@
+import type { WidgetConfig } from '../base/types'
+
+export const inputConfig: WidgetConfig = {
+  name: 'FgInput',
+  displayName: '输入框',
+  defaultStyle: {
+    width: '240px',
+    height: '32px',
+    fontSize: '14px',
+  },
+  defaultProps: {
+    placeholder: '请输入',
+    clearable: true,
+    disabled: false,
+    readonly: false,
+    maxlength: undefined as number | undefined,
+    showPassword: false,
+  },
+  configPanels: ['events', 'rules'] as const,
+  propertyPanel: {
+    basic: ['field', 'label', 'defaultValue'],
+    style: ['fontSize', 'color', 'backgroundColor'],
+    props: [
+      { key: 'placeholder', label: '占位文字', type: 'input', default: '请输入' },
+      { key: 'clearable', label: '可清空', type: 'switch', default: true },
+      { key: 'disabled', label: '禁用', type: 'switch', default: false },
+      { key: 'readonly', label: '只读', type: 'switch', default: false },
+      { key: 'maxlength', label: '最大长度', type: 'number', default: undefined },
+      { key: 'showPassword', label: '密码输入', type: 'switch', default: false },
+    ],
+  },
+}
