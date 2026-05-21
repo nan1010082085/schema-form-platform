@@ -7,6 +7,9 @@
 import type { Widget, SchemaEventAction } from '../widgets/base/types'
 import { useWidgetStore } from '../stores/widget'
 import { useEditorStore } from '../stores/editor'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('EventEngine')
 
 /**
  * 执行单个事件动作。
@@ -105,7 +108,7 @@ export function evaluateCondition(
     const fn = new Function(...keys, `return ${expression}`)
     return Boolean(fn(...values))
   } catch {
-    console.warn(`[EventEngine] Expression evaluation failed: ${expression}`)
+    logger.warn(`Expression evaluation failed: ${expression}`)
     return false
   }
 }

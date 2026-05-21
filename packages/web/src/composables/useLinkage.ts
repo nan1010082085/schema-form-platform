@@ -16,6 +16,9 @@ import type {
   SchemaLinkage,
   LinkageState,
 } from '@/components/FormGrid/types'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('Linkage')
 
 /** 收集到的联动节点信息 */
 interface LinkageEntry {
@@ -121,12 +124,12 @@ function compileCondition(expression: string): (values: Record<string, FormField
       try {
         return Boolean(fn(values))
       } catch {
-        console.warn(`[useLinkage] 条件表达式求值失败: "${expression}"`)
+        logger.rule(`条件表达式求值失败: "${expression}"`)
         return false
       }
     }
   } catch {
-    console.warn(`[useLinkage] 条件表达式编译失败: "${expression}"`)
+    logger.rule(`条件表达式编译失败: "${expression}"`)
     return () => false
   }
 }
@@ -147,7 +150,7 @@ function evaluateCondition(
     try {
       return linkage.condition(values)
     } catch {
-      console.warn(`[useLinkage] 条件函数求值失败`)
+      logger.rule(`条件函数求值失败`)
       return false
     }
   }
