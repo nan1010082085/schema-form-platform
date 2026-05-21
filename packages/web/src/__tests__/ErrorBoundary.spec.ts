@@ -36,11 +36,11 @@ describe('ErrorBoundary', () => {
     // 通过强制更新来模拟错误恢复流程
     const wrapper = mount(ErrorBoundary, {
       slots: { default: () => h(HealthyComponent) },
-    })
+    });
 
     // 手动设置错误状态
-    (wrapper.vm as any).hasError = true
-    (wrapper.vm as any).error = new Error('测试错误')
+    (wrapper.vm as any).hasError = true;
+    (wrapper.vm as any).error = new Error('测试错误');
     await nextTick()
 
     expect(wrapper.find('.fg-error-boundary').exists()).toBe(true)
@@ -60,10 +60,10 @@ describe('ErrorBoundary', () => {
     const wrapper = mount(ErrorBoundary, {
       props: { nodePath: '3,0', nodeType: 'input', nodeField: 'name' },
       slots: { default: () => h(HealthyComponent) },
-    })
+    });
 
-    (wrapper.vm as any).hasError = true
-    (wrapper.vm as any).error = new Error('测试')
+    (wrapper.vm as any).hasError = true;
+    (wrapper.vm as any).error = new Error('测试');
     await nextTick()
 
     // 验证错误 UI 显示了节点信息
@@ -88,11 +88,11 @@ describe('ErrorBoundary', () => {
       slots: { default: () => h(SpyComponent) },
     })
 
-    const initialMountCount = mountSpy.mock.calls.length
+    const initialMountCount = mountSpy.mock.calls.length;
 
     // 模拟错误并重试
-    (wrapper.vm as any).hasError = true
-    (wrapper.vm as any).error = new Error('test')
+    (wrapper.vm as any).hasError = true;
+    (wrapper.vm as any).error = new Error('test');
     await nextTick()
 
     await wrapper.find('.el-button').trigger('click')

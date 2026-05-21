@@ -103,6 +103,10 @@ async function loadSchema(id: string) {
     } else {
       // 2) Fetch from PublishedSchema table — only published schemas are accessible
       const publishedSchema = await fetchPublishedSchema(id)
+      if (!publishedSchema) {
+        error.value = `未找到 ID 为 "${id}" 的已发布 Schema`
+        return
+      }
       baseSchema.value = publishedSchema.json
       schemaName.value = publishedSchema.name
     }

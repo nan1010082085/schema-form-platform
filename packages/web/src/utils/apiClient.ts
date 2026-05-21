@@ -24,12 +24,14 @@ import type {
 
 let baseUrl = 'http://localhost:3001/api'
 let getToken: (() => string) | null = null
+let useMock = false
 
 // ---- 配置入口 ----
 
 export interface ApiClientConfig {
   baseUrl?: string
   getToken?: () => string
+  useMock?: boolean
 }
 
 export function configureApiClient(config: ApiClientConfig = {}): void {
@@ -38,6 +40,9 @@ export function configureApiClient(config: ApiClientConfig = {}): void {
   }
   if (config.getToken) {
     getToken = config.getToken
+  }
+  if (config.useMock !== undefined) {
+    useMock = config.useMock
   }
 }
 
@@ -50,7 +55,7 @@ export function getBaseUrl(): string {
 /**
  * GET /api/schemas?search=&type=&page=1&pageSize=20
  */
-export function fetchSchemas(
+export async function fetchSchemas(
   options?: {
     search?: string
     type?: string
@@ -58,6 +63,10 @@ export function fetchSchemas(
     pageSize?: number
   },
 ): Promise<PaginatedResponse<SchemaListItem>> {
+  if (useMock) {
+    const { mockFetchSchemas } = await import('./mockApi')
+    return mockFetchSchemas(options)
+  }
   const params = new URLSearchParams()
   params.set('page', String(options?.page ?? 1))
   params.set('pageSize', String(options?.pageSize ?? 20))
@@ -73,7 +82,11 @@ export function fetchSchemas(
 /**
  * GET /api/schemas/:id
  */
-export function fetchSchemaById(id: string): Promise<SchemaDetail> {
+export async function fetchSchemaById(id: string): Promise<SchemaDetail> {
+  if (useMock) {
+    const { mockFetchSchemaById } = await import('./mockApi')
+    return mockFetchSchemaById(id)
+  }
   return apiRequest<SchemaDetail>('GET', `/schemas/${encodeURIComponent(id)}`)
 }
 
@@ -82,7 +95,11 @@ export function fetchSchemaById(id: string): Promise<SchemaDetail> {
  *
  * Publishes a draft schema to the PublishedSchema table (upsert).
  */
-export function publishSchema(id: string): Promise<PublishedSchemaItem> {
+export async function publishSchema(id: string): Promise<PublishedSchemaItem> {
+  if (useMock) {
+    const { mockPublishSchema } = await import('./mockApi')
+    return mockPublishSchema(id)
+  }
   return apiRequest<PublishedSchemaItem>(
     'POST',
     `/schemas/${encodeURIComponent(id)}/publish`,
@@ -93,28 +110,48 @@ export function publishSchema(id: string): Promise<PublishedSchemaItem> {
  * GET /api/schemas/published/:sourceId
  *
  * Fetches the published version of a schema by its source FormSchema ID.
+ * Returns null (not throws) when not found — "not published" is not an error.
  */
-export function fetchPublishedSchema(sourceId: string): Promise<PublishedSchemaItem> {
-  return apiRequest<PublishedSchemaItem>(
-    'GET',
-    `/schemas/published/${encodeURIComponent(sourceId)}`,
-  )
+export async function fetchPublishedSchema(sourceId: string): Promise<PublishedSchemaItem | null> {
+  if (useMock) {
+    const { mockFetchPublishedSchema } = await import('./mockApi')
+    return mockFetchPublishedSchema(sourceId)
+  }
+  try {
+    return await apiRequest<PublishedSchemaItem>(
+      'GET',
+      `/schemas/published/${encodeURIComponent(sourceId)}`,
+    )
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null
+    }
+    throw err
+  }
 }
 
 /**
  * POST /api/schemas
  */
-export function createSchema(payload: SchemaCreatePayload): Promise<SchemaDetail> {
+export async function createSchema(payload: SchemaCreatePayload): Promise<SchemaDetail> {
+  if (useMock) {
+    const { mockCreateSchema } = await import('./mockApi')
+    return mockCreateSchema(payload)
+  }
   return apiRequest<SchemaDetail>('POST', '/schemas', payload)
 }
 
 /**
  * PUT /api/schemas/:id
  */
-export function updateSchema(
+export async function updateSchema(
   id: string,
   payload: SchemaUpdatePayload,
 ): Promise<SchemaDetail> {
+  if (useMock) {
+    const { mockUpdateSchema } = await import('./mockApi')
+    return mockUpdateSchema(id, payload)
+  }
   return apiRequest<SchemaDetail>(
     'PUT',
     `/schemas/${encodeURIComponent(id)}`,
@@ -125,7 +162,11 @@ export function updateSchema(
 /**
  * DELETE /api/schemas/:id
  */
-export function deleteSchema(id: string): Promise<null> {
+export async function deleteSchema(id: string): Promise<null> {
+  if (useMock) {
+    const { mockDeleteSchema } = await import('./mockApi')
+    return mockDeleteSchema(id)
+  }
   return apiRequest<null>('DELETE', `/schemas/${encodeURIComponent(id)}`)
 }
 

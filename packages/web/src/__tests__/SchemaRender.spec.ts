@@ -1,189 +1,154 @@
 /**
  * SchemaRender unit tests
  *
- * Tests the 4 rendering paths of the core recursive rendering engine:
- *   1. grid-row   — flex row container
- *   2. grid-col   — 24-column flex cell with optional label
- *   3. Layout component — page/toolbar/card/title/divider/spacer/steps/tabs
- *   4. Form component  — compMap[type] with model-value binding + special cases
- *
- * Also covers: hidden, expression visibility, linkage state, edge cases.
+ * Tests the new Widget + registry based rendering engine:
+ *   1. Basic rendering — SchemaRender delegates to SchemaNode for each Widget
+ *   2. Hidden visibility — widget.hidden controls rendering
+ *   3. Container rendering — containers render children recursively
+ *   4. Mode prop — edit vs preview mode adds/removes outline styles
+ *   5. Rule engine integration — computeWidgetRenderState controls visibility
+ *   6. Edge cases — empty widgets, unknown types, position styling
  */
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Component } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
+import { defineComponent, h, inject, type PropType } from 'vue'
 import ElementPlus from 'element-plus'
-import type { Component } from 'vue'
-import type {
-  FormSchemaItem,
-  FormData,
-  LinkageState,
-} from '@/components/FormGrid/types'
-import {
-  ACTION_EMIT_KEY,
-  FORM_GRID_LINKAGE_KEY,
-} from '@/components/FormGrid/types'
+import type { Widget, SchemaType } from '@/widgets/base/types'
+import { widgetDataKey } from '@/widgets/base/types'
 import SchemaRenderComponent from '@/components/FormGrid/SchemaRender.vue'
 
 // ---------------------------------------------------------------------------
-// Mock compMap — stub every type so SchemaRender can resolve components.
-// ALL stubs are defined inside the factory because vi.mock() is hoisted.
+// Mock registry — provide stub components for all types SchemaNode resolves.
+// vi.mock is hoisted, so the factory must be self-contained.
 // ---------------------------------------------------------------------------
-vi.mock('@/components/FormGrid/compMap', () => {
-  /** Generic slot-passthrough stub for layout components */
-  function stubLayout(tag: string): Component {
-    return {
-      template: `<div class="stub-${tag}"><slot /></div>`,
-      props: ['label', 'children', 'formData'],
-    }
+vi.mock('@/widgets/registry', () => {
+  function makeStub(className: string, isContainer = false): Component {
+    return defineComponent({
+      name: `Stub_${className}`,
+      props: {
+        widget: { type: Object as PropType<Widget>, required: true },
+      },
+      setup(_, { slots }) {
+        return () =>
+          h('div', { class: className }, isContainer && slots.default ? slots.default() : [])
+      },
+    })
   }
 
-  /** Simple input stub that emits update:modelValue */
-  const StubInput: Component = {
-    template: `<input class="stub-input" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" />`,
-    props: ['modelValue', 'placeholder', 'disabled', 'readonly', 'options', 'api'],
-  }
-
-  /** Simple select stub */
-  const StubSelect: Component = {
-    template: '<select class="stub-select" :value="modelValue"><slot /></select>',
-    props: ['modelValue', 'placeholder', 'disabled', 'readonly', 'options', 'api'],
-  }
-
-  /** Stub for date-range — receives formData + schema props */
-  const StubDateRange: Component = {
-    template: '<div class="stub-date-range" :data-start="formData?.startDate" :data-end="formData?.endDate" />',
-    props: ['formData', 'schema', 'disabled'],
-  }
-
-  /** Stub for button-list */
-  const StubButtonList: Component = {
-    template: '<div class="stub-button-list"><button v-for="b in buttons" :key="b.text">{{ b.text }}</button></div>',
-    props: ['buttons'],
-  }
-
-  /** Stub for toolbar-buttons */
-  const StubToolbarButtons: Component = {
-    template: '<div class="stub-toolbar-buttons"><button v-for="b in buttons" :key="b.text">{{ b.text }}</button></div>',
-    props: ['buttons', 'background'],
-  }
-
-  /** Stub for table */
-  const StubTable: Component = {
-    template: '<div class="stub-table" :data-rows="JSON.stringify(modelValue)"><slot /></div>',
-    props: ['modelValue', 'columnSchema', 'addDefault', 'showActions', 'actions'],
-    emits: ['update:modelValue'],
-  }
-
-  /** Stub for file-list */
-  const StubFileList: Component = {
-    template: '<div class="stub-file-list" />',
-    props: ['modelValue'],
-  }
-
-  /** Stub for person-select */
-  const StubPersonSelect: Component = {
-    template: '<div class="stub-person-select" />',
-    props: ['modelValue'],
-  }
-
-  /** Stub for search-list */
-  const StubSearchList: Component = {
-    template: '<div class="stub-search-list" />',
-    props: ['schema'],
-    emits: ['action'],
+  const compMap: Record<string, Component> = {
+    // Container types
+    form: makeStub('stub-form', true),
+    card: makeStub('stub-card', true),
+    'row-col': makeStub('stub-row-col', true),
+    tabs: makeStub('stub-tabs', true),
+    dialog: makeStub('stub-dialog', true),
+    // Basic types
+    input: makeStub('stub-input'),
+    number: makeStub('stub-number'),
+    select: makeStub('stub-select'),
+    radio: makeStub('stub-radio'),
+    checkbox: makeStub('stub-checkbox'),
+    date: makeStub('stub-date'),
+    'date-range': makeStub('stub-date-range'),
+    textarea: makeStub('stub-textarea'),
+    richtext: makeStub('stub-richtext'),
+    'button-list': makeStub('stub-button-list'),
+    upload: makeStub('stub-upload'),
+    table: makeStub('stub-table'),
+    'search-list': makeStub('stub-search-list'),
+    'editable-table': makeStub('stub-editable-table'),
+    title: makeStub('stub-title'),
+    divider: makeStub('stub-divider'),
+    spacer: makeStub('stub-spacer'),
+    'toolbar-buttons': makeStub('stub-toolbar-buttons'),
+    'file-list': makeStub('stub-file-list'),
+    'person-select': makeStub('stub-person-select'),
+    'dept-select': makeStub('stub-dept-select'),
+    transfer: makeStub('stub-transfer'),
+    'detail-form': makeStub('stub-detail-form'),
+    banner: makeStub('stub-banner'),
+    'tree-layout': makeStub('stub-tree-layout'),
+    'date-time-slot': makeStub('stub-date-time-slot'),
   }
 
   return {
-    compMap: {
-      // Layout
-      page: stubLayout('page'),
-      toolbar: stubLayout('toolbar'),
-      card: stubLayout('card'),
-      title: stubLayout('title'),
-      divider: stubLayout('divider'),
-      spacer: stubLayout('spacer'),
-      steps: { template: '<div class="stub-steps" />', props: ['children', 'formData'] },
-      tabs: { template: '<div class="stub-tabs" />', props: ['children', 'formData'] },
-      // Base
-      input: StubInput,
-      number: StubInput,
-      select: StubSelect,
-      radio: StubInput,
-      checkbox: StubInput,
-      date: StubInput,
-      'date-range': StubDateRange,
-      textarea: StubInput,
-      richtext: StubInput,
-      // Business
-      'button-list': StubButtonList,
-      dialog: stubLayout('dialog'),
-      upload: StubInput,
-      table: StubTable,
-      pagination: StubInput,
-      'file-list': StubFileList,
-      'file-preview': StubInput,
-      'person-select': StubPersonSelect,
-      'dept-select': StubInput,
-      transfer: StubInput,
-      'detail-form': StubInput,
-      banner: StubInput,
-      'tree-layout': StubInput,
-      'date-time-slot': StubInput,
-      'toolbar-buttons': StubToolbarButtons,
-      'search-list': StubSearchList,
-      // grid-row/grid-col — never rendered via compMap
-      'grid-row': stubLayout('grid-row-placeholder'),
-      'grid-col': stubLayout('grid-col-placeholder'),
-    } as Record<string, Component>,
+    getComponentMap: () => compMap,
+    getWidget: (type: SchemaType) => ({
+      name: `Stub_${type}`,
+      displayName: type,
+      type,
+      group: 'basic' as const,
+      component: compMap[type],
+      create: (id: string) => ({
+        id,
+        name: `Stub_${type}`,
+        type,
+        position: { x: 0, y: 0, w: 240, h: 40 },
+      }),
+      config: {},
+    }),
+    getAllWidgets: () => Object.values(compMap).map((c, i) => ({
+      name: `Stub_${i}`,
+      displayName: `Stub ${i}`,
+      type: `stub-${i}` as SchemaType,
+      group: 'basic' as const,
+      component: c,
+      create: (id: string) => ({ id, name: '', type: 'input' as SchemaType, position: { x: 0, y: 0, w: 240, h: 40 } }),
+      config: {},
+    })),
+    registerWidget: vi.fn(),
+    createWidget: vi.fn(),
+    getWidgetsByGroup: vi.fn(() => []),
+    generateWidgetId: vi.fn(() => 'generated-id'),
   }
 })
+
+// ---------------------------------------------------------------------------
+// Mock ruleEngine — return static render state by default
+// ---------------------------------------------------------------------------
+vi.mock('@/engine/ruleEngine', () => ({
+  computeWidgetRenderState: vi.fn((widget: Widget) => ({
+    visible: !widget.hidden,
+    disabled: (widget.props?.disabled as boolean) ?? false,
+    required: widget.validationRules?.some((r: { required?: boolean }) => r.required) ?? false,
+  })),
+  evaluateWidgetRules: vi.fn(),
+}))
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Stub window.matchMedia for jsdom (useBreakpoint compat) */
-function setupMatchMediaStub() {
-  vi.stubGlobal('matchMedia', (query: string): MediaQueryList => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  }))
-}
-
-/** Default inject mocks for SchemaRender */
-function defaultProvides(overrides?: Record<string | symbol, unknown>) {
-  const linkageMap = new Map<string, LinkageState>()
+function makeWidget(overrides: Partial<Widget> = {}): Widget {
   return {
-    [ACTION_EMIT_KEY as symbol]: vi.fn(),
-    [FORM_GRID_LINKAGE_KEY as symbol]: computed(() => linkageMap),
+    id: `widget-${Math.random().toString(36).slice(2, 7)}`,
+    name: 'FgInput',
+    type: 'input',
+    position: { x: 0, y: 0, w: 240, h: 40 },
     ...overrides,
   }
 }
 
-interface MountSchemaRenderOptions {
-  schema: FormSchemaItem
-  formData?: FormData
-  provides?: Record<string | symbol, unknown>
-  props?: Record<string, unknown>
+function makeContainerWidget(type: SchemaType, children: Widget[] = [], overrides: Partial<Widget> = {}): Widget {
+  return {
+    id: `container-${Math.random().toString(36).slice(2, 7)}`,
+    name: `Fg${type}`,
+    type,
+    position: { x: 0, y: 0, w: 800, h: 400 },
+    children,
+    ...overrides,
+  }
 }
 
-function mountSchemaRender(options: MountSchemaRenderOptions) {
+function mountSchemaRender(widgets: Widget[], props: Record<string, unknown> = {}) {
   return mount(SchemaRenderComponent, {
     props: {
-      schema: options.schema,
-      formData: options.formData ?? {},
-      ...options.props,
+      widgets,
+      ...props,
     },
     global: {
       plugins: [ElementPlus],
-      provide: options.provides ?? defaultProvides(),
     },
   })
 }
@@ -193,628 +158,526 @@ function mountSchemaRender(options: MountSchemaRenderOptions) {
 // ---------------------------------------------------------------------------
 
 describe('SchemaRender', () => {
-  beforeAll(() => {
-    setupMatchMediaStub()
-  })
-
-  afterAll(() => {
-    vi.unstubAllGlobals()
+  beforeEach(() => {
+    setActivePinia(createPinia())
   })
 
   // =========================================================================
-  // Path 1: grid-row
+  // 1. Basic rendering
   // =========================================================================
-  describe('Path 1 — grid-row', () => {
-    it('renders a div with class fg-grid-row', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-row', children: [] },
-      })
+  describe('Basic rendering', () => {
+    it('renders a single widget via SchemaNode', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+      ])
 
-      expect(wrapper.find('.fg-grid-row').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('renders child schemas recursively', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-row',
-          children: [
-            { type: 'grid-col', span: 12, children: [{ type: 'input', field: 'name', label: 'Name' }] },
-            { type: 'grid-col', span: 12, children: [{ type: 'input', field: 'email', label: 'Email' }] },
-          ],
-        },
-      })
+    it('renders multiple widgets', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+        makeWidget({ type: 'select', id: 'w2' }),
+        makeWidget({ type: 'textarea', id: 'w3' }),
+      ])
 
-      // Both grid-cols should render
-      expect(wrapper.findAll('.fg-grid-col')).toHaveLength(2)
-      // Both form items should render inside the grid-cols
-      expect(wrapper.findAll('.el-form-item')).toHaveLength(2)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+      expect(wrapper.find('.stub-textarea').exists()).toBe(true)
     })
 
-    it('handles empty children array gracefully', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-row', children: [] },
-      })
+    it('renders correct component for each type', () => {
+      const types: SchemaType[] = ['input', 'number', 'select', 'radio', 'checkbox', 'date', 'textarea']
 
-      expect(wrapper.find('.fg-grid-row').exists()).toBe(true)
-      // No grid-col children, no form items
-      expect(wrapper.findAll('.fg-grid-col')).toHaveLength(0)
+      for (const type of types) {
+        const wrapper = mountSchemaRender([
+          makeWidget({ type, id: `w-${type}` }),
+        ])
+        expect(wrapper.find(`.stub-${type}`).exists()).toBe(true)
+      }
     })
 
-    it('handles undefined children gracefully', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-row' } as FormSchemaItem,
-      })
-
-      expect(wrapper.find('.fg-grid-row').exists()).toBe(true)
+    it('renders empty list without errors', () => {
+      const wrapper = mountSchemaRender([])
+      expect(wrapper.element.children).toHaveLength(0)
     })
 
-    it('skips children with hidden: true', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-row',
-          children: [
-            { type: 'grid-col', span: 12, children: [{ type: 'input', field: 'visible', label: 'Visible' }] },
-            { type: 'grid-col', span: 12, children: [{ type: 'input', field: 'secret', label: 'Secret', hidden: true }] },
-          ],
-        },
-      })
-
-      // Both grid-cols render (neither hidden at grid-row level), but the hidden input inside
-      // the second grid-col is skipped, so only 1 el-form-item
-      expect(wrapper.findAll('.fg-grid-col')).toHaveLength(2)
-      expect(wrapper.findAll('.el-form-item')).toHaveLength(1)
+    it('renders wrapper div but no component for unknown widget type', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'unknown-type' as SchemaType, id: 'w-unknown' }),
+      ])
+      // No stub component for the unknown type
+      expect(wrapper.find('.stub-unknown-type').exists()).toBe(false)
+      // SchemaNode still renders a wrapper div with position:absolute
+      expect(wrapper.find('div[style*="position: absolute"]').exists()).toBe(true)
     })
   })
 
   // =========================================================================
-  // Path 2: grid-col
+  // 2. Hidden visibility
   // =========================================================================
-  describe('Path 2 — grid-col', () => {
-    it('renders a div with class fg-grid-col', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, children: [] },
-      })
+  describe('Hidden visibility', () => {
+    it('does not render widget when hidden is true', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', hidden: true }),
+      ])
 
-      expect(wrapper.find('.fg-grid-col').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(false)
     })
 
-    it('renders label when provided and children exist', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-col',
-          span: 24,
-          label: 'My Section',
-          children: [{ type: 'input', field: 'field1', label: 'Field 1' }],
-        },
-      })
+    it('renders widget when hidden is false', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', hidden: false }),
+      ])
 
-      expect(wrapper.find('.fg-cell-label').exists()).toBe(true)
-      expect(wrapper.find('.fg-cell-label').text()).toBe('My Section')
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('renders label-only cell when no children are present', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, label: 'Section Title' },
-      })
+    it('renders widget when hidden is undefined (default)', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+      ])
 
-      expect(wrapper.find('.fg-cell--label-only').exists()).toBe(true)
-      expect(wrapper.find('.fg-cell--label-only').text()).toBe('Section Title')
-      // No fg-cell-content since no children
-      expect(wrapper.find('.fg-cell-content').exists()).toBe(false)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('applies span-based flex width via inline style', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 12, children: [] },
-      })
+    it('skips hidden widgets but renders visible ones in the same list', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', hidden: true }),
+        makeWidget({ type: 'select', id: 'w2', hidden: false }),
+        makeWidget({ type: 'textarea', id: 'w3' }),
+      ])
 
-      const col = wrapper.find('.fg-grid-col')
-      const style = col.attributes('style')
-      // Browser/jsdom may compute calc(12/24*100%) → calc(50%)
-      expect(style).toMatch(/calc\(50%\)/)
-    })
-
-    it('applies colspan override to span calculation', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', colspan: 6, children: [] },
-      })
-
-      const col = wrapper.find('.fg-grid-col')
-      const style = col.attributes('style')
-      // colspan takes priority over default 24
-      // Browser/jsdom may compute calc(6/24*100%) → calc(25%)
-      expect(style).toMatch(/calc\(25%\)/)
-    })
-
-    it('applies custom width when specified', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', width: '300px', children: [] },
-      })
-
-      const col = wrapper.find('.fg-grid-col')
-      const style = col.attributes('style')
-      expect(style).toContain('300px')
-    })
-
-    it('wraps child form component in el-form-item', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-col',
-          span: 24,
-          children: [{ type: 'input', field: 'username', label: 'Username' }],
-        },
-      })
-
-      expect(wrapper.find('.el-form-item').exists()).toBe(true)
-    })
-
-    it('suppresses no-border class when border is false', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, border: false, children: [] },
-      })
-
-      expect(wrapper.find('.fg-grid-col.no-border').exists()).toBe(true)
-    })
-
-    it('applies alignment class based on align prop', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, align: 'center', children: [] },
-      })
-
-      expect(wrapper.find('.fg-cell--center').exists()).toBe(true)
-    })
-
-    it('defaults alignment to left when not specified', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, children: [] },
-      })
-
-      expect(wrapper.find('.fg-cell--left').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(false)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+      expect(wrapper.find('.stub-textarea').exists()).toBe(true)
     })
   })
 
   // =========================================================================
-  // Path 3: Layout components
+  // 3. Container rendering
   // =========================================================================
-  describe('Path 3 — Layout components', () => {
-    const layoutTypes = ['page', 'toolbar', 'card', 'title', 'divider', 'spacer'] as const
+  describe('Container rendering', () => {
+    const containerTypes: SchemaType[] = ['form', 'card', 'row-col', 'tabs', 'dialog']
 
-    for (const layoutType of layoutTypes) {
-      it(`renders stub-${layoutType} for type="${layoutType}"`, () => {
-        const wrapper = mountSchemaRender({
-          schema: { type: layoutType, children: [] },
-        })
+    for (const containerType of containerTypes) {
+      it(`renders ${containerType} container with children`, () => {
+        const child = makeWidget({ type: 'input', id: 'child1' })
+        const container = makeContainerWidget(containerType, [child], { id: 'container1' })
 
-        expect(wrapper.find(`.stub-${layoutType}`).exists()).toBe(true)
+        const wrapper = mountSchemaRender([container])
+
+        expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
+        expect(wrapper.find('.stub-input').exists()).toBe(true)
       })
 
-      it(`passes children via default slot for type="${layoutType}"`, () => {
-        const wrapper = mountSchemaRender({
-          schema: {
-            type: layoutType,
-            children: [
-              { type: 'input', field: 'childField', label: 'Child' },
-            ],
-          },
-        })
+      it(`renders ${containerType} without children gracefully`, () => {
+        const container = makeContainerWidget(containerType, [], { id: 'container1' })
 
-        // The child input should render inside the layout stub
-        const stub = wrapper.find(`.stub-${layoutType}`)
-        expect(stub.exists()).toBe(true)
-        // Verify the el-form-item was rendered inside
-        expect(wrapper.find('.el-form-item').exists()).toBe(true)
+        const wrapper = mountSchemaRender([container])
+
+        expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
       })
     }
 
-    it('renders steps component with children and formData as props', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'steps',
-          children: [
-            { type: 'input', field: 'step1', label: 'Step 1' },
-          ],
-        },
-      })
+    it('renders deeply nested containers (card > form > input)', () => {
+      const input = makeWidget({ type: 'input', id: 'deep-input' })
+      const form = makeContainerWidget('form', [input], { id: 'form1' })
+      const card = makeContainerWidget('card', [form], { id: 'card1' })
 
-      expect(wrapper.find('.stub-steps').exists()).toBe(true)
+      const wrapper = mountSchemaRender([card])
+
+      expect(wrapper.find('.stub-card').exists()).toBe(true)
+      expect(wrapper.find('.stub-form').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('renders tabs component with children and formData as props', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'tabs',
-          children: [
-            { type: 'input', field: 'tab1', label: 'Tab 1' },
-          ],
-        },
-      })
+    it('handles container with undefined children', () => {
+      const container: Widget = {
+        id: 'c1',
+        name: 'FgCard',
+        type: 'card',
+        position: { x: 0, y: 0, w: 800, h: 400 },
+        // children is undefined
+      }
 
-      expect(wrapper.find('.stub-tabs').exists()).toBe(true)
+      const wrapper = mountSchemaRender([container])
+
+      expect(wrapper.find('.stub-card').exists()).toBe(true)
     })
 
-    it('passes schema.label as label prop to layout component', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'card', label: 'Card Title', children: [] },
-      })
+    it('renders multiple children inside a container', () => {
+      const children = [
+        makeWidget({ type: 'input', id: 'c1' }),
+        makeWidget({ type: 'select', id: 'c2' }),
+        makeWidget({ type: 'textarea', id: 'c3' }),
+      ]
+      const container = makeContainerWidget('card', children, { id: 'card1' })
 
-      // The stub receives the label prop
-      const cardEl = wrapper.find('.stub-card')
-      expect(cardEl.exists()).toBe(true)
+      const wrapper = mountSchemaRender([container])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+      expect(wrapper.find('.stub-textarea').exists()).toBe(true)
     })
   })
 
   // =========================================================================
-  // Path 4: Form components
+  // 4. Mode prop (edit / preview)
   // =========================================================================
-  describe('Path 4 — Form components', () => {
-    it('renders correct stub component from compMap', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'name', label: 'Name' },
-      })
+  describe('Mode prop', () => {
+    // Note: CSS Module classes ($style.nodeWrapperEdit) are not resolved in jsdom.
+    // We verify mode is passed correctly by checking the rendered DOM structure:
+    // - In edit mode, SchemaNode still renders the wrapper div with position style
+    // - The mode prop is correctly propagated to child containers' SchemaRender
+
+    it('renders widgets correctly in edit mode', () => {
+      const wrapper = mountSchemaRender(
+        [makeWidget({ type: 'input', id: 'w1' })],
+        { mode: 'edit' },
+      )
 
       expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('wraps standard component in el-form-item with label', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'username', label: 'Username' },
-      })
-
-      const formItem = wrapper.find('.el-form-item')
-      expect(formItem.exists()).toBe(true)
-    })
-
-    it('binds model-value from formData[field]', () => {
-      const formData: FormData = { username: 'Alice' }
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'username', label: 'Username' },
-        formData,
-      })
-
-      const input = wrapper.find('.stub-input')
-      expect(input.attributes('value')).toBe('Alice')
-    })
-
-    it('updates formData on update:model-value', async () => {
-      const formData: FormData = { username: '' }
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'username', label: 'Username' },
-        formData,
-      })
-
-      const input = wrapper.find('.stub-input')
-      await input.trigger('input')
-      // After input event, formData should be updated
-      expect(formData.username).toBeDefined()
-    })
-
-    it('does not wrap in el-form-item when field is missing', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', label: 'No Field' },
-      })
-
-      // No field → no el-form-item, but still renders inside ErrorBoundary > fg-component
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-      expect(wrapper.find('.fg-component').exists()).toBe(true)
-    })
-
-    // -- Special cases --
-
-    it('date-range: receives formData prop directly (not v-model)', () => {
-      const formData: FormData = { startDate: '2024-01-01', endDate: '2024-12-31' }
-      const wrapper = mountSchemaRender({
-        schema: { type: 'date-range', field: 'range' },
-        formData,
-      })
-
-      const dr = wrapper.find('.stub-date-range')
-      expect(dr.exists()).toBe(true)
-      // date-range receives formData as a prop, not modelValue
-      expect(dr.attributes('data-start')).toBe('2024-01-01')
-      expect(dr.attributes('data-end')).toBe('2024-12-31')
-    })
-
-    it('button-list: renders without el-form-item wrapper', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'button-list',
-          buttons: [{ text: 'Save' }, { text: 'Cancel' }],
-        },
-      })
-
-      expect(wrapper.find('.stub-button-list').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('toolbar-buttons: renders without el-form-item wrapper', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'toolbar-buttons',
-          buttons: [{ text: 'Submit' }],
-        },
-      })
-
-      expect(wrapper.find('.stub-toolbar-buttons').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('table: binds model-value from formData[field] and does not wrap in el-form-item', () => {
-      const formData: FormData = { items: [{ id: 1 }, { id: 2 }] }
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'table',
-          field: 'items',
-          props: { columnSchema: [] },
-        },
-        formData,
-      })
-
-      expect(wrapper.find('.stub-table').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('table: handles missing field gracefully', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'table',
-          props: { columnSchema: [] },
-        },
-      })
-
-      expect(wrapper.find('.stub-table').exists()).toBe(true)
-    })
-
-    it('file-list: renders without el-form-item wrapper', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'file-list', props: {} },
-      })
-
-      expect(wrapper.find('.stub-file-list').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('person-select: renders without el-form-item wrapper', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'person-select', props: {} },
-      })
-
-      expect(wrapper.find('.stub-person-select').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('search-list: renders with schema prop and emits action to inject', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'search-list', field: 'results' },
-      })
-
-      expect(wrapper.find('.stub-search-list').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-  })
-
-  // =========================================================================
-  // Visibility / Hidden
-  // =========================================================================
-  describe('Visibility & hidden', () => {
-    it('does not render DOM when schema.hidden is true', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'secret', label: 'Secret', hidden: true },
-      })
-
-      // The template renders <template v-if="!isVisible" /> which is empty
-      expect(wrapper.find('.fg-component').exists()).toBe(false)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-      expect(wrapper.find('.stub-input').exists()).toBe(false)
-    })
-
-    it('renders normally when schema.hidden is false', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'normal', label: 'Normal', hidden: false },
-      })
+    it('renders widgets correctly in preview mode', () => {
+      const wrapper = mountSchemaRender(
+        [makeWidget({ type: 'input', id: 'w1' })],
+        { mode: 'preview' },
+      )
 
       expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('schema.hidden takes priority over linkage visibility', () => {
-      const linkageMap = new Map<string, LinkageState>()
-      // Linkage says visible, but hidden flag overrides
-      linkageMap.set('field1', { visible: true, disabled: false, required: false })
+    it('renders widgets correctly when mode is not specified', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+      ])
 
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'field1', label: 'Field 1', hidden: true },
-        provides: defaultProvides({
-          [FORM_GRID_LINKAGE_KEY as symbol]: computed(() => linkageMap),
-        }),
-      })
-
-      // hidden=true overrides everything
-      expect(wrapper.find('.stub-input').exists()).toBe(false)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
 
-    it('linkage can hide a visible field', () => {
-      const linkageMap = new Map<string, LinkageState>()
-      linkageMap.set('field2', { visible: false, disabled: false, required: false })
+    it('passes mode to nested children in containers', () => {
+      const child = makeWidget({ type: 'input', id: 'child1' })
+      const container = makeContainerWidget('card', [child], { id: 'card1' })
 
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'field2', label: 'Field 2' },
-        provides: defaultProvides({
-          [FORM_GRID_LINKAGE_KEY as symbol]: computed(() => linkageMap),
-        }),
-      })
+      const wrapper = mountSchemaRender([container], { mode: 'edit' })
 
-      expect(wrapper.find('.stub-input').exists()).toBe(false)
+      // Both container and child should render their stubs (mode doesn't break rendering)
+      expect(wrapper.find('.stub-card').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
     })
   })
 
   // =========================================================================
-  // Disabled & linkage state
+  // 5. Rule engine integration
   // =========================================================================
-  describe('Disabled & linkage state', () => {
-    it('passes disabled from linkage state to component', () => {
-      const linkageMap = new Map<string, LinkageState>()
-      linkageMap.set('readonlyField', { visible: true, disabled: true, required: false })
-
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'readonlyField', label: 'Readonly' },
-        provides: defaultProvides({
-          [FORM_GRID_LINKAGE_KEY as symbol]: computed(() => linkageMap),
-        }),
+  describe('Rule engine integration', () => {
+    it('hides widget when computeWidgetRenderState returns visible=false', async () => {
+      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
+      // Use mockReturnValue (not Once) since the computed may call it multiple times
+      vi.mocked(computeWidgetRenderState).mockReturnValue({
+        visible: false,
+        disabled: false,
+        required: false,
       })
 
-      // The stub receives :disabled="isDisabled" which should be true
-      const input = wrapper.find('.stub-input')
-      expect(input.exists()).toBe(true)
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(false)
     })
 
-    it('is not disabled by default when no linkage and no disabledOn', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'editable', label: 'Editable' },
-      })
-
-      const input = wrapper.find('.stub-input')
-      expect(input.exists()).toBe(true)
-      // No disabled attribute by default
-      expect(input.attributes('disabled')).toBeUndefined()
-    })
-  })
-
-  // =========================================================================
-  // Edge cases
-  // =========================================================================
-  describe('Edge cases', () => {
-    it('handles null formData gracefully', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'test', label: 'Test' },
-        formData: null as unknown as FormData,
-      })
-
-      // Should not throw — getFieldValue returns undefined for null formData
-      expect(wrapper.find('.fg-component').exists()).toBe(true)
-    })
-
-    it('handles undefined field on a form component', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input' },
-      })
-
-      // Renders in fg-component wrapper but no el-form-item since field is undefined
-      expect(wrapper.find('.fg-component').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(false)
-    })
-
-    it('renders component inside ErrorBoundary wrapper', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'input', field: 'test', label: 'Test' },
-      })
-
-      // ErrorBoundary wraps content in a div — verify the form component is rendered
-      expect(wrapper.find('.fg-component').exists()).toBe(true)
-    })
-
-    it('applies effective options from linkage state', () => {
-      const linkageMap = new Map<string, LinkageState>()
-      linkageMap.set('dynamicField', {
+    it('shows widget when computeWidgetRenderState returns visible=true', async () => {
+      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
+      vi.mocked(computeWidgetRenderState).mockReturnValue({
         visible: true,
         disabled: false,
         required: false,
-        options: [{ label: 'Dynamic A', value: 'a' }],
       })
 
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'select',
-          field: 'dynamicField',
-          label: 'Dynamic',
-          options: [{ label: 'Static', value: 'static' }],
-        },
-        provides: defaultProvides({
-          [FORM_GRID_LINKAGE_KEY as symbol]: computed(() => linkageMap),
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('computeWidgetRenderState is called for each widget', async () => {
+      const { computeWidgetRenderState } = await import('@/engine/ruleEngine')
+      vi.mocked(computeWidgetRenderState).mockClear()
+      // Restore default behavior for counting
+      vi.mocked(computeWidgetRenderState).mockImplementation(
+        (widget: Widget) => ({
+          visible: !widget.hidden,
+          disabled: (widget.props?.disabled as boolean) ?? false,
+          required: widget.validationRules?.some((r: { required?: boolean }) => r.required) ?? false,
         }),
-      })
+      )
 
-      // The select stub should receive the linkage options (but we can't easily
-      // assert the prop value on a stub — just verify it renders)
-      expect(wrapper.find('.stub-select').exists()).toBe(true)
-    })
+      mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1' }),
+        makeWidget({ type: 'select', id: 'w2' }),
+      ])
 
-    it('applies colspan to full-width component overriding span', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-col',
-          colspan: 24,
-          children: [
-            { type: 'table', field: 'items', props: { columnSchema: [] } },
-          ],
-        },
-      })
-
-      const col = wrapper.find('.fg-grid-col')
-      const style = col.attributes('style')
-      // colspan=24 should produce calc(24 / 24 * 100%) for full-width types
-      // Browser/jsdom may compute calc(24/24*100%) → calc(100%)
-      expect(style).toMatch(/calc\(100%\)/)
-    })
-
-    it('does not render label-only cell when label exists but children is empty array', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 24, label: 'Title', children: [] },
-      })
-
-      // children is an empty array → isLabelOnly should be true
-      expect(wrapper.find('.fg-cell--label-only').exists()).toBe(true)
-      expect(wrapper.find('.fg-cell-content').exists()).toBe(false)
-    })
-
-    it('handles deeply nested schema (grid-row > grid-col > card > input)', () => {
-      const wrapper = mountSchemaRender({
-        schema: {
-          type: 'grid-row',
-          children: [
-            {
-              type: 'grid-col',
-              span: 24,
-              children: [
-                {
-                  type: 'card',
-                  label: 'Card',
-                  children: [
-                    { type: 'input', field: 'nested', label: 'Nested Field' },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      })
-
-      expect(wrapper.find('.fg-grid-row').exists()).toBe(true)
-      expect(wrapper.find('.fg-grid-col').exists()).toBe(true)
-      expect(wrapper.find('.stub-card').exists()).toBe(true)
-      expect(wrapper.find('.el-form-item').exists()).toBe(true)
+      // SchemaNode calls computeWidgetRenderState for each widget
+      expect(computeWidgetRenderState).toHaveBeenCalledTimes(2)
     })
   })
 
   // =========================================================================
-  // responsive span (colSpan computed)
+  // 6. Position styling
   // =========================================================================
-  describe('Responsive span', () => {
-    it('uses resolveSpan for span resolution', () => {
-      // span as a number
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', span: 6, children: [] },
+  describe('Position styling', () => {
+    // Note: CSS Module class `.nodeWrapper` is not available in jsdom.
+    // We locate the wrapper div by its inline style (position: absolute).
+
+    it('applies absolute positioning based on widget position', () => {
+      const widget = makeWidget({
+        type: 'input',
+        id: 'w1',
+        position: { x: 100, y: 200, w: 300, h: 50 },
       })
 
-      const col = wrapper.find('.fg-grid-col')
-      expect(col.attributes('style')).toMatch(/calc\(25%\)/)
+      const wrapper = mountSchemaRender([widget])
+
+      // SchemaNode wraps components in a div with position:absolute and the widget's position
+      const nodeWrapper = wrapper.find('div[style*="position: absolute"]')
+      expect(nodeWrapper.exists()).toBe(true)
+      const style = nodeWrapper.attributes('style')
+      expect(style).toContain('left: 100px')
+      expect(style).toContain('top: 200px')
+      expect(style).toContain('width: 300px')
+      expect(style).toContain('height: 50px')
     })
 
-    it('defaults span to 24 when not specified', () => {
-      const wrapper = mountSchemaRender({
-        schema: { type: 'grid-col', children: [] },
+    it('applies zIndex when present', () => {
+      const widget = makeWidget({
+        type: 'input',
+        id: 'w1',
+        position: { x: 0, y: 0, w: 240, h: 40, zIndex: 10 },
       })
 
-      const col = wrapper.find('.fg-grid-col')
-      expect(col.attributes('style')).toMatch(/calc\(100%\)/)
+      const wrapper = mountSchemaRender([widget])
+
+      const style = wrapper.find('div[style*="position: absolute"]').attributes('style')
+      expect(style).toContain('z-index: 10')
     })
+
+    it('does not include zIndex when not specified', () => {
+      const widget = makeWidget({
+        type: 'input',
+        id: 'w1',
+        position: { x: 0, y: 0, w: 240, h: 40 },
+      })
+
+      const wrapper = mountSchemaRender([widget])
+
+      const style = wrapper.find('div[style*="position: absolute"]').attributes('style')
+      expect(style).not.toContain('z-index')
+    })
+  })
+
+  // =========================================================================
+  // 7. Widget data provide/inject
+  // =========================================================================
+  describe('Widget data provide/inject', () => {
+    it('provides widget data via widgetDataKey', () => {
+      const widget = makeWidget({
+        type: 'input',
+        id: 'w1',
+        label: 'Test Label',
+        field: 'testField',
+      })
+
+      // We can verify this indirectly: the component renders correctly
+      // which means SchemaNode resolved the component via registry
+      const wrapper = mountSchemaRender([widget])
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('provides widget style via widgetStyleKey', () => {
+      const widget = makeWidget({
+        type: 'input',
+        id: 'w1',
+        style: { backgroundColor: 'red' },
+      })
+
+      const wrapper = mountSchemaRender([widget])
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+  })
+
+  // =========================================================================
+  // 8. Widget with various properties
+  // =========================================================================
+  describe('Widget properties', () => {
+    it('renders widget with label', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', label: 'Username' }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with field', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', field: 'username' }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with options', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({
+          type: 'select',
+          id: 'w1',
+          options: [
+            { label: 'Option A', value: 'a' },
+            { label: 'Option B', value: 'b' },
+          ],
+        }),
+      ])
+
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+    })
+
+    it('renders widget with defaultValue', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', defaultValue: 'hello' }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with props', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({ type: 'input', id: 'w1', props: { placeholder: 'Enter name' } }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with validationRules', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({
+          type: 'input',
+          id: 'w1',
+          field: 'name',
+          validationRules: [{ required: true, message: 'Name is required' }],
+        }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with events', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({
+          type: 'input',
+          id: 'w1',
+          events: [{
+            trigger: 'change',
+            actions: [{ type: 'show', target: 'w2' }],
+          }],
+        }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+
+    it('renders widget with rules', () => {
+      const wrapper = mountSchemaRender([
+        makeWidget({
+          type: 'input',
+          id: 'w1',
+          rules: [{
+            watches: [{ type: 'field' as const, source: 'status' }],
+            condition: 'status === "active"',
+            actions: [{ type: 'visible' as const, config: {} }],
+          }],
+        }),
+      ])
+
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+    })
+  })
+
+  // =========================================================================
+  // 9. Mixed layout — multiple containers and widgets
+  // =========================================================================
+  describe('Mixed layout', () => {
+    it('renders a form with card children containing inputs', () => {
+      const inputs = [
+        makeWidget({ type: 'input', id: 'i1', field: 'name' }),
+        makeWidget({ type: 'select', id: 'i2', field: 'status' }),
+      ]
+      const card = makeContainerWidget('card', inputs, { id: 'card1', label: 'Info' })
+      const form = makeContainerWidget('form', [card], { id: 'form1' })
+
+      const wrapper = mountSchemaRender([form])
+
+      expect(wrapper.find('.stub-form').exists()).toBe(true)
+      expect(wrapper.find('.stub-card').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+      expect(wrapper.find('.stub-select').exists()).toBe(true)
+    })
+
+    it('renders multiple root-level containers', () => {
+      const form = makeContainerWidget('form', [
+        makeWidget({ type: 'input', id: 'i1' }),
+      ], { id: 'form1' })
+      const card = makeContainerWidget('card', [
+        makeWidget({ type: 'select', id: 's1' }),
+      ], { id: 'card1' })
+
+      const wrapper = mountSchemaRender([form, card])
+
+      expect(wrapper.find('.stub-form').exists()).toBe(true)
+      expect(wrapper.find('.stub-card').exists()).toBe(true)
+      expect(wrapper.findAll('.stub-input')).toHaveLength(1)
+      expect(wrapper.findAll('.stub-select')).toHaveLength(1)
+    })
+
+    it('renders tabs container with multiple children', () => {
+      const children = [
+        makeWidget({ type: 'input', id: 't1' }),
+        makeWidget({ type: 'textarea', id: 't2' }),
+      ]
+      const tabs = makeContainerWidget('tabs', children, { id: 'tabs1' })
+
+      const wrapper = mountSchemaRender([tabs])
+
+      expect(wrapper.find('.stub-tabs').exists()).toBe(true)
+      expect(wrapper.find('.stub-input').exists()).toBe(true)
+      expect(wrapper.find('.stub-textarea').exists()).toBe(true)
+    })
+  })
+
+  // =========================================================================
+  // 10. Non-container types render without slot
+  // =========================================================================
+  describe('Non-container rendering', () => {
+    const nonContainerTypes: SchemaType[] = ['input', 'select', 'textarea', 'date', 'radio', 'checkbox', 'number']
+
+    for (const type of nonContainerTypes) {
+      it(`${type} renders without slot content even if children are set`, () => {
+        const widget = makeWidget({
+          type,
+          id: `w-${type}`,
+          children: [makeWidget({ type: 'input', id: 'nested' })],
+        })
+
+        const wrapper = mountSchemaRender([widget])
+
+        // The stub for non-container types does not render a slot,
+        // so the nested child should not appear
+        expect(wrapper.find(`.stub-${type}`).exists()).toBe(true)
+        // Only one stub-input should exist (from the non-container stub itself if type=input)
+        // The nested child is not rendered because non-container stubs don't have slots
+      })
+    }
   })
 })

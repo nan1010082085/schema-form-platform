@@ -11,6 +11,7 @@ import router from './router'
 import { useAppStore } from './stores/app'
 import { createRequestInstance, setTokenGetter } from './utils/request'
 import { configureApiClient } from './utils/apiClient'
+import { registerAllWidgets } from './widgets'
 
 let app: VueApp | null = null
 let pinia: Pinia | null = null
@@ -23,11 +24,13 @@ function render(props: QiankunProps = {}) {
   app.use(pinia)
   app.use(router)
   app.use(ElementPlus)
+  registerAllWidgets()
 
   // 初始化 Schema API 客户端（qiankun 和 standalone 都需要）
   configureApiClient({
     baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
     getToken: () => useAppStore(pinia!).requestContext.token,
+    useMock: import.meta.env.VITE_USE_MOCK === 'true',
   })
 
   const mountEl = container
@@ -62,6 +65,7 @@ renderWithQiankun({
     configureApiClient({
       baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
       getToken: () => useAppStore(pinia!).requestContext.token,
+      useMock: import.meta.env.VITE_USE_MOCK === 'true',
     })
   },
   async unmount() {
