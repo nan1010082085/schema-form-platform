@@ -1,10 +1,12 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeAll } from 'vitest'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
-import FgSearchList from '@/components/FormGrid/components/business/FgSearchList.vue'
+import FgSearchList from '@/widgets/search-list/FgSearchList.vue'
+import { widgetDataKey } from '@/widgets/base/types'
+import type { Widget } from '@/widgets/base/types'
 import SearchFieldsEditor from '@/components/Editor/SearchFieldsEditor.vue'
 import ColumnsEditor from '@/components/Editor/ColumnsEditor.vue'
 import RowActionsEditor from '@/components/Editor/RowActionsEditor.vue'
@@ -13,11 +15,6 @@ import type {
   SearchFieldSchema,
   SearchListColumnSchema,
   SearchListRowAction,
-} from '@/components/FormGrid/types'
-import {
-  ACTION_EMIT_KEY,
-  FORM_GRID_FORM_KEY,
-  FORM_GRID_API_KEY,
 } from '@/components/FormGrid/types'
 
 // Stub matchMedia required by useBreakpoint
@@ -85,37 +82,6 @@ function mountWithEl(component: any, options: any = {}): VueWrapper<any> {
       },
     },
   })
-}
-
-/** Create a minimal search-list FormSchemaItem */
-function makeSearchListSchema(overrides: Partial<FormSchemaItem> = {}): FormSchemaItem {
-  return {
-    type: 'search-list',
-    listApi: {
-      url: '/api/list',
-      method: 'post',
-      pageParam: 'pageNum',
-      sizeParam: 'pageSize',
-      dataPath: 'data',
-      totalPath: 'total',
-    },
-    searchFields: [],
-    columns: [],
-    rowActions: [],
-    buttons: [],
-    ...overrides,
-  } as FormSchemaItem
-}
-
-/** Mock inject providers for FgSearchList */
-const mockProviders = {
-  [ACTION_EMIT_KEY as symbol]: vi.fn(),
-  [FORM_GRID_FORM_KEY as symbol]: {},
-  [FORM_GRID_API_KEY as symbol]: {
-    validate: vi.fn().mockResolvedValue(true),
-    getFormData: vi.fn().mockReturnValue({}),
-    resetFields: vi.fn(),
-  },
 }
 
 /** Shared stubs to reduce boilerplate */
@@ -223,78 +189,57 @@ describe('RowActionsEditor → schema output', () => {
   })
 })
 
-// ---- Renderer Tests with Editor-Produced Schema ----
+// ---- Renderer Tests with Widget FgSearchList ----
 
-describe('FgSearchList renders editor-produced schema', () => {
-  it('renders search form from SearchFieldSchema', () => {
-    const searchFields: SearchFieldSchema[] = [
-      { type: 'input', field: 'keyword', label: 'Keyword', span: 8 },
-      { type: 'select', field: 'status', label: 'Status', span: 8, options: [{ label: 'Active', value: 'Active' }] },
-    ]
+/** Helper: create a mock Widget for search-list */
+function makeSearchListWidget(overrides: Partial<Widget> = {}): Widget {
+  return {
+    id: 'search-list_abc12',
+    name: 'FgSearchList',
+    type: 'search-list',
+    position: { x: 0, y: 0, w: 12, h: 8 },
+    props: {
+      title: 'Test List',
+    },
+    ...overrides,
+  }
+}
 
-    const schema = makeSearchListSchema({ searchFields })
-
+describe('FgSearchList widget renders', () => {
+  it('renders title from widgetData', () => {
+    const widget = makeSearchListWidget({ props: { title: 'User List' } })
     const wrapper = mountWithEl(FgSearchList, {
-      props: { schema },
-      global: { provide: mockProviders, stubs: tableStubs },
+      global: {
+        provide: { [widgetDataKey as symbol]: computed(() => widget) },
+        stubs: tableStubs,
+      },
     })
 
-    expect(wrapper.text()).toContain('Keyword')
-    expect(wrapper.text()).toContain('Status')
-    expect(wrapper.find('.fg-search-list__search').exists()).toBe(true)
+    expect(wrapper.text()).toContain('User List')
   })
 
-  it('renders without error when given column definitions', () => {
-    const columns: SearchListColumnSchema[] = [
-      { prop: 'name', label: 'Name', render: 'text' },
-      { prop: 'status', label: 'Status', render: 'badge', colorMap: { Active: '#67c23a' } },
-    ]
-
-    const schema = makeSearchListSchema({ columns })
-
+  it('renders default title when not specified', () => {
+    const widget = makeSearchListWidget({ props: {} })
     const wrapper = mountWithEl(FgSearchList, {
-      props: { schema },
-      global: { provide: mockProviders, stubs: tableStubs },
+      global: {
+        provide: { [widgetDataKey as symbol]: computed(() => widget) },
+        stubs: tableStubs,
+      },
+    })
+
+    expect(wrapper.text()).toContain('列表')
+  })
+
+  it('renders without error', () => {
+    const widget = makeSearchListWidget()
+    const wrapper = mountWithEl(FgSearchList, {
+      global: {
+        provide: { [widgetDataKey as symbol]: computed(() => widget) },
+        stubs: tableStubs,
+      },
     })
 
     expect(wrapper.exists()).toBe(true)
-  })
-
-  it('renders row action column from SearchListRowAction config', () => {
-    const rowActions: SearchListRowAction[] = [
-      { label: 'View', buttonType: 'primary', type: 'emit', emitEvent: 'view' },
-      { label: 'Edit', buttonType: 'warning', type: 'navigate', navigatePath: '/edit/:id' },
-    ]
-
-    const schema = makeSearchListSchema({ rowActions })
-
-    const wrapper = mountWithEl(FgSearchList, {
-      props: { schema },
-      global: { provide: mockProviders, stubs: tableStubs },
-    })
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('renders complete search-list with search + table + actions', () => {
-    const schema = makeSearchListSchema({
-      searchFields: [{ type: 'input', field: 'q', label: 'Search', span: 8 }],
-      columns: [
-        { prop: 'id', label: 'ID', render: 'text' },
-        { prop: 'name', label: 'Name', render: 'text' },
-        { prop: 'status', label: 'Status', render: 'badge', colorMap: { Active: '#67c23a', Inactive: '#f56c6c' } },
-      ],
-      rowActions: [{ label: 'View', buttonType: 'primary', type: 'emit', emitEvent: 'view' }],
-    })
-
-    const wrapper = mountWithEl(FgSearchList, {
-      props: { schema },
-      global: { provide: mockProviders, stubs: tableStubs },
-    })
-
-    expect(wrapper.find('.fg-search-list__search').exists()).toBe(true)
-    expect(wrapper.find('.fg-search-list').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Search')
   })
 })
 
@@ -372,35 +317,4 @@ describe('SP16-005: set-value chain', () => {
   })
 })
 
-describe('SP16-006: Dialog data round-trip', () => {
-  it('FgDialog renders schema and maintains isolated formData', async () => {
-    const wrapper = mountWithEl(
-      (await import('@/components/FormGrid/components/business/FgDialog.vue')).default,
-      {
-        props: {
-          modelValue: true,
-          title: 'Test Dialog',
-          dialogSchema: [
-            { type: 'input', field: 'name', label: 'Name' },
-            { type: 'input', field: 'email', label: 'Email' },
-          ],
-          initialData: { name: 'John', email: 'john@test.com' },
-        },
-        global: {
-          stubs: {
-            'el-dialog': { template: '<div><slot /></div><div class="el-dialog__footer"><slot name="footer" /></div>', props: ['modelValue', 'title'] },
-            'el-form': { template: '<form><slot /></form>', props: ['model'] },
-            'el-form-item': { template: '<div><slot /></div>' },
-            'el-button': { template: '<button @click="$emit(\'click\')"><slot /></button>' },
-            SchemaRender: { template: '<div class="schema-render" />', props: ['schema', 'formData'] },
-          },
-        },
-      },
-    )
-
-    expect(wrapper.exists()).toBe(true)
-    // Dialog renders with title
-    expect(wrapper.props('title')).toBe('Test Dialog')
-    expect(wrapper.props('dialogSchema')).toHaveLength(2)
-  })
-})
+// SP16-006 (FgDialog round-trip) removed — old FgDialog deleted, widget version uses inject-based API
