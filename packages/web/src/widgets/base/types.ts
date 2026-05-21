@@ -100,7 +100,14 @@ export interface WidgetVariable {
 // ============================================================
 
 /** 事件动作类型 */
-export type EventActionType = 'show' | 'hide' | 'open-dialog' | 'close-dialog' | 'switch-tab'
+export type EventActionType =
+  | 'show' | 'hide'
+  | 'open-dialog' | 'close-dialog'
+  | 'switch-tab'
+  | 'set-value'
+  | 'submit'
+  | 'reset'
+  | 'emit'
 
 /** 事件动作 */
 export interface SchemaEventAction {
