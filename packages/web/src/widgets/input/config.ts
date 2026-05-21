@@ -3,6 +3,7 @@ import type { WidgetConfig } from '../base/types'
 export const inputConfig: WidgetConfig = {
   name: 'FgInput',
   displayName: '输入框',
+  description: '单行文本输入框，支持 placeholder、清空、禁用等配置',
   defaultStyle: {
     width: '240px',
     height: '32px',

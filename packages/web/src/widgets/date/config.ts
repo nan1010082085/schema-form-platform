@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const dateConfig: WidgetConfig = {
   name: 'FgDate',
   displayName: '日期选择',
+  description: '日期选择器，支持日期格式配置',
   defaultStyle: {
     width: '240px',
     height: '32px',

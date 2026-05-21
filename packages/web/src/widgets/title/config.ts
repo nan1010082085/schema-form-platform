@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const titleConfig: WidgetConfig = {
   name: 'FgTitle',
   displayName: '标题',
+  description: '标题组件，用于页面或区块标题展示',
   defaultStyle: {
     width: '100%',
     fontSize: '20px',

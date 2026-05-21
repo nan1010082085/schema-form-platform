@@ -9,6 +9,7 @@ export interface TableColumn {
 export const tableConfig: WidgetConfig = {
   name: 'FgTable',
   displayName: '表格',
+  description: '数据表格组件，支持列配置和操作按钮',
   defaultStyle: {
     width: '100%',
     height: '300px',

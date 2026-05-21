@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const selectConfig: WidgetConfig = {
   name: 'FgSelect',
   displayName: '下拉选择',
+  description: '下拉选择器，支持静态选项和动态数据源加载',
   defaultStyle: {
     width: '240px',
     height: '32px',

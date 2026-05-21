@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const textareaConfig: WidgetConfig = {
   name: 'FgTextarea',
   displayName: '文本域',
+  description: '多行文本输入框，支持行数配置',
   defaultStyle: {
     width: '240px',
     fontSize: '14px',

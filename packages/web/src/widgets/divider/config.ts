@@ -2,6 +2,7 @@ import type { WidgetConfig } from '../base/types'
 export const dividerConfig: WidgetConfig = {
   name: 'FgDivider',
   displayName: '分割线',
+  description: '分割线组件，用于内容区域分隔',
   defaultStyle: {
     width: '100%',
   },
