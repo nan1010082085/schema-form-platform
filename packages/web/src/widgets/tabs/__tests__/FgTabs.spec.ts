@@ -153,9 +153,9 @@ describe('FgTabs', () => {
 
   // Dimension 4: Config panel
   describe('配置面板', () => {
-    it('configPanels 为空（容器无事件/规则/数据源）', () => {
+    it('configPanels 包含 events', () => {
       const item = getWidget('tabs')
-      expect(item?.config.configPanels).toBeUndefined()
+      expect(item?.config.configPanels).toContain('events')
     })
   })
 })

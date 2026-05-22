@@ -38,4 +38,7 @@ const dynamicStyle = computed(() => ({
   align-items: center;
   gap: 16px;
 }
+:deep(.el-checkbox) {
+  height: 100%;
+}
 </style>

@@ -4,7 +4,7 @@ export const transferConfig: WidgetConfig = {
   name: 'FgTransfer',
   displayName: '穿梭框',
   description: '穿梭框组件，支持左右列表数据穿梭',
-  defaultStyle: { width: '600px', height: '300px' },
+  defaultStyle: { width: '700px', height: '300px' },
   defaultProps: {
     titles: ['待选', '已选'],
     filterable: true,

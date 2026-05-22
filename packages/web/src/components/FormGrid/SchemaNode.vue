@@ -58,12 +58,17 @@ const INTERACTIVE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
 const FORM_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'richtext', 'upload',
-  'date-time-slot', 'person-select', 'dept-select',
+  'date-time-slot',
 ])
 
 /** 输入类组件（支持 focus/blur 事件） */
 const INPUT_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'select', 'number', 'textarea', 'richtext',
+])
+
+/** 可点击组件（支持 click 事件） */
+const CLICKABLE_TYPES: ReadonlySet<SchemaType> = new Set([
+  'button', 'title', 'divider', 'spacer', 'banner',
 ])
 
 const logger = useLogger('SchemaNode')
@@ -218,7 +223,7 @@ const wrapperStyle = computed(() => {
       @change="FORM_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('change', $event)"
       @focus="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('focus')"
       @blur="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('blur')"
-      @click="widget.type === 'button' && handleWidgetEvent('click')"
+      @click="CLICKABLE_TYPES.has(widget.type) && handleWidgetEvent('click')"
     >
       <!-- 表单校验：有 field + validationRules 时包裹 el-form-item -->
       <el-form-item

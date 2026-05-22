@@ -6,6 +6,7 @@ export const cardConfig: WidgetConfig = {
   defaultStyle: {
     width: '100%',
   },
+  configPanels: ['events'],
   defaultProps: {
     title: '卡片标题',
     shadow: 'hover' as const,

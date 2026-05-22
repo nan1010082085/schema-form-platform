@@ -5,7 +5,7 @@ export const radioConfig: WidgetConfig = {
   description: '单选框组，支持静态选项和动态数据源',
   defaultStyle: {
     width: '240px',
-    height: '32px',
+    height: '44px',
     fontSize: '14px',
   },
   defaultProps: {

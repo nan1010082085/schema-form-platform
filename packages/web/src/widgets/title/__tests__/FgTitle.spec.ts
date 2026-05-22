@@ -136,8 +136,8 @@ describe('FgTitle', () => {
 
   // Config panels
   describe('配置面板声明', () => {
-    it('无 events/rules/api 面板', () => {
-      expect(titleConfig.configPanels).toBeUndefined()
+    it('configPanels 包含 events', () => {
+      expect(titleConfig.configPanels).toContain('events')
     })
   })
 })

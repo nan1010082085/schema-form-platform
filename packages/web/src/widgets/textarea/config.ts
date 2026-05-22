@@ -5,6 +5,7 @@ export const textareaConfig: WidgetConfig = {
   description: '多行文本输入框，支持行数配置',
   defaultStyle: {
     width: '240px',
+    height: '80px',
     fontSize: '14px',
   },
   defaultProps: {

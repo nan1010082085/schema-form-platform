@@ -1,8 +1,4 @@
-/**
- * useWorkerRequest — Worker 请求代理（最小实现）
- *
- * 当前为 fetch 直接实现，待 RequestWorker 完成后迁移到 Web Worker。
- */
+/** useWorkerRequest — fetch 请求封装 */
 import { ref, readonly } from 'vue'
 import { useLogger } from './useLogger'
 
@@ -16,10 +12,7 @@ export interface RequestConfig {
 
 export interface WorkerRequestAPI {
   request: (config: RequestConfig) => Promise<unknown>
-  cancel: () => void
-  cancelAll: () => void
   pendingCount: Readonly<Ref<number>>
-  isReady: Readonly<Ref<boolean>>
 }
 
 function extractByPath(data: unknown, path: string): unknown {
@@ -34,7 +27,6 @@ function extractByPath(data: unknown, path: string): unknown {
 export function useWorkerRequest(): WorkerRequestAPI {
   const logger = useLogger('WorkerRequest')
   const pendingCount = ref(0)
-  const isReady = ref(true)
 
   async function request(config: RequestConfig): Promise<unknown> {
     pendingCount.value++
@@ -78,8 +70,5 @@ export function useWorkerRequest(): WorkerRequestAPI {
     }
   }
 
-  function cancel() { /* no-op until Worker migration */ }
-  function cancelAll() { /* no-op until Worker migration */ }
-
-  return { request, cancel, cancelAll, pendingCount: readonly(pendingCount), isReady }
+  return { request, pendingCount: readonly(pendingCount) }
 }

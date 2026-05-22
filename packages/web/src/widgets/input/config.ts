@@ -6,7 +6,7 @@ export const inputConfig: WidgetConfig = {
   description: '单行文本输入框，支持 placeholder、清空、禁用等配置',
   defaultStyle: {
     width: '240px',
-    height: '32px',
+    height: '44px',
     fontSize: '14px',
   },
   defaultProps: {

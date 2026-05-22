@@ -6,8 +6,7 @@
  *   2. Hidden visibility — widget.hidden controls rendering
  *   3. Container rendering — containers render children recursively
  *   4. Mode prop — edit vs preview mode adds/removes outline styles
- *   5. Rule engine integration — computeWidgetRenderState controls visibility
- *   6. Edge cases — empty widgets, unknown types, position styling
+ *   5. Edge cases — empty widgets, unknown types, position styling
  */
 import { describe, it, expect, vi, beforeEach, type Component } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -64,8 +63,6 @@ vi.mock('@/widgets/registry', () => {
     spacer: makeStub('stub-spacer'),
     'toolbar-buttons': makeStub('stub-toolbar-buttons'),
     'file-list': makeStub('stub-file-list'),
-    'person-select': makeStub('stub-person-select'),
-    'dept-select': makeStub('stub-dept-select'),
     transfer: makeStub('stub-transfer'),
     'detail-form': makeStub('stub-detail-form'),
     banner: makeStub('stub-banner'),
@@ -104,18 +101,6 @@ vi.mock('@/widgets/registry', () => {
     generateWidgetId: vi.fn(() => 'generated-id'),
   }
 })
-
-// ---------------------------------------------------------------------------
-// Mock ruleEngine — kept for backward compatibility (not used by SchemaNode anymore)
-// ---------------------------------------------------------------------------
-vi.mock('@/engine/ruleEngine', () => ({
-  computeWidgetRenderState: vi.fn((widget: Widget) => ({
-    visible: !widget.hidden,
-    disabled: (widget.props?.disabled as boolean) ?? false,
-    required: widget.validationRules?.some((r: { required?: boolean }) => r.required) ?? false,
-  })),
-  evaluateWidgetRules: vi.fn(),
-}))
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -129,8 +129,9 @@ describe('FgTreeLayout', () => {
 
   // Config panels
   describe('配置面板声明', () => {
-    it('无 configPanels', () => {
-      expect(treeLayoutConfig.configPanels).toBeUndefined()
+    it('configPanels 包含 events 和 api', () => {
+      expect(treeLayoutConfig.configPanels).toContain('events')
+      expect(treeLayoutConfig.configPanels).toContain('api')
     })
   })
 })

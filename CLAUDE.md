@@ -94,7 +94,7 @@ pnpm db:seed              # 种子数据
 - **状态管理**: Pinia（`useSchemaStore` — schema CRUD；`useEditorStore` — 编辑器画布状态、撤销/重做）
 - **路由**: Vue Router 4，支持 qiankun 微前端模式（`/child/schemaForm/` 前缀）
 - **API 通信**: `src/utils/apiClient.ts` — 基于 fetch 的薄封装，`ApiError` 统一错误类型。通过 `configureApiClient()` 初始化 baseUrl 和 token
-- **编辑器核心**: `src/components/FormGrid/` — schema 驱动的表单组件系统，支持拖拽编辑
+- **编辑器核心**: `src/widgets/` — widget 注册表 + 组件实现；`src/components/FormGrid/` — schema 驱动的渲染引擎，支持拖拽编辑
 - **路径别名**: `@/` → `src/`
 
 ### 后端 (`packages/server`)

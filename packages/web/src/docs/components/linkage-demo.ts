@@ -24,9 +24,13 @@ export const linkageDemoSchema: import('@/components/FormGrid/types').FormSchema
 
   // ---- ① visible: checkbox勾选"高级审批"时显示审批人 ----
   {
-    type: 'person-select',
+    type: 'select',
     field: 'approver',
     label: '审批人',
+    options: [
+      { label: '张三', value: 'zhangsan' },
+      { label: '李四', value: 'lisi' },
+    ],
     linkages: [
       {
         type: 'visible',

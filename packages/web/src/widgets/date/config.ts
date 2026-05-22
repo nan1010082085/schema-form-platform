@@ -5,7 +5,7 @@ export const dateConfig: WidgetConfig = {
   description: '日期选择器，支持日期格式配置',
   defaultStyle: {
     width: '240px',
-    height: '32px',
+    height: '44px',
     fontSize: '14px',
   },
   defaultProps: {
