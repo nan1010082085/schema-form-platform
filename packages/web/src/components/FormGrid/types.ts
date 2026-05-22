@@ -170,8 +170,6 @@ export type SchemaType =
   | 'pagination'
   | 'file-list'
   | 'file-preview'
-  | 'person-select'
-  | 'dept-select'
   | 'transfer'
   | 'detail-form'
   | 'banner'
@@ -486,6 +484,10 @@ export interface ComponentStyle {
   borderLeft?: string
   backgroundColor?: string
   borderRadius?: string
+  borderTopLeftRadius?: string
+  borderTopRightRadius?: string
+  borderBottomRightRadius?: string
+  borderBottomLeftRadius?: string
   boxShadow?: string
   opacity?: number
   fontSize?: string

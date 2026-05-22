@@ -16,6 +16,8 @@ import { getWidget } from '../../widgets/registry'
 import { publicStylePanel } from '../../widgets/base/publicSchema'
 import type { Widget, WidgetEvent, WidgetRule, SchemaApiConfig, ConfigPanelType, ArrayFieldSchema, WidgetConfig } from '../../widgets/base/types'
 import PropertyField from './PropertyField.vue'
+import BorderEditor from './BorderEditor.vue'
+import BorderRadiusEditor from './BorderRadiusEditor.vue'
 import TableColumnsEditor from './TableColumnsEditor.vue'
 import type { TableColumn } from '../../widgets/table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
@@ -203,12 +205,22 @@ function toggleSection(key: string) {
 
 // ---- 更新属性 ----
 
+const TOP_LEVEL_KEYS = new Set(['field', 'label'])
+
 function updateProperty(key: string, value: unknown) {
   if (!selectedWidget.value) return
 
   const parts = key.split('.')
   if (parts.length === 1) {
-    widgetStore.updateWidget(selectedWidget.value.id, { [key]: value })
+    if (TOP_LEVEL_KEYS.has(key)) {
+      // field / label 是 Widget 顶层属性
+      widgetStore.updateWidget(selectedWidget.value.id, { [key]: value })
+    } else {
+      // 其他无前缀 key 默认写入 widget.props
+      widgetStore.updateWidget(selectedWidget.value.id, {
+        props: { ...(selectedWidget.value.props ?? {}), [key]: value },
+      })
+    }
   } else if (parts[0] === 'position') {
     widgetStore.updateWidget(selectedWidget.value.id, {
       position: { ...selectedWidget.value.position, [parts[1]]: value },
@@ -222,6 +234,17 @@ function updateProperty(key: string, value: unknown) {
       props: { ...(selectedWidget.value.props ?? {}), [parts[1]]: value },
     })
   }
+}
+
+/**
+ * 样式补丁更新 — BorderEditor / BorderRadiusEditor 发出多字段 patch
+ * 合并到现有 style 对象上
+ */
+function updateStylePatch(patch: Record<string, string>) {
+  if (!selectedWidget.value) return
+  widgetStore.updateWidget(selectedWidget.value.id, {
+    style: { ...(selectedWidget.value.style ?? {}), ...patch },
+  })
 }
 
 // ---- configPanels 声明 ----
@@ -403,6 +426,22 @@ function updateBoardProperty(key: string, value: unknown) {
                 :value="item.value"
                 @update="(v: unknown) => updateProperty(item.key, v)"
               />
+              <!-- 边框可视化编辑器 -->
+              <div v-else-if="item.type === 'border-editor'" :class="$style.columnsSection">
+                <div :class="$style.columnsLabel">{{ item.label }}</div>
+                <BorderEditor
+                  :value="(selectedWidget?.style as Record<string, string>) ?? {}"
+                  @update="updateStylePatch"
+                />
+              </div>
+              <!-- 圆角可视化编辑器 -->
+              <div v-else-if="item.type === 'border-radius-editor'" :class="$style.columnsSection">
+                <div :class="$style.columnsLabel">{{ item.label }}</div>
+                <BorderRadiusEditor
+                  :value="(selectedWidget?.style as Record<string, string>) ?? {}"
+                  @update="updateStylePatch"
+                />
+              </div>
               <PropertyField
                 v-else
                 :label="item.label"
