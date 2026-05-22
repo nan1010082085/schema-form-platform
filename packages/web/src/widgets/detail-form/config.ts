@@ -13,7 +13,7 @@ export const detailFormConfig: WidgetConfig = {
   },
   propertyPanel: {
     basic: ['label'],
-    style: ['width'],
+    style: [],
     props: [
       { key: 'title', label: '标题', type: 'input', default: '详情' },
       { key: 'columns', label: '列数', type: 'number', default: 2 },

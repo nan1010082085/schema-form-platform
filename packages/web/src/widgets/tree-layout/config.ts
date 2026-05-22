@@ -12,7 +12,7 @@ export const treeLayoutConfig: WidgetConfig = {
   },
   propertyPanel: {
     basic: ['label'],
-    style: ['width', 'height'],
+    style: [],
     props: [
       { key: 'title', label: '标题', type: 'input', default: '树形布局' },
       { key: 'showSearch', label: '显示搜索', type: 'switch', default: true },

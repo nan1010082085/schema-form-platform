@@ -108,19 +108,19 @@ describe('FgTitle', () => {
     it('默认左对齐', () => {
       const wrapper = mountWidget()
       const el = wrapper.find('h3')
-      expect((el.element as HTMLElement).style.textAlign).toBe('left')
+      expect((el.element as HTMLElement).style.justifyContent).toBe('left')
     })
 
     it('居中对齐', () => {
       const wrapper = mountWidget({ props: { align: 'center' } })
       const el = wrapper.find('h3')
-      expect((el.element as HTMLElement).style.textAlign).toBe('center')
+      expect((el.element as HTMLElement).style.justifyContent).toBe('center')
     })
 
     it('右对齐', () => {
       const wrapper = mountWidget({ props: { align: 'right' } })
       const el = wrapper.find('h3')
-      expect((el.element as HTMLElement).style.textAlign).toBe('right')
+      expect((el.element as HTMLElement).style.justifyContent).toBe('right')
     })
   })
 

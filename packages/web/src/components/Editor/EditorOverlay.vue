@@ -127,12 +127,13 @@ const selectionStyle = computed(() => {
   const pos = findCanvasPos(widgetStore.widgets, w.id)
   const x = pos?.x ?? w.position.x
   const y = pos?.y ?? w.position.y
+  const delta = getStyleSizeDelta(w)
   return {
     position: 'absolute' as const,
-    left: `${x}px`,
-    top: `${y}px`,
-    width: `${w.position.w}px`,
-    height: `${w.position.h}px`,
+    left: `${x + delta.mx}px`,
+    top: `${y + delta.my}px`,
+    width: `${w.position.w + delta.bw}px`,
+    height: `${w.position.h + delta.bh}px`,
     border: '2px solid #409eff',
     pointerEvents: 'none' as const,
     zIndex: 9999,
@@ -141,6 +142,39 @@ const selectionStyle = computed(() => {
 
 /** 扁平化所有 Widget（含容器内子组件），坐标转为画布绝对坐标 */
 const flatWidgets = computed(() => flattenWidgets(widgetStore.widgets))
+
+// ---- 样式尺寸辅助 ----
+
+function parsePxVal(val?: string): number {
+  if (!val) return 0
+  const m = val.match(/^(\d+(?:\.\d+)?)/)
+  return m ? parseFloat(m[1]) : 0
+}
+
+function getStyleNum(style: Record<string, unknown> | undefined, key: string): number {
+  return parsePxVal(style?.[key] as string | undefined)
+}
+
+/** 计算 widget 的 margin 偏移和 border/padding 扩展尺寸 */
+function getStyleSizeDelta(widget: Widget): { mx: number; my: number; bw: number; bh: number } {
+  const s = widget.style as Record<string, unknown> | undefined
+  if (!s) return { mx: 0, my: 0, bw: 0, bh: 0 }
+
+  const mt = getStyleNum(s, 'marginTop') || getStyleNum(s, 'margin')
+  const mr = getStyleNum(s, 'marginRight') || getStyleNum(s, 'margin')
+  const mb = getStyleNum(s, 'marginBottom') || getStyleNum(s, 'margin')
+  const ml = getStyleNum(s, 'marginLeft') || getStyleNum(s, 'margin')
+
+  // margin 偏移（左上角位移）
+  const mx = ml - mr
+  const my = mt - mb
+
+  // margin 增量（总宽度 = 左margin + 右margin）
+  const marginW = ml + mr
+  const marginH = mt + mb
+
+  return { mx, my, bw: marginW, bh: marginH }
+}
 // ================================================================
 
 const handles: { type: ResizeHandle; style: Record<string, string> }[] = [
@@ -308,14 +342,17 @@ function handleDrop(e: DragEvent) {
       v-for="fw in flatWidgets"
       :key="fw.widget.id"
       :class="$style.hitArea"
-      :style="{
-        position: 'absolute',
-        left: `${fw.canvasX}px`,
-        top: `${fw.canvasY}px`,
-        width: `${fw.widget.position.w}px`,
-        height: `${fw.widget.position.h}px`,
-        zIndex: (fw.widget.position.zIndex ?? 1) + 100 + fw.depth * 10,
-      }"
+      :style="(() => {
+        const d = getStyleSizeDelta(fw.widget)
+        return {
+          position: 'absolute',
+          left: `${fw.canvasX + d.mx}px`,
+          top: `${fw.canvasY + d.my}px`,
+          width: `${fw.widget.position.w + d.bw}px`,
+          height: `${fw.widget.position.h + d.bh}px`,
+          zIndex: (fw.widget.position.zIndex ?? 1) + 100 + fw.depth * 10,
+        }
+      })()"
       @mousedown.stop="handleWidgetMouseDown($event, fw.widget)"
       @click.stop="INTERACTIVE_CONTAINER_TYPES.has(fw.widget.type) && handleInteractiveClick($event, fw.widget)"
       @contextmenu.prevent="showContextMenu($event, fw.widget)"

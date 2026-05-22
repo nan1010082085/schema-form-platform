@@ -476,7 +476,15 @@ export interface ComponentStyle {
   width?: string
   height?: string
   margin?: string
+  marginTop?: string
+  marginRight?: string
+  marginBottom?: string
+  marginLeft?: string
   padding?: string
+  paddingTop?: string
+  paddingRight?: string
+  paddingBottom?: string
+  paddingLeft?: string
   border?: string
   borderTop?: string
   borderRight?: string

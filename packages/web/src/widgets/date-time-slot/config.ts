@@ -14,7 +14,7 @@ export const dateTimeSlotConfig: WidgetConfig = {
   configPanels: ['events', 'rules'] as const,
   propertyPanel: {
     basic: ['field', 'label'],
-    style: ['width'],
+    style: [],
     props: [
       { key: 'startPlaceholder', label: '开始占位', type: 'input', default: '开始时间' },
       { key: 'endPlaceholder', label: '结束占位', type: 'input', default: '结束时间' },

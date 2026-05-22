@@ -7,13 +7,15 @@ const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
 
-const dynamicStyle = computed(() => ({
-  fontSize: widgetStyle.value?.fontSize as string,
-  color: widgetStyle.value?.color as string,
-  backgroundColor: widgetStyle.value?.backgroundColor as string,
-  borderRadius: widgetStyle.value?.borderRadius as string,
-  border: widgetStyle.value?.border as string,
-}))
+const dynamicStyle = computed(() => {
+  const s: Record<string, string> = {}
+  if (widgetStyle.value?.fontSize) s.fontSize = widgetStyle.value.fontSize as string
+  if (widgetStyle.value?.color) s.color = widgetStyle.value.color as string
+  if (widgetStyle.value?.backgroundColor) s.backgroundColor = widgetStyle.value.backgroundColor as string
+  if (widgetStyle.value?.borderRadius) s.borderRadius = widgetStyle.value.borderRadius as string
+  if (widgetStyle.value?.border) s.border = widgetStyle.value.border as string
+  return s
+})
 
 const buttonType = computed(() => (widgetData.value.props?.type as string) || 'default')
 const buttonSize = computed(() => (widgetData.value.props?.size as string) || 'default')

@@ -3,11 +3,9 @@
  * BorderEditor -- 边框样式可视化编辑器
  *
  * 设计：
- * - 中央矩形 + 4 条可点击边线（top/right/bottom/left）
- * - 点击边线切换选中状态（支持多选）
- * - 未选中任何边时，修改应用到全部 4 边（border 简写）
- * - 选中特定边时，仅修改对应边（borderTop/borderRight/...）
- * - 链接模式：所有边联动
+ * - 链接模式（默认）：一组控件（宽度/样式/颜色），四边同步
+ * - 解除链接：点击某边选中，控件仅影响该边
+ * - 选中某边时显示该边的值，未选中时显示简写值
  */
 import { ref, computed } from 'vue'
 import { ElInputNumber, ElColorPicker, ElSelect, ElOption, ElTooltip } from 'element-plus'
@@ -32,10 +30,11 @@ const SIDE_BORDER_MAP: Record<Side, string> = {
   left: 'borderLeft',
 }
 
-const selectedSides = ref<Set<Side>>(new Set())
+/** 当前选中的边（单选），null 表示未选中（使用简写） */
+const activeSide = ref<Side | null>(null)
 const linked = ref(true)
 
-// ---- 从当前值解析边框属性 ----
+// ---- 解析边框属性 ----
 
 function parseBorder(shorthand?: string): { width: number; style: string; color: string } {
   if (!shorthand) return { width: 0, style: 'solid', color: '#000000' }
@@ -46,39 +45,23 @@ function parseBorder(shorthand?: string): { width: number; style: string; color:
   return { width, style, color }
 }
 
-function getCurrentBorder(side?: Side): { width: number; style: string; color: string } {
+function getActiveBorder(): { width: number; style: string; color: string } {
   const v = props.value ?? {}
-  if (side && selectedSides.value.size > 0) {
-    return parseBorder(v[SIDE_BORDER_MAP[side]])
+  if (activeSide.value) {
+    return parseBorder(v[SIDE_BORDER_MAP[activeSide.value]])
   }
   return parseBorder(v.border)
 }
 
-const currentWidth = computed(() => {
-  const border = getCurrentBorder(selectedSides.value.size > 0 ? [...selectedSides.value][0] : undefined)
-  return border.width
-})
-
-const currentStyle = computed(() => {
-  const border = getCurrentBorder(selectedSides.value.size > 0 ? [...selectedSides.value][0] : undefined)
-  return border.style
-})
-
-const currentColor = computed(() => {
-  const border = getCurrentBorder(selectedSides.value.size > 0 ? [...selectedSides.value][0] : undefined)
-  return border.color
-})
+const currentWidth = computed(() => getActiveBorder().width)
+const currentStyle = computed(() => getActiveBorder().style)
+const currentColor = computed(() => getActiveBorder().color)
 
 // ---- 操作 ----
 
-function toggleSide(side: Side) {
-  if (selectedSides.value.has(side)) {
-    selectedSides.value.delete(side)
-  } else {
-    selectedSides.value.add(side)
-  }
-  // force reactivity
-  selectedSides.value = new Set(selectedSides.value)
+function selectSide(side: Side) {
+  // 单选：点击已选中的取消选中，否则选中新边
+  activeSide.value = activeSide.value === side ? null : side
 }
 
 function buildBorderValue(width: number, style: string, color: string): string {
@@ -91,8 +74,8 @@ function applyChange(width?: number, style?: string, color?: string) {
   const c = color ?? currentColor.value
   const borderVal = buildBorderValue(w, s, c)
 
-  if (linked.value || selectedSides.value.size === 0) {
-    // linked or no selection: apply to all sides via shorthand
+  if (linked.value) {
+    // 链接模式：简写，清除所有单边
     emit('update', {
       border: borderVal,
       borderTop: '',
@@ -100,23 +83,21 @@ function applyChange(width?: number, style?: string, color?: string) {
       borderBottom: '',
       borderLeft: '',
     })
+  } else if (activeSide.value) {
+    // 选中了某边：仅修改该边，清除简写
+    emit('update', {
+      border: '',
+      [SIDE_BORDER_MAP[activeSide.value]]: borderVal,
+    })
   } else {
-    // specific sides selected
-    const patch: Record<string, string> = {}
-    for (const side of selectedSides.value) {
-      patch[SIDE_BORDER_MAP[side]] = borderVal
-    }
-    // clear shorthand when per-side is used
-    if (selectedSides.value.size === 4) {
-      patch.border = borderVal
-      patch.borderTop = ''
-      patch.borderRight = ''
-      patch.borderBottom = ''
-      patch.borderLeft = ''
-    } else {
-      patch.border = ''
-    }
-    emit('update', patch)
+    // 未选中任何边：应用到简写
+    emit('update', {
+      border: borderVal,
+      borderTop: '',
+      borderRight: '',
+      borderBottom: '',
+      borderLeft: '',
+    })
   }
 }
 
@@ -125,17 +106,21 @@ function onWidthChange(val: number | undefined) {
 }
 
 function onStyleChange(val: string) {
-  applyChange(undefined, val)
+  const w = currentWidth.value || 1
+  applyChange(w, val)
 }
 
 function onColorChange(val: string | null) {
-  applyChange(undefined, undefined, val ?? '#000000')
+  const w = currentWidth.value || 1
+  applyChange(w, undefined, val ?? '#000000')
 }
 
 function toggleLinked() {
   linked.value = !linked.value
   if (linked.value) {
-    selectedSides.value = new Set()
+    activeSide.value = null
+    // 切回链接模式：用当前值统一四边
+    applyChange()
   }
 }
 
@@ -143,8 +128,7 @@ function toggleLinked() {
 
 function getSideStyle(side: Side): Record<string, string> {
   const v = props.value ?? {}
-  const borderStr = selectedSides.value.size > 0 ? v[SIDE_BORDER_MAP[side]] : undefined
-  const parsed = parseBorder(borderStr || v.border)
+  const parsed = parseBorder(v[SIDE_BORDER_MAP[side]] || v.border)
   if (parsed.width === 0) return {}
   return {
     borderWidth: `${parsed.width}px`,
@@ -154,10 +138,10 @@ function getSideStyle(side: Side): Record<string, string> {
 }
 
 const borderStyleOptions = [
-  { label: 'solid', value: 'solid' },
-  { label: 'dashed', value: 'dashed' },
-  { label: 'dotted', value: 'dotted' },
-  { label: 'none', value: 'none' },
+  { label: '实线', value: 'solid' },
+  { label: '虚线', value: 'dashed' },
+  { label: '点线', value: 'dotted' },
+  { label: '无', value: 'none' },
 ]
 </script>
 
@@ -168,27 +152,27 @@ const borderStyleOptions = [
       <div :class="$style.box">
         <!-- Top -->
         <div
-          :class="[$style.side, $style.sideTop, selectedSides.has('top') && $style.sideActive]"
+          :class="[$style.side, $style.sideTop, activeSide === 'top' && $style.sideActive]"
           :style="getSideStyle('top')"
-          @click="toggleSide('top')"
+          @click="selectSide('top')"
         />
         <!-- Right -->
         <div
-          :class="[$style.side, $style.sideRight, selectedSides.has('right') && $style.sideActive]"
+          :class="[$style.side, $style.sideRight, activeSide === 'right' && $style.sideActive]"
           :style="getSideStyle('right')"
-          @click="toggleSide('right')"
+          @click="selectSide('right')"
         />
         <!-- Bottom -->
         <div
-          :class="[$style.side, $style.sideBottom, selectedSides.has('bottom') && $style.sideActive]"
+          :class="[$style.side, $style.sideBottom, activeSide === 'bottom' && $style.sideActive]"
           :style="getSideStyle('bottom')"
-          @click="toggleSide('bottom')"
+          @click="selectSide('bottom')"
         />
         <!-- Left -->
         <div
-          :class="[$style.side, $style.sideLeft, selectedSides.has('left') && $style.sideActive]"
+          :class="[$style.side, $style.sideLeft, activeSide === 'left' && $style.sideActive]"
           :style="getSideStyle('left')"
-          @click="toggleSide('left')"
+          @click="selectSide('left')"
         />
         <!-- Center label -->
         <div :class="$style.center">
@@ -205,6 +189,14 @@ const borderStyleOptions = [
           <el-icon :size="14"><Link /></el-icon>
         </button>
       </ElTooltip>
+    </div>
+
+    <!-- 选中边提示（仅解除链接模式） -->
+    <div v-if="!linked" :class="$style.sideHint">
+      <template v-if="activeSide">
+        当前编辑：{{ { top: '上边', right: '右边', bottom: '下边', left: '左边' }[activeSide] }}
+      </template>
+      <template v-else>点击边线选择要编辑的边</template>
     </div>
 
     <!-- 编辑控件 -->
@@ -329,6 +321,12 @@ const borderStyleOptions = [
 .centerLabel {
   font-size: 10px;
   color: #909399;
+}
+
+.sideHint {
+  font-size: 11px;
+  color: #909399;
+  text-align: center;
 }
 
 .linkBtn {

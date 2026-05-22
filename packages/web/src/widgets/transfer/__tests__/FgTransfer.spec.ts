@@ -42,11 +42,12 @@ describe('FgTransfer', () => {
       expect(store.findWidget('test_transfer')).toBeDefined()
     })
 
-    it('更新 titles 后 store 中同步', () => {
+    it('更新标题后 store 中同步', () => {
       const widget = createWidget('transfer', 'test_transfer')!
       store.addWidget(widget)
-      store.updateWidget('test_transfer', { props: { ...widget.props, titles: ['可选', '已选'] } })
-      expect(store.findWidget('test_transfer')!.props!.titles).toEqual(['可选', '已选'])
+      store.updateWidget('test_transfer', { props: { ...widget.props, leftTitle: '可选', rightTitle: '已选' } })
+      expect(store.findWidget('test_transfer')!.props!.leftTitle).toBe('可选')
+      expect(store.findWidget('test_transfer')!.props!.rightTitle).toBe('已选')
     })
 
     it('删除后 store 中不存在', () => {
@@ -58,7 +59,7 @@ describe('FgTransfer', () => {
   })
 
   // Titles prop
-  describe('titles 属性', () => {
+  describe('标题属性', () => {
     it('默认标题为待选/已选', () => {
       const wrapper = mountWidget()
       expect(wrapper.text()).toContain('待选')
@@ -66,7 +67,7 @@ describe('FgTransfer', () => {
     })
 
     it('自定义标题', () => {
-      const wrapper = mountWidget({ props: { titles: ['可选项目', '已选项目'] } })
+      const wrapper = mountWidget({ props: { leftTitle: '可选项目', rightTitle: '已选项目' } })
       expect(wrapper.text()).toContain('可选项目')
       expect(wrapper.text()).toContain('已选项目')
     })

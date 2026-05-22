@@ -127,16 +127,12 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 // ================================================================
-// Context menu dialog targets
+// Context menu dialog targets — 委托给 editorStore，PropertyPanel 监听并打开弹框
 // ================================================================
 
-const eventDialogTarget = ref<Widget | null>(null)
-const ruleDialogTarget = ref<Widget | null>(null)
-const apiDialogTarget = ref<Widget | null>(null)
-
-function handleOpenEvent(widget: Widget) { eventDialogTarget.value = widget }
-function handleOpenRule(widget: Widget) { ruleDialogTarget.value = widget }
-function handleOpenApi(widget: Widget) { apiDialogTarget.value = widget }
+function handleOpenEvent(widget: Widget) { editorStore.openConfigDialog(widget, 'events') }
+function handleOpenRule(widget: Widget) { editorStore.openConfigDialog(widget, 'rules') }
+function handleOpenApi(widget: Widget) { editorStore.openConfigDialog(widget, 'api') }
 
 // ================================================================
 // Toolbar actions

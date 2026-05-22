@@ -40,11 +40,11 @@ export const searchListConfig: WidgetConfig = {
   configPanels: ['events', 'api'] as const,
   propertyPanel: {
     basic: ['label'],
-    style: ['width', 'height'],
+    style: [],
     props: [
       { key: 'title', label: '标题', type: 'input', default: '列表' },
-      { key: 'searchFields', label: '搜索字段', type: 'array', fields: searchFieldSchema },
-      { key: 'columns', label: '列配置', type: 'array', fields: columnSchema },
+      { key: 'searchFields', label: '搜索字段', type: 'array-editor', fields: searchFieldSchema },
+      { key: 'columns', label: '列配置', type: 'array-editor', fields: columnSchema },
       { key: 'pageSize', label: '每页条数', type: 'number', default: 10 },
       { key: 'showPagination', label: '分页', type: 'switch', default: true },
       { key: 'stripe', label: '斑马纹', type: 'switch', default: true },

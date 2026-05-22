@@ -7,13 +7,29 @@ const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
+const titles = computed(() => [
+  (widgetData.value.props?.leftTitle as string) || '待选',
+  (widgetData.value.props?.rightTitle as string) || '已选',
+])
+
+/** 根据 position.w 计算每个面板的宽度：(总宽 - 按钮区 - 间距) / 2 */
+const panelWidth = computed(() => {
+  const totalW = widgetData.value.position?.w ?? 700
+  const btnArea = 124
+  return Math.max(0, (totalW - btnArea) / 2)
+})
+
+const transferStyle = computed(() => ({
+  ...dynamicStyle.value,
+  '--transfer-panel-width': `${panelWidth.value}px`,
+}))
 </script>
 <template>
   <el-transfer
     :data="[]"
-    :titles="(widgetData.props?.titles as string[]) || ['待选', '已选']"
+    :titles="titles"
     :filterable="widgetData.props?.filterable !== false"
-    :style="dynamicStyle"
+    :style="transferStyle"
   />
 </template>
 
@@ -21,13 +37,13 @@ const dynamicStyle = computed(() => ({
 :deep(.el-transfer) {
   display: flex;
   width: 100%;
+  height: 100%;
 }
 :deep(.el-transfer__buttons) {
-  padding: 0 12px;
+  padding: 0 8px;
   flex-shrink: 0;
 }
 :deep(.el-transfer-panel) {
-  flex: 1;
-  min-width: 0;
+  width: var(--transfer-panel-width) !important;
 }
 </style>

@@ -15,13 +15,11 @@ export const editableTableConfig: WidgetConfig = {
   configPanels: ['events', 'rules'] as const,
   propertyPanel: {
     basic: ['field', 'label'],
-    style: ['width', 'height'],
+    style: [],
     props: [
       { key: 'title', label: '标题', type: 'input', default: '可编辑表格' },
       { key: 'addButtonText', label: '添加按钮文字', type: 'input', default: '添加行' },
       { key: 'showAddButton', label: '显示添加按钮', type: 'switch', default: true },
-      { key: 'showDeleteButton', label: '显示删除按钮', type: 'switch', default: true },
-      { key: 'maxRows', label: '最大行数(0不限)', type: 'number', default: 0 },
       { key: 'columns', label: '列配置', type: 'columns' },
     ],
   },

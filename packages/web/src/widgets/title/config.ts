@@ -18,9 +18,9 @@ export const titleConfig: WidgetConfig = {
     basic: ['field', 'label'],
     style: ['fontSize', 'fontWeight', 'color', 'backgroundColor'],
     props: [
-      { key: 'props.content', label: '标题内容', type: 'input', default: '标题文字' },
+      { key: 'content', label: '标题内容', type: 'input', default: '标题文字' },
       {
-        key: 'props.level',
+        key: 'level',
         label: '级别',
         type: 'select',
         options: [
@@ -32,7 +32,7 @@ export const titleConfig: WidgetConfig = {
         default: 3,
       },
       {
-        key: 'props.align',
+        key: 'align',
         label: '对齐',
         type: 'select',
         options: [

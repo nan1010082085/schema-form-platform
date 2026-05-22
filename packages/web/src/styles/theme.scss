@@ -218,6 +218,72 @@
   }
 }
 
+.el-button--success {
+  &:not(.is-disabled) {
+    background: $color-success;
+    border: 1px solid $color-success;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-success-light;
+      border-color: $color-success-light;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-success;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--warning {
+  &:not(.is-disabled) {
+    background: $color-warning;
+    border: 1px solid $color-warning;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-warning;
+      border-color: $color-warning;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-warning;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--info {
+  &:not(.is-disabled) {
+    background: $color-info;
+    border: 1px solid $color-info;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-info;
+      border-color: $color-info;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-info;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
 // 禁用按钮：保持主色背景
 .is-disabled.el-button--primary {
   background-color: $color-primary;
@@ -369,7 +435,7 @@
 }
 
 .el-transfer-panel {
-  width: 0;
+  width: 220px;
 }
 
 // ---- Upload 上传 ----
