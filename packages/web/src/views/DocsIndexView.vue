@@ -18,7 +18,6 @@ const docsByCategory = computed(() => getDocsByCategory())
       <div class="preview-header__inner">
         <h1>FormGrid 组件文档</h1>
         <p class="preview-header__sub">Schema 驱动表单引擎 · {{ componentDocs.length }} 个组件</p>
-        <nav class="preview-nav"><router-link to="/">返回控制台</router-link></nav>
       </div>
     </header>
 

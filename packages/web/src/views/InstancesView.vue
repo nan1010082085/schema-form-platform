@@ -370,7 +370,7 @@ const isFiltered = computed(() =>
 
 <style scoped lang="scss">
 .fg-instances {
-  height: 100vh;
+  height: 100%;
   background: #f0f2f5;
 
   &__scrollbar {

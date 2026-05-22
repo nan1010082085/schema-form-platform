@@ -8,7 +8,7 @@ const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__
 const router = createRouter({
   history: createWebHistory(routerBase),
   routes: [
-    // ---- Redirects from old routes ----
+    // ---- Redirects ----
     { path: '/', redirect: '/instances' },
     { path: '/schemas', redirect: '/instances' },
     { path: '/demo', redirect: '/docs' },
@@ -17,12 +17,31 @@ const router = createRouter({
       redirect: (to) => `/view?id=${to.query.id || ''}`,
     },
 
-    // ---- Primary routes ----
+    // ---- 带全局布局的管理页面 ----
     {
-      path: '/instances',
-      name: 'instances',
-      component: () => import('@/views/InstancesView.vue'),
+      path: '/',
+      component: () => import('@/components/AppLayout.vue'),
+      children: [
+        {
+          path: 'instances',
+          name: 'instances',
+          component: () => import('@/views/InstancesView.vue'),
+        },
+        {
+          path: 'docs',
+          name: 'docs',
+          component: () => import('@/views/DocsIndexView.vue'),
+        },
+        {
+          path: 'docs/:componentId',
+          name: 'docs-component',
+          component: () => import('@/views/docs/ComponentDocPage.vue'),
+          props: true,
+        },
+      ],
     },
+
+    // ---- 全屏页面（无布局壳）----
     {
       path: '/editor',
       name: 'editor',
@@ -38,16 +57,12 @@ const router = createRouter({
       name: 'publish-view',
       component: () => import('@/views/PublishView.vue'),
     },
+
+    // ---- 404 ----
     {
-      path: '/docs',
-      name: 'docs',
-      component: () => import('@/views/DocsIndexView.vue'),
-    },
-    {
-      path: '/docs/:componentId',
-      name: 'docs-component',
-      component: () => import('@/views/docs/ComponentDocPage.vue'),
-      props: true,
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
     },
   ],
 })
