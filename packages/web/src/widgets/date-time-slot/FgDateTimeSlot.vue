@@ -12,3 +12,13 @@ const widgetData = inject(widgetDataKey)!
     :range-separator="(widgetData.props?.rangeSeparator as string) || '至'"
   />
 </template>
+
+<style scoped>
+:deep(.el-date-editor) {
+  width: 100% !important;
+  height: 100%;
+}
+:deep(.el-input__wrapper) {
+  height: 100%;
+}
+</style>

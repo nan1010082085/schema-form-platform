@@ -111,8 +111,8 @@ describe('FgBanner', () => {
 
   // Config panels
   describe('配置面板声明', () => {
-    it('无 configPanels', () => {
-      expect(bannerConfig.configPanels).toBeUndefined()
+    it('configPanels 包含 events', () => {
+      expect(bannerConfig.configPanels).toContain('events')
     })
   })
 })

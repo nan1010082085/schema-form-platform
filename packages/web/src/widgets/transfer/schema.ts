@@ -7,7 +7,7 @@ export function createTransferWidget(id: string): Widget {
     ...publicSchema(id, 'transfer'),
     name: transferConfig.name,
     label: transferConfig.displayName,
-    position: { x: 0, y: 0, w: 600, h: 300, zIndex: 1 },
+    position: { x: 0, y: 0, w: 700, h: 300, zIndex: 1 },
     style: { ...transferConfig.defaultStyle },
     props: { ...transferConfig.defaultProps },
   }

@@ -112,8 +112,9 @@ describe('FgFileList', () => {
 
   // Config panels
   describe('配置面板声明', () => {
-    it('无 configPanels', () => {
-      expect(fileListConfig.configPanels).toBeUndefined()
+    it('configPanels 包含 events 和 api', () => {
+      expect(fileListConfig.configPanels).toContain('events')
+      expect(fileListConfig.configPanels).toContain('api')
     })
   })
 })

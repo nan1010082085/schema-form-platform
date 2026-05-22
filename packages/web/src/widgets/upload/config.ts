@@ -6,6 +6,7 @@ export const uploadConfig: WidgetConfig = {
   description: '文件上传组件，支持文件类型和大小限制',
   defaultStyle: {
     width: '240px',
+    height: '44px',
   },
   defaultProps: {
     accept: '',

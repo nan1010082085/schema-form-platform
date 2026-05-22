@@ -6,7 +6,7 @@ import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
-import { computeWidgetRenderState } from '@/engine/ruleEngine'
+import { computeWidgetRenderState } from '@/__tests__/widgetTestHarness'
 import { widgetDataKey, widgetStyleKey } from '../../base/types'
 import FgRichtext from '../FgRichtext.vue'
 

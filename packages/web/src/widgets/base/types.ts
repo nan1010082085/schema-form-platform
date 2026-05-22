@@ -30,8 +30,6 @@ export type BasicType =
   | 'spacer'
   | 'toolbar-buttons'
   | 'file-list'
-  | 'person-select'
-  | 'dept-select'
   | 'transfer'
   | 'detail-form'
   | 'banner'
@@ -163,6 +161,26 @@ export interface WidgetRule {
   condition: string
   /** 执行动作列表 */
   actions: WidgetRuleAction[]
+}
+
+// ============================================================
+// 搜索字段配置
+// ============================================================
+
+/** 搜索字段配置 */
+export interface SearchFieldConfig {
+  /** 字段名（作为 API 查询参数 key） */
+  field: string
+  /** 显示标签 */
+  label: string
+  /** 搜索控件类型 */
+  type: 'input' | 'select' | 'date' | 'date-range'
+  /** 占位文字 */
+  placeholder?: string
+  /** 下拉选项（type=select 时使用） */
+  options?: { label: string; value: string | number | boolean }[]
+  /** 默认值 */
+  defaultValue?: unknown
 }
 
 // ============================================================

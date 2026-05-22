@@ -7,7 +7,7 @@ export function createDateTimeSlotWidget(id: string): Widget {
     ...publicSchema(id, 'date-time-slot'),
     name: dateTimeSlotConfig.name,
     label: dateTimeSlotConfig.displayName,
-    position: { x: 0, y: 0, w: 400, h: 32, zIndex: 1 },
+    position: { x: 0, y: 0, w: 400, h: 44, zIndex: 1 },
     style: { ...dateTimeSlotConfig.defaultStyle },
     props: { ...dateTimeSlotConfig.defaultProps },
   }

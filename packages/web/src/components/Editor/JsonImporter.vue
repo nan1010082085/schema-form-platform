@@ -43,8 +43,6 @@ const schemaTypeOptions: { label: string; value: SchemaType }[] = [
   { label: '富文本', value: 'richtext' },
   { label: '上传', value: 'upload' },
   { label: '表格', value: 'table' },
-  { label: '人员选择', value: 'person-select' },
-  { label: '部门选择', value: 'dept-select' },
   { label: '穿梭框', value: 'transfer' },
   { label: '卡片 (嵌套)', value: 'card' },
 ]

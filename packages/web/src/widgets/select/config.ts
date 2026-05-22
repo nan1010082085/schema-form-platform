@@ -5,7 +5,7 @@ export const selectConfig: WidgetConfig = {
   description: '下拉选择器，支持静态选项和动态数据源加载',
   defaultStyle: {
     width: '240px',
-    height: '32px',
+    height: '44px',
     fontSize: '14px',
   },
   defaultProps: {

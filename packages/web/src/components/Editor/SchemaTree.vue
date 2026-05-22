@@ -114,7 +114,7 @@ function getTypeZh(type: string): string {
     'textarea': '多行文本', 'richtext': '富文本',
     'button-list': '按钮', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
     'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
-    'person-select': '人员', 'dept-select': '部门', 'transfer': '穿梭框',
+    'transfer': '穿梭框',
     'detail-form': '详情', 'banner': '横幅', 'tree-layout': '树形',
     'date-time-slot': '日期时段', 'dialog': '弹窗', 'search-list': '搜索列表',
   }

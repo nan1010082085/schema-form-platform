@@ -7,6 +7,7 @@ export const rowColConfig: WidgetConfig = {
     width: '100%',
     height: '44px',
   },
+  configPanels: ['events'],
   defaultProps: {
     columns: 2,
     gutter: 16,

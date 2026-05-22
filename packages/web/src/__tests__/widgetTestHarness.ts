@@ -28,8 +28,69 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
-import { computeWidgetRenderState } from '@/engine/ruleEngine'
-import type { SchemaType, Widget, WidgetEvent } from '@/widgets/base/types'
+import { evaluateCondition } from '@/engine/eventEngine'
+import type { SchemaType, Widget, WidgetEvent, WidgetRenderState } from '@/widgets/base/types'
+
+/**
+ * 计算 Widget 的渲染状态（visible / disabled / required）。
+ *
+ * 纯同步状态计算，不执行规则的副作用动作。
+ * 从已废弃的 ruleEngine 迁移到测试工具层。
+ *
+ * @param widget - 目标 Widget
+ * @param formData - 当前表单数据（field → value）
+ * @returns 渲染状态
+ */
+export function computeWidgetRenderState(
+  widget: Widget,
+  formData: Record<string, unknown>,
+): WidgetRenderState {
+  const staticDisabled = (widget.props?.disabled as boolean) ?? false
+  const staticRequired = widget.validationRules?.some((r) => r.required) ?? false
+
+  if (!widget.rules?.length) {
+    return {
+      visible: !widget.hidden,
+      disabled: staticDisabled,
+      required: staticRequired,
+    }
+  }
+
+  let visible = !widget.hidden
+  let disabled = staticDisabled
+
+  for (const rule of widget.rules) {
+    const shouldExecute = rule.watches.some((watch) => {
+      if (watch.type === 'field') {
+        return watch.source in formData
+      }
+      return false
+    })
+    if (!shouldExecute) continue
+
+    if (!evaluateCondition(rule.condition, formData)) continue
+
+    for (const action of rule.actions) {
+      switch (action.type) {
+        case 'hide':
+          visible = false
+          break
+        case 'visible':
+          visible = true
+          break
+        case 'disabled':
+          disabled = true
+          break
+      }
+    }
+  }
+
+  return {
+    visible,
+    disabled,
+    required: staticRequired,
+  }
+}
 
 export function createWidgetTestHarness(type: SchemaType) {
   let store: ReturnType<typeof useWidgetStore>

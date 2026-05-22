@@ -4,7 +4,7 @@ export const dateTimeSlotConfig: WidgetConfig = {
   name: 'FgDateTimeSlot',
   displayName: '日期时间区间',
   description: '日期时间区间选择器，支持开始/结束时间配置',
-  defaultStyle: { width: '400px', height: '32px' },
+  defaultStyle: { width: '400px', height: '44px' },
   defaultProps: {
     startPlaceholder: '开始时间',
     endPlaceholder: '结束时间',

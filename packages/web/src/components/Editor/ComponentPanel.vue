@@ -13,6 +13,7 @@ import type { SchemaType } from '@/widgets/base/types'
 const GROUP_LABELS: Record<string, string> = {
   container: '容器部件',
   basic: '基础部件',
+  static: '静态部件',
   form: '表单部件',
   table: '表格部件',
   business: '业务部件',
@@ -136,7 +137,7 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
 
 .scroll {
   flex: 1;
-  min-height: 0;
+  height: 0;
 }
 
 .group {

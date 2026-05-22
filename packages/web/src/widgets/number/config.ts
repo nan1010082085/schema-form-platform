@@ -5,7 +5,7 @@ export const numberConfig: WidgetConfig = {
   description: '数字输入框，支持步进、最小最大值限制',
   defaultStyle: {
     width: '240px',
-    height: '32px',
+    height: '44px',
     fontSize: '14px',
   },
   defaultProps: {

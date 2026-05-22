@@ -7,7 +7,7 @@ export function createRichtextWidget(id: string): Widget {
     ...publicSchema(id, 'richtext'),
     name: richtextConfig.name,
     label: richtextConfig.displayName,
-    position: { x: 0, y: 0, w: 240, h: 32, zIndex: 1 },
+    position: { x: 0, y: 0, w: 240, h: 200, zIndex: 1 },
     style: { ...richtextConfig.defaultStyle },
     props: { ...richtextConfig.defaultProps },
   }

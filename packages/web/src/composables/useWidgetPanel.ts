@@ -13,6 +13,7 @@ export function useWidgetPanel() {
     { label: '容器组件', key: 'container', items: getWidgetsByGroup('container') },
     { label: '基础组件', key: 'basic', items: getWidgetsByGroup('basic') },
     { label: '表单组件', key: 'form', items: getWidgetsByGroup('form') },
+    { label: '静态组件', key: 'static', items: getWidgetsByGroup('static') },
     { label: '表格组件', key: 'table', items: getWidgetsByGroup('table') },
     { label: '业务组件', key: 'business', items: getWidgetsByGroup('business') },
   ].filter(g => g.items.length > 0))

@@ -7,6 +7,7 @@ export const spacerConfig: WidgetConfig = {
     width: '100%',
     height: '20px',
   },
+  configPanels: ['events'],
   defaultProps: {
     height: 20,
   },

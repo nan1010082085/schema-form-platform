@@ -94,51 +94,53 @@ function getIcon(type: string): string {
 
 <template>
   <div :class="$style.tree">
-    <div v-if="treeData.length === 0" :class="$style.empty">
-      暂无部件
-    </div>
-    <el-tree
-      v-else
-      :data="treeData"
-      :props="{ label: 'label', children: 'children' }"
-      node-key="id"
-      :default-expanded-keys="expandedArray"
-      :highlight-current="true"
-      :current-node-key="selectedId"
-      :expand-on-click-node="false"
-    >
-      <template #default="{ data }">
-        <div
-          :class="[
-            $style.node,
-            { [$style.nodeSelected]: selectedId === data.id },
-          ]"
-          @click="handleNodeClick(data)"
-        >
-          <!-- 展开箭头 -->
-          <span
-            v-if="data.isContainer && data.children.length"
-            :class="$style.expandBtn"
-            @click.stop="toggleExpand(data)"
+    <el-scrollbar>
+      <div v-if="treeData.length === 0" :class="$style.empty">
+        暂无部件
+      </div>
+      <el-tree
+        v-else
+        :data="treeData"
+        :props="{ label: 'label', children: 'children' }"
+        node-key="id"
+        :default-expanded-keys="expandedArray"
+        :highlight-current="true"
+        :current-node-key="selectedId"
+        :expand-on-click-node="false"
+      >
+        <template #default="{ data }">
+          <div
+            :class="[
+              $style.node,
+              { [$style.nodeSelected]: selectedId === data.id },
+            ]"
+            @click="handleNodeClick(data)"
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-              <path v-if="expandedKeys.has(data.id)" d="M2 3.5l3 3 3-3z"/>
-              <path v-else d="M3.5 2l3 3-3 3z"/>
-            </svg>
-          </span>
-          <span v-else :class="[$style.expandBtn, $style.expandPlaceholder]" />
+            <!-- 展开箭头 -->
+            <span
+              v-if="data.isContainer && data.children.length"
+              :class="$style.expandBtn"
+              @click.stop="toggleExpand(data)"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path v-if="expandedKeys.has(data.id)" d="M2 3.5l3 3 3-3z"/>
+                <path v-else d="M3.5 2l3 3-3 3z"/>
+              </svg>
+            </span>
+            <span v-else :class="[$style.expandBtn, $style.expandPlaceholder]" />
 
-          <!-- 图标 -->
-          <span :class="$style.icon">{{ getIcon(data.type) }}</span>
+            <!-- 图标 -->
+            <span :class="$style.icon">{{ getIcon(data.type) }}</span>
 
-          <!-- 类型标签 -->
-          <span :class="$style.badge">{{ data.label }}</span>
+            <!-- 类型标签 -->
+            <span :class="$style.badge">{{ data.label }}</span>
 
-          <!-- 字段名 -->
-          <span v-if="data.widget.field" :class="$style.field">{{ data.widget.field }}</span>
-        </div>
-      </template>
-    </el-tree>
+            <!-- 字段名 -->
+            <span v-if="data.widget.field" :class="$style.field">{{ data.widget.field }}</span>
+          </div>
+        </template>
+      </el-tree>
+    </el-scrollbar>
   </div>
 </template>
 
@@ -146,6 +148,14 @@ function getIcon(type: string): string {
 .tree {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  :deep(.el-scrollbar) {
+    flex: 1;
+    min-height: 0;
+  }
 
   :deep(.el-tree) {
     background: transparent;

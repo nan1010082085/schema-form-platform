@@ -9,7 +9,7 @@ const dynamicStyle = computed<CSSProperties>(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
   fontWeight: widgetStyle.value?.fontWeight as string,
   color: widgetStyle.value?.color as string,
-  textAlign: (widgetData.value.props?.align as CSSProperties['textAlign']) || 'left',
+  justifyContent: (widgetData.value.props?.align as string) || 'left',
 }))
 
 const tag = computed(() => {

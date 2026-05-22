@@ -149,12 +149,6 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
     case 'file-list':
       item = { type: 'file-list', props: { title: '附件', allowDelete: true, allowPreview: true } }
       break
-    case 'person-select':
-      item = { ...base, label: '人员选择', props: { placeholder: '请选择人员', clearable: true, multiple: false } }
-      break
-    case 'dept-select':
-      item = { ...base, label: '部门选择', props: { placeholder: '请选择部门', clearable: true, multiple: false } }
-      break
     case 'transfer':
       item = { type: 'transfer', props: { titles: ['待选', '已选'], filterable: true } }
       break

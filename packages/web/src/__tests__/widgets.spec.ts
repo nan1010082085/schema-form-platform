@@ -43,8 +43,6 @@ import { bannerConfig } from '@/widgets/banner/config'
 import { treeLayoutConfig } from '@/widgets/tree-layout/config'
 import { dateTimeSlotConfig } from '@/widgets/date-time-slot/config'
 import { fileListConfig } from '@/widgets/file-list/config'
-import { personSelectConfig } from '@/widgets/person-select/config'
-import { deptSelectConfig } from '@/widgets/dept-select/config'
 import { transferConfig } from '@/widgets/transfer/config'
 import { detailFormConfig } from '@/widgets/detail-form/config'
 import { searchListConfig } from '@/widgets/search-list/config'
@@ -54,7 +52,7 @@ import { editableTableConfig } from '@/widgets/editable-table/config'
 import { createDefaultSchema } from '@/utils/schemaDefaults'
 
 // --- Rule engine ---
-import { computeWidgetRenderState } from '@/engine/ruleEngine'
+import { computeWidgetRenderState } from '@/__tests__/widgetTestHarness'
 
 // --- Widget store ---
 import { useWidgetStore } from '@/stores/widget'
@@ -71,7 +69,7 @@ const REGISTERED_TYPES: SchemaType[] = [
   'date', 'textarea', 'button-list', 'title', 'divider',
   'spacer', 'toolbar-buttons', 'table', 'button',
   'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
-  'file-list', 'person-select', 'dept-select', 'transfer',
+  'file-list', 'transfer',
   'detail-form', 'search-list', 'editable-table',
 ]
 
@@ -101,8 +99,6 @@ const ALL_CONFIGS = [
   { name: 'tree-layout', config: treeLayoutConfig },
   { name: 'date-time-slot', config: dateTimeSlotConfig },
   { name: 'file-list', config: fileListConfig },
-  { name: 'person-select', config: personSelectConfig },
-  { name: 'dept-select', config: deptSelectConfig },
   { name: 'transfer', config: transferConfig },
   { name: 'detail-form', config: detailFormConfig },
   { name: 'search-list', config: searchListConfig },
@@ -119,9 +115,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 31 widget types', () => {
+  it('registers exactly 29 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(31)
+    expect(all).toHaveLength(29)
   })
 
   it('getComponentMap returns a component for every registered type', () => {
@@ -271,7 +267,7 @@ describe('Widget Default Schema', () => {
   const formComponentTypes: SchemaType[] = [
     'input', 'number', 'select', 'radio', 'checkbox',
     'date', 'textarea', 'richtext', 'upload', 'date-time-slot',
-    'person-select', 'dept-select', 'editable-table',
+    'editable-table',
   ]
 
   const layoutTypes: SchemaType[] = [
@@ -438,22 +434,6 @@ describe('Widget Default Schema', () => {
     expect(schema.props!.title).toBe('附件')
     expect(schema.props!.allowDelete).toBe(true)
     expect(schema.props!.allowPreview).toBe(true)
-  })
-
-  it('person-select has field and props', () => {
-    const schema = createDefaultSchema('person-select')
-    expect(schema.type).toBe('person-select')
-    expect(schema.field).toBeDefined()
-    expect(schema.props!.placeholder).toBe('请选择人员')
-    expect(schema.props!.multiple).toBe(false)
-  })
-
-  it('dept-select has field and props', () => {
-    const schema = createDefaultSchema('dept-select')
-    expect(schema.type).toBe('dept-select')
-    expect(schema.field).toBeDefined()
-    expect(schema.props!.placeholder).toBe('请选择部门')
-    expect(schema.props!.multiple).toBe(false)
   })
 
   it('transfer has props with titles and filterable', () => {

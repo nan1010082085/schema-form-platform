@@ -8,6 +8,7 @@ export const titleConfig: WidgetConfig = {
     fontSize: '20px',
     color: '#303133',
   },
+  configPanels: ['events'],
   defaultProps: {
     content: '标题文字',
     level: 3 as 1 | 2 | 3 | 4,
@@ -17,9 +18,9 @@ export const titleConfig: WidgetConfig = {
     basic: ['field', 'label'],
     style: ['fontSize', 'fontWeight', 'color', 'backgroundColor'],
     props: [
-      { key: 'content', label: '标题内容', type: 'input', default: '标题文字' },
+      { key: 'props.content', label: '标题内容', type: 'input', default: '标题文字' },
       {
-        key: 'level',
+        key: 'props.level',
         label: '级别',
         type: 'select',
         options: [
@@ -31,7 +32,7 @@ export const titleConfig: WidgetConfig = {
         default: 3,
       },
       {
-        key: 'align',
+        key: 'props.align',
         label: '对齐',
         type: 'select',
         options: [

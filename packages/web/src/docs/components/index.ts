@@ -22,8 +22,6 @@ import upload from './upload'
 import table from './table'
 import pagination from './pagination'
 import fileList from './file-list'
-import personSelect from './person-select'
-import deptSelect from './dept-select'
 import transfer from './transfer'
 import detailForm from './detail-form'
 import banner from './banner'
@@ -68,8 +66,6 @@ export const componentDocs: ComponentDoc[] = [
   pagination,
   fileList,
   filePreview,
-  personSelect,
-  deptSelect,
   transfer,
   detailForm,
   banner,

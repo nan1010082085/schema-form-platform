@@ -305,7 +305,7 @@ describe('validateSchema', () => {
         type: 'card',
         children: [
           { type: 'upload', field: 'file', label: 'File' },
-          { type: 'person-select', field: 'user', label: 'User' },
+          { type: 'file-list', field: 'files', label: 'Files' },
         ],
       },
     ]
