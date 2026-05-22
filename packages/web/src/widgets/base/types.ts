@@ -313,6 +313,10 @@ export interface Widget {
   // === 子组件 ===
   /** 子 Widget 列表（容器组件） */
   children?: Widget[]
+
+  // === 生命周期 ===
+  /** Widget 生命周期钩子 */
+  lifecycle?: WidgetLifecycleConfig
 }
 
 // ============================================================
@@ -390,7 +394,40 @@ export interface FormContext {
   formRef: Ref<unknown>
   /** 表单数据模型（field → value），绑定到 el-form :model */
   formModel: Record<string, unknown>
+  /** 更新指定字段值（子组件通过 inject 调用） */
+  updateField: (field: string, value: unknown) => void
 }
 
 /** 注入表单上下文（el-form ref + model） */
 export const formContextKey: InjectionKey<FormContext> = Symbol('FormContext')
+
+// ============================================================
+// Widget 生命周期
+// ============================================================
+
+/** 生命周期钩子：字符串表达式或函数 */
+export type LifecycleHook = string | ((ctx: LifecycleContext) => void | Promise<void>)
+
+/** 生命周期钩子配置 */
+export interface WidgetLifecycleConfig {
+  onInit?: LifecycleHook
+  onMount?: LifecycleHook
+  onUnmount?: LifecycleHook
+  onDataChange?: LifecycleHook
+  onVisibleChange?: LifecycleHook
+  onBeforeSubmit?: LifecycleHook
+  onAfterLoad?: LifecycleHook
+  onOpen?: LifecycleHook
+  onClose?: LifecycleHook
+}
+
+/** 生命周期执行上下文 */
+export interface LifecycleContext {
+  widget: Widget
+  formData: Record<string, unknown>
+  scopes: unknown[]
+  field?: string
+  value?: unknown
+  logger: { info: (...a: unknown[]) => void; warn: (...a: unknown[]) => void; error: (...a: unknown[]) => void; debug: (...a: unknown[]) => void }
+  [key: string]: unknown
+}
