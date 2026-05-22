@@ -33,7 +33,7 @@ let startTop = 0
 
 function onHeaderMousedown(e: MouseEvent) {
   if (!props.draggable || isFullscreen.value) return
-  const dialog = (e.currentTarget as HTMLElement).closest('.el-dialog')
+  const dialog = (e.currentTarget as HTMLElement).closest('.el-dialog') as HTMLElement | null
   if (!dialog) return
 
   isDragging = true

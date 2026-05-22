@@ -23,7 +23,7 @@
  * })
  * ```
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'

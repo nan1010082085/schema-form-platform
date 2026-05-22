@@ -13,16 +13,26 @@
  * - 而非本组件（v-for 中 provide 会共享同一作用域）
  */
 import type { Widget } from '../../widgets/base/types'
+import type { FormSchemaItem, FormData } from './types'
 import SchemaNode from './SchemaNode.vue'
 
 defineProps<{
-  widgets: Widget[]
+  /** Widget-based rendering (editor canvas) */
+  widgets?: Widget[]
   mode?: 'edit' | 'preview'
+  /** FormSchemaItem-based rendering (FormGrid form mode) */
+  schema?: FormSchemaItem
+  formData?: FormData
+  editable?: boolean
+  isDragging?: boolean
+  readonly?: boolean
+  path?: number[]
 }>()
 </script>
 
 <template>
-  <template v-for="widget in widgets" :key="widget.id">
+  <!-- Widget-based rendering (editor canvas) -->
+  <template v-if="widgets" v-for="widget in widgets" :key="widget.id">
     <SchemaNode :widget="widget" :mode="mode" />
   </template>
 </template>

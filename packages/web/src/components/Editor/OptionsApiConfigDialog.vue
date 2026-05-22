@@ -8,7 +8,7 @@
 import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
-import type { InstanceType } from 'vue'
+
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{

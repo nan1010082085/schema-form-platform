@@ -32,7 +32,7 @@ async function loadSchema(id: string) {
     const demoEntry = demoSchemas[id]
     if (demoEntry) {
       schema.value = demoEntry.schema
-      schemaName.value = demoEntry.title
+      schemaName.value = demoEntry.title ?? demoEntry.name
     } else {
       error.value = `Schema "${id}" 未找到`
     }

@@ -1,3 +1,3 @@
-export { FgUsearchUlist } from '../search-list'
-export { createUsearchUlistWidget } from '../search-list'
-export { searchUlistConfig } from '../search-list'
+export { FgSearchList } from '../search-list'
+export { createSearchListWidget } from '../search-list'
+export { searchListConfig } from '../search-list'

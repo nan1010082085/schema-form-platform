@@ -15,7 +15,7 @@ import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
 import { useLinkage } from '@/composables/useLinkage'
-import type { FormSchemaItem, FormData, LinkageState } from '@/components/FormGrid/types'
+import type { FormSchemaItem, FormData } from '@/components/FormGrid/types'
 
 describe('Linkage Integration', () => {
   beforeEach(() => {

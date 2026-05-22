@@ -1,5 +1,5 @@
 /** useWorkerRequest — fetch 请求封装 */
-import { ref, readonly } from 'vue'
+import { ref, readonly, type Ref } from 'vue'
 import { useLogger } from './useLogger'
 
 export interface RequestConfig {

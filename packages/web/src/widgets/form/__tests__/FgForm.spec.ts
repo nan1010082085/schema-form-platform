@@ -238,12 +238,14 @@ describe('FgForm', () => {
   describe('FormContext provide', () => {
     it('provide 包含 formRef', () => {
       const wrapper = mountForm()
-      expect(wrapper.vm.$?.provides?.[formContextKey as symbol]).toBeDefined()
+      const provides = (wrapper.vm.$ as unknown as Record<string, Record<symbol, unknown> | undefined>)?.provides
+      expect(provides?.[formContextKey]).toBeDefined()
     })
 
     it('provide 包含 updateField 方法', () => {
       const wrapper = mountForm()
-      const ctx = wrapper.vm.$?.provides?.[formContextKey as symbol] as Record<string, unknown>
+      const provides = (wrapper.vm.$ as unknown as Record<string, Record<symbol, unknown> | undefined>)?.provides
+      const ctx = provides?.[formContextKey] as Record<string, unknown> | undefined
       expect(ctx?.updateField).toBeDefined()
       expect(typeof ctx?.updateField).toBe('function')
     })

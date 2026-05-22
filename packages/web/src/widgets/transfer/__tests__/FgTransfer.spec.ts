@@ -111,9 +111,9 @@ describe('FgTransfer', () => {
     it('支持 linkage 配置', () => {
       const widget = createWidget('transfer', 'test_widget')!
       widget.linkages = [{
+        type: 'disabled',
         watchFields: ['status'],
-        expression: 'status === "readonly"',
-        actions: [{ type: 'disabled', config: {} }],
+        condition: 'status === "readonly"',
       }]
       store.addWidget(widget)
       expect(store.findWidget('test_widget')!.linkages).toHaveLength(1)

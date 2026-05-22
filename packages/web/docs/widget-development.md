@@ -112,7 +112,7 @@ export function createMyWidgetSchema(id: string): Widget {
     name: myWidgetConfig.name,
     field: `field_${id}`,
     label: '我的组件',
-    position: { x: 0, y: 0, w: 240, h: 32, zIndex: 1 },
+    position: { x: 0, y: 0, w: 240, h: 44, zIndex: 1 },
     style: { ...myWidgetConfig.defaultStyle },
     props: { ...myWidgetConfig.defaultProps },
     options: [],

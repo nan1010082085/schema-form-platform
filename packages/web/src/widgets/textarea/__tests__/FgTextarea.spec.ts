@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
-import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
 import { computeWidgetRenderState } from '@/__tests__/widgetTestHarness'
-import { widgetDataKey, widgetStyleKey } from '../../base/types'
-import FgTextarea from '../FgTextarea.vue'
-
 describe('FgTextarea', () => {
   let store: ReturnType<typeof useWidgetStore>
 
@@ -18,23 +12,6 @@ describe('FgTextarea', () => {
     registerAllWidgets()
     store = useWidgetStore()
   })
-
-  function mountWidget(overrides: Record<string, unknown> = {}) {
-    const widget = createWidget('textarea', 'test_widget')!
-    Object.assign(widget, overrides)
-    store.addWidget(widget)
-
-    return mount(FgTextarea, {
-      global: {
-        plugins: [ElementPlus],
-        provide: {
-          [widgetDataKey as symbol]: computed(() => store.findWidget('test_widget')!),
-          [widgetStyleKey as symbol]: computed(() => store.findWidget('test_widget')!.style ?? {}),
-        },
-      },
-    })
-  }
-
   // Store CRUD
   describe('Store CRUD', () => {
     it('创建后 store 中存在', () => {

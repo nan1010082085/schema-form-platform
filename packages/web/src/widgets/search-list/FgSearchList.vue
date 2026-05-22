@@ -61,12 +61,12 @@ async function loadData() {
       page: currentPage.value,
       pageSize: pageSize.value,
     }
-    const result = await request(api.url, { method: api.method ?? 'get', params })
+    const result = await request({ url: api.url, method: api.method ?? 'get', params })
     const dataPath = api.dataPath
-    const root = dataPath ? result?.[dataPath] : result
+    const root = dataPath ? (result as Record<string, unknown>)?.[dataPath] : result
     if (Array.isArray(root)) {
       tableData.value = root
-      total.value = (result?.total as number) ?? root.length
+      total.value = ((result as Record<string, unknown>)?.total as number) ?? root.length
     } else if (root && typeof root === 'object') {
       tableData.value = (root as Record<string, unknown>).list as unknown[] ?? (root as Record<string, unknown>).records as unknown[] ?? []
       total.value = ((root as Record<string, unknown>).total as number) ?? tableData.value.length

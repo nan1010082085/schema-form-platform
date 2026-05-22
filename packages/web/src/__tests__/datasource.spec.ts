@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractByPath, normalizeListResponse, getNestedValue } from '@/utils/responseNormalizer'
+import { extractByPath, normalizeListResponse } from '@/utils/responseNormalizer'
 
 describe('extractByPath', () => {
   const data = {

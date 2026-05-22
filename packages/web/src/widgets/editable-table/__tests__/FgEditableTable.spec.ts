@@ -154,9 +154,9 @@ describe('FgEditableTable', () => {
     it('支持 linkage 配置', () => {
       const widget = createWidget('editable-table', 'test_editable_table')!
       widget.linkages = [{
-        watches: [{ type: 'field', source: 'status' }],
+        type: 'disabled',
+        watchFields: ['status'],
         condition: 'status === "readonly"',
-        actions: [{ type: 'disabled', config: {} }],
       }]
       store.addWidget(widget)
       expect(store.findWidget('test_editable_table')!.linkages).toHaveLength(1)

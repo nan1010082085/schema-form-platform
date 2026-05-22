@@ -1,3 +1,3 @@
-export { FgUrichtext } from '../richtext'
-export { createUrichtextWidget } from '../richtext'
+export { FgRichtext } from '../richtext'
+export { createRichtextWidget } from '../richtext'
 export { richtextConfig } from '../richtext'

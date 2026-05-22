@@ -72,7 +72,7 @@ const schema = computed<FormSchemaItem[]>(() => {
 // ---- Schema 注册表（本地 demo + msa-form 业务表单） ----
 const schemaRegistry: Record<string, RegistryEntry> = {
   ...Object.fromEntries(
-    Object.entries(demoSchemas).map(([id, entry]) => [id, entry.schema])
+    Object.entries(demoSchemas).map(([id, entry]: [string, { schema: FormSchemaItem[] }]) => [id, entry.schema])
   ),
   ...msaFormRegistry
 }

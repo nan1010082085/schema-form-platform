@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useEditorStore } from '../stores/editor'
 import { useBoardStore } from '../stores/board'
-import { scaleDelta, constrainToCanvasBounds } from '../utils/coordinate'
+import { scaleDelta } from '../utils/coordinate'
 
 /** 缩放手柄方向 */
 export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'

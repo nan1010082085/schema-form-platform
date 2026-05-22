@@ -200,7 +200,7 @@ function handleOverlayClick(e: MouseEvent) {
  * 交互式容器 hitArea click — 将点击穿透到实际 UI（tab headers 等）。
  * hitArea 拦截了 mousedown（用于拖拽检测），click 事件需要手动转发给底层 UI。
  */
-function handleInteractiveClick(e: MouseEvent, widget: Widget) {
+function handleInteractiveClick(e: MouseEvent, _widget: Widget) {
   const hitArea = e.currentTarget as HTMLElement
   hitArea.style.pointerEvents = 'none'
   const target = document.elementFromPoint(e.clientX, e.clientY)
