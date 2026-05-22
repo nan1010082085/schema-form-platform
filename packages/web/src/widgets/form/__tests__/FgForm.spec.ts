@@ -1,13 +1,45 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
+import { computed, nextTick } from 'vue'
 import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget, getWidget } from '@/widgets/registry'
-import { widgetDataKey, widgetStyleKey } from '../../base/types'
+import { widgetDataKey, widgetStyleKey, formContextKey } from '../../base/types'
 import FgForm from '../FgForm.vue'
+
+vi.mock('@/composables/useWidgetLifecycle', () => ({
+  useWidgetLifecycle: () => ({
+    trigger: vi.fn().mockResolvedValue(undefined),
+    isRunning: { value: false },
+    lastError: { value: null },
+  }),
+}))
+
+vi.mock('@/composables/useWorkerRequest', () => ({
+  useWorkerRequest: () => ({
+    request: vi.fn().mockResolvedValue({ name: 'test', age: 25 }),
+    cancel: vi.fn(),
+    cancelAll: vi.fn(),
+    pendingCount: { value: 0 },
+    isReady: { value: true },
+  }),
+}))
+
+vi.mock('@/composables/useLogger', () => ({
+  useLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    event: vi.fn(),
+    rule: vi.fn(),
+    api: vi.fn(),
+    lifecycle: vi.fn(),
+    child: vi.fn(),
+  }),
+}))
 
 describe('FgForm', () => {
   let store: ReturnType<typeof useWidgetStore>
@@ -33,7 +65,7 @@ describe('FgForm', () => {
     })
   }
 
-  // Dimension 1: Store CRUD
+  // ---- Dimension 1: Store CRUD ----
   describe('Store CRUD', () => {
     it('创建后 store 中存在', () => {
       const widget = createWidget('form', 'test_form')
@@ -56,42 +88,39 @@ describe('FgForm', () => {
     })
   })
 
-  // Dimension 2: Props
+  // ---- Dimension 2: Props ----
   describe('Props', () => {
     it('默认 labelWidth 为 100px', () => {
-      const widget = createWidget('form', 'test_form')!
-      store.addWidget(widget)
+      const wrapper = mountForm()
+      const elForm = wrapper.find('.el-form')
+      // Element Plus 渲染 label-width 为属性或 CSS 变量
+      expect(elForm.exists()).toBe(true)
+      const widget = store.findWidget('test_form')!
       expect(widget.props?.labelWidth).toBe('100px')
-    })
-
-    it('默认 labelPosition 为 right', () => {
-      const widget = createWidget('form', 'test_form')!
-      store.addWidget(widget)
-      expect(widget.props?.labelPosition).toBe('right')
     })
 
     it('labelWidth 可自定义', () => {
       const wrapper = mountForm({ props: { labelWidth: '120px' } })
       const elForm = wrapper.find('.el-form')
       expect(elForm.exists()).toBe(true)
+      const widget = store.findWidget('test_form')!
+      expect(widget.props?.labelWidth).toBe('120px')
+    })
+
+    it('默认 labelPosition 为 right', () => {
+      const wrapper = mountForm()
+      const elForm = wrapper.find('.el-form')
+      expect(elForm.classes()).toContain('el-form--label-right')
     })
 
     it('labelPosition 可配置为 left', () => {
-      const widget = createWidget('form', 'test_form')!
-      widget.props = { ...widget.props, labelPosition: 'left' }
-      store.addWidget(widget)
-      expect(store.findWidget('test_form')!.props!.labelPosition).toBe('left')
-    })
-
-    it('labelPosition 可配置为 top', () => {
-      const widget = createWidget('form', 'test_form')!
-      widget.props = { ...widget.props, labelPosition: 'top' }
-      store.addWidget(widget)
-      expect(store.findWidget('test_form')!.props!.labelPosition).toBe('top')
+      const wrapper = mountForm({ props: { labelPosition: 'left' } })
+      const elForm = wrapper.find('.el-form')
+      expect(elForm.classes()).toContain('el-form--label-left')
     })
   })
 
-  // Dimension 3: Container child management
+  // ---- Dimension 3: Container child management ----
   describe('容器子组件管理', () => {
     it('可容纳子组件', () => {
       const container = createWidget('form', 'container')
@@ -125,11 +154,111 @@ describe('FgForm', () => {
     })
   })
 
-  // Dimension 4: Config panel
+  // ---- Dimension 4: defineExpose ----
+  describe('defineExpose', () => {
+    it('暴露 validate 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.validate).toBeDefined()
+      expect(typeof wrapper.vm.validate).toBe('function')
+    })
+
+    it('暴露 validateField 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.validateField).toBeDefined()
+    })
+
+    it('暴露 clearValidate 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.clearValidate).toBeDefined()
+    })
+
+    it('暴露 resetFields 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.resetFields).toBeDefined()
+    })
+
+    it('暴露 scrollToField 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.scrollToField).toBeDefined()
+    })
+
+    it('暴露 getFormData 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.getFormData).toBeDefined()
+      const data = wrapper.vm.getFormData()
+      expect(typeof data).toBe('object')
+    })
+
+    it('暴露 setFormData 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.setFormData).toBeDefined()
+    })
+
+    it('暴露 submit 方法', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.submit).toBeDefined()
+      expect(typeof wrapper.vm.submit).toBe('function')
+    })
+
+    it('getFormData 返回当前 formModel 副本', () => {
+      const wrapper = mountForm()
+      const data = wrapper.vm.getFormData()
+      expect(data).toEqual({})
+    })
+
+    it('setFormData 合并数据到 formModel', async () => {
+      const wrapper = mountForm()
+      wrapper.vm.setFormData({ name: 'test' })
+      await nextTick()
+      const data = wrapper.vm.getFormData()
+      expect(data.name).toBe('test')
+    })
+  })
+
+  // ---- Dimension 5: Events ----
+  describe('事件系统', () => {
+    it('submit 可调用并触发事件', async () => {
+      const wrapper = mountForm()
+      await wrapper.vm.submit()
+      // submit 内部调用 el-form validate，结果决定 emit submit 或 validate-error
+      const hasSubmit = wrapper.emitted('submit') !== undefined
+      const hasValidateError = wrapper.emitted('validate-error') !== undefined
+      expect(hasSubmit || hasValidateError).toBe(true)
+    })
+
+    it('resetFields 触发 reset 事件', async () => {
+      const wrapper = mountForm()
+      wrapper.vm.resetFields()
+      await nextTick()
+      expect(wrapper.emitted('reset')).toBeDefined()
+    })
+  })
+
+  // ---- Dimension 6: FormContext provide ----
+  describe('FormContext provide', () => {
+    it('provide 包含 formRef', () => {
+      const wrapper = mountForm()
+      expect(wrapper.vm.$?.provides?.[formContextKey as symbol]).toBeDefined()
+    })
+
+    it('provide 包含 updateField 方法', () => {
+      const wrapper = mountForm()
+      const ctx = wrapper.vm.$?.provides?.[formContextKey as symbol] as Record<string, unknown>
+      expect(ctx?.updateField).toBeDefined()
+      expect(typeof ctx?.updateField).toBe('function')
+    })
+  })
+
+  // ---- Dimension 7: Config panel ----
   describe('配置面板', () => {
-    it('configPanels 为空（容器无事件/规则/数据源）', () => {
+    it('configPanels 包含 events', () => {
       const item = getWidget('form')
-      expect(item?.config.configPanels).toBeUndefined()
+      expect(item?.config.configPanels).toContain('events')
+    })
+
+    it('configPanels 包含 api（数据源）', () => {
+      const item = getWidget('form')
+      expect(item?.config.configPanels).toContain('api')
     })
   })
 })

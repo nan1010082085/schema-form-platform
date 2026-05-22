@@ -19,7 +19,7 @@ export const dialogConfig: WidgetConfig = {
   propertyPanel: {
     basic: [
       { key: 'title', label: '标题', type: 'input', default: '弹窗标题' },
-      { key: '', label: '宽度', type: 'input', default: '600px' },
+      { key: 'width', label: '宽度', type: 'input', default: '600px' },
       { key: 'confirmText', label: '确认按钮文字', type: 'input', default: '确定' },
       { key: 'cancelText', label: '取消按钮文字', type: 'input', default: '取消' },
       { key: 'destroyOnClose', label: '关闭时销毁', type: 'switch', default: true },
@@ -58,4 +58,5 @@ export const dialogConfig: WidgetConfig = {
       { key: 'showFullscreenBtn', label: '显示全屏按钮', type: 'switch', default: true },
     ],
   },
+  configPanels: ['events'],
 }
