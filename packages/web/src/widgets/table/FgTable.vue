@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { inject, computed, ref, onMounted, watch } from 'vue'
-import { widgetDataKey, widgetStyleKey } from '../base/types'
+import { widgetDataKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useApiRequest } from '../../composables/useApiRequest'
 import type { TableColumn } from './config'
 
 const widgetData = inject(widgetDataKey)!
-const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
 const { fetchApi } = useApiRequest()
 

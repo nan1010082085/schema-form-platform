@@ -13,6 +13,7 @@
 import { computed, inject, provide, type ComputedRef } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import type { Widget, SchemaType } from '../../widgets/base/types'
+import type { FormSchemaItem, FormData } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
@@ -125,10 +126,10 @@ function handleWidgetEvent(trigger: string, value?: unknown) {
  * 当前表单上下文的值集合。
  * 当任意 Widget 的 defaultValue 变化时自动重算。
  */
-const formData = computed(() => {
+const formData = computed<FormData>(() => {
   const formId = props.widget.formId
   if (!formId) return {}
-  return widgetStore.collectFormValues(formId)
+  return widgetStore.collectFormValues(formId) as FormData
 })
 
 /**
@@ -138,7 +139,7 @@ const formData = computed(() => {
  * 基于 useLinkage composable，按 field 查找联动状态。
  * widget.hidden 作为静态可见性覆盖（优先于联动状态）。
  */
-const linkage = useLinkage(widgetStore.widgets, formData)
+const linkage = useLinkage(widgetStore.widgets as unknown as FormSchemaItem[], formData)
 const renderState = computed(() => {
   const linkageState = linkage.stateMap.value.get(props.widget.field ?? '')
   const base = linkageState ?? { visible: true, disabled: false, required: false }

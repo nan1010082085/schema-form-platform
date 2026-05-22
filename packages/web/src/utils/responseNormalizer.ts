@@ -28,7 +28,7 @@ export function extractByPath(data: unknown, path: string): unknown {
   if (!path) return data
   if (path.startsWith('$')) {
     try {
-      return JSONPath({ path, json: data, wrap: false })
+      return (JSONPath as unknown as (opts: Record<string, unknown>) => unknown)({ path, json: data, wrap: false })
     } catch {
       return undefined
     }

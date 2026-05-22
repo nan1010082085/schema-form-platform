@@ -8,7 +8,7 @@
  * 支持交互式弹窗联动：当 doc 示例设置 dialogMode: 'external' 时，
  * 弹窗由 ComponentDocPage 在页面顶层渲染，实现跨组件弹窗联动效果。
  */
-import { computed, provide, ref, reactive, watch } from 'vue'
+import { computed, provide, ref, reactive } from 'vue'
 import FormGrid from '@/components/FormGrid/index.vue'
 import SchemaRender from '@/components/FormGrid/SchemaRender.vue'
 import {
@@ -63,6 +63,8 @@ const previewContext: FormGridContext = {
   request: { token: '', headers: {}, baseUrl: '' },
   global: { dictMap: {}, config: {} },
 }
+const dialogFormData = reactive<FormData>({})
+
 provide(FORM_GRID_CONTEXT_KEY, previewContext)
 provide(FORM_GRID_API_KEY, {
   validate: async () => true,
@@ -85,8 +87,6 @@ interface OpenDialogConfig {
   schema?: FormSchemaItem[]
   initialData?: FormData
 }
-
-const dialogFormData = reactive<FormData>({})
 
 function handleOpenDialog(config: OpenDialogConfig) {
   previewDialogTitle.value = config.title

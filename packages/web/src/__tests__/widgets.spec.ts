@@ -10,8 +10,8 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import type { Widget, SchemaType, WidgetRenderState } from '@/widgets/base/types'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { Widget, SchemaType as WidgetSchemaType } from '@/widgets/base/types'
+import type { SchemaType } from '@/components/FormGrid/types'
 
 // --- Registry & Config ---
 import { registerAllWidgets } from '@/widgets/index'
@@ -63,7 +63,7 @@ import { publicStylePanel } from '@/widgets/base/publicSchema'
 // =====================================================================
 // Expected registered widget types
 // =====================================================================
-const REGISTERED_TYPES: SchemaType[] = [
+const REGISTERED_TYPES: WidgetSchemaType[] = [
   'form', 'card', 'row-col', 'tabs', 'dialog',
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'button-list', 'title', 'divider',
@@ -154,7 +154,7 @@ describe('Widget Registry & Loading', () => {
   })
 
   it('createWidget returns null for unknown type', () => {
-    const widget = createWidget('unknown-type' as SchemaType, 'test_unknown')
+    const widget = createWidget('unknown-type' as WidgetSchemaType, 'test_unknown')
     expect(widget).toBeNull()
   })
 
@@ -642,7 +642,7 @@ describe('Widget Store CRUD', () => {
     store = useWidgetStore()
   })
 
-  function makeWidget(id: string, type: SchemaType = 'input', overrides: Partial<Widget> = {}): Widget {
+  function makeWidget(id: string, type: WidgetSchemaType = 'input', overrides: Partial<Widget> = {}): Widget {
     return {
       id,
       name: `Fg${type}`,

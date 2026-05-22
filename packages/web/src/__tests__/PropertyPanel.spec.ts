@@ -13,13 +13,13 @@
  * - Transition from selection to no-selection
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
 import { useEditorStore } from '@/stores/editor'
 import { useWidgetStore } from '@/stores/widget'
-import { registerWidget, getWidget } from '@/widgets/registry'
+import { registerWidget } from '@/widgets/registry'
 import type { Widget } from '@/widgets/base/types'
 import type { Component } from 'vue'
 
@@ -149,6 +149,9 @@ function registerTestWidgets() {
     component: stubComponent,
     create: (id: string) => createTestWidget({ id }),
     config: {
+      name: 'FgInput',
+      displayName: '输入框',
+      description: '文本输入框组件',
       configPanels: ['events', 'rules'],
       propertyPanel: {
         basic: ['field', 'label', 'defaultValue', 'hidden'],
@@ -169,6 +172,9 @@ function registerTestWidgets() {
     component: stubComponent,
     create: (id: string) => createCardWidget({ id }),
     config: {
+      name: 'FgCard',
+      displayName: '卡片容器',
+      description: '卡片容器组件',
       propertyPanel: {
         basic: [
           { key: 'title', label: '标题', type: 'input', default: '卡片标题' },

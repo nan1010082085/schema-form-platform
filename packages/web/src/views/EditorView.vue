@@ -186,10 +186,6 @@ function handleZoomOut() {
   boardStore.setZoom(boardStore.canvas.zoom - 10)
 }
 
-function handleZoomReset() {
-  boardStore.setZoom(100)
-}
-
 // ================================================================
 // Save (placeholder)
 // ================================================================

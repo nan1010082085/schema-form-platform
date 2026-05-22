@@ -1,3 +1,3 @@
-export { FgUfileUlist } from '../file-list'
-export { createUfileUlistWidget } from '../file-list'
-export { fileUlistConfig } from '../file-list'
+export { FgFileList } from '../file-list'
+export { createFileListWidget } from '../file-list'
+export { fileListConfig } from '../file-list'

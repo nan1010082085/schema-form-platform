@@ -1,3 +1,3 @@
-export { FgUdetailUform } from '../detail-form'
-export { createUdetailUformWidget } from '../detail-form'
-export { detailUformConfig } from '../detail-form'
+export { FgDetailForm } from '../detail-form'
+export { createDetailFormWidget } from '../detail-form'
+export { detailFormConfig } from '../detail-form'

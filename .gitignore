@@ -33,3 +33,4 @@ coverage/
 # Build
 *.tsbuildinfo
 *.png
+.vercel

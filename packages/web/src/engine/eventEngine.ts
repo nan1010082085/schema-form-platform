@@ -4,7 +4,7 @@
  * 解析 WidgetEvent，执行 SchemaEventAction。
  * 纯逻辑层，不依赖 Vue 组件，仅操作 Store。
  */
-import type { Widget, SchemaEventAction } from '../widgets/base/types'
+import type { Widget, SchemaEventAction, FormFieldValue } from '../widgets/base/types'
 import { useWidgetStore } from '../stores/widget'
 import { useEditorStore } from '../stores/editor'
 import { useLogger } from '@/composables/useLogger'
@@ -57,7 +57,7 @@ export function executeEventAction(
       if (action.target) {
         const targetWidget = widgetStore.findWidget(action.target)
         if (targetWidget) {
-          widgetStore.updateWidget(action.target, { defaultValue: action.value })
+          widgetStore.updateWidget(action.target, { defaultValue: action.value as FormFieldValue })
         }
       }
       break

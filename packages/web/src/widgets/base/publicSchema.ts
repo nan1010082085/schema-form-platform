@@ -9,7 +9,7 @@ export function publicSchema(id: string, type: SchemaType): Omit<Widget, 'name'>
   return {
     id,
     type,
-    position: { x: 0, y: 0, w: 240, h: 32, zIndex: 1 },
+    position: { x: 0, y: 0, w: 240, h: 44, zIndex: 1 },
     style: {},
     props: {},
     options: [],

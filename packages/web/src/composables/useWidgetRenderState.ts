@@ -10,7 +10,7 @@
  * // 在模板中：:disabled="isDisabled"
  * ```
  */
-import { inject, computed, type ComputedRef } from 'vue'
+import { inject, computed } from 'vue'
 import { widgetDataKey, widgetRenderStateKey } from '../widgets/base/types'
 import type { WidgetRenderState } from '../widgets/base/types'
 

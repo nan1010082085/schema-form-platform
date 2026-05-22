@@ -8,13 +8,12 @@
  *   4. Mode prop — edit vs preview mode adds/removes outline styles
  *   5. Edge cases — empty widgets, unknown types, position styling
  */
-import { describe, it, expect, vi, beforeEach, type Component } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { defineComponent, h, inject, type PropType } from 'vue'
+import { defineComponent, h, type Component, type PropType } from 'vue'
 import ElementPlus from 'element-plus'
 import type { Widget, SchemaType } from '@/widgets/base/types'
-import { widgetDataKey } from '@/widgets/base/types'
 import SchemaRenderComponent from '@/components/FormGrid/SchemaRender.vue'
 import { useWidgetStore } from '@/stores/widget'
 
