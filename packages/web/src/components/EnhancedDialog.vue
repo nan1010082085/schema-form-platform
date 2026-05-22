@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount } from 'vue'
-import { FullScreen } from '@element-plus/icons-vue'
+import { FullScreen, Close, QuestionFilled } from '@element-plus/icons-vue'
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -10,6 +10,7 @@ const props = withDefaults(defineProps<{
   showFullscreenBtn?: boolean
   destroyOnClose?: boolean
   closeOnClickModal?: boolean
+  helpContent?: string
 }>(), {
   draggable: true,
   showFullscreenBtn: true,
@@ -41,6 +42,8 @@ function onHeaderMousedown(e: MouseEvent) {
   startY = e.clientY
   startLeft = parseInt(dialog.style.left || '0', 10)
   startTop = parseInt(dialog.style.top || '0', 10)
+  document.body.style.cursor = 'move'
+  document.body.style.userSelect = 'none'
 
   document.addEventListener('mousemove', onMousemove)
   document.addEventListener('mouseup', onMouseup)
@@ -60,6 +63,8 @@ function onMousemove(e: MouseEvent) {
 
 function onMouseup() {
   isDragging = false
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
   document.removeEventListener('mousemove', onMousemove)
   document.removeEventListener('mouseup', onMouseup)
 }
@@ -91,6 +96,7 @@ onBeforeUnmount(() => {
     :width="width"
     :destroy-on-close="destroyOnClose"
     :close-on-click-modal="closeOnClickModal"
+    :show-close="false"
     :class="{ 'is-fullscreen': isFullscreen }"
     :style="dialogStyle"
     @close="handleClose"
@@ -101,14 +107,35 @@ onBeforeUnmount(() => {
         @mousedown="onHeaderMousedown"
       >
         <span :class="$style.title">{{ title }}</span>
-        <el-icon
-          v-if="showFullscreenBtn"
-          data-testid="fullscreen-btn"
-          :class="$style.fullscreenBtn"
-          @click.stop="toggleFullscreen"
-        >
-          <FullScreen />
-        </el-icon>
+        <div :class="$style.headerActions">
+          <el-popover
+            v-if="helpContent"
+            placement="bottom-end"
+            :width="280"
+            trigger="click"
+          >
+            <template #reference>
+              <el-icon :class="$style.headerBtn" @click.stop>
+                <QuestionFilled />
+              </el-icon>
+            </template>
+            <div :class="$style.helpContent" v-html="helpContent" />
+          </el-popover>
+          <el-icon
+            v-if="showFullscreenBtn"
+            data-testid="fullscreen-btn"
+            :class="$style.headerBtn"
+            @click.stop="toggleFullscreen"
+          >
+            <FullScreen />
+          </el-icon>
+          <el-icon
+            :class="$style.headerBtn"
+            @click.stop="handleClose"
+          >
+            <Close />
+          </el-icon>
+        </div>
       </div>
     </template>
 
@@ -131,17 +158,48 @@ onBeforeUnmount(() => {
 
 .title {
   flex: 1;
+  color: #fff;
 }
 
-.fullscreenBtn {
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.headerBtn {
   cursor: pointer;
   font-size: 16px;
-  color: var(--el-text-color-secondary);
-  margin-left: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.15s;
 }
 
-.fullscreenBtn:hover {
-  color: var(--el-color-primary);
+.headerBtn:hover {
+  color: #fff;
+}
+
+.helpContent {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #606266;
+}
+
+.helpContent p {
+  margin: 0 0 6px;
+}
+
+.helpContent strong {
+  color: #303133;
+}
+
+.helpContent ul {
+  margin: 2px 0 8px;
+  padding-left: 16px;
+}
+
+.helpContent li {
+  margin-bottom: 2px;
 }
 </style>
 

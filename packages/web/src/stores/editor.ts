@@ -61,6 +61,21 @@ export const useEditorStore = defineStore('editor', () => {
   const clipboard = ref<Widget | null>(null)
 
   // ================================================================
+  // 配置弹窗触发（右键菜单 → PropertyPanel 打开弹框）
+  // ================================================================
+
+  type ConfigDialogType = 'events' | 'rules' | 'api'
+  const configDialogTrigger = ref<{ widget: Widget; type: ConfigDialogType } | null>(null)
+
+  function openConfigDialog(widget: Widget, type: ConfigDialogType) {
+    configDialogTrigger.value = { widget, type }
+  }
+
+  function clearConfigDialogTrigger() {
+    configDialogTrigger.value = null
+  }
+
+  // ================================================================
   // 选择操作
   // ================================================================
 
@@ -223,6 +238,10 @@ export const useEditorStore = defineStore('editor', () => {
     canRedoDialog,
     // 剪贴板
     clipboard,
+    // 配置弹窗触发
+    configDialogTrigger,
+    openConfigDialog,
+    clearConfigDialogTrigger,
     // 选择操作
     select,
     toggleSelect,

@@ -27,15 +27,17 @@ const STYLE_LABEL_MAP: Record<string, string> = {
 }
 
 const COLOR_STYLE_PROPS = new Set(['color', 'backgroundColor'])
-const TEXT_STYLE_PROPS = new Set(['width', 'height', 'fontSize', 'margin', 'padding'])
+const TEXT_STYLE_PROPS = new Set(['width', 'height', 'fontSize'])
 const SELECT_STYLE_PROPS = new Set(['fontWeight'])
 const BORDER_STYLE_PROPS = new Set(['border'])
 const BORDER_RADIUS_STYLE_PROPS = new Set(['borderRadius'])
+const SPACING_MARGIN_PROPS = new Set(['margin'])
+const SPACING_PADDING_PROPS = new Set(['padding'])
 
 const STYLE_OPTIONS_MAP: Record<string, { label: string; value: string | number }[]> = {
   fontWeight: [
-    { label: 'normal', value: 'normal' },
-    { label: 'bold', value: 'bold' },
+    { label: '正常', value: 'normal' },
+    { label: '粗体', value: 'bold' },
   ],
 }
 
@@ -119,6 +121,8 @@ export function usePropertyAdapters() {
     if (SELECT_STYLE_PROPS.has(prop)) return 'select'
     if (BORDER_STYLE_PROPS.has(prop)) return 'border-editor'
     if (BORDER_RADIUS_STYLE_PROPS.has(prop)) return 'border-radius-editor'
+    if (SPACING_MARGIN_PROPS.has(prop)) return 'spacing-margin-editor'
+    if (SPACING_PADDING_PROPS.has(prop)) return 'spacing-padding-editor'
     if (TEXT_STYLE_PROPS.has(prop)) return 'text'
     return 'text'
   }

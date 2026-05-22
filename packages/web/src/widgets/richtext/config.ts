@@ -15,7 +15,7 @@ export const richtextConfig: WidgetConfig = {
   configPanels: ['events', 'rules'] as const,
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
-    style: ['width', 'height'],
+    style: [],
     props: [
       { key: 'placeholder', label: '占位文字', type: 'input', default: '请输入内容' },
       { key: 'readonly', label: '只读', type: 'switch', default: false },

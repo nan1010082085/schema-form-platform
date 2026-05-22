@@ -164,7 +164,19 @@ const needsFormItem = computed(() => {
   return (props.widget.validationRules?.length ?? 0) > 0
 })
 
-/** 位置样式：position: absolute + left/top（不用 transform） */
+/**
+ * 位置样式：position: absolute + left/top（不用 transform）
+ * 合并 widget.style 中的 CSS 属性（边框、圆角、内外边距、背景色、对齐等）
+ */
+const CSS_STYLE_KEYS: ReadonlySet<string> = new Set([
+  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft',
+  'borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius',
+  'backgroundColor', 'boxShadow', 'opacity',
+  'fontSize', 'fontWeight', 'color', 'textAlign',
+])
+
 const wrapperStyle = computed(() => {
   const pos = props.widget.position
   const style: Record<string, string | number> = {
@@ -176,6 +188,16 @@ const wrapperStyle = computed(() => {
   }
   if (pos.zIndex !== undefined) {
     style.zIndex = pos.zIndex
+  }
+  // 合并 widget.style 中的 CSS 属性到 wrapper
+  const ws = props.widget.style
+  if (ws) {
+    for (const key of CSS_STYLE_KEYS) {
+      const val = (ws as Record<string, unknown>)[key]
+      if (val !== undefined && val !== '') {
+        style[key] = val as string | number
+      }
+    }
   }
   return style
 })

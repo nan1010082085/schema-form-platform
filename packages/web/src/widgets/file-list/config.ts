@@ -13,11 +13,9 @@ export const fileListConfig: WidgetConfig = {
   },
   propertyPanel: {
     basic: ['label'],
-    style: ['width'],
+    style: [],
     props: [
       { key: 'title', label: '标题', type: 'input', default: '附件' },
-      { key: 'allowDelete', label: '允许删除', type: 'switch', default: true },
-      { key: 'allowPreview', label: '允许预览', type: 'switch', default: true },
     ],
   },
 }

@@ -7,8 +7,8 @@
  * - 动态组件：每个属性由 PropertyField 根据 type 渲染不同输入
  * - 每行一个属性：label + value 水平排列
  */
-import { computed, ref } from 'vue'
-import { ArrowRight, ArrowDown, QuestionFilled } from '@element-plus/icons-vue'
+import { computed, ref, watch } from 'vue'
+import { ArrowRight, ArrowDown, QuestionFilled, Warning } from '@element-plus/icons-vue'
 import { useEditorStore } from '../../stores/editor'
 import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
@@ -18,6 +18,7 @@ import type { Widget, WidgetEvent, WidgetRule, SchemaApiConfig, ConfigPanelType,
 import PropertyField from './PropertyField.vue'
 import BorderEditor from './BorderEditor.vue'
 import BorderRadiusEditor from './BorderRadiusEditor.vue'
+import SpacingEditor from './SpacingEditor.vue'
 import TableColumnsEditor from './TableColumnsEditor.vue'
 import type { TableColumn } from '../../widgets/table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
@@ -254,6 +255,46 @@ const configPanels = computed<ConfigPanelType[]>(() => {
   return widgetConfig.value.config.configPanels ?? []
 })
 
+/** 根据 configPanels 自动生成配置说明 */
+const configHelpText = computed(() => {
+  const parts: string[] = ['<p><strong>配置说明</strong></p>']
+  if (configPanels.value.includes('events')) {
+    parts.push(`
+      <p><strong>事件配置</strong></p>
+      <p>为组件绑定交互事件，设置触发条件和执行动作：</p>
+      <ul>
+        <li><strong>触发</strong> — 选择事件类型（点击/值变化/聚焦/失焦/关闭）</li>
+        <li><strong>条件</strong> — 可选，满足条件时才执行动作</li>
+        <li><strong>确认</strong> — 可选，执行前弹出确认提示</li>
+        <li><strong>动作</strong> — 显示/隐藏组件、打开/关闭弹窗、切换标签页</li>
+      </ul>
+    `)
+  }
+  if (configPanels.value.includes('rules')) {
+    parts.push(`
+      <p><strong>联动规则</strong></p>
+      <p>监听其他字段值变化，自动控制当前组件状态：</p>
+      <ul>
+        <li>设置监听字段和触发条件表达式</li>
+        <li>条件为真时：自动显示/隐藏/禁用/必填/更新选项</li>
+        <li>条件为假时：恢复默认状态或指定回退值</li>
+      </ul>
+    `)
+  }
+  if (configPanels.value.includes('api')) {
+    parts.push(`
+      <p><strong>数据源</strong></p>
+      <p>配置 API 接口实现动态数据加载：</p>
+      <ul>
+        <li>设置接口地址和请求方法</li>
+        <li>配置请求参数和字段映射</li>
+        <li>支持下拉选项、表格数据等动态加载</li>
+      </ul>
+    `)
+  }
+  return parts.join('')
+})
+
 // ---- 事件/规则/API 弹框 ----
 
 const eventDialogVisible = ref(false)
@@ -271,6 +312,15 @@ function openRuleDialog() {
 function openApiDialog() {
   apiDialogVisible.value = true
 }
+
+// ---- 监听右键菜单触发的弹框打开 ----
+watch(() => editorStore.configDialogTrigger, (trigger) => {
+  if (!trigger) return
+  if (trigger.type === 'events') eventDialogVisible.value = true
+  else if (trigger.type === 'rules') ruleDialogVisible.value = true
+  else if (trigger.type === 'api') apiDialogVisible.value = true
+  editorStore.clearConfigDialogTrigger()
+})
 
 function handleEventSave(events: WidgetEvent[]) {
   if (!selectedWidget.value) return
@@ -359,6 +409,14 @@ function updateBoardProperty(key: string, value: unknown) {
       <div v-if="configPanels.length" :class="$style.configActions">
         <el-scrollbar>
           <div :class="$style.configButtons">
+            <el-popover placement="bottom-start" :width="280" trigger="click">
+              <template #reference>
+                <div :class="$style.helpIconWrap">
+                  <el-icon :class="$style.helpIcon"><QuestionFilled /></el-icon>
+                </div>
+              </template>
+              <div :class="$style.helpContent" v-html="configHelpText" />
+            </el-popover>
             <template v-for="panel in configPanels" :key="panel">
               <el-button v-if="panel === 'events'" size="small" plain @click="openEventDialog">
                 事件配置
@@ -438,6 +496,24 @@ function updateBoardProperty(key: string, value: unknown) {
               <div v-else-if="item.type === 'border-radius-editor'" :class="$style.columnsSection">
                 <div :class="$style.columnsLabel">{{ item.label }}</div>
                 <BorderRadiusEditor
+                  :value="(selectedWidget?.style as Record<string, string>) ?? {}"
+                  @update="updateStylePatch"
+                />
+              </div>
+              <!-- 外边距可视化编辑器 -->
+              <div v-else-if="item.type === 'spacing-margin-editor'" :class="$style.columnsSection">
+                <div :class="$style.columnsLabel">{{ item.label }}</div>
+                <SpacingEditor
+                  mode="margin"
+                  :value="(selectedWidget?.style as Record<string, string>) ?? {}"
+                  @update="updateStylePatch"
+                />
+              </div>
+              <!-- 内边距可视化编辑器 -->
+              <div v-else-if="item.type === 'spacing-padding-editor'" :class="$style.columnsSection">
+                <div :class="$style.columnsLabel">{{ item.label }}</div>
+                <SpacingEditor
+                  mode="padding"
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
                   @update="updateStylePatch"
                 />
@@ -617,5 +693,54 @@ function updateBoardProperty(key: string, value: unknown) {
   color: #fff;
   background: #409eff;
   border-radius: 8px;
+}
+
+.helpIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s;
+}
+
+.helpIconWrap:hover {
+  background-color: var(--el-color-primary-light-9);
+}
+
+.helpIcon {
+  font-size: 14px;
+  color: #909399;
+  transition: color 0.15s;
+}
+
+.helpIconWrap:hover .helpIcon {
+  color: var(--el-color-primary);
+}
+
+.helpContent {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #606266;
+}
+
+.helpContent p {
+  margin: 0 0 6px;
+}
+
+.helpContent strong {
+  color: #303133;
+}
+
+.helpContent ul {
+  margin: 2px 0 8px;
+  padding-left: 16px;
+}
+
+.helpContent li {
+  margin-bottom: 2px;
 }
 </style>

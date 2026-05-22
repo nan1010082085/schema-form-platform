@@ -42,11 +42,11 @@ watch(
 // ---- 选项常量 ----
 
 const triggerOptions = [
-  { label: 'click', value: 'click' },
-  { label: 'change', value: 'change' },
-  { label: 'close', value: 'close' },
-  { label: 'blur', value: 'blur' },
-  { label: 'focus', value: 'focus' },
+  { label: '点击', value: 'click' },
+  { label: '值变化', value: 'change' },
+  { label: '关闭', value: 'close' },
+  { label: '失焦', value: 'blur' },
+  { label: '聚焦', value: 'focus' },
 ]
 
 const actionTypeOptions: { label: string; value: EventActionType }[] = [
