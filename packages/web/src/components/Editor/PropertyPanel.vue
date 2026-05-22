@@ -8,7 +8,7 @@
  * - 每行一个属性：label + value 水平排列
  */
 import { computed, ref, watch } from 'vue'
-import { ArrowRight, ArrowDown, QuestionFilled, Warning } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, QuestionFilled } from '@element-plus/icons-vue'
 import { useEditorStore } from '../../stores/editor'
 import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
