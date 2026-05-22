@@ -29,6 +29,8 @@ const STYLE_LABEL_MAP: Record<string, string> = {
 const COLOR_STYLE_PROPS = new Set(['color', 'backgroundColor'])
 const TEXT_STYLE_PROPS = new Set(['width', 'height', 'fontSize', 'margin', 'padding'])
 const SELECT_STYLE_PROPS = new Set(['fontWeight'])
+const BORDER_STYLE_PROPS = new Set(['border'])
+const BORDER_RADIUS_STYLE_PROPS = new Set(['borderRadius'])
 
 const STYLE_OPTIONS_MAP: Record<string, { label: string; value: string | number }[]> = {
   fontWeight: [
@@ -115,6 +117,8 @@ export function usePropertyAdapters() {
   function getStyleInputType(prop: string): string {
     if (COLOR_STYLE_PROPS.has(prop)) return 'color'
     if (SELECT_STYLE_PROPS.has(prop)) return 'select'
+    if (BORDER_STYLE_PROPS.has(prop)) return 'border-editor'
+    if (BORDER_RADIUS_STYLE_PROPS.has(prop)) return 'border-radius-editor'
     if (TEXT_STYLE_PROPS.has(prop)) return 'text'
     return 'text'
   }
