@@ -8,6 +8,7 @@ import healthRouter from './routes/health.js'
 import schemaRouter from './routes/schema.js'
 import authRouter from './routes/auth.js'
 import dictRouter from './routes/dict.js'
+import optionsRouter from './routes/options.js'
 import dataRouter from './routes/data.js'
 import mockRouter from './routes/mock.js'
 import docsRouter from './routes/docs.js'
@@ -44,6 +45,8 @@ app.use(authRouter.routes())
 app.use(authRouter.allowedMethods())
 app.use(dictRouter.routes())
 app.use(dictRouter.allowedMethods())
+app.use(optionsRouter.routes())
+app.use(optionsRouter.allowedMethods())
 app.use(dataRouter.routes())
 app.use(dataRouter.allowedMethods())
 app.use(mockRouter.routes())

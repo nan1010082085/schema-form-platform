@@ -2,11 +2,12 @@ import Router from '@koa/router'
 
 const router = new Router({ prefix: '/api/data' })
 
-const departments = ['tech', 'product', 'design', 'operations']
-const statuses = ['enabled', 'disabled', 'pending']
-const firstNames = ['张', '李', '王', '赵', '刘', '陈', '杨', '黄', '周', '吴']
-const lastNames = ['伟', '芳', '娜', '敏', '静', '强', '磊', '洋', '勇', '艳']
+const departments = ['tech', 'product', 'design', 'operations', 'marketing', 'sales', 'hr', 'finance', 'legal', 'admin']
+const statuses = ['enabled', 'disabled', 'pending', 'approved', 'rejected', 'archived']
+const firstNames = ['张', '李', '王', '赵', '刘', '陈', '杨', '黄', '周', '吴', '徐', '孙', '马', '朱', '胡', '郭', '何', '高', '林', '罗']
+const lastNames = ['伟', '芳', '娜', '敏', '静', '强', '磊', '洋', '勇', '艳', '军', '杰', '涛', '明', '超', '秀英', '丽', '鑫', '斌', '桂英']
 
+/** 生成模拟数据记录 */
 function generateMockRecords(count: number) {
   const records = []
   for (let i = 1; i <= count; i++) {
@@ -19,32 +20,47 @@ function generateMockRecords(count: number) {
       email: `user${i}@example.com`,
       department: departments[i % departments.length],
       status: statuses[i % statuses.length],
+      city: ['beijing', 'shanghai', 'guangzhou', 'shenzhen', 'hangzhou', 'chengdu', 'wuhan', 'nanjing'][i % 8],
+      joinDate: `202${Math.floor(i / 50)}-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
     })
   }
   return records
 }
 
-const mockRecords = generateMockRecords(50)
+const mockRecords = generateMockRecords(200)
 
 /**
- * GET /api/data/list
+ * GET/POST /api/data/list
+ * 同时支持 GET（query）和 POST（body）读取参数
  */
-router.get('/list', async (ctx) => {
-  const { page: pageStr = '1', pageSize: pageSizeStr = '10', ...filters } = ctx.query
-  const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
-  const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 10))
+async function listHandler(ctx: Router.RouterContext) {
+  // POST 从 body 读取，GET 从 query 读取
+  const params = ctx.method === 'POST' ? (ctx.request.body as Record<string, unknown>) : ctx.query
+
+  // 分页参数：优先 pageNum/pageSize，兼容 page/size
+  const pageNumStr = String(params.pageNum ?? params.page ?? '1')
+  const pageSizeStr = String(params.pageSize ?? params.size ?? '10')
+  const page = Math.max(1, parseInt(pageNumStr, 10) || 1)
+  const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr, 10) || 10))
+
+  // 收集过滤参数（排除分页键）
+  const paginationKeys = new Set(['page', 'pageNum', 'pageSize', 'size'])
+  const filters: Record<string, string> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (!paginationKeys.has(key) && value && typeof value === 'string') {
+      filters[key] = value
+    }
+  }
 
   let items = [...mockRecords]
 
-  // Apply arbitrary filters
+  // 应用过滤条件
   for (const [key, value] of Object.entries(filters)) {
-    if (value && typeof value === 'string' && key !== 'page' && key !== 'pageSize') {
-      items = items.filter((item) => {
-        const fieldValue = (item as Record<string, unknown>)[key]
-        if (fieldValue === undefined) return false
-        return String(fieldValue).toLowerCase().includes(value.toLowerCase())
-      })
-    }
+    items = items.filter((item) => {
+      const fieldValue = (item as Record<string, unknown>)[key]
+      if (fieldValue === undefined) return false
+      return String(fieldValue).toLowerCase().includes(value.toLowerCase())
+    })
   }
 
   const total = items.length
@@ -62,7 +78,10 @@ router.get('/list', async (ctx) => {
       totalPages,
     },
   }
-})
+}
+
+router.get('/list', listHandler)
+router.post('/list', listHandler)
 
 /**
  * GET /api/data/:id
