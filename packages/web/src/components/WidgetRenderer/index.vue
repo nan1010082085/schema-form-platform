@@ -223,6 +223,13 @@ const eventContext: EventExecutionContext = {
   emit: (eventName: string, payload?: unknown) => {
     emit('action', { type: 'emit', eventName, eventPayload: payload } as SchemaAction)
   },
+  confirm: (message: string) => {
+    return ElMessageBox.confirm(message, '确认', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    }).then(() => undefined)
+  },
   get variables() { return variablesContext.value },
   setVariable: (name: string, value: unknown) => {
     runtimeVariables.value[name] = value

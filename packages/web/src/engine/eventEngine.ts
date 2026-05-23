@@ -28,6 +28,8 @@ export interface EventExecutionContext {
   getFormData: () => Record<string, unknown>
   /** 自定义事件 emit */
   emit: (eventName: string, payload?: unknown) => void
+  /** 确认对话框（返回 Promise，reject 表示取消） */
+  confirm?: (message: string) => Promise<void>
   /** 变量上下文 */
   variables?: Record<string, unknown>
   /** 设置变量值 */
@@ -211,11 +213,11 @@ function resolveTextValue(text: string, ctx: EventExecutionContext): string {
  * @param trigger - 触发事件名（click / change / close 等）
  * @param ctx - 执行上下文
  */
-export function triggerWidgetEvent(
+export async function triggerWidgetEvent(
   widget: Widget,
   trigger: string,
   ctx: EventExecutionContext,
-): void {
+): Promise<void> {
   if (!widget.events) return
 
   // 构建完整的表达式上下文
@@ -230,10 +232,18 @@ export function triggerWidgetEvent(
     // 条件判断
     if (event.condition && !evaluateCondition(event.condition, context, ctx.exposed)) continue
 
-    // 确认提示
+    // 确认提示（使用 UI 库的 confirm，而非浏览器原生）
     if (event.confirm) {
-      const confirmed = window.confirm(event.confirm)
-      if (!confirmed) continue
+      if (!ctx.confirm) {
+        logger.warn('confirm dialog requested but ctx.confirm is not provided')
+        continue
+      }
+      try {
+        await ctx.confirm(event.confirm)
+      } catch {
+        // 用户取消
+        continue
+      }
     }
 
     // 执行动作链

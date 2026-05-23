@@ -97,9 +97,9 @@ provide(widgetRenderStateKey, renderState)
 // ---- 事件拦截 ----
 const eventCtx = inject(EVENT_CONTEXT_KEY, null)
 
-function handleWidgetEvent(trigger: string, _value?: unknown) {
+async function handleWidgetEvent(trigger: string, _value?: unknown) {
   if (!eventCtx) return
-  triggerWidgetEvent(props.widget as Widget, trigger, eventCtx)
+  await triggerWidgetEvent(props.widget as Widget, trigger, eventCtx)
 }
 </script>
 

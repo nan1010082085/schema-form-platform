@@ -20,9 +20,9 @@ const buttons = computed<ToolbarButtonItem[]>(() => {
   return (widgetData.value.props?.buttons as ToolbarButtonItem[]) || []
 })
 
-function handleClick() {
+async function handleClick() {
   if (eventCtx) {
-    triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx)
   }
 }
 </script>

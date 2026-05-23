@@ -27,9 +27,9 @@ const isRound = computed(() => Boolean(widgetData.value.props?.round))
 const isCircle = computed(() => Boolean(widgetData.value.props?.circle))
 const buttonText = computed(() => widgetData.value.label || widgetData.value.props?.text || '按钮')
 
-function handleClick() {
+async function handleClick() {
   if (eventCtx) {
-    triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx)
   }
 }
 </script>
