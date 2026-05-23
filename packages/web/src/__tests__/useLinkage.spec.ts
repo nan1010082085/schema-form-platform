@@ -643,4 +643,172 @@ describe('useLinkage', () => {
       expect(stateMap.value.get('target')!.elseValue).toBe('')
     })
   })
+
+  // ---------- reset-fields ----------
+
+  describe('reset-fields linkage', () => {
+    it('stores resetFields when condition is met', () => {
+      const schema: PartialWidget[] = [
+        { type: 'select', field: 'type', label: '类型', options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] },
+        { type: 'input', field: 'field1', label: '字段1' },
+        { type: 'input', field: 'field2', label: '字段2' },
+        {
+          type: 'input', field: 'trigger', label: '触发器',
+          linkages: [{
+            type: 'reset-fields',
+            watchFields: ['type'],
+            condition: 'values.type === "a"',
+            targetFields: ['field1', 'field2'],
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ type: 'a', field1: 'old1', field2: 'old2', trigger: '' })
+      const { stateMap } = useLinkage(schema, formData)
+      expect(stateMap.value.get('trigger')!.resetFields).toEqual(['field1', 'field2'])
+    })
+
+    it('resetFields is undefined when condition is false', () => {
+      const schema: PartialWidget[] = [
+        { type: 'select', field: 'type', label: '类型', options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] },
+        { type: 'input', field: 'field1', label: '字段1' },
+        {
+          type: 'input', field: 'trigger', label: '触发器',
+          linkages: [{
+            type: 'reset-fields',
+            watchFields: ['type'],
+            condition: 'values.type === "a"',
+            targetFields: ['field1'],
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ type: 'b', field1: 'old', trigger: '' })
+      const { stateMap } = useLinkage(schema, formData)
+      expect(stateMap.value.get('trigger')!.resetFields).toBeUndefined()
+    })
+
+    it('reacts to watchFields changes', () => {
+      const schema: PartialWidget[] = [
+        { type: 'select', field: 'mode', label: '模式' },
+        { type: 'input', field: 'data', label: '数据' },
+        {
+          type: 'input', field: 'ctrl', label: '控制',
+          linkages: [{
+            type: 'reset-fields',
+            watchFields: ['mode'],
+            condition: 'values.mode === "reset"',
+            targetFields: ['data'],
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ mode: 'keep', data: 'value', ctrl: '' })
+      const { stateMap } = useLinkage(schema, formData)
+
+      expect(stateMap.value.get('ctrl')!.resetFields).toBeUndefined()
+
+      formData.mode = 'reset'
+      expect(stateMap.value.get('ctrl')!.resetFields).toEqual(['data'])
+    })
+  })
+
+  // ---------- variables 上下文 ----------
+
+  describe('variables context', () => {
+    it('evaluates condition with variables reference', () => {
+      const schema: PartialWidget[] = [
+        {
+          type: 'input', field: 'name', label: '名称',
+          linkages: [{
+            type: 'visible',
+            watchFields: ['toggle'],
+            condition: 'variables.showName === true',
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ toggle: true, name: '' })
+      const variables = { showName: true }
+      const { stateMap } = useLinkage(schema, formData, variables)
+      expect(stateMap.value.get('name')!.visible).toBe(true)
+    })
+
+    it('reacts to variables changes', () => {
+      const schema: PartialWidget[] = [
+        {
+          type: 'input', field: 'name', label: '名称',
+          linkages: [{
+            type: 'visible',
+            watchFields: ['toggle'],
+            condition: 'variables.showName === true',
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ toggle: true, name: '' })
+      const variables = reactive<Record<string, unknown>>({ showName: false })
+      const { stateMap } = useLinkage(schema, formData, variables)
+
+      expect(stateMap.value.get('name')!.visible).toBe(false)
+
+      variables.showName = true
+      expect(stateMap.value.get('name')!.visible).toBe(true)
+    })
+  })
+
+  // ---------- exposed 上下文 ----------
+
+  describe('exposed context', () => {
+    it('evaluates condition with exposed reference', () => {
+      const schema: PartialWidget[] = [
+        {
+          type: 'input', field: 'reason', label: '原因',
+          linkages: [{
+            type: 'required',
+            watchFields: ['status'],
+            condition: 'exposed.table1.selectedRows.length > 0',
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ status: 'active', reason: '' })
+      const exposed = { table1: { selectedRows: [{ id: 1 }] } }
+      const { stateMap } = useLinkage(schema, formData, undefined, exposed)
+      expect(stateMap.value.get('reason')!.required).toBe(true)
+    })
+
+    it('reacts to exposed changes', () => {
+      const schema: PartialWidget[] = [
+        {
+          type: 'input', field: 'action', label: '操作',
+          linkages: [{
+            type: 'visible',
+            watchFields: ['mode'],
+            condition: 'exposed.form1.loading === false',
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ mode: 'edit', action: '' })
+      const exposed = reactive<Record<string, Record<string, unknown>>>({ form1: { loading: true } })
+      const { stateMap } = useLinkage(schema, formData, undefined, exposed)
+
+      expect(stateMap.value.get('action')!.visible).toBe(false)
+
+      exposed.form1.loading = false
+      expect(stateMap.value.get('action')!.visible).toBe(true)
+    })
+
+    it('combines values, variables and exposed in condition', () => {
+      const schema: PartialWidget[] = [
+        {
+          type: 'input', field: 'result', label: '结果',
+          linkages: [{
+            type: 'visible',
+            watchFields: ['type'],
+            condition: 'values.type === "detail" && variables.debug && exposed.table1.selectedRows.length > 0',
+          }],
+        },
+      ]
+      const formData = reactive<FormData>({ type: 'detail', result: '' })
+      const variables = { debug: true }
+      const exposed = { table1: { selectedRows: [{ id: 1 }] } }
+      const { stateMap } = useLinkage(schema, formData, variables, exposed)
+      expect(stateMap.value.get('result')!.visible).toBe(true)
+    })
+  })
 })
