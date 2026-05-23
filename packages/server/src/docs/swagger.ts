@@ -30,6 +30,7 @@ const spec = {
   },
   servers: [
     { url: 'http://localhost:3001', description: 'Local development' },
+    { url: 'https://schema-form-platform.vercel.app', description: 'Production (Vercel)' },
   ],
   components: {
     securitySchemes: {
@@ -89,7 +90,7 @@ const spec = {
             properties: {
               json: {
                 type: 'array',
-                description: 'Widget tree (FormSchemaItem[])',
+                description: 'Widget tree (PartialWidget[])',
                 items: { type: 'object' },
               },
               publishId: { type: 'string' },

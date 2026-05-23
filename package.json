@@ -2,6 +2,7 @@
   "name": "schema-form-platform",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "FormGrid monorepo — schema-driven form engine with editor and backend services",
   "scripts": {
     "dev": "pnpm --parallel -r dev",
@@ -18,12 +19,5 @@
   "engines": {
     "node": ">=18",
     "pnpm": ">=9"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "vue-demi",
-      "@parcel/watcher"
-    ]
   }
 }

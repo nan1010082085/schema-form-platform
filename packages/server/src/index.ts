@@ -7,7 +7,7 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10)
 async function start() {
   await connectDatabase()
   const server = app.listen(PORT, () => {
-    console.log(`[server] FormGrid API running at http://localhost:${PORT}`)
+    console.log(`[server] Schema API running at http://localhost:${PORT}`)
     console.log(`[server] Health check: http://localhost:${PORT}/api/health`)
   })
 
