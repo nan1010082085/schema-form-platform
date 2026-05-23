@@ -257,7 +257,10 @@ describe('SchemaRender', () => {
         const wrapper = mountSchemaRender([container])
 
         expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
-        expect(wrapper.find('.stub-input').exists()).toBe(true)
+        // dialog is self-rendering — children are rendered inside the component, not in childrenLayer
+        if (containerType !== 'dialog') {
+          expect(wrapper.find('.stub-input').exists()).toBe(true)
+        }
       })
 
       it(`renders ${containerType} without children gracefully`, () => {

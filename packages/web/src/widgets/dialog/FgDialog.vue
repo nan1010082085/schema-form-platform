@@ -12,6 +12,7 @@
  */
 import { inject, ref, reactive, provide, watch, computed, onMounted, onUnmounted } from 'vue'
 import { widgetDataKey, formContextKey } from '../base/types'
+import SchemaRender from '../../components/FormGrid/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import { useLogger } from '@/composables/useLogger'
 import EnhancedDialog from '../../components/EnhancedDialog.vue'
@@ -138,7 +139,10 @@ function handleCancel() {
       :destroy-on-close="widgetData.props?.destroyOnClose !== false"
       :close-on-click-modal="widgetData.props?.closeOnClickModal === true"
     >
-      <slot />
+      <SchemaRender
+        v-if="widgetData.children?.length"
+        :widgets="widgetData.children"
+      />
       <template v-if="widgetData.props?.showFooter !== false" #footer>
         <div :class="styles.footer">
           <el-button @click="handleCancel">{{ (widgetData.props?.cancelText as string) || '取消' }}</el-button>

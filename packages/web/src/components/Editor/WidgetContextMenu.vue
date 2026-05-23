@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   copy: [widget: Widget]
+  copyId: [id: string]
   delete: [widget: Widget]
   openEvent: [widget: Widget]
   openRule: [widget: Widget]
@@ -33,6 +34,7 @@ function handleAction(action: string) {
   if (!props.widget) return
   switch (action) {
     case 'copy': emit('copy', props.widget); break
+    case 'copyId': emit('copyId', props.widget.id); break
     case 'delete': emit('delete', props.widget); break
     case 'event': emit('openEvent', props.widget); break
     case 'rule': emit('openRule', props.widget); break
@@ -57,6 +59,7 @@ function handleAction(action: string) {
     >
       <div :class="$style.header">{{ widgetConfig?.displayName ?? widget.name }}</div>
       <div :class="$style.item" @click="handleAction('copy')">复制部件</div>
+      <div :class="$style.item" @click="handleAction('copyId')">复制 ID</div>
       <div :class="$style.item" @click="handleAction('delete')">删除部件</div>
       <template v-if="configPanels.length">
         <div :class="$style.divider" />

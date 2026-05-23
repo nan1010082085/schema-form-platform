@@ -8,7 +8,7 @@
  * - 每行一个属性：label + value 水平排列
  */
 import { computed, ref, watch } from 'vue'
-import { ArrowRight, ArrowDown, QuestionFilled } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, QuestionFilled, CopyDocument } from '@element-plus/icons-vue'
 import { useEditorStore } from '../../stores/editor'
 import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
@@ -237,6 +237,12 @@ function updateProperty(key: string, value: unknown) {
   }
 }
 
+function copyWidgetId() {
+  if (selectedWidget.value) {
+    navigator.clipboard.writeText(selectedWidget.value.id)
+  }
+}
+
 /**
  * 样式补丁更新 — BorderEditor / BorderRadiusEditor 发出多字段 patch
  * 合并到现有 style 对象上
@@ -403,6 +409,12 @@ function updateBoardProperty(key: string, value: unknown) {
         >
           <el-icon :class="$style.questionIcon"><QuestionFilled /></el-icon>
         </ElTooltip>
+        <el-tooltip v-if="selectedWidget" content="复制部件 ID" placement="top" :show-after="500">
+          <el-icon
+            :class="$style.copyIdIcon"
+            @click="copyWidgetId"
+          ><CopyDocument /></el-icon>
+        </el-tooltip>
       </div>
 
       <!-- 动态配置入口（由 widget config.configPanels 声明驱动）—— 顶部横向按钮 -->
@@ -606,6 +618,16 @@ function updateBoardProperty(key: string, value: unknown) {
 }
 
 .questionIcon:hover {
+  color: var(--el-color-primary);
+}
+
+.copyIdIcon {
+  color: var(--el-text-color-placeholder);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.copyIdIcon:hover {
   color: var(--el-color-primary);
 }
 

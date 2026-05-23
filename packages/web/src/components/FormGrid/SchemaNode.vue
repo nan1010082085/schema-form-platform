@@ -10,7 +10,7 @@
  * - 判断是否容器组件，渲染组件 + 递归 children
  * - 位置通过 position: absolute + left/top 定位
  */
-import { computed, inject, provide, type ComputedRef } from 'vue'
+import { computed, inject, provide, ref, type ComputedRef, type ComponentPublicInstance } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { FormSchemaItem, FormData } from './types'
@@ -42,7 +42,7 @@ const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
  * 所有容器统一由 childrenLayer（absolute 定位）渲染子组件，
  * 保证 overlay 坐标系与渲染坐标系一致。
  */
-const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
+const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set(['dialog'])
 
 /**
  * 交互式容器：内部有可交互 UI（tab headers、dialog body），
@@ -101,6 +101,27 @@ const isSelfRendering = computed(() =>
 
 /** 解析组件 */
 const resolvedComponent = computed(() => compMap[props.widget.type])
+
+// ---- Tabs activeKey 支持 ----
+
+/** tabs 容器组件 ref，用于读取 activeKey */
+const containerRef = ref<ComponentPublicInstance | null>(null)
+
+/** 当前 tabs 容器的 activeKey（仅 tabs 容器有效） */
+const activeTabKey = computed(() => {
+  if (props.widget.type !== 'tabs') return null
+  const instance = containerRef.value as Record<string, unknown> | null
+  if (!instance) return null
+  // activeKey is exposed via defineExpose on FgTabs
+  return (instance as { activeKey?: { value?: string } })?.activeKey?.value ?? null
+})
+
+/** 过滤后的子部件列表：tabs 容器按 tabKey 过滤，其他容器全量 */
+const filteredChildren = computed(() => {
+  if (!props.widget.children?.length) return []
+  if (props.widget.type !== 'tabs' || activeTabKey.value === null) return props.widget.children
+  return props.widget.children.filter(c => (c as { tabKey?: string }).tabKey === activeTabKey.value)
+})
 
 // ---- 规则引擎 ----
 
@@ -222,17 +243,18 @@ const wrapperStyle = computed(() => {
       <!-- 容器组件自身渲染（卡片标题、表单包裹等） -->
       <component
         v-if="resolvedComponent"
+        :ref="(el: ComponentPublicInstance | null) => { containerRef = el }"
         :is="resolvedComponent"
         :widget="widget"
         :editable="isEditMode"
       />
-      <!-- 子部件层：绝对定位，相对于容器定位（自渲染容器跳过） -->
+      <!-- 子部件层：绝对定位，相对于容器定位（自渲染容器跳过；dialog 预览模式跳过） -->
       <div
-        v-if="widget.children?.length && !isSelfRendering"
+        v-if="filteredChildren.length && !isSelfRendering && !(widget.type === 'dialog' && !isEditMode)"
         :class="$style.childrenLayer"
       >
         <SchemaRender
-          :widgets="widget.children"
+          :widgets="filteredChildren"
           :mode="mode"
         />
       </div>
