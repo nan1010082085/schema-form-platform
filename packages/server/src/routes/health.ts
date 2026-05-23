@@ -16,10 +16,13 @@ router.get('/api/health', async (ctx) => {
   }
 
   ctx.body = {
-    status: 'ok',
-    timestamp: Date.now(),
-    uptime: process.uptime(),
-    database: dbStatus,
+    success: true,
+    data: {
+      status: 'ok',
+      timestamp: Date.now(),
+      uptime: process.uptime(),
+      database: dbStatus,
+    },
   }
 })
 

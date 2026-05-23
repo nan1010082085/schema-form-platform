@@ -1,5 +1,8 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
+
+const SALT_ROUNDS = 10
 
 export interface IUser {
   _id: string
@@ -15,7 +18,7 @@ export type UserRole = IUser['role']
 
 const userSchema = new mongoose.Schema(
   {
-    _id: { type: String, required: true },
+    _id: { type: String, default: uuidv4 },
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     displayName: { type: String, required: true },
@@ -33,6 +36,12 @@ const userSchema = new mongoose.Schema(
     },
   },
 )
+
+userSchema.pre('save', async function (this: IUser & mongoose.Document) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, SALT_ROUNDS)
+  }
+})
 
 userSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
   return bcrypt.compare(candidate, this.password)

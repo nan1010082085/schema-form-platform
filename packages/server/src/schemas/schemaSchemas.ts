@@ -18,6 +18,6 @@ export const updateSchemaSchema = z.object({
 
 export const importSchemaSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  type: z.string().min(1, 'Type is required'),
+  type: z.enum(['form', 'search-list', 'search_list']).default('form'),
   json: z.array(z.unknown()),
 }).strict()

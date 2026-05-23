@@ -2,8 +2,11 @@ import Router from '@koa/router'
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import { FormSchemaModel } from '../models/FormSchema.js'
 import { PublishedSchemaModel } from '../models/PublishedSchema.js'
+import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { createSchemaSchema, updateSchemaSchema, importSchemaSchema } from '../schemas/schemaSchemas.js'
+
+const requireAuth = authMiddleware({ required: true })
 
 const router = new Router({ prefix: '/api/schemas' })
 
@@ -130,7 +133,7 @@ router.get('/', async (ctx) => {
 // If body has `editId`, find existing schema by editId, generate new version,
 // create new document with same editId. Otherwise generate new editId + version.
 // ────────────────────────────────────────────
-router.post('/', validate(createSchemaSchema), async (ctx) => {
+router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
   const { name, json, type, editId: bodyEditId } = ctx.request.body as {
     name?: string; json?: unknown; type?: string; editId?: string
   }
@@ -168,7 +171,7 @@ router.post('/', validate(createSchemaSchema), async (ctx) => {
 // POST /api/schemas/import
 // Import a schema with deep validation.
 // ────────────────────────────────────────────
-router.post('/import', validate(importSchemaSchema), async (ctx) => {
+router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) => {
   const { name, type, json } = ctx.request.body as {
     name?: string; type?: string; json?: unknown
   }
@@ -335,7 +338,7 @@ router.get('/:id', async (ctx) => {
 // ────────────────────────────────────────────
 // PUT /api/schemas/:id
 // ────────────────────────────────────────────
-router.put('/:id', validate(updateSchemaSchema), async (ctx) => {
+router.put('/:id', requireAuth, validate(updateSchemaSchema), async (ctx) => {
   const { id } = ctx.params
   const { name, json, status, type } = ctx.request.body as {
     name?: string; json?: unknown; status?: string; type?: string
@@ -405,7 +408,7 @@ router.put('/:id', validate(updateSchemaSchema), async (ctx) => {
 // If provided, find the schema by editId+version and publish that.
 // Otherwise publish the `:id` document.
 // ────────────────────────────────────────────
-router.post('/:id/publish', async (ctx) => {
+router.post('/:id/publish', requireAuth, async (ctx) => {
   const { id } = ctx.params
   const { version: bodyVersion } = ctx.request.body as { version?: string }
 
@@ -461,7 +464,7 @@ router.post('/:id/publish', async (ctx) => {
 // ────────────────────────────────────────────
 // DELETE /api/schemas/:id
 // ────────────────────────────────────────────
-router.delete('/:id', async (ctx) => {
+router.delete('/:id', requireAuth, async (ctx) => {
   const { id } = ctx.params
 
   if (!uuidValidate(id)) {
