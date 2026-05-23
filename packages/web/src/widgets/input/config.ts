@@ -17,7 +17,7 @@ export const inputConfig: WidgetConfig = {
     maxlength: undefined as number | undefined,
     showPassword: false,
   },
-  configPanels: ['events', 'rules'] as const,
+  configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
     style: ['fontSize', 'color', 'backgroundColor'],

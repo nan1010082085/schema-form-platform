@@ -15,7 +15,7 @@ export const uploadConfig: WidgetConfig = {
     limit: 5,
     buttonText: '点击上传',
   },
-  configPanels: ['events', 'rules'] as const,
+  configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],
     style: [],

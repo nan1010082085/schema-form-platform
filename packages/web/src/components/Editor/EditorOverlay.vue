@@ -16,9 +16,10 @@ import { useDragStore } from '../../stores/drag'
 import { useBoardStore } from '../../stores/board'
 import { useDrag } from '../../composables/useDrag'
 import { useResize } from '../../composables/useResize'
+import { useClipboard } from '../../composables/useClipboard'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { ResizeHandle } from '../../composables/useResize'
-import SchemaRender from '../FormGrid/SchemaRender.vue'
+import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import WidgetContextMenu from './WidgetContextMenu.vue'
 
 // ================================================================
@@ -53,6 +54,7 @@ const emit = defineEmits<{
   openEvent: [widget: Widget]
   openRule: [widget: Widget]
   openApi: [widget: Widget]
+  openVariables: [widget: Widget]
 }>()
 
 const widgetStore = useWidgetStore()
@@ -61,6 +63,7 @@ const dragStore = useDragStore()
 const boardStore = useBoardStore()
 
 const { startDragFromPanel, startDragOnCanvas, updateDrag, endDrag } = useDrag()
+const { copy } = useClipboard()
 
 /** 自渲染容器：children 在组件内部渲染，flattenWidgets 跳过其子组件 */
 const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
@@ -98,12 +101,13 @@ function handleDeleteWidget(widget: Widget) {
 }
 
 function handleCopyId(id: string) {
-  navigator.clipboard.writeText(id)
+  copy(id, '已复制部件 ID')
 }
 
 function handleOpenEvent(widget: Widget) { emit('openEvent', widget) }
 function handleOpenRule(widget: Widget) { emit('openRule', widget) }
 function handleOpenApi(widget: Widget) { emit('openApi', widget) }
+function handleOpenVariables(widget: Widget) { emit('openVariables', widget) }
 
 // ================================================================
 // 选中 Widget
@@ -413,6 +417,7 @@ function handleDrop(e: DragEvent) {
       @open-event="handleOpenEvent"
       @open-rule="handleOpenRule"
       @open-api="handleOpenApi"
+      @open-variables="handleOpenVariables"
     />
   </div>
 </template>

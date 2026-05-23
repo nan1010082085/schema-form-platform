@@ -9,9 +9,9 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { h, nextTick } from 'vue'
-import FormGrid from '@/components/FormGrid/index.vue'
+import FormGrid from '@/components/WidgetRenderer/index.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 /** Stub window.matchMedia for jsdom (used by useBreakpoint -> SchemaRender) */
 function setupMatchMediaStub() {
@@ -27,7 +27,7 @@ function setupMatchMediaStub() {
   }))
 }
 
-function createWrapper(schema: FormSchemaItem[], props: Record<string, unknown> = {}) {
+function createWrapper(schema: PartialWidget[], props: Record<string, unknown> = {}) {
   const pinia = createPinia()
   setActivePinia(pinia)
   return mount(FormGrid, {
@@ -47,7 +47,7 @@ describe('E2E Smoke', () => {
 
   // ─── Test 1: FormGrid mounts and renders a simple form ──────────────
   it('mounts FormGrid and exposes API methods', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [
@@ -77,7 +77,7 @@ describe('E2E Smoke', () => {
 
   // ─── Test 2: FormGrid handles form submission ─────────────────────
   it('fires submit event when form is submitted', async () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [
@@ -109,7 +109,7 @@ describe('E2E Smoke', () => {
   })
 
   it('getFormData returns form data with default values', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [

@@ -24,10 +24,10 @@ import {
   flattenToPaths,
   comparePaths,
 } from '@/utils/schemaTransform'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 /** Helper: create a simple schema with a card container at index 1 */
-function makeNestedSchema(): FormSchemaItem[] {
+function makeNestedSchema(): PartialWidget[] {
   return [
     { type: 'input', field: 'name', label: 'Name' },
     {
@@ -47,7 +47,7 @@ describe('schemaTransform', () => {
 
   describe('getItemAtPath', () => {
     it('returns item at root level path', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
       ]
@@ -84,7 +84,7 @@ describe('schemaTransform', () => {
 
   describe('removeAtPath', () => {
     it('removes item at root level', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
       ]
@@ -96,19 +96,19 @@ describe('schemaTransform', () => {
     it('removes item at nested level', () => {
       const schema = makeNestedSchema()
       const result = removeAtPath(schema, [1, 0])
-      const card = result[1] as FormSchemaItem
+      const card = result[1] as PartialWidget
       expect(card.children).toHaveLength(1)
       expect(card.children![0].field).toBe('email')
     })
 
     it('returns original schema for empty path', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = removeAtPath(schema, [])
       expect(result).toHaveLength(1)
     })
 
     it('returns original schema when path is out of range', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = removeAtPath(schema, [99])
       expect(result).toHaveLength(1)
     })
@@ -125,20 +125,20 @@ describe('schemaTransform', () => {
 
   describe('insertAtPath', () => {
     it('inserts at root level', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
       ]
-      const newItem: FormSchemaItem = { type: 'number', field: 'new', label: 'New' }
+      const newItem: PartialWidget = { type: 'number', field: 'new', label: 'New' }
       const result = insertAtPath(schema, [], 1, newItem)
       expect(result).toHaveLength(2)
       expect(result[1].field).toBe('new')
     })
 
     it('inserts at beginning of root level', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
       ]
-      const newItem: FormSchemaItem = { type: 'number', field: 'new', label: 'New' }
+      const newItem: PartialWidget = { type: 'number', field: 'new', label: 'New' }
       const result = insertAtPath(schema, [], 0, newItem)
       expect(result).toHaveLength(2)
       expect(result[0].field).toBe('new')
@@ -146,28 +146,28 @@ describe('schemaTransform', () => {
 
     it('inserts into container children', () => {
       const schema = makeNestedSchema()
-      const newItem: FormSchemaItem = { type: 'radio', field: 'gender', label: 'Gender' }
+      const newItem: PartialWidget = { type: 'radio', field: 'gender', label: 'Gender' }
       const result = insertAtPath(schema, [1], 1, newItem)
-      const card = result[1] as FormSchemaItem
+      const card = result[1] as PartialWidget
       expect(card.children).toHaveLength(3)
       expect(card.children![1].field).toBe('gender')
     })
 
     it('returns original schema when parentPath does not exist', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
-      const newItem: FormSchemaItem = { type: 'input', field: 'x', label: 'X' }
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const newItem: PartialWidget = { type: 'input', field: 'x', label: 'X' }
       const result = insertAtPath(schema, [99], 0, newItem)
       expect(result).toHaveLength(1)
     })
 
     it('creates children array on parent if missing', () => {
       // Create an item without children
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'card', label: 'Empty' },
       ]
-      const newItem: FormSchemaItem = { type: 'input', field: 'x', label: 'X' }
+      const newItem: PartialWidget = { type: 'input', field: 'x', label: 'X' }
       const result = insertAtPath(schema, [0], 0, newItem)
-      const card = result[0] as FormSchemaItem
+      const card = result[0] as PartialWidget
       expect(card.children).toBeDefined()
       expect(card.children).toHaveLength(1)
       expect(card.children![0].field).toBe('x')
@@ -177,7 +177,7 @@ describe('schemaTransform', () => {
   // ======== groupAsContainer ========
 
   describe('groupAsContainer', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'input', field: 'a', label: 'A' },
       { type: 'input', field: 'b', label: 'B' },
       { type: 'input', field: 'c', label: 'C' },
@@ -228,7 +228,7 @@ describe('schemaTransform', () => {
 
   describe('ungroupContainer', () => {
     it('extracts children from a container', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'before', label: 'Before' },
         {
           type: 'card',
@@ -249,19 +249,19 @@ describe('schemaTransform', () => {
     })
 
     it('returns original schema for invalid index', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = ungroupContainer(schema, -1)
       expect(result).toEqual(schema)
     })
 
     it('returns original schema for non-container item', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = ungroupContainer(schema, 0)
       expect(result).toEqual(schema)
     })
 
     it('returns original schema for container with no children', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'card', label: 'Empty', children: [] },
       ]
       const result = ungroupContainer(schema, 0)
@@ -273,7 +273,7 @@ describe('schemaTransform', () => {
 
   describe('moveItem', () => {
     it('moves item from one position to another', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
         { type: 'input', field: 'c', label: 'C' },
@@ -285,7 +285,7 @@ describe('schemaTransform', () => {
     })
 
     it('moves item to earlier position', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
         { type: 'input', field: 'c', label: 'C' },
@@ -297,7 +297,7 @@ describe('schemaTransform', () => {
     })
 
     it('returns original schema when fromIndex and toIndex are same', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
       ]
@@ -306,13 +306,13 @@ describe('schemaTransform', () => {
     })
 
     it('returns original schema when fromIndex is out of range', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = moveItem(schema, -1, 0)
       expect(result).toEqual(schema)
     })
 
     it('returns original schema when toIndex is out of range', () => {
-      const schema: FormSchemaItem[] = [{ type: 'input', field: 'a', label: 'A' }]
+      const schema: PartialWidget[] = [{ type: 'input', field: 'a', label: 'A' }]
       const result = moveItem(schema, 0, 99)
       expect(result).toEqual(schema)
     })
@@ -322,7 +322,7 @@ describe('schemaTransform', () => {
 
   describe('buildSchemaTree', () => {
     it('generates correct tree for flat schema', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'name', label: 'Name' },
         { type: 'number', field: 'age', label: 'Age' },
       ]
@@ -351,7 +351,7 @@ describe('schemaTransform', () => {
     })
 
     it('identifies grid-row with children as container', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'grid-row',
           children: [
@@ -364,7 +364,7 @@ describe('schemaTransform', () => {
     })
 
     it('uses field as fallback label when label is missing', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'customField' },
       ]
       const tree = buildSchemaTree(schema)
@@ -372,7 +372,7 @@ describe('schemaTransform', () => {
     })
 
     it('uses type as fallback label when both label and field are missing', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'divider' },
       ]
       const tree = buildSchemaTree(schema)
@@ -384,7 +384,7 @@ describe('schemaTransform', () => {
 
   describe('isContainerType', () => {
     it('identifies card as container when it has children array', () => {
-      const item: FormSchemaItem = {
+      const item: PartialWidget = {
         type: 'card',
         children: [{ type: 'input', field: 'x', label: 'X' }],
       }
@@ -392,12 +392,12 @@ describe('schemaTransform', () => {
     })
 
     it('does not identify card without children as container', () => {
-      const item: FormSchemaItem = { type: 'card' }
+      const item: PartialWidget = { type: 'card' }
       expect(isContainerType(item)).toBe(false)
     })
 
     it('identifies page as container', () => {
-      const item: FormSchemaItem = {
+      const item: PartialWidget = {
         type: 'page',
         children: [],
       }
@@ -405,7 +405,7 @@ describe('schemaTransform', () => {
     })
 
     it('identifies toolbar as container', () => {
-      const item: FormSchemaItem = {
+      const item: PartialWidget = {
         type: 'toolbar',
         children: [],
       }
@@ -413,7 +413,7 @@ describe('schemaTransform', () => {
     })
 
     it('does not identify input as container', () => {
-      const item: FormSchemaItem = { type: 'input', field: 'x' }
+      const item: PartialWidget = { type: 'input', field: 'x' }
       expect(isContainerType(item)).toBe(false)
     })
   })
@@ -422,7 +422,7 @@ describe('schemaTransform', () => {
 
   describe('flattenToPaths', () => {
     it('flattens flat schema', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
       ]

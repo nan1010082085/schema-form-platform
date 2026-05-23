@@ -8,16 +8,17 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Loading, CircleCloseFilled } from '@element-plus/icons-vue'
-import { FormGrid } from '@/components/FormGrid'
-import type { FormSchemaItem, FormData } from '@/components/FormGrid'
+import { WidgetRenderer } from '@/components/WidgetRenderer'
+import type { FormData } from '@/components/WidgetRenderer'
+import type { PartialWidget } from '@/widgets/base/types'
 import { useAppStore } from '@/stores/app'
 import { fetchPublishedSchema } from '@/utils/apiClient'
 
 const route = useRoute()
-const formRef = ref<InstanceType<typeof FormGrid>>()
+const formRef = ref<InstanceType<typeof WidgetRenderer>>()
 const appStore = useAppStore()
 
-const schema = ref<FormSchemaItem[]>([])
+const schema = ref<PartialWidget[]>([])
 const loading = ref(true)
 const error = ref('')
 const schemaName = ref('')
@@ -117,7 +118,7 @@ onUnmounted(() => window.removeEventListener('message', handleMessage))
       <p>{{ error }}</p>
     </div>
 
-    <FormGrid
+    <WidgetRenderer
       v-else
       ref="formRef"
       :schema="schema"

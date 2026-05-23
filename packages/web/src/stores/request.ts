@@ -18,7 +18,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiClient } from '@/utils/apiClient'
 import { useCache } from '@/composables/useCache'
-import type { FormSchemaItem, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
+import type { PartialWidget, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 import type { CacheEntry, PrefetchTask } from '@/types/api'
 import { useLogger } from '@/composables/useLogger'
 
@@ -241,14 +241,14 @@ export const useRequestStore = defineStore('request', () => {
   // ================================================================
 
   /**
-   * 从 FormSchemaItem[] 树中收集 API 任务并追加到预取队列。
+   * 从 PartialWidget[] 树中收集 API 任务并追加到预取队列。
    *
    * 与 requestQueue.ts 的 collectApiTasks 功能等价。
    */
-  function collectPrefetchTasks(schema: FormSchemaItem[]): void {
+  function collectPrefetchTasks(schema: PartialWidget[]): void {
     const taskMap = new Map<string, PrefetchTask>()
 
-    function walk(items: FormSchemaItem[]): void {
+    function walk(items: PartialWidget[]): void {
       for (const item of items) {
         const api: SchemaApiConfig | undefined = item.api
         if (api?.url && !api.dictCode) {
@@ -388,11 +388,11 @@ export const useRequestStore = defineStore('request', () => {
   /**
    * 便捷方法：收集 schema 树中的 API 任务并执行预取。
    *
-   * @param schema - FormSchemaItem 树
+   * @param schema - PartialWidget 树
    * @returns 预取结果 Map（key → DictItem[]）
    */
   async function prefetchSchemaOptions(
-    schema: FormSchemaItem[],
+    schema: PartialWidget[],
   ): Promise<Map<string, DictItem[]>> {
     collectPrefetchTasks(schema)
     return flushPrefetchQueue()

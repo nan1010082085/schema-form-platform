@@ -6,8 +6,18 @@ const doc: ComponentDoc = {
   name: 'FgSearchList',
   category: 'business',
   description: '搜索列表组件 — FormGrid 最复杂的业务组件。组合了搜索表单、数据表格、分页器、行操作按钮和导出功能。通过完整的属性面板可视化配置。支持 7 种列渲染模式、4 种行操作类型、CSV/Excel 导出、骨架屏加载态、空状态和错误重试。',
+  exposedValues: [
+    { key: 'selectedRows', type: 'array', description: '当前选中行数据', example: [] },
+    { key: 'loading', type: 'boolean', description: '数据加载状态', example: false },
+    { key: 'pagination', type: 'object', description: '分页信息 { page, pageSize, total }', example: { page: 1, pageSize: 10, total: 0 } },
+    { key: 'dataSource', type: 'array', description: '当前数据列表', example: [] },
+  ],
+  receivableEvents: [
+    { name: 'refresh', description: '刷新数据（重新请求 API）' },
+    { name: 'reset-search', description: '重置搜索条件并刷新' },
+  ],
   props: [
-    { name: 'schema', type: 'FormSchemaItem', default: '—', description: 'search-list 类型的完整 schema 配置' },
+    { name: 'schema', type: 'PartialWidget', default: '—', description: 'search-list 类型的完整 schema 配置' },
     { name: 'listApi', type: 'ListApiConfig', default: '—', description: '列表查询 API（url/method/pageParam/sizeParam/dataPath/totalPath）' },
     { name: 'searchFields', type: 'SearchFieldSchema[]', default: '[]', description: '搜索字段配置（支持 7 种类型：input/number/select/radio/checkbox/date/date-range）' },
     { name: 'columns', type: 'SearchListColumnSchema[]', default: '[]', description: '表格列定义（7 种渲染：text/tooltip/tag/link/badge/image/custom）' },

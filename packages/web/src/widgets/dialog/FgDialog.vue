@@ -12,7 +12,7 @@
  */
 import { inject, ref, reactive, provide, watch, computed, onMounted, onUnmounted } from 'vue'
 import { widgetDataKey, formContextKey } from '../base/types'
-import SchemaRender from '../../components/FormGrid/SchemaRender.vue'
+import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import { useLogger } from '@/composables/useLogger'
 import EnhancedDialog from '../../components/EnhancedDialog.vue'
@@ -23,6 +23,7 @@ const logger = useLogger('FgDialog')
 
 defineProps<{
   editable?: boolean
+  defaultOpen?: boolean
 }>()
 
 const emit = defineEmits<{

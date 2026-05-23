@@ -14,7 +14,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, h, type Component, type PropType } from 'vue'
 import ElementPlus from 'element-plus'
 import type { Widget, SchemaType } from '@/widgets/base/types'
-import SchemaRenderComponent from '@/components/FormGrid/SchemaRender.vue'
+import SchemaRenderComponent from '@/components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '@/stores/widget'
 
 // ---------------------------------------------------------------------------

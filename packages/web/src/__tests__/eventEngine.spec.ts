@@ -1,15 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { evaluateCondition, executeEventAction } from '@/engine/eventEngine'
-import { useWidgetStore } from '@/stores/widget'
-import { useEditorStore } from '@/stores/editor'
-
-vi.mock('@/stores/widget', () => ({
-  useWidgetStore: vi.fn(),
-}))
-
-vi.mock('@/stores/editor', () => ({
-  useEditorStore: vi.fn(),
-}))
+import { evaluateCondition, executeEventAction, type EventExecutionContext } from '@/engine/eventEngine'
 
 vi.mock('@/composables/useLogger', () => ({
   useLogger: vi.fn(() => ({
@@ -17,6 +7,7 @@ vi.mock('@/composables/useLogger', () => ({
     info: vi.fn(),
     rule: vi.fn(),
     event: vi.fn(),
+    debug: vi.fn(),
   })),
 }))
 
@@ -46,76 +37,78 @@ describe('evaluateCondition', () => {
 })
 
 describe('executeEventAction', () => {
-  let mockWidgetStore: ReturnType<typeof createMockWidgetStore>
-  let mockEditorStore: ReturnType<typeof createMockEditorStore>
+  let ctx: EventExecutionContext
 
-  function createMockWidgetStore(overrides: Record<string, unknown> = {}) {
+  function createMockContext(overrides: Partial<EventExecutionContext> = {}): EventExecutionContext {
     return {
       findWidget: vi.fn(),
       updateWidget: vi.fn(),
-      widgets: [] as unknown[],
-      collectFormValues: vi.fn().mockReturnValue({}),
-      ...overrides,
-    }
-  }
-
-  function createMockEditorStore(overrides: Record<string, unknown> = {}) {
-    return {
-      openDialogEditor: vi.fn(),
-      closeDialogEditor: vi.fn(),
+      openDialog: vi.fn(),
+      closeDialog: vi.fn(),
+      submitForm: vi.fn(),
+      resetForm: vi.fn(),
+      getFormData: vi.fn().mockReturnValue({}),
+      emit: vi.fn(),
       ...overrides,
     }
   }
 
   beforeEach(() => {
-    mockWidgetStore = createMockWidgetStore()
-    mockEditorStore = createMockEditorStore()
-    vi.mocked(useWidgetStore).mockReturnValue(mockWidgetStore as any)
-    vi.mocked(useEditorStore).mockReturnValue(mockEditorStore as any)
+    ctx = createMockContext()
   })
 
   it('set-value updates target widget defaultValue', () => {
-    mockWidgetStore.findWidget.mockReturnValue({ id: 'w1', defaultValue: 'old' })
-    executeEventAction(
-      { type: 'set-value', target: 'w1', value: 'new' },
-    )
-    expect(mockWidgetStore.updateWidget).toHaveBeenCalledWith('w1', { defaultValue: 'new' })
+    vi.mocked(ctx.findWidget).mockReturnValue({ id: 'w1', defaultValue: 'old' } as any)
+    executeEventAction({ type: 'set-value', target: 'w1', value: 'new' }, ctx)
+    expect(ctx.updateWidget).toHaveBeenCalledWith('w1', { defaultValue: 'new' })
   })
 
   it('set-value does nothing if target not found', () => {
-    mockWidgetStore.findWidget.mockReturnValue(null)
-    executeEventAction(
-      { type: 'set-value', target: 'missing', value: 'val' },
-    )
-    expect(mockWidgetStore.updateWidget).not.toHaveBeenCalled()
+    vi.mocked(ctx.findWidget).mockReturnValue(undefined)
+    executeEventAction({ type: 'set-value', target: 'missing', value: 'val' }, ctx)
+    expect(ctx.updateWidget).not.toHaveBeenCalled()
   })
 
-  it('submit collects form values from the first form widget', () => {
-    mockWidgetStore.widgets = [{ id: 'form1', type: 'form' }] as any
-    mockWidgetStore.collectFormValues.mockReturnValue({ name: 'Alice' })
-    executeEventAction({ type: 'submit', target: '' })
-    expect(mockWidgetStore.collectFormValues).toHaveBeenCalledWith('form1')
+  it('submit calls submitForm', () => {
+    executeEventAction({ type: 'submit', target: '' }, ctx)
+    expect(ctx.submitForm).toHaveBeenCalled()
   })
 
-  it('submit does nothing if no form widget exists', () => {
-    mockWidgetStore.widgets = []
-    executeEventAction({ type: 'submit', target: '' })
-    expect(mockWidgetStore.collectFormValues).not.toHaveBeenCalled()
+  it('reset calls resetForm', () => {
+    executeEventAction({ type: 'reset', target: '' }, ctx)
+    expect(ctx.resetForm).toHaveBeenCalled()
   })
 
-  it('reset restores children defaultValue', () => {
-    const child1 = { id: 'c1', field: 'name', defaultValue: '' }
-    const child2 = { id: 'c2', field: 'age', defaultValue: 0 }
-    mockWidgetStore.widgets = [{ id: 'form1', type: 'form', children: [child1, child2] }] as any
-    executeEventAction({ type: 'reset', target: '' })
-    expect(mockWidgetStore.updateWidget).toHaveBeenCalledWith('c1', { defaultValue: '' })
-    expect(mockWidgetStore.updateWidget).toHaveBeenCalledWith('c2', { defaultValue: 0 })
+  it('show unhides target widget', () => {
+    vi.mocked(ctx.findWidget).mockReturnValue({ id: 'w1', hidden: true } as any)
+    executeEventAction({ type: 'show', target: 'w1' }, ctx)
+    expect(ctx.updateWidget).toHaveBeenCalledWith('w1', { hidden: false })
   })
 
-  it('reset skips children without field', () => {
-    const noField = { id: 'c1', defaultValue: '' }
-    mockWidgetStore.widgets = [{ id: 'form1', type: 'form', children: [noField] }] as any
-    executeEventAction({ type: 'reset', target: '' })
-    expect(mockWidgetStore.updateWidget).not.toHaveBeenCalled()
+  it('hide hides target widget', () => {
+    vi.mocked(ctx.findWidget).mockReturnValue({ id: 'w1', hidden: false } as any)
+    executeEventAction({ type: 'hide', target: 'w1' }, ctx)
+    expect(ctx.updateWidget).toHaveBeenCalledWith('w1', { hidden: true })
+  })
+
+  it('open-dialog calls ctx.openDialog', () => {
+    executeEventAction({ type: 'open-dialog', target: 'dlg1' }, ctx)
+    expect(ctx.openDialog).toHaveBeenCalledWith('dlg1')
+  })
+
+  it('close-dialog calls ctx.closeDialog', () => {
+    executeEventAction({ type: 'close-dialog', target: '' }, ctx)
+    expect(ctx.closeDialog).toHaveBeenCalled()
+  })
+
+  it('switch-tab updates tabs widget activeKey', () => {
+    vi.mocked(ctx.findWidget).mockReturnValue({ id: 'tabs1', type: 'tabs', props: {} } as any)
+    executeEventAction({ type: 'switch-tab', target: 'tabs1', value: 'tab2' }, ctx)
+    expect(ctx.updateWidget).toHaveBeenCalledWith('tabs1', { props: { activeKey: 'tab2' } })
+  })
+
+  it('emit calls ctx.emit with custom event', () => {
+    executeEventAction({ type: 'emit', target: '', value: 'payload' }, ctx)
+    expect(ctx.emit).toHaveBeenCalledWith('custom', 'payload')
   })
 })

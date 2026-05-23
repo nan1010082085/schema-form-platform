@@ -3,7 +3,7 @@
  *
  * 消除项目中的魔法数字/字符串，统一引用。
  */
-import type { SchemaType } from '@/components/FormGrid/types'
+import type { SchemaType } from '@/components/WidgetRenderer/types'
 
 /** 编辑历史最大快照数 */
 export const MAX_HISTORY_SIZE = 10

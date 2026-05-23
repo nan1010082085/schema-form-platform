@@ -5,9 +5,17 @@ const doc: ComponentDoc = {
   name: 'FgEditableTable',
   category: 'business',
   description: '可编辑表格组件 — 独占一行的表格布局。自定义表头，列内容可动态配置表单组件（input/number/select/date/textarea）。支持全局校验、动态添加/删除行、序号显示、最大行数限制、斑马纹行背景。',
+  exposedValues: [
+    { key: 'tableData', type: 'array', description: '当前表格行数据', example: [] },
+    { key: 'rowCount', type: 'number', description: '当前行数', example: 0 },
+  ],
+  receivableEvents: [
+    { name: 'add-row', description: '添加一行' },
+    { name: 'clear', description: '清空所有行' },
+  ],
   props: [
     { name: 'modelValue', type: 'Record<string, unknown>[]', default: '[]', description: '表格行数据（双向绑定）' },
-    { name: 'schema', type: 'FormSchemaItem', default: '—', description: 'editable-table 类型的完整 schema 配置' },
+    { name: 'schema', type: 'PartialWidget', default: '—', description: 'editable-table 类型的完整 schema 配置' },
     { name: 'schema.columns', type: 'EditableTableColumn[]', default: '[]', description: '列定义：prop/label/type/placeholder/width/options/rules/required' },
     { name: 'schema.props.maxRows', type: 'number', default: '20', description: '最大行数' },
     { name: 'schema.props.showIndex', type: 'boolean', default: 'true', description: '是否显示序号列' },

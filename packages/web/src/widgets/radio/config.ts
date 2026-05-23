@@ -11,7 +11,7 @@ export const radioConfig: WidgetConfig = {
   defaultProps: {
     disabled: false,
   },
-  configPanels: ['events', 'rules', 'api'],
+  configPanels: ['events', 'rules', 'api', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue', 'options'],
     style: ['fontSize', 'color', 'backgroundColor'],

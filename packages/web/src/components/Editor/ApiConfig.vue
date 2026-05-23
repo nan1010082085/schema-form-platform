@@ -10,14 +10,14 @@
  * and displays the result count or error.
  *
  * After successful test connection, an "Analyze & Generate Schema" button
- * appears that infers FormSchemaItem[] from the response data.
+ * appears that infers PartialWidget[] from the response data.
  */
 import { ref, computed } from 'vue'
 import { Connection, Check, WarningFilled } from '@element-plus/icons-vue'
 import { apiClient } from '@/utils/apiClient'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
-import type { SchemaApiConfig, FormSchemaItem } from '@/components/FormGrid/types'
+import type { SchemaApiConfig, PartialWidget } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   api: SchemaApiConfig | undefined
@@ -25,7 +25,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:api': [api: SchemaApiConfig | undefined]
-  'generate-schema': [schema: FormSchemaItem[]]
+  'generate-schema': [schema: PartialWidget[]]
 }>()
 
 // ---- Data source mode ----

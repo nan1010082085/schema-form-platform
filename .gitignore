@@ -34,3 +34,6 @@ coverage/
 *.tsbuildinfo
 *.png
 .vercel
+
+# Private docs (runtime system design)
+packages/web/src/docs/runtime/

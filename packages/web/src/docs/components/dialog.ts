@@ -9,6 +9,10 @@ const doc: ComponentDoc = {
     '通用弹窗组件。对齐 UI 规范：宽度 994px，内边距 16px。' +
     '支持 footer 插槽、确认/取消回调、数据预填、与按钮动作链深度集成。' +
     '通过 dialogMode 支持内部/外部两种弹窗管理模式。',
+  receivableEvents: [
+    { name: 'open', description: '打开弹窗' },
+    { name: 'close', description: '关闭弹窗' },
+  ],
   props: [
     { name: 'modelValue', type: 'boolean', default: '—', description: '弹窗可见性（v-model）' },
     { name: 'title', type: 'string', default: '—', description: '弹窗标题' },
@@ -19,7 +23,7 @@ const doc: ComponentDoc = {
     { name: 'confirmText', type: 'string', default: '"确定"', description: '确认按钮文字' },
     { name: 'cancelText', type: 'string', default: '"取消"', description: '取消按钮文字' },
     { name: 'confirmLoading', type: 'boolean', default: 'false', description: '确认按钮 loading 状态' },
-    { name: 'dialogSchema', type: 'FormSchemaItem[]', default: '—', description: '弹窗内部的表单 schema（由 action 传入）' },
+    { name: 'dialogSchema', type: 'PartialWidget[]', default: '—', description: '弹窗内部的表单 schema（由 action 传入）' },
     { name: 'initialData', type: 'FormData', default: '—', description: '弹窗打开时的预填数据' },
   ],
   events: [

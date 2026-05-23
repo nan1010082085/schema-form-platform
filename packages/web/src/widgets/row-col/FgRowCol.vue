@@ -14,7 +14,7 @@
 import { inject, computed } from 'vue'
 import { widgetDataKey } from '../base/types'
 import type { Widget } from '../base/types'
-import SchemaRender from '../../components/FormGrid/SchemaRender.vue'
+import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!

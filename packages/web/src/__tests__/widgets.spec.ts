@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import type { Widget, SchemaType as WidgetSchemaType } from '@/widgets/base/types'
-import type { SchemaType } from '@/components/FormGrid/types'
+import type { SchemaType } from '@/components/WidgetRenderer/types'
 
 // --- Registry & Config ---
 import { registerAllWidgets } from '@/widgets/index'

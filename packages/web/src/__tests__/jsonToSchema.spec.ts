@@ -6,7 +6,7 @@
  * - inferFieldsFromJson with string -> date, select, textarea inference
  * - inferFieldsFromJson with boolean -> radio, number -> number
  * - fieldNameToLabel conversions (snake_case, camelCase, PascalCase)
- * - fieldInferencesToSchema generates correct FormSchemaItem[]
+ * - fieldInferencesToSchema generates correct PartialWidget[]
  * - fieldInferencesToSchema handles nested objects as card containers
  * - generateFormDataMapping extracts field -> value mapping
  */
@@ -17,7 +17,7 @@ import {
   fieldInferencesToSchema,
   generateFormDataMapping,
 } from '@/utils/jsonToSchema'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 describe('jsonToSchema', () => {
   // ======== inferFieldsFromJson ========
@@ -234,7 +234,7 @@ describe('jsonToSchema', () => {
   // ======== fieldInferencesToSchema ========
 
   describe('fieldInferencesToSchema', () => {
-    it('generates correct FormSchemaItem[] from flat inferences', () => {
+    it('generates correct PartialWidget[] from flat inferences', () => {
       const inferences = inferFieldsFromJson({
         name: 'Alice',
         age: 30,
@@ -260,7 +260,7 @@ describe('jsonToSchema', () => {
       const schema = fieldInferencesToSchema(inferences)
 
       // Should have: name (input), profile (card) with children
-      const profileItem = schema.find((s) => s.field === 'profile') as FormSchemaItem
+      const profileItem = schema.find((s) => s.field === 'profile') as PartialWidget
       expect(profileItem).toBeDefined()
       expect(profileItem.type).toBe('card')
       expect(profileItem.children).toBeDefined()

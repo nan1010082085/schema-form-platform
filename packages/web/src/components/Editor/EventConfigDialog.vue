@@ -10,9 +10,11 @@
  *
  * 保存时 emit 完整的 WidgetEvent[]，由调用方写入 widget。
  */
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import type { WidgetEvent, EventActionType } from '../../widgets/base/types'
+import type { WidgetEvent, EventActionType, ReceivableEventConfig } from '../../widgets/base/types'
+import { useWidgetStore } from '@/stores/widget'
+import { getWidget } from '@/widgets/registry'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{
@@ -24,6 +26,8 @@ const emit = defineEmits<{
   'update:visible': [val: boolean]
   save: [events: WidgetEvent[]]
 }>()
+
+const widgetStore = useWidgetStore()
 
 // ---- 本地编辑副本 ----
 
@@ -55,7 +59,61 @@ const actionTypeOptions: { label: string; value: EventActionType }[] = [
   { label: '打开弹窗', value: 'open-dialog' },
   { label: '关闭弹窗', value: 'close-dialog' },
   { label: '切换标签', value: 'switch-tab' },
+  { label: '设置值', value: 'set-value' },
+  { label: '提交表单', value: 'submit' },
+  { label: '重置表单', value: 'reset' },
+  { label: '触发事件', value: 'emit' },
+  { label: '触发组件事件', value: 'trigger-event' },
+  { label: '设置变量', value: 'set-variable' },
+  { label: '调用 API', value: 'api' },
+  { label: '路由跳转', value: 'navigate' },
+  { label: '发送消息', value: 'post-message' },
+  { label: '复制文本', value: 'copy' },
+  { label: '刷新数据', value: 'refresh' },
+  { label: '关闭页签', value: 'close-tab' },
 ]
+
+// ---- 目标组件列表（用于 target 选择） ----
+
+interface WidgetOption {
+  label: string
+  value: string
+  type: string
+}
+
+const widgetOptions = computed<WidgetOption[]>(() => {
+  const result: WidgetOption[] = []
+  function collect(list: typeof widgetStore.widgets) {
+    for (const w of list) {
+      result.push({
+        label: `${w.label || w.type} (${w.id})`,
+        value: w.id,
+        type: w.type,
+      })
+      if (w.children?.length) collect(w.children)
+    }
+  }
+  collect(widgetStore.widgets)
+  return result
+})
+
+// ---- 根据目标组件获取可接收事件 ----
+
+function getReceivableEvents(targetId: string): ReceivableEventConfig[] {
+  const widget = widgetStore.findWidget(targetId)
+  if (!widget) return []
+  const registryItem = getWidget(widget.type)
+  return registryItem?.config?.receivableEvents ?? []
+}
+
+// ---- 根据目标组件获取暴露值（用于 set-variable 的变量名提示） ----
+
+function getExposedValues(targetId: string) {
+  const widget = widgetStore.findWidget(targetId)
+  if (!widget) return []
+  const registryItem = getWidget(widget.type)
+  return registryItem?.config?.exposedValues ?? []
+}
 
 // ---- 事件 CRUD ----
 
@@ -206,21 +264,102 @@ function handleClose() {
                 />
               </el-select>
 
-              <!-- target -->
-              <el-input
+              <!-- target: 组件选择（show/hide/open-dialog/switch-tab/set-value/trigger-event/refresh/close-dialog） -->
+              <el-select
+                v-if="['show','hide','open-dialog','switch-tab','set-value','trigger-event','refresh'].includes(action.type)"
                 v-model="action.target"
                 size="small"
-                placeholder="目标组件 ID"
+                filterable
+                placeholder="选择目标组件"
+                style="flex: 1"
+              >
+                <el-option
+                  v-for="opt in widgetOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+
+              <!-- trigger-event: 选择目标组件可接收的事件 -->
+              <el-select
+                v-if="action.type === 'trigger-event' && action.target"
+                v-model="action.event"
+                size="small"
+                placeholder="选择事件"
+                style="width: 160px"
+              >
+                <el-option
+                  v-for="evtOpt in getReceivableEvents(action.target)"
+                  :key="evtOpt.name"
+                  :label="`${evtOpt.name} — ${evtOpt.description}`"
+                  :value="evtOpt.name"
+                />
+              </el-select>
+
+              <!-- set-variable: 变量名 -->
+              <el-input
+                v-if="action.type === 'set-variable'"
+                v-model="action.variable"
+                size="small"
+                placeholder="变量名"
+                style="width: 120px"
+              />
+
+              <!-- set-variable / switch-tab / emit: value -->
+              <el-input
+                v-if="action.type === 'switch-tab' || action.type === 'set-value' || action.type === 'emit'"
+                v-model="action.value as string"
+                size="small"
+                :placeholder="action.type === 'switch-tab' ? '标签 key' : action.type === 'set-value' ? '设置的值' : '事件 payload'"
+                style="width: 140px"
+              />
+
+              <!-- api: URL + method -->
+              <el-input
+                v-if="action.type === 'api'"
+                v-model="action.apiUrl"
+                size="small"
+                placeholder="API 地址"
+                style="flex: 1"
+              />
+              <el-select
+                v-if="action.type === 'api'"
+                v-model="action.apiMethod"
+                size="small"
+                style="width: 90px"
+              >
+                <el-option label="POST" value="post" />
+                <el-option label="GET" value="get" />
+                <el-option label="PUT" value="put" />
+                <el-option label="DELETE" value="delete" />
+              </el-select>
+
+              <!-- navigate: path -->
+              <el-input
+                v-if="action.type === 'navigate'"
+                v-model="action.navigatePath"
+                size="small"
+                placeholder="路由路径"
                 style="flex: 1"
               />
 
-              <!-- value (for switch-tab) -->
+              <!-- post-message: message (JSON) -->
               <el-input
-                v-if="action.type === 'switch-tab'"
-                v-model="action.value as string"
+                v-if="action.type === 'post-message'"
+                v-model="action.message"
                 size="small"
-                placeholder="标签 key"
-                style="width: 120px"
+                placeholder='消息 JSON，如 {"type":"save"}'
+                style="flex: 1"
+              />
+
+              <!-- copy: text -->
+              <el-input
+                v-if="action.type === 'copy'"
+                v-model="action.text"
+                size="small"
+                placeholder="复制内容（支持 formData.xxx）"
+                style="flex: 1"
               />
             </div>
 

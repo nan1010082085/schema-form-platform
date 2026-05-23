@@ -13,7 +13,7 @@
  */
 import { reactive, type Ref } from 'vue'
 import type { FormInstance } from 'element-plus'
-import type { FormSchemaItem, FormData } from '@/components/FormGrid/types'
+import type { PartialWidget, FormData } from '@/components/WidgetRenderer/types'
 
 export interface UseFormDataReturn {
   /** 响应式表单数据对象 */
@@ -27,13 +27,13 @@ export interface UseFormDataReturn {
   /** 校验整个表单 */
   validate: () => Promise<boolean>
   /** 从 schema 初始化默认值 */
-  initFormData: (schema: FormSchemaItem[]) => void
+  initFormData: (schema: PartialWidget[]) => void
 }
 
 /**
  * 递归遍历 schema 树，提取默认值并初始化 formData
  */
-function applyDefaults(schema: FormSchemaItem[], formData: FormData): void {
+function applyDefaults(schema: PartialWidget[], formData: FormData): void {
   for (const item of schema) {
     if (item.field && item.defaultValue !== undefined) {
       formData[item.field] = item.defaultValue
@@ -65,7 +65,7 @@ export function useFormData(formRef: Ref<FormInstance | undefined>): UseFormData
   const formData = reactive<FormData>({})
 
   /** 从 schema 初始化默认值 */
-  function initFormData(schema: FormSchemaItem[]) {
+  function initFormData(schema: PartialWidget[]) {
     applyDefaults(schema, formData)
   }
 

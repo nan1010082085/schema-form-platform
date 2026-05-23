@@ -6,7 +6,7 @@
  * Each action type shows conditional fields for its specific properties.
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
-import type { SchemaButtonConfig, SchemaAction, ActionType } from '@/components/FormGrid/types'
+import type { SchemaButtonConfig, SchemaAction, ActionType } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   buttons: SchemaButtonConfig[]

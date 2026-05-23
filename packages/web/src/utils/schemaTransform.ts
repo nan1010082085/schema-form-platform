@@ -3,7 +3,7 @@
  *
  * Provides group/ungroup, move, and path-based operations for the editor.
  */
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import type { PartialWidget, SchemaType } from '@/widgets/base/types'
 import { LAYOUT_CONTAINER_TYPES } from '@/composables/useConstant'
 
 /** Container types that support children — 统一引用 useConstant */
@@ -17,7 +17,7 @@ const CONTAINER_TYPES = LAYOUT_CONTAINER_TYPES
  * Get the item at a given path in the schema tree.
  * Path [0, 2, 1] means schema[0].children[2].children[1].
  */
-export function getItemAtPath(schema: FormSchemaItem[], path: number[]): FormSchemaItem | undefined {
+export function getItemAtPath(schema: PartialWidget[], path: number[]): PartialWidget | undefined {
   if (path.length === 0) return undefined
   let current = schema[path[0]]
   for (let i = 1; i < path.length; i++) {
@@ -30,9 +30,9 @@ export function getItemAtPath(schema: FormSchemaItem[], path: number[]): FormSch
 /**
  * Remove the item at the given path, returning a new schema array.
  */
-export function removeAtPath(schema: FormSchemaItem[], path: number[]): FormSchemaItem[] {
+export function removeAtPath(schema: PartialWidget[], path: number[]): PartialWidget[] {
   if (path.length === 0) return schema
-  const result = JSON.parse(JSON.stringify(schema)) as FormSchemaItem[]
+  const result = JSON.parse(JSON.stringify(schema)) as PartialWidget[]
   if (path.length === 1) {
     result.splice(path[0], 1)
     return result
@@ -48,12 +48,12 @@ export function removeAtPath(schema: FormSchemaItem[], path: number[]): FormSche
  * If parentPath is empty, inserts into the top-level schema.
  */
 export function insertAtPath(
-  schema: FormSchemaItem[],
+  schema: PartialWidget[],
   parentPath: number[],
   index: number,
-  item: FormSchemaItem,
-): FormSchemaItem[] {
-  const result = JSON.parse(JSON.stringify(schema)) as FormSchemaItem[]
+  item: PartialWidget,
+): PartialWidget[] {
+  const result = JSON.parse(JSON.stringify(schema)) as PartialWidget[]
   if (parentPath.length === 0) {
     result.splice(index, 0, item)
     return result
@@ -81,9 +81,9 @@ export function comparePaths(a: number[], b: number[]): number {
  * Flatten the schema tree into an ordered list of paths (depth-first).
  * Used for range-select with Shift+Click.
  */
-export function flattenToPaths(schema: FormSchemaItem[]): number[][] {
+export function flattenToPaths(schema: PartialWidget[]): number[][] {
   const result: number[][] = []
-  function walk(items: FormSchemaItem[], prefix: number[]) {
+  function walk(items: PartialWidget[], prefix: number[]) {
     for (let i = 0; i < items.length; i++) {
       const path = [...prefix, i]
       result.push(path)
@@ -114,8 +114,8 @@ export interface SchemaTreeNode {
 /**
  * Build a tree data structure from schema for the SchemaTree panel.
  */
-export function buildSchemaTree(schema: FormSchemaItem[]): SchemaTreeNode[] {
-  function walk(items: FormSchemaItem[], parentPath: number[]): SchemaTreeNode[] {
+export function buildSchemaTree(schema: PartialWidget[]): SchemaTreeNode[] {
+  function walk(items: PartialWidget[], parentPath: number[]): SchemaTreeNode[] {
     return items.map((item, index) => {
       const path = [...parentPath, index]
       const isContainer = CONTAINER_TYPES.has(item.type) || (Array.isArray(item.children) && item.children.length > 0 && ['grid-row', 'grid-col', 'steps', 'tabs'].includes(item.type))
@@ -137,7 +137,7 @@ export function buildSchemaTree(schema: FormSchemaItem[]): SchemaTreeNode[] {
 /**
  * Check if a schema item is a container type that can hold children.
  */
-export function isContainerType(item: FormSchemaItem): boolean {
+export function isContainerType(item: PartialWidget): boolean {
   return CONTAINER_TYPES.has(item.type) && Array.isArray(item.children)
 }
 
@@ -162,10 +162,10 @@ function getDefaultContainerLabel(type: SchemaType): string {
  * @returns New schema array with the selected items wrapped in a container
  */
 export function groupAsContainer(
-  items: FormSchemaItem[],
+  items: PartialWidget[],
   selectedIndices: number[],
   containerType: SchemaType,
-): FormSchemaItem[] {
+): PartialWidget[] {
   if (selectedIndices.length === 0) return items
   if (!CONTAINER_TYPES.has(containerType)) return items
 
@@ -178,10 +178,10 @@ export function groupAsContainer(
   const selectedItems = sorted.map((i) => items[i])
 
   // Deep clone the selected items for the container children
-  const children = JSON.parse(JSON.stringify(selectedItems)) as FormSchemaItem[]
+  const children = JSON.parse(JSON.stringify(selectedItems)) as PartialWidget[]
 
   // Build the new container
-  const container: FormSchemaItem = {
+  const container: PartialWidget = {
     type: containerType,
     label: getDefaultContainerLabel(containerType),
     children,
@@ -202,9 +202,9 @@ export function groupAsContainer(
  * @returns New schema array with the container replaced by its children
  */
 export function ungroupContainer(
-  items: FormSchemaItem[],
+  items: PartialWidget[],
   containerIndex: number,
-): FormSchemaItem[] {
+): PartialWidget[] {
   if (containerIndex < 0 || containerIndex >= items.length) return items
 
   const item = items[containerIndex]
@@ -214,7 +214,7 @@ export function ungroupContainer(
   if (children.length === 0) return items
 
   // Deep clone children to avoid reference issues
-  const clonedChildren = JSON.parse(JSON.stringify(children)) as FormSchemaItem[]
+  const clonedChildren = JSON.parse(JSON.stringify(children)) as PartialWidget[]
 
   const result = [...items]
   result.splice(containerIndex, 1, ...clonedChildren)
@@ -231,10 +231,10 @@ export function ungroupContainer(
  * @returns New schema array with the item moved
  */
 export function moveItem(
-  items: FormSchemaItem[],
+  items: PartialWidget[],
   fromIndex: number,
   toIndex: number,
-): FormSchemaItem[] {
+): PartialWidget[] {
   if (fromIndex === toIndex) return items
   if (fromIndex < 0 || fromIndex >= items.length) return items
   if (toIndex < 0 || toIndex >= items.length) return items

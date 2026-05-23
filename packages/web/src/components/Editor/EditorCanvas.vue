@@ -14,7 +14,7 @@ import { computed } from 'vue'
 import { useBoardStore } from '../../stores/board'
 import { useEditorStore } from '../../stores/editor'
 import EditorOverlay from './EditorOverlay.vue'
-import SchemaRender from '../FormGrid/SchemaRender.vue'
+import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
 import type { Widget } from '../../widgets/base/types'
 
@@ -22,6 +22,7 @@ const emit = defineEmits<{
   openEvent: [widget: Widget]
   openRule: [widget: Widget]
   openApi: [widget: Widget]
+  openVariables: [widget: Widget]
 }>()
 
 const boardStore = useBoardStore()
@@ -52,6 +53,7 @@ const canvasStyle = computed(() => ({
       @open-event="emit('openEvent', $event)"
       @open-rule="emit('openRule', $event)"
       @open-api="emit('openApi', $event)"
+      @open-variables="emit('openVariables', $event)"
     />
   </div>
 </template>

@@ -16,7 +16,7 @@ export const numberConfig: WidgetConfig = {
     step: 1,
     precision: undefined as number | undefined,
   },
-  configPanels: ['events', 'rules'],
+  configPanels: ['events', 'rules', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
     style: ['fontSize', 'color', 'backgroundColor'],

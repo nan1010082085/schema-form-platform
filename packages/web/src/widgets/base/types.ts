@@ -1,5 +1,4 @@
 import type { InjectionKey, ComputedRef, Ref } from 'vue'
-import type { SchemaLinkage } from '@/components/FormGrid/types'
 
 // ============================================================
 // SchemaType — 组件类型枚举
@@ -35,6 +34,13 @@ export type BasicType =
   | 'banner'
   | 'tree-layout'
   | 'date-time-slot'
+  | 'pagination'
+  | 'file-preview'
+  | 'grid-row'
+  | 'grid-col'
+  | 'page'
+  | 'toolbar'
+  | 'steps'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType
@@ -104,17 +110,48 @@ export type EventActionType =
   | 'open-dialog' | 'close-dialog'
   | 'switch-tab'
   | 'set-value'
-  | 'submit'
-  | 'reset'
+  | 'submit' | 'reset'
   | 'emit'
+  | 'set-variable'    // 修改用户变量
+  | 'trigger-event'   // 触发目标组件的指定事件
+  | 'post-message'    // 向父窗口发送 postMessage
+  | 'close-tab'       // 关闭浏览器页签
+  | 'copy'            // 复制文本到剪贴板
+  | 'refresh'         // 刷新目标组件数据
+  | 'api'             // 调用后端 API
+  | 'navigate'        // 路由跳转
 
 /** 事件动作 */
 export interface SchemaEventAction {
   type: EventActionType
   /** 目标组件 ID 或弹窗 ID */
-  target: string
-  /** 附带值（如切换到哪个标签） */
+  target?: string
+  /** 附带值（如切换到哪个标签、emit 的 payload） */
   value?: unknown
+  // ---- set-variable 专用 ----
+  /** 变量名 */
+  variable?: string
+  // ---- trigger-event 专用 ----
+  /** 要触发的事件名 */
+  event?: string
+  // ---- post-message 专用 ----
+  /** 消息内容 */
+  message?: Record<string, unknown>
+  // ---- copy 专用 ----
+  /** 要复制的文本（支持 formData.xxx 引用） */
+  text?: string
+  // ---- api 专用 ----
+  /** API 地址 */
+  apiUrl?: string
+  /** 请求方法 */
+  apiMethod?: 'get' | 'post' | 'put' | 'delete'
+  /** 请求参数，'formData' 表示使用表单数据 */
+  apiParams?: Record<string, unknown> | 'formData'
+  // ---- navigate 专用 ----
+  /** 路由路径 */
+  navigatePath?: string
+  /** 路由查询参数 */
+  navigateQuery?: Record<string, string>
 }
 
 // ============================================================
@@ -204,11 +241,60 @@ export interface SchemaApiConfig {
 }
 
 // ============================================================
+// 联动配置
+// ============================================================
+
+/** 联动类型 */
+export type LinkageType = 'visible' | 'disabled' | 'required' | 'options' | 'set-value' | 'reset-fields'
+
+/** 联动配置 */
+export interface SchemaLinkage {
+  /** 联动类型 */
+  type: LinkageType
+  /** 监听的字段列表 */
+  watchFields: string[]
+  /** 联动条件 — 函数或字符串表达式 */
+  condition: string | ((values: Record<string, FormFieldValue>) => boolean)
+  /** options 联动时，条件为真的静态选项 */
+  thenOptions?: DictItem[]
+  /** options 联动时，条件为真的动态 API 配置 */
+  thenApi?: SchemaApiConfig
+  /** 条件为假时的回退值（visible=false, disabled=false 等） */
+  elseValue?: FormFieldValue
+  /** set-value 联动：条件为真时设置的字面值 */
+  thenValue?: FormFieldValue
+  /** set-value 联动：条件为真时复制值来源字段 */
+  valueSource?: string
+  /** reset-fields 联动：条件为真时要重置的目标字段列表 */
+  targetFields?: string[]
+}
+
+/** 联动计算后的字段状态 */
+export interface LinkageState {
+  /** 是否可见 */
+  visible: boolean
+  /** 是否禁用 */
+  disabled: boolean
+  /** 是否必填 */
+  required: boolean
+  /** options 联动覆盖的静态选项 */
+  options?: DictItem[]
+  /** options 联动覆盖的 API 配置 */
+  optionsApi?: SchemaApiConfig
+  /** elseValue: 联动条件为 false 时回退到此值 */
+  elseValue?: FormFieldValue
+  /** set-value 联动设置的目标值 */
+  targetValue?: FormFieldValue
+  /** reset-fields 联动：条件为真时要重置的目标字段列表 */
+  resetFields?: string[]
+}
+
+// ============================================================
 // 属性面板配置类型
 // ============================================================
 
 /** 配置面板类型（属性面板底部的弹框入口按钮） */
-export type ConfigPanelType = 'events' | 'rules' | 'api'
+export type ConfigPanelType = 'events' | 'rules' | 'api' | 'variables'
 
 /** 属性面板声明中的基础属性快捷键 */
 export type BasicPropKey = 'field' | 'label' | 'defaultValue' | 'hidden' | 'options' | 'validationRules'
@@ -244,6 +330,32 @@ export interface WidgetConfig {
   defaultProps?: Record<string, unknown>
   propertyPanel?: PropertyPanelConfig
   configPanels?: ConfigPanelType[]
+  /** 组件暴露的运行时值 — 供联动条件表达式引用 exposed.widgetId.xxx */
+  exposedValues?: ExposedValueConfig[]
+  /** 组件可接收的外部事件 — 由事件引擎 trigger-event 动作触发 */
+  receivableEvents?: ReceivableEventConfig[]
+}
+
+/** 组件暴露值配置 */
+export interface ExposedValueConfig {
+  /** 引用 key，如 selectedRows / loading */
+  key: string
+  /** 值类型 */
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array'
+  /** 说明 */
+  description: string
+  /** 示例值 */
+  example?: unknown
+}
+
+/** 组件可接收事件配置 */
+export interface ReceivableEventConfig {
+  /** 事件名，如 refresh / reset-search */
+  name: string
+  /** 说明 */
+  description: string
+  /** 参数说明 */
+  params?: Record<string, string>
 }
 
 /** 通用数组编辑器字段声明 */
@@ -330,6 +442,62 @@ export interface Widget {
   /** 设计时隐藏 */
   hidden?: boolean
 
+  // === 布局属性（流式渲染器使用） ===
+  /** 栅格列宽（1-24） */
+  span?: number | Record<string, number>
+  /** 表格列合并 */
+  colspan?: number
+  /** 表格行合并 */
+  rowspan?: number
+  /** CSS 宽度 */
+  width?: string
+  /** CSS 高度 */
+  height?: string
+  /** 对齐方式 */
+  align?: 'left' | 'center' | 'right'
+  /** 显示边框 */
+  border?: boolean
+
+  // === 条件表达式 ===
+  /** 条件可见 — 表达式求值为 true 时可见 */
+  visibleOn?: string
+  /** 条件禁用 — 表达式求值为 true 时禁用 */
+  disabledOn?: string
+  /** 条件必填 — 表达式求值为 true 时必填 */
+  requiredOn?: string
+
+  // === 按钮配置 ===
+  /** 按钮文本 */
+  text?: string
+  /** 按钮类型 */
+  buttonType?: '' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  /** 图标 */
+  icon?: string
+  /** 按钮动作列表 */
+  actions?: Record<string, unknown>[]
+  /** 按钮组配置 */
+  buttons?: Record<string, unknown>[]
+
+  // === 表格/搜索列表 ===
+  /** 列表 API 配置 */
+  listApi?: Record<string, unknown>
+  /** 搜索字段定义 */
+  searchFields?: Record<string, unknown>[]
+  /** 表格列定义 */
+  columns?: Record<string, unknown>[]
+  /** 行操作按钮 */
+  rowActions?: Record<string, unknown>[]
+
+  // === 高级配置 ===
+  /** 边框隐藏 */
+  hideBorder?: string[]
+  /** 权限角色白名单 */
+  permissionRoles?: string[]
+  /** 只读模式 */
+  readonly?: boolean
+  /** 自定义 HTML 属性 */
+  customAttrs?: Record<string, string>
+
   // === 子组件 ===
   /** 子 Widget 列表（容器组件） */
   children?: Widget[]
@@ -337,6 +505,42 @@ export interface Widget {
   // === 生命周期 ===
   /** Widget 生命周期钩子 */
   lifecycle?: WidgetLifecycleConfig
+}
+
+/**
+ * PartialWidget — Widget 的 schema 存储形态
+ *
+ * 与 Widget 结构相同，但 id/name/position 为可选。
+ * 用于 API 存储、文档示例、schema 导入导出等场景。
+ * 编辑器加载后会补全为完整的 Widget。
+ */
+export type PartialWidget = Omit<Widget, 'id' | 'name' | 'position' | 'children'> & {
+  id?: string
+  name?: string
+  position?: Widget['position']
+  children?: PartialWidget[]
+}
+
+/** 全宽组件类型集合 — 这些组件在 grid-col 中渲染时强制占满整行 */
+export const FULL_WIDTH_TYPES = [
+  'table',
+  'upload',
+  'transfer',
+  'banner',
+  'tree-layout',
+  'detail-form',
+  'pagination',
+  'file-list',
+  'search-list',
+  'editable-table',
+] as const
+
+/**
+ * 判断组件类型是否为全宽组件
+ * 全宽组件在 grid-col 中渲染时 span 强制为 24
+ */
+export function isFullWidthType(type: SchemaType): boolean {
+  return (FULL_WIDTH_TYPES as readonly string[]).includes(type)
 }
 
 // ============================================================
@@ -420,6 +624,9 @@ export interface FormContext {
 
 /** 注入表单上下文（el-form ref + model） */
 export const formContextKey: InjectionKey<FormContext> = Symbol('FormContext')
+
+/** 组件暴露值注入 Key — 每个组件 provide 自己的 exposedState */
+export const widgetExposedKey: InjectionKey<Record<string, unknown>> = Symbol('WidgetExposed')
 
 // ============================================================
 // Widget 生命周期

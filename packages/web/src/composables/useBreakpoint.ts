@@ -6,7 +6,7 @@
  * SSR 安全：在非浏览器环境下默认返回 'xxl'。
  */
 import { ref, computed, onUnmounted, type ComputedRef } from 'vue'
-import type { ResponsiveSpan } from '@/components/FormGrid/types'
+import type { ResponsiveSpan } from '@/components/WidgetRenderer/types'
 
 /** 断点名称，从小到大排列 */
 export type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'

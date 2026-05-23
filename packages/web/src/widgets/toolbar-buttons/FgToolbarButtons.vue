@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
 import type { ToolbarButtonItem } from './config'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
+const eventCtx = inject(EVENT_CONTEXT_KEY, null)
 
 const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
@@ -16,6 +19,12 @@ const dynamicStyle = computed(() => ({
 const buttons = computed<ToolbarButtonItem[]>(() => {
   return (widgetData.value.props?.buttons as ToolbarButtonItem[]) || []
 })
+
+function handleClick() {
+  if (eventCtx) {
+    triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+  }
+}
 </script>
 
 <template>
@@ -25,6 +34,7 @@ const buttons = computed<ToolbarButtonItem[]>(() => {
       :key="idx"
       :type="(btn.type as 'primary' | 'success' | 'warning' | 'danger' | 'info' | '') || ''"
       :disabled="isDisabled"
+      @click="handleClick"
     >
       {{ btn.text }}
     </el-button>

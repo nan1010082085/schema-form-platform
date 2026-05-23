@@ -11,7 +11,7 @@ export const dateTimeSlotConfig: WidgetConfig = {
     format: 'YYYY-MM-DD HH:mm:ss',
     rangeSeparator: '至',
   },
-  configPanels: ['events', 'rules'] as const,
+  configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],
     style: [],

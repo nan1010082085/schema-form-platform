@@ -26,12 +26,16 @@ import OptionsEditor from './OptionsEditor.vue'
 import EventConfigDialog from './EventConfigDialog.vue'
 import LinkageConfigDialog from './LinkageConfigDialog.vue'
 import OptionsApiConfigDialog from './OptionsApiConfigDialog.vue'
+import VariableConfigDialog from './VariableConfigDialog.vue'
+import type { WidgetVariable } from '../../widgets/base/types'
 import { usePropertyAdapters } from '../../composables/usePropertyAdapters'
+import { useClipboard } from '../../composables/useClipboard'
 
 const editorStore = useEditorStore()
 const widgetStore = useWidgetStore()
 const boardStore = useBoardStore()
 const { getStyleLabel, getStyleInputType, getPropInputType, getStyleOptions } = usePropertyAdapters()
+const { copy } = useClipboard()
 
 // ---- 选中的 Widget ----
 
@@ -239,7 +243,7 @@ function updateProperty(key: string, value: unknown) {
 
 function copyWidgetId() {
   if (selectedWidget.value) {
-    navigator.clipboard.writeText(selectedWidget.value.id)
+    copy(selectedWidget.value.id, '已复制部件 ID')
   }
 }
 
@@ -301,11 +305,12 @@ const configHelpText = computed(() => {
   return parts.join('')
 })
 
-// ---- 事件/规则/API 弹框 ----
+// ---- 事件/规则/API/变量 弹框 ----
 
 const eventDialogVisible = ref(false)
 const ruleDialogVisible = ref(false)
 const apiDialogVisible = ref(false)
+const variableDialogVisible = ref(false)
 
 function openEventDialog() {
   eventDialogVisible.value = true
@@ -325,6 +330,7 @@ watch(() => editorStore.configDialogTrigger, (trigger) => {
   if (trigger.type === 'events') eventDialogVisible.value = true
   else if (trigger.type === 'rules') ruleDialogVisible.value = true
   else if (trigger.type === 'api') apiDialogVisible.value = true
+  else if (trigger.type === 'variables') variableDialogVisible.value = true
   editorStore.clearConfigDialogTrigger()
 })
 
@@ -341,6 +347,18 @@ function handleRuleSave(rules: WidgetRule[]) {
 function handleApiSave(api: SchemaApiConfig | undefined) {
   if (!selectedWidget.value) return
   widgetStore.updateWidget(selectedWidget.value.id, { api })
+}
+
+function handleVariableSave(variables: WidgetVariable[]) {
+  if (!selectedWidget.value) return
+  widgetStore.updateWidget(selectedWidget.value.id, { variables })
+}
+
+// ---- 画布级变量配置 ----
+const boardVariableDialogVisible = ref(false)
+
+function handleBoardVariableSave(variables: WidgetVariable[]) {
+  boardStore.variables = variables as typeof boardStore.variables
 }
 
 // ---- 画布配置（未选中部件时显示） ----
@@ -393,8 +411,21 @@ function updateBoardProperty(key: string, value: unknown) {
               :desc="item.desc"
               @update="(v: unknown) => updateBoardProperty(item.key, v)"
             />
+            <div :class="$style.variableBtn">
+              <el-button size="small" @click="boardVariableDialogVisible = true">
+                画布变量 ({{ boardStore.variables.length }})
+              </el-button>
+            </div>
           </div>
         </div>
+
+        <VariableConfigDialog
+          :visible="boardVariableDialogVisible"
+          :variables="boardStore.variables"
+          title="画布变量配置"
+          @update:visible="boardVariableDialogVisible = $event"
+          @save="handleBoardVariableSave"
+        />
       </el-scrollbar>
     </template>
 
@@ -564,6 +595,14 @@ function updateBoardProperty(key: string, value: unknown) {
         @update:visible="apiDialogVisible = $event"
         @save="handleApiSave"
       />
+
+      <VariableConfigDialog
+        :visible="variableDialogVisible"
+        :variables="selectedWidget.variables ?? []"
+        title="部件变量配置"
+        @update:visible="variableDialogVisible = $event"
+        @save="handleVariableSave"
+      />
     </template>
   </div>
 </template>
@@ -677,6 +716,10 @@ function updateBoardProperty(key: string, value: unknown) {
 
 .sectionBody {
   padding: 0 16px 8px;
+}
+
+.variableBtn {
+  margin-top: 8px;
 }
 
 .columnsSection {

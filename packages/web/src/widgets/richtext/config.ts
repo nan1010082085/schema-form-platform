@@ -12,7 +12,7 @@ export const richtextConfig: WidgetConfig = {
     placeholder: '请输入内容',
     readonly: false,
   },
-  configPanels: ['events', 'rules'] as const,
+  configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
     style: [],

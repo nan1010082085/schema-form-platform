@@ -12,7 +12,8 @@
 import { describe, it, expect } from 'vitest'
 import { reactive } from 'vue'
 import { useLinkage } from '@/composables/useLinkage'
-import type { FormSchemaItem, FormData } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
+import type { FormData } from '@/components/WidgetRenderer/types'
 
 /** Helper: collect keys from stateMap */
 
@@ -21,7 +22,7 @@ describe('useLinkage', () => {
 
   describe('visible linkage', () => {
     it('hides field when condition is true (visible=false when condition is false)', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'type',
@@ -53,7 +54,7 @@ describe('useLinkage', () => {
     })
 
     it('respects schema.hidden priority over linkage.visible', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'secret',
@@ -83,7 +84,7 @@ describe('useLinkage', () => {
 
   describe('disabled linkage', () => {
     it('disables field when condition is met', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'select',
           field: 'approvalType',
@@ -121,7 +122,7 @@ describe('useLinkage', () => {
 
   describe('required linkage', () => {
     it('sets required when condition is met', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'radio',
           field: 'hasCar',
@@ -159,7 +160,7 @@ describe('useLinkage', () => {
 
   describe('options linkage', () => {
     it('overrides options with thenOptions when condition is met', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'select',
           field: 'province',
@@ -214,7 +215,7 @@ describe('useLinkage', () => {
     })
 
     it('overrides options with thenApi when condition is met', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'select',
           field: 'category',
@@ -257,7 +258,7 @@ describe('useLinkage', () => {
 
   describe('function condition', () => {
     it('evaluates function condition correctly', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'number',
           field: 'age',
@@ -294,7 +295,7 @@ describe('useLinkage', () => {
 
   describe('multi-field joint linkage', () => {
     it('evaluates condition with multiple watchFields', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'role', label: '角色' },
         { type: 'input', field: 'level', label: '级别' },
         {
@@ -328,7 +329,7 @@ describe('useLinkage', () => {
 
   describe('multiple linkage types on same field', () => {
     it('applies multiple linkage types independently', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'mode', label: '模式' },
         {
           type: 'textarea',
@@ -380,7 +381,7 @@ describe('useLinkage', () => {
 
   describe('cycle detection', () => {
     it('degrades fields with circular dependencies to default state', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'fieldA',
@@ -422,7 +423,7 @@ describe('useLinkage', () => {
 
   describe('empty linkages', () => {
     it('returns default state for fields without linkages', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'name',
@@ -452,7 +453,7 @@ describe('useLinkage', () => {
     })
 
     it('works with nested children', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'grid-row',
           children: [
@@ -491,7 +492,7 @@ describe('useLinkage', () => {
 
   describe('default state', () => {
     it('defaults are visible=true, disabled=false, required=false', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'test',
@@ -524,7 +525,7 @@ describe('useLinkage', () => {
 
   describe('elseValue', () => {
     it('sets elseValue when visible condition is false', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] },
         {
           type: 'input', field: 'target', label: 'Target',
@@ -539,7 +540,7 @@ describe('useLinkage', () => {
     })
 
     it('does NOT set elseValue when condition is true', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }] },
         {
           type: 'input', field: 'target', label: 'Target',
@@ -554,7 +555,7 @@ describe('useLinkage', () => {
     })
 
     it('elseValue with options linkage type on condition false', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'X', value: 'x' }] },
         {
           type: 'select', field: 'target', label: 'Target',
@@ -569,7 +570,7 @@ describe('useLinkage', () => {
     })
 
     it('cycle detection still works with elseValue', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A', linkages: [{ type: 'visible', watchFields: ['b'], condition: 'values.b === "1"', elseValue: 'a-reset' }] },
         { type: 'input', field: 'b', label: 'B', linkages: [{ type: 'visible', watchFields: ['a'], condition: 'values.a === "1"', elseValue: 'b-reset' }] },
       ]
@@ -586,7 +587,7 @@ describe('useLinkage', () => {
 
   describe('set-value linkage', () => {
     it('stores targetValue from thenValue literal', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }] },
         {
           type: 'input', field: 'target', label: 'Target',
@@ -599,7 +600,7 @@ describe('useLinkage', () => {
     })
 
     it('targetValue is undefined when condition is false', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }] },
         {
           type: 'input', field: 'target', label: 'Target',
@@ -612,7 +613,7 @@ describe('useLinkage', () => {
     })
 
     it('stores targetValue from valueSource (field copy)', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'source', label: 'Source' },
         {
           type: 'input', field: 'target', label: 'Target',
@@ -629,7 +630,7 @@ describe('useLinkage', () => {
     })
 
     it('set-value with elseValue fallback', () => {
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }] },
         {
           type: 'input', field: 'target', label: 'Target',

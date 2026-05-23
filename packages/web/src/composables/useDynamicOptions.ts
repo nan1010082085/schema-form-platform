@@ -5,8 +5,8 @@
  * apiConfig 支持静态值或响应式 getter，当联动切换 API 配置时自动重新加载
  */
 import { ref, inject, onMounted, watch, toValue, type Ref, type MaybeRefOrGetter } from 'vue'
-import { FORM_GRID_CONTEXT_KEY, FORM_GRID_FORM_KEY } from '@/components/FormGrid/types'
-import type { SchemaApiConfig, DictItem, FormData } from '@/components/FormGrid/types'
+import { FORM_GRID_CONTEXT_KEY, FORM_GRID_FORM_KEY } from '@/components/WidgetRenderer/types'
+import type { SchemaApiConfig, DictItem, FormData } from '@/components/WidgetRenderer/types'
 import { apiClient } from '@/utils/apiClient'
 import { getCachedOptions, setCachedOptions } from '@/utils/optionsCache'
 import { normalizeListResponse } from '@/utils/responseNormalizer'

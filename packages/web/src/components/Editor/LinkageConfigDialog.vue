@@ -11,6 +11,7 @@
  */
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
+import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import type {
   WidgetRule,
   WidgetRuleWatch,
@@ -27,6 +28,9 @@ const emit = defineEmits<{
   'update:visible': [val: boolean]
   save: [rules: WidgetRule[]]
 }>()
+
+// ---- 部件字段选项 ----
+const { widgetOptions } = useWidgetOptions()
 
 // ---- 本地编辑副本 ----
 
@@ -195,10 +199,26 @@ function handleClose() {
               />
             </el-select>
 
-            <el-input
+            <el-select
+              v-if="w.type === 'field'"
               v-model="w.source"
               size="small"
-              placeholder="字段名 / 动作名 / 弹窗ID"
+              filterable
+              placeholder="选择字段"
+              style="flex: 1"
+            >
+              <el-option
+                v-for="opt in widgetOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+            <el-input
+              v-else
+              v-model="w.source"
+              size="small"
+              placeholder="动作名 / 弹窗ID"
               style="flex: 1"
             />
 

@@ -2,7 +2,7 @@
  * 请求队列
  * 遍历 Schema 树收集 API 任务，顺序执行请求
  */
-import type { FormSchemaItem, DictItem } from '@/components/FormGrid/types'
+import type { PartialWidget, DictItem } from '@/components/WidgetRenderer/types'
 import { getRequestInstance } from './request'
 import { setCachedOptions, getCachedOptions } from './optionsCache'
 import { useLogger } from '@/composables/useLogger'
@@ -24,10 +24,10 @@ function buildTaskKey(url: string, method: string, params?: Record<string, unkno
 }
 
 /** 递归收集 Schema 树中的 API 任务 */
-export function collectApiTasks(schema: FormSchemaItem[]): QueueTask[] {
+export function collectApiTasks(schema: PartialWidget[]): QueueTask[] {
   const taskMap = new Map<string, QueueTask>()
 
-  function walk(items: FormSchemaItem[]) {
+  function walk(items: PartialWidget[]) {
     for (const item of items) {
       if (item.api?.url && !item.api.dictCode) {
         const method = item.api.method ?? 'get'
@@ -95,7 +95,7 @@ export async function executeQueue(tasks: QueueTask[]): Promise<Map<string, Dict
 }
 
 /** 便捷方法：收集并执行 */
-export async function processSchema(schema: FormSchemaItem[]) {
+export async function processSchema(schema: PartialWidget[]) {
   const tasks = collectApiTasks(schema)
   if (tasks.length === 0) return
   return executeQueue(tasks)

@@ -5,8 +5,9 @@ const doc: ComponentDoc = {
   name: '字段联动',
   category: 'business',
   description:
-    'Schema 驱动的字段联动机制，支持 visible / disabled / required / options 四种联动类型。' +
-    '通过在 FormSchemaItem 上配置 linkages 数组，可以实现字段间的条件联动。',
+    'Schema 驱动的字段联动机制，支持 visible / disabled / required / options / set-value / reset-fields 六种联动类型。' +
+    '通过在 PartialWidget 上配置 linkages 数组，可以实现字段间的条件联动。' +
+    '条件表达式可引用 values (表单数据)、variables (用户变量)、exposed (组件暴露值)。',
   props: [
     {
       name: 'linkages',
@@ -16,7 +17,7 @@ const doc: ComponentDoc = {
     },
     {
       name: 'linkages[].type',
-      type: '"visible" | "disabled" | "required" | "options"',
+      type: '"visible" | "disabled" | "required" | "options" | "set-value" | "reset-fields"',
       default: '—',
       description: '联动类型',
     },
@@ -30,7 +31,7 @@ const doc: ComponentDoc = {
       name: 'linkages[].condition',
       type: 'string | ((values: Record<string, FormFieldValue>) => boolean)',
       default: '—',
-      description: '联动条件，支持字符串表达式或函数',
+      description: '联动条件，支持字符串表达式或函数。可引用 values / variables / exposed',
     },
     {
       name: 'linkages[].thenOptions',
@@ -43,6 +44,30 @@ const doc: ComponentDoc = {
       type: 'SchemaApiConfig',
       default: '—',
       description: 'options 联动时，条件为真的动态 API 配置',
+    },
+    {
+      name: 'linkages[].thenValue',
+      type: 'FieldValue',
+      default: '—',
+      description: 'set-value 联动时，条件为真时设置的字面值',
+    },
+    {
+      name: 'linkages[].valueSource',
+      type: 'string',
+      default: '—',
+      description: 'set-value 联动时，条件为真时从该字段复制值',
+    },
+    {
+      name: 'linkages[].targetFields',
+      type: 'string[]',
+      default: '—',
+      description: 'reset-fields 联动时，要重置的目标字段列表',
+    },
+    {
+      name: 'linkages[].elseValue',
+      type: 'FieldValue',
+      default: '—',
+      description: '条件为假时的回退值',
     },
   ],
   events: [],
@@ -298,6 +323,141 @@ const doc: ComponentDoc = {
                       watchFields: ['linkage_role', 'linkage_level'],
                       condition:
                         'values.linkage_role === "manager" && values.linkage_level >= 5',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'set-value 联动 — 条件设值',
+      description: '当折扣类型选择 VIP 时，自动设置折扣率为 0.8',
+      schema: [
+        {
+          type: 'grid-row',
+          children: [
+            { type: 'grid-col', span: 4, label: '折扣类型', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'select',
+                  field: 'linkage_discountType',
+                  options: [
+                    { label: '普通', value: 'normal' },
+                    { label: 'VIP', value: 'vip' },
+                  ],
+                },
+              ],
+            },
+            { type: 'grid-col', span: 4, label: '折扣率', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'number',
+                  field: 'linkage_discountRate',
+                  props: { min: 0, max: 1, step: 0.1 },
+                  linkages: [
+                    {
+                      type: 'set-value',
+                      watchFields: ['linkage_discountType'],
+                      condition: 'values.linkage_discountType === "vip"',
+                      thenValue: 0.8,
+                      elseValue: 1,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: 'reset-fields 联动 — 条件重置',
+      description: '当分类切换为非"自定义"时，重置自定义名称和价格字段',
+      schema: [
+        {
+          type: 'grid-row',
+          children: [
+            { type: 'grid-col', span: 4, label: '分类', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'select',
+                  field: 'linkage_category',
+                  options: [
+                    { label: '标准', value: 'standard' },
+                    { label: '自定义', value: 'custom' },
+                  ],
+                  linkages: [
+                    {
+                      type: 'reset-fields',
+                      watchFields: ['linkage_category'],
+                      condition: 'values.linkage_category !== "custom"',
+                      targetFields: ['linkage_customName', 'linkage_customPrice'],
+                    },
+                  ],
+                },
+              ],
+            },
+            { type: 'grid-col', span: 4, label: '自定义名称', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'input',
+                  field: 'linkage_customName',
+                  props: { placeholder: '仅自定义分类可编辑' },
+                },
+              ],
+            },
+            { type: 'grid-col', span: 4, label: '自定义价格', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'number',
+                  field: 'linkage_customPrice',
+                  props: { placeholder: '仅自定义分类可编辑' },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: '变量引用联动 — 使用 variables',
+      description: '条件表达式中引用画布/组件变量，实现跨组件联动',
+      schema: [
+        {
+          type: 'grid-row',
+          children: [
+            { type: 'grid-col', span: 4, label: '管理员面板', align: 'center' },
+            {
+              type: 'grid-col',
+              span: 8,
+              children: [
+                {
+                  type: 'input',
+                  field: 'linkage_adminNote',
+                  props: { placeholder: '仅管理员可见' },
+                  linkages: [
+                    {
+                      type: 'visible',
+                      watchFields: [],
+                      condition: 'variables.isAdmin === true',
                     },
                   ],
                 },

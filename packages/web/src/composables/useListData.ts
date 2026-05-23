@@ -5,7 +5,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import type { ListApiConfig } from '@/components/FormGrid/types'
+import type { ListApiConfig } from '@/components/WidgetRenderer/types'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import { executeWithRetry } from '@/utils/retryRequest'
 

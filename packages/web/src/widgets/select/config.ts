@@ -15,7 +15,7 @@ export const selectConfig: WidgetConfig = {
     multiple: false,
     filterable: false,
   },
-  configPanels: ['events', 'rules', 'api'],
+  configPanels: ['events', 'rules', 'api', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue', 'options'],
     style: ['fontSize', 'color', 'backgroundColor'],

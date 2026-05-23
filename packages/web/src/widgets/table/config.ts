@@ -27,7 +27,7 @@ export const tableConfig: WidgetConfig = {
     apiHeaders: {} as Record<string, string>,
     responseDataPath: '',
   },
-  configPanels: ['api'],
+  configPanels: ['api', 'variables'],
   propertyPanel: {
     basic: ['label'],
     style: [],

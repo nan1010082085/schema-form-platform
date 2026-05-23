@@ -1,4 +1,4 @@
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 
 export type FieldType =
   | 'input'
@@ -25,7 +25,7 @@ export interface PropertyField {
   /** Placeholder for input/number */
   placeholder?: string
   /** Condition to show this field */
-  show?: (schema: FormSchemaItem) => boolean
+  show?: (schema: PartialWidget) => boolean
   /** Read-only — field is visible but not editable */
   disabled?: boolean
 }
@@ -40,4 +40,4 @@ export interface PropertyCategory {
 }
 
 /** Adapter: given a schema, return which fields to show */
-export type PropertyAdapter = (schema: FormSchemaItem) => PropertyCategory[]
+export type PropertyAdapter = (schema: PartialWidget) => PropertyCategory[]

@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { useListData } from '@/composables/useListData'
-import type { ListApiConfig } from '@/components/FormGrid/types'
+import type { ListApiConfig } from '@/components/WidgetRenderer/types'
 
 /**
  * Mock apiClient from @/utils/apiClient.

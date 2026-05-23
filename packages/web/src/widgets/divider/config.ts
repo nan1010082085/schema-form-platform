@@ -6,7 +6,7 @@ export const dividerConfig: WidgetConfig = {
   defaultStyle: {
     width: '100%',
   },
-  configPanels: ['events'],
+  configPanels: ['events', 'variables'],
   defaultProps: {
     direction: 'horizontal' as 'horizontal' | 'vertical',
     contentPosition: 'center' as 'left' | 'center' | 'right',
