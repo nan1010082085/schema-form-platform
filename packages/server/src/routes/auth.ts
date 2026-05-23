@@ -1,15 +1,13 @@
 import Router from '@koa/router'
 import jwt from 'jsonwebtoken'
-import { v4 as uuidv4 } from 'uuid'
 import { UserModel } from '../models/User.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { loginSchema } from '../schemas/authSchemas.js'
+import { JWT_SECRET } from '../config/jwt.js'
 import type { JwtPayload } from '../middleware/auth.js'
 
 const router = new Router({ prefix: '/api/auth' })
-
-const JWT_SECRET = process.env.JWT_SECRET || 'schema-form-secret'
 
 /**
  * POST /api/auth/login

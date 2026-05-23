@@ -396,14 +396,14 @@ const spec = {
       },
     },
 
-    '/api/schemas/published/{editId}': {
+    '/api/schemas/published/{sourceId}': {
       get: {
         tags: ['Schema'],
-        summary: 'Get published version by editId',
+        summary: 'Get published version by sourceId',
         operationId: 'getPublishedSchema',
         security: [{ bearerAuth: [] }],
         parameters: [
-          { name: 'editId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          { name: 'sourceId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'The editId of the source schema' },
         ],
         responses: {
           '200': {
