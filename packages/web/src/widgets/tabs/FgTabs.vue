@@ -44,6 +44,8 @@ const tabPosition = computed(() => {
 function handleTabChange(name: string | number) {
   activeKey.value = name as string
 }
+
+defineExpose({ activeKey })
 </script>
 
 <template>
@@ -59,8 +61,6 @@ function handleTabChange(name: string | number) {
       :key="tab.key"
       :label="tab.label"
       :name="tab.key"
-    >
-      <div :class="styles.tabPane" />
-    </el-tab-pane>
+    />
   </el-tabs>
 </template>

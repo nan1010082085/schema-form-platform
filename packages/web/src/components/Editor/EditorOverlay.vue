@@ -97,6 +97,10 @@ function handleDeleteWidget(widget: Widget) {
   editorStore.select(null)
 }
 
+function handleCopyId(id: string) {
+  navigator.clipboard.writeText(id)
+}
+
 function handleOpenEvent(widget: Widget) { emit('openEvent', widget) }
 function handleOpenRule(widget: Widget) { emit('openRule', widget) }
 function handleOpenApi(widget: Widget) { emit('openApi', widget) }
@@ -404,6 +408,7 @@ function handleDrop(e: DragEvent) {
       :widget="contextMenu.widget"
       @close="contextMenu.visible = false"
       @copy="handleCopyWidget"
+      @copy-id="handleCopyId"
       @delete="handleDeleteWidget"
       @open-event="handleOpenEvent"
       @open-rule="handleOpenRule"
