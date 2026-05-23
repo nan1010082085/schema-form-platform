@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { evaluateCondition, executeEventAction, type EventExecutionContext } from '@/engine/eventEngine'
+import { evaluateCondition, executeEventAction, triggerWidgetEvent, type EventExecutionContext } from '@/engine/eventEngine'
+import type { Widget } from '@/widgets/base/types'
 
 vi.mock('@/composables/useLogger', () => ({
   useLogger: vi.fn(() => ({
@@ -34,6 +35,34 @@ describe('evaluateCondition', () => {
     const longExpr = 'a'.repeat(501)
     expect(evaluateCondition(longExpr, {})).toBe(false)
   })
+
+  // ---- variables 上下文测试 ----
+
+  it('evaluates expression with variables context', () => {
+    // variables 合并到 context 中，因为 evaluateCondition 的 variables 参数指向 context
+    const context = { status: 'active', threshold: 100 }
+    expect(evaluateCondition('variables.threshold > 50', context)).toBe(true)
+  })
+
+  it('evaluates expression referencing both values and variables', () => {
+    // values 和 variables 都指向同一个 context
+    const context = { amount: 200, limit: 150 }
+    expect(evaluateCondition('amount > variables.limit', context)).toBe(true)
+  })
+
+  // ---- exposed 上下文测试 ----
+
+  it('evaluates expression with exposed context', () => {
+    const context = {}
+    const exposed = { table1: { selectedRows: [{ id: 1 }] } }
+    expect(evaluateCondition('exposed.table1.selectedRows.length > 0', context, exposed)).toBe(true)
+  })
+
+  it('evaluates expression with exposed and variables together', () => {
+    const context = { mode: 'edit', debug: true }
+    const exposed = { form1: { loading: false } }
+    expect(evaluateCondition('mode === "edit" && variables.debug && !exposed.form1.loading', context, exposed)).toBe(true)
+  })
 })
 
 describe('executeEventAction', () => {
@@ -47,7 +76,7 @@ describe('executeEventAction', () => {
       closeDialog: vi.fn(),
       submitForm: vi.fn(),
       resetForm: vi.fn(),
-      getFormData: vi.fn().mockReturnValue({}),
+      getFormData: vi.fn().mockReturnValue({ name: 'test', age: 25 }),
       emit: vi.fn(),
       ...overrides,
     }
@@ -56,6 +85,8 @@ describe('executeEventAction', () => {
   beforeEach(() => {
     ctx = createMockContext()
   })
+
+  // ---- 基础动作测试 ----
 
   it('set-value updates target widget defaultValue', () => {
     vi.mocked(ctx.findWidget).mockReturnValue({ id: 'w1', defaultValue: 'old' } as any)
@@ -110,5 +141,397 @@ describe('executeEventAction', () => {
   it('emit calls ctx.emit with custom event', () => {
     executeEventAction({ type: 'emit', target: '', value: 'payload' }, ctx)
     expect(ctx.emit).toHaveBeenCalledWith('custom', 'payload')
+  })
+
+  // ---- 新增动作类型测试 ----
+
+  describe('set-variable', () => {
+    it('calls ctx.setVariable with variable name and value', () => {
+      const setVariable = vi.fn()
+      ctx = createMockContext({ setVariable })
+      executeEventAction({ type: 'set-variable', variable: 'count', value: 42 }, ctx)
+      expect(setVariable).toHaveBeenCalledWith('count', 42)
+    })
+
+    it('does nothing if variable name is missing', () => {
+      const setVariable = vi.fn()
+      ctx = createMockContext({ setVariable })
+      executeEventAction({ type: 'set-variable', value: 42 }, ctx)
+      expect(setVariable).not.toHaveBeenCalled()
+    })
+
+    it('does nothing if ctx.setVariable is not provided', () => {
+      ctx = createMockContext({ setVariable: undefined })
+      expect(() => {
+        executeEventAction({ type: 'set-variable', variable: 'count', value: 42 }, ctx)
+      }).not.toThrow()
+    })
+  })
+
+  describe('trigger-event', () => {
+    it('calls ctx.triggerEvent with target and event name', () => {
+      const triggerEvent = vi.fn()
+      ctx = createMockContext({ triggerEvent })
+      executeEventAction({ type: 'trigger-event', target: 'table1', event: 'refresh' }, ctx)
+      expect(triggerEvent).toHaveBeenCalledWith('table1', 'refresh')
+    })
+
+    it('does nothing if target is missing', () => {
+      const triggerEvent = vi.fn()
+      ctx = createMockContext({ triggerEvent })
+      executeEventAction({ type: 'trigger-event', event: 'refresh' }, ctx)
+      expect(triggerEvent).not.toHaveBeenCalled()
+    })
+
+    it('does nothing if event name is missing', () => {
+      const triggerEvent = vi.fn()
+      ctx = createMockContext({ triggerEvent })
+      executeEventAction({ type: 'trigger-event', target: 'table1' }, ctx)
+      expect(triggerEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('post-message', () => {
+    const originalPostMessage = window.parent.postMessage
+
+    afterEach(() => {
+      window.parent.postMessage = originalPostMessage
+    })
+
+    it('sends postMessage to parent window', () => {
+      const postMessageSpy = vi.fn()
+      window.parent.postMessage = postMessageSpy
+      executeEventAction({ type: 'post-message', message: { type: 'save', data: 'test' } }, ctx)
+      expect(postMessageSpy).toHaveBeenCalledWith({ type: 'save', data: 'test' }, '*')
+    })
+
+    it('resolves formData.xxx references in message', () => {
+      const postMessageSpy = vi.fn()
+      window.parent.postMessage = postMessageSpy
+      ctx = createMockContext({ getFormData: vi.fn().mockReturnValue({ userName: 'Alice' }) })
+      executeEventAction({ type: 'post-message', message: { name: 'formData.userName' } }, ctx)
+      expect(postMessageSpy).toHaveBeenCalledWith({ name: 'Alice' }, '*')
+    })
+
+    it('does nothing if message is missing', () => {
+      const postMessageSpy = vi.fn()
+      window.parent.postMessage = postMessageSpy
+      executeEventAction({ type: 'post-message' }, ctx)
+      expect(postMessageSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('close-tab', () => {
+    it('calls window.close', () => {
+      const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
+      executeEventAction({ type: 'close-tab' }, ctx)
+      expect(closeSpy).toHaveBeenCalled()
+      closeSpy.mockRestore()
+    })
+  })
+
+  describe('copy', () => {
+    it('copies text to clipboard', async () => {
+      const writeTextSpy = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText: writeTextSpy } })
+      executeEventAction({ type: 'copy', text: 'Hello World' }, ctx)
+      // Wait for the promise to resolve
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(writeTextSpy).toHaveBeenCalledWith('Hello World')
+    })
+
+    it('resolves formData.xxx references in text', async () => {
+      const writeTextSpy = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText: writeTextSpy } })
+      ctx = createMockContext({ getFormData: vi.fn().mockReturnValue({ email: 'test@example.com' }) })
+      executeEventAction({ type: 'copy', text: 'formData.email' }, ctx)
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(writeTextSpy).toHaveBeenCalledWith('test@example.com')
+    })
+
+    it('does nothing if text is missing', () => {
+      const writeTextSpy = vi.fn()
+      Object.assign(navigator, { clipboard: { writeText: writeTextSpy } })
+      executeEventAction({ type: 'copy' }, ctx)
+      expect(writeTextSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('refresh', () => {
+    it('calls ctx.triggerEvent with refresh event', () => {
+      const triggerEvent = vi.fn()
+      ctx = createMockContext({ triggerEvent })
+      executeEventAction({ type: 'refresh', target: 'table1' }, ctx)
+      expect(triggerEvent).toHaveBeenCalledWith('table1', 'refresh')
+    })
+
+    it('does nothing if target is missing', () => {
+      const triggerEvent = vi.fn()
+      ctx = createMockContext({ triggerEvent })
+      executeEventAction({ type: 'refresh' }, ctx)
+      expect(triggerEvent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('api', () => {
+    it('emits api-call event with url and method', () => {
+      executeEventAction({ type: 'api', apiUrl: '/api/users', apiMethod: 'get' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
+        url: '/api/users',
+        method: 'get',
+        params: undefined,
+      })
+    })
+
+    it('defaults to post method', () => {
+      executeEventAction({ type: 'api', apiUrl: '/api/users' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
+        url: '/api/users',
+        method: 'post',
+        params: undefined,
+      })
+    })
+
+    it('sends formData as params when apiParams is "formData"', () => {
+      ctx = createMockContext({ getFormData: vi.fn().mockReturnValue({ name: 'test' }) })
+      executeEventAction({ type: 'api', apiUrl: '/api/save', apiParams: 'formData' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
+        url: '/api/save',
+        method: 'post',
+        params: { name: 'test' },
+      })
+    })
+
+    it('sends custom params', () => {
+      executeEventAction({ type: 'api', apiUrl: '/api/query', apiParams: { id: 123 } }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
+        url: '/api/query',
+        method: 'post',
+        params: { id: 123 },
+      })
+    })
+
+    it('does nothing if apiUrl is missing', () => {
+      executeEventAction({ type: 'api' }, ctx)
+      expect(ctx.emit).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('navigate', () => {
+    it('emits navigate event with path and query', () => {
+      executeEventAction({ type: 'navigate', navigatePath: '/detail', navigateQuery: { id: '123' } }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('navigate', {
+        path: '/detail',
+        query: { id: '123' },
+      })
+    })
+
+    it('emits navigate event without query', () => {
+      executeEventAction({ type: 'navigate', navigatePath: '/list' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('navigate', {
+        path: '/list',
+        query: undefined,
+      })
+    })
+
+    it('does nothing if navigatePath is missing', () => {
+      executeEventAction({ type: 'navigate' }, ctx)
+      expect(ctx.emit).not.toHaveBeenCalled()
+    })
+  })
+})
+
+// ---- triggerWidgetEvent 完整测试 ----
+
+describe('triggerWidgetEvent', () => {
+  let ctx: EventExecutionContext
+
+  function createMockContext(overrides: Partial<EventExecutionContext> = {}): EventExecutionContext {
+    return {
+      findWidget: vi.fn(),
+      updateWidget: vi.fn(),
+      openDialog: vi.fn(),
+      closeDialog: vi.fn(),
+      submitForm: vi.fn(),
+      resetForm: vi.fn(),
+      getFormData: vi.fn().mockReturnValue({ status: 'active', amount: 100 }),
+      emit: vi.fn(),
+      variables: { threshold: 50 },
+      ...overrides,
+    }
+  }
+
+  beforeEach(() => {
+    ctx = createMockContext()
+  })
+
+  it('executes matching trigger events', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).toHaveBeenCalled()
+  })
+
+  it('skips non-matching triggers', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'change', ctx)
+    expect(ctx.submitForm).not.toHaveBeenCalled()
+  })
+
+  it('skips events with unmet conditions', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          condition: 'status === "inactive"',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).not.toHaveBeenCalled()
+  })
+
+  it('executes events with met conditions', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          condition: 'status === "active"',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).toHaveBeenCalled()
+  })
+
+  it('handles confirm dialog (user confirms)', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          confirm: '确定提交？',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).toHaveBeenCalled()
+  })
+
+  it('handles confirm dialog (user cancels)', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          confirm: '确定提交？',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).not.toHaveBeenCalled()
+  })
+
+  it('executes action chain in order', () => {
+    const callOrder: string[] = []
+    vi.mocked(ctx.submitForm).mockImplementation(() => { callOrder.push('submit') })
+    vi.mocked(ctx.resetForm).mockImplementation(() => { callOrder.push('reset') })
+
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          actions: [
+            { type: 'submit' },
+            { type: 'reset' },
+          ],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(callOrder).toEqual(['submit', 'reset'])
+  })
+
+  it('does nothing if widget has no events', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+    }
+
+    expect(() => triggerWidgetEvent(widget, 'click', ctx)).not.toThrow()
+    expect(ctx.submitForm).not.toHaveBeenCalled()
+  })
+
+  it('evaluates condition with variables context', () => {
+    const widget: Widget = {
+      id: 'btn1',
+      name: 'FgButton',
+      type: 'button',
+      position: { x: 0, y: 0, w: 100, h: 40 },
+      events: [
+        {
+          trigger: 'click',
+          condition: 'variables.threshold > 30',
+          actions: [{ type: 'submit' }],
+        },
+      ],
+    }
+
+    triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.submitForm).toHaveBeenCalled()
   })
 })
