@@ -6,12 +6,12 @@
  */
 import { ref, watch } from 'vue'
 import type { Ref } from 'vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { InteractionMode } from '@/composables/useConstant'
 import { processSchema } from '@/utils/requestQueue'
 
 export interface UseModeControlOptions {
-  schema: Ref<FormSchemaItem[]>
+  schema: Ref<PartialWidget[]>
   currentSchemaId: Ref<string | null>
 }
 

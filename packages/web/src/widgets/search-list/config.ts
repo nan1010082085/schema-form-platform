@@ -37,7 +37,7 @@ export const searchListConfig: WidgetConfig = {
     searchFields: [],
     columns: [],
   },
-  configPanels: ['events', 'api'] as const,
+  configPanels: ['events', 'api', 'variables'] as const,
   propertyPanel: {
     basic: ['label'],
     style: [],

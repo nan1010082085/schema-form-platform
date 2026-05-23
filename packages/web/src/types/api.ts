@@ -5,7 +5,7 @@
  * 参考：packages/server/docs/api.md
  */
 
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 // ---- 通用响应格式 ----
 
@@ -36,14 +36,14 @@ export interface SchemaListItem {
   name: string
   type: SchemaTypeValue
   status: SchemaStatusValue
-  json?: FormSchemaItem[]
+  json?: PartialWidget[]
   createdAt: string
   updatedAt: string
 }
 
 /** Schema 详情（含完整 JSON schema 定义） */
 export interface SchemaDetail extends SchemaListItem {
-  json: FormSchemaItem[]
+  json: PartialWidget[]
 }
 
 /** 发布 Schema（发布表 — 每个源 Schema 最多一条） */
@@ -52,7 +52,7 @@ export interface PublishedSchemaItem {
   sourceId: string
   name: string
   type: SchemaTypeValue
-  json: FormSchemaItem[]
+  json: PartialWidget[]
   publishId: string
   version: string
   publishedAt: string
@@ -64,14 +64,14 @@ export interface PublishedSchemaItem {
 export interface SchemaCreatePayload {
   name: string
   type: SchemaTypeValue
-  json: FormSchemaItem[]
+  json: PartialWidget[]
   editId?: string
 }
 
 /** Schema 更新请求体（至少一个字段） */
 export interface SchemaUpdatePayload {
   name?: string
-  json?: FormSchemaItem[]
+  json?: PartialWidget[]
   type?: SchemaTypeValue
 }
 
@@ -116,7 +116,7 @@ export interface VersionListResponse {
 export interface SchemaImportPayload {
   name: string
   type: SchemaTypeValue
-  json: FormSchemaItem[]
+  json: PartialWidget[]
 }
 
 // ---- 缓存与预取 ----

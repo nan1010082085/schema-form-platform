@@ -1,16 +1,16 @@
 /**
  * JSON structure analysis engine.
  *
- * Infers FormSchemaItem[] from a JSON response, with type detection
+ * Infers PartialWidget[] from a JSON response, with type detection
  * and field-name-to-label conversion.
  */
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import type { PartialWidget, SchemaType } from '@/widgets/base/types'
 
 /** Inferred field information */
 export interface FieldInference {
   /** Original field path (dot-separated for nested objects) */
   path: string
-  /** Suggested FormSchemaItem field name */
+  /** Suggested PartialWidget field name */
   field: string
   /** Inferred SchemaType */
   type: SchemaType
@@ -162,14 +162,14 @@ export function fieldNameToLabel(name: string): string {
 }
 
 /**
- * Convert field inferences to FormSchemaItem[].
+ * Convert field inferences to PartialWidget[].
  * For nested objects, creates card containers with children.
  *
  * @param inferences - Array of field inferences
- * @returns FormSchemaItem[] ready for the editor
+ * @returns PartialWidget[] ready for the editor
  */
-export function fieldInferencesToSchema(inferences: FieldInference[]): FormSchemaItem[] {
-  const schema: FormSchemaItem[] = []
+export function fieldInferencesToSchema(inferences: FieldInference[]): PartialWidget[] {
+  const schema: PartialWidget[] = []
   const processed = new Set<string>()
 
   for (const inf of inferences) {
@@ -181,7 +181,7 @@ export function fieldInferencesToSchema(inferences: FieldInference[]): FormSchem
       continue
     }
 
-    const item: FormSchemaItem = {
+    const item: PartialWidget = {
       type: inf.type,
       field: inf.field,
       label: inf.label,
@@ -195,7 +195,7 @@ export function fieldInferencesToSchema(inferences: FieldInference[]): FormSchem
           type: c.type,
           field: c.path,
           label: c.label,
-        } satisfies FormSchemaItem))
+        } satisfies PartialWidget))
       if (children.length > 0) {
         item.children = children
       }

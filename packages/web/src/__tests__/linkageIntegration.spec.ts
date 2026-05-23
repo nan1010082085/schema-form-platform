@@ -2,7 +2,7 @@
  * Linkage Integration Tests
  *
  * Tests the full linkage system end-to-end:
- * - useLinkage composable with FormSchemaItem[] and reactive FormData
+ * - useLinkage composable with PartialWidget[] and reactive FormData
  * - visible / disabled / required / set-value / options linkage types
  * - Multi-field watch scenarios
  * - Cycle detection and degradation
@@ -15,7 +15,8 @@ import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
 import { useLinkage } from '@/composables/useLinkage'
-import type { FormSchemaItem, FormData } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
+import type { FormData } from '@/components/WidgetRenderer/types'
 
 describe('Linkage Integration', () => {
   beforeEach(() => {
@@ -37,7 +38,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'status', label: 'Status' },
         {
           type: 'input',
@@ -65,7 +66,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'status', label: 'Status' },
         {
           type: 'input',
@@ -97,7 +98,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'lock', label: 'Lock' },
         {
           type: 'input',
@@ -124,7 +125,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'lock', label: 'Lock' },
         {
           type: 'input',
@@ -155,7 +156,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'type', label: 'Type' },
         {
           type: 'input',
@@ -182,7 +183,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'type', label: 'Type' },
         {
           type: 'input',
@@ -218,7 +219,7 @@ describe('Linkage Integration', () => {
       expect(widget.linkages[0].type).toBe('set-value')
 
       // Verify the linkage computation
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'source', label: 'Source' },
         {
           type: 'input',
@@ -246,7 +247,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'source', label: 'Source' },
         {
           type: 'input',
@@ -274,7 +275,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'source', label: 'Source' },
         {
           type: 'input',
@@ -305,7 +306,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'a', label: 'A' },
         { type: 'input', field: 'b', label: 'B' },
         {
@@ -338,7 +339,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'role', label: 'Role' },
         { type: 'input', field: 'level', label: 'Level' },
         {
@@ -374,7 +375,7 @@ describe('Linkage Integration', () => {
       widget.field = 'plain'
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'plain', label: 'Plain' },
       ]
 
@@ -392,7 +393,7 @@ describe('Linkage Integration', () => {
       widget.linkages = []
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'empty',
@@ -431,7 +432,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widgetB)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'input',
           field: 'fieldA',
@@ -475,7 +476,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'province', label: 'Province' },
         {
           type: 'select',
@@ -522,7 +523,7 @@ describe('Linkage Integration', () => {
       ]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         { type: 'input', field: 'mode', label: 'Mode' },
         {
           type: 'textarea',
@@ -569,7 +570,7 @@ describe('Linkage Integration', () => {
       }]
       store.addWidget(widget)
 
-      const schema: FormSchemaItem[] = [
+      const schema: PartialWidget[] = [
         {
           type: 'grid-row',
           children: [

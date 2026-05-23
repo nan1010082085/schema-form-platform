@@ -5,6 +5,14 @@ const doc: ComponentDoc = {
   name: 'FgFormContainer',
   category: 'business',
   description: '工作流表单容器。提供工具栏（返回/打印/保存/发送）和内容区布局，适合作为审批表单的顶层容器。',
+  exposedValues: [
+    { key: 'loading', type: 'boolean', description: '保存/提交中状态', example: false },
+  ],
+  receivableEvents: [
+    { name: 'submit', description: '触发表单提交' },
+    { name: 'reset', description: '重置表单数据' },
+    { name: 'validate', description: '触发表单校验' },
+  ],
   props: [
     { name: 'title', type: 'string', default: 'undefined', description: '工具栏标题文本' },
     { name: 'showToolbar', type: 'boolean', default: 'true', description: '是否显示顶部工具栏' },

@@ -6,16 +6,16 @@
  */
 import { ref, computed } from 'vue'
 import type { Ref } from 'vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 
 export interface UseHistoryOptions {
   maxSize?: number
 }
 
 export interface UseHistoryReturn {
-  pushState: (schema: FormSchemaItem[]) => void
-  undo: () => FormSchemaItem[] | null
-  redo: () => FormSchemaItem[] | null
+  pushState: (schema: PartialWidget[]) => void
+  undo: () => PartialWidget[] | null
+  redo: () => PartialWidget[] | null
   canUndo: Ref<boolean>
   canRedo: Ref<boolean>
   undoCount: Ref<number>
@@ -26,7 +26,7 @@ export interface UseHistoryReturn {
 export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
   const maxSize = options.maxSize ?? 50
 
-  const history: FormSchemaItem[][] = []
+  const history: PartialWidget[][] = []
   let pointer = -1
 
   const version = ref(0)
@@ -39,11 +39,11 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
     return history.length - 1 - pointer
   })
 
-  function clone(schema: FormSchemaItem[]): FormSchemaItem[] {
-    return JSON.parse(JSON.stringify(schema)) as FormSchemaItem[]
+  function clone(schema: PartialWidget[]): PartialWidget[] {
+    return JSON.parse(JSON.stringify(schema)) as PartialWidget[]
   }
 
-  function pushState(schema: FormSchemaItem[]): void {
+  function pushState(schema: PartialWidget[]): void {
     const snapshot = clone(schema)
 
     // Drop any redo states beyond the current pointer
@@ -69,14 +69,14 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
     version.value++
   }
 
-  function undo(): FormSchemaItem[] | null {
+  function undo(): PartialWidget[] | null {
     if (!canUndo.value) return null
     pointer--
     version.value++
     return clone(history[pointer])
   }
 
-  function redo(): FormSchemaItem[] | null {
+  function redo(): PartialWidget[] | null {
     if (!canRedo.value) return null
     pointer++
     version.value++

@@ -6,7 +6,7 @@
  * Each column row has up/down reorder and delete buttons.
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
-import type { SearchListColumnSchema, SchemaApiConfig } from '@/components/FormGrid/types'
+import type { SearchListColumnSchema, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   columns: SearchListColumnSchema[]

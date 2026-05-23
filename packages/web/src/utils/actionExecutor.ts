@@ -3,8 +3,11 @@
  * 顺序执行按钮动作链，支持确认、API 调用、路由跳转等
  */
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { SchemaAction, FormData } from '@/components/FormGrid/types'
+import type { SchemaAction, FormData } from '@/components/WidgetRenderer/types'
 import { getRequestInstance } from './request'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('ActionExecutor')
 
 /** Action 执行上下文 */
 export interface ActionContext {
@@ -104,6 +107,6 @@ async function executeAction(action: SchemaAction, context: ActionContext): Prom
     }
 
     default:
-      console.warn('[ActionExecutor] 未知动作类型:', (action as { type: string }).type)
+      logger.warn('未知动作类型:', (action as { type: string }).type)
   }
 }

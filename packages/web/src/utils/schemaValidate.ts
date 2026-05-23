@@ -1,12 +1,12 @@
 /**
  * schemaValidate — Schema structure validation (Sprint 11 / S17扩展)
  *
- * Validates FormSchemaItem[] for common issues.
+ * Validates PartialWidget[] for common issues.
  * Sprint 17 added: required-field-missing-label, options-empty-on-select,
  *   api-config-invalid, circular-linkage + P2 improvements
  */
 import { getComponentMap } from '@/widgets/registry'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useConstant'
 
 /**
@@ -72,10 +72,10 @@ export interface ValidationResult {
 }
 
 /** Build a dependency graph from linkage rules */
-function buildLinkageGraph(items: FormSchemaItem[]): Map<string, Set<string>> {
+function buildLinkageGraph(items: PartialWidget[]): Map<string, Set<string>> {
   const graph = new Map<string, Set<string>>()
 
-  function walk(schemaItems: FormSchemaItem[]) {
+  function walk(schemaItems: PartialWidget[]) {
     for (const item of schemaItems) {
       if (item.field && item.linkages?.length) {
         const deps = new Set<string>()
@@ -134,11 +134,11 @@ function detectLinkageCycles(graph: Map<string, Set<string>>): { field: string; 
 /**
  * Validate a schema tree for structural issues.
  */
-export function validateSchema(schema: FormSchemaItem[]): ValidationResult {
+export function validateSchema(schema: PartialWidget[]): ValidationResult {
   const errors: ValidationError[] = []
   const fieldCounts = new Map<string, number[]>() // field → [occurrence indices]
 
-  function walk(items: FormSchemaItem[], path: number[], depth: number): void {
+  function walk(items: PartialWidget[], path: number[], depth: number): void {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
       const itemPath = [...path, i]
@@ -263,7 +263,7 @@ export function validateSchema(schema: FormSchemaItem[]): ValidationResult {
   // Report duplicate fields with path info
   // (collect per unique field across the walk)
   const fieldOccurrences = new Map<string, number[][]>()
-  function collectOccurrences(items: FormSchemaItem[], path: number[]) {
+  function collectOccurrences(items: PartialWidget[], path: number[]) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
       const itemPath = [...path, i]

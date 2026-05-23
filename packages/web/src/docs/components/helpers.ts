@@ -1,9 +1,9 @@
-import type { FormSchemaItem } from '@/components/FormGrid'
+import type { PartialWidget } from '@/widgets/base/types'
 
 /**
  * 生成一行两列（标签 + 内容）的 Schema 片段
  */
-export const simpleRow = (label: string, spanLabel: number, spanContent: number, component: FormSchemaItem): FormSchemaItem => ({
+export const simpleRow = (label: string, spanLabel: number, spanContent: number, component: PartialWidget): PartialWidget => ({
   type: 'grid-row',
   children: [
     { type: 'grid-col', span: spanLabel, label, align: 'center' },

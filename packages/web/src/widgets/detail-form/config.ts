@@ -5,7 +5,7 @@ export const detailFormConfig: WidgetConfig = {
   displayName: '详情表单',
   description: '详情表单组件，用于只读数据展示',
   defaultStyle: { width: '100%' },
-  configPanels: ['events'],
+  configPanels: ['events', 'variables'],
   defaultProps: {
     title: '详情',
     columns: 2,

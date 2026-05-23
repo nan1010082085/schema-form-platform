@@ -15,7 +15,7 @@ const doc: ComponentDoc = {
     { name: 'height', type: 'string', default: '—', description: '自定义高度' },
     { name: 'border', type: 'boolean', default: 'true', description: '是否显示边框' },
     { name: 'hideBorder', type: 'string[]', default: '—', description: '隐藏指定方向边框（top/left/right/bottom）' },
-    { name: 'children', type: 'FormSchemaItem[]', default: '—', description: '子节点（表单组件）' }
+    { name: 'children', type: 'PartialWidget[]', default: '—', description: '子节点（表单组件）' }
   ],
   events: [],
   slots: [],

@@ -38,7 +38,7 @@ import formContainer from './form-container'
 import workflowForm from './workflow-form'
 import linkage from './linkage'
 
-export type { ComponentDoc, PropDoc, EventDoc, SlotDoc, ExposeDoc, SchemaExample } from './types'
+export type { ComponentDoc, PropDoc, EventDoc, SlotDoc, ExposeDoc, SchemaExample, ExposedValueDoc, ReceivableEventDoc } from './types'
 
 export const componentDocs: ComponentDoc[] = [
   gridRow,

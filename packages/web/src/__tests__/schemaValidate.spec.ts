@@ -12,7 +12,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { validateSchema } from '@/utils/schemaValidate'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 describe('validateSchema', () => {
   // ---------- empty schema ----------
@@ -26,7 +26,7 @@ describe('validateSchema', () => {
   // ---------- valid schema ----------
 
   it('passes validation for a valid simple schema', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [
@@ -45,7 +45,7 @@ describe('validateSchema', () => {
   // ---------- invalid type ----------
 
   it('detects invalid type', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'bogus-type' as never, field: 'test' },
     ]
     const result = validateSchema(schema)
@@ -59,7 +59,7 @@ describe('validateSchema', () => {
   // ---------- duplicate field names ----------
 
   it('detects duplicate field names', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'input', field: 'email', label: 'Email' },
       { type: 'input', field: 'email', label: '确认邮箱' },
     ]
@@ -72,7 +72,7 @@ describe('validateSchema', () => {
   })
 
   it('detects duplicate field names across nested levels', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'input', field: 'shared', label: 'Top level' },
       {
         type: 'card',
@@ -85,7 +85,7 @@ describe('validateSchema', () => {
   })
 
   it('does not report duplicates for unique fields', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'input', field: 'firstName', label: 'First Name' },
       { type: 'input', field: 'lastName', label: 'Last Name' },
       { type: 'number', field: 'age', label: 'Age' },
@@ -98,7 +98,7 @@ describe('validateSchema', () => {
   // ---------- empty container ----------
 
   it('warns about empty container', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'card', label: 'Empty Card', children: [] },
     ]
     const result = validateSchema(schema)
@@ -109,7 +109,7 @@ describe('validateSchema', () => {
   })
 
   it('warns about container with no children at all', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'card', label: 'No Kids Card' },
     ]
     const result = validateSchema(schema)
@@ -118,7 +118,7 @@ describe('validateSchema', () => {
   })
 
   it('does not warn for container with children', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'card',
         label: 'Populated Card',
@@ -134,8 +134,8 @@ describe('validateSchema', () => {
 
   it('warns about deep nesting exceeding 5 levels', () => {
     // Build a schema with 7 levels of nesting
-    const deepItem: FormSchemaItem = { type: 'input', field: 'deep', label: 'Deep' }
-    let schema: FormSchemaItem[] = [deepItem]
+    const deepItem: PartialWidget = { type: 'input', field: 'deep', label: 'Deep' }
+    let schema: PartialWidget[] = [deepItem]
 
     for (let i = 0; i < 7; i++) {
       schema = [{ type: 'card', label: `Level ${i}`, children: schema }]
@@ -149,8 +149,8 @@ describe('validateSchema', () => {
 
   it('does not warn for depth exactly at 5 levels', () => {
     // Build a schema with exactly 5 levels
-    const leaf: FormSchemaItem = { type: 'input', field: 'ok', label: 'Ok' }
-    let schema: FormSchemaItem[] = [leaf]
+    const leaf: PartialWidget = { type: 'input', field: 'ok', label: 'Ok' }
+    let schema: PartialWidget[] = [leaf]
 
     for (let i = 0; i < 5; i++) {
       schema = [{ type: 'card', label: `Level ${i}`, children: schema }]
@@ -164,7 +164,7 @@ describe('validateSchema', () => {
   // ---------- missing field on non-layout component ----------
 
   it('detects missing field on non-layout component', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'input', label: 'Name (missing field)' },
     ]
     const result = validateSchema(schema)
@@ -175,7 +175,7 @@ describe('validateSchema', () => {
   })
 
   it('does not require field on layout type (grid-row)', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [{ type: 'grid-col', span: 12, children: [] }],
@@ -187,7 +187,7 @@ describe('validateSchema', () => {
   })
 
   it('does not require field on button-list', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       { type: 'button-list', buttons: [{ text: 'Submit' }] },
     ]
     const result = validateSchema(schema)
@@ -198,7 +198,7 @@ describe('validateSchema', () => {
   // ---------- 'search-list' type ----------
 
   it('accepts search-list as a valid type without requiring a field', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'search-list',
         listApi: { url: '/api/list' },
@@ -216,7 +216,7 @@ describe('validateSchema', () => {
   // ---------- steps and tabs ----------
 
   it('accepts steps as a valid type without requiring a field', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'steps',
         children: [{ type: 'input', field: 'step1', label: 'Step 1' }],
@@ -230,7 +230,7 @@ describe('validateSchema', () => {
   })
 
   it('accepts tabs as a valid type without requiring a field', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'tabs',
         children: [{ type: 'input', field: 'tab1', label: 'Tab 1' }],
@@ -247,7 +247,7 @@ describe('validateSchema', () => {
 
   it('detects basic component nested inside business component', () => {
     // upload is business, input is basic
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'upload',
         field: 'files',
@@ -267,7 +267,7 @@ describe('validateSchema', () => {
 
   it('detects business component nested inside basic component', () => {
     // button-list is basic, upload is business
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'button-list',
         buttons: [{ text: 'Submit' }],
@@ -285,7 +285,7 @@ describe('validateSchema', () => {
   })
 
   it('allows basic components nested inside layout containers', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'card',
         children: [
@@ -300,7 +300,7 @@ describe('validateSchema', () => {
   })
 
   it('allows business components nested inside layout containers', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'card',
         children: [
@@ -315,7 +315,7 @@ describe('validateSchema', () => {
   })
 
   it('allows mixed basic and business inside layout containers', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'grid-row',
         children: [
@@ -330,7 +330,7 @@ describe('validateSchema', () => {
   })
 
   it('detects nesting violations in deeply nested structures', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'card',
         children: [
@@ -351,7 +351,7 @@ describe('validateSchema', () => {
   })
 
   it('allows same-category nesting (basic inside basic)', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'table',
         field: 'tbl',
@@ -367,7 +367,7 @@ describe('validateSchema', () => {
   })
 
   it('allows same-category nesting (business inside business)', () => {
-    const schema: FormSchemaItem[] = [
+    const schema: PartialWidget[] = [
       {
         type: 'detail-form',
         field: 'detail',

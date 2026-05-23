@@ -12,7 +12,7 @@
 import { computed } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { validateExpression } from '@/utils/expression'
-import type { SchemaLinkage, LinkageType, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
+import type { SchemaLinkage, LinkageType, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   linkages: SchemaLinkage[]

@@ -12,6 +12,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useClipboard } from '@/composables/useClipboard'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
 import { useEditorStore } from '@/stores/editor'
@@ -27,7 +28,6 @@ import {
   EditPen,
   FullScreen,
   Clock,
-  Download,
   DArrowLeft,
   DArrowRight,
 } from '@element-plus/icons-vue'
@@ -41,6 +41,7 @@ const route = useRoute()
 const boardStore = useBoardStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
+const { copy } = useClipboard()
 
 // ================================================================
 // Layout state
@@ -117,9 +118,15 @@ onUnmounted(() => {
 // Keyboard shortcuts
 // ================================================================
 
+function isEditing(e: KeyboardEvent): boolean {
+  return !!(e.target as HTMLElement)?.closest('input, textarea, [contenteditable]')
+}
+
 function handleKeyDown(e: KeyboardEvent) {
+  if (isEditing(e)) return
+
   if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (editorStore.selectedId && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+    if (editorStore.selectedId) {
       handleDeleteWidget()
     }
   }
@@ -151,6 +158,7 @@ function handleKeyDown(e: KeyboardEvent) {
 function handleOpenEvent(widget: Widget) { editorStore.openConfigDialog(widget, 'events') }
 function handleOpenRule(widget: Widget) { editorStore.openConfigDialog(widget, 'rules') }
 function handleOpenApi(widget: Widget) { editorStore.openConfigDialog(widget, 'api') }
+function handleOpenVariables(widget: Widget) { editorStore.openConfigDialog(widget, 'variables') }
 
 // ================================================================
 // Toolbar actions
@@ -190,30 +198,7 @@ function handleDeleteWidget() {
 
 function handleCopyId() {
   if (!editorStore.selectedId) return
-  navigator.clipboard.writeText(editorStore.selectedId)
-  ElMessage.success('已复制部件 ID')
-}
-
-type AlignDir = 'top' | 'bottom' | 'left' | 'right' | 'center-h' | 'center-v'
-
-function handleAlign(dir: AlignDir) {
-  const id = editorStore.selectedId
-  if (!id) return
-  const widget = widgetStore.findWidget(id)
-  if (!widget) return
-  const p = { ...widget.position }
-
-  switch (dir) {
-    case 'top': p.y = 0; break
-    case 'bottom': p.y = boardStore.canvas.height - p.h; break
-    case 'left': p.x = 0; break
-    case 'right': p.x = boardStore.canvas.width - p.w; break
-    case 'center-h': p.x = Math.round((boardStore.canvas.width - p.w) / 2); break
-    case 'center-v': p.y = Math.round((boardStore.canvas.height - p.h) / 2); break
-  }
-
-  widgetStore.updateWidget(id, { position: p })
-  editorStore.pushHistory([...widgetStore.widgets])
+  copy(editorStore.selectedId, '已复制部件 ID')
 }
 
 // ================================================================
@@ -278,6 +263,7 @@ async function handleLoadVersion(entry: VersionEntry) {
   if (!currentEditId.value) return
   try {
     const detail = await fetchVersion(currentEditId.value, entry.version)
+    // 编辑器保存的数据始终包含完整 Widget 字段（id/name/position）
     widgetStore.loadWidgets(detail.json as unknown as Widget[])
     currentVersion.value = entry.version
     editorStore.markClean()
@@ -368,23 +354,6 @@ function handleClearCanvas() {
               <el-icon :size="14"><CopyDocument /></el-icon>
             </button>
           </el-tooltip>
-        </div>
-        <div class="editor-view__btn-group">
-          <el-dropdown trigger="click" :disabled="!editorStore.selectedId" @command="handleAlign">
-            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" title="对齐">
-              <el-icon :size="14"><Download /></el-icon>
-            </button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="top">顶部对齐</el-dropdown-item>
-                <el-dropdown-item command="bottom">底部对齐</el-dropdown-item>
-                <el-dropdown-item command="left">左对齐</el-dropdown-item>
-                <el-dropdown-item command="right">右对齐</el-dropdown-item>
-                <el-dropdown-item divided command="center-h">水平居中</el-dropdown-item>
-                <el-dropdown-item command="center-v">垂直居中</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
         </div>
       </div>
 
@@ -511,6 +480,7 @@ function handleClearCanvas() {
           @open-event="handleOpenEvent"
           @open-rule="handleOpenRule"
           @open-api="handleOpenApi"
+          @open-variables="handleOpenVariables"
         />
       </div>
 

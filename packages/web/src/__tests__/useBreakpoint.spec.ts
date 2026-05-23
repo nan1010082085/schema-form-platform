@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useBreakpoint } from '@/composables/useBreakpoint'
-import type { ResponsiveSpan } from '@/components/FormGrid/types'
+import type { ResponsiveSpan } from '@/components/WidgetRenderer/types'
 
 /** Mock matchMedia for jsdom */
 function setupMatchMedia(width: number) {

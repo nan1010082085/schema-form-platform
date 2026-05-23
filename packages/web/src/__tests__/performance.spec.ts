@@ -8,8 +8,8 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { nextTick } from 'vue'
-import FormGrid from '@/components/FormGrid/index.vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import FormGrid from '@/components/WidgetRenderer/index.vue'
+import type { PartialWidget } from '@/widgets/base/types'
 
 /** Stub window.matchMedia for jsdom (required by useBreakpoint -> SchemaRender) */
 function setupMatchMediaStub() {
@@ -36,8 +36,8 @@ function mountWithEl(component: any, options: any = {}) {
 }
 
 /** Generate N input fields in grid layout */
-function generateSchema(fieldCount: number, withContainer = true): FormSchemaItem[] {
-  const fields: FormSchemaItem[] = []
+function generateSchema(fieldCount: number, withContainer = true): PartialWidget[] {
+  const fields: PartialWidget[] = []
   for (let i = 0; i < fieldCount; i++) {
     fields.push({
       type: 'grid-col', span: 12,
@@ -48,8 +48,8 @@ function generateSchema(fieldCount: number, withContainer = true): FormSchemaIte
   return [{ type: 'page', children: [{ type: 'card', children: [{ type: 'grid-row', children: fields }] }] }]
 }
 
-function generateWithLinkage(count: number): FormSchemaItem[] {
-  const items: FormSchemaItem[] = [
+function generateWithLinkage(count: number): PartialWidget[] {
+  const items: PartialWidget[] = [
     { type: 'select', field: 'trigger', label: '触发字段', options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] },
   ]
   for (let i = 0; i < count; i++) {

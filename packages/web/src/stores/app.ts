@@ -6,7 +6,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { UserContext, RequestContext, GlobalContext, FormGridContext } from '@/components/FormGrid/types'
+import type { UserContext, RequestContext, GlobalContext, FormGridContext } from '@/components/WidgetRenderer/types'
 import type { SchemaFormQiankunProps } from '@/types/qiankun'
 import { extractAuthToken } from '@/utils/auth'
 

@@ -12,7 +12,7 @@ export const editableTableConfig: WidgetConfig = {
     showDeleteButton: true,
     maxRows: 0,
   },
-  configPanels: ['events', 'rules'] as const,
+  configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],
     style: [],

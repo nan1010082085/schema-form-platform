@@ -6,23 +6,23 @@
  */
 import { ref, computed } from 'vue'
 import type { Ref } from 'vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import { flattenToPaths, getItemAtPath } from '@/utils/schemaTransform'
 
 export interface UseRightPanelConfigOptions {
-  schema: Ref<FormSchemaItem[]>
+  schema: Ref<PartialWidget[]>
   selectedPath: Ref<number[] | null>
   selectedPaths: Ref<number[][]>
-  pushState: (schema: FormSchemaItem[]) => void
+  pushState: (schema: PartialWidget[]) => void
 }
 
 export interface UseRightPanelConfigReturn {
   drawerVisible: Ref<boolean>
-  selectedSchema: Ref<FormSchemaItem | null>
+  selectedSchema: Ref<PartialWidget | null>
   handleSelect: (index: number | null, ctrl?: boolean, shift?: boolean) => void
   handleOpenProperties: () => void
-  handlePropertyUpdate: (updatedItem: FormSchemaItem) => void
-  replaceAtPath: (items: FormSchemaItem[], path: number[], newItem: FormSchemaItem) => FormSchemaItem[]
+  handlePropertyUpdate: (updatedItem: PartialWidget) => void
+  replaceAtPath: (items: PartialWidget[], path: number[], newItem: PartialWidget) => PartialWidget[]
 }
 
 /**
@@ -30,12 +30,12 @@ export interface UseRightPanelConfigReturn {
  * Returns a new array; does not mutate the input.
  */
 function replaceAtPath(
-  items: FormSchemaItem[],
+  items: PartialWidget[],
   path: number[],
-  newItem: FormSchemaItem,
-): FormSchemaItem[] {
+  newItem: PartialWidget,
+): PartialWidget[] {
   if (path.length === 0) return items
-  const result = JSON.parse(JSON.stringify(items)) as FormSchemaItem[]
+  const result = JSON.parse(JSON.stringify(items)) as PartialWidget[]
   if (path.length === 1) {
     result[path[0]] = newItem
     return result
@@ -52,7 +52,7 @@ export function useRightPanelConfig(options: UseRightPanelConfigOptions): UseRig
 
   const drawerVisible = ref(false)
 
-  const selectedSchema = computed<FormSchemaItem | null>(() => {
+  const selectedSchema = computed<PartialWidget | null>(() => {
     if (!selectedPath.value) return null
     return getItemAtPath(schema.value, selectedPath.value) ?? null
   })
@@ -109,7 +109,7 @@ export function useRightPanelConfig(options: UseRightPanelConfigOptions): UseRig
     if (selectedPath.value) drawerVisible.value = true
   }
 
-  function handlePropertyUpdate(updatedItem: FormSchemaItem) {
+  function handlePropertyUpdate(updatedItem: PartialWidget) {
     if (!selectedPath.value) return
     pushState(schema.value)
     schema.value = replaceAtPath(schema.value, selectedPath.value, updatedItem)

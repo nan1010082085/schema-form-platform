@@ -6,7 +6,7 @@
  * Conditional fields shown based on action type (emit/api/navigate/dialog).
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
-import type { SearchListRowAction } from '@/components/FormGrid/types'
+import type { SearchListRowAction } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   rowActions: SearchListRowAction[]
@@ -74,7 +74,7 @@ function updateAction<K extends keyof SearchListRowAction>(index: number, field:
   emit('update:rowActions', updated)
 }
 
-function parseDialogSchemaJson(text: string): import('@/components/FormGrid/types').FormSchemaItem[] | undefined {
+function parseDialogSchemaJson(text: string): import('@/components/WidgetRenderer/types').PartialWidget[] | undefined {
   if (!text.trim()) return undefined
   try {
     return JSON.parse(text)

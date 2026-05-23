@@ -4,7 +4,7 @@
  * 组件 ID 格式: 组件Key + 5位随机 Hash（如 input-A3xK9）
  * 生成时机: 拖拽入画布瞬间，永久不变
  */
-import type { SchemaType } from '@/components/FormGrid/types'
+import type { SchemaType } from '@/components/WidgetRenderer/types'
 import { ID_HASH_LENGTH } from './useConstant'
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'

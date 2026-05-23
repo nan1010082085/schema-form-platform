@@ -21,7 +21,7 @@ import type {
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import { ApiError } from '@/utils/apiClient'
 import {
   fetchSchemas as apiFetchSchemas,
@@ -297,13 +297,13 @@ export const useApiStore = defineStore('schema', () => {
   /**
    * 保存 schema 到后端。
    *
-   * @param schema   - 要保存的 FormSchemaItem 数组
+   * @param schema   - 要保存的 PartialWidget 数组
    * @param name     - Schema 名称
    * @param schemaId - 可选：要更新的 Schema ID
    * @returns 保存后的 Schema，失败返回 null
    */
   async function saveSchema(
-    schema: FormSchemaItem[],
+    schema: PartialWidget[],
     name: string,
     schemaId?: string,
   ): Promise<SchemaListItem | null> {

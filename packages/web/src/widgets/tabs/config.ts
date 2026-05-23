@@ -6,7 +6,7 @@ export const tabsConfig: WidgetConfig = {
   defaultStyle: {
     width: '100%',
   },
-  configPanels: ['events'],
+  configPanels: ['events', 'variables'],
   defaultProps: {
     tabs: [
       { key: 'tab1', label: '标签一' },

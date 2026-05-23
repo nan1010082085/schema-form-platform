@@ -12,10 +12,10 @@ import {
   fieldInferencesToSchema,
   type FieldInference,
 } from '@/utils/jsonToSchema'
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import type { PartialWidget, SchemaType } from '@/components/WidgetRenderer/types'
 
 const emit = defineEmits<{
-  'import': [schema: FormSchemaItem[]]
+  'import': [schema: PartialWidget[]]
 }>()
 
 const visible = ref(false)

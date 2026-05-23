@@ -5,6 +5,12 @@ const doc: ComponentDoc = {
   name: 'FgTabs',
   category: 'layout',
   description: '标签页容器。children 中每一项为一个 tab 面板，切换 tab 时保留各 tab 内的 formData。支持 controlled mode。',
+  exposedValues: [
+    { key: 'activeTab', type: 'string', description: '当前激活的 tab key', example: 'tab1' },
+  ],
+  receivableEvents: [
+    { name: 'switch-tab', description: '切换到指定 tab', params: { tabKey: 'string' } },
+  ],
   props: [
     { name: 'modelValue', type: 'string | number', default: '—', description: '当前激活 tab（支持 v-model）' },
     { name: 'tabPosition', type: "'top' | 'left' | 'right' | 'bottom'", default: "'top'", description: '标签位置' },

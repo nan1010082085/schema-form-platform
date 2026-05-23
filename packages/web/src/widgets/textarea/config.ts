@@ -16,7 +16,7 @@ export const textareaConfig: WidgetConfig = {
     maxlength: undefined as number | undefined,
     showWordLimit: false,
   },
-  configPanels: ['events', 'rules'],
+  configPanels: ['events', 'rules', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
     style: ['fontSize', 'color', 'backgroundColor'],

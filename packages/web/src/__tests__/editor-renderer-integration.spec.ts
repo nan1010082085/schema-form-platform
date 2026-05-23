@@ -11,11 +11,11 @@ import SearchFieldsEditor from '@/components/Editor/SearchFieldsEditor.vue'
 import ColumnsEditor from '@/components/Editor/ColumnsEditor.vue'
 import RowActionsEditor from '@/components/Editor/RowActionsEditor.vue'
 import type {
-  FormSchemaItem,
+  PartialWidget,
   SearchFieldSchema,
   SearchListColumnSchema,
   SearchListRowAction,
-} from '@/components/FormGrid/types'
+} from '@/widgets/base/types'
 
 // Stub matchMedia required by useBreakpoint
 beforeAll(() => {
@@ -267,7 +267,7 @@ describe('SP16-004: elseValue reset', () => {
     const { reactive } = await import('vue')
     const { useLinkage } = await import('@/composables/useLinkage')
 
-    const schema: import('@/components/FormGrid/types').FormSchemaItem[] = [
+    const schema: import('@/widgets/base/types').PartialWidget[] = [
       { type: 'select', field: 'source', label: 'Source', options: [{ label: 'A', value: 'a' }] },
       {
         type: 'input', field: 'target', label: 'Target',
@@ -288,7 +288,7 @@ describe('SP16-005: set-value chain', () => {
     const { reactive } = await import('vue')
     const { useLinkage } = await import('@/composables/useLinkage')
 
-    const schema: import('@/components/FormGrid/types').FormSchemaItem[] = [
+    const schema: import('@/widgets/base/types').PartialWidget[] = [
       { type: 'select', field: 'mode', label: 'Mode', options: [{ label: 'Auto', value: 'auto' }] },
       {
         type: 'input', field: 'result', label: 'Result',
@@ -304,7 +304,7 @@ describe('SP16-005: set-value chain', () => {
     const { reactive } = await import('vue')
     const { useLinkage } = await import('@/composables/useLinkage')
 
-    const schema: import('@/components/FormGrid/types').FormSchemaItem[] = [
+    const schema: import('@/widgets/base/types').PartialWidget[] = [
       { type: 'input', field: 'copyFrom', label: 'From' },
       {
         type: 'input', field: 'copyTo', label: 'To',

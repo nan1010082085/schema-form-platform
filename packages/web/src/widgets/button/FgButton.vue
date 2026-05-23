@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
+const eventCtx = inject(EVENT_CONTEXT_KEY, null)
 
 const dynamicStyle = computed(() => {
   const s: Record<string, string> = {}
@@ -23,6 +26,12 @@ const isPlain = computed(() => Boolean(widgetData.value.props?.plain))
 const isRound = computed(() => Boolean(widgetData.value.props?.round))
 const isCircle = computed(() => Boolean(widgetData.value.props?.circle))
 const buttonText = computed(() => widgetData.value.label || widgetData.value.props?.text || '按钮')
+
+function handleClick() {
+  if (eventCtx) {
+    triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+  }
+}
 </script>
 
 <template>
@@ -34,6 +43,7 @@ const buttonText = computed(() => widgetData.value.label || widgetData.value.pro
     :round="isRound"
     :circle="isCircle"
     :disabled="isDisabled"
+    @click="handleClick"
   >
     {{ buttonText }}
   </el-button>

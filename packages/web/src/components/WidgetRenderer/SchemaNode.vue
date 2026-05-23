@@ -13,12 +13,12 @@
 import { computed, inject, provide, ref, type ComputedRef, type ComponentPublicInstance } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import type { Widget, SchemaType } from '../../widgets/base/types'
-import type { FormSchemaItem, FormData } from './types'
+import type { PartialWidget, FormData } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import { useLinkage } from '../../composables/useLinkage'
-import { triggerWidgetEvent } from '../../engine/eventEngine'
+import { triggerWidgetEvent, type EventExecutionContext } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
 
@@ -42,7 +42,7 @@ const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
  * 所有容器统一由 childrenLayer（absolute 定位）渲染子组件，
  * 保证 overlay 坐标系与渲染坐标系一致。
  */
-const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set(['dialog'])
+const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
 
 /**
  * 交互式容器：内部有可交互 UI（tab headers、dialog body），
@@ -133,14 +133,34 @@ function handleInteractiveContainerClick() {
   editorStore.select(props.widget.id)
 }
 
+/** 构建编辑器模式的事件执行上下文 */
+function buildEditorEventContext(): EventExecutionContext {
+  return {
+    findWidget: (id: string) => widgetStore.findWidget(id) as Widget | undefined,
+    updateWidget: (id: string, patch: Partial<Widget>) => widgetStore.updateWidget(id, patch),
+    openDialog: (target: string) => editorStore.openDialogEditor(target),
+    closeDialog: () => editorStore.closeDialogEditor(),
+    submitForm: () => {
+      const form = widgetStore.widgets.find((w: Widget) => w.type === 'form')
+      if (form) logger.event('Form submit:', widgetStore.collectFormValues(form.id))
+    },
+    resetForm: () => {
+      const form = widgetStore.widgets.find((w: Widget) => w.type === 'form')
+      if (form?.children) {
+        for (const child of form.children) {
+          if (child.field) widgetStore.updateWidget(child.id, { defaultValue: child.defaultValue })
+        }
+      }
+    },
+    getFormData: () => formData.value,
+    emit: (eventName: string, payload?: unknown) => logger.event('Emit:', eventName, payload),
+  }
+}
+
 /** 统一事件触发：由 SchemaNode 拦截并分发，部件无需自行调用 */
-function handleWidgetEvent(trigger: string, value?: unknown) {
+function handleWidgetEvent(trigger: string, _value?: unknown) {
   logger.debug(`trigger=${trigger}`, props.widget.id)
-  triggerWidgetEvent(props.widget, trigger, {
-    widgetStore,
-    formData: formData.value,
-    value,
-  })
+  triggerWidgetEvent(props.widget, trigger, buildEditorEventContext())
 }
 
 /**
@@ -160,7 +180,7 @@ const formData = computed<FormData>(() => {
  * 基于 useLinkage composable，按 field 查找联动状态。
  * widget.hidden 作为静态可见性覆盖（优先于联动状态）。
  */
-const linkage = useLinkage(widgetStore.widgets as unknown as FormSchemaItem[], formData)
+const linkage = useLinkage(widgetStore.widgets as unknown as PartialWidget[], formData)
 const renderState = computed(() => {
   const linkageState = linkage.stateMap.value.get(props.widget.field ?? '')
   const base = linkageState ?? { visible: true, disabled: false, required: false }

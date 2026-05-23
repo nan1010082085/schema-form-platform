@@ -20,7 +20,7 @@ export const buttonListConfig: WidgetConfig = {
     ] as ButtonItem[],
     disabled: false,
   },
-  configPanels: ['events'],
+  configPanels: ['events', 'variables'],
   propertyPanel: {
     basic: ['field', 'label'],
     style: ['fontSize', 'color', 'backgroundColor'],

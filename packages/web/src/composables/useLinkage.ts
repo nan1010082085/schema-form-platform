@@ -10,13 +10,14 @@
  */
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import type {
-  FormSchemaItem,
+  PartialWidget,
   FormData,
   FormFieldValue,
   SchemaLinkage,
   LinkageState,
-} from '@/components/FormGrid/types'
+} from '@/components/WidgetRenderer/types'
 import { useLogger } from '@/composables/useLogger'
+import { checkSecurity } from '@/utils/expression'
 
 const logger = useLogger('Linkage')
 
@@ -34,10 +35,10 @@ type DependencyGraph = Map<string, Set<string>>
 /**
  * 递归遍历 schema 树，收集所有带 linkages 的节点
  */
-function collectLinkageEntries(schema: FormSchemaItem[]): LinkageEntry[] {
+function collectLinkageEntries(schema: PartialWidget[]): LinkageEntry[] {
   const entries: LinkageEntry[] = []
 
-  function walk(items: FormSchemaItem[]) {
+  function walk(items: PartialWidget[]) {
     for (const item of items) {
       if (item.field && item.linkages?.length) {
         entries.push({ field: item.field, linkages: item.linkages })
@@ -114,15 +115,22 @@ function detectCycles(graph: DependencyGraph): Set<string> {
 
 /**
  * 编译字符串表达式为求值函数
- * 沙箱限制：仅允许访问 values 对象的属性
+ * 沙箱限制：仅允许访问 values、variables、exposed 对象的属性
  */
-function compileCondition(expression: string): (values: Record<string, FormFieldValue>) => boolean {
+function compileCondition(expression: string): (values: Record<string, FormFieldValue>, variables?: Record<string, unknown>, exposed?: Record<string, Record<string, unknown>>) => boolean {
+  // 安全检查：阻止危险表达式（与 eventEngine 共享 blocklist）
+  const securityError = checkSecurity(expression)
+  if (securityError) {
+    logger.warn(`Blocked unsafe expression: ${expression} (${securityError})`)
+    return () => false
+  }
+
   try {
-    // 使用 new Function 创建沙箱函数，仅注入 values 参数
-    const fn = new Function('values', `"use strict"; return (${expression});`)
-    return (values: Record<string, FormFieldValue>): boolean => {
+    // 使用 new Function 创建沙箱函数，注入 values、variables、exposed 参数
+    const fn = new Function('values', 'variables', 'exposed', `"use strict"; return (${expression});`)
+    return (values: Record<string, FormFieldValue>, variables?: Record<string, unknown>, exposed?: Record<string, Record<string, unknown>>): boolean => {
       try {
-        return Boolean(fn(values))
+        return Boolean(fn(values, variables ?? {}, exposed ?? {}))
       } catch {
         logger.rule(`条件表达式求值失败: "${expression}"`)
         return false
@@ -140,6 +148,8 @@ function compileCondition(expression: string): (values: Record<string, FormField
 function evaluateCondition(
   linkage: SchemaLinkage,
   formData: FormData,
+  variables?: Record<string, unknown>,
+  exposed?: Record<string, Record<string, unknown>>,
 ): boolean {
   const values: Record<string, FormFieldValue> = {}
   for (const field of linkage.watchFields) {
@@ -155,7 +165,7 @@ function evaluateCondition(
     }
   }
 
-  return compileCondition(linkage.condition)(values)
+  return compileCondition(linkage.condition)(values, variables, exposed)
 }
 
 /**
@@ -172,11 +182,15 @@ const DEFAULT_STATE: LinkageState = {
  *
  * @param schema - 表单 schema 定义
  * @param formData - 响应式表单数据（reactive 对象、ref 或 getter）
+ * @param variables - 可选的变量上下文（供条件表达式使用）
+ * @param exposed - 可选的组件暴露值上下文（供条件表达式使用）
  * @returns stateMap - 所有联动字段的状态映射
  */
 export function useLinkage(
-  schema: FormSchemaItem[],
+  schema: PartialWidget[],
   formData: MaybeRefOrGetter<FormData>,
+  variables?: MaybeRefOrGetter<Record<string, unknown>>,
+  exposed?: MaybeRefOrGetter<Record<string, Record<string, unknown>>>,
 ): { stateMap: ComputedRef<Map<string, LinkageState>> } {
   // 收集所有联动节点（静态，不依赖 formData）
   const entries = computed(() => collectLinkageEntries(schema))
@@ -192,6 +206,8 @@ export function useLinkage(
   // 当任何 watchField 的值变化时，此 computed 会自动重算
   const stateMap = computed<Map<string, LinkageState>>(() => {
     const currentFormData = toValue(formData)
+    const currentVariables = variables ? toValue(variables) : undefined
+    const currentExposed = exposed ? toValue(exposed) : undefined
     const currentEntries = entries.value
     const cyclic = cyclicFields.value
     const map = new Map<string, LinkageState>()
@@ -212,7 +228,7 @@ export function useLinkage(
           currentFormData[watchField]
         }
 
-        const result = evaluateCondition(linkage, currentFormData)
+        const result = evaluateCondition(linkage, currentFormData, currentVariables, currentExposed)
 
         switch (linkage.type) {
           case 'visible':

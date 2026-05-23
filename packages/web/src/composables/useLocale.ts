@@ -9,7 +9,7 @@
  * 接受 MaybeRef<FormGridLocale>，locale 变化时 t 函数自动切换语言包。
  */
 import { computed, toValue, type MaybeRef } from 'vue'
-import type { FormGridLocale, TranslateFn } from '@/components/FormGrid/types'
+import type { FormGridLocale, TranslateFn } from '@/components/WidgetRenderer/types'
 import zhCN from '@/locales/zh-CN'
 import enUS from '@/locales/en-US'
 

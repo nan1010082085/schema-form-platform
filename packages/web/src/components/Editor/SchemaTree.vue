@@ -10,13 +10,13 @@
  * - 拖拽排序
  */
 import { computed, watch, ref } from 'vue'
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
+import type { PartialWidget, SchemaType } from '@/components/WidgetRenderer/types'
 import { buildSchemaTree } from '@/utils/schemaTransform'
 import type { SchemaTreeNode } from '@/utils/schemaTransform'
 import { BASIC_TYPES, BUSINESS_TYPES } from '@/composables/useConstant'
 
 const props = defineProps<{
-  schema: FormSchemaItem[]
+  schema: PartialWidget[]
   selectedPath: number[] | null
 }>()
 
@@ -177,9 +177,9 @@ function isHidden(data: SchemaTreeNode): boolean {
   return item?.hidden === true
 }
 
-function getSchemaItemByPath(items: FormSchemaItem[], path: number[]): FormSchemaItem | undefined {
+function getSchemaItemByPath(items: PartialWidget[], path: number[]): PartialWidget | undefined {
   if (path.length === 0) return undefined
-  let current: FormSchemaItem | undefined = items[path[0]]
+  let current: PartialWidget | undefined = items[path[0]]
   for (let i = 1; i < path.length; i++) {
     if (!current?.children) return undefined
     current = current.children[path[i]]

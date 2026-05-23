@@ -1,9 +1,9 @@
-// FormGrid 组件库 barrel export
-export { default as FormGrid } from './index.vue'
+// WidgetRenderer 组件库 barrel export
+export { default as WidgetRenderer } from './index.vue'
 export { default as SchemaRender } from './SchemaRender.vue'
 export type {
   SchemaType,
-  FormSchemaItem,
+  PartialWidget,
   FormGridContext,
   UserContext,
   RequestContext,
@@ -44,6 +44,4 @@ export {
   ACTION_EMIT_KEY,
   FORM_GRID_LINKAGE_KEY,
   FORM_GRID_T_KEY,
-  FULL_WIDTH_TYPES,
-  isFullWidthType,
 } from './types'

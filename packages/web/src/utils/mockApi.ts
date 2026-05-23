@@ -14,7 +14,7 @@ import type {
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 // ---- 内存存储 ----
 
@@ -24,7 +24,7 @@ const MOCK_PUBLISHED = new Map<string, PublishedSchemaItem>()
 // 初始化一个 demo schema
 function initMockData() {
   const demoId = 'mock-demo-001'
-  const demoSchema: FormSchemaItem[] = [
+  const demoSchema: PartialWidget[] = [
     {
       type: 'page',
       children: [

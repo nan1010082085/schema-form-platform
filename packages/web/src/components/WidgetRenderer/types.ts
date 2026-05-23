@@ -1,6 +1,8 @@
 /** 节点类型枚举 */
 import type { InjectionKey, ComputedRef } from 'vue'
 import type { FormItemRule } from 'element-plus'
+import type { SchemaType } from '../../widgets/base/types'
+export type { SchemaType }
 
 /** 响应式 span 配置 — 断点定义与 Element Plus 一致 */
 export interface ResponsiveSpan {
@@ -105,10 +107,13 @@ export type FormGridLocale = 'zh-CN' | 'en-US'
 /** 翻译函数类型 */
 export type TranslateFn = (key: string, params?: Record<string, unknown>) => string
 
+import type { PartialWidget, LinkageType, SchemaLinkage, LinkageState } from '../../widgets/base/types'
+export type { PartialWidget, LinkageType, SchemaLinkage, LinkageState }
+
 /** FormGrid 组件 Props 定义 */
 export interface FormGridProps {
-  /** 表单 schema 定义 */
-  schema: FormSchemaItem[]
+  /** Widget 定义列表（支持完整 Widget 或 schema 形态的 PartialWidget） */
+  schema: PartialWidget[]
   /** 用户上下文 */
   user?: FormGridContext['user']
   /** 请求上下文 */
@@ -140,71 +145,8 @@ export interface FormGridProps {
    *   用于预览页、跨组件弹窗联动等场景
    */
   dialogMode?: 'internal' | 'external'
-}
-
-export type SchemaType =
-  // 栅格布局
-  | 'grid-row'
-  | 'grid-col'
-  // 页面布局
-  | 'page'
-  | 'toolbar'
-  | 'card'
-  | 'title'
-  | 'divider'
-  | 'spacer'
-  // 基础表单组件
-  | 'input'
-  | 'number'
-  | 'select'
-  | 'radio'
-  | 'checkbox'
-  | 'date'
-  | 'date-range'
-  | 'textarea'
-  | 'richtext'
-  // 业务组件
-  | 'button-list'
-  | 'upload'
-  | 'table'
-  | 'pagination'
-  | 'file-list'
-  | 'file-preview'
-  | 'transfer'
-  | 'detail-form'
-  | 'banner'
-  | 'tree-layout'
-  | 'date-time-slot'
-  | 'dialog'
-  | 'toolbar-buttons'
-  // 搜索列表
-  | 'search-list'
-  // 可编辑表格
-  | 'editable-table'
-  // 分步/标签页布局
-  | 'steps'
-  | 'tabs'
-
-/** 全宽组件类型集合 — 这些组件在 grid-col 中渲染时强制占满整行 */
-export const FULL_WIDTH_TYPES = [
-  'table',
-  'upload',
-  'transfer',
-  'banner',
-  'tree-layout',
-  'detail-form',
-  'pagination',
-  'file-list',
-  'search-list',
-  'editable-table',
-] as const
-
-/**
- * 判断组件类型是否为全宽组件
- * 全宽组件在 grid-col 中渲染时 span 强制为 24
- */
-export function isFullWidthType(type: SchemaType): boolean {
-  return (FULL_WIDTH_TYPES as readonly string[]).includes(type)
+  /** 画布级变量 — 从 boardStore 传入，与 widget.variables 合并后供事件/联动条件使用 */
+  boardVariables?: Record<string, unknown>
 }
 
 /** 动态数据请求配置 — 从 widgets/base/types 统一导出 */
@@ -229,7 +171,7 @@ export interface SchemaAction {
   // dialog
   dialogTitle?: string
   dialogWidth?: string
-  dialogSchema?: FormSchemaItem[]
+  dialogSchema?: PartialWidget[]
   // api
   apiUrl?: string
   apiMethod?: 'get' | 'post'
@@ -255,53 +197,6 @@ export type SchemaRules = FormItemRule[]
 /** 通用组件 props — 用 unknown 约束，消费方按类型断言 */
 export type ComponentProps = Record<string, unknown>
 
-/** 联动类型 */
-export type LinkageType = 'visible' | 'disabled' | 'required' | 'options' | 'set-value' | 'reset-fields'
-
-/** 联动配置 */
-export interface SchemaLinkage {
-  /** 联动类型 */
-  type: LinkageType
-  /** 监听的字段列表 */
-  watchFields: string[]
-  /** 联动条件 — 函数或字符串表达式 */
-  condition: string | ((values: Record<string, FormFieldValue>) => boolean)
-  /** options 联动时，条件为真的静态选项 */
-  thenOptions?: DictItem[]
-  /** options 联动时，条件为真的动态 API 配置 */
-  thenApi?: SchemaApiConfig
-  /** 条件为假时的回退值（visible=false, disabled=false 等） */
-  elseValue?: FormFieldValue
-  /** set-value 联动：条件为真时设置的字面值 */
-  thenValue?: FormFieldValue
-  /** set-value 联动：条件为真时复制值来源字段 */
-  valueSource?: string
-  /** reset-fields 联动：条件为真时要重置的目标字段列表 */
-  targetFields?: string[]
-}
-
-/** 联动计算后的字段状态 */
-
-/** 联动计算后的字段状态 */
-export interface LinkageState {
-  /** 是否可见 */
-  visible: boolean
-  /** 是否禁用 */
-  disabled: boolean
-  /** 是否必填 */
-  required: boolean
-  /** options 联动覆盖的静态选项 */
-  options?: DictItem[]
-  /** options 联动覆盖的 API 配置 */
-  optionsApi?: SchemaApiConfig
-  /** elseValue: 联动条件为 false 时回退到此值 (visible/disabled/required/options 类型) */
-  elseValue?: FormFieldValue
-  /** set-value 联动设置的目标值 */
-  targetValue?: FormFieldValue
-  /** reset-fields 联动：条件为真时要重置的目标字段列表 */
-  resetFields?: string[]
-}
-
 /** 联动状态注入 Key */
 export const FORM_GRID_LINKAGE_KEY: InjectionKey<ComputedRef<Map<string, LinkageState>>> = Symbol('FormGridLinkage')
 
@@ -310,6 +205,11 @@ export const FORM_GRID_T_KEY: InjectionKey<TranslateFn> = Symbol('FormGridTransl
 
 /** 只读模式注入 Key — 禁用表单输入、隐藏内部按钮 */
 export const FORM_GRID_READONLY_KEY: InjectionKey<ComputedRef<boolean>> = Symbol('FormGridReadonly')
+
+/** 事件执行上下文注入 Key — 运行时事件引擎 */
+import type { EventExecutionContext } from '../../engine/eventEngine'
+export type { EventExecutionContext }
+export const EVENT_CONTEXT_KEY: InjectionKey<EventExecutionContext> = Symbol('EventExecutionContext')
 
 /**
  * 生命周期钩子配置
@@ -408,7 +308,7 @@ export interface SearchListRowAction {
   // dialog
   dialogTitle?: string
   dialogWidth?: string
-  dialogSchema?: FormSchemaItem[]
+  dialogSchema?: PartialWidget[]
 }
 
 /** 可编辑表格列 Schema — FgEditableTable 专用 */
@@ -503,76 +403,6 @@ export interface ComponentStyle {
   color?: string
   textAlign?: 'left' | 'center' | 'right'
   customClass?: string
-}
-
-/** 表单 Schema 节点 */
-export interface FormSchemaItem {
-  // 基础通用
-  type: SchemaType
-  /** 组件唯一 ID — 拖拽入画布时生成，格式: 组件Key + 5位随机Hash，永久不变 */
-  componentId?: string
-  field?: string
-  label?: string
-  defaultValue?: FormFieldValue
-  rules?: SchemaRules
-  props?: ComponentProps
-  options?: DictItem[]
-  hidden?: boolean
-
-  // 条件表达式（表达式引擎求值）
-  /** 条件可见 — 表达式求值为 true 时可见 */
-  visibleOn?: string
-  /** 条件禁用 — 表达式求值为 true 时禁用 */
-  disabledOn?: string
-  /** 条件必填 — 表达式求值为 true 时必填 */
-  requiredOn?: string
-
-  // 联动配置
-  linkages?: SchemaLinkage[]
-
-  // 动态数据
-  api?: SchemaApiConfig
-
-  // 按钮相关
-  text?: string
-  buttonType?: '' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
-  icon?: string
-  actions?: SchemaAction[]
-  buttons?: SchemaButtonConfig[]
-
-  // 栅格表格布局专用
-  span?: number | ResponsiveSpan
-  colspan?: number
-  rowspan?: number
-  width?: string
-  height?: string
-  align?: 'left' | 'center' | 'right'
-  border?: boolean
-  hideBorder?: string[]
-
-  // 样式配置 (PropertyPanel 样式配置 tab)
-  style?: ComponentStyle
-
-  // 高级配置
-  /** 权限角色白配 — 允许访问的角色列表 */
-  permissionRoles?: string[]
-  /** 只读模式 — 组件在查看模式下是否只读 */
-  readonly?: boolean
-  /** 自定义 HTML 属性 */
-  customAttrs?: Record<string, string>
-
-  // search-list 组件专用
-  /** 列表数据请求配置 */
-  listApi?: ListApiConfig
-  /** 搜索表单字段定义 */
-  searchFields?: SearchFieldSchema[]
-  /** 表格列定义（search-list / editable-table） */
-  columns?: SearchListColumnSchema[] | EditableTableColumn[]
-  /** 行操作按钮 */
-  rowActions?: SearchListRowAction[]
-
-  // 递归子节点
-  children?: FormSchemaItem[]
 }
 
 /** 遥测回调接口 — S20 */

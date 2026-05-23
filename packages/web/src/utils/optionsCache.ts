@@ -2,7 +2,7 @@
  * 选项内存缓存
  * 按 url:params JSON 作为 key 存储，支持 TTL 过期
  */
-import type { DictItem } from '@/components/FormGrid/types'
+import type { DictItem } from '@/components/WidgetRenderer/types'
 
 interface CacheEntry {
   options: DictItem[]

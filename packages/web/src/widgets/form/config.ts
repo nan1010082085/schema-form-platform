@@ -30,5 +30,5 @@ export const formConfig: WidgetConfig = {
     style: ['padding', 'backgroundColor'],
     props: [],
   },
-  configPanels: ['events', 'api'],
+  configPanels: ['events', 'api', 'variables'],
 }

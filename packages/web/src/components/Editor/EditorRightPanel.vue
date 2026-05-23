@@ -5,20 +5,20 @@
  * 包含面板头部 + PropertyPanel + 全局配置提示
  */
 import PropertyPanel from './PropertyPanel.vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 
 defineProps<{
-  selectedSchema: FormSchemaItem | null
-  allSchema: FormSchemaItem[]
+  selectedSchema: PartialWidget | null
+  allSchema: PartialWidget[]
   drawerVisible: boolean
 }>()
 
 const emit = defineEmits<{
-  'update:schema': [schema: FormSchemaItem]
+  'update:schema': [schema: PartialWidget]
   'close': []
 }>()
 
-function getDisplayLabel(item: FormSchemaItem): string {
+function getDisplayLabel(item: PartialWidget): string {
   return (item as any).label || item.type || '组件'
 }
 </script>

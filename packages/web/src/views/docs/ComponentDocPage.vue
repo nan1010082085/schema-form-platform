@@ -9,16 +9,16 @@
  * 弹窗由 ComponentDocPage 在页面顶层渲染，实现跨组件弹窗联动效果。
  */
 import { computed, provide, ref, reactive } from 'vue'
-import FormGrid from '@/components/FormGrid/index.vue'
-import SchemaRender from '@/components/FormGrid/SchemaRender.vue'
+import WidgetRenderer from '@/components/WidgetRenderer/index.vue'
+import SchemaRender from '@/components/WidgetRenderer/SchemaRender.vue'
 import {
   FORM_GRID_CONTEXT_KEY,
   FORM_GRID_FORM_KEY,
   FORM_GRID_API_KEY,
   type FormGridContext,
-  type FormSchemaItem,
+  type PartialWidget,
   type FormData,
-} from '@/components/FormGrid/types'
+} from '@/components/WidgetRenderer/types'
 import { componentDocs } from '@/docs/components'
 
 const props = defineProps<{ componentId: string }>()
@@ -77,14 +77,14 @@ provide(FORM_GRID_FORM_KEY, dialogFormData)
 const previewDialogVisible = ref(false)
 const previewDialogTitle = ref('')
 const previewDialogWidth = ref('600px')
-const previewDialogSchema = ref<FormSchemaItem[]>([])
+const previewDialogSchema = ref<PartialWidget[]>([])
 const previewDialogInitialData = ref<FormData | undefined>(undefined)
 
 /** Matches FormGrid's `open-dialog` emit payload type */
 interface OpenDialogConfig {
   title: string
   width?: string
-  schema?: FormSchemaItem[]
+  schema?: PartialWidget[]
   initialData?: FormData
 }
 
@@ -155,7 +155,7 @@ function handlePreviewDialogCancel() {
 
             <!-- 实时渲染区 -->
             <div class="demo-block__preview">
-              <FormGrid
+              <WidgetRenderer
                 :schema="example.schema"
                 :dialog-mode="example.dialogMode ?? 'internal'"
                 @open-dialog="handleOpenDialog"

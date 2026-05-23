@@ -17,7 +17,10 @@ import { onMounted, watch, ref } from 'vue'
 import type {
   FormLifecycleConfig,
   FormData,
-} from '@/components/FormGrid/types'
+} from '@/components/WidgetRenderer/types'
+import { useLogger } from '@/composables/useLogger'
+
+const logger = useLogger('Lifecycle')
 
 /** 生命周期钩子执行结果 */
 export interface UseLifecycleReturn {
@@ -38,8 +41,7 @@ function compileExpression<T extends (...args: unknown[]) => unknown>(
   try {
     return new Function(...paramNames, `"use strict"; ${expression}`) as T
   } catch {
-    console.error(`[useLifecycle] 表达式编译失败: "${expression}"`)
-    // 返回空操作函数，避免后续调用报错
+    logger.error(`表达式编译失败: "${expression}"`)
     return ((() => {}) as unknown) as T
   }
 }
@@ -68,7 +70,7 @@ async function executeHook<R = void>(
     }
     return await fn(...args)
   } catch (err) {
-    console.error('[useLifecycle] 钩子执行异常:', err)
+    logger.error('钩子执行异常:', err)
     return undefined
   }
 }

@@ -3,7 +3,7 @@
  * qiankun 主应用传递的 Props 类型
  * 与 msa-form 项目的 props 模式对齐
  */
-import type { UserContext, RequestContext, GlobalContext, DictItem } from '@/components/FormGrid/types'
+import type { UserContext, RequestContext, GlobalContext, DictItem } from '@/components/WidgetRenderer/types'
 
 export interface SchemaFormQiankunProps {
   /** 用户信息 */

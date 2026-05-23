@@ -12,10 +12,10 @@
  */
 import { describe, it, expect } from 'vitest'
 import { useHistory } from '@/composables/useHistory'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/widgets/base/types'
 
 /** Helper: create a simple schema */
-function mkSchema(label: string): FormSchemaItem[] {
+function mkSchema(label: string): PartialWidget[] {
   return [{ type: 'input', field: 'name', label }]
 }
 
@@ -141,7 +141,7 @@ describe('useHistory', () => {
   describe('max history size', () => {
     /** Safe undo wrapper: catches error when stale canUndo cache causes
      *  undo to access history[-1] after exceeding history bounds */
-    function safeUndo(undo: () => FormSchemaItem[] | null): FormSchemaItem[] | null {
+    function safeUndo(undo: () => PartialWidget[] | null): PartialWidget[] | null {
       try {
         return undo()
       } catch {

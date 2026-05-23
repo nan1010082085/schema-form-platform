@@ -1,19 +1,19 @@
 /**
- * schemaDefaults — Default FormSchemaItem factory for each component type
+ * schemaDefaults — Default PartialWidget factory for each component type
  *
  * Extracted from EditorCanvas.vue createDefaultSchema() so it can be shared
  * between the editor store and editor canvas component.
  */
-import type { FormSchemaItem, SchemaType } from '@/components/FormGrid/types'
-import { isFullWidthType } from '@/components/FormGrid/types'
+import type { PartialWidget, SchemaType } from '@/widgets/base/types'
+import { isFullWidthType } from '@/widgets/base/types'
 
 /**
- * Create a default FormSchemaItem for a given component type.
+ * Create a default PartialWidget for a given component type.
  *
  * Used when dragging from the component panel onto the canvas.
  * Returns a fully initialized schema item with sensible defaults.
  */
-export function createDefaultSchema(type: SchemaType): FormSchemaItem {
+export function createDefaultSchema(type: SchemaType): PartialWidget {
   // ---- Layout types ----
   if (type === 'grid-row') {
     return { type: 'grid-row', children: [], style: { height: '44px' } }
@@ -71,9 +71,9 @@ export function createDefaultSchema(type: SchemaType): FormSchemaItem {
 
   // ---- Form components: generate a unique field name ----
   const field = `field_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
-  const base: FormSchemaItem = { type, field }
+  const base: PartialWidget = { type, field }
 
-  let item: FormSchemaItem
+  let item: PartialWidget
 
   switch (type) {
     case 'input':

@@ -17,7 +17,7 @@
  * - 500 character expression length limit
  * - LRU compile cache with 1000 entry limit
  */
-import type { FormData } from '@/components/FormGrid/types'
+import type { FormData } from '@/components/WidgetRenderer/types'
 
 /** Expression evaluation context */
 export interface ExpressionContext {

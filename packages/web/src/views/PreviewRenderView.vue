@@ -8,13 +8,13 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Loading } from '@element-plus/icons-vue'
-import { FormGrid } from '@/components/FormGrid'
-import type { FormSchemaItem } from '@/components/FormGrid'
+import { WidgetRenderer } from '@/components/WidgetRenderer'
+import type { PartialWidget } from '@/widgets/base/types'
 import { fetchSchemaById } from '@/utils/apiClient'
 
 const route = useRoute()
 const schemaId = computed(() => route.query.id as string)
-const schema = ref<FormSchemaItem[]>([])
+const schema = ref<PartialWidget[]>([])
 const schemaName = ref('')
 const loading = ref(false)
 const error = ref('')
@@ -53,7 +53,7 @@ watch(schemaId, (id) => { if (id) loadSchema(id) }, { immediate: true })
     </div>
 
     <div v-else class="fg-preview-render__body">
-      <FormGrid :schema="schema" />
+      <WidgetRenderer :schema="schema" />
     </div>
   </div>
 </template>

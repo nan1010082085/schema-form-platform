@@ -28,14 +28,14 @@ import {
   Lock,
   Monitor,
 } from '@element-plus/icons-vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
 import { useApiStore } from '@/stores/api'
 
 const props = defineProps<{
   mode: InteractionMode
-  schema: FormSchemaItem[]
+  schema: PartialWidget[]
   schemaName?: string
   schemaId?: string | null
   selectedIndex: number | null
@@ -65,7 +65,7 @@ const emit = defineEmits<{
   'publish': []
   'preview': []
   'export': []
-  'import': [schema: FormSchemaItem[]]
+  'import': [schema: PartialWidget[]]
   'import-response': []
   'undo': []
   'redo': []
@@ -75,13 +75,12 @@ const emit = defineEmits<{
   'move-down': []
   'zindex-up': []
   'zindex-down': []
-  'align': [align: 'left' | 'center' | 'right']
   'group': [containerType: 'card' | 'page' | 'toolbar']
   'ungroup': []
   'validate': []
   'toggle-thumbnail': []
   'canvas-size-change': [preset: string]
-  'load-schema': [schema: FormSchemaItem[]]
+  'load-schema': [schema: PartialWidget[]]
 }>()
 
 // ---- Mode switcher ----
@@ -129,7 +128,7 @@ function confirmImport() {
   try {
     const parsed = JSON.parse(importJson.value) as unknown
     if (!Array.isArray(parsed)) { ElMessage.error('JSON 必须是数组'); return }
-    emit('import', parsed as FormSchemaItem[])
+    emit('import', parsed as PartialWidget[])
     showImportDialog.value = false
     ElMessage.success('Schema 导入成功')
   } catch { ElMessage.error('JSON 格式错误') }
@@ -168,9 +167,6 @@ function handleMoreCommand(command: string) {
     case 'export-json': emit('export'); break
     case 'zindex-up': handleZIndexUp(); break
     case 'zindex-down': handleZIndexDown(); break
-    case 'align-left': handleAlign('left'); break
-    case 'align-center': handleAlign('center'); break
-    case 'align-right': handleAlign('right'); break
   }
 }
 
@@ -181,7 +177,6 @@ function handleMoveUp() { if (hasSelection.value && !isFirstItem.value) emit('mo
 function handleMoveDown() { if (hasSelection.value && !isLastItem.value) emit('move-down') }
 function handleZIndexUp() { if (hasSelection.value) emit('zindex-up') }
 function handleZIndexDown() { if (hasSelection.value) emit('zindex-down') }
-function handleAlign(align: 'left' | 'center' | 'right') { if (hasSelection.value) emit('align', align) }
 function handleUndo() { if (props.canUndo) emit('undo') }
 function handleRedo() { if (props.canRedo) emit('redo') }
 function handleGroup(type: 'card' | 'page' | 'toolbar') { if (props.canGroup) emit('group', type) }
@@ -189,8 +184,8 @@ function handleUngroup() { if (props.canUngroup) emit('ungroup') }
 
 // ---- Keyboard shortcuts ----
 function handleKeydown(event: KeyboardEvent) {
-  const tag = (event.target as HTMLElement)?.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+  const target = event.target as HTMLElement
+  if (target?.closest('input, textarea, [contenteditable]')) return
 
   if (event.ctrlKey || event.metaKey) {
     if (event.key === 'c') { event.preventDefault(); handleCopy() }
@@ -302,15 +297,6 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
               </el-dropdown-item>
               <el-dropdown-item :disabled="!hasSelection" command="zindex-down">
                 下移一层 (Alt+↓)
-              </el-dropdown-item>
-              <el-dropdown-item divided :disabled="!hasSelection" command="align-left">
-                左对齐
-              </el-dropdown-item>
-              <el-dropdown-item :disabled="!hasSelection" command="align-center">
-                居中对齐
-              </el-dropdown-item>
-              <el-dropdown-item :disabled="!hasSelection" command="align-right">
-                右对齐
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -528,7 +514,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       v-model="importJson"
       type="textarea"
       :rows="16"
-      placeholder="在此粘贴 FormSchemaItem[] JSON..."
+      placeholder="在此粘贴 PartialWidget[] JSON..."
     />
     <template #footer>
       <el-button @click="showImportDialog = false">取消</el-button>

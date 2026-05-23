@@ -9,7 +9,7 @@
  * 4. reset-fields 多字段批量重置
  * 5. 多字段联合条件（role + level → approval字段）
  */
-export const linkageDemoSchema: import('@/components/FormGrid/types').FormSchemaItem[] = [
+export const linkageDemoSchema: import('@/components/WidgetRenderer/types').PartialWidget[] = [
   // ---- 多选联动触发源 ----
   {
     type: 'checkbox',

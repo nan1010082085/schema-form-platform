@@ -18,6 +18,7 @@ const emit = defineEmits<{
   openEvent: [widget: Widget]
   openRule: [widget: Widget]
   openApi: [widget: Widget]
+  openVariables: [widget: Widget]
 }>()
 
 const widgetConfig = computed(() => {
@@ -39,6 +40,7 @@ function handleAction(action: string) {
     case 'event': emit('openEvent', props.widget); break
     case 'rule': emit('openRule', props.widget); break
     case 'api': emit('openApi', props.widget); break
+    case 'variables': emit('openVariables', props.widget); break
   }
   emit('close')
 }
@@ -66,6 +68,7 @@ function handleAction(action: string) {
         <div v-if="configPanels.includes('events')" :class="$style.item" @click="handleAction('event')">事件配置</div>
         <div v-if="configPanels.includes('rules')" :class="$style.item" @click="handleAction('rule')">规则配置</div>
         <div v-if="configPanels.includes('api')" :class="$style.item" @click="handleAction('api')">数据源</div>
+        <div v-if="configPanels.includes('variables')" :class="$style.item" @click="handleAction('variables')">变量配置</div>
       </template>
     </div>
   </Teleport>

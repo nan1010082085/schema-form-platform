@@ -7,8 +7,8 @@ import en from 'element-plus/es/locale/lang/en'
 import SchemaRender from './SchemaRender.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 // FgDialog import removed — internal dialog rendered inline below
+import type { PartialWidget } from '../../widgets/base/types'
 import type {
-  FormSchemaItem,
   FormGridContext,
   FormData,
   FormFieldValue,
@@ -25,12 +25,19 @@ import {
   FORM_GRID_LINKAGE_KEY,
   FORM_GRID_T_KEY,
   FORM_GRID_READONLY_KEY,
+  EVENT_CONTEXT_KEY,
 } from './types'
+import type { EventExecutionContext } from './types'
+import type { Widget } from '../../widgets/base/types'
 import { useLinkage } from '@/composables/useLinkage'
 import { useFormData } from '@/composables/useFormData'
 import { useLifecycle } from '@/composables/useLifecycle'
 import { useLocale } from '@/composables/useLocale'
+import { useLogger } from '@/composables/useLogger'
 import { apiClient } from '@/utils/apiClient'
+import { executeEventAction } from '@/engine/eventEngine'
+
+const logger = useLogger('WidgetRenderer')
 
 /** Element Plus 语言包映射 */
 const epLocaleMap: Record<FormGridLocale, typeof zhCn> = {
@@ -51,7 +58,7 @@ const emit = defineEmits<{
   'submit': [data: FormData]
   'validate-error': [errors: Record<string, unknown>]
   'action': [action: SchemaAction]
-  'open-dialog': [config: { title: string; width?: string; schema?: FormSchemaItem[]; initialData?: FormData }]
+  'open-dialog': [config: { title: string; width?: string; schema?: PartialWidget[]; initialData?: FormData }]
   'container-drop': [payload: { parentPath: number[]; index: number; dragDataRaw: string }]
 }>()
 
@@ -63,10 +70,10 @@ const dialogMode = computed(() => props.dialogMode ?? 'internal')
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const dialogWidth = ref<string | undefined>(undefined)
-const dialogSchema = ref<FormSchemaItem[] | undefined>(undefined)
+const dialogSchema = ref<PartialWidget[] | undefined>(undefined)
 const dialogInitialData = ref<FormData | undefined>(undefined)
 
-function openDialog(config: { title: string; width?: string; schema?: FormSchemaItem[]; initialData?: FormData }) {
+function openDialog(config: { title: string; width?: string; schema?: PartialWidget[]; initialData?: FormData }) {
   if (dialogMode.value === 'external') {
     // 外部模式：仅通知父组件，不接管弹窗渲染
     emit('open-dialog', config)
@@ -127,22 +134,118 @@ provide(ACTION_EMIT_KEY, (event: string, payload?: unknown) => {
   } else if (event === 'submit') {
     emit('submit', payload as FormData)
   } else if (event === 'open-dialog') {
-    const config = payload as { title: string; width?: string; schema?: FormSchemaItem[]; initialData?: FormData }
+    const config = payload as { title: string; width?: string; schema?: PartialWidget[]; initialData?: FormData }
     openDialog(config)
     // emit 已由 openDialog 内部处理（根据 dialogMode 决定）
   }
 })
 
-// 联动状态
-const { stateMap: linkageStateMap } = useLinkage(props.schema, formData)
+// 变量上下文（画布级变量 + 从 schema 树收集所有 widget.variables）
+const runtimeVariables = ref<Record<string, unknown>>({})
+
+const variablesContext = computed(() => {
+  const vars: Record<string, unknown> = { ...(props.boardVariables ?? {}) }
+  function collect(items: PartialWidget[]) {
+    for (const item of items) {
+      if (item.variables?.length) {
+        for (const v of item.variables) {
+          vars[v.name] = v.defaultValue
+        }
+      }
+      if (item.children?.length) collect(item.children)
+    }
+  }
+  collect(props.schema)
+  // 合并运行时修改的变量
+  Object.assign(vars, runtimeVariables.value)
+  return vars
+})
+
+// 组件暴露值收集（由子组件通过 provide 注入）
+const exposedContext = ref<Record<string, Record<string, unknown>>>({})
+
+/** 注册组件暴露值（由子组件调用） */
+function registerExposed(widgetId: string, state: Record<string, unknown>) {
+  exposedContext.value[widgetId] = state
+}
+
+/** 注销组件暴露值 */
+function unregisterExposed(widgetId: string) {
+  delete exposedContext.value[widgetId]
+}
+
+// 提供暴露值注册接口
+provide('registerExposed', registerExposed)
+provide('unregisterExposed', unregisterExposed)
+
+// 联动状态（支持 variables 和 exposed 引用）
+const { stateMap: linkageStateMap } = useLinkage(props.schema, formData, variablesContext, exposedContext)
 provide(FORM_GRID_LINKAGE_KEY, linkageStateMap)
 
 // 只读模式注入（使用 toRef 保持响应式）
 const readonlyRef = computed(() => props.readonly ?? false)
 provide(FORM_GRID_READONLY_KEY, readonlyRef)
 
+// ---- 运行时事件执行上下文 ----
+
+/** 递归查找 schema 树中的 widget */
+function findWidgetInSchema(items: PartialWidget[], id: string): Widget | undefined {
+  for (const item of items) {
+    if (item.id === id) return item as Widget
+    if (item.children?.length) {
+      const found = findWidgetInSchema(item.children, id)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+const eventContext: EventExecutionContext = {
+  findWidget: (id: string) => findWidgetInSchema(props.schema, id),
+  updateWidget: (id: string, patch: Partial<Widget>) => {
+    const widget = findWidgetInSchema(props.schema, id)
+    if (widget) Object.assign(widget, patch)
+  },
+  openDialog: (target: string) => {
+    const widget = findWidgetInSchema(props.schema, target)
+    if (widget?.type === 'dialog') {
+      openDialog({
+        title: (widget.props?.title as string) || widget.label || '弹窗',
+        width: (widget.props?.width as string) || '600px',
+        schema: widget.children as PartialWidget[] | undefined,
+      })
+    }
+  },
+  closeDialog: () => { dialogVisible.value = false },
+  submitForm: () => { submit() },
+  resetForm: () => { resetFields() },
+  getFormData: () => formData,
+  emit: (eventName: string, payload?: unknown) => {
+    emit('action', { type: 'emit', eventName, eventPayload: payload } as SchemaAction)
+  },
+  get variables() { return variablesContext.value },
+  setVariable: (name: string, value: unknown) => {
+    runtimeVariables.value[name] = value
+  },
+  getVariable: (name: string) => variablesContext.value[name],
+  get exposed() { return exposedContext.value },
+  triggerEvent: (targetId: string, eventName: string) => {
+    const widget = findWidgetInSchema(props.schema, targetId)
+    if (widget?.events) {
+      for (const event of widget.events) {
+        if (event.trigger === eventName) {
+          executeEventAction(event.actions[0], eventContext)
+        }
+      }
+    }
+    // 同时 emit 给父组件处理
+    emit('action', { type: 'trigger-event', target: targetId, event: eventName } as SchemaAction)
+  },
+}
+provide(EVENT_CONTEXT_KEY, eventContext)
+
 // Build defaultValue map from schema tree for reset-fields linkage
-function collectDefaultValues(items: FormSchemaItem[]): Map<string, unknown> {
+function collectDefaultValues(items: PartialWidget[]): Map<string, unknown> {
   const map = new Map<string, unknown>()
   for (const item of items) {
     if (item.field && item.defaultValue !== undefined) {
@@ -232,7 +335,7 @@ async function loadApiData(config: LoadApiConfig): Promise<void> {
         transformedData = await props.transformAfterLoad(rawData)
       } catch (err) {
         const msg = err instanceof Error ? err.message : '数据转换失败'
-        console.warn('[FormGrid transformAfterLoad] 转换失败，使用原始数据降级:', msg)
+        logger.warn('transformAfterLoad 转换失败，使用原始数据降级:', msg)
         // 降级：使用原始数据
         transformedData = applyFieldMap(rawData, config.fieldMap)
         setFormData(transformedData)
@@ -252,7 +355,7 @@ async function loadApiData(config: LoadApiConfig): Promise<void> {
     await executeAfterLoad(formData)
   } catch (err) {
     const msg = err instanceof Error ? err.message : '数据加载失败'
-    console.error('[FormGrid loadApi]', msg)
+    logger.error('loadApi:', msg)
     ElMessage.error(msg)
   } finally {
     loading.value = false
@@ -322,7 +425,7 @@ async function submit() {
       submitData = await props.transformBeforeSubmit(submitData)
     } catch (err) {
       const msg = err instanceof Error ? err.message : '数据转换失败'
-      console.error('[FormGrid transformBeforeSubmit]', msg)
+      logger.error('transformBeforeSubmit:', msg)
       ElMessage.error(msg)
       return
     }

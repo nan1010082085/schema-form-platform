@@ -38,7 +38,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { configureApiClient, fetchPublishedSchema, ApiError } from '@/utils/apiClient'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
-import SchemaRender from '@/components/FormGrid/SchemaRender.vue'
+import SchemaRender from '@/components/WidgetRenderer/SchemaRender.vue'
 import type { Widget, FormFieldValue } from '@/widgets/base/types'
 import { initMicroappGuest, emitToHost } from './postMessage'
 
@@ -85,9 +85,9 @@ let hostContainer: HTMLElement | null = null
 // ============================================================
 
 /**
- * 将 FormSchemaItem[] 转换为 Widget[]。
+ * 将 PartialWidget[] 转换为 Widget[]。
  *
- * FormSchemaItem 是后端存储格式，Widget 是前端渲染格式。
+ * PartialWidget 是后端存储格式，Widget 是前端渲染格式。
  * 此函数做最小化映射，确保 SchemaRender 能正确渲染。
  */
 function schemaToWidgets(schemaItems: Array<Record<string, unknown>>): Widget[] {

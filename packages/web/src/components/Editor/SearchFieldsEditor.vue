@@ -7,7 +7,7 @@
  * and full API configuration (url, method, params, dataPath, labelKey, valueKey).
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
-import type { SearchFieldSchema, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
+import type { SearchFieldSchema, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
   searchFields: SearchFieldSchema[]

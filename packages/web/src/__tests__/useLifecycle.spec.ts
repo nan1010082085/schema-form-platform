@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { reactive, nextTick } from 'vue'
 import { useLifecycle } from '@/composables/useLifecycle'
-import type { FormLifecycleConfig, FormData } from '@/components/FormGrid/types'
+import type { FormLifecycleConfig, FormData } from '@/components/WidgetRenderer/types'
 
 /**
  * Helper: mount useLifecycle with the given config and formData.

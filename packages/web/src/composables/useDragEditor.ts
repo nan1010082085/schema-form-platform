@@ -7,19 +7,19 @@
  * 3. Drag an existing component into a different container
  */
 import type { Ref } from 'vue'
-import type { FormSchemaItem } from '@/components/FormGrid/types'
+import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import { getItemAtPath, removeAtPath, insertAtPath } from '@/utils/schemaTransform'
 
 export interface UseDragEditorOptions {
-  schema: Ref<FormSchemaItem[]>
+  schema: Ref<PartialWidget[]>
   selectedPath: Ref<number[] | null>
   selectedPaths: Ref<number[][]>
-  pushState: (schema: FormSchemaItem[]) => void
+  pushState: (schema: PartialWidget[]) => void
 }
 
 export interface UseDragEditorReturn {
   handleDragReorder: (fromIndex: number, toIndex: number) => void
-  handleDropToContainer: (parentPath: number[], index: number, item: FormSchemaItem) => void
+  handleDropToContainer: (parentPath: number[], index: number, item: PartialWidget) => void
   handleDragToContainer: (sourcePath: number[], targetPath: number[], targetIndex: number) => void
 }
 
@@ -38,7 +38,7 @@ export function useDragEditor(options: UseDragEditorOptions): UseDragEditorRetur
   }
 
   /** Drop a new component item into a container at the given path/index */
-  function handleDropToContainer(parentPath: number[], index: number, item: FormSchemaItem) {
+  function handleDropToContainer(parentPath: number[], index: number, item: PartialWidget) {
     pushState(schema.value)
     schema.value = insertAtPath(schema.value, parentPath, index, item)
     selectedPath.value = [...parentPath, index]
@@ -56,7 +56,7 @@ export function useDragEditor(options: UseDragEditorOptions): UseDragEditorRetur
     if (!item) return
 
     pushState(schema.value)
-    const clonedItem = JSON.parse(JSON.stringify(item)) as FormSchemaItem
+    const clonedItem = JSON.parse(JSON.stringify(item)) as PartialWidget
     let newSchema = removeAtPath(schema.value, sourcePath)
     const adjustedTargetPath = adjustTarget(sourcePath, targetPath)
     schema.value = insertAtPath(newSchema, adjustedTargetPath, targetIndex, clonedItem)

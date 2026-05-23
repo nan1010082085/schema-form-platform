@@ -5,7 +5,7 @@ export const fileListConfig: WidgetConfig = {
   displayName: '文件列表',
   description: '文件列表组件，支持文件预览和删除',
   defaultStyle: { width: '100%' },
-  configPanels: ['events', 'api'],
+  configPanels: ['events', 'api', 'variables'],
   defaultProps: {
     title: '附件',
     allowDelete: true,

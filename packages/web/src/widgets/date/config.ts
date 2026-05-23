@@ -15,7 +15,7 @@ export const dateConfig: WidgetConfig = {
     type: 'date' as 'date' | 'datetime' | 'daterange',
     format: 'YYYY-MM-DD',
   },
-  configPanels: ['events', 'rules'],
+  configPanels: ['events', 'rules', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],
     style: ['fontSize', 'color', 'backgroundColor'],
