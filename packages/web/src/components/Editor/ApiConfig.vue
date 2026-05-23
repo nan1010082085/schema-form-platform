@@ -14,7 +14,7 @@
  */
 import { ref, computed } from 'vue'
 import { Connection, Check, WarningFilled } from '@element-plus/icons-vue'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import type { SchemaApiConfig, FormSchemaItem } from '@/components/FormGrid/types'
@@ -149,11 +149,8 @@ async function testConnection() {
   testResult.value = null
   rawResponse.value = null
   try {
-    const http = getRequestInstance()
     const method = props.api.method ?? 'get'
-    const res: unknown = method === 'get'
-      ? await http.get(props.api.url, { params: props.api.params })
-      : await http.post(props.api.url, props.api.params)
+    const res: unknown = await apiClient.requestUrl(method, props.api.url, props.api.params)
 
     rawResponse.value = res
 

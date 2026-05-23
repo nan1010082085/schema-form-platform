@@ -7,9 +7,10 @@
 import { ref, inject, onMounted, watch, toValue, type Ref, type MaybeRefOrGetter } from 'vue'
 import { FORM_GRID_CONTEXT_KEY, FORM_GRID_FORM_KEY } from '@/components/FormGrid/types'
 import type { SchemaApiConfig, DictItem, FormData } from '@/components/FormGrid/types'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 import { getCachedOptions, setCachedOptions } from '@/utils/optionsCache'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
+import { executeWithRetry } from '@/utils/retryRequest'
 import { useLogger } from '@/composables/useLogger'
 
 const logger = useLogger('DynamicOptions')
@@ -70,15 +71,15 @@ export function useDynamicOptions(apiConfig: MaybeRefOrGetter<SchemaApiConfig | 
       return
     }
 
-    // 3. 发起请求
+    // 3. 发起请求（支持重试）
     loading.value = true
     error.value = ''
     try {
-      const http = getRequestInstance()
       const method = config.method ?? 'get'
-      const res: unknown = method === 'get'
-        ? await http.get(config.url, { params: resolvedParams })
-        : await http.post(config.url, resolvedParams)
+      const res: unknown = await executeWithRetry(
+        () => apiClient.requestUrl(method, config.url, resolvedParams),
+        { enableRetry: config.enableRetry },
+      )
 
       // 归一化响应：支持 dataPath 配置或自动探测常见包装键
       const { data: rawList } = normalizeListResponse(res, { dataPath: config.dataPath })

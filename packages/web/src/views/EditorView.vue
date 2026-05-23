@@ -9,7 +9,7 @@
  * - useEditorStore — 选中、历史、模式
  * - useDragStore   — 拖拽状态
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useBoardStore } from '@/stores/board'
@@ -28,7 +28,10 @@ import {
   View,
   EditPen,
   FullScreen,
+  Clock,
 } from '@element-plus/icons-vue'
+import { fetchVersions, fetchVersion } from '@/utils/apiClient'
+import type { VersionEntry } from '@/types/api'
 
 // Register all widgets on first mount
 registerAllWidgets()
@@ -85,6 +88,8 @@ onMounted(async () => {
     // if (detail) {
     //   boardStore.loadBoard({ id: detail.id, name: detail.name, status: detail.status })
     //   widgetStore.loadWidgets(detail.json)
+    //   currentEditId.value = detail.editId
+    //   currentVersion.value = detail.version
     // }
     console.log('[EditorView] Load schema:', id)
   }
@@ -93,6 +98,18 @@ onMounted(async () => {
   if (!boardStore.name) {
     boardStore.name = '未命名画布'
   }
+})
+
+// 页面刷新/关闭拦截
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (editorStore.isDirty) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+window.addEventListener('beforeunload', handleBeforeUnload)
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 // ================================================================
@@ -196,7 +213,50 @@ async function handleSave() {
     widgets: widgetStore.widgets,
   }
   console.log('[EditorView] Save:', JSON.stringify(data, null, 2))
+  editorStore.markClean()
   ElMessage.success('已保存（控制台输出）')
+}
+
+// ================================================================
+// Version management
+// ================================================================
+
+const currentEditId = ref('')
+const currentVersion = ref('')
+const versionPopoverVisible = ref(false)
+const versionList = ref<VersionEntry[]>([])
+const versionLoading = ref(false)
+
+function formatVersion(v: string): string {
+  if (!v || v.length !== 14) return v
+  return `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)} ${v.slice(8, 10)}:${v.slice(10, 12)}:${v.slice(12, 14)}`
+}
+
+async function loadVersionList() {
+  if (!currentEditId.value) return
+  versionLoading.value = true
+  try {
+    const res = await fetchVersions(currentEditId.value)
+    versionList.value = res.items
+  } catch {
+    versionList.value = []
+  } finally {
+    versionLoading.value = false
+  }
+}
+
+async function handleLoadVersion(entry: VersionEntry) {
+  if (!currentEditId.value) return
+  try {
+    const detail = await fetchVersion(currentEditId.value, entry.version)
+    widgetStore.loadWidgets(detail.json as unknown as Widget[])
+    currentVersion.value = entry.version
+    editorStore.markClean()
+    versionPopoverVisible.value = false
+    ElMessage.success(`已加载版本 ${formatVersion(entry.version)}`)
+  } catch {
+    ElMessage.error('加载版本失败')
+  }
 }
 
 // ================================================================
@@ -221,6 +281,7 @@ function handleClearCanvas() {
           class="editor-view__name-input"
           placeholder="未命名画布"
         />
+        <span v-if="currentVersion" class="editor-view__version-badge">v{{ formatVersion(currentVersion) }}</span>
         <div class="editor-view__divider" />
         <button
           class="editor-view__icon-btn"
@@ -320,6 +381,51 @@ function handleClearCanvas() {
 
         <template v-if="mode === 'edit'">
           <div class="editor-view__divider" />
+
+          <!-- Version history -->
+          <el-popover
+            v-model:visible="versionPopoverVisible"
+            placement="bottom-end"
+            :width="320"
+            trigger="click"
+            @show="loadVersionList"
+          >
+            <template #reference>
+              <button class="editor-view__icon-btn" title="版本历史" @click="versionPopoverVisible = !versionPopoverVisible">
+                <el-icon :size="14"><Clock /></el-icon>
+              </button>
+            </template>
+            <div class="editor-view__version-panel">
+              <div class="editor-view__version-header">
+                <span class="editor-view__version-title">版本历史</span>
+              </div>
+              <div v-if="versionLoading" class="editor-view__version-loading">加载中...</div>
+              <div v-else-if="versionList.length === 0" class="editor-view__version-empty">暂无版本记录</div>
+              <div v-else class="editor-view__version-list">
+                <div
+                  v-for="entry in versionList"
+                  :key="entry.version"
+                  class="editor-view__version-item"
+                  :class="{ 'editor-view__version-item--current': entry.version === currentVersion }"
+                >
+                  <div class="editor-view__version-info">
+                    <span class="editor-view__version-time">{{ formatVersion(entry.version) }}</span>
+                    <div class="editor-view__version-tags">
+                      <el-tag v-if="entry.published" type="success" size="small">已发布</el-tag>
+                      <el-tag v-if="entry.version === currentVersion" type="primary" size="small">当前</el-tag>
+                    </div>
+                  </div>
+                  <el-button
+                    v-if="entry.version !== currentVersion"
+                    size="small"
+                    text
+                    type="primary"
+                    @click="handleLoadVersion(entry)"
+                  >加载</el-button>
+                </div>
+              </div>
+            </div>
+          </el-popover>
 
           <button class="editor-view__btn editor-view__btn--outline" @click="handleClearCanvas">清空</button>
           <button class="editor-view__btn editor-view__btn--primary" @click="handleSave">保存</button>
@@ -526,6 +632,76 @@ function handleClearCanvas() {
       color: var(--el-color-white);
       &:hover { background: var(--el-color-primary-light-3); border-color: var(--el-color-primary-light-3); }
     }
+  }
+
+  &__version-badge {
+    font-size: 11px;
+    color: var(--el-text-color-placeholder);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__version-panel {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  &__version-header {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 8px;
+  }
+
+  &__version-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__version-loading,
+  &__version-empty {
+    padding: 16px 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--el-text-color-placeholder);
+  }
+
+  &__version-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__version-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: var(--el-border-radius-small);
+    transition: background 0.15s;
+
+    &:hover { background: var(--el-fill-color-light); }
+
+    &--current {
+      background: var(--el-color-primary-light-9);
+    }
+  }
+
+  &__version-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__version-time {
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+    font-family: monospace;
+  }
+
+  &__version-tags {
+    display: flex;
+    gap: 4px;
   }
 
   &__body {

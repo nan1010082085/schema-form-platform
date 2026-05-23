@@ -65,6 +65,8 @@ function initMockData() {
 
   MOCK_SCHEMAS.set(demoId, {
     id: demoId,
+    editId: demoId,
+    version: '20250101000000',
     name: 'Demo Form',
     type: 'form',
     status: 'draft',
@@ -132,6 +134,8 @@ export async function mockCreateSchema(payload: SchemaCreatePayload): Promise<Sc
   const now = new Date().toISOString()
   const schema: SchemaListItem = {
     id,
+    editId: payload.editId ?? id,
+    version: new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14),
     name: payload.name,
     type: payload.type,
     status: 'draft',
@@ -177,6 +181,7 @@ export async function mockPublishSchema(id: string): Promise<PublishedSchemaItem
     type: schema.type,
     json: schema.json ?? [],
     publishId: genId(),
+    version: schema.version ?? '20250101000000',
     publishedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

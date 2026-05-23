@@ -19,6 +19,8 @@ export interface ApiResponse<T = unknown> {
 /** API 错误详情 */
 export interface ApiErrorDetail {
   message: string
+  code?: string
+  details?: Array<{ path: string; message: string }>
 }
 
 // ---- Schema 资源类型 ----
@@ -29,6 +31,8 @@ export type SchemaStatusValue = 'draft'
 /** Schema 列表项（编辑表 — 仅草稿） */
 export interface SchemaListItem {
   id: string
+  editId: string
+  version: string
   name: string
   type: SchemaTypeValue
   status: SchemaStatusValue
@@ -50,6 +54,7 @@ export interface PublishedSchemaItem {
   type: SchemaTypeValue
   json: FormSchemaItem[]
   publishId: string
+  version: string
   publishedAt: string
   createdAt: string
   updatedAt: string
@@ -60,6 +65,7 @@ export interface SchemaCreatePayload {
   name: string
   type: SchemaTypeValue
   json: FormSchemaItem[]
+  editId?: string
 }
 
 /** Schema 更新请求体（至少一个字段） */
@@ -86,4 +92,48 @@ export interface PaginatedResponse<T> {
   page: number
   pageSize: number
   totalPages: number
+}
+
+// ---- 版本管理 ----
+
+/** 版本列表项 */
+export interface VersionEntry {
+  id: string
+  version: string
+  createdAt: string
+  published: boolean
+}
+
+/** 版本列表响应 */
+export interface VersionListResponse {
+  items: VersionEntry[]
+  total: number
+}
+
+// ---- 导入 ----
+
+/** Schema 导入请求体 */
+export interface SchemaImportPayload {
+  name: string
+  type: SchemaTypeValue
+  json: FormSchemaItem[]
+}
+
+// ---- 缓存与预取 ----
+
+/** 缓存条目 */
+export interface CacheEntry {
+  data: unknown
+  timestamp: number
+  ttl: number
+}
+
+/** 预取任务 */
+export interface PrefetchTask {
+  key: string
+  url: string
+  method: string
+  params?: Record<string, unknown>
+  labelKey: string
+  valueKey: string
 }

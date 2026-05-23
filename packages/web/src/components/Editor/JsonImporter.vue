@@ -6,7 +6,7 @@
  */
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 import {
   inferFieldsFromJson,
   fieldInferencesToSchema,
@@ -99,8 +99,7 @@ async function handleFetchFromUrl() {
   fetching.value = true
   fetchError.value = ''
   try {
-    const http = getRequestInstance()
-    const res = await http.get(fetchUrl.value) as unknown
+    const res: unknown = await apiClient.requestUrl('get', fetchUrl.value)
 
     // Extract data array from wrapped response
     const dataSource = extractDataArray(res)

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
+import { useEditorStore } from '@/stores/editor'
 
 const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__
   ? '/child/schemaForm/'
@@ -65,6 +66,17 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
+})
+
+// 路由守卫：编辑器未保存时拦截离开
+router.beforeEach((_to, from) => {
+  if (from.name === 'editor') {
+    const editorStore = useEditorStore()
+    if (editorStore.isDirty) {
+      const confirmed = window.confirm('当前编辑未保存，确定要离开吗？')
+      if (!confirmed) return false
+    }
+  }
 })
 
 export default router

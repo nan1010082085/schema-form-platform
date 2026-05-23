@@ -30,7 +30,7 @@ import { useLinkage } from '@/composables/useLinkage'
 import { useFormData } from '@/composables/useFormData'
 import { useLifecycle } from '@/composables/useLifecycle'
 import { useLocale } from '@/composables/useLocale'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 
 /** Element Plus 语言包映射 */
 const epLocaleMap: Record<FormGridLocale, typeof zhCn> = {
@@ -215,11 +215,8 @@ function applyFieldMap(data: Record<string, unknown>, fieldMap?: Record<string, 
 async function loadApiData(config: LoadApiConfig): Promise<void> {
   loading.value = true
   try {
-    const http = getRequestInstance()
     const method = config.method ?? 'get'
-    const res: unknown = method === 'get'
-      ? await http.get(config.url, { params: config.params })
-      : await http.post(config.url, config.params)
+    const res: unknown = await apiClient.requestUrl(method, config.url, config.params)
 
     // 假设 API 返回 { code: 0, data: Record<string, any> }
     let rawData: Record<string, unknown> = {}

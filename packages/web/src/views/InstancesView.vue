@@ -8,9 +8,11 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Delete, Edit, View, Promotion, List, Document, Sort } from '@element-plus/icons-vue'
+import { Search, Plus, Delete, Edit, View, Promotion, List, Document, Sort, Download, Upload } from '@element-plus/icons-vue'
 import { useApiStore } from '@/stores/api'
-import type { SchemaListItem } from '@/types/api'
+import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
+import { importSchema } from '@/utils/apiClient'
+import type { SchemaListItem, SchemaDetail } from '@/types/api'
 
 const router = useRouter()
 const store = useApiStore()
@@ -159,6 +161,50 @@ async function handleBulkDelete() {
   selectedIds.value.clear()
 }
 
+// ---- Export/Import ----
+function handleExport(item: SchemaListItem) {
+  // 需要完整的 schema 数据才能导出
+  store.fetchSchemaById(item.id).then((detail) => {
+    if (detail) {
+      downloadSchemaJson(detail as SchemaDetail)
+      ElMessage.success('导出成功')
+    }
+  })
+}
+
+const importDialogVisible = ref(false)
+const importLoading = ref(false)
+const importFile = ref<File | null>(null)
+
+function openImportDialog() {
+  importFile.value = null
+  importDialogVisible.value = true
+}
+
+function handleFileChange(file: File) {
+  importFile.value = file
+}
+
+async function confirmImport() {
+  if (!importFile.value) {
+    ElMessage.warning('请选择文件')
+    return
+  }
+
+  importLoading.value = true
+  try {
+    const parsed = await parseImportFile(importFile.value)
+    await importSchema(parsed)
+    importDialogVisible.value = false
+    ElMessage.success('导入成功')
+    store.fetchSchemas()
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '导入失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
 // ---- Helpers ----
 function formatDate(d: string) {
   return new Date(d).toLocaleString('zh-CN')
@@ -188,6 +234,7 @@ const isFiltered = computed(() =>
             <p class="fg-instances__subtitle">管理所有表单和搜索列表实例</p>
           </div>
           <div class="fg-instances__header-actions">
+            <el-button :icon="Upload" @click="openImportDialog">导入</el-button>
             <el-button type="primary" :icon="Plus" @click="openCreateDialog">新建实例</el-button>
           </div>
         </div>
@@ -300,6 +347,7 @@ const isFiltered = computed(() =>
               <h3 class="fg-instances-card__name">{{ item.name }}</h3>
               <div class="fg-instances-card__meta">
                 <el-tag :type="typeTagType(item.type)" size="small">{{ typeLabel(item.type) }}</el-tag>
+                <span v-if="item.version" class="fg-instances-card__version">v{{ item.version }}</span>
                 <!-- Component count -->
                 <span v-if="item.json?.length" class="fg-instances-card__count">
                   {{ item.json.length }} 个组件
@@ -317,6 +365,7 @@ const isFiltered = computed(() =>
                 :icon="Promotion"
                 @click="handlePublish(item.id)"
               >发布</el-button>
+              <el-button size="small" text :icon="Download" @click="handleExport(item)">导出</el-button>
               <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)" />
             </div>
           </div>
@@ -363,6 +412,33 @@ const isFiltered = computed(() =>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmCreate">创建并编辑</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Import Dialog -->
+    <el-dialog
+      v-model="importDialogVisible"
+      title="导入 Schema"
+      width="440px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <el-upload
+        drag
+        :auto-upload="false"
+        accept=".json"
+        :limit="1"
+        :on-change="(file: any) => handleFileChange(file.raw)"
+      >
+        <el-icon :size="40"><Upload /></el-icon>
+        <div class="el-upload__text">拖拽文件到此处，或 <em>点击选择</em></div>
+        <template #tip>
+          <div class="el-upload__tip">仅支持 .json 格式的 Schema 文件</div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <el-button @click="importDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="importLoading" @click="confirmImport">导入</el-button>
       </template>
     </el-dialog>
   </div>
@@ -584,6 +660,12 @@ const isFiltered = computed(() =>
     font-size: 12px;
     color: #c0c4cc;
     margin-left: auto;
+  }
+
+  &__version {
+    font-size: 11px;
+    color: #909399;
+    font-family: monospace;
   }
 
   &__actions {

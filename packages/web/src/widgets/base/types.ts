@@ -199,6 +199,8 @@ export interface SchemaApiConfig {
   ttl?: number           // 缓存 TTL（毫秒），默认 0 = 永不过期
   immediate?: boolean    // 默认 true，挂载时加载
   dictCode?: string      // 从 global.dictMap 查找（优先于 url）
+  cacheLevel?: 'memory' | 'indexeddb' | 'both'  // 缓存策略，默认 'memory'
+  enableRetry?: boolean  // 开启重试，默认 false，开启后重试 3 次（最高 5 次）
 }
 
 // ============================================================

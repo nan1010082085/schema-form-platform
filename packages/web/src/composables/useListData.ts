@@ -4,14 +4,16 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 import type { ListApiConfig } from '@/components/FormGrid/types'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
+import { executeWithRetry } from '@/utils/retryRequest'
 
 export interface UseListDataOptions {
   listApi: ListApiConfig
   pageSize?: number
   autoLoad?: boolean
+  enableRetry?: boolean
 }
 
 export interface UseListDataReturn {
@@ -64,7 +66,6 @@ export function useListData(options: UseListDataOptions): UseListDataReturn {
     loading.value = true
     error.value = ''
     try {
-      const request = getRequestInstance()
       const params: Record<string, unknown> = {
         [listApi.pageParam ?? 'pageNum']: currentPage.value,
         [listApi.sizeParam ?? 'pageSize']: pageSize.value,
@@ -77,9 +78,10 @@ export function useListData(options: UseListDataOptions): UseListDataReturn {
       }
 
       const method = listApi.method ?? 'post'
-      const response: unknown = method === 'get'
-        ? await request.get(listApi.url, { params })
-        : await request.post(listApi.url, params)
+      const response: unknown = await executeWithRetry(
+        () => apiClient.requestUrl(method, listApi.url, params),
+        { enableRetry: options.enableRetry },
+      )
 
       const { data, total: totalVal } = normalizeListResponse(response, {
         dataPath: listApi.dataPath ?? 'data',

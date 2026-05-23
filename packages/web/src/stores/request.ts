@@ -16,7 +16,8 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
+import { useCache } from '@/composables/useCache'
 import type { FormSchemaItem, DictItem, SchemaApiConfig } from '@/components/FormGrid/types'
 import type { CacheEntry, PrefetchTask } from '@/types/api'
 import { useLogger } from '@/composables/useLogger'
@@ -322,17 +323,26 @@ export const useRequestStore = defineStore('request', () => {
 
     isPrefetching.value = true
     const results = new Map<string, DictItem[]>()
-    const http = getRequestInstance()
+    const workerCache = useCache()
 
     // 一次性获取所有任务（后续 dequeue 逐个处理）
     const tasks = [...prefetchQueue.value]
     prefetchQueue.value = []
 
     for (const task of tasks) {
-      // 查缓存
-      const cached = cacheGet<DictItem[]>(task.url, task.params)
-      if (cached) {
-        results.set(task.key, cached)
+      // L1: 同步内存缓存
+      const l1Cached = cacheGet<DictItem[]>(task.url, task.params)
+      if (l1Cached) {
+        results.set(task.key, l1Cached)
+        continue
+      }
+
+      // L2: Worker 缓存（IndexedDB 持久化）
+      const workerKey = workerCache.hashKey(task.method, task.url, task.params)
+      const l2Cached = await workerCache.get<DictItem[]>(workerKey)
+      if (l2Cached) {
+        cacheSet(task.url, task.params, l2Cached)
+        results.set(task.key, l2Cached)
         continue
       }
 
@@ -342,10 +352,7 @@ export const useRequestStore = defineStore('request', () => {
 
         trackRequest(task.method, task.url, task.params)
 
-        const res: unknown =
-          task.method === 'get'
-            ? await http.get(task.url, { params: task.params })
-            : await http.post(task.url, task.params)
+        const res: unknown = await apiClient.requestUrl(task.method, task.url, task.params)
 
         untrackRequest(task.method, task.url, task.params)
 
@@ -364,6 +371,8 @@ export const useRequestStore = defineStore('request', () => {
 
         results.set(task.key, options)
         cacheSet(task.url, task.params, options)
+        // L2: 写入 Worker 缓存
+        workerCache.set(workerKey, options)
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'
         logger.error(`Prefetch failed for ${task.url}:`, message)
