@@ -356,21 +356,11 @@ const isFiltered = computed(() =>
               </div>
             </div>
             <div class="fg-instances-card__actions">
-              <el-tooltip content="编辑" placement="top" :show-after="500">
-                <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)">编辑</el-button>
-              </el-tooltip>
-              <el-tooltip content="预览" placement="top" :show-after="500">
-                <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)">预览</el-button>
-              </el-tooltip>
-              <el-tooltip content="发布" placement="top" :show-after="500">
-                <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item.id)">发布</el-button>
-              </el-tooltip>
-              <el-tooltip content="导出" placement="top" :show-after="500">
-                <el-button size="small" text :icon="Download" @click="handleExport(item)">导出</el-button>
-              </el-tooltip>
-              <el-tooltip content="删除" placement="top" :show-after="500">
-                <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
-              </el-tooltip>
+              <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)">编辑</el-button>
+              <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)">预览</el-button>
+              <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item.id)">发布</el-button>
+              <el-button size="small" text :icon="Download" @click="handleExport(item)">导出</el-button>
+              <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
             </div>
           </div>
         </div>
@@ -676,9 +666,16 @@ const isFiltered = computed(() =>
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 4px;
+    gap: 2px;
     padding-top: 12px;
     border-top: 1px solid #f0f2f5;
+    flex-wrap: nowrap;
+    overflow: hidden;
+
+    .el-button {
+      padding: 4px 6px;
+      font-size: 12px;
+    }
   }
 }
 
