@@ -779,7 +779,7 @@ const spec = {
             in: 'path',
             required: true,
             schema: { type: 'string' },
-            description: 'Dictionary code. Built-in: city, gender, status, department',
+            description: 'Dictionary code. Built-in: city, gender, status, department, role, priority, education, industry',
           },
         ],
         responses: {
@@ -820,9 +820,48 @@ const spec = {
         summary: 'Generic paginated data list',
         operationId: 'getDataList',
         parameters: [
-          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
-          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 10 } },
+          { name: 'pageNum', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number (alias: page)' },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 10 }, description: 'Items per page (alias: size)' },
         ],
+        responses: {
+          '200': {
+            description: 'Paginated data',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: { $ref: '#/components/schemas/DataListResponse' },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Data'],
+        summary: 'Generic paginated data list (POST)',
+        operationId: 'postDataList',
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  pageNum: { type: 'integer', default: 1, description: 'Page number (alias: page)' },
+                  pageSize: { type: 'integer', default: 10, description: 'Items per page (alias: size)' },
+                },
+                additionalProperties: { type: 'string', description: 'Filter params (e.g. department, status, name)' },
+              },
+            },
+          },
+        },
         responses: {
           '200': {
             description: 'Paginated data',
@@ -880,6 +919,112 @@ const spec = {
                 schema: { $ref: '#/components/schemas/ApiResponse' },
               },
             },
+          },
+        },
+      },
+    },
+
+    // ========== Options ==========
+    '/api/options/{category}': {
+      get: {
+        tags: ['Options'],
+        summary: 'Get flat option list by category',
+        operationId: 'getOptions',
+        parameters: [
+          {
+            name: 'category',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Category name. Built-in: cities, departments, roles, skills, priorities, statuses',
+          },
+          { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Filter by label or value (case-insensitive)' },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Option items with pagination',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: { type: 'array', items: { $ref: '#/components/schemas/DictItem' } },
+                        pagination: {
+                          type: 'object',
+                          properties: {
+                            page: { type: 'integer' },
+                            pageSize: { type: 'integer' },
+                            total: { type: 'integer' },
+                            totalPages: { type: 'integer' },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Category not found',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } },
+          },
+        },
+      },
+    },
+
+    '/api/options/tree/{category}': {
+      get: {
+        tags: ['Options'],
+        summary: 'Get tree-structured options by category',
+        operationId: 'getTreeOptions',
+        parameters: [
+          {
+            name: 'category',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Tree category. Built-in: regions (province/city/district), departments (org tree)',
+          },
+          { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Filter tree nodes by label (returns matching nodes with ancestor paths)' },
+        ],
+        responses: {
+          '200': {
+            description: 'Tree nodes',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              label: { type: 'string' },
+                              value: { type: 'string' },
+                              children: { type: 'array', items: {} },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Category not found',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiResponse' } } },
           },
         },
       },
