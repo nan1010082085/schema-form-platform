@@ -20,9 +20,9 @@ const buttons = computed<ButtonItem[]>(() => {
   return (widgetData.value.props?.buttons as ButtonItem[]) || []
 })
 
-function handleClick(_btn: ButtonItem, _idx: number) {
+async function handleClick(_btn: ButtonItem, _idx: number) {
   if (eventCtx) {
-    triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx)
   }
 }
 </script>

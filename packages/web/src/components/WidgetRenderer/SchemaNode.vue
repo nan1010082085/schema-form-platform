@@ -158,9 +158,9 @@ function buildEditorEventContext(): EventExecutionContext {
 }
 
 /** 统一事件触发：由 SchemaNode 拦截并分发，部件无需自行调用 */
-function handleWidgetEvent(trigger: string, _value?: unknown) {
+async function handleWidgetEvent(trigger: string, _value?: unknown) {
   logger.debug(`trigger=${trigger}`, props.widget.id)
-  triggerWidgetEvent(props.widget, trigger, buildEditorEventContext())
+  await triggerWidgetEvent(props.widget, trigger, buildEditorEventContext())
 }
 
 /**
