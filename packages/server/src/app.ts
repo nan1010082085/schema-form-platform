@@ -3,8 +3,14 @@ import cors from '@koa/cors'
 import helmet from 'koa-helmet'
 import bodyParser from 'koa-bodyparser'
 import { errorHandler } from './middleware/errorHandler.js'
+import { createRateLimit } from './middleware/rateLimit.js'
 import healthRouter from './routes/health.js'
 import schemaRouter from './routes/schema.js'
+import authRouter from './routes/auth.js'
+import dictRouter from './routes/dict.js'
+import dataRouter from './routes/data.js'
+import mockRouter from './routes/mock.js'
+import docsRouter from './routes/docs.js'
 
 const app = new Koa()
 
@@ -24,10 +30,23 @@ app.use(cors({
   credentials: true,
 }))
 
+// Rate limiting - must be before routes
+app.use(createRateLimit())
+
 // --- Routes ---
+app.use(docsRouter.routes())
+app.use(docsRouter.allowedMethods())
 app.use(healthRouter.routes())
 app.use(healthRouter.allowedMethods())
 app.use(schemaRouter.routes())
 app.use(schemaRouter.allowedMethods())
+app.use(authRouter.routes())
+app.use(authRouter.allowedMethods())
+app.use(dictRouter.routes())
+app.use(dictRouter.allowedMethods())
+app.use(dataRouter.routes())
+app.use(dataRouter.allowedMethods())
+app.use(mockRouter.routes())
+app.use(mockRouter.allowedMethods())
 
 export default app

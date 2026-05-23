@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 
 export interface IFormSchema {
   _id: string
+  editId: string
+  version: string
   name: string
   type: 'form' | 'search_list'
   status: 'draft'
@@ -13,6 +15,8 @@ export interface IFormSchema {
 const formSchemaDef = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    editId: { type: String, required: true, index: true },
+    version: { type: String, required: true },
     name: { type: String, required: true },
     type: { type: String, enum: ['form', 'search_list'], default: 'form' },
     status: { type: String, enum: ['draft'], default: 'draft' },
@@ -29,6 +33,8 @@ const formSchemaDef = new mongoose.Schema(
     },
   },
 )
+
+formSchemaDef.index({ editId: 1, version: 1 }, { unique: true })
 
 export const FormSchemaModel =
   mongoose.models.FormSchema ?? mongoose.model<IFormSchema>('FormSchema', formSchemaDef)

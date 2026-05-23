@@ -17,28 +17,35 @@ import { useListData } from '@/composables/useListData'
 import type { ListApiConfig } from '@/components/FormGrid/types'
 
 /**
- * Mock getRequestInstance from @/utils/request.
- * We use vi.mock to replace it with a controlled axios stub.
+ * Mock apiClient from @/utils/apiClient.
+ * We use vi.mock to replace it with a controlled stub.
  */
-vi.mock('@/utils/request', () => {
-  const mockAxios = {
-    get: vi.fn(),
-    post: vi.fn(),
-  }
+vi.mock('@/utils/apiClient', () => {
+  const mockRequestUrl = vi.fn()
   return {
-    getRequestInstance: () => mockAxios,
-    createRequestInstance: vi.fn(),
-    setTokenGetter: vi.fn(),
-    request: vi.fn(),
+    apiClient: {
+      requestUrl: mockRequestUrl,
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+      configure: vi.fn(),
+      isMockEnabled: vi.fn(() => false),
+    },
+    ApiError: class ApiError extends Error {
+      constructor(msg, status) {
+        super(msg)
+        this.status = status
+      }
+    },
   }
 })
 
-import { getRequestInstance } from '@/utils/request'
+import { apiClient } from '@/utils/apiClient'
 
-/** Get the mocked axios instance */
-function getMockAxios() {
-  const inst = getRequestInstance()
-  return inst as unknown as { get: ReturnType<typeof vi.fn>; post: ReturnType<typeof vi.fn> }
+/** Get the mocked requestUrl function */
+function getMockRequestUrl() {
+  return apiClient.requestUrl as unknown as ReturnType<typeof vi.fn>
 }
 
 describe('useListData', () => {
@@ -86,8 +93,8 @@ describe('useListData', () => {
 
   describe('fetchData', () => {
     it('fetches data and populates tableData and total', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({
         data: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }],
         total: 2,
       })
@@ -114,8 +121,8 @@ describe('useListData', () => {
     })
 
     it('handles fetch errors gracefully', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockRejectedValue(new Error('Network error'))
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockRejectedValue(new Error('Network error'))
 
       const { fetchData, error, loading, tableData, total } = useListData({
         listApi: defaultListApi,
@@ -135,8 +142,8 @@ describe('useListData', () => {
 
   describe('handleSearch', () => {
     it('resets page to 1 by default', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handlePageChange, handleSearch, currentPage } = useListData({
         listApi: defaultListApi,
@@ -153,13 +160,14 @@ describe('useListData', () => {
       await flushPromises()
       expect(currentPage.value).toBe(1)
       // Verify the request was made with page 1
-      const lastCall = mockAxios.post.mock.calls[mockAxios.post.mock.calls.length - 1]
-      expect(lastCall[1]).toMatchObject({ pageNum: 1 })
+      const lastCall = mockRequestUrl.mock.calls[mockRequestUrl.mock.calls.length - 1]
+      const params = lastCall[2] // third arg is params/body
+      expect(params).toMatchObject({ pageNum: 1 })
     })
 
     it('does not reset page when resetOnSearch is false', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handlePageChange, handleSearch, currentPage } = useListData({
         listApi: { ...defaultListApi, resetOnSearch: false },
@@ -181,8 +189,8 @@ describe('useListData', () => {
 
   describe('handleReset', () => {
     it('clears search params and resets page to 1', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handlePageChange, handleReset, searchParams, currentPage, setSearchParams } =
         useListData({ listApi: defaultListApi, autoLoad: false })
@@ -207,8 +215,8 @@ describe('useListData', () => {
 
   describe('handlePageChange', () => {
     it('updates currentPage and fetches data', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handlePageChange, currentPage } = useListData({
         listApi: defaultListApi,
@@ -221,8 +229,9 @@ describe('useListData', () => {
       expect(currentPage.value).toBe(3)
 
       // Verify the request included the correct page
-      const lastCall = mockAxios.post.mock.calls[mockAxios.post.mock.calls.length - 1]
-      expect(lastCall[1]).toMatchObject({ pageNum: 3 })
+      const lastCall = mockRequestUrl.mock.calls[mockRequestUrl.mock.calls.length - 1]
+      const params = lastCall[2]
+      expect(params).toMatchObject({ pageNum: 3 })
     })
   })
 
@@ -230,8 +239,8 @@ describe('useListData', () => {
 
   describe('handleSizeChange', () => {
     it('resets page to 1 and updates pageSize', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handlePageChange, handleSizeChange, currentPage, pageSize } = useListData({
         listApi: defaultListApi,
@@ -250,8 +259,9 @@ describe('useListData', () => {
       expect(currentPage.value).toBe(1)
 
       // Verify request contains the new page size
-      const lastCall = mockAxios.post.mock.calls[mockAxios.post.mock.calls.length - 1]
-      expect(lastCall[1]).toMatchObject({ pageNum: 1, pageSize: 50 })
+      const lastCall = mockRequestUrl.mock.calls[mockRequestUrl.mock.calls.length - 1]
+      const params = lastCall[2]
+      expect(params).toMatchObject({ pageNum: 1, pageSize: 50 })
     })
   })
 
@@ -259,8 +269,8 @@ describe('useListData', () => {
 
   describe('filterEmptyParams (via fetchData)', () => {
     it('strips null/undefined/empty string values from request params', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { setSearchParams, fetchData } = useListData({
         listApi: defaultListApi,
@@ -277,8 +287,8 @@ describe('useListData', () => {
 
       await fetchData()
 
-      const lastCall = mockAxios.post.mock.calls[mockAxios.post.mock.calls.length - 1]
-      const params = lastCall[1] as Record<string, unknown>
+      const lastCall = mockRequestUrl.mock.calls[mockRequestUrl.mock.calls.length - 1]
+      const params = lastCall[2] as Record<string, unknown>
 
       expect(params.keyword).toBe('hello')
       expect(params.active).toBe(true)
@@ -294,8 +304,8 @@ describe('useListData', () => {
 
   describe('getNestedValue (via dataPath/totalPath)', () => {
     it('extracts data by dot-path', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({
         result: {
           records: [{ id: 1 }, { id: 2 }],
           pagination: { totalCount: 100 },
@@ -318,8 +328,8 @@ describe('useListData', () => {
     })
 
     it('uses top-level properties when no dataPath specified', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({
         data: [{ id: 1 }],
         total: 1,
       })
@@ -376,8 +386,8 @@ describe('useListData', () => {
 
   describe('handleSortChange', () => {
     it('fetches data with sort params', async () => {
-      const mockAxios = getMockAxios()
-      mockAxios.post.mockResolvedValue({ data: [], total: 0 })
+      const mockRequestUrl = getMockRequestUrl()
+      mockRequestUrl.mockResolvedValue({ data: [], total: 0 })
 
       const { handleSortChange } = useListData({
         listApi: defaultListApi,
@@ -387,8 +397,9 @@ describe('useListData', () => {
       handleSortChange({ prop: 'name', order: 'ascending' })
       await flushPromises()
 
-      const lastCall = mockAxios.post.mock.calls[mockAxios.post.mock.calls.length - 1]
-      expect(lastCall[1]).toMatchObject({
+      const lastCall = mockRequestUrl.mock.calls[mockRequestUrl.mock.calls.length - 1]
+      const params = lastCall[2]
+      expect(params).toMatchObject({
         sortField: 'name',
         sortOrder: 'ascending',
       })

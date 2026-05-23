@@ -61,6 +61,22 @@ export const useEditorStore = defineStore('editor', () => {
   const clipboard = ref<Widget | null>(null)
 
   // ================================================================
+  // 脏标记（未保存更改检测）
+  // ================================================================
+
+  const isDirty = ref(false)
+  const savedHistoryIndex = ref(-1)
+
+  function markDirty(): void {
+    isDirty.value = true
+  }
+
+  function markClean(): void {
+    isDirty.value = false
+    savedHistoryIndex.value = historyIndex.value
+  }
+
+  // ================================================================
   // 配置弹窗触发（右键菜单 → PropertyPanel 打开弹框）
   // ================================================================
 
@@ -115,8 +131,11 @@ export const useEditorStore = defineStore('editor', () => {
     history.value.push(snapshot)
     if (history.value.length > MAX_HISTORY) {
       history.value.shift()
+      // MAX_HISTORY 被截断时，savedHistoryIndex 也需要调整
+      if (savedHistoryIndex.value >= 0) savedHistoryIndex.value--
     }
     historyIndex.value = history.value.length - 1
+    markDirty()
   }
 
   /**
@@ -126,6 +145,7 @@ export const useEditorStore = defineStore('editor', () => {
   function undo(): Widget[] | null {
     if (historyIndex.value <= 0) return null
     historyIndex.value--
+    isDirty.value = historyIndex.value !== savedHistoryIndex.value
     return JSON.parse(JSON.stringify(history.value[historyIndex.value]))
   }
 
@@ -136,6 +156,7 @@ export const useEditorStore = defineStore('editor', () => {
   function redo(): Widget[] | null {
     if (historyIndex.value >= history.value.length - 1) return null
     historyIndex.value++
+    isDirty.value = historyIndex.value !== savedHistoryIndex.value
     return JSON.parse(JSON.stringify(history.value[historyIndex.value]))
   }
 
@@ -238,6 +259,10 @@ export const useEditorStore = defineStore('editor', () => {
     canRedoDialog,
     // 剪贴板
     clipboard,
+    // 脏标记
+    isDirty,
+    markDirty,
+    markClean,
     // 配置弹窗触发
     configDialogTrigger,
     openConfigDialog,
