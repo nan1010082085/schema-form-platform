@@ -21,14 +21,15 @@ import EditorLeftPanel from '@/components/Editor/EditorLeftPanel.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
 import type { Widget } from '@/widgets/base/types'
 import {
-  RefreshLeft,
-  RefreshRight,
   CopyDocument,
   Delete,
   View,
   EditPen,
   FullScreen,
   Clock,
+  Download,
+  DArrowLeft,
+  DArrowRight,
 } from '@element-plus/icons-vue'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
@@ -187,6 +188,34 @@ function handleDeleteWidget() {
   editorStore.pushHistory([...widgetStore.widgets])
 }
 
+function handleCopyId() {
+  if (!editorStore.selectedId) return
+  navigator.clipboard.writeText(editorStore.selectedId)
+  ElMessage.success('已复制部件 ID')
+}
+
+type AlignDir = 'top' | 'bottom' | 'left' | 'right' | 'center-h' | 'center-v'
+
+function handleAlign(dir: AlignDir) {
+  const id = editorStore.selectedId
+  if (!id) return
+  const widget = widgetStore.findWidget(id)
+  if (!widget) return
+  const p = { ...widget.position }
+
+  switch (dir) {
+    case 'top': p.y = 0; break
+    case 'bottom': p.y = boardStore.canvas.height - p.h; break
+    case 'left': p.x = 0; break
+    case 'right': p.x = boardStore.canvas.width - p.w; break
+    case 'center-h': p.x = Math.round((boardStore.canvas.width - p.w) / 2); break
+    case 'center-v': p.y = Math.round((boardStore.canvas.height - p.h) / 2); break
+  }
+
+  widgetStore.updateWidget(id, { position: p })
+  editorStore.pushHistory([...widgetStore.widgets])
+}
+
 // ================================================================
 // Zoom controls
 // ================================================================
@@ -310,20 +339,52 @@ function handleClearCanvas() {
       <!-- Center: edit operations -->
       <div v-if="mode === 'edit'" class="editor-view__toolbar-center">
         <div class="editor-view__btn-group">
-          <button class="editor-view__icon-btn" :disabled="!editorStore.canUndo" title="撤销 (Ctrl+Z)" @click="handleUndo">
-            <el-icon :size="14"><RefreshLeft /></el-icon>
-          </button>
-          <button class="editor-view__icon-btn" :disabled="!editorStore.canRedo" title="重做 (Ctrl+Y)" @click="handleRedo">
-            <el-icon :size="14"><RefreshRight /></el-icon>
-          </button>
+          <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.canUndo" @click="handleUndo">
+              <el-icon :size="14"><DArrowLeft /></el-icon>
+            </button>
+          </el-tooltip>
+          <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.canRedo" @click="handleRedo">
+              <el-icon :size="14"><DArrowRight /></el-icon>
+            </button>
+          </el-tooltip>
         </div>
         <div class="editor-view__btn-group">
-          <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" title="复制 (Ctrl+C)" @click="handleCopyWidget">
-            <el-icon :size="14"><CopyDocument /></el-icon>
-          </button>
-          <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" title="删除 (Del)" @click="handleDeleteWidget">
-            <el-icon :size="14"><Delete /></el-icon>
-          </button>
+          <el-tooltip content="复制部件 (Ctrl+C)" placement="bottom">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleCopyWidget">
+              <el-icon :size="14"><CopyDocument /></el-icon>
+            </button>
+          </el-tooltip>
+          <el-tooltip content="删除部件 (Del)" placement="bottom">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleDeleteWidget">
+              <el-icon :size="14"><Delete /></el-icon>
+            </button>
+          </el-tooltip>
+        </div>
+        <div class="editor-view__btn-group">
+          <el-tooltip content="复制部件 ID" placement="bottom">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleCopyId">
+              <el-icon :size="14"><CopyDocument /></el-icon>
+            </button>
+          </el-tooltip>
+        </div>
+        <div class="editor-view__btn-group">
+          <el-dropdown trigger="click" :disabled="!editorStore.selectedId" @command="handleAlign">
+            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" title="对齐">
+              <el-icon :size="14"><Download /></el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="top">顶部对齐</el-dropdown-item>
+                <el-dropdown-item command="bottom">底部对齐</el-dropdown-item>
+                <el-dropdown-item command="left">左对齐</el-dropdown-item>
+                <el-dropdown-item command="right">右对齐</el-dropdown-item>
+                <el-dropdown-item divided command="center-h">水平居中</el-dropdown-item>
+                <el-dropdown-item command="center-v">垂直居中</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
 
