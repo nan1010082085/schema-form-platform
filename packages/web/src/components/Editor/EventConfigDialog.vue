@@ -106,15 +106,6 @@ function getReceivableEvents(targetId: string): ReceivableEventConfig[] {
   return registryItem?.config?.receivableEvents ?? []
 }
 
-// ---- 根据目标组件获取暴露值（用于 set-variable 的变量名提示） ----
-
-function getExposedValues(targetId: string) {
-  const widget = widgetStore.findWidget(targetId)
-  if (!widget) return []
-  const registryItem = getWidget(widget.type)
-  return registryItem?.config?.exposedValues ?? []
-}
-
 // ---- 事件 CRUD ----
 
 function addEvent() {

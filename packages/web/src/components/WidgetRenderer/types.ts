@@ -154,7 +154,7 @@ import type { SchemaApiConfig } from '../../widgets/base/types'
 export type { SchemaApiConfig }
 
 /** 按钮动作类型 */
-export type ActionType = 'emit' | 'dialog' | 'upload' | 'submit' | 'reset' | 'navigate' | 'api' | 'validate' | 'confirm'
+export type ActionType = 'emit' | 'dialog' | 'upload' | 'submit' | 'reset' | 'navigate' | 'api' | 'validate' | 'confirm' | 'trigger-event'
 
 /** emit 动作的 payload — 可以是任意可序列化值 */
 export type ActionPayload = string | number | boolean | null | Record<string, unknown> | unknown[]
@@ -179,6 +179,9 @@ export interface SchemaAction {
   // navigate
   navigatePath?: string
   navigateQuery?: Record<string, string>
+  // trigger-event
+  target?: string
+  event?: string
 }
 
 /** 按钮配置 */

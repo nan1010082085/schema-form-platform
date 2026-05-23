@@ -8,11 +8,11 @@
  * - 数据源加载后触发联动
  * - 复杂多系统交互场景
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { reactive, ref, computed } from 'vue'
-import { executeEventAction, triggerWidgetEvent, type EventExecutionContext } from '@/engine/eventEngine'
+import { describe, it, expect, vi } from 'vitest'
+import { reactive } from 'vue'
+import { executeEventAction, type EventExecutionContext } from '@/engine/eventEngine'
 import { useLinkage } from '@/composables/useLinkage'
-import type { Widget, PartialWidget, SchemaEventAction } from '@/widgets/base/types'
+import type { PartialWidget, SchemaEventAction } from '@/widgets/base/types'
 import type { FormData } from '@/components/WidgetRenderer/types'
 
 vi.mock('@/composables/useLogger', () => ({
