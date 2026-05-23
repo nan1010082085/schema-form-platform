@@ -11,7 +11,7 @@
  * - 变量与事件系统的集成
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { reactive, ref, computed } from 'vue'
+import { reactive } from 'vue'
 import { evaluateCondition, executeEventAction, triggerWidgetEvent, type EventExecutionContext } from '@/engine/eventEngine'
 import { useLinkage } from '@/composables/useLinkage'
 import type { Widget, PartialWidget } from '@/widgets/base/types'
