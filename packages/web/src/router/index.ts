@@ -2,14 +2,24 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper'
 import { ElMessageBox } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
+import { useAuthStore } from '@/stores/auth'
 
-const routerBase = qiankunWindow.__POWERED_BY_QIANKUN__
+const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__
+
+const routerBase = isQiankun
   ? '/child/schemaForm/'
   : import.meta.env.BASE_URL
 
 const router = createRouter({
   history: createWebHistory(routerBase),
   routes: [
+    // ---- 登录 ----
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+    },
+
     // ---- Redirects ----
     { path: '/', redirect: '/instances' },
     { path: '/schemas', redirect: '/instances' },
@@ -67,6 +77,17 @@ const router = createRouter({
       component: () => import('@/views/NotFoundView.vue'),
     },
   ],
+})
+
+// 路由守卫：认证检查（仅独立模式）
+router.beforeEach((to) => {
+  if (isQiankun) return true
+
+  const authStore = useAuthStore()
+  if (!authStore.isLoggedIn && to.name !== 'login') {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  return true
 })
 
 // 路由守卫：编辑器未保存时拦截离开

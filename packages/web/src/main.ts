@@ -9,6 +9,7 @@ import { renderWithQiankun, qiankunWindow, type QiankunProps } from 'vite-plugin
 import App from './App.vue'
 import router from './router'
 import { useAppStore } from './stores/app'
+import { useAuthStore } from './stores/auth'
 import { createRequestInstance, setTokenGetter } from './utils/request'
 import { configureApiClient } from './utils/apiClient'
 import { registerAllWidgets } from './widgets'
@@ -29,7 +30,11 @@ function render(props: QiankunProps = {}) {
   // 初始化 Schema API 客户端（qiankun 和 standalone 都需要）
   configureApiClient({
     baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
-    getToken: () => useAppStore(pinia!).requestContext.token,
+    getToken: () => {
+      const authStore = useAuthStore(pinia!)
+      if (authStore.token) return authStore.token
+      return useAppStore(pinia!).requestContext.token
+    },
     useMock: import.meta.env.VITE_USE_MOCK === 'true',
   })
 
@@ -59,12 +64,20 @@ renderWithQiankun({
       token: reqCtx.token,
       headers: reqCtx.headers
     })
-    setTokenGetter(() => useAppStore(pinia!).requestContext.token)
+    setTokenGetter(() => {
+      const authStore = useAuthStore(pinia!)
+      if (authStore.token) return authStore.token
+      return useAppStore(pinia!).requestContext.token
+    })
 
     // 初始化 Schema API 客户端
     configureApiClient({
       baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
-      getToken: () => useAppStore(pinia!).requestContext.token,
+      getToken: () => {
+        const authStore = useAuthStore(pinia!)
+        if (authStore.token) return authStore.token
+        return useAppStore(pinia!).requestContext.token
+      },
       useMock: import.meta.env.VITE_USE_MOCK === 'true',
     })
   },
