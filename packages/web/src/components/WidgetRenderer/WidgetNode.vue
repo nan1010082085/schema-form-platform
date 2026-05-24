@@ -13,12 +13,12 @@
  * - 拦截 DOM 事件并路由到事件引擎
  * - 注入联动状态控制 visible/disabled/required
  */
-import { computed, inject, provide, ref } from 'vue'
+import { computed, inject, provide, ref, onMounted, onUnmounted } from 'vue'
 import type { ComputedRef, ComponentPublicInstance } from 'vue'
 import type { Widget, PartialWidget, SchemaType, LinkageState } from '../../widgets/base/types'
 import type { FormData } from './types'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
-import { EVENT_CONTEXT_KEY, FORM_GRID_LINKAGE_KEY } from './types'
+import { EVENT_CONTEXT_KEY, FORM_GRID_LINKAGE_KEY, DIALOG_REGISTRY_KEY } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from './SchemaRender.vue'
@@ -61,8 +61,21 @@ const widgetData = computed(() => props.widget)
 provide(widgetDataKey, widgetData as ComputedRef<Widget>)
 provide(widgetStyleKey, computed(() => props.widget.style ?? {}))
 
-// ---- Dialog state ----
-const dialogVisible = ref(true)
+// ---- Dialog state (hidden by default, opened via event action) ----
+const dialogVisible = ref(false)
+
+// Register dialog with registry so eventContext.openDialog(target) can open it
+const dialogRegistry = inject(DIALOG_REGISTRY_KEY, null)
+onMounted(() => {
+  if (props.widget.type === 'dialog' && props.widget.id && dialogRegistry) {
+    dialogRegistry.set(props.widget.id, (visible: boolean) => { dialogVisible.value = visible })
+  }
+})
+onUnmounted(() => {
+  if (props.widget.type === 'dialog' && props.widget.id && dialogRegistry) {
+    dialogRegistry.delete(props.widget.id)
+  }
+})
 
 // ---- Container ref (for tabs activeKey etc.) ----
 const containerRef = ref<ComponentPublicInstance | null>(null)
