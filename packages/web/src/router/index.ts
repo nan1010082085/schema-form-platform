@@ -92,29 +92,30 @@ router.beforeEach((to) => {
 })
 
 // 路由守卫：编辑器未保存时拦截离开
-let pendingNavigation: (() => void) | null = null
+let allowEditorLeave = false
 
 router.beforeEach((to, from) => {
-  // 如果是确认后的导航，直接放行
-  if (pendingNavigation) {
-    pendingNavigation()
-    pendingNavigation = null
+  if (allowEditorLeave) {
+    allowEditorLeave = false
     return true
   }
 
   if (from.name === 'editor') {
     const editorStore = useEditorStore()
     if (editorStore.isDirty) {
+      // 弹框确认（异步），先阻止导航
       ElMessageBox.confirm('当前编辑未保存，确定要离开吗？', '提示', {
         type: 'warning',
         confirmButtonText: '确定离开',
         cancelButtonText: '取消',
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
       }).then(() => {
-        // 用户确认，执行导航
-        pendingNavigation = () => router.push(to.fullPath)
+        allowEditorLeave = true
         router.push(to.fullPath)
       }).catch(() => {
-        // 用户取消，不做任何事
+        // 用户取消：恢复浏览器 URL 到当前路由
+        window.history.pushState(null, '', router.resolve(from.fullPath).href)
       })
       return false
     }

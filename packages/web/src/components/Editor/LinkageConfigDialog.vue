@@ -41,6 +41,9 @@ watch(
   (open) => {
     if (open) {
       localRules.value = JSON.parse(JSON.stringify(props.rules ?? []))
+      // 清空配置文本缓存，避免上次编辑残留
+      configTexts.value = {}
+      configErrors.value = {}
     }
   },
 )
@@ -48,8 +51,8 @@ watch(
 // ---- 选项常量 ----
 
 const watchTypeOptions: { label: string; value: WidgetRuleWatch['type'] }[] = [
-  { label: '字段', value: 'field' },
-  { label: '动作', value: 'action' },
+  { label: '字段值变化', value: 'field' },
+  { label: '组件动作', value: 'action' },
   { label: '弹窗回调', value: 'dialog-callback' },
 ]
 
@@ -110,13 +113,33 @@ function configToText(config: Record<string, unknown>): string {
   return JSON.stringify(config, null, 2)
 }
 
-/** 将 JSON 字符串解析为 config 对象 */
-function parseConfig(text: string): Record<string, unknown> {
-  if (!text.trim()) return {}
+/**
+ * 动作配置的本地文本状态（防止输入过程中 JSON 解析失败覆盖用户输入）
+ * key 格式: `${ruleIndex}-${actionIndex}`
+ */
+const configTexts = ref<Record<string, string>>({})
+const configErrors = ref<Record<string, string>>({})
+
+function getConfigText(ruleIndex: number, actionIndex: number, config: Record<string, unknown>): string {
+  const key = `${ruleIndex}-${actionIndex}`
+  if (key in configTexts.value) return configTexts.value[key]
+  return configToText(config)
+}
+
+function handleConfigChange(ruleIndex: number, actionIndex: number, text: string) {
+  const key = `${ruleIndex}-${actionIndex}`
+  configTexts.value[key] = text
+  if (!text.trim()) {
+    configErrors.value[key] = ''
+    localRules.value[ruleIndex].actions[actionIndex].config = {}
+    return
+  }
   try {
-    return JSON.parse(text)
+    const parsed = JSON.parse(text)
+    configErrors.value[key] = ''
+    localRules.value[ruleIndex].actions[actionIndex].config = parsed
   } catch {
-    return {}
+    configErrors.value[key] = 'JSON 格式有误，继续编辑即可'
   }
 }
 
@@ -165,7 +188,7 @@ function handleClose() {
         <!-- watches -->
         <div :class="$style.section">
           <div :class="$style.sectionHeader">
-            <span :class="$style.sectionTitle">监听源</span>
+            <span :class="$style.sectionTitle">监听条件</span>
             <el-button
               type="primary"
               :icon="Plus"
@@ -178,7 +201,7 @@ function handleClose() {
           </div>
 
           <div v-if="rule.watches.length === 0" :class="$style.sectionEmpty">
-            暂无监听源
+            暂无监听条件，添加后当指定字段值变化或组件动作触发时执行规则
           </div>
 
           <div
@@ -240,7 +263,7 @@ function handleClose() {
             type="textarea"
             :rows="2"
             size="small"
-            placeholder="必填，条件表达式如: model.status === 'draft'"
+            placeholder="必填，表达式如: status === 'draft' 或 amount > 100"
           />
         </div>
 
@@ -298,15 +321,21 @@ function handleClose() {
 
             <!-- config JSON -->
             <div :class="$style.row">
-              <label :class="$style.label">配置</label>
-              <el-input
-                :model-value="configToText(action.config)"
-                type="textarea"
-                :rows="3"
-                size="small"
-                placeholder='{"url":"/api/data","method":"get"}'
-                @update:model-value="action.config = parseConfig($event)"
-              />
+              <label :class="$style.label">参数</label>
+              <div style="flex: 1">
+                <el-input
+                  :model-value="getConfigText(ri, ai, action.config)"
+                  type="textarea"
+                  :rows="3"
+                  size="small"
+                  placeholder='{"key": "value"}'
+                  :class="{ [$style.inputError]: !!configErrors[`${ri}-${ai}`] }"
+                  @update:model-value="handleConfigChange(ri, ai, $event)"
+                />
+                <div v-if="configErrors[`${ri}-${ai}`]" :class="$style.configError">
+                  {{ configErrors[`${ri}-${ai}`] }}
+                </div>
+              </div>
             </div>
 
             <!-- callback summary -->
@@ -464,5 +493,15 @@ function handleClose() {
   background: #f4f4f5;
   padding: 2px 8px;
   border-radius: 3px;
+}
+
+.configError {
+  font-size: 11px;
+  color: #e6a23c;
+  margin-top: 3px;
+}
+
+.inputError :deep(.el-textarea__inner) {
+  border-color: #e6a23c;
 }
 </style>
