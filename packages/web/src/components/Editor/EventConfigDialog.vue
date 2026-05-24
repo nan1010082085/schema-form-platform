@@ -15,6 +15,7 @@ import { Plus, Delete } from '@element-plus/icons-vue'
 import type { WidgetEvent, EventActionType, ReceivableEventConfig } from '../../widgets/base/types'
 import { useWidgetStore } from '@/stores/widget'
 import { getWidget } from '@/widgets/registry'
+import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 const props = defineProps<{
@@ -28,6 +29,7 @@ const emit = defineEmits<{
 }>()
 
 const widgetStore = useWidgetStore()
+const { widgetOptions: fieldOptions } = useWidgetOptions()
 
 // ---- 本地编辑副本 ----
 
@@ -196,13 +198,31 @@ function handleClose() {
         <!-- condition -->
         <div :class="$style.row">
           <label :class="$style.label">条件</label>
-          <el-input
-            v-model="evt.condition"
-            type="textarea"
-            :rows="2"
-            size="small"
-            placeholder="可选，表达式如: model.status === 'active'"
-          />
+          <div :class="$style.conditionArea">
+            <el-input
+              v-model="evt.condition"
+              type="textarea"
+              :rows="2"
+              size="small"
+              placeholder="可选，如: status === 'active' 或 amount > 100"
+            />
+            <div v-if="fieldOptions.length > 0" :class="$style.conditionHint">
+              <span :class="$style.hintLabel">可用字段:</span>
+              <el-tag
+                v-for="opt in fieldOptions.slice(0, 8)"
+                :key="opt.value"
+                size="small"
+                type="info"
+                :class="$style.hintTag"
+                @click="evt.condition = (evt.condition ? evt.condition + ' ' : '') + opt.value"
+              >
+                {{ opt.value }}
+              </el-tag>
+              <el-tag v-if="fieldOptions.length > 8" size="small" type="info" :class="$style.hintTag">
+                +{{ fieldOptions.length - 8 }}
+              </el-tag>
+            </div>
+          </div>
         </div>
 
         <!-- confirm -->
@@ -479,5 +499,35 @@ function handleClose() {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.conditionArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conditionHint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hintLabel {
+  font-size: 11px;
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.hintTag {
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.hintTag:hover {
+  color: #409eff;
+  border-color: #409eff;
 }
 </style>
