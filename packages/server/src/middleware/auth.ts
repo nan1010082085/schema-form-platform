@@ -12,6 +12,12 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
   const required = options?.required ?? true
 
   return async (ctx, next) => {
+    // 本地开发跳过认证
+    if (process.env.NODE_ENV !== 'production') {
+      ctx.state.user = { id: 'dev', username: 'dev', role: 'admin' }
+      await next()
+      return
+    }
     const authHeader = ctx.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       if (required) {
