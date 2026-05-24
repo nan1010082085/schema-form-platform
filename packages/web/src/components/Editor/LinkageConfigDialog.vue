@@ -3,15 +3,16 @@
  * LinkageConfigDialog -- WidgetRule[] 配置对话框
  *
  * 对每条规则支持：
- * - watches[]: 监听源列表（type + source）
+ * - watches[]: 监听字段列表（type + source）
  * - condition: 条件表达式（必填）
- * - actions[]: 动作列表（type + config JSON + onSuccess/onError 计数展示）
+ * - actions[]: 动作列表（结构化配置 UI，按类型展示不同表单）
  *
  * 保存时 emit 完整的 WidgetRule[]，由调用方写入 widget。
  */
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { useWidgetOptions } from '@/composables/useWidgetOptions'
+import { useWidgetStore } from '@/stores/widget'
 import type {
   WidgetRule,
   WidgetRuleWatch,
@@ -29,8 +30,33 @@ const emit = defineEmits<{
   save: [rules: WidgetRule[]]
 }>()
 
-// ---- 部件字段选项 ----
+// ---- 部件字段选项（带 field 的组件） ----
 const { widgetOptions } = useWidgetOptions()
+
+// ---- 所有组件 ID 选项（用于目标选择） ----
+const widgetStore = useWidgetStore()
+
+interface WidgetIdOption {
+  label: string
+  value: string
+  type: string
+}
+
+const widgetIdOptions = computed<WidgetIdOption[]>(() => {
+  const result: WidgetIdOption[] = []
+  function collect(list: typeof widgetStore.widgets) {
+    for (const w of list) {
+      result.push({
+        label: `${w.label || w.type}（${w.id}）`,
+        value: w.id,
+        type: w.type,
+      })
+      if (w.children?.length) collect(w.children)
+    }
+  }
+  collect(widgetStore.widgets)
+  return result
+})
 
 // ---- 本地编辑副本 ----
 
@@ -41,9 +67,6 @@ watch(
   (open) => {
     if (open) {
       localRules.value = JSON.parse(JSON.stringify(props.rules ?? []))
-      // 清空配置文本缓存，避免上次编辑残留
-      configTexts.value = {}
-      configErrors.value = {}
     }
   },
 )
@@ -59,13 +82,16 @@ const watchTypeOptions: { label: string; value: WidgetRuleWatch['type'] }[] = [
 const actionTypeOptions: { label: string; value: WidgetRuleAction['type'] }[] = [
   { label: '请求数据', value: 'fetch-data' },
   { label: '设置值', value: 'set-value' },
+  { label: '隐藏', value: 'hide' },
+  { label: '显示', value: 'visible' },
+  { label: '禁用', value: 'disabled' },
   { label: '提交', value: 'submit' },
   { label: '校验', value: 'validate' },
   { label: '重置', value: 'reset' },
-  { label: '隐藏', value: 'hide' },
-  { label: '可见', value: 'visible' },
-  { label: '禁用', value: 'disabled' },
 ]
+
+/** 不需要额外配置的动作类型 */
+const NO_CONFIG_TYPES = new Set<WidgetRuleAction['type']>(['submit', 'validate', 'reset'])
 
 // ---- 规则 CRUD ----
 
@@ -81,7 +107,7 @@ function removeRule(index: number) {
   localRules.value.splice(index, 1)
 }
 
-// ---- 监听源 CRUD ----
+// ---- 监听字段 CRUD ----
 
 function addWatch(ruleIndex: number) {
   localRules.value[ruleIndex].watches.push({
@@ -107,40 +133,16 @@ function removeAction(ruleIndex: number, actionIndex: number) {
   localRules.value[ruleIndex].actions.splice(actionIndex, 1)
 }
 
-/** 将 config 对象格式化为 JSON 字符串用于 textarea */
-function configToText(config: Record<string, unknown>): string {
-  if (!config || Object.keys(config).length === 0) return '{}'
-  return JSON.stringify(config, null, 2)
+// ---- 结构化 config 操作 ----
+
+function getConfigValue(action: WidgetRuleAction, key: string): string {
+  const val = action.config?.[key]
+  return val !== undefined && val !== null ? String(val) : ''
 }
 
-/**
- * 动作配置的本地文本状态（防止输入过程中 JSON 解析失败覆盖用户输入）
- * key 格式: `${ruleIndex}-${actionIndex}`
- */
-const configTexts = ref<Record<string, string>>({})
-const configErrors = ref<Record<string, string>>({})
-
-function getConfigText(ruleIndex: number, actionIndex: number, config: Record<string, unknown>): string {
-  const key = `${ruleIndex}-${actionIndex}`
-  if (key in configTexts.value) return configTexts.value[key]
-  return configToText(config)
-}
-
-function handleConfigChange(ruleIndex: number, actionIndex: number, text: string) {
-  const key = `${ruleIndex}-${actionIndex}`
-  configTexts.value[key] = text
-  if (!text.trim()) {
-    configErrors.value[key] = ''
-    localRules.value[ruleIndex].actions[actionIndex].config = {}
-    return
-  }
-  try {
-    const parsed = JSON.parse(text)
-    configErrors.value[key] = ''
-    localRules.value[ruleIndex].actions[actionIndex].config = parsed
-  } catch {
-    configErrors.value[key] = 'JSON 格式有误，继续编辑即可'
-  }
+function setConfigValue(action: WidgetRuleAction, key: string, value: string) {
+  if (!action.config) action.config = {}
+  action.config[key] = value || undefined
 }
 
 // ---- 保存 / 关闭 ----
@@ -188,7 +190,7 @@ function handleClose() {
         <!-- watches -->
         <div :class="$style.section">
           <div :class="$style.sectionHeader">
-            <span :class="$style.sectionTitle">监听条件</span>
+            <span :class="$style.sectionTitle">监听字段</span>
             <el-button
               type="primary"
               :icon="Plus"
@@ -201,7 +203,7 @@ function handleClose() {
           </div>
 
           <div v-if="rule.watches.length === 0" :class="$style.sectionEmpty">
-            暂无监听条件，添加后当指定字段值变化或组件动作触发时执行规则
+            添加后当指定字段值变化时触发此规则
           </div>
 
           <div
@@ -222,12 +224,13 @@ function handleClose() {
               />
             </el-select>
 
+            <!-- 字段类型：从表单字段列表选择 -->
             <el-select
               v-if="w.type === 'field'"
               v-model="w.source"
               size="small"
               filterable
-              placeholder="选择字段"
+              placeholder="选择要监听的字段"
               style="flex: 1"
             >
               <el-option
@@ -237,13 +240,40 @@ function handleClose() {
                 :value="opt.value"
               />
             </el-select>
-            <el-input
+
+            <!-- 动作类型：从组件 ID 列表选择 -->
+            <el-select
+              v-else-if="w.type === 'action'"
+              v-model="w.source"
+              size="small"
+              filterable
+              placeholder="选择触发动作的组件"
+              style="flex: 1"
+            >
+              <el-option
+                v-for="opt in widgetIdOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+
+            <!-- 弹窗回调：从 dialog 类型组件选择 -->
+            <el-select
               v-else
               v-model="w.source"
               size="small"
-              placeholder="动作名 / 弹窗ID"
+              filterable
+              placeholder="选择弹窗组件"
               style="flex: 1"
-            />
+            >
+              <el-option
+                v-for="opt in widgetIdOptions.filter(o => o.type === 'dialog')"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
 
             <el-button
               type="danger"
@@ -258,13 +288,28 @@ function handleClose() {
         <!-- condition -->
         <div :class="$style.row">
           <label :class="$style.label">条件</label>
-          <el-input
-            v-model="rule.condition"
-            type="textarea"
-            :rows="2"
-            size="small"
-            placeholder="必填，表达式如: status === 'draft' 或 amount > 100"
-          />
+          <div :class="$style.conditionArea">
+            <el-input
+              v-model="rule.condition"
+              type="textarea"
+              :rows="2"
+              size="small"
+              placeholder="必填，表达式如: status === 'draft' 或 amount > 100"
+            />
+            <div v-if="widgetOptions.length > 0" :class="$style.conditionHint">
+              <span :class="$style.hintLabel">可用字段:</span>
+              <el-tag
+                v-for="opt in widgetOptions.slice(0, 6)"
+                :key="opt.value"
+                size="small"
+                type="info"
+                :class="$style.hintTag"
+                @click="rule.condition = (rule.condition ? rule.condition + ' ' : '') + opt.value"
+              >
+                {{ opt.value }}
+              </el-tag>
+            </div>
+          </div>
         </div>
 
         <!-- actions -->
@@ -309,6 +354,7 @@ function handleClose() {
                 v-model="action.type"
                 size="small"
                 style="flex: 1"
+                @update:model-value="action.config = {}"
               >
                 <el-option
                   v-for="opt in actionTypeOptions"
@@ -319,23 +365,89 @@ function handleClose() {
               </el-select>
             </div>
 
-            <!-- config JSON -->
-            <div :class="$style.row">
-              <label :class="$style.label">参数</label>
-              <div style="flex: 1">
-                <el-input
-                  :model-value="getConfigText(ri, ai, action.config)"
-                  type="textarea"
-                  :rows="3"
+            <!-- 结构化配置：set-value -->
+            <template v-if="action.type === 'set-value'">
+              <div :class="$style.row">
+                <label :class="$style.label">目标</label>
+                <el-select
+                  :model-value="getConfigValue(action, 'targetField')"
                   size="small"
-                  placeholder='{"key": "value"}'
-                  :class="{ [$style.inputError]: !!configErrors[`${ri}-${ai}`] }"
-                  @update:model-value="handleConfigChange(ri, ai, $event)"
-                />
-                <div v-if="configErrors[`${ri}-${ai}`]" :class="$style.configError">
-                  {{ configErrors[`${ri}-${ai}`] }}
-                </div>
+                  filterable
+                  placeholder="选择要设置值的字段"
+                  style="flex: 1"
+                  @update:model-value="setConfigValue(action, 'targetField', $event)"
+                >
+                  <el-option
+                    v-for="opt in widgetOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
               </div>
+              <div :class="$style.row">
+                <label :class="$style.label">值</label>
+                <el-input
+                  :model-value="getConfigValue(action, 'value')"
+                  size="small"
+                  placeholder="要设置的值"
+                  style="flex: 1"
+                  @update:model-value="setConfigValue(action, 'value', $event)"
+                />
+              </div>
+            </template>
+
+            <!-- 结构化配置：fetch-data -->
+            <template v-if="action.type === 'fetch-data'">
+              <div :class="$style.row">
+                <label :class="$style.label">URL</label>
+                <el-input
+                  :model-value="getConfigValue(action, 'url')"
+                  size="small"
+                  placeholder="/api/data"
+                  style="flex: 1"
+                  @update:model-value="setConfigValue(action, 'url', $event)"
+                />
+              </div>
+              <div :class="$style.row">
+                <label :class="$style.label">方法</label>
+                <el-select
+                  :model-value="getConfigValue(action, 'method') || 'get'"
+                  size="small"
+                  style="width: 120px"
+                  @update:model-value="setConfigValue(action, 'method', $event)"
+                >
+                  <el-option label="GET" value="get" />
+                  <el-option label="POST" value="post" />
+                </el-select>
+              </div>
+            </template>
+
+            <!-- 结构化配置：hide / visible / disabled（选择目标组件） -->
+            <template v-if="['hide', 'visible', 'disabled'].includes(action.type)">
+              <div :class="$style.row">
+                <label :class="$style.label">目标</label>
+                <el-select
+                  :model-value="getConfigValue(action, 'targetId')"
+                  size="small"
+                  filterable
+                  :placeholder="action.type === 'hide' ? '选择要隐藏的组件' : action.type === 'visible' ? '选择要显示的组件' : '选择要禁用的组件'"
+                  style="flex: 1"
+                  @update:model-value="setConfigValue(action, 'targetId', $event)"
+                >
+                  <el-option
+                    v-for="opt in widgetIdOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
+              </div>
+            </template>
+
+            <!-- 无需配置的类型：submit / validate / reset -->
+            <div v-if="NO_CONFIG_TYPES.has(action.type)" :class="$style.noConfigHint">
+              此动作无需额外配置
             </div>
 
             <!-- callback summary -->
@@ -453,6 +565,36 @@ function handleClose() {
   line-height: 32px;
 }
 
+.conditionArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conditionHint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hintLabel {
+  font-size: 11px;
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.hintTag {
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.hintTag:hover {
+  color: #409eff;
+  border-color: #409eff;
+}
+
 .watchRow {
   display: flex;
   align-items: center;
@@ -481,6 +623,12 @@ function handleClose() {
   color: #606266;
 }
 
+.noConfigHint {
+  font-size: 11px;
+  color: #909399;
+  padding: 4px 0;
+}
+
 .callbackSummary {
   display: flex;
   gap: 12px;
@@ -493,15 +641,5 @@ function handleClose() {
   background: #f4f4f5;
   padding: 2px 8px;
   border-radius: 3px;
-}
-
-.configError {
-  font-size: 11px;
-  color: #e6a23c;
-  margin-top: 3px;
-}
-
-.inputError :deep(.el-textarea__inner) {
-  border-color: #e6a23c;
 }
 </style>
