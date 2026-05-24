@@ -17,7 +17,23 @@ const app = new Koa()
 
 // --- Middleware stack ---
 app.use(errorHandler)
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      'default-src': ["'self'"],
+      'base-uri': ["'self'"],
+      'font-src': ["'self'", 'https:', 'data:'],
+      'form-action': ["'self'"],
+      'frame-ancestors': ["'self'"],
+      'img-src': ["'self'", 'data:'],
+      'object-src': ["'none'"],
+      'script-src': ["'self'", 'https://unpkg.com'],
+      'script-src-attr': ["'none'"],
+      'style-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+      'upgrade-insecure-requests': [],
+    },
+  },
+}))
 app.use(bodyParser())
 
 app.use(cors({
