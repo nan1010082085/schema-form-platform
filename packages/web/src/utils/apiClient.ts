@@ -84,8 +84,8 @@ export class ApiClient {
       )
     }
 
-    // 401: 自动登出并跳转登录页
-    if (response.status === 401) {
+    // 401: 自动登出并跳转登录页（本地开发跳过）
+    if (response.status === 401 && !import.meta.env.DEV) {
       const { useAuthStore } = await import('@/stores/auth')
       useAuthStore().logout()
       const { useRouter } = await import('vue-router')

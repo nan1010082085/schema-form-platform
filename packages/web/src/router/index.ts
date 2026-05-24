@@ -79,9 +79,10 @@ const router = createRouter({
   ],
 })
 
-// 路由守卫：认证检查（仅独立模式）
+// 路由守卫：认证检查（仅独立生产模式）
 router.beforeEach((to) => {
   if (isQiankun) return true
+  if (import.meta.env.DEV) return true
 
   const authStore = useAuthStore()
   if (!authStore.isLoggedIn && to.name !== 'login') {
