@@ -10,10 +10,10 @@
  * 6. 边界场景：空变量、undefined、循环引用防护
  */
 import { describe, it, expect, vi } from 'vitest'
-import { reactive, nextTick } from 'vue'
+import { reactive } from 'vue'
 import { executeEventAction, triggerWidgetEvent, type EventExecutionContext } from '@/engine/eventEngine'
 import { useLinkage } from '@/composables/useLinkage'
-import type { PartialWidget, Widget, SchemaEventAction, WidgetEvent } from '@/widgets/base/types'
+import type { PartialWidget, Widget, SchemaEventAction } from '@/widgets/base/types'
 import type { FormData } from '@/components/WidgetRenderer/types'
 
 vi.mock('@/composables/useLogger', () => ({
