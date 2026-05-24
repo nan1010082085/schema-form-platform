@@ -554,29 +554,6 @@ function handleClose() {
   gap: 4px;
 }
 
-.conditionHint {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.hintLabel {
-  font-size: 11px;
-  color: #909399;
-  flex-shrink: 0;
-}
-
-.hintTag {
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.hintTag:hover {
-  color: #409eff;
-  border-color: #409eff;
-}
-
 .watchRow {
   display: flex;
   align-items: center;
