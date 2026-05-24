@@ -84,6 +84,14 @@ export class ApiClient {
       )
     }
 
+    // 401: 自动登出并跳转登录页
+    if (response.status === 401) {
+      const { useAuthStore } = await import('@/stores/auth')
+      useAuthStore().logout()
+      const { useRouter } = await import('vue-router')
+      useRouter().push({ name: 'login' })
+    }
+
     let json: ApiResponse<T>
     try {
       json = (await response.json()) as ApiResponse<T>
