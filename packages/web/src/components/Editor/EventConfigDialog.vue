@@ -15,8 +15,8 @@ import { Plus, Delete } from '@element-plus/icons-vue'
 import type { WidgetEvent, EventActionType, ReceivableEventConfig } from '../../widgets/base/types'
 import { useWidgetStore } from '@/stores/widget'
 import { getWidget } from '@/widgets/registry'
-import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import ConditionBuilder from '@/components/Editor/ConditionBuilder.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -29,7 +29,6 @@ const emit = defineEmits<{
 }>()
 
 const widgetStore = useWidgetStore()
-const { widgetOptions: fieldOptions } = useWidgetOptions()
 
 // ---- 本地编辑副本 ----
 
@@ -199,29 +198,7 @@ function handleClose() {
         <div :class="$style.row">
           <label :class="$style.label">条件</label>
           <div :class="$style.conditionArea">
-            <el-input
-              v-model="evt.condition"
-              type="textarea"
-              :rows="2"
-              size="small"
-              placeholder="可选，如: status === 'active' 或 amount > 100"
-            />
-            <div v-if="fieldOptions.length > 0" :class="$style.conditionHint">
-              <span :class="$style.hintLabel">可用字段:</span>
-              <el-tag
-                v-for="opt in fieldOptions.slice(0, 8)"
-                :key="opt.value"
-                size="small"
-                type="info"
-                :class="$style.hintTag"
-                @click="evt.condition = (evt.condition ? evt.condition + ' ' : '') + opt.value"
-              >
-                {{ opt.value }}
-              </el-tag>
-              <el-tag v-if="fieldOptions.length > 8" size="small" type="info" :class="$style.hintTag">
-                +{{ fieldOptions.length - 8 }}
-              </el-tag>
-            </div>
+            <ConditionBuilder v-model="evt.condition" />
           </div>
         </div>
 

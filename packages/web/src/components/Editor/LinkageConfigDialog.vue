@@ -19,6 +19,7 @@ import type {
   WidgetRuleAction,
 } from '../../widgets/base/types'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import ConditionBuilder from '@/components/Editor/ConditionBuilder.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -289,26 +290,7 @@ function handleClose() {
         <div :class="$style.row">
           <label :class="$style.label">条件</label>
           <div :class="$style.conditionArea">
-            <el-input
-              v-model="rule.condition"
-              type="textarea"
-              :rows="2"
-              size="small"
-              placeholder="必填，表达式如: status === 'draft' 或 amount > 100"
-            />
-            <div v-if="widgetOptions.length > 0" :class="$style.conditionHint">
-              <span :class="$style.hintLabel">可用字段:</span>
-              <el-tag
-                v-for="opt in widgetOptions.slice(0, 6)"
-                :key="opt.value"
-                size="small"
-                type="info"
-                :class="$style.hintTag"
-                @click="rule.condition = (rule.condition ? rule.condition + ' ' : '') + opt.value"
-              >
-                {{ opt.value }}
-              </el-tag>
-            </div>
+            <ConditionBuilder v-model="rule.condition" required />
           </div>
         </div>
 
