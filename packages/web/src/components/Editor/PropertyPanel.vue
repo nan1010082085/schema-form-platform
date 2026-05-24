@@ -210,7 +210,7 @@ function toggleSection(key: string) {
 
 // ---- 更新属性 ----
 
-const TOP_LEVEL_KEYS = new Set(['field', 'label'])
+const TOP_LEVEL_KEYS = new Set(['field', 'label', 'defaultValue', 'hidden', 'options', 'validationRules'])
 
 function updateProperty(key: string, value: unknown) {
   if (!selectedWidget.value) return
