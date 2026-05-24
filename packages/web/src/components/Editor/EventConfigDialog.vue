@@ -166,7 +166,7 @@ function handleClose() {
         :class="$style.card"
       >
         <div :class="$style.cardHeader">
-          <span :class="$style.cardTitle">事件 {{ ei + 1 }}</span>
+          <span :class="$style.cardTitle">事件 <span :class="$style.cardNum">{{ ei + 1 }}</span></span>
           <el-button
             type="danger"
             :icon="Delete"
@@ -419,6 +419,11 @@ function handleClose() {
   font-size: 13px;
   font-weight: 600;
   color: #303133;
+}
+
+.cardNum {
+  color: #409eff;
+  font-weight: 700;
 }
 
 .row {
