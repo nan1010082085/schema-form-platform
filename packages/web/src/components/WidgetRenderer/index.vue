@@ -26,7 +26,9 @@ import {
   FORM_GRID_T_KEY,
   FORM_GRID_READONLY_KEY,
   EVENT_CONTEXT_KEY,
+  DIALOG_REGISTRY_KEY,
 } from './types'
+import type { DialogRegistry } from './types'
 import type { EventExecutionContext } from './types'
 import type { Widget } from '../../widgets/base/types'
 import { useLinkage } from '@/composables/useLinkage'
@@ -182,6 +184,11 @@ provide('unregisterExposed', unregisterExposed)
 const { stateMap: linkageStateMap } = useLinkage(props.schema, formData, variablesContext, exposedContext)
 provide(FORM_GRID_LINKAGE_KEY, linkageStateMap)
 
+// ---- 弹窗注册表（WidgetNode 注册 dialog 回调，eventContext.openDialog 消费） ----
+const dialogRegistry: DialogRegistry = new Map()
+const lastOpenedDialogId = ref<string | undefined>(undefined)
+provide(DIALOG_REGISTRY_KEY, dialogRegistry)
+
 // 只读模式注入（使用 toRef 保持响应式）
 const readonlyRef = computed(() => props.readonly ?? false)
 provide(FORM_GRID_READONLY_KEY, readonlyRef)
@@ -207,6 +214,14 @@ const eventContext: EventExecutionContext = {
     if (widget) Object.assign(widget, patch)
   },
   openDialog: (target: string) => {
+    // 优先通过注册表打开 WidgetNode 渲染的 EnhancedDialog
+    const handler = dialogRegistry.get(target)
+    if (handler) {
+      lastOpenedDialogId.value = target
+      handler(true)
+      return
+    }
+    // 降级：使用 WidgetRenderer 内置 el-dialog
     const widget = findWidgetInSchema(props.schema, target)
     if (widget?.type === 'dialog') {
       openDialog({
@@ -216,7 +231,15 @@ const eventContext: EventExecutionContext = {
       })
     }
   },
-  closeDialog: () => { dialogVisible.value = false },
+  closeDialog: () => {
+    // 关闭注册表中最近打开的 dialog
+    if (lastOpenedDialogId.value) {
+      const handler = dialogRegistry.get(lastOpenedDialogId.value)
+      if (handler) handler(false)
+      lastOpenedDialogId.value = undefined
+    }
+    dialogVisible.value = false
+  },
   submitForm: () => { submit() },
   resetForm: () => { resetFields() },
   getFormData: () => formData,

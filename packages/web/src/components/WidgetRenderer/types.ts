@@ -214,6 +214,10 @@ import type { EventExecutionContext } from '../../engine/eventEngine'
 export type { EventExecutionContext }
 export const EVENT_CONTEXT_KEY: InjectionKey<EventExecutionContext> = Symbol('EventExecutionContext')
 
+/** 弹窗注册表 — WidgetNode 注册 dialog 的打开/关闭回调，eventContext.openDialog 消费 */
+export type DialogRegistry = Map<string, (visible: boolean) => void>
+export const DIALOG_REGISTRY_KEY: InjectionKey<DialogRegistry> = Symbol('DialogRegistry')
+
 /**
  * 生命周期钩子配置
  * 支持函数或字符串表达式两种模式（与 linkage.condition 共享沙箱模式）
