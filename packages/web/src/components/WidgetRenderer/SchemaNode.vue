@@ -278,7 +278,7 @@ const wrapperStyle = computed(() => {
 <template>
   <!-- 规则引擎控制可见性 -->
   <template v-if="renderState.visible">
-    <!-- Dialog 容器：编辑模式=shell，预览模式=EnhancedDialog -->
+    <!-- Dialog 容器：编辑模式=shell+childrenLayer，预览模式=EnhancedDialog -->
     <template v-if="widget.type === 'dialog'">
       <!-- 编辑模式：容器 shell + 子部件层 -->
       <div
@@ -293,6 +293,15 @@ const wrapperStyle = computed(() => {
           :widget="widget"
           :editable="true"
         />
+        <div
+          v-if="filteredChildren.length"
+          :class="$style.childrenLayer"
+        >
+          <SchemaRender
+            :widgets="filteredChildren"
+            :mode="mode"
+          />
+        </div>
       </div>
 
       <!-- 预览模式：EnhancedDialog（默认隐藏，通过事件打开） -->
@@ -306,10 +315,12 @@ const wrapperStyle = computed(() => {
         :destroy-on-close="widget.props?.destroyOnClose !== false"
         :close-on-click-modal="widget.props?.closeOnClickModal === true"
       >
+        <!-- 流式布局渲染子部件（与 WidgetNode 一致） -->
         <template v-if="filteredChildren.length">
           <SchemaRender
-            :widgets="filteredChildren"
-            :mode="mode"
+            v-for="(child, ci) in filteredChildren"
+            :key="ci"
+            :schema="child"
           />
         </template>
         <template v-if="widget.props?.showFooter !== false" #footer>
@@ -357,6 +368,8 @@ const wrapperStyle = computed(() => {
     </div>
 
     <!-- 基础组件：直接渲染 -->
+    <!-- 编辑模式：SchemaNode 拦截所有 DOM 事件分发到事件引擎 -->
+    <!-- 预览模式：change/focus/blur 仍由 wrapper 拦截（表单组件不自行触发），click 由组件自行处理（避免与 FgButton 内部 handler 重复） -->
     <div
       v-else
       :class="[$style.nodeWrapper, { [$style.nodeWrapperEdit]: isEditMode }]"
@@ -364,7 +377,7 @@ const wrapperStyle = computed(() => {
       @change="FORM_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('change', $event) : handlePreviewEvent('change', $event))"
       @focus="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('focus') : handlePreviewEvent('focus'))"
       @blur="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('blur') : handlePreviewEvent('blur'))"
-      @click="CLICKABLE_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('click') : handlePreviewEvent('click'))"
+      @click="isEditMode && CLICKABLE_TYPES.has(widget.type) && handleWidgetEvent('click')"
     >
       <!-- 表单校验：有 field + validationRules 时包裹 el-form-item -->
       <el-form-item
