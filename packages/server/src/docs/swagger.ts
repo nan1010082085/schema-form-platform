@@ -29,8 +29,8 @@ const spec = {
     ].join('\n'),
   },
   servers: [
-    { url: 'http://localhost:3001', description: 'Local development' },
     { url: 'https://schema-form-platform.vercel.app', description: 'Production (Vercel)' },
+    { url: 'http://localhost:3001', description: 'Local development' },
   ],
   components: {
     securitySchemes: {
