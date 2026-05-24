@@ -10,13 +10,16 @@
  * - 委托 SchemaRender 渲染 Widget 树
  * - 画布交互（选中、拖拽、缩放）后续迭代接入
  */
-import { computed } from 'vue'
+import { computed, provide, ref } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import { useBoardStore } from '../../stores/board'
 import { useEditorStore } from '../../stores/editor'
 import EditorOverlay from './EditorOverlay.vue'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
 import type { Widget } from '../../widgets/base/types'
+import type { DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
+import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from '../WidgetRenderer/types'
 
 const emit = defineEmits<{
   openEvent: [widget: Widget]
@@ -41,6 +44,56 @@ const canvasStyle = computed(() => ({
   transformOrigin: 'top left',
   position: 'relative' as const,
 }))
+
+// ---- 预览模式：弹窗注册表 + 事件执行上下文 ----
+
+const dialogRegistry: DialogRegistry = new Map()
+const lastOpenedDialogId = ref<string | undefined>(undefined)
+provide(DIALOG_REGISTRY_KEY, dialogRegistry)
+
+/** 递归查找 widget */
+function findWidgetById(items: Widget[], id: string): Widget | undefined {
+  for (const item of items) {
+    if (item.id === id) return item
+    if (item.children?.length) {
+      const found = findWidgetById(item.children as Widget[], id)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+const previewEventContext: EventExecutionContext = {
+  findWidget: (id: string) => findWidgetById(widgetStore.widgets, id),
+  updateWidget: (id: string, patch: Partial<Widget>) => widgetStore.updateWidget(id, patch),
+  openDialog: (target: string) => {
+    const handler = dialogRegistry.get(target)
+    if (handler) {
+      lastOpenedDialogId.value = target
+      handler(true)
+      return
+    }
+  },
+  closeDialog: () => {
+    if (lastOpenedDialogId.value) {
+      const handler = dialogRegistry.get(lastOpenedDialogId.value)
+      if (handler) handler(false)
+      lastOpenedDialogId.value = undefined
+    }
+  },
+  submitForm: () => {},
+  resetForm: () => {},
+  getFormData: () => ({}),
+  emit: () => {},
+  confirm: (message: string) => {
+    return ElMessageBox.confirm(message, '确认', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    }).then(() => undefined)
+  },
+}
+provide(EVENT_CONTEXT_KEY, previewEventContext)
 </script>
 
 <template>

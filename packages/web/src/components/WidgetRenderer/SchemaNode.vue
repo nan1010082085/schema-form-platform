@@ -10,10 +10,11 @@
  * - 判断是否容器组件，渲染组件 + 递归 children
  * - 位置通过 position: absolute + left/top 定位
  */
-import { computed, inject, provide, ref, type ComputedRef, type ComponentPublicInstance } from 'vue'
+import { computed, inject, provide, ref, onMounted, onUnmounted, type ComputedRef, type ComponentPublicInstance } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { PartialWidget, FormData } from './types'
+import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
@@ -21,6 +22,7 @@ import { useLinkage } from '../../composables/useLinkage'
 import { triggerWidgetEvent, type EventExecutionContext } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
+import EnhancedDialog from '../EnhancedDialog.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -131,6 +133,35 @@ const editorStore = useEditorStore()
 /** 交互式容器空白区域点击 → 选中容器 */
 function handleInteractiveContainerClick() {
   editorStore.select(props.widget.id)
+}
+
+// ---- 预览模式：弹窗注册 + 事件拦截 ----
+
+/** 弹窗注册表（从 EditorCanvas 或 WidgetRenderer 注入） */
+const dialogRegistry = inject(DIALOG_REGISTRY_KEY, null)
+
+/** dialog 类型的可见性（预览模式下默认隐藏，通过事件打开） */
+const dialogVisible = ref(false)
+
+/** 注册/注销 dialog 到注册表 */
+onMounted(() => {
+  if (!isEditMode.value && props.widget.type === 'dialog' && props.widget.id && dialogRegistry) {
+    dialogRegistry.set(props.widget.id, (visible: boolean) => { dialogVisible.value = visible })
+  }
+})
+onUnmounted(() => {
+  if (!isEditMode.value && props.widget.type === 'dialog' && props.widget.id && dialogRegistry) {
+    dialogRegistry.delete(props.widget.id)
+  }
+})
+
+/** 事件执行上下文（预览模式从 EditorCanvas/WidgetRenderer 注入） */
+const eventCtx = inject(EVENT_CONTEXT_KEY, null)
+
+/** 预览模式统一事件触发 */
+async function handlePreviewEvent(trigger: string, _value?: unknown) {
+  if (!eventCtx) return
+  await triggerWidgetEvent(props.widget, trigger, eventCtx)
 }
 
 /** 构建编辑器模式的事件执行上下文 */
@@ -247,9 +278,54 @@ const wrapperStyle = computed(() => {
 <template>
   <!-- 规则引擎控制可见性 -->
   <template v-if="renderState.visible">
-    <!-- 容器组件：容器渲染 + 独立子部件层 -->
+    <!-- Dialog 容器：编辑模式=shell，预览模式=EnhancedDialog -->
+    <template v-if="widget.type === 'dialog'">
+      <!-- 编辑模式：容器 shell + 子部件层 -->
+      <div
+        v-if="isEditMode"
+        :class="[$style.nodeWrapper, $style.nodeWrapperEdit]"
+        :style="wrapperStyle"
+      >
+        <component
+          v-if="resolvedComponent"
+          :ref="(el: ComponentPublicInstance | null) => { containerRef = el }"
+          :is="resolvedComponent"
+          :widget="widget"
+          :editable="true"
+        />
+      </div>
+
+      <!-- 预览模式：EnhancedDialog（默认隐藏，通过事件打开） -->
+      <EnhancedDialog
+        v-else
+        v-model="dialogVisible"
+        :title="(widget.props?.title as string) || widget.label || '弹窗'"
+        :width="(widget.props?.width as string) || '600px'"
+        :draggable="widget.props?.draggable !== false"
+        :show-fullscreen-btn="widget.props?.showFullscreenBtn !== false"
+        :destroy-on-close="widget.props?.destroyOnClose !== false"
+        :close-on-click-modal="widget.props?.closeOnClickModal === true"
+      >
+        <template v-if="filteredChildren.length">
+          <SchemaRender
+            :widgets="filteredChildren"
+            :mode="mode"
+          />
+        </template>
+        <template v-if="widget.props?.showFooter !== false" #footer>
+          <el-button @click="dialogVisible = false">
+            {{ (widget.props?.cancelText as string) || '取消' }}
+          </el-button>
+          <el-button type="primary" @click="dialogVisible = false">
+            {{ (widget.props?.confirmText as string) || '确定' }}
+          </el-button>
+        </template>
+      </EnhancedDialog>
+    </template>
+
+    <!-- 其他容器组件：容器渲染 + 独立子部件层 -->
     <div
-      v-if="isContainer"
+      v-else-if="isContainer"
       :class="[
         $style.nodeWrapper,
         {
@@ -268,9 +344,9 @@ const wrapperStyle = computed(() => {
         :widget="widget"
         :editable="isEditMode"
       />
-      <!-- 子部件层：绝对定位，相对于容器定位（自渲染容器跳过；dialog 预览模式跳过） -->
+      <!-- 子部件层：绝对定位，相对于容器定位（自渲染容器跳过） -->
       <div
-        v-if="filteredChildren.length && !isSelfRendering && !(widget.type === 'dialog' && !isEditMode)"
+        v-if="filteredChildren.length && !isSelfRendering"
         :class="$style.childrenLayer"
       >
         <SchemaRender
@@ -285,10 +361,10 @@ const wrapperStyle = computed(() => {
       v-else
       :class="[$style.nodeWrapper, { [$style.nodeWrapperEdit]: isEditMode }]"
       :style="wrapperStyle"
-      @change="FORM_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('change', $event)"
-      @focus="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('focus')"
-      @blur="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('blur')"
-      @click="CLICKABLE_TYPES.has(widget.type) && handleWidgetEvent('click')"
+      @change="FORM_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('change', $event) : handlePreviewEvent('change', $event))"
+      @focus="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('focus') : handlePreviewEvent('focus'))"
+      @blur="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('blur') : handlePreviewEvent('blur'))"
+      @click="CLICKABLE_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('click') : handlePreviewEvent('click'))"
     >
       <!-- 表单校验：有 field + validationRules 时包裹 el-form-item -->
       <el-form-item

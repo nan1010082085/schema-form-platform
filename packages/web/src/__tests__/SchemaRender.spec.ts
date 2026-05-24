@@ -247,7 +247,7 @@ describe('SchemaRender', () => {
   // 3. Container rendering
   // =========================================================================
   describe('Container rendering', () => {
-    const containerTypes: SchemaType[] = ['form', 'card', 'row-col', 'tabs', 'dialog']
+    const containerTypes: SchemaType[] = ['form', 'card', 'row-col', 'tabs']
 
     for (const containerType of containerTypes) {
       it(`renders ${containerType} container with children`, () => {
@@ -257,10 +257,7 @@ describe('SchemaRender', () => {
         const wrapper = mountSchemaRender([container])
 
         expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
-        // dialog is self-rendering — children are rendered inside the component, not in childrenLayer
-        if (containerType !== 'dialog') {
-          expect(wrapper.find('.stub-input').exists()).toBe(true)
-        }
+        expect(wrapper.find('.stub-input').exists()).toBe(true)
       })
 
       it(`renders ${containerType} without children gracefully`, () => {
@@ -271,6 +268,25 @@ describe('SchemaRender', () => {
         expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
       })
     }
+
+    it('renders dialog as EnhancedDialog in preview mode (default)', () => {
+      const child = makeWidget({ type: 'input', id: 'child1' })
+      const container = makeContainerWidget('dialog', [child], { id: 'dialog1' })
+
+      const wrapper = mountSchemaRender([container])
+
+      // In non-edit mode, dialog renders EnhancedDialog (hidden by default), not the stub
+      expect(wrapper.find('.stub-dialog').exists()).toBe(false)
+    })
+
+    it('renders dialog stub in edit mode', () => {
+      const child = makeWidget({ type: 'input', id: 'child1' })
+      const container = makeContainerWidget('dialog', [child], { id: 'dialog1' })
+
+      const wrapper = mountSchemaRender([container], { mode: 'edit' })
+
+      expect(wrapper.find('.stub-dialog').exists()).toBe(true)
+    })
 
     it('renders deeply nested containers (card > form > input)', () => {
       const input = makeWidget({ type: 'input', id: 'deep-input' })
