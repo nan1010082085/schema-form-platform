@@ -439,8 +439,10 @@ describe('triggerWidgetEvent', () => {
     expect(ctx.submitForm).toHaveBeenCalled()
   })
 
-  it('handles confirm dialog (user confirms)', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+  it('handles confirm dialog (user confirms)', async () => {
+    ctx = createMockContext({
+      confirm: vi.fn().mockResolvedValue(undefined),
+    })
     const widget: Widget = {
       id: 'btn1',
       name: 'FgButton',
@@ -455,12 +457,15 @@ describe('triggerWidgetEvent', () => {
       ],
     }
 
-    triggerWidgetEvent(widget, 'click', ctx)
+    await triggerWidgetEvent(widget, 'click', ctx)
+    expect(ctx.confirm).toHaveBeenCalledWith('确定提交？')
     expect(ctx.submitForm).toHaveBeenCalled()
   })
 
-  it('handles confirm dialog (user cancels)', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('handles confirm dialog (user cancels)', async () => {
+    ctx = createMockContext({
+      confirm: vi.fn().mockRejectedValue(new Error('cancel')),
+    })
     const widget: Widget = {
       id: 'btn1',
       name: 'FgButton',
@@ -475,7 +480,7 @@ describe('triggerWidgetEvent', () => {
       ],
     }
 
-    triggerWidgetEvent(widget, 'click', ctx)
+    await triggerWidgetEvent(widget, 'click', ctx)
     expect(ctx.submitForm).not.toHaveBeenCalled()
   })
 

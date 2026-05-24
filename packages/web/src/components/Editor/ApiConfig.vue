@@ -13,7 +13,7 @@
  * appears that infers PartialWidget[] from the response data.
  */
 import { ref, computed } from 'vue'
-import { Connection, Check, WarningFilled } from '@element-plus/icons-vue'
+import { Check, WarningFilled } from '@element-plus/icons-vue'
 import { apiClient } from '@/utils/apiClient'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
@@ -60,10 +60,6 @@ function emitApi(patch: Partial<SchemaApiConfig>) {
 
 function emitApiField<K extends keyof SchemaApiConfig>(field: K, value: SchemaApiConfig[K]) {
   emitApi({ [field]: value })
-}
-
-function clearApi() {
-  emit('update:api', undefined)
 }
 
 // ---- Mode switching ----
@@ -214,7 +210,7 @@ function analyzeAndGenerateSchema() {
   emit('generate-schema', schema)
 }
 
-defineExpose({ testConnection })
+defineExpose({ testConnection, testing })
 </script>
 
 <template>
@@ -345,17 +341,6 @@ defineExpose({ testConnection })
           />
         </div>
 
-        <!-- Test Connection -->
-        <el-button
-          size="small"
-          :icon="Connection"
-          :loading="testing"
-          style="width: 100%"
-          @click="testConnection"
-        >
-          测试连接
-        </el-button>
-
         <!-- Test Result: Success -->
         <div v-if="testResult?.success" class="api-config__test-result api-config__test-result--success">
           <div class="api-config__test-header">
@@ -419,17 +404,6 @@ defineExpose({ testConnection })
           </div>
         </div>
       </template>
-
-      <!-- Remove API config -->
-      <el-button
-        size="small"
-        type="danger"
-        plain
-        style="width: 100%; margin-top: 8px"
-        @click="clearApi"
-      >
-        移除 API 配置
-      </el-button>
     </template>
   </div>
 </template>

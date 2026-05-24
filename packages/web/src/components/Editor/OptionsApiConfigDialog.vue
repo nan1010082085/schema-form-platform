@@ -46,6 +46,10 @@ function testConnection() {
   apiConfigRef.value?.testConnection()
 }
 
+function clearApi() {
+  localApi.value = undefined
+}
+
 // ---- 保存 / 关闭 ----
 
 function handleSave() {
@@ -65,6 +69,31 @@ function handleClose() {
     width="560px"
     @update:model-value="emit('update:visible', $event)"
   >
+    <!-- 顶部操作栏：所有按钮一行排列 -->
+    <div :class="$style.toolbar">
+      <el-button size="small" @click="handleClose">取消</el-button>
+      <el-button
+        v-if="localApi"
+        size="small"
+        type="danger"
+        plain
+        @click="clearApi"
+      >
+        移除配置
+      </el-button>
+      <el-button
+        v-if="localApi"
+        size="small"
+        type="primary"
+        plain
+        :loading="apiConfigRef?.testing"
+        @click="testConnection"
+      >
+        测试连接
+      </el-button>
+      <el-button size="small" type="primary" @click="handleSave">保存</el-button>
+    </div>
+
     <div :class="$style.body">
       <ApiConfig
         ref="apiConfigRef"
@@ -72,25 +101,21 @@ function handleClose() {
         @update:api="handleApiUpdate"
       />
     </div>
-
-    <template #footer>
-      <div :class="$style.footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" plain @click="testConnection">测试连接</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
-      </div>
-    </template>
   </EnhancedDialog>
 </template>
 
 <style module>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 12px;
+}
+
 .body {
   max-height: 60vh;
   overflow-y: auto;
-}
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 </style>
