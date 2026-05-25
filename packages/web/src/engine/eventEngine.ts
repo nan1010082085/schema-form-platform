@@ -57,20 +57,24 @@ export function executeEventAction(
       if (!action.target) break
       const target = ctx.findWidget(action.target)
       if (target) ctx.updateWidget(action.target, { hidden: false })
+      logger.event(`show: ${action.target}`)
       break
     }
     case 'hide': {
       if (!action.target) break
       const target = ctx.findWidget(action.target)
       if (target) ctx.updateWidget(action.target, { hidden: true })
+      logger.event(`hide: ${action.target}`)
       break
     }
     case 'open-dialog': {
       if (action.target) ctx.openDialog(action.target)
+      logger.event(`open-dialog: ${action.target}`)
       break
     }
     case 'close-dialog': {
       ctx.closeDialog()
+      logger.event('close-dialog')
       break
     }
     case 'switch-tab': {
@@ -81,6 +85,7 @@ export function executeEventAction(
           props: { ...target.props, activeKey: action.value },
         })
       }
+      logger.event(`switch-tab: ${action.target} → ${action.value}`)
       break
     }
     case 'set-value': {
@@ -90,18 +95,22 @@ export function executeEventAction(
           ctx.updateWidget(action.target, { defaultValue: action.value as FormFieldValue })
         }
       }
+      logger.event(`set-value: ${action.target} =`, action.value)
       break
     }
     case 'submit': {
       ctx.submitForm()
+      logger.event('submit')
       break
     }
     case 'reset': {
       ctx.resetForm()
+      logger.event('reset')
       break
     }
     case 'emit': {
       ctx.emit('custom', action.value)
+      logger.event('emit:', action.value)
       break
     }
     case 'set-variable': {
@@ -218,7 +227,8 @@ export async function triggerWidgetEvent(
   trigger: string,
   ctx: EventExecutionContext,
 ): Promise<void> {
-  if (!widget.events) return
+  if (!widget.events?.length) return
+  logger.event(`trigger: ${widget.id} (${widget.type}).${trigger}`)
 
   // 构建完整的表达式上下文
   const context: Record<string, unknown> = {
@@ -230,7 +240,11 @@ export async function triggerWidgetEvent(
     if (event.trigger !== trigger) continue
 
     // 条件判断
-    if (event.condition && !evaluateCondition(event.condition, context, ctx.exposed)) continue
+    if (event.condition) {
+      const result = evaluateCondition(event.condition, context, ctx.exposed)
+      logger.rule(`condition: "${event.condition}" → ${result}`)
+      if (!result) continue
+    }
 
     // 确认提示（使用 UI 库的 confirm，而非浏览器原生）
     if (event.confirm) {

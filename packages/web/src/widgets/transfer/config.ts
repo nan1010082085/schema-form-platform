@@ -10,6 +10,9 @@ export const transferConfig: WidgetConfig = {
     rightTitle: '已选',
     filterable: true,
   },
+  exposedValues: [
+    { key: 'value', type: 'array', description: '已选值' },
+  ],
   configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],

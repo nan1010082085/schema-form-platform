@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useDynamicOptions } from '../../composables/useDynamicOptions'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
+
+useExposeWidget((wd) => ({
+  get value() { return wd.value.defaultValue },
+}))
 
 // 动态选项加载（api 配置存在时生效）
 const { options: dynamicOptions, loading } = useDynamicOptions(
@@ -22,10 +27,17 @@ const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
+
+const selectRef = ref<{ $el?: HTMLElement }>()
+
+function forwardNativeChange() {
+  selectRef.value?.$el?.dispatchEvent(new Event('change', { bubbles: true }))
+}
 </script>
 
 <template>
   <el-select
+    ref="selectRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
     :placeholder="(widgetData.props?.placeholder as string) || '请选择'"
@@ -34,6 +46,7 @@ const dynamicStyle = computed(() => ({
     :multiple="(widgetData.props?.multiple as boolean) || false"
     :filterable="(widgetData.props?.filterable as boolean) || false"
     :loading="loading"
+    @change="forwardNativeChange"
   >
     <el-option
       v-for="opt in resolvedOptions"

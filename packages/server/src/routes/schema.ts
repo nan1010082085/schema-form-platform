@@ -40,7 +40,7 @@ const VALID_WIDGET_TYPES = new Set([
   'button', 'button-list', 'upload', 'table',
   'search-list', 'editable-table', 'title', 'divider',
   'spacer', 'toolbar-buttons', 'file-list', 'transfer',
-  'detail-form', 'banner', 'tree-layout', 'date-time-slot',
+  'banner', 'tree-layout', 'date-time-slot',
   'grid-row', 'grid-col', 'page', 'toolbar', 'pagination', 'steps',
 ])
 

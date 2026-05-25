@@ -37,6 +37,10 @@ export const searchListConfig: WidgetConfig = {
     searchFields: [],
     columns: [],
   },
+  exposedValues: [
+    { key: 'loading', type: 'boolean', description: '加载状态' },
+    { key: 'tableData', type: 'array', description: '列表数据' },
+  ],
   configPanels: ['events', 'api', 'variables'] as const,
   propertyPanel: {
     basic: ['label'],

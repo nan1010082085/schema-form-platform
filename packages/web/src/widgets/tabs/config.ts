@@ -6,6 +6,9 @@ export const tabsConfig: WidgetConfig = {
   defaultStyle: {
     width: '100%',
   },
+  exposedValues: [
+    { key: 'activeKey', type: 'string', description: '当前激活标签' },
+  ],
   configPanels: ['events', 'variables'],
   defaultProps: {
     tabs: [

@@ -11,6 +11,9 @@ export const dateTimeSlotConfig: WidgetConfig = {
     format: 'YYYY-MM-DD HH:mm:ss',
     rangeSeparator: '至',
   },
+  exposedValues: [
+    { key: 'value', type: 'string', description: '当前字段值', example: '' },
+  ],
   configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],

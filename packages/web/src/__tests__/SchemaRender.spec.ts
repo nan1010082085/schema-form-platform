@@ -63,7 +63,6 @@ vi.mock('@/widgets/registry', () => {
     'toolbar-buttons': makeStub('stub-toolbar-buttons'),
     'file-list': makeStub('stub-file-list'),
     transfer: makeStub('stub-transfer'),
-    'detail-form': makeStub('stub-detail-form'),
     banner: makeStub('stub-banner'),
     'tree-layout': makeStub('stub-tree-layout'),
     'date-time-slot': makeStub('stub-date-time-slot'),

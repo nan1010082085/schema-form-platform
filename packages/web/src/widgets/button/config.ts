@@ -16,7 +16,7 @@ export const buttonConfig: WidgetConfig = {
     disabled: false,
     text: '按钮',
   },
-  configPanels: ['events', 'variables'],
+  configPanels: ['events'],
   propertyPanel: {
     basic: [
       'label',

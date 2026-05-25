@@ -61,6 +61,6 @@ export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
 /** 业务组件（不参与本次重构） */
 export const BUSINESS_TYPES: ReadonlySet<SchemaType> = new Set([
   'upload', 'file-list', 'transfer',
-  'detail-form', 'banner', 'tree-layout', 'date-time-slot',
+  'banner', 'tree-layout', 'date-time-slot',
   'toolbar-buttons', 'search-list', 'editable-table',
 ])

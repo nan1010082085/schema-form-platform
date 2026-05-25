@@ -16,6 +16,9 @@ export const textareaConfig: WidgetConfig = {
     maxlength: undefined as number | undefined,
     showWordLimit: false,
   },
+  exposedValues: [
+    { key: 'value', type: 'string', description: '当前字段值', example: '' },
+  ],
   configPanels: ['events', 'rules', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],

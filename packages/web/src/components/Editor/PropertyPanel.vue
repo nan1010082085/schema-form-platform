@@ -14,7 +14,7 @@ import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
 import { getWidget } from '../../widgets/registry'
 import { publicStylePanel } from '../../widgets/base/publicSchema'
-import type { Widget, WidgetEvent, WidgetRule, SchemaApiConfig, ConfigPanelType, ArrayFieldSchema, WidgetConfig } from '../../widgets/base/types'
+import type { Widget, WidgetEvent, SchemaApiConfig, ConfigPanelType, ArrayFieldSchema, WidgetConfig } from '../../widgets/base/types'
 import PropertyField from './PropertyField.vue'
 import BorderEditor from './BorderEditor.vue'
 import BorderRadiusEditor from './BorderRadiusEditor.vue'
@@ -302,6 +302,16 @@ const configHelpText = computed(() => {
       </ul>
     `)
   }
+  if (configPanels.value.includes('variables')) {
+    parts.push(`
+      <p><strong>变量</strong></p>
+      <p>定义组件级变量，可在事件条件和联动规则中引用：</p>
+      <ul>
+        <li>通过 exposed.xxx.value 引用组件暴露值</li>
+        <li>通过 variables.xxx 引用变量值</li>
+      </ul>
+    `)
+  }
   return parts.join('')
 })
 
@@ -339,9 +349,9 @@ function handleEventSave(events: WidgetEvent[]) {
   widgetStore.updateWidget(selectedWidget.value.id, { events })
 }
 
-function handleRuleSave(rules: WidgetRule[]) {
+function handleRuleSave(events: WidgetEvent[]) {
   if (!selectedWidget.value) return
-  widgetStore.updateWidget(selectedWidget.value.id, { rules })
+  widgetStore.updateWidget(selectedWidget.value.id, { events })
 }
 
 function handleApiSave(api: SchemaApiConfig | undefined) {
@@ -477,6 +487,12 @@ function updateBoardProperty(key: string, value: unknown) {
                 数据源
                 <span v-if="selectedWidget.api" :class="$style.badge">1</span>
               </el-button>
+              <el-button v-if="panel === 'variables'" size="small" plain @click="variableDialogVisible = true">
+                变量
+                <span v-if="selectedWidget.variables?.length" :class="$style.badge">
+                  {{ selectedWidget.variables.length }}
+                </span>
+              </el-button>
             </template>
           </div>
         </el-scrollbar>
@@ -584,7 +600,7 @@ function updateBoardProperty(key: string, value: unknown) {
 
       <LinkageConfigDialog
         :visible="ruleDialogVisible"
-        :rules="selectedWidget.rules ?? []"
+        :events="selectedWidget.events ?? []"
         @update:visible="ruleDialogVisible = $event"
         @save="handleRuleSave"
       />

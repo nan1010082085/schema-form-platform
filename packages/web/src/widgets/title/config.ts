@@ -8,7 +8,7 @@ export const titleConfig: WidgetConfig = {
     fontSize: '20px',
     color: '#303133',
   },
-  configPanels: ['events', 'variables'],
+  configPanels: ['events'],
   defaultProps: {
     content: '标题文字',
     level: 3 as 1 | 2 | 3 | 4,

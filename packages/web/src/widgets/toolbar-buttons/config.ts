@@ -20,7 +20,7 @@ export const toolbarButtonsConfig: WidgetConfig = {
     ] as ToolbarButtonItem[],
     disabled: false,
   },
-  configPanels: ['events', 'variables'],
+  configPanels: ['events'],
   propertyPanel: {
     basic: ['field', 'label'],
     style: ['fontSize', 'color', 'backgroundColor'],

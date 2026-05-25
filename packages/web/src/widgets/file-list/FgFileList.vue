@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { widgetDataKey } from '../base/types'
+import { useExposeWidget } from '../../composables/useExposeWidget'
+
 const widgetData = inject(widgetDataKey)!
+
+useExposeWidget((wd) => ({
+  get value() { return wd.value.defaultValue },
+}))
 </script>
 <template>
   <div :class="$style.container">

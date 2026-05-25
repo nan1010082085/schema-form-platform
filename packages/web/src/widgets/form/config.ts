@@ -30,5 +30,8 @@ export const formConfig: WidgetConfig = {
     style: ['padding', 'backgroundColor'],
     props: [],
   },
+  exposedValues: [
+    { key: 'formData', type: 'object', description: '表单数据模型' },
+  ],
   configPanels: ['events', 'api', 'variables'],
 }

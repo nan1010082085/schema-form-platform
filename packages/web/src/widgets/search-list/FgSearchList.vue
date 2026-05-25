@@ -13,8 +13,13 @@ import { widgetDataKey } from '../base/types'
 import type { SearchFieldConfig } from '../base/types'
 import { useWorkerRequest } from '@/composables/useWorkerRequest'
 import { useLogger } from '@/composables/useLogger'
+import { useExposeWidget } from '@/composables/useExposeWidget'
 
 const widgetData = inject(widgetDataKey)!
+useExposeWidget(() => ({
+  get loading() { return loading.value },
+  get tableData() { return tableData.value },
+}))
 const logger = useLogger('FgSearchList')
 const { request } = useWorkerRequest()
 

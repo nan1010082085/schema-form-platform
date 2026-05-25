@@ -25,7 +25,6 @@ import { FgTreeLayout, createTreeLayoutWidget, treeLayoutConfig } from './tree-l
 import { FgDateTimeSlot, createDateTimeSlotWidget, dateTimeSlotConfig } from './date-time-slot'
 import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
 import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
-import { FgDetailForm, createDetailFormWidget, detailFormConfig } from './detail-form'
 import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
 import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
 
@@ -231,7 +230,6 @@ export function registerAllWidgets() {
   registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
   registerWidget({ name: fileListConfig.name, displayName: fileListConfig.displayName, type: 'file-list', group: 'basic', component: FgFileList, create: createFileListWidget, config: fileListConfig })
   registerWidget({ name: transferConfig.name, displayName: transferConfig.displayName, type: 'transfer', group: 'basic', component: FgTransfer, create: createTransferWidget, config: transferConfig })
-  registerWidget({ name: detailFormConfig.name, displayName: detailFormConfig.displayName, type: 'detail-form', group: 'basic', component: FgDetailForm, create: createDetailFormWidget, config: detailFormConfig })
   registerWidget({ name: searchListConfig.name, displayName: searchListConfig.displayName, type: 'search-list', group: 'table', component: FgSearchList, create: createSearchListWidget, config: searchListConfig })
   registerWidget({ name: editableTableConfig.name, displayName: editableTableConfig.displayName, type: 'editable-table', group: 'table', component: FgEditableTable, create: createEditableTableWidget, config: editableTableConfig })
 }

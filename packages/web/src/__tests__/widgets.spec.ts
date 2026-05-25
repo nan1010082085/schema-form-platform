@@ -44,7 +44,6 @@ import { treeLayoutConfig } from '@/widgets/tree-layout/config'
 import { dateTimeSlotConfig } from '@/widgets/date-time-slot/config'
 import { fileListConfig } from '@/widgets/file-list/config'
 import { transferConfig } from '@/widgets/transfer/config'
-import { detailFormConfig } from '@/widgets/detail-form/config'
 import { searchListConfig } from '@/widgets/search-list/config'
 import { editableTableConfig } from '@/widgets/editable-table/config'
 
@@ -70,7 +69,7 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
   'spacer', 'toolbar-buttons', 'table', 'button',
   'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
   'file-list', 'transfer',
-  'detail-form', 'search-list', 'editable-table',
+  'search-list', 'editable-table',
 ]
 
 const ALL_CONFIGS = [
@@ -100,7 +99,6 @@ const ALL_CONFIGS = [
   { name: 'date-time-slot', config: dateTimeSlotConfig },
   { name: 'file-list', config: fileListConfig },
   { name: 'transfer', config: transferConfig },
-  { name: 'detail-form', config: detailFormConfig },
   { name: 'search-list', config: searchListConfig },
   { name: 'editable-table', config: editableTableConfig },
 ]
@@ -115,9 +113,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 29 widget types', () => {
+  it('registers exactly 28 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(29)
+    expect(all).toHaveLength(28)
   })
 
   it('getComponentMap returns a component for every registered type', () => {
@@ -273,7 +271,7 @@ describe('Widget Default Schema', () => {
   const layoutTypes: SchemaType[] = [
     'grid-row', 'grid-col', 'card', 'page', 'toolbar',
     'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
-    'tree-layout', 'detail-form',
+    'tree-layout',
   ]
 
   const noFieldTypes: SchemaType[] = [
@@ -441,15 +439,6 @@ describe('Widget Default Schema', () => {
     expect(schema.type).toBe('transfer')
     expect(schema.props!.titles).toEqual(['待选', '已选'])
     expect(schema.props!.filterable).toBe(true)
-  })
-
-  it('detail-form has children and props', () => {
-    const schema = createDefaultSchema('detail-form')
-    expect(schema.type).toBe('detail-form')
-    expect(schema.props!.title).toBe('详情')
-    expect(schema.props!.columns).toBe(2)
-    expect(schema.props!.bordered).toBe(true)
-    expect(Array.isArray(schema.children)).toBe(true)
   })
 
   it('editable-table has field and props', () => {

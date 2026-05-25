@@ -3,9 +3,14 @@ import { inject, computed, ref, onMounted, watch } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useApiRequest } from '../../composables/useApiRequest'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 import type { TableColumn } from './config'
 
 const widgetData = inject(widgetDataKey)!
+useExposeWidget(() => ({
+  get loading() { return loading.value },
+  get tableData() { return tableData.value },
+}))
 const { isDisabled } = useWidgetRenderState()
 const { fetchApi } = useApiRequest()
 

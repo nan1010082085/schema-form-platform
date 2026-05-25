@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
+const value = ref<Array<string | number>>([])
+useExposeWidget(() => ({
+  get value() { return value.value },
+}))
 const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
