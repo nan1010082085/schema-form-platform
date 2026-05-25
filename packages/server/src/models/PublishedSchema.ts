@@ -6,6 +6,7 @@ export interface IPublishedSchema {
   name: string
   type: 'form' | 'search_list'
   json: Record<string, unknown>
+  thumbnail?: string
   publishId: string
   version: string
   publishedAt: Date
@@ -20,6 +21,7 @@ const publishedSchemaDef = new mongoose.Schema(
     name: { type: String, required: true },
     type: { type: String, enum: ['form', 'search_list'], default: 'form' },
     json: { type: mongoose.Schema.Types.Mixed, required: true },
+    thumbnail: { type: String, default: '' },
     publishId: { type: String, required: true },
     version: { type: String, required: true },
     publishedAt: { type: Date, required: true },

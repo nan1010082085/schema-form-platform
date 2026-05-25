@@ -135,6 +135,7 @@ function handlePreviewDialogCancel() {
           <div class="preview-section__header">
             <h2 class="preview-section__title">{{ doc.name }}</h2>
             <p class="preview-section__desc">{{ doc.description }}</p>
+            <p v-if="doc.author" class="preview-section__author">作者：{{ doc.author }}</p>
           </div>
 
           <!-- 示例区域 -->
@@ -424,6 +425,12 @@ function handlePreviewDialogCancel() {
     color: #666;
     margin: 8px 0 0;
     line-height: 1.6;
+  }
+
+  &__author {
+    font-size: 12px;
+    color: #909399;
+    margin: 6px 0 0;
   }
 }
 

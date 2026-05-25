@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'grid-row',
   category: 'layout',
   description: '表格行容器，只能包含 grid-col 子节点，对应视觉上的行。使用 flex 布局。',
+  author: 'yangdongnan',
   props: [],
   events: [],
   slots: [],

@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgDateTimeSlot',
   category: 'business',
   description: '日期 + 时段选择组件，如 "上午/下午/晚上"。',
+  author: 'yangdongnan',
   props: [
     { name: 'modelValue', type: '{ date: string; slot: string }', default: '—', description: '选中值（v-model）' },
     { name: 'disabled', type: 'boolean', default: 'false', description: '是否禁用' },

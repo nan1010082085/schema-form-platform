@@ -4,6 +4,7 @@ export const treeLayoutConfig: WidgetConfig = {
   name: 'FgTreeLayout',
   displayName: '树形布局',
   description: '树形布局容器，支持树形结构展示和搜索',
+  author: 'yangdongnan',
   defaultStyle: { width: '100%', height: '400px' },
   configPanels: ['events', 'api', 'variables'],
   defaultProps: {

@@ -17,6 +17,7 @@ import { useBoardStore } from '../../stores/board'
 import { useDrag } from '../../composables/useDrag'
 import { useResize } from '../../composables/useResize'
 import { useClipboard } from '../../composables/useClipboard'
+import { useSnapshot } from '../../composables/useSnapshot'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { ResizeHandle } from '../../composables/useResize'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
@@ -55,6 +56,7 @@ const emit = defineEmits<{
   openRule: [widget: Widget]
   openApi: [widget: Widget]
   openVariables: [widget: Widget]
+  savePreview: [dataUrl: string]
 }>()
 
 const widgetStore = useWidgetStore()
@@ -64,6 +66,7 @@ const boardStore = useBoardStore()
 
 const { startDragFromPanel, startDragOnCanvas, updateDrag, endDrag } = useDrag()
 const { copy } = useClipboard()
+const { captureElement } = useSnapshot()
 
 /** 自渲染容器：children 在组件内部渲染，flattenWidgets 跳过其子组件 */
 const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
@@ -108,6 +111,13 @@ function handleOpenEvent(widget: Widget) { emit('openEvent', widget) }
 function handleOpenRule(widget: Widget) { emit('openRule', widget) }
 function handleOpenApi(widget: Widget) { emit('openApi', widget) }
 function handleOpenVariables(widget: Widget) { emit('openVariables', widget) }
+
+async function handleSavePreview(widget: Widget) {
+  const el = document.querySelector(`[data-widget-id="${widget.id}"]`) as HTMLElement | null
+  if (!el) return
+  const dataUrl = await captureElement(el)
+  if (dataUrl) emit('savePreview', dataUrl)
+}
 
 // ================================================================
 // 选中 Widget
@@ -418,6 +428,7 @@ function handleDrop(e: DragEvent) {
       @open-rule="handleOpenRule"
       @open-api="handleOpenApi"
       @open-variables="handleOpenVariables"
+      @save-preview="handleSavePreview"
     />
   </div>
 </template>

@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgFileList',
   category: 'business',
   description: '文件上传/下载/预览/删除组件。支持文件大小格式化、上传校验、禁用态。',
+  author: 'yangdongnan',
   props: [
     { name: 'fileList', type: 'FileItem[]', default: '[]', description: '文件列表' },
     { name: 'config', type: 'FileConfig', default: '—', description: '配置（accept/maxSize/maxCount/multiple）' },

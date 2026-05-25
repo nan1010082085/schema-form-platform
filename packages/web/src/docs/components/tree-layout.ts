@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgTreeLayout',
   category: 'business',
   description: '左侧树 + 右侧内容的布局组件。',
+  author: 'yangdongnan',
   props: [
     { name: 'data', type: 'TreeNode[]', default: '—', description: '树数据' },
     { name: 'title', type: 'string', default: '—', description: '标题' },

@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgToolbar',
   category: 'layout',
   description: '固定顶部工具栏，通常包含 toolbar-buttons 按钮组。',
+  author: 'yangdongnan',
   props: [],
   events: [],
   slots: [],

@@ -50,7 +50,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概览
 
-pnpm monorepo：schema-driven form engine，包含可视化编辑器和后端 API 服务。部署于 Vercel（SPA + Serverless Functions）。
+pnpm monorepo：Schema 驱动的可视化自由布局设计器与渲染器。上层通过 qiankun 微前端接入宿主应用，下层承接 microapp 子应用集成。部署于 Vercel（SPA + Serverless Functions）。
 
 ```
 schema-form-platform/

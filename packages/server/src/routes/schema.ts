@@ -134,8 +134,8 @@ router.get('/', async (ctx) => {
 // create new document with same editId. Otherwise generate new editId + version.
 // ────────────────────────────────────────────
 router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
-  const { name, json, type, editId: bodyEditId } = ctx.request.body as {
-    name?: string; json?: unknown; type?: string; editId?: string
+  const { name, json, type, editId: bodyEditId, thumbnail } = ctx.request.body as {
+    name?: string; json?: unknown; type?: string; editId?: string; thumbnail?: string
   }
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -161,6 +161,7 @@ router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
     name: name.trim(),
     type: schemaType,
     json: json as object,
+    ...(thumbnail ? { thumbnail } : {}),
   })
 
   ctx.status = 201
@@ -172,8 +173,8 @@ router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
 // Import a schema with deep validation.
 // ────────────────────────────────────────────
 router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) => {
-  const { name, type, json } = ctx.request.body as {
-    name?: string; type?: string; json?: unknown
+  const { name, type, json, thumbnail } = ctx.request.body as {
+    name?: string; type?: string; json?: unknown; thumbnail?: string
   }
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -218,6 +219,7 @@ router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) =>
     name: name.trim(),
     type: schemaType,
     json: json as object,
+    ...(thumbnail ? { thumbnail } : {}),
   })
 
   ctx.status = 201
@@ -340,8 +342,8 @@ router.get('/:id', async (ctx) => {
 // ────────────────────────────────────────────
 router.put('/:id', requireAuth, validate(updateSchemaSchema), async (ctx) => {
   const { id } = ctx.params
-  const { name, json, status, type } = ctx.request.body as {
-    name?: string; json?: unknown; status?: string; type?: string
+  const { name, json, status, type, thumbnail } = ctx.request.body as {
+    name?: string; json?: unknown; status?: string; type?: string; thumbnail?: string
   }
 
   if (!uuidValidate(id)) {
@@ -389,6 +391,9 @@ router.put('/:id', requireAuth, validate(updateSchemaSchema), async (ctx) => {
       return
     }
     data.type = type
+  }
+  if (thumbnail !== undefined) {
+    data.thumbnail = thumbnail
   }
 
   if (Object.keys(data).length === 0) {
@@ -446,6 +451,7 @@ router.post('/:id/publish', requireAuth, async (ctx) => {
         name: draft.name,
         type: draft.type,
         json: draft.json,
+        thumbnail: draft.thumbnail,
         publishId: newPublishId,
         version: draft.version,
         publishedAt: now,

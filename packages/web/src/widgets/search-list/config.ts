@@ -27,6 +27,7 @@ export const searchListConfig: WidgetConfig = {
   name: 'FgSearchList',
   displayName: '搜索列表',
   description: '搜索列表复合组件，包含搜索表单、数据表格、分页',
+  author: 'yangdongnan',
   defaultStyle: { width: '100%', height: '500px' },
   defaultProps: {
     title: '列表',

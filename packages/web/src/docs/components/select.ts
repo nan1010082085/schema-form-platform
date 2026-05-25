@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FormSelect',
   category: 'base',
   description: '封装 ElSelect。通过 options 数组或 api 配置定义选项。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'any', default: '—', description: '选中值（v-model）' },

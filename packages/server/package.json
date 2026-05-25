@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "author": "yangdongnan",
+  "description": "可视化设计器后端 — Koa.js + MongoDB，Schema 存储与 API 服务",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

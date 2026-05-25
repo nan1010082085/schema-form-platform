@@ -9,6 +9,7 @@ export const toolbarButtonsConfig: WidgetConfig = {
   name: 'FgToolbarButtons',
   displayName: '工具栏按钮',
   description: '工具栏按钮组，用于操作栏按钮排列',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100%',
     fontSize: '14px',

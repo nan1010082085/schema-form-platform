@@ -4,6 +4,7 @@ export const editableTableConfig: WidgetConfig = {
   name: 'FgEditableTable',
   displayName: '可编辑表格',
   description: '可编辑表格，支持动态增删行、列配置',
+  author: 'yangdongnan',
   defaultStyle: { width: '100%', height: '300px' },
   defaultProps: {
     title: '可编辑表格',

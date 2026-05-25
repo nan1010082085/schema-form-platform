@@ -5,7 +5,8 @@ const doc: ComponentDoc = {
   name: '字段联动',
   category: 'business',
   description:
-    'Schema 驱动的字段联动机制，支持 visible / disabled / required / options / set-value / reset-fields 六种联动类型。' +
+    'Schema 驱动的字段联动机制，支持 visible / disabled / required / options / set-value / reset-fields 六种联动类型。',
+  author: 'yangdongnan' +
     '通过在 PartialWidget 上配置 linkages 数组，可以实现字段间的条件联动。' +
     '条件表达式可引用 values (表单数据)、variables (用户变量)、exposed (组件暴露值)。',
   props: [

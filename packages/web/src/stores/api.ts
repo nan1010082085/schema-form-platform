@@ -306,11 +306,12 @@ export const useApiStore = defineStore('schema', () => {
     schema: PartialWidget[],
     name: string,
     schemaId?: string,
+    thumbnail?: string,
   ): Promise<SchemaListItem | null> {
     if (schemaId) {
-      return updateSchema(schemaId, { name, json: schema })
+      return updateSchema(schemaId, { name, json: schema, thumbnail })
     } else {
-      return createSchema({ name, type: 'form' as const, json: schema })
+      return createSchema({ name, type: 'form' as const, json: schema, thumbnail })
     }
   }
 

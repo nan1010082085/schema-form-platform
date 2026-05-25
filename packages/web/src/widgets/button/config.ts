@@ -3,6 +3,7 @@ export const buttonConfig: WidgetConfig = {
   name: 'FgButton',
   displayName: '按钮',
   description: '按钮组件，支持事件配置和样式自定义',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100px',
     height: '44px',

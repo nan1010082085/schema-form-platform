@@ -37,6 +37,7 @@ const docsByCategory = computed(() => getDocsByCategory())
             >
               <h3 class="preview-card__name">{{ doc.name }}</h3>
               <p class="preview-card__desc">{{ doc.description }}</p>
+              <p v-if="doc.author" class="preview-card__author">作者：{{ doc.author }}</p>
               <div class="preview-card__meta">
                 <span v-if="doc.props.length" class="preview-card__meta-item">
                   {{ doc.props.length }} props
@@ -176,6 +177,12 @@ const docsByCategory = computed(() => getDocsByCategory())
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  &__author {
+    font-size: 12px;
+    color: #909399;
+    margin: -8px 0 10px;
   }
 
   &__meta {

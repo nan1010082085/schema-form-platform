@@ -3,6 +3,7 @@ export const textareaConfig: WidgetConfig = {
   name: 'FgTextarea',
   displayName: '文本域',
   description: '多行文本输入框，支持行数配置',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
     height: '80px',

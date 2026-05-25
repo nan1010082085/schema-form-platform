@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgTable',
   category: 'business',
   description: '通用表格组件。对齐 UI 规范：斑马纹、序号列 48px、文字溢出截断。支持 selection、自定义列插槽。',
+  author: 'yangdongnan',
   props: [
     { name: 'data', type: 'any[]', default: '—', description: '表格数据' },
     { name: 'columns', type: 'TableColumn[]', default: '—', description: '列配置' },

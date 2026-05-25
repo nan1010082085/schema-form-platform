@@ -27,7 +27,11 @@ const emit = defineEmits<{
   openRule: [widget: Widget]
   openApi: [widget: Widget]
   openVariables: [widget: Widget]
+  savePreview: [dataUrl: string]
 }>()
+
+const canvasRef = ref<HTMLElement>()
+defineExpose({ canvasRef })
 
 const boardStore = useBoardStore()
 const editorStore = useEditorStore()
@@ -153,7 +157,7 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
 </script>
 
 <template>
-  <div :class="[$style.canvas, { [$style.canvasGrid]: !isPreview }]" :style="canvasStyle">
+  <div ref="canvasRef" :class="[$style.canvas, { [$style.canvasGrid]: !isPreview }]" :style="canvasStyle">
     <!-- 预览模式：纯净渲染，无编辑交互层 -->
     <SchemaRender v-if="isPreview" :widgets="widgetStore.widgets" />
     <!-- 编辑模式：带选中、拖拽、缩放的交互层 -->
@@ -163,6 +167,7 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
       @open-rule="emit('openRule', $event)"
       @open-api="emit('openApi', $event)"
       @open-variables="emit('openVariables', $event)"
+      @save-preview="emit('savePreview', $event)"
     />
   </div>
 </template>

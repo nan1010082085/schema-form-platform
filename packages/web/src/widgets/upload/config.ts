@@ -4,6 +4,7 @@ export const uploadConfig: WidgetConfig = {
   name: 'FgUpload',
   displayName: '文件上传',
   description: '文件上传组件，支持文件类型和大小限制',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
     height: '44px',

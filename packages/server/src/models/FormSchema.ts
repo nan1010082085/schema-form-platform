@@ -8,6 +8,7 @@ export interface IFormSchema {
   type: 'form' | 'search_list'
   status: 'draft'
   json: Record<string, unknown>
+  thumbnail?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -21,6 +22,7 @@ const formSchemaDef = new mongoose.Schema(
     type: { type: String, enum: ['form', 'search_list'], default: 'form' },
     status: { type: String, enum: ['draft'], default: 'draft' },
     json: { type: mongoose.Schema.Types.Mixed, required: true },
+    thumbnail: { type: String, default: '' },
   },
   {
     timestamps: true,

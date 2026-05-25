@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'grid-col',
   category: 'layout',
   description: '表格单元格，基于 24 栅格。通过 span 控制宽度，label 显示标签文字。',
+  author: 'yangdongnan',
   props: [
     { name: 'type', type: '"grid-col"', default: '—', description: '节点类型，必须为 grid-col' },
     { name: 'span', type: 'number', default: '24', description: '栅格占位列数（1-24）' },

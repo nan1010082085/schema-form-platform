@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FgSearchList',
   category: 'business',
   description: '搜索列表组件 — FormGrid 最复杂的业务组件。组合了搜索表单、数据表格、分页器、行操作按钮和导出功能。通过完整的属性面板可视化配置。支持 7 种列渲染模式、4 种行操作类型、CSV/Excel 导出、骨架屏加载态、空状态和错误重试。',
+  author: 'yangdongnan',
   exposedValues: [
     { key: 'selectedRows', type: 'array', description: '当前选中行数据', example: [] },
     { key: 'loading', type: 'boolean', description: '数据加载状态', example: false },

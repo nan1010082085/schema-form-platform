@@ -13,9 +13,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useClipboard } from '@/composables/useClipboard'
+import { useSnapshot } from '@/composables/useSnapshot'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
 import { useEditorStore } from '@/stores/editor'
+import { useApiStore } from '@/stores/api'
 import { registerAllWidgets } from '@/widgets'
 import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
 import EditorLeftPanel from '@/components/Editor/EditorLeftPanel.vue'
@@ -41,7 +43,10 @@ const route = useRoute()
 const boardStore = useBoardStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
+const apiStore = useApiStore()
 const { copy } = useClipboard()
+const { captureElement } = useSnapshot()
+const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
 // ================================================================
 // Layout state
@@ -215,21 +220,44 @@ function handleZoomOut() {
 }
 
 // ================================================================
-// Save (placeholder)
+// Save
 // ================================================================
 
 async function handleSave() {
-  const data = {
-    name: boardStore.name,
-    status: boardStore.status,
-    canvas: boardStore.canvas,
-    variables: boardStore.variables,
-    events: boardStore.events,
-    widgets: widgetStore.widgets,
+  // 1. Capture full canvas snapshot
+  const canvasEl = editorCanvasRef.value?.canvasRef
+  let thumbnail = ''
+  if (canvasEl) {
+    thumbnail = await captureElement(canvasEl)
   }
-  console.log('[EditorView] Save:', JSON.stringify(data, null, 2))
-  editorStore.markClean()
-  ElMessage.success('已保存（控制台输出）')
+
+  // 2. Call API
+  const result = await apiStore.saveSchema(
+    widgetStore.widgets,
+    boardStore.name,
+    boardStore.id || undefined,
+    thumbnail,
+  )
+
+  // 3. Update local state
+  if (result) {
+    boardStore.id = result.id
+    editorStore.markClean()
+    ElMessage.success('已保存')
+  } else {
+    ElMessage.error(apiStore.error || '保存失败')
+  }
+}
+
+async function handleSavePreview(dataUrl: string) {
+  if (!boardStore.id) {
+    ElMessage.warning('请先保存画布')
+    return
+  }
+  const result = await apiStore.updateSchema(boardStore.id, { thumbnail: dataUrl })
+  if (result) {
+    ElMessage.success('预览图已保存')
+  }
 }
 
 // ================================================================
@@ -478,10 +506,12 @@ function handleClearCanvas() {
       <!-- Center: canvas -->
       <div class="editor-view__center">
         <EditorCanvas
+          ref="editorCanvasRef"
           @open-event="handleOpenEvent"
           @open-rule="handleOpenRule"
           @open-api="handleOpenApi"
           @open-variables="handleOpenVariables"
+          @save-preview="handleSavePreview"
         />
       </div>
 

@@ -3,6 +3,7 @@ export const rowColConfig: WidgetConfig = {
   name: 'FgRowCol',
   displayName: '行列容器',
   description: '行列容器，使用 el-row + el-col 布局，支持 1-4 列选择',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100%',
     height: '44px',

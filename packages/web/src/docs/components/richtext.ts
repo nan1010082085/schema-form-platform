@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FormRichText',
   category: 'base',
   description: '富文本编辑器组件，基于 textarea 封装，支持 maxLength 限制字数。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'string', default: '—', description: '文本值（v-model）' },

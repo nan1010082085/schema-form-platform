@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgSpacer',
   category: 'layout',
   description: '垂直间距组件，通过 height 属性控制高度。',
+  author: 'yangdongnan',
   props: [
     { name: 'height', type: 'string', default: '"20px"', description: '间距高度' }
   ],
