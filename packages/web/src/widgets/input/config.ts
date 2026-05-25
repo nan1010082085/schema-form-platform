@@ -17,6 +17,9 @@ export const inputConfig: WidgetConfig = {
     maxlength: undefined as number | undefined,
     showPassword: false,
   },
+  exposedValues: [
+    { key: 'value', type: 'string', description: '当前字段值', example: '' },
+  ],
   configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],

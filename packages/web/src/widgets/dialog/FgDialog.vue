@@ -16,10 +16,16 @@ import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import { useLogger } from '@/composables/useLogger'
 import EnhancedDialog from '../../components/EnhancedDialog.vue'
+import { useExposeWidget } from '@/composables/useExposeWidget'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const logger = useLogger('FgDialog')
+
+useExposeWidget(() => ({
+  get visible() { return visible.value },
+  get dialogData() { return dialogModel },
+}))
 
 defineProps<{
   editable?: boolean

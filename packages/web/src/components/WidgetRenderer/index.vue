@@ -37,7 +37,7 @@ import { useLifecycle } from '@/composables/useLifecycle'
 import { useLocale } from '@/composables/useLocale'
 import { useLogger } from '@/composables/useLogger'
 import { apiClient } from '@/utils/apiClient'
-import { executeEventAction } from '@/engine/eventEngine'
+import { triggerWidgetEvent } from '@/engine/eventEngine'
 
 const logger = useLogger('WidgetRenderer')
 
@@ -168,17 +168,20 @@ const exposedContext = ref<Record<string, Record<string, unknown>>>({})
 
 /** 注册组件暴露值（由子组件调用） */
 function registerExposed(widgetId: string, state: Record<string, unknown>) {
-  exposedContext.value[widgetId] = state
+  exposedContext.value = { ...exposedContext.value, [widgetId]: state }
 }
 
 /** 注销组件暴露值 */
 function unregisterExposed(widgetId: string) {
-  delete exposedContext.value[widgetId]
+  const { [widgetId]: _, ...rest } = exposedContext.value
+  exposedContext.value = rest
 }
 
 // 提供暴露值注册接口
 provide('registerExposed', registerExposed)
 provide('unregisterExposed', unregisterExposed)
+provide('variablesContext', variablesContext)
+provide('exposedContext', exposedContext)
 
 // 联动状态（支持 variables 和 exposed 引用）
 const { stateMap: linkageStateMap } = useLinkage(props.schema, formData, variablesContext, exposedContext)
@@ -261,12 +264,8 @@ const eventContext: EventExecutionContext = {
   get exposed() { return exposedContext.value },
   triggerEvent: (targetId: string, eventName: string) => {
     const widget = findWidgetInSchema(props.schema, targetId)
-    if (widget?.events) {
-      for (const event of widget.events) {
-        if (event.trigger === eventName) {
-          executeEventAction(event.actions[0], eventContext)
-        }
-      }
+    if (widget) {
+      triggerWidgetEvent(widget, eventName, eventContext)
     }
     // 同时 emit 给父组件处理
     emit('action', { type: 'trigger-event', target: targetId, event: eventName } as SchemaAction)

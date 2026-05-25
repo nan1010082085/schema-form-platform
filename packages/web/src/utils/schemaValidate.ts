@@ -19,7 +19,7 @@ const FALLBACK_SCHEMA_TYPES = new Set([
   'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea',
   'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
   'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
-  'file-list', 'transfer', 'detail-form',
+  'file-list', 'transfer',
   'search-list', 'editable-table',
   // Legacy types still accepted by the renderer
   'page', 'toolbar', 'steps', 'date-range', 'file-preview', 'pagination',

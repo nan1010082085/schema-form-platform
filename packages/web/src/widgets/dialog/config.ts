@@ -58,5 +58,9 @@ export const dialogConfig: WidgetConfig = {
       { key: 'showFullscreenBtn', label: '显示全屏按钮', type: 'switch', default: true },
     ],
   },
+  exposedValues: [
+    { key: 'visible', type: 'boolean', description: '弹窗是否可见' },
+    { key: 'dialogData', type: 'object', description: '弹窗表单数据' },
+  ],
   configPanels: ['events', 'variables'],
 }

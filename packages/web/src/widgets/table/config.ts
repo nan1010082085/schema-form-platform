@@ -27,6 +27,10 @@ export const tableConfig: WidgetConfig = {
     apiHeaders: {} as Record<string, string>,
     responseDataPath: '',
   },
+  exposedValues: [
+    { key: 'loading', type: 'boolean', description: '加载状态' },
+    { key: 'tableData', type: 'array', description: '表格数据' },
+  ],
   configPanels: ['api', 'variables'],
   propertyPanel: {
     basic: ['label'],

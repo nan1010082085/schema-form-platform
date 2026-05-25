@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useDynamicOptions } from '../../composables/useDynamicOptions'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
 const { isDisabled } = useWidgetRenderState()
+
+useExposeWidget((wd) => ({
+  get value() { return wd.value.defaultValue },
+}))
 
 // 动态选项加载（api 配置存在时生效）
 const { options: dynamicOptions } = useDynamicOptions(
@@ -22,13 +27,21 @@ const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
+
+const groupRef = ref<{ $el?: HTMLElement }>()
+
+function forwardNativeChange() {
+  groupRef.value?.$el?.dispatchEvent(new Event('change', { bubbles: true }))
+}
 </script>
 
 <template>
   <el-checkbox-group
+    ref="groupRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
     :disabled="isDisabled"
+    @change="forwardNativeChange"
   >
     <el-checkbox
       v-for="opt in resolvedOptions"

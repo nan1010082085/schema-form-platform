@@ -229,6 +229,7 @@ export function useLinkage(
         }
 
         const result = evaluateCondition(linkage, currentFormData, currentVariables, currentExposed)
+        logger.rule(`${entry.field} [${linkage.type}]: "${linkage.condition}" → ${result}`)
 
         switch (linkage.type) {
           case 'visible':

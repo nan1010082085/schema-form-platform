@@ -15,6 +15,9 @@ export const dateConfig: WidgetConfig = {
     type: 'date' as 'date' | 'datetime' | 'daterange',
     format: 'YYYY-MM-DD',
   },
+  exposedValues: [
+    { key: 'value', type: 'string', description: '当前字段值', example: '' },
+  ],
   configPanels: ['events', 'rules', 'variables'],
   propertyPanel: {
     basic: ['field', 'label', 'defaultValue'],

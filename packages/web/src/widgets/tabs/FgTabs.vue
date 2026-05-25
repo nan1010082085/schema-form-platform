@@ -13,9 +13,13 @@
  */
 import { inject, ref, computed } from 'vue'
 import { widgetDataKey } from '../base/types'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
+useExposeWidget(() => ({
+  get activeKey() { return activeKey.value },
+}))
 
 interface TabItem {
   key: string

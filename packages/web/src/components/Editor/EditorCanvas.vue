@@ -19,6 +19,7 @@ import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
 import type { Widget } from '../../widgets/base/types'
 import type { DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
+import { triggerWidgetEvent } from '../../engine'
 import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from '../WidgetRenderer/types'
 
 const emit = defineEmits<{
@@ -50,6 +51,41 @@ const canvasStyle = computed(() => ({
 const dialogRegistry: DialogRegistry = new Map()
 const lastOpenedDialogId = ref<string | undefined>(undefined)
 provide(DIALOG_REGISTRY_KEY, dialogRegistry)
+
+// ---- 变量 + exposed 上下文（预览模式） ----
+
+const runtimeVariables = ref<Record<string, unknown>>({})
+const exposedContext = ref<Record<string, Record<string, unknown>>>({})
+
+const variablesContext = computed(() => {
+  const vars: Record<string, unknown> = {}
+  for (const v of boardStore.variables) {
+    vars[v.name] = v.defaultValue
+  }
+  function collect(items: Widget[]) {
+    for (const item of items) {
+      if (item.variables?.length) {
+        for (const v of item.variables) {
+          vars[v.name] = v.defaultValue
+        }
+      }
+      if (item.children?.length) collect(item.children as Widget[])
+    }
+  }
+  collect(widgetStore.widgets)
+  Object.assign(vars, runtimeVariables.value)
+  return vars
+})
+
+provide('registerExposed', (widgetId: string, state: Record<string, unknown>) => {
+  exposedContext.value = { ...exposedContext.value, [widgetId]: state }
+})
+provide('unregisterExposed', (widgetId: string) => {
+  const { [widgetId]: _, ...rest } = exposedContext.value
+  exposedContext.value = rest
+})
+provide('variablesContext', variablesContext)
+provide('exposedContext', exposedContext)
 
 /** 递归查找 widget */
 function findWidgetById(items: Widget[], id: string): Widget | undefined {
@@ -83,8 +119,28 @@ const previewEventContext: EventExecutionContext = {
   },
   submitForm: () => {},
   resetForm: () => {},
-  getFormData: () => ({}),
+  getFormData: () => {
+    const values: Record<string, unknown> = {}
+    function walk(items: Widget[]) {
+      for (const w of items) {
+        if (w.field) values[w.field] = w.defaultValue ?? null
+        if (w.children?.length) walk(w.children as Widget[])
+      }
+    }
+    walk(widgetStore.widgets)
+    return values
+  },
   emit: () => {},
+  get variables() { return variablesContext.value },
+  setVariable: (name: string, value: unknown) => { runtimeVariables.value[name] = value },
+  getVariable: (name: string) => variablesContext.value[name],
+  get exposed() { return exposedContext.value },
+  triggerEvent: (targetId: string, eventName: string) => {
+    const widget = findWidgetById(widgetStore.widgets, targetId)
+    if (widget) {
+      triggerWidgetEvent(widget, eventName, previewEventContext)
+    }
+  },
   confirm: (message: string) => {
     return ElMessageBox.confirm(message, '确认', {
       type: 'warning',

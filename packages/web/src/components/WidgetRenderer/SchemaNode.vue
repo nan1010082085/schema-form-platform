@@ -19,6 +19,7 @@ import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import { useLinkage } from '../../composables/useLinkage'
+import type { Ref } from 'vue'
 import { triggerWidgetEvent, type EventExecutionContext } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
@@ -211,13 +212,19 @@ const formData = computed<FormData>(() => {
  * 基于 useLinkage composable，按 field 查找联动状态。
  * widget.hidden 作为静态可见性覆盖（优先于联动状态）。
  */
-const linkage = useLinkage(widgetStore.widgets as unknown as PartialWidget[], formData)
+const injectedVariables = inject<Ref<Record<string, unknown>>>('variablesContext', ref({}))
+const injectedExposed = inject<Ref<Record<string, Record<string, unknown>>>>('exposedContext', ref({}))
+const linkage = useLinkage(widgetStore.widgets as unknown as PartialWidget[], formData, injectedVariables, injectedExposed)
 const renderState = computed(() => {
   const linkageState = linkage.stateMap.value.get(props.widget.field ?? '')
   const base = linkageState ?? { visible: true, disabled: false, required: false }
   // hidden 静态属性覆盖：hidden=true 时强制不可见
   if (props.widget.hidden) {
     return { ...base, visible: false }
+  }
+  // disabled 属性覆盖（规则引擎动态设置）
+  if (props.widget.disabled) {
+    return { ...base, disabled: true }
   }
   return base
 })
@@ -283,8 +290,9 @@ const wrapperStyle = computed(() => {
       <!-- 编辑模式：容器 shell + 子部件层 -->
       <div
         v-if="isEditMode"
-        :class="[$style.nodeWrapper, $style.nodeWrapperEdit]"
+        :class="[$style.nodeWrapper, $style.nodeWrapperEdit, $style.interactiveContainer]"
         :style="wrapperStyle"
+        @click.stop="handleInteractiveContainerClick()"
       >
         <component
           v-if="resolvedComponent"

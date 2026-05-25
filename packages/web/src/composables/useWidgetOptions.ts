@@ -32,5 +32,19 @@ export function useWidgetOptions() {
 
   const widgetOptions = computed(() => flattenWidgets(widgetStore.widgets))
 
-  return { widgetOptions }
+  /** 所有组件选项（含无 field 的组件，按 ID 选择） */
+  const allWidgetOptions = computed(() => {
+    const result: WidgetOption[] = []
+    function collect(list: Widget[]) {
+      for (const w of list) {
+        const label = w.label || w.name || w.type
+        result.push({ label: `${label}（${w.id}）`, value: w.id })
+        if (w.children?.length) collect(w.children)
+      }
+    }
+    collect(widgetStore.widgets)
+    return result
+  })
+
+  return { widgetOptions, allWidgetOptions }
 }

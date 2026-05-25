@@ -2,28 +2,23 @@
 /**
  * ConditionBuilder — 结构化条件表达式构建器
  *
- * 替代原始表达式 textarea，提供可视化条件配置：
- * - 字段选择（从 widget store 收集所有带 field 的组件）
- * - 运算符选择（===, !==, >, <, >=, <=, 包含, 为真, 为假）
- * - 值输入（运算符为 为真/为假 时自动隐藏）
- *
- * 内部维护条件子句列表，自动生成表达式字符串。
- * 支持与原始表达式字符串双向同步（向后兼容）。
+ * 支持三类引用：表单字段、变量、组件暴露值
+ * 支持 AND / OR 逻辑组合
+ * 双向同步表达式字符串
  */
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import { useWidgetOptions } from '@/composables/useWidgetOptions'
+import { useConditionReferences } from '@/composables/useConditionReferences'
 
 interface ConditionClause {
   field: string
   operator: string
   value: string
+  logic: '&&' | '||'
 }
 
 const props = defineProps<{
-  /** 当前表达式字符串 */
   modelValue?: string
-  /** 是否必填 */
   required?: boolean
 }>()
 
@@ -31,13 +26,13 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-// ---- 字段选项 ----
-const { widgetOptions } = useWidgetOptions()
+// ---- 引用选项（字段 + 变量 + 暴露值） ----
+const { fieldRefs, variableRefs, exposedRefs } = useConditionReferences()
 
 // ---- 运算符选项 ----
 const operatorOptions = [
-  { label: '等于', value: '===', needsValue: true },
-  { label: '不等于', value: '!==', needsValue: true },
+  { label: '等于', value: '==', needsValue: true },
+  { label: '不等于', value: '!=', needsValue: true },
   { label: '大于', value: '>', needsValue: true },
   { label: '小于', value: '<', needsValue: true },
   { label: '大于等于', value: '>=', needsValue: true },
@@ -50,50 +45,55 @@ const operatorOptions = [
 // ---- 条件子句列表 ----
 const clauses = ref<ConditionClause[]>([])
 
-/** 从表达式字符串解析子句（尽力而为，失败则保留空子句） */
+/** 从表达式字符串解析子句 */
 function parseExpression(expr: string): ConditionClause[] {
   if (!expr?.trim()) return []
 
-  // 尝试解析 "field op value" 格式的 AND 链
-  const parts = expr.split('&&').map(s => s.trim()).filter(Boolean)
+  // 按 || 分割为 OR 组，每组内部按 && 分割
+  const orGroups = expr.split('||').map(s => s.trim()).filter(Boolean)
   const result: ConditionClause[] = []
 
-  for (const part of parts) {
-    // 匹配 field op value 模式
-    const match = part.match(/^(\w+)\s*(===|!==|>=|<=|>|<)\s*(.+)$/)
-    if (match) {
-      let val = match[3].trim()
-      // 去掉引号
-      if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
-        val = val.slice(1, -1)
+  for (let gi = 0; gi < orGroups.length; gi++) {
+    const andParts = orGroups[gi].split('&&').map(s => s.trim()).filter(Boolean)
+    for (let ai = 0; ai < andParts.length; ai++) {
+      const part = andParts[ai]
+      const isFirst = gi === 0 && ai === 0
+      const logic: '&&' | '||' = isFirst ? '&&' : (ai === 0 ? '||' : '&&')
+
+      // 匹配 field op value 模式（支持 exposed.xxx.value 和 variables.xxx 作为 field）
+      const match = part.match(/^([\w.]+)\s*(===?|!==?|>=|<=|>|<)\s*(.+)$/)
+      if (match) {
+        let val = match[3].trim()
+        if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
+          val = val.slice(1, -1)
+        }
+        result.push({ field: match[1], operator: match[2], value: val, logic })
+        continue
       }
-      result.push({ field: match[1], operator: match[2], value: val })
-      continue
-    }
 
-    // 匹配 field.includes(value)
-    const includesMatch = part.match(/^(\w+)\.includes\((.+)\)$/)
-    if (includesMatch) {
-      let val = includesMatch[2].trim()
-      if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
-        val = val.slice(1, -1)
+      // 匹配 field.includes(value)
+      const includesMatch = part.match(/^([\w.]+)\.includes\((.+)\)$/)
+      if (includesMatch) {
+        let val = includesMatch[2].trim()
+        if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
+          val = val.slice(1, -1)
+        }
+        result.push({ field: includesMatch[1], operator: 'includes', value: val, logic })
+        continue
       }
-      result.push({ field: includesMatch[1], operator: 'includes', value: val })
-      continue
-    }
 
-    // 匹配 !field 或 !!field
-    if (part.startsWith('!!')) {
-      result.push({ field: part.slice(2), operator: 'truthy', value: '' })
-      continue
-    }
-    if (part.startsWith('!')) {
-      result.push({ field: part.slice(1), operator: 'falsy', value: '' })
-      continue
-    }
+      // 匹配 !!field 或 !field
+      if (part.startsWith('!!')) {
+        result.push({ field: part.slice(2), operator: 'truthy', value: '', logic })
+        continue
+      }
+      if (part.startsWith('!')) {
+        result.push({ field: part.slice(1), operator: 'falsy', value: '', logic })
+        continue
+      }
 
-    // 无法解析，作为原始文本保留
-    result.push({ field: '', operator: '===', value: part })
+      result.push({ field: '', operator: '==', value: part, logic })
+    }
   }
 
   return result
@@ -107,19 +107,25 @@ function buildExpression(cls: ConditionClause[]): string {
     const op = operatorOptions.find(o => o.value === c.operator)
     if (!op) continue
 
+    let expr: string
     if (c.operator === 'truthy') {
-      parts.push(`!!${c.field}`)
+      expr = `!!${c.field}`
     } else if (c.operator === 'falsy') {
-      parts.push(`!${c.field}`)
+      expr = `!${c.field}`
     } else if (c.operator === 'includes') {
       const val = isNaN(Number(c.value)) ? `'${c.value}'` : c.value
-      parts.push(`${c.field}.includes(${val})`)
+      expr = `${c.field}.includes(${val})`
     } else {
       const val = isNaN(Number(c.value)) ? `'${c.value}'` : c.value
-      parts.push(`${c.field} ${c.operator} ${val}`)
+      expr = `${c.field} ${c.operator} ${val}`
     }
+
+    if (parts.length > 0) {
+      parts.push(c.logic === '||' ? ' || ' : ' && ')
+    }
+    parts.push(expr)
   }
-  return parts.join(' && ')
+  return parts.join('')
 }
 
 // ---- 同步：外部表达式 → 内部子句 ----
@@ -127,7 +133,6 @@ watch(
   () => props.modelValue,
   (expr) => {
     const parsed = parseExpression(expr ?? '')
-    // 只在表达式真正变化时更新子句，避免循环
     const current = buildExpression(clauses.value)
     if ((expr ?? '') !== current) {
       clauses.value = parsed.length > 0 ? parsed : []
@@ -144,7 +149,8 @@ function syncToExpression() {
 
 // ---- CRUD ----
 function addClause() {
-  clauses.value.push({ field: '', operator: '===', value: '' })
+  const logic = clauses.value.length > 0 ? '&&' : '&&'
+  clauses.value.push({ field: '', operator: '==', value: '', logic })
 }
 
 function removeClause(index: number) {
@@ -153,11 +159,10 @@ function removeClause(index: number) {
 }
 
 function updateClause(index: number, key: keyof ConditionClause, val: string) {
-  clauses.value[index][key] = val
+  ;(clauses.value[index] as Record<string, unknown>)[key] = val
   syncToExpression()
 }
 
-// ---- 运算符是否需要值输入 ----
 function needsValue(operator: string): boolean {
   return operatorOptions.find(o => o.value === operator)?.needsValue ?? true
 }
@@ -165,13 +170,24 @@ function needsValue(operator: string): boolean {
 
 <template>
   <div :class="$style.builder">
-    <!-- 子句列表 -->
     <div
       v-for="(clause, ci) in clauses"
       :key="ci"
       :class="$style.clause"
     >
-      <!-- 字段选择 -->
+      <!-- 逻辑切换（非第一个子句） -->
+      <el-select
+        v-if="ci > 0"
+        :model-value="clause.logic"
+        size="small"
+        :class="$style.logicSelect"
+        @update:model-value="updateClause(ci, 'logic', $event)"
+      >
+        <el-option label="且" value="&&" />
+        <el-option label="或" value="||" />
+      </el-select>
+
+      <!-- 字段选择（分组） -->
       <el-select
         :model-value="clause.field"
         size="small"
@@ -180,12 +196,30 @@ function needsValue(operator: string): boolean {
         :class="$style.fieldSelect"
         @update:model-value="updateClause(ci, 'field', $event)"
       >
-        <el-option
-          v-for="opt in widgetOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
+        <el-option-group v-if="fieldRefs.length > 0" label="表单字段">
+          <el-option
+            v-for="opt in fieldRefs"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-option-group>
+        <el-option-group v-if="variableRefs.length > 0" label="变量">
+          <el-option
+            v-for="opt in variableRefs"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-option-group>
+        <el-option-group v-if="exposedRefs.length > 0" label="组件暴露值">
+          <el-option
+            v-for="opt in exposedRefs"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-option-group>
       </el-select>
 
       <!-- 运算符 -->
@@ -203,7 +237,7 @@ function needsValue(operator: string): boolean {
         />
       </el-select>
 
-      <!-- 值输入（为真/为假时隐藏） -->
+      <!-- 值输入 -->
       <el-input
         v-if="needsValue(clause.operator)"
         :model-value="clause.value"
@@ -212,9 +246,6 @@ function needsValue(operator: string): boolean {
         :class="$style.valueInput"
         @update:model-value="updateClause(ci, 'value', $event)"
       />
-
-      <!-- AND 标记 -->
-      <span v-if="ci < clauses.length - 1" :class="$style.andMark">且</span>
 
       <!-- 删除 -->
       <el-button
@@ -263,8 +294,12 @@ function needsValue(operator: string): boolean {
   gap: 6px;
 }
 
+.logicSelect {
+  width: 64px;
+}
+
 .fieldSelect {
-  width: 180px;
+  width: 200px;
 }
 
 .opSelect {
@@ -273,13 +308,7 @@ function needsValue(operator: string): boolean {
 
 .valueInput {
   flex: 1;
-  min-width: 100px;
-}
-
-.andMark {
-  font-size: 11px;
-  color: #909399;
-  flex-shrink: 0;
+  min-width: 80px;
 }
 
 .empty {

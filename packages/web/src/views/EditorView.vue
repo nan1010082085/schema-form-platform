@@ -123,6 +123,7 @@ function isEditing(e: KeyboardEvent): boolean {
 }
 
 function handleKeyDown(e: KeyboardEvent) {
+  if (editorStore.mode !== 'edit') return
   if (isEditing(e)) return
 
   if (e.key === 'Delete' || e.key === 'Backspace') {

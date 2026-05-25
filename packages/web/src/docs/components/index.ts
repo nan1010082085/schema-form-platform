@@ -23,7 +23,6 @@ import table from './table'
 import pagination from './pagination'
 import fileList from './file-list'
 import transfer from './transfer'
-import detailForm from './detail-form'
 import banner from './banner'
 import treeLayout from './tree-layout'
 import dateTimeSlot from './date-time-slot'
@@ -67,7 +66,6 @@ export const componentDocs: ComponentDoc[] = [
   fileList,
   filePreview,
   transfer,
-  detailForm,
   banner,
   treeLayout,
   dateTimeSlot,

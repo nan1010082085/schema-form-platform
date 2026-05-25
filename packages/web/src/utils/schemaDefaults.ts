@@ -152,9 +152,6 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
     case 'transfer':
       item = { type: 'transfer', props: { titles: ['待选', '已选'], filterable: true } }
       break
-    case 'detail-form':
-      item = { type: 'detail-form', label: '详情', props: { title: '详情', columns: 2, bordered: true }, children: [] }
-      break
     case 'editable-table':
       item = { ...base, label: '可编辑表格', props: { title: '可编辑表格', addButtonText: '添加行', showAddButton: true, showDeleteButton: true, maxRows: 0 } }
       break

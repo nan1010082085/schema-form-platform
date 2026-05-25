@@ -30,7 +30,6 @@ export type BasicType =
   | 'toolbar-buttons'
   | 'file-list'
   | 'transfer'
-  | 'detail-form'
   | 'banner'
   | 'tree-layout'
   | 'date-time-slot'
@@ -422,6 +421,10 @@ export interface Widget {
   /** 组件联动规则列表（SchemaLinkage） */
   linkages?: SchemaLinkage[]
 
+  // === 运行时状态（由规则引擎设置） ===
+  /** 组件是否禁用（规则引擎可动态设置） */
+  disabled?: boolean
+
   // === 数据源 ===
   /** API 数据源配置（用于动态加载 options 等） */
   api?: SchemaApiConfig
@@ -528,7 +531,6 @@ export const FULL_WIDTH_TYPES = [
   'transfer',
   'banner',
   'tree-layout',
-  'detail-form',
   'pagination',
   'file-list',
   'search-list',

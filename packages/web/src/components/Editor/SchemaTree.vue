@@ -115,7 +115,7 @@ function getTypeZh(type: string): string {
     'button-list': '按钮', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
     'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
     'transfer': '穿梭框',
-    'detail-form': '详情', 'banner': '横幅', 'tree-layout': '树形',
+    'banner': '横幅', 'tree-layout': '树形',
     'date-time-slot': '日期时段', 'dialog': '弹窗', 'search-list': '搜索列表',
   }
   return map[type] ?? type

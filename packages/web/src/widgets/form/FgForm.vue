@@ -16,6 +16,7 @@ import type { Widget } from '../base/types'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import { useWorkerRequest } from '@/composables/useWorkerRequest'
 import { useLogger } from '@/composables/useLogger'
+import { useExposeWidget } from '@/composables/useExposeWidget'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
@@ -28,6 +29,10 @@ const emit = defineEmits<{
 }>()
 
 const logger = useLogger('FgForm')
+
+useExposeWidget(() => ({
+  get formData() { return formModel },
+}))
 
 // ---- ElForm ref ----
 const formRef = ref<InstanceType<typeof import('element-plus')['ElForm']>>()

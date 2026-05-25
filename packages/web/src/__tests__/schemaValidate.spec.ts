@@ -369,7 +369,7 @@ describe('validateSchema', () => {
   it('allows same-category nesting (business inside business)', () => {
     const schema: PartialWidget[] = [
       {
-        type: 'detail-form',
+        type: 'search-list',
         field: 'detail',
         label: 'Detail',
         children: [

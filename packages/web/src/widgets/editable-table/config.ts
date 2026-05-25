@@ -12,6 +12,9 @@ export const editableTableConfig: WidgetConfig = {
     showDeleteButton: true,
     maxRows: 0,
   },
+  exposedValues: [
+    { key: 'tableData', type: 'array', description: '表格数据' },
+  ],
   configPanels: ['events', 'rules', 'variables'] as const,
   propertyPanel: {
     basic: ['field', 'label'],

@@ -5,7 +5,7 @@ export const bannerConfig: WidgetConfig = {
   displayName: '横幅',
   description: '横幅提示组件，支持 info/success/warning/error 类型',
   defaultStyle: { width: '100%' },
-  configPanels: ['events', 'variables'],
+  configPanels: ['events'],
   defaultProps: {
     text: '提示信息',
     type: 'info' as const,

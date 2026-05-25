@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import { widgetDataKey } from '../base/types'
+import { useExposeWidget } from '../../composables/useExposeWidget'
 const widgetData = inject(widgetDataKey)!
+const tableData = ref<Record<string, unknown>[]>([])
+useExposeWidget(() => ({
+  get tableData() { return tableData.value },
+}))
 </script>
 <template>
   <div :class="$style.container">
