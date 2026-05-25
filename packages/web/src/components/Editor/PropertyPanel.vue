@@ -60,6 +60,15 @@ const panelDeclaration = computed(() => {
   return widgetConfig.value.config.propertyPanel ?? null
 })
 
+// ---- 事件目标（支持动态函数） ----
+
+const resolvedEventTargets = computed(() => {
+  const et = widgetConfig.value?.config.eventTargets
+  if (!et || !selectedWidget.value) return undefined
+  if (typeof et === 'function') return et(selectedWidget.value)
+  return et
+})
+
 // ---- 属性列表项类型 ----
 
 interface SelectOption {
@@ -594,6 +603,7 @@ function updateBoardProperty(key: string, value: unknown) {
       <EventConfigDialog
         :visible="eventDialogVisible"
         :events="selectedWidget.events ?? []"
+        :event-targets="resolvedEventTargets"
         @update:visible="eventDialogVisible = $event"
         @save="handleEventSave"
       />

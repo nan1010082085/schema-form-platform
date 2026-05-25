@@ -12,6 +12,8 @@
  */
 import { inject, ref, reactive, provide, watch, computed, onMounted, onUnmounted } from 'vue'
 import { widgetDataKey, formContextKey } from '../base/types'
+import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import { useLogger } from '@/composables/useLogger'
@@ -20,6 +22,7 @@ import { useExposeWidget } from '@/composables/useExposeWidget'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
+const eventCtx = inject(EVENT_CONTEXT_KEY, null)
 const logger = useLogger('FgDialog')
 
 useExposeWidget(() => ({
@@ -103,14 +106,20 @@ defineExpose({
 })
 
 // ---- 确认/取消 ----
-function handleConfirm() {
+async function handleConfirm() {
   visible.value = false
   emit('confirm', { ...dialogModel })
+  if (eventCtx) {
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'confirm')
+  }
 }
 
-function handleCancel() {
+async function handleCancel() {
   visible.value = false
   emit('cancel')
+  if (eventCtx) {
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'cancel')
+  }
 }
 </script>
 

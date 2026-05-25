@@ -19,7 +19,6 @@ export type BasicType =
   | 'textarea'
   | 'richtext'
   | 'button'
-  | 'button-list'
   | 'upload'
   | 'table'
   | 'search-list'
@@ -160,11 +159,23 @@ export interface SchemaEventAction {
 export interface WidgetEvent {
   /** 触发事件名（click / change / close 等） */
   trigger: string
+  /** 事件目标（部件内部元素标识，为空则绑定到整个部件） */
+  eventTarget?: string
   /** 执行条件表达式 */
   condition?: string
   /** 执行前确认提示 */
   confirm?: string
   actions: SchemaEventAction[]
+}
+
+/** 事件目标配置 — 声明部件内可绑定事件的子元素 */
+export interface EventTargetConfig {
+  /** 目标标识（传给 triggerWidgetEvent 的第三个参数） */
+  id: string
+  /** 显示名称 */
+  label: string
+  /** 描述 */
+  description?: string
 }
 
 // ============================================================
@@ -329,6 +340,8 @@ export interface WidgetConfig {
   defaultProps?: Record<string, unknown>
   propertyPanel?: PropertyPanelConfig
   configPanels?: ConfigPanelType[]
+  /** 事件目标列表 — 声明部件内可独立绑定事件的子元素（支持静态数组或动态函数） */
+  eventTargets?: EventTargetConfig[] | ((widget: Widget) => EventTargetConfig[])
   /** 组件暴露的运行时值 — 供联动条件表达式引用 exposed.widgetId.xxx */
   exposedValues?: ExposedValueConfig[]
   /** 组件可接收的外部事件 — 由事件引擎 trigger-event 动作触发 */

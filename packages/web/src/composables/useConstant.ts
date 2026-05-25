@@ -55,7 +55,7 @@ export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
 export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range',
   'textarea', 'richtext',
-  'button-list', 'table', 'pagination',
+  'toolbar-buttons', 'button', 'table', 'pagination',
 ])
 
 /** 业务组件（不参与本次重构） */

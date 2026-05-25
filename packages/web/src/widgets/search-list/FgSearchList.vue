@@ -10,12 +10,15 @@
  */
 import { inject, ref, reactive, computed, watch, onMounted } from 'vue'
 import { widgetDataKey } from '../base/types'
+import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
 import type { SearchFieldConfig } from '../base/types'
 import { useWorkerRequest } from '@/composables/useWorkerRequest'
 import { useLogger } from '@/composables/useLogger'
 import { useExposeWidget } from '@/composables/useExposeWidget'
 
 const widgetData = inject(widgetDataKey)!
+const eventCtx = inject(EVENT_CONTEXT_KEY, null)
 useExposeWidget(() => ({
   get loading() { return loading.value },
   get tableData() { return tableData.value },
@@ -85,17 +88,23 @@ async function loadData() {
   }
 }
 
-function handleSearch() {
+async function handleSearch() {
   currentPage.value = 1
   loadData()
+  if (eventCtx) {
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'search')
+  }
 }
 
-function handleReset() {
+async function handleReset() {
   for (const key of Object.keys(searchModel)) {
     searchModel[key] = undefined
   }
   currentPage.value = 1
   loadData()
+  if (eventCtx) {
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'reset')
+  }
 }
 
 function handlePageChange(page: number) {

@@ -30,7 +30,6 @@ import { radioConfig } from '@/widgets/radio/config'
 import { checkboxConfig } from '@/widgets/checkbox/config'
 import { dateConfig } from '@/widgets/date/config'
 import { textareaConfig } from '@/widgets/textarea/config'
-import { buttonListConfig } from '@/widgets/button-list/config'
 import { titleConfig } from '@/widgets/title/config'
 import { dividerConfig } from '@/widgets/divider/config'
 import { spacerConfig } from '@/widgets/spacer/config'
@@ -65,7 +64,7 @@ import { publicStylePanel } from '@/widgets/base/publicSchema'
 const REGISTERED_TYPES: WidgetSchemaType[] = [
   'form', 'card', 'row-col', 'tabs', 'dialog',
   'input', 'select', 'number', 'radio', 'checkbox',
-  'date', 'textarea', 'button-list', 'title', 'divider',
+  'date', 'textarea', 'title', 'divider',
   'spacer', 'toolbar-buttons', 'table', 'button',
   'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
   'file-list', 'transfer',
@@ -85,7 +84,6 @@ const ALL_CONFIGS = [
   { name: 'checkbox', config: checkboxConfig },
   { name: 'date', config: dateConfig },
   { name: 'textarea', config: textareaConfig },
-  { name: 'button-list', config: buttonListConfig },
   { name: 'title', config: titleConfig },
   { name: 'divider', config: dividerConfig },
   { name: 'spacer', config: spacerConfig },
@@ -113,9 +111,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 28 widget types', () => {
+  it('registers exactly 27 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(28)
+    expect(all).toHaveLength(27)
   })
 
   it('getComponentMap returns a component for every registered type', () => {
@@ -353,16 +351,6 @@ describe('Widget Default Schema', () => {
     const schema = createDefaultSchema('checkbox')
     expect(schema.options).toBeDefined()
     expect(schema.options!.length).toBeGreaterThanOrEqual(2)
-  })
-
-  it('button-list has buttons array with submit and reset', () => {
-    const schema = createDefaultSchema('button-list')
-    expect(schema.type).toBe('button-list')
-    expect(schema.buttons).toBeDefined()
-    expect(schema.buttons!.length).toBeGreaterThanOrEqual(2)
-    const texts = schema.buttons!.map(b => b.text)
-    expect(texts).toContain('Submit')
-    expect(texts).toContain('Reset')
   })
 
   it('input schema has label and props', () => {

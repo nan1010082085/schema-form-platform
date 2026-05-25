@@ -121,7 +121,7 @@ const context: FormGridContext = {
 provide(FORM_GRID_CONTEXT_KEY, context)
 provide(FORM_GRID_FORM_KEY, formData)
 
-// 注入 FormGrid API 给子组件（如 FgSchemaButtonList、FgSteps）使用
+// 注入 FormGrid API 给子组件（如 FgToolbarButtons、FgSteps）使用
 provide(FORM_GRID_API_KEY, {
   validate,
   validateField,

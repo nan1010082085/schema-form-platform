@@ -20,9 +20,9 @@ const buttons = computed<ToolbarButtonItem[]>(() => {
   return (widgetData.value.props?.buttons as ToolbarButtonItem[]) || []
 })
 
-async function handleClick() {
+async function handleClick(idx: number) {
   if (eventCtx) {
-    await triggerWidgetEvent(widgetData.value, 'click', eventCtx)
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, `btn-${idx}`)
   }
 }
 </script>
@@ -34,7 +34,7 @@ async function handleClick() {
       :key="idx"
       :type="(btn.type as 'primary' | 'success' | 'warning' | 'danger' | 'info' | '') || ''"
       :disabled="isDisabled"
-      @click="handleClick"
+      @click="handleClick(idx)"
     >
       {{ btn.text }}
     </el-button>

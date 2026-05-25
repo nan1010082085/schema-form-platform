@@ -226,9 +226,10 @@ export async function triggerWidgetEvent(
   widget: Widget,
   trigger: string,
   ctx: EventExecutionContext,
+  eventTarget?: string,
 ): Promise<void> {
   if (!widget.events?.length) return
-  logger.event(`trigger: ${widget.id} (${widget.type}).${trigger}`)
+  logger.event(`trigger: ${widget.id} (${widget.type}).${trigger}${eventTarget ? ` [${eventTarget}]` : ''}`)
 
   // 构建完整的表达式上下文
   const context: Record<string, unknown> = {
@@ -238,6 +239,8 @@ export async function triggerWidgetEvent(
 
   for (const event of widget.events) {
     if (event.trigger !== trigger) continue
+    // 匹配事件目标：事件未指定 target 则匹配所有，指定了则必须一致
+    if (event.eventTarget && event.eventTarget !== eventTarget) continue
 
     // 条件判断
     if (event.condition) {
