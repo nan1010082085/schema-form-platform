@@ -41,6 +41,10 @@ export const searchListConfig: WidgetConfig = {
     { key: 'loading', type: 'boolean', description: '加载状态' },
     { key: 'tableData', type: 'array', description: '列表数据' },
   ],
+  eventTargets: [
+    { id: 'search', label: '搜索按钮', description: '点击搜索时触发' },
+    { id: 'reset', label: '重置按钮', description: '点击重置时触发' },
+  ],
   configPanels: ['events', 'api', 'variables'] as const,
   propertyPanel: {
     basic: ['label'],

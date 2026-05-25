@@ -83,7 +83,7 @@ function handleNodeClick(node: TreeNode) {
 const TYPE_ICONS: Record<string, string> = {
   form: '📋', card: '🃏', 'row-col': '▥', tabs: '📑', dialog: '💬',
   input: '✏️', select: '▼', number: '#', radio: '◉', checkbox: '☑',
-  date: '📅', textarea: '📝', 'button-list': '🔘', title: 'T',
+  date: '📅', textarea: '📝', title: 'T',
   divider: '—', spacer: '␣', 'toolbar-buttons': '🔧', table: '📊', button: '🖱️',
 }
 

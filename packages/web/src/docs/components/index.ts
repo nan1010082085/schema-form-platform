@@ -17,7 +17,6 @@ import date from './date'
 import dateRange from './date-range'
 import textarea from './textarea'
 import richtext from './richtext'
-import buttonList from './button-list'
 import upload from './upload'
 import table from './table'
 import pagination from './pagination'
@@ -59,7 +58,6 @@ export const componentDocs: ComponentDoc[] = [
   dateRange,
   textarea,
   richtext,
-  buttonList,
   upload,
   table,
   pagination,

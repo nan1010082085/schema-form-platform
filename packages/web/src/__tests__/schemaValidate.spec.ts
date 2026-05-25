@@ -186,9 +186,9 @@ describe('validateSchema', () => {
     expect(missingErrors).toHaveLength(0)
   })
 
-  it('does not require field on button-list', () => {
+  it('does not require field on toolbar-buttons', () => {
     const schema: PartialWidget[] = [
-      { type: 'button-list', buttons: [{ text: 'Submit' }] },
+      { type: 'toolbar-buttons', buttons: [{ text: 'Submit' }] },
     ]
     const result = validateSchema(schema)
     const missingErrors = result.errors.filter((e) => e.type === 'missing-field')
@@ -266,10 +266,10 @@ describe('validateSchema', () => {
   })
 
   it('detects business component nested inside basic component', () => {
-    // button-list is basic, upload is business
+    // toolbar-buttons is basic, upload is business
     const schema: PartialWidget[] = [
       {
-        type: 'button-list',
+        type: 'toolbar-buttons',
         buttons: [{ text: 'Submit' }],
         children: [
           { type: 'upload', field: 'file', label: 'File' },
@@ -280,7 +280,7 @@ describe('validateSchema', () => {
     const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
     expect(nestingErrors).toHaveLength(1)
     expect(nestingErrors[0].severity).toBe('error')
-    expect(nestingErrors[0].message).toContain('button-list')
+    expect(nestingErrors[0].message).toContain('toolbar-buttons')
     expect(nestingErrors[0].message).toContain('upload')
   })
 

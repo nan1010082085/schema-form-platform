@@ -11,7 +11,6 @@ import { FgRadio, createRadioWidget, radioConfig } from './radio'
 import { FgCheckbox, createCheckboxWidget, checkboxConfig } from './checkbox'
 import { FgDate, createDateWidget, dateConfig } from './date'
 import { FgTextarea, createTextareaWidget, textareaConfig } from './textarea'
-import { FgButtonList, createButtonListWidget, buttonListConfig } from './button-list'
 import { FgTitle, createTitleWidget, titleConfig } from './title'
 import { FgDivider, createDividerWidget, dividerConfig } from './divider'
 import { FgSpacer, createSpacerWidget, spacerConfig } from './spacer'
@@ -150,16 +149,6 @@ export function registerAllWidgets() {
     component: FgTextarea,
     create: createTextareaWidget,
     config: textareaConfig,
-  })
-
-  registerWidget({
-    name: buttonListConfig.name,
-    displayName: buttonListConfig.displayName,
-    type: 'button-list',
-    group: 'basic',
-    component: FgButtonList,
-    create: createButtonListWidget,
-    config: buttonListConfig,
   })
 
   registerWidget({

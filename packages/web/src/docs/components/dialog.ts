@@ -54,7 +54,7 @@ const doc: ComponentDoc = {
               align: 'center',
               children: [
                 {
-                  type: 'button-list',
+                  type: 'toolbar-buttons',
                   buttons: [
                     {
                       text: '打开弹窗',
@@ -143,7 +143,7 @@ const doc: ComponentDoc = {
               align: 'center',
               children: [
                 {
-                  type: 'button-list',
+                  type: 'toolbar-buttons',
                   buttons: [
                     {
                       text: '编辑用户信息',
@@ -264,7 +264,7 @@ const doc: ComponentDoc = {
               align: 'center',
               children: [
                 {
-                  type: 'button-list',
+                  type: 'toolbar-buttons',
                   buttons: [
                     {
                       text: '提交申请',
@@ -321,7 +321,7 @@ const doc: ComponentDoc = {
               align: 'center',
               children: [
                 {
-                  type: 'button-list',
+                  type: 'toolbar-buttons',
                   buttons: [
                     {
                       text: '查看详情（弹窗联动）',

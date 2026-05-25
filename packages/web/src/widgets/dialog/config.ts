@@ -62,5 +62,9 @@ export const dialogConfig: WidgetConfig = {
     { key: 'visible', type: 'boolean', description: '弹窗是否可见' },
     { key: 'dialogData', type: 'object', description: '弹窗表单数据' },
   ],
+  eventTargets: [
+    { id: 'confirm', label: '确认按钮', description: '点击确认时触发' },
+    { id: 'cancel', label: '取消按钮', description: '点击取消时触发' },
+  ],
   configPanels: ['events', 'variables'],
 }

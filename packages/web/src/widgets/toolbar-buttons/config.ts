@@ -1,4 +1,4 @@
-import type { WidgetConfig } from '../base/types'
+import type { WidgetConfig, Widget, EventTargetConfig } from '../base/types'
 export interface ToolbarButtonItem {
   text: string
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | ''
@@ -21,6 +21,13 @@ export const toolbarButtonsConfig: WidgetConfig = {
     disabled: false,
   },
   configPanels: ['events'],
+  eventTargets: (widget: Widget): EventTargetConfig[] => {
+    const btns = (widget.props?.buttons as ToolbarButtonItem[]) || []
+    return btns.map((btn, idx) => ({
+      id: `btn-${idx}`,
+      label: btn.text || `按钮 ${idx + 1}`,
+    }))
+  },
   propertyPanel: {
     basic: ['field', 'label'],
     style: ['fontSize', 'color', 'backgroundColor'],

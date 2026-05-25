@@ -50,7 +50,7 @@ const INPUT_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
 
 /** 可点击组件（支持 click 事件） */
 const CLICKABLE_TYPES: ReadonlySet<SchemaType> = new Set([
-  'button', 'button-list', 'toolbar-buttons', 'title', 'divider', 'spacer', 'banner',
+  'button', 'toolbar-buttons', 'title', 'divider', 'spacer', 'banner',
 ])
 
 const isContainer = computed(() => CONTAINER_TYPES.has(props.widget.type))

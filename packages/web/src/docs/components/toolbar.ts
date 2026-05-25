@@ -4,7 +4,7 @@ const doc: ComponentDoc = {
   id: 'toolbar',
   name: 'FgToolbar',
   category: 'layout',
-  description: '固定顶部工具栏，通常包含 button-list 按钮组。',
+  description: '固定顶部工具栏，通常包含 toolbar-buttons 按钮组。',
   props: [],
   events: [],
   slots: [],
@@ -17,7 +17,7 @@ const doc: ComponentDoc = {
         {
           type: 'toolbar',
           children: [
-            { type: 'button-list', buttons: [
+            { type: 'toolbar-buttons', buttons: [
               { text: '保存', buttonType: 'primary' },
               { text: '提交', buttonType: 'success' },
               { text: '返回' }

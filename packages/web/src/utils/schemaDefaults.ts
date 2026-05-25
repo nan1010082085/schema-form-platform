@@ -125,15 +125,6 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
     case 'richtext':
       item = { ...base, label: 'Rich Text', style: { height: '120px' } }
       break
-    case 'button-list':
-      item = {
-        type: 'button-list',
-        buttons: [
-          { text: 'Submit', buttonType: 'primary', actions: [{ type: 'submit' }] },
-          { text: 'Reset', actions: [{ type: 'reset' }] },
-        ],
-      }
-      break
     case 'upload':
       item = { ...base, label: 'Upload' }
       break

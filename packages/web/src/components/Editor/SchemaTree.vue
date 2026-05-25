@@ -200,7 +200,7 @@ const NODE_ICONS: Record<string, string> = {
   'steps': '👣', 'tabs': '📑', 'input': '✏️', 'number': '#',
   'select': '▼', 'radio': '◉', 'checkbox': '☑', 'date': '📅',
   'date-range': '📅', 'textarea': '📝', 'richtext': '📰',
-  'button-list': '🔘', 'upload': '📤', 'table': '📊', 'pagination': '📑',
+  'toolbar-buttons': '🔧', 'upload': '📤', 'table': '📊', 'pagination': '📑',
 }
 
 function getNodeIcon(type: SchemaType): string {

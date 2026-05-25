@@ -12,7 +12,7 @@
  */
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import type { WidgetEvent, SchemaEventAction, ReceivableEventConfig } from '../../widgets/base/types'
+import type { WidgetEvent, SchemaEventAction, ReceivableEventConfig, EventTargetConfig } from '../../widgets/base/types'
 import { useWidgetStore } from '@/stores/widget'
 import { getWidget } from '@/widgets/registry'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
@@ -23,6 +23,7 @@ import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 const props = defineProps<{
   visible: boolean
   events: WidgetEvent[]
+  eventTargets?: EventTargetConfig[]
 }>()
 
 const emit = defineEmits<{
@@ -161,6 +162,27 @@ function handleClose() {
               :label="opt.label"
               :value="opt.value"
             />
+          </el-select>
+        </div>
+
+        <!-- eventTarget -->
+        <div v-if="eventTargets?.length" :class="$style.row">
+          <label :class="$style.label">目标</label>
+          <el-select
+            v-model="evt.eventTarget"
+            style="flex: 1"
+            clearable
+            placeholder="整个部件"
+          >
+            <el-option
+              v-for="t in eventTargets"
+              :key="t.id"
+              :label="t.label"
+              :value="t.id"
+            >
+              <span>{{ t.label }}</span>
+              <span v-if="t.description" style="color: #909399; font-size: 12px; margin-left: 8px">{{ t.description }}</span>
+            </el-option>
           </el-select>
         </div>
 

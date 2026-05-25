@@ -52,13 +52,13 @@ Schema 驱动的可视化表单编辑器和渲染引擎。
 
 ### Widget 体系
 
-32 个 Widget，覆盖表单、布局、展示、数据四大类：
+27 个 Widget，覆盖表单、布局、展示、数据四大类：
 
 **表单类**: input, number, select, radio, checkbox, date, date-time-slot, textarea, richtext, transfer, upload, file-list, editable-table
 
 **布局类**: form, row-col, tabs, card, dialog, divider, spacer, tree-layout, banner, toolbar-buttons, search-list
 
-**展示类**: title, base, button, button-list, table
+**展示类**: title, base, button, table
 
 **数据类**: entries
 
@@ -67,6 +67,34 @@ Schema 驱动的可视化表单编辑器和渲染引擎。
 - 属性配置面板
 - Schema 默认值
 - 事件/暴露系统接入
+
+### 事件目标系统 (eventTargets)
+
+Widget 可声明内部可交互元素，允许为每个元素独立配置事件：
+
+```ts
+// config.ts — 静态声明
+eventTargets: [
+  { id: 'confirm', label: '确认按钮', description: '点击确认时触发' },
+  { id: 'cancel', label: '取消按钮', description: '点击取消时触发' },
+]
+
+// config.ts — 动态声明（根据 widget 数据生成）
+eventTargets: (widget) => {
+  const btns = widget.props?.buttons || []
+  return btns.map((btn, idx) => ({ id: `btn-${idx}`, label: btn.text }))
+}
+```
+
+已声明 eventTargets 的 Widget：
+
+| Widget | 事件目标 | 触发方式 |
+|---|---|---|
+| `toolbar-buttons` | `btn-0`, `btn-1`, ... (动态) | 每个按钮独立 click |
+| `dialog` | `confirm`, `cancel` | 确认/取消按钮 click |
+| `search-list` | `search`, `reset` | 搜索/重置按钮 click |
+
+事件匹配规则：`WidgetEvent.eventTarget` 为空时匹配所有目标，指定了则只匹配对应目标。
 
 ### 渲染引擎
 
