@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FormDate',
   category: 'base',
   description: '封装 ElDatePicker，单日期选择器。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'string | Date', default: '—', description: '日期值（v-model）' },

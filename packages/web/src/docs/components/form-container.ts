@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgFormContainer',
   category: 'business',
   description: '工作流表单容器。提供工具栏（返回/打印/保存/发送）和内容区布局，适合作为审批表单的顶层容器。',
+  author: 'yangdongnan',
   exposedValues: [
     { key: 'loading', type: 'boolean', description: '保存/提交中状态', example: false },
   ],

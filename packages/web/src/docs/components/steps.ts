@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgSteps',
   category: 'layout',
   description: '步骤条布局容器。children 中的每一项为一个步骤面板，支持上一步/下一步导航，支持步骤切换前的表单校验。',
+  author: 'yangdongnan',
   props: [
     { name: 'active', type: 'number', default: '0', description: '当前激活步骤索引（支持 v-model）' },
     { name: 'finishStatus', type: "'success' | 'error' | 'process'", default: "'success'", description: '已完成步骤的状态' },

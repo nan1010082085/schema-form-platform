@@ -290,6 +290,7 @@ const wrapperStyle = computed(() => {
       <!-- 编辑模式：容器 shell + 子部件层 -->
       <div
         v-if="isEditMode"
+        :data-widget-id="widget.id"
         :class="[$style.nodeWrapper, $style.nodeWrapperEdit, $style.interactiveContainer]"
         :style="wrapperStyle"
         @click.stop="handleInteractiveContainerClick()"
@@ -345,6 +346,7 @@ const wrapperStyle = computed(() => {
     <!-- 其他容器组件：容器渲染 + 独立子部件层 -->
     <div
       v-else-if="isContainer"
+      :data-widget-id="widget.id"
       :class="[
         $style.nodeWrapper,
         {
@@ -380,6 +382,7 @@ const wrapperStyle = computed(() => {
     <!-- 预览模式：change/focus/blur 仍由 wrapper 拦截（表单组件不自行触发），click 由组件自行处理（避免与 FgButton 内部 handler 重复） -->
     <div
       v-else
+      :data-widget-id="widget.id"
       :class="[$style.nodeWrapper, { [$style.nodeWrapperEdit]: isEditMode }]"
       :style="wrapperStyle"
       @change="FORM_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('change', $event) : handlePreviewEvent('change', $event))"

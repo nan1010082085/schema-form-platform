@@ -3,6 +3,7 @@ export const dateConfig: WidgetConfig = {
   name: 'FgDate',
   displayName: '日期选择',
   description: '日期选择器，支持日期格式配置',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
     height: '44px',

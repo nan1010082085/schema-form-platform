@@ -336,6 +336,7 @@ export interface WidgetConfig {
   name: string
   displayName: string
   description: string      // 部件描述，用于属性面板 tooltip
+  author?: string          // 部件作者
   defaultStyle?: Record<string, unknown>
   defaultProps?: Record<string, unknown>
   propertyPanel?: PropertyPanelConfig

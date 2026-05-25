@@ -3,6 +3,7 @@ export const cardConfig: WidgetConfig = {
   name: 'FgCard',
   displayName: '卡片容器',
   description: '卡片容器，提供标题和阴影包裹，用于内容分组展示',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100%',
   },

@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgTabs',
   category: 'layout',
   description: '标签页容器。children 中每一项为一个 tab 面板，切换 tab 时保留各 tab 内的 formData。支持 controlled mode。',
+  author: 'yangdongnan',
   exposedValues: [
     { key: 'activeTab', type: 'string', description: '当前激活的 tab key', example: 'tab1' },
   ],

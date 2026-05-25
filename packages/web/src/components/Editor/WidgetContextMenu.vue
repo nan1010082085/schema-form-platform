@@ -19,6 +19,7 @@ const emit = defineEmits<{
   openRule: [widget: Widget]
   openApi: [widget: Widget]
   openVariables: [widget: Widget]
+  savePreview: [widget: Widget]
 }>()
 
 const widgetConfig = computed(() => {
@@ -41,6 +42,7 @@ function handleAction(action: string) {
     case 'rule': emit('openRule', props.widget); break
     case 'api': emit('openApi', props.widget); break
     case 'variables': emit('openVariables', props.widget); break
+    case 'savePreview': emit('savePreview', props.widget); break
   }
   emit('close')
 }
@@ -63,6 +65,7 @@ function handleAction(action: string) {
       <div :class="$style.item" @click="handleAction('copy')">复制部件</div>
       <div :class="$style.item" @click="handleAction('copyId')">复制 ID</div>
       <div :class="$style.item" @click="handleAction('delete')">删除部件</div>
+      <div :class="$style.item" @click="handleAction('savePreview')">保存预览图</div>
       <template v-if="configPanels.length">
         <div :class="$style.divider" />
         <div v-if="configPanels.includes('events')" :class="$style.item" @click="handleAction('event')">事件配置</div>

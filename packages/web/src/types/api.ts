@@ -37,6 +37,7 @@ export interface SchemaListItem {
   type: SchemaTypeValue
   status: SchemaStatusValue
   json?: PartialWidget[]
+  thumbnail?: string
   createdAt: string
   updatedAt: string
 }
@@ -53,6 +54,7 @@ export interface PublishedSchemaItem {
   name: string
   type: SchemaTypeValue
   json: PartialWidget[]
+  thumbnail?: string
   publishId: string
   version: string
   publishedAt: string
@@ -66,6 +68,7 @@ export interface SchemaCreatePayload {
   type: SchemaTypeValue
   json: PartialWidget[]
   editId?: string
+  thumbnail?: string
 }
 
 /** Schema 更新请求体（至少一个字段） */
@@ -73,6 +76,7 @@ export interface SchemaUpdatePayload {
   name?: string
   json?: PartialWidget[]
   type?: SchemaTypeValue
+  thumbnail?: string
 }
 
 // ---- 分页格式 ----
@@ -117,6 +121,7 @@ export interface SchemaImportPayload {
   name: string
   type: SchemaTypeValue
   json: PartialWidget[]
+  thumbnail?: string
 }
 
 // ---- 缓存与预取 ----

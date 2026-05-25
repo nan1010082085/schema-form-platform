@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FormTextarea',
   category: 'base',
   description: '封装 ElInput type=textarea。支持 rows、autosize 属性。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'string', default: '—', description: '文本值（v-model）' },

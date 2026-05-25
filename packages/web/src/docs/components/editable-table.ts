@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgEditableTable',
   category: 'business',
   description: '可编辑表格组件 — 独占一行的表格布局。自定义表头，列内容可动态配置表单组件（input/number/select/date/textarea）。支持全局校验、动态添加/删除行、序号显示、最大行数限制、斑马纹行背景。',
+  author: 'yangdongnan',
   exposedValues: [
     { key: 'tableData', type: 'array', description: '当前表格行数据', example: [] },
     { key: 'rowCount', type: 'number', description: '当前行数', example: 0 },

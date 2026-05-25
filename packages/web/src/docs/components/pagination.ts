@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgPagination',
   category: 'business',
   description: '封装 ElPagination，对齐 UI 规范：字号 16px，上边距 24px。支持双向绑定 currentPage / pageSize。',
+  author: 'yangdongnan',
   props: [
     { name: 'currentPage', type: 'number', default: '1', description: '当前页码（v-model）' },
     { name: 'pageSize', type: 'number', default: '10', description: '每页条数（v-model）' },

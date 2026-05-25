@@ -3,6 +3,7 @@ export const numberConfig: WidgetConfig = {
   name: 'FgNumber',
   displayName: '数字输入',
   description: '数字输入框，支持步进、最小最大值限制',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
     height: '44px',

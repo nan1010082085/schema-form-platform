@@ -4,6 +4,7 @@ export const richtextConfig: WidgetConfig = {
   name: 'FgRichtext',
   displayName: '富文本',
   description: '富文本编辑器，支持格式化内容输入',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100%',
     height: '200px',

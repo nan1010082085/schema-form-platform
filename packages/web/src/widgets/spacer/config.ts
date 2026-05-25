@@ -3,6 +3,7 @@ export const spacerConfig: WidgetConfig = {
   name: 'FgSpacer',
   displayName: '间距',
   description: '间隔组件，用于控制元素间距',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '100%',
     height: '20px',

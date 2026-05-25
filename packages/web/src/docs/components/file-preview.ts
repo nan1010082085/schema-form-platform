@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FgFilePreview',
   category: 'business',
   description: '文件选择预览组件（S19 新增）。两列布局：左侧显示已选文件名称列表，右侧选择按钮点击弹出文件选择对话框。支持单选/多选、最大数量限制。',
+  author: 'yangdongnan',
   props: [
     { name: 'modelValue', type: 'string | string[]', default: '—', description: '选中的文件ID（v-model），单选为 string，多选为 string[]' },
     { name: 'options', type: '{name:string,url?:string,id?:string|number}[]', default: '—', description: '可选文件列表（静态或 API 加载）' },

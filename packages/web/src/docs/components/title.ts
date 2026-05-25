@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgTitle',
   category: 'layout',
   description: '标题栏组件，带底部主题色边框。',
+  author: 'yangdongnan',
   props: [
     { name: 'label', type: 'string', default: '—', description: '标题文字' },
     { name: 'color', type: 'string', default: '主色', description: '自定义标题颜色（CSS 颜色值）' }

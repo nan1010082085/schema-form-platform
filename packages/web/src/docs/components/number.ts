@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FormNumber',
   category: 'base',
   description: '封装 ElInputNumber。支持 min、max、step 属性。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'number', default: '—', description: '数值（v-model）' },

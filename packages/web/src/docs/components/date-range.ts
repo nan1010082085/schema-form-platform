@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FormDateRange',
   category: 'base',
   description: '双日期选择器 + 中间文字连接符。通过 props.fieldStart / fieldEnd 指定两个字段，直接读写 formData。',
+  author: 'yangdongnan',
   props: [
     { name: 'fieldStart', type: 'string', default: '—', description: '开始日期字段名' },
     { name: 'fieldEnd', type: 'string', default: '—', description: '结束日期字段名' },

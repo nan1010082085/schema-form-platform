@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgCard',
   category: 'layout',
   description: '白色卡片容器，带圆角和阴影。',
+  author: 'yangdongnan',
   props: [],
   events: [],
   slots: [],

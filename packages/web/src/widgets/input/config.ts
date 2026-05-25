@@ -4,6 +4,7 @@ export const inputConfig: WidgetConfig = {
   name: 'FgInput',
   displayName: '输入框',
   description: '单行文本输入框，支持 placeholder、清空、禁用等配置',
+  author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
     height: '44px',

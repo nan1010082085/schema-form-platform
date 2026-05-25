@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgWorkflowForm',
   category: 'business',
   description: '流程表单容器。提供工具栏（返回/打印/保存/发送）、内容区和审批意见区，支持工作流引擎集成。',
+  author: 'yangdongnan',
   props: [
     { name: 'title', type: 'string', default: 'undefined', description: '工具栏标题文本' },
     { name: 'showToolbar', type: 'boolean', default: 'true', description: '是否显示顶部工具栏' },

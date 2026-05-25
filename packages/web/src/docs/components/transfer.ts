@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgTransfer',
   category: 'business',
   description: '封装 ElTransfer，支持搜索过滤、双向绑定、自定义标题。',
+  author: 'yangdongnan',
   props: [
     { name: 'modelValue', type: 'Array<string | number>', default: '—', description: '已选 key 数组（v-model）' },
     { name: 'data', type: 'TransferItem[]', default: '—', description: '数据源（{ key, label, disabled? }）' },

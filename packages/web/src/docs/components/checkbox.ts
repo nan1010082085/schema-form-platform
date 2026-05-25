@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FormCheckbox',
   category: 'base',
   description: '封装 ElCheckboxGroup。通过 options 数组定义选项。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'any[]', default: '—', description: '选中值数组（v-model）' },

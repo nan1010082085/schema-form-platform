@@ -57,6 +57,7 @@ export interface ComponentDoc {
   name: string
   category: 'layout' | 'base' | 'business'
   description: string
+  author?: string
   props: PropDoc[]
   events: EventDoc[]
   slots: SlotDoc[]

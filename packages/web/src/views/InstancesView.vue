@@ -343,6 +343,18 @@ const isFiltered = computed(() =>
               />
             </div>
 
+            <div class="fg-instances-card__preview">
+              <img
+                v-if="item.thumbnail"
+                :src="item.thumbnail"
+                :alt="item.name"
+                class="fg-instances-card__thumbnail"
+              />
+              <div v-else class="fg-instances-card__thumbnail-placeholder">
+                <el-icon :size="32"><Document /></el-icon>
+              </div>
+            </div>
+
             <div class="fg-instances-card__body">
               <h3 class="fg-instances-card__name">{{ item.name }}</h3>
               <div class="fg-instances-card__meta">
@@ -623,6 +635,27 @@ const isFiltered = computed(() =>
     top: 12px;
     left: 12px;
     z-index: 2;
+  }
+
+  &__preview {
+    margin: -20px -24px 16px;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    background: #f5f7fa;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &__thumbnail-placeholder {
+    color: #dcdfe6;
   }
 
   &__body { margin-bottom: 14px; }

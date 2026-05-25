@@ -4,6 +4,7 @@ export const bannerConfig: WidgetConfig = {
   name: 'FgBanner',
   displayName: '横幅',
   description: '横幅提示组件，支持 info/success/warning/error 类型',
+  author: 'yangdongnan',
   defaultStyle: { width: '100%' },
   configPanels: ['events'],
   defaultProps: {

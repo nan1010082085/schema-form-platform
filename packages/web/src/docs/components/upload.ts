@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgUpload',
   category: 'business',
   description: '支持单文件/多文件/图片模式，拖拽上传，文件大小限制，类型过滤。',
+  author: 'yangdongnan',
   props: [
     { name: 'modelValue', type: 'FileItem[]', default: '[]', description: '文件列表（v-model）' },
     { name: 'action', type: 'string', default: '—', description: '上传接口地址' },

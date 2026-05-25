@@ -6,6 +6,7 @@ const doc: ComponentDoc = {
   name: 'FormInput',
   category: 'base',
   description: '基础文本输入框，封装 ElInput。支持 placeholder、disabled、readonly。',
+  author: 'yangdongnan',
   props: [
     { name: 'field', type: 'string', default: '—', description: '表单数据绑定字段' },
     { name: 'modelValue', type: 'string', default: '—', description: '输入值（v-model）' },

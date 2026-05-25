@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgDivider',
   category: 'layout',
   description: '水平分割线，用于分隔内容区域。',
+  author: 'yangdongnan',
   props: [],
   events: [],
   slots: [],

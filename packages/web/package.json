@@ -3,6 +3,8 @@
   "version": "1.0.0-rc.1",
   "private": true,
   "type": "module",
+  "author": "yangdongnan",
+  "description": "可视化自由布局设计器前端 — Vue 3 Schema 驱动的编辑器与运行时渲染器，支持 qiankun 微前端",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -19,6 +21,7 @@
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.16.0",
     "element-plus": "^2.9.7",
+    "html-to-image": "^1.11.13",
     "jsonpath-plus": "^10.4.0",
     "pinia": "^2.3.0",
     "qiankun": "^2.10.16",

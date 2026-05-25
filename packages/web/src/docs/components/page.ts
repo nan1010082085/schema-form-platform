@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgPage',
   category: 'layout',
   description: '页面根容器，提供背景色和最小高度。通常作为 schema 树的顶层节点。',
+  author: 'yangdongnan',
   props: [],
   events: [],
   slots: [],

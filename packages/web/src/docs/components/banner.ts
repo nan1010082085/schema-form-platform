@@ -5,6 +5,7 @@ const doc: ComponentDoc = {
   name: 'FgBanner',
   category: 'business',
   description: '轮播图组件，基于 ElCarousel 封装。',
+  author: 'yangdongnan',
   props: [
     { name: 'images', type: 'Array<{ id; src; description? }>', default: '—', description: '图片列表' },
     { name: 'height', type: 'string', default: '—', description: '轮播高度' },
