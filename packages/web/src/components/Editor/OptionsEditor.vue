@@ -134,7 +134,7 @@ function updateOptionValue(index: number, value: string) {
 }
 
 .add:hover {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 </style>

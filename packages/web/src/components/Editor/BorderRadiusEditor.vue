@@ -243,13 +243,13 @@ const previewStyle = computed(() => {
 }
 
 .linkBtn:hover {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 
 .linkBtnActive {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
   background: #ecf5ff;
 }
 

@@ -123,6 +123,7 @@ function getItemTitle(item: unknown, index: number): string {
         <el-input-number
           v-else-if="field.type === 'number'"
           :model-value="(item as Record<string, unknown>)[field.key] as number"
+          controls-position="right"
           size="small"
           style="width: 100%"
           @update:model-value="updateField(idx, field.key, $event ?? 0)"

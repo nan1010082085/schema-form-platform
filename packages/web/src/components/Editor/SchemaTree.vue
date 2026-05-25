@@ -360,7 +360,7 @@ function handleToggleExpand(node: SchemaTreeNode) {
     position: relative;
 
     &--selected {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
 
     &--container {
@@ -387,7 +387,7 @@ function handleToggleExpand(node: SchemaTreeNode) {
     flex-shrink: 0;
     user-select: none;
 
-    &:hover { color: #409eff; }
+    &:hover { color: var(--el-color-primary); }
 
     &--placeholder {
       cursor: default;

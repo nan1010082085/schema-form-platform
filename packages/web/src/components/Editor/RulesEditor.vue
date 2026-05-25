@@ -97,6 +97,7 @@ function setRequired(index: number, val: boolean) {
           size="small"
           style="width:100%"
           :min="0"
+          controls-position="right"
           @update:model-value="updateRule(idx, { min: $event ?? undefined })"
         />
       </div>
@@ -109,6 +110,7 @@ function setRequired(index: number, val: boolean) {
           size="small"
           style="width:100%"
           :min="0"
+          controls-position="right"
           @update:model-value="updateRule(idx, { max: $event ?? undefined })"
         />
       </div>

@@ -117,7 +117,7 @@ const activeNav = computed(() => {
 
 .navItemActive {
   background: #ecf5ff;
-  color: #409eff;
+  color: var(--el-color-primary);
   font-weight: 500;
 }
 

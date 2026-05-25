@@ -328,7 +328,7 @@ function handleApiParamsChange(idx: number, text: string) {
 
       <div v-if="col.render === 'image'" class="columns-editor__field">
         <label class="columns-editor__label">图片宽度 (px)</label>
-        <el-input-number :model-value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" @update:model-value="updateColumn(idx, 'imageWidth', $event)" />
+        <el-input-number :model-value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" controls-position="right" @update:model-value="updateColumn(idx, 'imageWidth', $event)" />
       </div>
 
       <div v-if="col.render === 'custom'" class="columns-editor__field">

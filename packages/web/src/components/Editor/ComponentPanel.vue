@@ -200,7 +200,7 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
 }
 
 .item:hover {
-  border-color: #409eff;
+  border-color: var(--el-color-primary);
   background: #ecf5ff;
 }
 

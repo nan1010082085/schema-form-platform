@@ -110,7 +110,7 @@ function handleAction(action: string) {
 
 .item:hover {
   background: #f5f7fa;
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .divider {

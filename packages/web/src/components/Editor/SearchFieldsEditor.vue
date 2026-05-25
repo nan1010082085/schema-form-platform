@@ -203,6 +203,7 @@ function handleParamsChange(idx: number, text: string) {
         <el-input-number
           :model-value="field.span ?? 8"
           :min="1"
+          controls-position="right"
           :max="24"
           size="small"
           style="width: 100%"
