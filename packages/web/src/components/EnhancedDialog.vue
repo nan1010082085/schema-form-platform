@@ -54,6 +54,7 @@ function onHeaderMousedown(e: MouseEvent) {
     left: `${startLeft}px`,
     top: `${startTop}px`,
     margin: '0',
+    transform: 'none',
   }
 
   document.body.style.cursor = 'move'
@@ -117,6 +118,7 @@ onBeforeUnmount(() => {
     :destroy-on-close="destroyOnClose"
     :close-on-click-modal="closeOnClickModal"
     :show-close="false"
+    append-to-body
     :class="{ 'is-fullscreen': isFullscreen }"
     :style="dialogStyle"
     @close="handleClose"
