@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount } from 'vue'
-import { FullScreen, Close, QuestionFilled } from '@element-plus/icons-vue'
+import { FullScreen, ScaleToOriginal, Close, QuestionFilled } from '@element-plus/icons-vue'
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -31,6 +31,9 @@ let startX = 0
 let startY = 0
 let startLeft = 0
 let startTop = 0
+let dialogWidth = 0
+
+const MIN_VISIBLE = 40 // at least 40px of dialog must stay in viewport
 
 function onHeaderMousedown(e: MouseEvent) {
   if (!props.draggable || isFullscreen.value) return
@@ -40,8 +43,19 @@ function onHeaderMousedown(e: MouseEvent) {
   isDragging = true
   startX = e.clientX
   startY = e.clientY
-  startLeft = parseInt(dialog.style.left || '0', 10)
-  startTop = parseInt(dialog.style.top || '0', 10)
+
+  const rect = dialog.getBoundingClientRect()
+  startLeft = rect.left
+  startTop = rect.top
+  dialogWidth = rect.width
+
+  dialogStyle.value = {
+    ...dialogStyle.value,
+    left: `${startLeft}px`,
+    top: `${startTop}px`,
+    margin: '0',
+  }
+
   document.body.style.cursor = 'move'
   document.body.style.userSelect = 'none'
 
@@ -53,10 +67,16 @@ function onMousemove(e: MouseEvent) {
   if (!isDragging) return
   const dx = e.clientX - startX
   const dy = e.clientY - startY
+
+  const maxLeft = window.innerWidth - MIN_VISIBLE
+  const maxTop = window.innerHeight - MIN_VISIBLE
+  const left = Math.max(MIN_VISIBLE - dialogWidth, Math.min(maxLeft, startLeft + dx))
+  const top = Math.max(0, Math.min(maxTop, startTop + dy))
+
   dialogStyle.value = {
     ...dialogStyle.value,
-    left: `${startLeft + dx}px`,
-    top: `${startTop + dy}px`,
+    left: `${left}px`,
+    top: `${top}px`,
     margin: '0',
   }
 }
@@ -122,12 +142,20 @@ onBeforeUnmount(() => {
             <div :class="$style.helpContent" v-html="helpContent" />
           </el-popover>
           <el-icon
-            v-if="showFullscreenBtn"
+            v-if="showFullscreenBtn && !isFullscreen"
             data-testid="fullscreen-btn"
             :class="$style.headerBtn"
             @click.stop="toggleFullscreen"
           >
             <FullScreen />
+          </el-icon>
+          <el-icon
+            v-if="showFullscreenBtn && isFullscreen"
+            data-testid="fullscreen-btn"
+            :class="$style.headerBtn"
+            @click.stop="toggleFullscreen"
+          >
+            <ScaleToOriginal />
           </el-icon>
           <el-icon
             :class="$style.headerBtn"

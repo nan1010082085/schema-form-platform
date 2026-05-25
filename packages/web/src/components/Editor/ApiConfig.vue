@@ -217,7 +217,7 @@ defineExpose({ testConnection, testing })
   <div class="api-config">
     <!-- Toggle: enable API -->
     <div v-if="!hasApi" class="api-config__toggle">
-      <el-button size="small" type="primary" plain @click="switchMode('url')">
+      <el-button type="primary" plain @click="switchMode('url')">
         配置 API
       </el-button>
     </div>
@@ -226,7 +226,7 @@ defineExpose({ testConnection, testing })
       <!-- Data source mode switch -->
       <div class="api-config__field">
         <label class="api-config__label">数据源</label>
-        <el-radio-group :model-value="sourceMode" size="small" @update:model-value="switchMode($event as DataSourceMode)">
+        <el-radio-group :model-value="sourceMode" @update:model-value="switchMode($event as DataSourceMode)">
           <el-radio-button value="dict">字典编码</el-radio-button>
           <el-radio-button value="url">URL</el-radio-button>
         </el-radio-group>
@@ -237,36 +237,88 @@ defineExpose({ testConnection, testing })
         <label class="api-config__label">字典编码</label>
         <el-input
           :model-value="api?.dictCode ?? ''"
-          size="small"
           placeholder="例如: gender_list"
           @update:model-value="emitApiField('dictCode', $event)"
         />
       </div>
 
-      <!-- URL mode -->
+      <!-- URL mode: table layout -->
       <template v-if="sourceMode === 'url'">
-        <div class="api-config__field">
-          <label class="api-config__label">URL</label>
-          <el-input
-            :model-value="api?.url ?? ''"
-            size="small"
-            placeholder="/api/options"
-            @update:model-value="emitApiField('url', $event)"
-          />
-        </div>
-
-        <div class="api-config__field">
-          <label class="api-config__label">请求方法</label>
-          <el-select
-            :model-value="api?.method ?? 'get'"
-            size="small"
-            style="width: 100%"
-            @update:model-value="emitApiField('method', $event as 'get' | 'post')"
-          >
-            <el-option label="GET" value="get" />
-            <el-option label="POST" value="post" />
-          </el-select>
-        </div>
+        <table class="api-config__table">
+          <tr>
+            <td class="api-config__cell">
+              <label class="api-config__label">URL</label>
+              <el-input
+                :model-value="api?.url ?? ''"
+                placeholder="/api/options"
+                @update:model-value="emitApiField('url', $event)"
+              />
+            </td>
+            <td class="api-config__cell">
+              <label class="api-config__label">请求方法</label>
+              <el-select
+                :model-value="api?.method ?? 'get'"
+                style="width: 100%"
+                @update:model-value="emitApiField('method', $event as 'get' | 'post')"
+              >
+                <el-option label="GET" value="get" />
+                <el-option label="POST" value="post" />
+              </el-select>
+            </td>
+            <td class="api-config__cell">
+              <label class="api-config__label">数据路径</label>
+              <el-input
+                :model-value="api?.dataPath ?? ''"
+                placeholder="result.records"
+                @update:model-value="emitApiField('dataPath', $event || undefined)"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="api-config__cell">
+              <label class="api-config__label">标签字段</label>
+              <el-input
+                :model-value="api?.labelKey ?? 'label'"
+                placeholder="label"
+                @update:model-value="emitApiField('labelKey', $event)"
+              />
+            </td>
+            <td class="api-config__cell">
+              <label class="api-config__label">值字段</label>
+              <el-input
+                :model-value="api?.valueKey ?? 'value'"
+                placeholder="value"
+                @update:model-value="emitApiField('valueKey', $event)"
+              />
+            </td>
+            <td class="api-config__cell">
+              <label class="api-config__label">子节点字段</label>
+              <el-input
+                :model-value="api?.childrenKey ?? ''"
+                placeholder="children"
+                @update:model-value="emitApiField('childrenKey', $event)"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="api-config__cell">
+              <label class="api-config__label">立即加载</label>
+              <el-switch
+                :model-value="api?.immediate !== false"
+                @update:model-value="emitApiField('immediate', $event)"
+              />
+            </td>
+            <td class="api-config__cell">
+              <label class="api-config__label">缓存时间 (ms)</label>
+              <el-input
+                :model-value="String(api?.ttl ?? 0)"
+                placeholder="0"
+                @update:model-value="emitApiField('ttl', Number($event) || 0)"
+              />
+            </td>
+            <td class="api-config__cell" />
+          </tr>
+        </table>
 
         <div class="api-config__field">
           <label class="api-config__label">参数 (JSON)</label>
@@ -274,71 +326,11 @@ defineExpose({ testConnection, testing })
             :model-value="paramsText"
             type="textarea"
             :rows="2"
-            size="small"
             placeholder='{"key": "value"}'
             :class="{ 'is-error': !!paramsError }"
             @update:model-value="handleParamsChange($event)"
           />
           <div v-if="paramsError" class="api-config__error">{{ paramsError }}</div>
-        </div>
-
-        <div class="api-config__field">
-          <label class="api-config__label">数据路径</label>
-          <el-input
-            :model-value="api?.dataPath ?? ''"
-            size="small"
-            placeholder="data (点号分隔 例如: result.records)"
-            @update:model-value="emitApiField('dataPath', $event || undefined)"
-          />
-        </div>
-
-        <div class="api-config__field api-config__field--row">
-          <div style="flex: 1">
-            <label class="api-config__label">标签字段</label>
-            <el-input
-              :model-value="api?.labelKey ?? 'label'"
-              size="small"
-              placeholder="label"
-              @update:model-value="emitApiField('labelKey', $event)"
-            />
-          </div>
-          <div style="flex: 1">
-            <label class="api-config__label">值字段</label>
-            <el-input
-              :model-value="api?.valueKey ?? 'value'"
-              size="small"
-              placeholder="value"
-              @update:model-value="emitApiField('valueKey', $event)"
-            />
-          </div>
-        </div>
-
-        <div class="api-config__field">
-          <label class="api-config__label">子节点字段 (树形数据)</label>
-          <el-input
-            :model-value="api?.childrenKey ?? ''"
-            size="small"
-            placeholder="children"
-            @update:model-value="emitApiField('childrenKey', $event)"
-          />
-        </div>
-
-        <div class="api-config__field">
-          <label class="api-config__label">立即加载</label>
-          <el-switch
-            :model-value="api?.immediate !== false"
-            @update:model-value="emitApiField('immediate', $event)"
-          />
-        </div>
-
-        <div class="api-config__field">
-          <label class="api-config__label">缓存时间 (毫秒, 0 = 不过期)</label>
-          <el-input
-            :model-value="String(api?.ttl ?? 0)"
-            size="small"
-            placeholder="0"
-            @update:model-value="emitApiField('ttl', Number($event) || 0)"
-          />
         </div>
 
         <!-- Test Result: Success -->
@@ -347,7 +339,6 @@ defineExpose({ testConnection, testing })
             <el-icon><Check /></el-icon>
             <span>{{ testResult.message }}</span>
             <el-button
-              size="small"
               type="success"
               plain
               @click="analyzeAndGenerateSchema"
@@ -410,6 +401,15 @@ defineExpose({ testConnection, testing })
 
 <style scoped lang="scss">
 .api-config {
+  /* 统一表单控件高度 32px */
+  :deep(.el-input__wrapper),
+  :deep(.el-select .el-input__wrapper),
+  :deep(.el-radio-group),
+  :deep(.el-button:not(.is-text):not(.is-link)) {
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+
   &__toggle {
     text-align: center;
     padding: 8px 0;
@@ -426,6 +426,18 @@ defineExpose({ testConnection, testing })
       display: flex;
       gap: 8px;
     }
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    table-layout: fixed;
+  }
+
+  &__cell {
+    padding: 4px 6px;
+    vertical-align: top;
   }
 
   &__label {
@@ -514,7 +526,7 @@ defineExpose({ testConnection, testing })
     align-items: center;
     justify-content: space-between;
     font-size: 11px;
-    color: #409eff;
+    color: var(--el-color-primary);
 
     code {
       font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;

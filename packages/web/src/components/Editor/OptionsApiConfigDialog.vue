@@ -71,10 +71,9 @@ function handleClose() {
   >
     <!-- 顶部操作栏：所有按钮一行排列 -->
     <div :class="$style.toolbar">
-      <el-button size="small" @click="handleClose">取消</el-button>
+      <el-button @click="handleClose">取消</el-button>
       <el-button
         v-if="localApi"
-        size="small"
         type="danger"
         plain
         @click="clearApi"
@@ -83,7 +82,6 @@ function handleClose() {
       </el-button>
       <el-button
         v-if="localApi"
-        size="small"
         type="primary"
         plain
         :loading="apiConfigRef?.testing"
@@ -91,7 +89,7 @@ function handleClose() {
       >
         测试连接
       </el-button>
-      <el-button size="small" type="primary" @click="handleSave">保存</el-button>
+      <el-button type="primary" @click="handleSave">保存</el-button>
     </div>
 
     <div :class="$style.body">
@@ -114,8 +112,23 @@ function handleClose() {
   margin-bottom: 12px;
 }
 
+/* 统一表单控件高度 32px */
+.toolbar :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
 .body {
   max-height: 60vh;
   overflow-y: auto;
+}
+
+/* 统一表单控件高度 32px */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-radio-group),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
 }
 </style>

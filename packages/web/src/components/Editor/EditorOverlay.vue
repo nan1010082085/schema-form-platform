@@ -142,7 +142,7 @@ const selectionStyle = computed(() => {
     top: `${y + delta.my}px`,
     width: `${w.position.w + delta.bw}px`,
     height: `${w.position.h + delta.bh}px`,
-    border: '2px solid #409eff',
+    border: '2px solid var(--el-color-primary)',
     pointerEvents: 'none' as const,
     zIndex: 9999,
   }
@@ -220,7 +220,7 @@ const containerHighlightStyle = computed(() => {
     top: `${c.position.y}px`,
     width: `${c.position.w}px`,
     height: `${c.position.h}px`,
-    border: '2px dashed #409eff',
+    border: '2px dashed var(--el-color-primary)',
     backgroundColor: 'rgba(64, 158, 255, 0.1)',
     pointerEvents: 'none' as const,
     zIndex: 9998,
@@ -445,7 +445,7 @@ function handleDrop(e: DragEvent) {
   width: 8px;
   height: 8px;
   background: #fff;
-  border: 1px solid #409eff;
+  border: 1px solid var(--el-color-primary);
   z-index: 10000;
   pointer-events: auto;
   cursor: nw-resize;

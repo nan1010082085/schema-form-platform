@@ -179,7 +179,6 @@ function needsValue(operator: string): boolean {
       <el-select
         v-if="ci > 0"
         :model-value="clause.logic"
-        size="small"
         :class="$style.logicSelect"
         @update:model-value="updateClause(ci, 'logic', $event)"
       >
@@ -190,7 +189,6 @@ function needsValue(operator: string): boolean {
       <!-- 字段选择（分组） -->
       <el-select
         :model-value="clause.field"
-        size="small"
         filterable
         placeholder="选择字段"
         :class="$style.fieldSelect"
@@ -225,7 +223,6 @@ function needsValue(operator: string): boolean {
       <!-- 运算符 -->
       <el-select
         :model-value="clause.operator"
-        size="small"
         :class="$style.opSelect"
         @update:model-value="updateClause(ci, 'operator', $event)"
       >
@@ -241,7 +238,6 @@ function needsValue(operator: string): boolean {
       <el-input
         v-if="needsValue(clause.operator)"
         :model-value="clause.value"
-        size="small"
         placeholder="比较值"
         :class="$style.valueInput"
         @update:model-value="updateClause(ci, 'value', $event)"
@@ -286,6 +282,14 @@ function needsValue(operator: string): boolean {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* 统一表单控件高度 32px */
+.builder :global(.el-input__wrapper),
+.builder :global(.el-select .el-input__wrapper),
+.builder :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
 }
 
 .clause {
@@ -337,7 +341,7 @@ function needsValue(operator: string): boolean {
 .previewCode {
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
   font-size: 11px;
-  color: #409eff;
+  color: var(--el-color-primary);
   word-break: break-all;
 }
 </style>

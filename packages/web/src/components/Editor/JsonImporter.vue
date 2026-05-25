@@ -291,12 +291,12 @@ defineExpose({ open })
     transition: all 0.2s;
 
     &:hover {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
 
     &--active {
-      color: #409eff;
-      border-bottom-color: #409eff;
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
     }
   }
 

@@ -608,7 +608,7 @@ const isFiltered = computed(() =>
   position: relative;
 
   &:hover {
-    border-color: #409eff;
+    border-color: var(--el-color-primary);
     box-shadow: 0 4px 16px rgba(64, 158, 255, 0.1);
     transform: translateY(-1px);
   }

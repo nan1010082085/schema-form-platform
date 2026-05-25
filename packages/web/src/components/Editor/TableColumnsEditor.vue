@@ -121,6 +121,7 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
         <el-input-number
           :model-value="col.width"
           size="small"
+          controls-position="right"
           :min="0"
           :max="2000"
           placeholder="列宽度"

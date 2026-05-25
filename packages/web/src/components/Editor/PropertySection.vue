@@ -52,7 +52,7 @@ watch(() => props.defaultOpen, (val) => {
     letter-spacing: 0.3px;
     transition: color 0.15s;
 
-    &:hover { color: #409eff; }
+    &:hover { color: var(--el-color-primary); }
   }
 
   :deep(.el-collapse-item__wrap) {

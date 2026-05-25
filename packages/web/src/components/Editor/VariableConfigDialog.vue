@@ -59,6 +59,16 @@ function removeVariable(index: number) {
   localVariables.value.splice(index, 1)
 }
 
+// ---- JSON 输入处理 ----
+
+function handleJsonInput(v: WidgetVariable, val: string) {
+  try {
+    v.defaultValue = JSON.parse(val)
+  } catch {
+    v.defaultValue = val
+  }
+}
+
 // ---- 名称校验 ----
 
 const nameError = computed(() => {
@@ -119,7 +129,6 @@ function handleClose() {
           <label :class="$style.label">名称</label>
           <el-input
             v-model="v.name"
-            size="small"
             placeholder="变量名（如 isAdmin）"
             style="flex: 1"
           />
@@ -129,8 +138,8 @@ function handleClose() {
           <label :class="$style.label">类型</label>
           <el-select
             v-model="v.type"
-            size="small"
             style="width: 120px"
+            @update:model-value="v.defaultValue = $event === 'boolean' ? false : $event === 'number' ? 0 : $event === 'object' ? {} : $event === 'array' ? [] : ''"
           >
             <el-option
               v-for="opt in typeOptions"
@@ -144,20 +153,26 @@ function handleClose() {
           <el-switch
             v-if="v.type === 'boolean'"
             v-model="v.defaultValue"
-            size="small"
           />
           <el-input-number
             v-else-if="v.type === 'number'"
             v-model="v.defaultValue as number"
-            size="small"
+            controls-position="right"
+          />
+          <el-input
+            v-else-if="v.type === 'string'"
+            v-model="v.defaultValue as string"
+            placeholder="默认值"
             style="flex: 1"
           />
           <el-input
             v-else
-            v-model="v.defaultValue as string"
-            size="small"
-            :placeholder="v.type === 'object' ? '{}' : v.type === 'array' ? '[]' : '默认值'"
+            :model-value="typeof v.defaultValue === 'object' ? JSON.stringify(v.defaultValue) : (v.defaultValue as string) ?? ''"
+            type="textarea"
+            :rows="2"
+            :placeholder="v.type === 'object' ? '{&quot;key&quot;: &quot;value&quot;}' : '[&quot;item1&quot;, &quot;item2&quot;]'"
             style="flex: 1"
+            @update:model-value="handleJsonInput(v, $event)"
           />
         </div>
 
@@ -165,7 +180,6 @@ function handleClose() {
           <label :class="$style.label">描述</label>
           <el-input
             v-model="v.description"
-            size="small"
             placeholder="可选，变量用途说明"
             style="flex: 1"
           />
@@ -179,7 +193,6 @@ function handleClose() {
       <el-button
         type="primary"
         :icon="Plus"
-        size="small"
         plain
         style="width: 100%"
         @click="addVariable"
@@ -189,8 +202,8 @@ function handleClose() {
     </div>
 
     <template #footer>
-      <el-button size="small" @click="handleClose">取消</el-button>
-      <el-button type="primary" size="small" :disabled="!!nameError" @click="handleSave">保存</el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :disabled="!!nameError" @click="handleSave">保存</el-button>
     </template>
   </EnhancedDialog>
 </template>
@@ -202,6 +215,25 @@ function handleClose() {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* 统一表单控件高度 32px */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+/* el-input-number 内部的 el-input 与其他表单控件保持 32px 一致 */
+.body :global(.el-input-number .el-input__wrapper) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+/* el-input-number 使用 Element Plus 原生样式 */
+.body :global(.el-input-number) {
+  --el-input-number-width: 200px;
 }
 
 .empty {

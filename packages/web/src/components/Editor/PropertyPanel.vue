@@ -731,7 +731,9 @@ function updateBoardProperty(key: string, value: unknown) {
 }
 
 .sectionBody {
-  padding: 0 16px 8px;
+  padding: 8px 16px;
+  background: #fafbfc;
+  border-top: 1px solid #f0f2f5;
 }
 
 .variableBtn {
@@ -772,7 +774,7 @@ function updateBoardProperty(key: string, value: unknown) {
   font-size: 11px;
   line-height: 1;
   color: #fff;
-  background: #409eff;
+  background: var(--el-color-primary);
   border-radius: 8px;
 }
 
