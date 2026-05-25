@@ -6,30 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 以第一性原理思考。不假设用户意图，目标不清晰时主动讨论。遇到问题追根因，不打补丁。输出说重点，砍掉不改变决策的信息。
 
-
 ## 规则
 
 ### 组件嵌套唯一规则（核心架构）
-所有基础组件、业务组件禁止互相嵌套、禁止互相组合搭建。  
+所有基础组件、业务组件禁止互相嵌套、禁止互相组合搭建。
 
 所有组件只允许嵌套在布局组件内部，页面所有排版、结构、层级全部依赖布局组件实现。
 
 ### 样式隔离与样式架构强制规则
 
-全局所有组件统一开启 CSS Module 样式隔离，彻底杜绝组件样式污染、全局样式冲突。  
+全局所有组件统一开启 CSS Module 样式隔离，彻底杜绝组件样式污染、全局样式冲突。
 
 删除所有组件硬编码样式、固定表格样式、固定宽高，所有组件样式 100% 由 Schema 配置驱动。
 
 ### 项目代码架构统一强制规则
 
-全项目统一分层规范：  
+全项目统一分层规范：
 
-1. 所有全局状态统一使用 Pinia Store 维护  
-
-2. 所有公共逻辑、工具方法、业务能力统一使用 组合式 API（useXXX）  
-
-3. 彻底废弃零散独立 utils 函数  
-
+1. 所有全局状态统一使用 Pinia Store 维护
+2. 所有公共逻辑、工具方法、业务能力统一使用组合式 API（useXXX）
+3. 彻底废弃零散独立 utils 函数
 4. UI 组件只做渲染，不写复杂业务逻辑
 
 ### 开发质量强制规则
@@ -42,7 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 架构相关（Store/Composables/工具函数）→ 前端架构师 Agent
 - 组件/渲染引擎/属性面板/画布交互 → 组件工程师 Agent
 - API/数据库/部署 → 服务端工程师 Agent
-- 需求/体验/优先级 → 产品经理 Agent# 低代码编辑器&渲染器 完整重构最终规范文档
+- 需求/体验/优先级 → 产品经理 Agent
 
 ### 编码
 
@@ -91,22 +87,56 @@ pnpm db:seed              # 种子数据
 
 - **框架**: Vue 3 Composition API + `<script setup>` + TypeScript
 - **UI**: Element Plus 2.9
-- **状态管理**: Pinia（`useSchemaStore` — schema CRUD；`useEditorStore` — 编辑器画布状态、撤销/重做）
+- **状态管理**: Pinia
+  - `useWidgetStore`（`stores/widget.ts`）— Widget 集合的 CRUD、树结构遍历、位置/容器操作，是 Widget 数据的唯一 source of truth
+  - `useEditorStore`（`stores/editor.ts`）— 编辑器交互状态：选中、模式切换、撤销/重做历史（主画布 + 弹窗编辑器独立管理）、剪贴板、脏标记
+  - `useSchemaStore`（`stores/api.ts`）— Schema 的后端 CRUD（列表、保存、发布）
+  - `useDragStore`（`stores/drag.ts`）— 拖拽状态
+  - `useBoardStore`（`stores/board.ts`）— 画布视口状态
 - **路由**: Vue Router 4，支持 qiankun 微前端模式（`/child/schemaForm/` 前缀）
-- **API 通信**: `src/utils/apiClient.ts` — 基于 fetch 的薄封装，`ApiError` 统一错误类型。通过 `configureApiClient()` 初始化 baseUrl 和 token
-- **编辑器核心**: `src/widgets/` — widget 注册表 + 组件实现；`src/components/FormGrid/` — schema 驱动的渲染引擎，支持拖拽编辑
+- **API 通信**: `src/utils/apiClient.ts` — 基于 fetch 的薄封装，`ApiError` 统一错误类型
 - **路径别名**: `@/` → `src/`
+
+#### Widget 系统
+
+Widget 是核心抽象。每个 Widget 由 `src/widgets/` 下的目录定义，通过 `registry.ts` 注册。
+
+- **注册表**（`widgets/registry.ts`）：`Map<SchemaType, WidgetRegistryItem>`，提供 `registerWidget`、`getWidget`、`getComponentMap` 等
+- **类型定义**（`widgets/base/types.ts`）：
+  - `SchemaType` = `ContainerType | BasicType`（容器：form/card/row-col/tabs/dialog；基础：input/select/table 等 30+ 种）
+  - `Widget` 接口：id、type、props、children、events、rules、variables 等
+  - `WidgetEvent`：trigger + condition + actions（支持 15+ 种事件动作类型）
+- **分组**：container / basic / form / table / business / static
+- **渲染引擎**（`components/WidgetRenderer/`）：Schema 驱动，通过 `getComponentMap()` 动态渲染
+
+#### 编辑器核心
+
+- **Editor**（`components/Editor/`）：可视化设计器主界面
+- **PropertyPanel**（`composables/useRightPanelConfig.ts`）：右侧属性配置面板，通过 Schema 驱动
+- **事件引擎**（`engine/eventEngine.ts`）：统一的事件执行引擎，支持条件判断、动作链
+- **Composables**（`composables/`）：30+ 个组合式函数，覆盖拖拽、历史、数据、选项、生命周期等
+
+#### 微前端
+
+- **qiankun**：通过 `vite-plugin-qiankun` 集成，支持作为子应用嵌入宿主
+- **microapp**（`src/microapp/`）：下层子应用集成能力
 
 ### 后端 (`packages/server`)
 
 - **框架**: Koa.js，ESM 模块（`"type": "module"`）
 - **数据库**: MongoDB Atlas（生产）/ Docker MongoDB 8（本地），Mongoose ODM
-- **认证**: JWT + bcryptjs（User 模型已就位，路由待实施）
-- **API 路由**:
-  - `GET/POST /api/schemas` — 列表（分页+搜索+筛选）和创建
-  - `GET/PUT/DELETE /api/schemas/:id` — 单个 CRUD，ID 使用 UUID
-  - `GET /api/health` — 健康检查（含 DB ping）
-- **中间件栈**: errorHandler → helmet → bodyParser → CORS → routes
+- **认证**: JWT + bcryptjs
+- **API 路由**（`src/routes/`）：
+  - `schema.ts` — `GET/POST /api/schemas`、`GET/PUT/DELETE /api/schemas/:id`（UUID 主键）
+  - `auth.ts` — 用户认证
+  - `data.ts` — 数据源
+  - `dict.ts` — 字典管理
+  - `options.ts` — 选项配置
+  - `mock.ts` — Mock 数据
+  - `docs.ts` — 文档
+  - `health.ts` — 健康检查（含 DB ping）
+- **中间件栈**（`src/middleware/`）：errorHandler → helmet → bodyParser → CORS → routes
+- **数据模型**（`src/models/`）：FormSchema、PublishedSchema、User
 - **CORS**: 通过 `CORS_ORIGINS` 环境变量控制，逗号分隔
 
 ### Vercel 部署
@@ -130,7 +160,7 @@ pnpm db:seed              # 种子数据
 **FormSchema** — 核心资源：
 - `_id`: UUID string（非 ObjectId）
 - `name`, `type`（form | search_list）, `status`（draft | published）
-- `json`: Mixed — 存储 schema 树结构（`FormSchemaItem[]`）
+- `json`: Mixed — 存储 schema 树结构（`Widget[]`）
 - `publishId`: 发布版本的唯一标识
 - `timestamps`: createdAt / updatedAt
 
