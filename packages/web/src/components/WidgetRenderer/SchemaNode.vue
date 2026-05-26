@@ -46,7 +46,9 @@ const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
  * 所有容器统一由 childrenLayer（absolute 定位）渲染子组件，
  * 保证 overlay 坐标系与渲染坐标系一致。
  */
-const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
+const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set([
+  'single-col', 'double-col', 'triple-col', 'quad-col',
+])
 
 /**
  * 交互式容器：内部有可交互 UI（tab headers、dialog body），

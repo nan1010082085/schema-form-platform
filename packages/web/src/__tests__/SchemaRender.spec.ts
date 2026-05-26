@@ -248,7 +248,7 @@ describe('SchemaRender', () => {
   // 3. Container rendering
   // =========================================================================
   describe('Container rendering', () => {
-    const containerTypes: SchemaType[] = ['form', 'card', 'tabs', 'single-col', 'double-col']
+    const containerTypes: SchemaType[] = ['form', 'card', 'tabs']
 
     for (const containerType of containerTypes) {
       it(`renders ${containerType} container with children`, () => {
@@ -269,6 +269,20 @@ describe('SchemaRender', () => {
         expect(wrapper.find(`.stub-${containerType}`).exists()).toBe(true)
       })
     }
+
+    it('renders column containers as self-rendering (children delegated to component)', () => {
+      const colTypes: SchemaType[] = ['single-col', 'double-col', 'triple-col', 'quad-col']
+      for (const colType of colTypes) {
+        const child = makeWidget({ type: 'input', id: 'child1' })
+        const container = makeContainerWidget(colType, [child], { id: 'container1' })
+        const wrapper = mountSchemaRender([container])
+
+        // Container itself renders
+        expect(wrapper.find(`.stub-${colType}`).exists()).toBe(true)
+        // Children are NOT rendered by SchemaNode's childrenLayer — the component handles it
+        expect(wrapper.find('.stub-input').exists()).toBe(false)
+      }
+    })
 
     it('renders dialog as EnhancedDialog in preview mode (default)', () => {
       const child = makeWidget({ type: 'input', id: 'child1' })
