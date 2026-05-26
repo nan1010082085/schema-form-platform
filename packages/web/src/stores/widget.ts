@@ -19,8 +19,22 @@ import type { Widget, ContainerType } from '../widgets/base/types'
 
 /** 容器组件类型集合 — 这些组件禁止被拖入其他容器 */
 const CONTAINER_TYPES: Set<string> = new Set<ContainerType>([
-  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'form', 'card', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
 ])
+
+/** 列容器类型 → 列数映射 */
+const COL_CONTAINER_COLUMNS: Record<string, number> = {
+  'single-col': 1,
+  'double-col': 2,
+  'triple-col': 3,
+  'quad-col': 4,
+}
+
+/** 获取列容器的列数，非列容器返回 0 */
+function getColContainerColumns(type: string): number {
+  return COL_CONTAINER_COLUMNS[type] ?? 0
+}
 
 export const useWidgetStore = defineStore('widget', () => {
   // ================================================================
@@ -174,15 +188,20 @@ export const useWidgetStore = defineStore('widget', () => {
       widget.tabKey = activeKey || tabs?.[0]?.key || 'tab1'
     }
 
-    // row-col 容器：自动分配 colIndex（放入列数最少的列）
-    if (container.type === 'row-col' && widget.colIndex === undefined) {
-      const colCount = (container.props?.columns as number) || 2
-      const colCounts = new Array(colCount).fill(0)
-      for (const child of container.children ?? []) {
-        const ci = (child as Widget).colIndex ?? 0
-        if (ci < colCount) colCounts[ci]++
+    // 列容器：自动分配 colIndex（放入列数最少的列）
+    const colContainerColumns = getColContainerColumns(container.type)
+    if (colContainerColumns > 0) {
+      const targetCol = widget.colIndex ?? 0
+      const existing = container.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
+      if (existing.length >= 1) return // column full — 1 widget per column
+      if (widget.colIndex === undefined) {
+        const colCounts = new Array(colContainerColumns).fill(0)
+        for (const child of container.children ?? []) {
+          const ci = (child as Widget).colIndex ?? 0
+          if (ci < colContainerColumns) colCounts[ci]++
+        }
+        widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
       }
-      widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
     }
 
     if (!container.children) container.children = []
@@ -249,15 +268,20 @@ export const useWidgetStore = defineStore('widget', () => {
       widget.tabKey = activeKey || tabs?.[0]?.key || 'tab1'
     }
 
-    // row-col 容器：自动分配 colIndex（放入列数最少的列）
-    if (target.type === 'row-col' && widget.colIndex === undefined) {
-      const colCount = (target.props?.columns as number) || 2
-      const colCounts = new Array(colCount).fill(0)
-      for (const child of target.children ?? []) {
-        const ci = (child as Widget).colIndex ?? 0
-        if (ci < colCount) colCounts[ci]++
+    // 列容器：自动分配 colIndex（放入列数最少的列）
+    const colContainerColumns = getColContainerColumns(target.type)
+    if (colContainerColumns > 0) {
+      const targetCol = widget.colIndex ?? 0
+      const existing = target.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
+      if (existing.length >= 1) return // column full — 1 widget per column
+      if (widget.colIndex === undefined) {
+        const colCounts = new Array(colContainerColumns).fill(0)
+        for (const child of target.children ?? []) {
+          const ci = (child as Widget).colIndex ?? 0
+          if (ci < colContainerColumns) colCounts[ci]++
+        }
+        widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
       }
-      widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
     }
 
     if (!target.children) target.children = []

@@ -20,6 +20,10 @@ export const LAYOUT_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
   'card',
   'steps',
   'tabs',
+  'single-col',
+  'double-col',
+  'triple-col',
+  'quad-col',
 ])
 
 /** 编辑器中可接受拖放的容器类型 */
@@ -31,6 +35,10 @@ export const EDITABLE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
   'grid-col',
   'steps',
   'tabs',
+  'single-col',
+  'double-col',
+  'triple-col',
+  'quad-col',
 ])
 
 /** 交互模式 */
@@ -49,6 +57,7 @@ export function canNest(type: SchemaType): boolean {
 export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
   'grid-row', 'grid-col',
   'page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
 ])
 
 /** 基础组件 */

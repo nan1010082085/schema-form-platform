@@ -20,7 +20,6 @@ import { getAllWidgets, getWidget, getComponentMap, createWidget, getWidgetsByGr
 // --- Individual configs ---
 import { formConfig } from '@/widgets/form/config'
 import { cardConfig } from '@/widgets/card/config'
-import { rowColConfig } from '@/widgets/row-col/config'
 import { tabsConfig } from '@/widgets/tabs/config'
 import { dialogConfig } from '@/widgets/dialog/config'
 import { inputConfig } from '@/widgets/input/config'
@@ -45,6 +44,10 @@ import { fileListConfig } from '@/widgets/file-list/config'
 import { transferConfig } from '@/widgets/transfer/config'
 import { searchListConfig } from '@/widgets/search-list/config'
 import { editableTableConfig } from '@/widgets/editable-table/config'
+import { singleColConfig } from '@/widgets/single-col/config'
+import { doubleColConfig } from '@/widgets/double-col/config'
+import { tripleColConfig } from '@/widgets/triple-col/config'
+import { quadColConfig } from '@/widgets/quad-col/config'
 
 // --- createDefaultSchema ---
 import { createDefaultSchema } from '@/utils/schemaDefaults'
@@ -62,7 +65,8 @@ import { publicStylePanel } from '@/widgets/base/publicSchema'
 // Expected registered widget types
 // =====================================================================
 const REGISTERED_TYPES: WidgetSchemaType[] = [
-  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'form', 'card', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'title', 'divider',
   'spacer', 'toolbar-buttons', 'table', 'button',
@@ -74,7 +78,6 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
 const ALL_CONFIGS = [
   { name: 'form', config: formConfig },
   { name: 'card', config: cardConfig },
-  { name: 'row-col', config: rowColConfig },
   { name: 'tabs', config: tabsConfig },
   { name: 'dialog', config: dialogConfig },
   { name: 'input', config: inputConfig },
@@ -99,6 +102,10 @@ const ALL_CONFIGS = [
   { name: 'transfer', config: transferConfig },
   { name: 'search-list', config: searchListConfig },
   { name: 'editable-table', config: editableTableConfig },
+  { name: 'single-col', config: singleColConfig },
+  { name: 'double-col', config: doubleColConfig },
+  { name: 'triple-col', config: tripleColConfig },
+  { name: 'quad-col', config: quadColConfig },
 ]
 
 // =====================================================================
@@ -111,9 +118,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 27 widget types', () => {
+  it('registers exactly 30 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(27)
+    expect(all).toHaveLength(30)
   })
 
   it('getComponentMap returns a component for every registered type', () => {

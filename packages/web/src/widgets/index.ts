@@ -1,7 +1,6 @@
 import { registerWidget } from './registry'
 import { FgForm, createFormWidget, formConfig } from './form'
 import { FgCard, createCardWidget, cardConfig } from './card'
-import { FgRowCol, createRowColWidget, rowColConfig } from './row-col'
 import { FgTabs, createTabsWidget, tabsConfig } from './tabs'
 import { FgDialog, createDialogWidget, dialogConfig } from './dialog'
 import { FgInput, createInputWidget, inputConfig } from './input'
@@ -26,6 +25,10 @@ import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
 import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
 import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
 import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
+import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
+import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
+import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-col'
+import { FgQuadCol, createQuadColWidget, quadColConfig } from './quad-col'
 
 export function registerAllWidgets() {
   // Container widgets
@@ -50,16 +53,6 @@ export function registerAllWidgets() {
   })
 
   registerWidget({
-    name: rowColConfig.name,
-    displayName: rowColConfig.displayName,
-    type: 'row-col',
-    group: 'container',
-    component: FgRowCol,
-    create: createRowColWidget,
-    config: rowColConfig,
-  })
-
-  registerWidget({
     name: tabsConfig.name,
     displayName: tabsConfig.displayName,
     type: 'tabs',
@@ -77,6 +70,46 @@ export function registerAllWidgets() {
     component: FgDialog,
     create: createDialogWidget,
     config: dialogConfig,
+  })
+
+  registerWidget({
+    name: singleColConfig.name,
+    displayName: singleColConfig.displayName,
+    type: 'single-col',
+    group: 'container',
+    component: FgSingleCol,
+    create: createSingleColWidget,
+    config: singleColConfig,
+  })
+
+  registerWidget({
+    name: doubleColConfig.name,
+    displayName: doubleColConfig.displayName,
+    type: 'double-col',
+    group: 'container',
+    component: FgDoubleCol,
+    create: createDoubleColWidget,
+    config: doubleColConfig,
+  })
+
+  registerWidget({
+    name: tripleColConfig.name,
+    displayName: tripleColConfig.displayName,
+    type: 'triple-col',
+    group: 'container',
+    component: FgTripleCol,
+    create: createTripleColWidget,
+    config: tripleColConfig,
+  })
+
+  registerWidget({
+    name: quadColConfig.name,
+    displayName: quadColConfig.displayName,
+    type: 'quad-col',
+    group: 'container',
+    component: FgQuadCol,
+    create: createQuadColWidget,
+    config: quadColConfig,
   })
 
   // Basic widgets

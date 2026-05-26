@@ -19,8 +19,36 @@ interface Rect {
   centerY: number
 }
 
+/** 预计算的对齐目标矩形（画布坐标系） */
+export interface AlignTarget {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+function toRect(r: AlignTarget): Rect {
+  return {
+    left: r.left,
+    right: r.right,
+    top: r.top,
+    bottom: r.bottom,
+    centerX: (r.left + r.right) / 2,
+    centerY: (r.top + r.bottom) / 2,
+  }
+}
+
+function widgetToAlignTarget(w: Widget, offsetX = 0, offsetY = 0): AlignTarget {
+  return {
+    left: offsetX + w.position.x,
+    right: offsetX + w.position.x + w.position.w,
+    top: offsetY + w.position.y,
+    bottom: offsetY + w.position.y + w.position.h,
+  }
+}
+
 /**
- * 计算对齐辅助线
+ * 计算对齐辅助线（全局模式 — 检查画布边界 + 所有 widget）
  */
 export function calculateGuideLines(
   draggingWidget: Widget,
@@ -51,7 +79,6 @@ export function calculateGuideLines(
     centerY: canvasHeight / 2,
   }
 
-  // 检查与画布边界的对齐
   checkAlignment(dragRect, canvasEdges, lines, (snap) => {
     if (snap.x !== null) snapX = snap.x
     if (snap.y !== null) snapY = snap.y
@@ -60,23 +87,80 @@ export function calculateGuideLines(
   // 检查与其他 widget 的对齐
   for (const other of allWidgets) {
     if (other.id === draggingWidget.id) continue
-
-    const otherRect: Rect = {
-      left: other.position.x,
-      right: other.position.x + other.position.w,
-      top: other.position.y,
-      bottom: other.position.y + other.position.h,
-      centerX: other.position.x + other.position.w / 2,
-      centerY: other.position.y + other.position.h / 2,
-    }
-
-    checkAlignment(dragRect, otherRect, lines, (snap) => {
+    checkAlignment(dragRect, toRect(widgetToAlignTarget(other)), lines, (snap) => {
       if (snap.x !== null) snapX = snap.x
       if (snap.y !== null) snapY = snap.y
     })
   }
 
   return { lines, snapX, snapY }
+}
+
+/**
+ * 计算容器内对齐辅助线（容器作用域 — 检查容器边界 + 同级 widget）
+ *
+ * @param dragRect      拖拽中的 widget 在**画布坐标系**中的矩形
+ * @param siblings      同容器内其他 widget 的对齐目标（画布坐标系）
+ * @param containerRect 容器在**画布坐标系**中的矩形
+ */
+export function calculateContainerGuides(
+  dragRect: { x: number; y: number; w: number; h: number },
+  siblings: AlignTarget[],
+  containerRect: { x: number; y: number; w: number; h: number },
+): { lines: GuideLine[]; snapX: number | null; snapY: number | null } {
+  const lines: GuideLine[] = []
+  let snapX: number | null = null
+  let snapY: number | null = null
+
+  const drag: Rect = {
+    left: dragRect.x,
+    right: dragRect.x + dragRect.w,
+    top: dragRect.y,
+    bottom: dragRect.y + dragRect.h,
+    centerX: dragRect.x + dragRect.w / 2,
+    centerY: dragRect.y + dragRect.h / 2,
+  }
+
+  // 容器边界对齐
+  const container: Rect = {
+    left: containerRect.x,
+    right: containerRect.x + containerRect.w,
+    top: containerRect.y,
+    bottom: containerRect.y + containerRect.h,
+    centerX: containerRect.x + containerRect.w / 2,
+    centerY: containerRect.y + containerRect.h / 2,
+  }
+
+  checkAlignment(drag, container, lines, (snap) => {
+    if (snap.x !== null) snapX = snap.x
+    if (snap.y !== null) snapY = snap.y
+  })
+
+  // 同级 widget 对齐
+  for (const sibling of siblings) {
+    checkAlignment(drag, toRect(sibling), lines, (snap) => {
+      if (snap.x !== null) snapX = snap.x
+      if (snap.y !== null) snapY = snap.y
+    })
+  }
+
+  return { lines, snapX, snapY }
+}
+
+/** 收集容器内子 widget 的对齐目标（画布坐标系） */
+export function collectSiblingTargets(
+  container: Widget,
+  excludeId: string,
+  containerCanvasX: number,
+  containerCanvasY: number,
+): AlignTarget[] {
+  if (!container.children) return []
+  const targets: AlignTarget[] = []
+  for (const child of container.children) {
+    if (child.id === excludeId) continue
+    targets.push(widgetToAlignTarget(child, containerCanvasX, containerCanvasY))
+  }
+  return targets
 }
 
 function checkAlignment(

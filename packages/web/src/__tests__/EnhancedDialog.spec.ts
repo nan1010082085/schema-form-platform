@@ -1,17 +1,23 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import ElementPlus from 'element-plus'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
+// el-dialog uses append-to-body (Teleport), so query from document instead of wrapper
+
 describe('EnhancedDialog', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
   it('renders el-dialog', async () => {
     const wrapper = mount(EnhancedDialog, {
       props: { modelValue: true, title: 'Test' },
       global: { plugins: [ElementPlus] },
     })
     await nextTick()
-    expect(wrapper.find('.el-dialog').exists()).toBe(true)
+    expect(document.querySelector('.el-dialog')).toBeTruthy()
     wrapper.unmount()
   })
 
@@ -21,7 +27,7 @@ describe('EnhancedDialog', () => {
       global: { plugins: [ElementPlus] },
     })
     await nextTick()
-    expect(wrapper.find('[data-testid="fullscreen-btn"]').exists()).toBe(true)
+    expect(document.querySelector('[data-testid="fullscreen-btn"]')).toBeTruthy()
     wrapper.unmount()
   })
 
@@ -31,7 +37,7 @@ describe('EnhancedDialog', () => {
       global: { plugins: [ElementPlus] },
     })
     await nextTick()
-    expect(wrapper.find('[data-testid="fullscreen-btn"]').exists()).toBe(false)
+    expect(document.querySelector('[data-testid="fullscreen-btn"]')).toBeNull()
     wrapper.unmount()
   })
 
@@ -41,9 +47,12 @@ describe('EnhancedDialog', () => {
       global: { plugins: [ElementPlus] },
     })
     await nextTick()
-    await wrapper.find('[data-testid="fullscreen-btn"]').trigger('click')
+    const btn = document.querySelector('[data-testid="fullscreen-btn"]') as HTMLElement
+    expect(btn).toBeTruthy()
+    btn.click()
     await nextTick()
-    expect(wrapper.find('.el-dialog').classes()).toContain('is-fullscreen')
+    const dialog = document.querySelector('.el-dialog') as HTMLElement
+    expect(dialog.classList.contains('is-fullscreen')).toBe(true)
     wrapper.unmount()
   })
 })

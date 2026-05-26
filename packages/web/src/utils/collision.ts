@@ -43,7 +43,7 @@ export function detectContainerCollision(
 
 /** 获取所有根级容器（排除 widget 自身） */
 export function getRootContainers(widgets: Widget[], excludeId?: string): Widget[] {
-  const containerTypes: string[] = ['form', 'card', 'row-col', 'tabs', 'dialog']
+  const containerTypes: string[] = ['form', 'card', 'tabs', 'dialog', 'single-col', 'double-col', 'triple-col', 'quad-col']
   return widgets.filter(
     (w) => containerTypes.includes(w.type) && w.id !== excludeId,
   )

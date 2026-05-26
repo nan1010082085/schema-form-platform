@@ -4,7 +4,7 @@ import { useEditorStore } from '../stores/editor'
 import { useBoardStore } from '../stores/board'
 import { viewportToCanvas, constrainToCanvasBounds } from '../utils/coordinate'
 import { detectContainerCollision, getRootContainers } from '../utils/collision'
-import { calculateGuideLines } from '../utils/guidelines'
+import { calculateGuideLines, calculateContainerGuides, collectSiblingTargets } from '../utils/guidelines'
 import { createWidget, generateWidgetId } from '../widgets/registry'
 import type { SchemaType, Widget } from '../widgets/base/types'
 
@@ -34,6 +34,20 @@ export function useDrag() {
           const found = findParentOffset(child.id, w.children, ox + w.position.x, oy + w.position.y)
           if (found) return found
         }
+      }
+    }
+    return null
+  }
+
+  /** 查找 widget 的直接父容器 Widget */
+  function findParentContainer(widgetId: string, widgets: Widget[] = widgetStore.widgets): Widget | null {
+    for (const w of widgets) {
+      if (w.children?.length) {
+        for (const child of w.children) {
+          if (child.id === widgetId) return w
+        }
+        const found = findParentContainer(widgetId, w.children)
+        if (found) return found
       }
     }
     return null
@@ -99,7 +113,7 @@ export function useDrag() {
     // 碰撞检测（容器组件禁止嵌套，跳过检测）
     // 必须使用画布坐标，因为容器位置是画布坐标
     const draggedType = dragStore.dragWidgetType || widgetStore.findWidget(dragStore.dragWidgetId || '')?.type
-    const isContainerDrag = draggedType && ['form', 'card', 'row-col', 'tabs', 'dialog'].includes(draggedType)
+    const isContainerDrag = draggedType && ['form', 'card', 'tabs', 'dialog', 'single-col', 'double-col', 'triple-col', 'quad-col'].includes(draggedType)
 
     if (isContainerDrag) {
       dragStore.updateCollision(null)
@@ -122,18 +136,45 @@ export function useDrag() {
     if (dragStore.dragSource === 'canvas' && dragStore.dragWidgetId) {
       const draggingWidget = widgetStore.findWidget(dragStore.dragWidgetId)
       if (draggingWidget) {
-        const movedWidget = {
-          ...draggingWidget,
-          position: { ...draggingWidget.position, x: canvasX, y: canvasY },
+        const dragRect = { x: canvasX, y: canvasY, w: widgetW, h: widgetH }
+
+        // 查找父容器：如果拖拽中的 widget 是某容器的子组件，使用容器内对齐
+        const parentContainer = findParentContainer(dragStore.dragWidgetId)
+        if (parentContainer) {
+          // 容器内拖拽：只与同级 widget 和容器边界对齐
+          const parentOff = findParentOffset(parentContainer.id)
+          const cx = parentOff?.x ?? 0
+          const cy = parentOff?.y ?? 0
+          const siblings = collectSiblingTargets(
+            parentContainer,
+            dragStore.dragWidgetId,
+            cx + parentContainer.position.x,
+            cy + parentContainer.position.y,
+          )
+          const containerRect = {
+            x: cx + parentContainer.position.x,
+            y: cy + parentContainer.position.y,
+            w: parentContainer.position.w,
+            h: parentContainer.position.h,
+          }
+          const { lines, snapX, snapY } = calculateContainerGuides(dragRect, siblings, containerRect)
+          dragStore.updateGuideLines(lines)
+          dragStore.updateSnap(snapX, snapY)
+        } else {
+          // 根级拖拽：与画布边界 + 所有根级 widget 对齐
+          const movedWidget = {
+            ...draggingWidget,
+            position: { ...draggingWidget.position, x: canvasX, y: canvasY },
+          }
+          const { lines, snapX, snapY } = calculateGuideLines(
+            movedWidget,
+            widgetStore.widgets,
+            boardStore.canvas.width,
+            boardStore.canvas.height,
+          )
+          dragStore.updateGuideLines(lines)
+          dragStore.updateSnap(snapX, snapY)
         }
-        const { lines, snapX, snapY } = calculateGuideLines(
-          movedWidget,
-          widgetStore.widgets,
-          boardStore.canvas.width,
-          boardStore.canvas.height,
-        )
-        dragStore.updateGuideLines(lines)
-        dragStore.updateSnap(snapX, snapY)
       }
     }
   }

@@ -7,7 +7,7 @@ export function createFormWidget(id: string): Widget {
     ...publicSchema(id, 'form'),
     name: formConfig.name,
     label: formConfig.displayName,
-    position: { x: 0, y: 0, w: 600, h: 300, zIndex: 1 },
+    position: { x: 0, y: 0, w: 600, h: 600, zIndex: 1 },
     style: { ...formConfig.defaultStyle },
     props: { ...formConfig.defaultProps },
     children: [],

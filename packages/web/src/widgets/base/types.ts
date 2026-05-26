@@ -5,7 +5,7 @@ import type { InjectionKey, ComputedRef, Ref } from 'vue'
 // ============================================================
 
 /** 容器组件类型 */
-export type ContainerType = 'form' | 'card' | 'row-col' | 'tabs' | 'dialog'
+export type ContainerType = 'form' | 'card' | 'tabs' | 'dialog' | 'single-col' | 'double-col' | 'triple-col' | 'quad-col'
 
 /** 基础组件类型 */
 export type BasicType =
