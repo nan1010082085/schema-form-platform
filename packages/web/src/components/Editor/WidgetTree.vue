@@ -34,7 +34,7 @@ function buildTree(widgets: Widget[]): TreeNode[] {
     id: w.id,
     label: w.label || getWidget(w.type)?.displayName || w.type,
     type: w.type,
-    isContainer: ['form', 'card', 'row-col', 'tabs', 'dialog'].includes(w.type),
+    isContainer: ['form', 'card', 'tabs', 'dialog', 'single-col', 'double-col', 'triple-col', 'quad-col'].includes(w.type),
     children: w.children?.length ? buildTree(w.children) : [],
     widget: w,
   }))
@@ -81,7 +81,8 @@ function handleNodeClick(node: TreeNode) {
 // ---- 类型图标 ----
 
 const TYPE_ICONS: Record<string, string> = {
-  form: '📋', card: '🃏', 'row-col': '▥', tabs: '📑', dialog: '💬',
+  form: '📋', card: '🃏', tabs: '📑', dialog: '💬',
+  'single-col': '▐', 'double-col': '▌▐', 'triple-col': '▌▐▌', 'quad-col': '▌▐▌▐',
   input: '✏️', select: '▼', number: '#', radio: '◉', checkbox: '☑',
   date: '📅', textarea: '📝', title: 'T',
   divider: '—', spacer: '␣', 'toolbar-buttons': '🔧', table: '📊', button: '🖱️',

@@ -1,4 +1,5 @@
-.rowContainer {
+.colContainer {
+  display: flex;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
@@ -12,4 +13,9 @@
   &:last-child {
     border-right: none;
   }
+}
+
+.colContent {
+  width: 100%;
+  height: 100%;
 }

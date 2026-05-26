@@ -7,7 +7,7 @@ export function createDialogWidget(id: string): Widget {
     ...publicSchema(id, 'dialog'),
     name: dialogConfig.name,
     label: dialogConfig.displayName,
-    position: { x: 0, y: 0, w: 600, h: 400, zIndex: 100 },
+    position: { x: 0, y: 0, w: 600, h: 600, zIndex: 100 },
     style: { ...dialogConfig.defaultStyle },
     props: { ...dialogConfig.defaultProps },
     children: [],

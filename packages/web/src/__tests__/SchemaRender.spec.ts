@@ -39,9 +39,12 @@ vi.mock('@/widgets/registry', () => {
     // Container types
     form: makeStub('stub-form', true),
     card: makeStub('stub-card', true),
-    'row-col': makeStub('stub-row-col', true),
     tabs: makeStub('stub-tabs', true),
     dialog: makeStub('stub-dialog', true),
+    'single-col': makeStub('stub-single-col', true),
+    'double-col': makeStub('stub-double-col', true),
+    'triple-col': makeStub('stub-triple-col', true),
+    'quad-col': makeStub('stub-quad-col', true),
     // Basic types
     input: makeStub('stub-input'),
     number: makeStub('stub-number'),
@@ -245,7 +248,7 @@ describe('SchemaRender', () => {
   // 3. Container rendering
   // =========================================================================
   describe('Container rendering', () => {
-    const containerTypes: SchemaType[] = ['form', 'card', 'row-col', 'tabs']
+    const containerTypes: SchemaType[] = ['form', 'card', 'tabs', 'single-col', 'double-col']
 
     for (const containerType of containerTypes) {
       it(`renders ${containerType} container with children`, () => {

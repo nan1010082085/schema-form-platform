@@ -245,6 +245,7 @@ defineExpose({ testConnection, testing })
       <!-- URL mode: table layout -->
       <template v-if="sourceMode === 'url'">
         <table class="api-config__table">
+          <tbody>
           <tr>
             <td class="api-config__cell">
               <label class="api-config__label">URL</label>
@@ -318,6 +319,7 @@ defineExpose({ testConnection, testing })
             </td>
             <td class="api-config__cell" />
           </tr>
+          </tbody>
         </table>
 
         <div class="api-config__field">

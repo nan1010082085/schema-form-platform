@@ -408,8 +408,9 @@ function handleDrop(e: DragEvent) {
         :y1="line.type === 'horizontal' ? line.position : line.start"
         :x2="line.type === 'vertical' ? line.position : line.end"
         :y2="line.type === 'horizontal' ? line.position : line.end"
-        stroke="#c0c0c0"
+        stroke="#409eff"
         stroke-width="1"
+        stroke-opacity="0.6"
         stroke-dasharray="4,4"
       />
     </svg>

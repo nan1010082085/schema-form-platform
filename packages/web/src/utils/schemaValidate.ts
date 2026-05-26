@@ -15,7 +15,8 @@ import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useCons
  * Must be kept in sync with widgets/index.ts registrations.
  */
 const FALLBACK_SCHEMA_TYPES = new Set([
-  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'form', 'card', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
   'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea',
   'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
   'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
@@ -38,7 +39,7 @@ function getValidSchemaTypes(): Set<string> {
 }
 
 /** Types that are containers (support children) */
-const CONTAINER_TYPES = new Set<string>(['card', 'page', 'toolbar'])
+const CONTAINER_TYPES = new Set<string>(['card', 'page', 'toolbar', 'single-col', 'double-col', 'triple-col', 'quad-col'])
 
 /** Get the category of a component type: 'basic', 'business', or 'layout' */
 function getComponentCategory(type: string): 'basic' | 'business' | 'layout' {

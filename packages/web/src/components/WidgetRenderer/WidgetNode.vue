@@ -33,7 +33,8 @@ const props = defineProps<{
 const compMap = getComponentMap()
 
 const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
-  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'form', 'card', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
 ])
 
 /** 表单类组件（支持 change 事件） */

@@ -35,7 +35,8 @@ const compMap = getComponentMap()
 
 /** 容器组件类型集合 */
 const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
-  'form', 'card', 'row-col', 'tabs', 'dialog',
+  'form', 'card', 'tabs', 'dialog',
+  'single-col', 'double-col', 'triple-col', 'quad-col',
 ])
 
 /**
