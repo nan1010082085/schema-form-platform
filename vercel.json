@@ -1,7 +1,7 @@
 {
-  "outputDirectory": "packages/web/dist",
-  "buildCommand": "pnpm build:server && pnpm build:web",
+  "buildCommand": "pnpm build:server && pnpm build:editor-server && pnpm build:editor && pnpm build:flow && mkdir -p packages/portal/editor && cp -r packages/editor/web/dist/* packages/portal/editor/ && mkdir -p packages/portal/flow && cp -r packages/flow/web/dist/* packages/portal/flow/",
   "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "packages/portal",
   "functions": {
     "api/index.ts": {
       "memory": 512,
@@ -10,20 +10,21 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/editor/assets/(.*)", "destination": "/editor/assets/$1" },
+    { "source": "/editor/(.*)", "destination": "/editor/index.html" },
+    { "source": "/flow/assets/(.*)", "destination": "/flow/assets/$1" },
+    { "source": "/flow/(.*)", "destination": "/flow/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/(editor|flow)/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ],
   "crons": [
-    {
-      "path": "/api/flow-timers/check",
-      "schedule": "* * * * *"
-    }
+    { "path": "/api/flow-timers/check", "schedule": "* * * * *" }
   ]
 }
