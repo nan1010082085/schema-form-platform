@@ -30,6 +30,17 @@ export class TaskService {
     if (!task) throw new Error('Task not found')
     if (task.status !== 'pending') throw new Error('Task is not pending')
 
+    // Authorization: verify user is eligible to claim
+    const hasCandidateUsers = task.candidateUsers && task.candidateUsers.length > 0
+    const hasCandidateRoles = task.candidateRoles && task.candidateRoles.length > 0
+    if (hasCandidateUsers || hasCandidateRoles) {
+      const inCandidateUsers = hasCandidateUsers && task.candidateUsers!.includes(userId)
+      // Role-based matching is deferred — for now only user-based check
+      if (!inCandidateUsers) {
+        throw new Error('You are not authorized to claim this task')
+      }
+    }
+
     task.status = 'claimed'
     task.assignee = userId
     await task.save()

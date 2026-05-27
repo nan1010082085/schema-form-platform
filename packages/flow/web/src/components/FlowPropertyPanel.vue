@@ -13,12 +13,78 @@
       </div>
 
       <template v-if="selectedNode.type === 'user-task'">
-        <!-- Assignee -->
+        <!-- Assignee type -->
         <div :class="$style.section">
-          <label :class="$style.label">审批人</label>
+          <label :class="$style.label">指派方式</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="assignee-type"
+                value="user"
+                :checked="(selectedNode.data?.assigneeType ?? 'user') === 'user'"
+                @change="updateNodeData('assigneeType', 'user')"
+              />
+              指定用户
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="assignee-type"
+                value="role"
+                :checked="selectedNode.data?.assigneeType === 'role'"
+                @change="updateNodeData('assigneeType', 'role')"
+              />
+              指定角色
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="assignee-type"
+                value="expression"
+                :checked="selectedNode.data?.assigneeType === 'expression'"
+                @change="updateNodeData('assigneeType', 'expression')"
+              />
+              表达式
+            </label>
+          </div>
+        </div>
+
+        <!-- User picker (when assigneeType='user') -->
+        <div v-if="(selectedNode.data?.assigneeType ?? 'user') === 'user'" :class="$style.section">
+          <label :class="$style.label">审批用户</label>
+          <UserPicker
+            :model-value="selectedNode.data?.candidateUsers ?? []"
+            placeholder="选择审批用户"
+            @update:model-value="updateNodeData('candidateUsers', $event)"
+          />
+        </div>
+
+        <!-- Role picker (when assigneeType='role') -->
+        <div v-if="selectedNode.data?.assigneeType === 'role'" :class="$style.section">
+          <label :class="$style.label">审批角色</label>
+          <el-select
+            :model-value="selectedNode.data?.candidateRoles ?? []"
+            multiple
+            filterable
+            allow-create
+            placeholder="输入或选择角色"
+            @change="updateNodeData('candidateRoles', $event)"
+          >
+            <el-option label="admin" value="admin" />
+            <el-option label="editor" value="editor" />
+            <el-option label="viewer" value="viewer" />
+          </el-select>
+        </div>
+
+        <!-- Expression input (when assigneeType='expression') -->
+        <div v-if="selectedNode.data?.assigneeType === 'expression'" :class="$style.section">
+          <label :class="$style.label">审批人表达式</label>
           <input
             :class="$style.input"
+            type="text"
             :value="selectedNode.data?.assignee ?? ''"
+            placeholder="例: ${variables.manager}"
             @input="updateNodeData('assignee', ($event.target as HTMLInputElement).value)"
           />
         </div>
@@ -221,6 +287,7 @@ import { computed } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { storeToRefs } from 'pinia'
+import UserPicker from './UserPicker.vue'
 
 const { findNode } = useVueFlow()
 const { selectedNodeId, selectedEdgeId } = storeToRefs(useFlowDesignerStore())

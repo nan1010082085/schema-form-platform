@@ -1,16 +1,18 @@
-import type { FlowGraph, FlowGraphMetadata } from './graph.js'
+import type { FlowGraph, FlowGraphMetadata, FlowPermissions } from './graph.js'
 import type { FlowInstanceStatus } from './instance.js'
 
 export interface CreateFlowDefinitionDto {
   name: string
   description?: string
   category?: string
+  permissions?: FlowPermissions
 }
 
 export interface UpdateFlowDefinitionDto {
   name?: string
   description?: string
   category?: string
+  permissions?: FlowPermissions
 }
 
 export interface SaveFlowVersionDto {

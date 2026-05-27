@@ -31,6 +31,8 @@ export interface BpmnNodeConfig {
   label: string
   assigneeType?: AssigneeType
   assignee?: string
+  candidateUsers?: string[]
+  candidateRoles?: string[]
   approvalMode?: ApprovalMode
   assigneeCollection?: string
   minApprovalCount?: number

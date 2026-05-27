@@ -3,6 +3,8 @@ export { default as FlowCanvas } from './components/FlowCanvas.vue'
 export { default as FlowPalette } from './components/FlowPalette.vue'
 export { default as FlowPropertyPanel } from './components/FlowPropertyPanel.vue'
 export { default as FlowToolbar } from './components/FlowToolbar.vue'
+export { default as FlowSettingsDialog } from './components/FlowSettingsDialog.vue'
+export { default as UserPicker } from './components/UserPicker.vue'
 
 export * from './components/nodes/index.js'
 

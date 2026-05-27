@@ -7,6 +7,7 @@ import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { createFlowSchema, updateFlowSchema } from '../flow-schemas/flowSchemas.js'
+import { flowPermissionService } from '../flow-services/FlowPermissionService.js'
 
 const requireAuth = authMiddleware({ required: true })
 
@@ -42,10 +43,11 @@ router.get('/', async (ctx) => {
 
 // POST /api/flows
 router.post('/', requireAuth, validate(createFlowSchema), async (ctx) => {
-  const { name, description, category } = ctx.request.body as {
+  const { name, description, category, permissions } = ctx.request.body as {
     name: string
     description?: string
     category?: string
+    permissions?: { editors?: string[]; launchers?: string[]; viewers?: string[] }
   }
 
   const definition = await FlowDefinitionModel.create({
@@ -55,6 +57,11 @@ router.post('/', requireAuth, validate(createFlowSchema), async (ctx) => {
     category: category ?? '',
     status: 'draft',
     createdBy: (ctx.state.user as { id: string }).id,
+    permissions: {
+      editors: permissions?.editors ?? [],
+      launchers: permissions?.launchers ?? [],
+      viewers: permissions?.viewers ?? [],
+    },
   })
 
   ctx.status = 201
@@ -89,6 +96,14 @@ router.put('/:id', requireAuth, validate(updateFlowSchema), async (ctx) => {
     return
   }
 
+  const userId = (ctx.state.user as { id: string }).id
+  const canEdit = await flowPermissionService.checkEditPermission(userId, id)
+  if (!canEdit) {
+    ctx.status = 403
+    ctx.body = { success: false, error: { message: 'You do not have permission to edit this flow.' } }
+    return
+  }
+
   const existing = await FlowDefinitionModel.findById(id)
   if (!existing) {
     ctx.status = 404
@@ -97,14 +112,22 @@ router.put('/:id', requireAuth, validate(updateFlowSchema), async (ctx) => {
   }
 
   const data: Record<string, unknown> = {}
-  const { name, description, category } = ctx.request.body as {
+  const { name, description, category, permissions } = ctx.request.body as {
     name?: string
     description?: string
     category?: string
+    permissions?: { editors?: string[]; launchers?: string[]; viewers?: string[] }
   }
   if (name !== undefined) data.name = name.trim()
   if (description !== undefined) data.description = description
   if (category !== undefined) data.category = category
+  if (permissions !== undefined) {
+    data.permissions = {
+      editors: permissions.editors ?? existing.permissions?.editors ?? [],
+      launchers: permissions.launchers ?? existing.permissions?.launchers ?? [],
+      viewers: permissions.viewers ?? existing.permissions?.viewers ?? [],
+    }
+  }
 
   if (Object.keys(data).length === 0) {
     ctx.status = 400
@@ -122,6 +145,14 @@ router.delete('/:id', requireAuth, async (ctx) => {
   if (!uuidValidate(id)) {
     ctx.status = 400
     ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const userId = (ctx.state.user as { id: string }).id
+  const canEdit = await flowPermissionService.checkEditPermission(userId, id)
+  if (!canEdit) {
+    ctx.status = 403
+    ctx.body = { success: false, error: { message: 'You do not have permission to delete this flow.' } }
     return
   }
 
@@ -147,6 +178,14 @@ router.post('/:id/publish', requireAuth, async (ctx) => {
   if (!uuidValidate(id)) {
     ctx.status = 400
     ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const userId = (ctx.state.user as { id: string }).id
+  const canEdit = await flowPermissionService.checkEditPermission(userId, id)
+  if (!canEdit) {
+    ctx.status = 403
+    ctx.body = { success: false, error: { message: 'You do not have permission to publish this flow.' } }
     return
   }
 

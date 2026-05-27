@@ -123,4 +123,10 @@ export const flowApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // Users
+  searchUsers: (q: string) => {
+    const params = new URLSearchParams({ q })
+    return request<unknown>(`/users?${params}`)
+  },
 }

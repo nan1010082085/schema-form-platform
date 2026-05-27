@@ -8,6 +8,11 @@ export interface IFlowDefinition {
   status: 'draft' | 'published' | 'archived'
   currentVersionId?: string
   createdBy: string
+  permissions: {
+    editors: string[]
+    launchers: string[]
+    viewers: string[]
+  }
   createdAt: Date
   updatedAt: Date
 }
@@ -25,6 +30,11 @@ const flowDefinitionSchema = new mongoose.Schema(
     },
     currentVersionId: { type: String, default: null },
     createdBy: { type: String, required: true },
+    permissions: {
+      editors: { type: [String], default: [] },
+      launchers: { type: [String], default: [] },
+      viewers: { type: [String], default: [] },
+    },
   },
   {
     timestamps: true,

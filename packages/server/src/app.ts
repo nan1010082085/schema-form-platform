@@ -18,6 +18,7 @@ import flowInstanceRouter from './flow-routes/flowInstance.js'
 import flowTaskRouter from './flow-routes/flowTask.js'
 import flowTimerRouter from './flow-routes/flowTimer.js'
 import flowApprovalRouter from './flow-routes/flowApproval.js'
+import usersRouter from './routes/users.js'
 
 const app = new Koa()
 
@@ -49,6 +50,8 @@ app.use(schemaRouter.routes())
 app.use(schemaRouter.allowedMethods())
 app.use(authRouter.routes())
 app.use(authRouter.allowedMethods())
+app.use(usersRouter.routes())
+app.use(usersRouter.allowedMethods())
 app.use(dictRouter.routes())
 app.use(dictRouter.allowedMethods())
 app.use(optionsRouter.routes())

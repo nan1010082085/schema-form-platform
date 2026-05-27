@@ -6,17 +6,25 @@
       @redo="onRedo"
       @export-bpmn="onExportBpmn"
       @import-bpmn="onImportBpmn"
+      @settings="settingsVisible = true"
     />
     <div :class="$style.body">
       <FlowPalette />
       <FlowCanvas ref="canvasRef" />
       <FlowPropertyPanel />
     </div>
+
+    <FlowSettingsDialog
+      :visible="settingsVisible"
+      :settings="flowSettings"
+      @update:visible="settingsVisible = $event"
+      @save="onSettingsSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import type { Node, Edge } from '@vue-flow/core'
 import {
   exportToBpmnXml,
@@ -24,11 +32,12 @@ import {
   BpmnElementType,
   DEFAULT_NODE_SIZES,
 } from '@schema-form/flow-shared'
-import type { FlowGraph, FlowNodeData, FlowEdgeData } from '@schema-form/flow-shared'
+import type { FlowGraph, FlowNodeData, FlowEdgeData, FlowPermissions, RejectPolicy } from '@schema-form/flow-shared'
 import FlowToolbar from './FlowToolbar.vue'
 import FlowPalette from './FlowPalette.vue'
 import FlowCanvas from './FlowCanvas.vue'
 import FlowPropertyPanel from './FlowPropertyPanel.vue'
+import FlowSettingsDialog from './FlowSettingsDialog.vue'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 
 interface GraphSnapshot {
@@ -56,6 +65,19 @@ const BPMN_TYPE_TO_VF_TYPE: Record<string, string> = Object.fromEntries(
 
 const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()
+
+const settingsVisible = ref(false)
+const flowSettings = reactive({
+  name: '',
+  description: '',
+  category: '',
+  permissions: { editors: [], launchers: [], viewers: [] } as FlowPermissions,
+  defaultRejectPolicy: 'reject-on-all' as RejectPolicy,
+})
+
+function onSettingsSave(settings: typeof flowSettings) {
+  Object.assign(flowSettings, settings)
+}
 
 const emit = defineEmits<{
   save: [data: GraphSnapshot]

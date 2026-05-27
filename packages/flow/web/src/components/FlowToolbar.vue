@@ -13,6 +13,7 @@
       <button :class="$style.btn" title="导入 BPMN" @click="$emit('import-bpmn')">导入 BPMN</button>
       <button :class="$style.btn" title="校验" @click="$emit('validate')">校验</button>
       <button :class="$style.btn" title="发布" @click="$emit('publish')">发布</button>
+      <button :class="$style.btn" title="设置" @click="$emit('settings')">设置</button>
     </div>
   </div>
 </template>
@@ -30,6 +31,7 @@ defineEmits<{
   publish: []
   'export-bpmn': []
   'import-bpmn': []
+  settings: []
 }>()
 </script>
 

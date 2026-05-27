@@ -15,12 +15,37 @@ interface FlowDefinition {
   status: 'draft' | 'published' | 'archived'
   currentVersionId?: string  // 当前发布版本 ID
   createdBy: string    // 创建人
+  permissions: {
+    editors: string[]   // 可编辑此流程的用户 ID 列表
+    launchers: string[] // 可发起此流程的用户 ID 列表（空=所有人）
+    viewers: string[]   // 可查看此流程的用户 ID 列表
+  }
   createdAt: Date
   updatedAt: Date
 }
 ```
 
 状态流转：`draft` → `published` → `archived`
+
+### 流程权限配置
+
+通过设计器工具栏的「设置」按钮可配置流程级权限：
+
+| 权限类型 | 说明 | 空列表行为 |
+|---|---|---|
+| 编辑权限（editors） | 可修改流程定义、保存版本、发布 | 空=所有已登录用户可编辑 |
+| 发起权限（launchers） | 可发起此流程的新实例 | 空=所有已登录用户可发起 |
+| 查看权限（viewers） | 可查看流程定义和实例详情 | 空=所有已登录用户可查看 |
+
+创建人始终拥有全部权限，不受限制。
+
+节点级人员配置通过属性面板的「指派方式」设置：
+
+| 指派方式 | 说明 | 配置字段 |
+|---|---|---|
+| 指定用户 | 直接选择审批人列表 | `candidateUsers: string[]` |
+| 指定角色 | 按角色分配任务 | `candidateRoles: string[]` |
+| 表达式 | 通过表达式动态计算审批人 | `assignee: string` |
 
 ### 版本管理（FlowVersion）
 
