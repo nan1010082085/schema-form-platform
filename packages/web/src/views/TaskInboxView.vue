@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { View, Check, Pointer } from '@element-plus/icons-vue'
 import { useFlowInstanceStore } from '@schema-form/flow-web'
 import type { TaskInstance } from '@schema-form/flow-web'
+import { createMicroappHost, type MicroappHostApi } from '@/microapp/postMessage'
 
 const router = useRouter()
 const store = useFlowInstanceStore()
@@ -28,10 +29,17 @@ const completingTask = ref<TaskInstance | null>(null)
 const completeOutcome = ref<'approved' | 'rejected'>('approved')
 const completeFormData = ref('')
 
-// Form dialog (iframe-based)
+// Form dialog (microapp postMessage)
 const formDialogVisible = ref(false)
-const formTask = ref<TaskInstance | null>(null)
-const formLoading = ref(true)
+const currentTask = ref<TaskInstance | null>(null)
+const formReady = ref(false)
+const formSubmitting = ref(false)
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+let microappHost: MicroappHostApi | null = null
+
+function getFormUrl(schemaId: string): string {
+  return `/view?id=${schemaId}`
+}
 
 function openCompleteDialog(task: TaskInstance) {
   completingTask.value = task
@@ -39,38 +47,58 @@ function openCompleteDialog(task: TaskInstance) {
   completeFormData.value = ''
 
   if (task.formSchemaId) {
-    formLoading.value = true
-    formTask.value = task
+    currentTask.value = task
+    formReady.value = false
     formDialogVisible.value = true
+
+    nextTick(() => {
+      if (!iframeRef.value) return
+      microappHost = createMicroappHost(iframeRef.value)
+
+      microappHost.on('ready', async () => {
+        formReady.value = true
+        // Prefill if we have existing form data
+        if (task.formData && Object.keys(task.formData).length > 0) {
+          await microappHost!.sendCommand('setValues', task.formData)
+        }
+      })
+    })
   } else {
     completeDialogVisible.value = true
   }
 }
 
-function getFormUrl(schemaId: string, mode?: string) {
-  const base = `/view?id=${schemaId}`
-  if (mode === 'readonly') return `${base}&readonly=true`
-  return base
-}
-
-function onFormLoad() {
-  formLoading.value = false
-}
-
 async function handleFormApprove() {
-  if (!formTask.value) return
-  await store.completeTask(formTask.value.id, undefined, 'approved')
-  formDialogVisible.value = false
-  ElMessage.success('任务已通过')
-  store.fetchMyTasks()
+  if (!currentTask.value || !microappHost) return
+  formSubmitting.value = true
+  try {
+    const valid = await microappHost.sendCommand('validate')
+    if (!valid) {
+      ElMessage.warning('表单校验未通过')
+      return
+    }
+    const formData = await microappHost.sendCommand('getValues')
+    await store.completeTask(currentTask.value.id, formData as Record<string, unknown>, 'approved')
+    ElMessage.success('审批通过')
+    formDialogVisible.value = false
+    store.fetchMyTasks()
+  } finally {
+    formSubmitting.value = false
+  }
 }
 
 async function handleFormReject() {
-  if (!formTask.value) return
-  await store.completeTask(formTask.value.id, undefined, 'rejected')
+  if (!currentTask.value) return
+  await store.completeTask(currentTask.value.id, undefined, 'rejected')
+  ElMessage.success('已驳回')
   formDialogVisible.value = false
-  ElMessage.success('任务已驳回')
   store.fetchMyTasks()
+}
+
+function onFormDialogClose() {
+  microappHost?.destroy()
+  microappHost = null
+  formReady.value = false
 }
 
 async function confirmComplete() {
@@ -252,26 +280,29 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
       </template>
     </el-dialog>
 
-    <!-- Form Dialog (iframe-based) -->
+    <!-- Form Dialog (microapp postMessage) -->
     <el-dialog
       v-model="formDialogVisible"
-      title="完成任务"
+      :title="`审批: ${currentTask?.nodeName ?? ''}`"
       width="800px"
       :close-on-click-modal="false"
       append-to-body
       destroy-on-close
+      @close="onFormDialogClose"
     >
-      <el-skeleton v-if="formLoading" :rows="4" animated />
+      <div v-if="!formReady" :class="$style.formLoading">
+        <el-skeleton :rows="5" animated />
+      </div>
       <iframe
-        v-if="formTask?.formSchemaId"
+        v-show="formReady"
+        ref="iframeRef"
+        :src="currentTask?.formSchemaId ? getFormUrl(currentTask.formSchemaId) : ''"
         :class="$style.formIframe"
-        :src="getFormUrl(formTask.formSchemaId, formTask.status === 'completed' ? 'readonly' : undefined)"
-        @load="onFormLoad"
       />
       <template #footer>
         <el-button @click="formDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="handleFormReject">驳回</el-button>
-        <el-button type="primary" @click="handleFormApprove">通过</el-button>
+        <el-button type="danger" :loading="formSubmitting" @click="handleFormReject">驳回</el-button>
+        <el-button type="primary" :loading="formSubmitting" @click="handleFormApprove">通过</el-button>
       </template>
     </el-dialog>
   </div>
@@ -374,5 +405,9 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
   height: 600px;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
+}
+
+.formLoading {
+  padding: 16px 0;
 }
 </style>

@@ -22,7 +22,7 @@ import {
   ExclusiveGatewayNode,
   ParallelGatewayNode,
 } from '@schema-form/flow-web'
-import type { TaskInstance } from '@schema-form/flow-web'
+import type { TaskInstance, ApprovalLogEntry } from '@schema-form/flow-web'
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -36,6 +36,8 @@ const graphNodes = ref<Node[]>([])
 const graphEdges = ref<Edge[]>([])
 const instanceTasks = ref<TaskInstance[]>([])
 const loadingTasks = ref(false)
+const approvalLogs = ref<ApprovalLogEntry[]>([])
+const loadingApprovalLogs = ref(false)
 
 const instance = computed(() => store.currentInstance)
 
@@ -138,6 +140,22 @@ async function loadTasks() {
   }
 }
 
+async function fetchApprovalLogs() {
+  if (!props.id) return
+  loadingApprovalLogs.value = true
+  try {
+    const res = await fetch(`/api/flow-approvals?instanceId=${props.id}`, {
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const json = await res.json()
+    if (json.success) approvalLogs.value = json.data
+  } catch {
+    // Approval logs may not be available
+  } finally {
+    loadingApprovalLogs.value = false
+  }
+}
+
 // Actions
 async function handleTerminate() {
   if (!instance.value) return
@@ -179,7 +197,7 @@ function goBack() {
   router.back()
 }
 
-function formatDate(d: string | undefined) {
+function formatDate(d: string | Date | undefined) {
   if (!d) return '-'
   return new Date(d).toLocaleString('zh-CN')
 }
@@ -206,15 +224,33 @@ function taskStatusTagType(status: string): '' | 'success' | 'info' | 'warning' 
   return map[status] ?? 'info'
 }
 
+function getActionLabel(action: string): string {
+  const map: Record<string, string> = {
+    claim: '认领了任务',
+    approve: '审批通过',
+    reject: '审批驳回',
+    delegate: '委派了任务',
+    comment: '添加了评论',
+  }
+  return map[action] ?? action
+}
+
+function getTimelineType(action: string): '' | 'success' | 'info' | 'warning' | 'danger' {
+  if (action === 'approve') return 'success'
+  if (action === 'reject') return 'danger'
+  if (action === 'claim') return ''
+  return 'info'
+}
+
 onMounted(async () => {
   await store.fetchInstanceDetail(props.id)
-  await Promise.all([loadGraph(), loadTasks()])
+  await Promise.all([loadGraph(), loadTasks(), fetchApprovalLogs()])
 })
 
 // Re-fetch on route param change
 watch(() => props.id, async (newId) => {
   await store.fetchInstanceDetail(newId)
-  await Promise.all([loadGraph(), loadTasks()])
+  await Promise.all([loadGraph(), loadTasks(), fetchApprovalLogs()])
 })
 </script>
 
@@ -345,6 +381,31 @@ watch(() => props.id, async (newId) => {
               </el-table-column>
             </el-table>
           </div>
+
+          <!-- Approval Trail -->
+          <div :class="$style.section">
+            <h2 :class="$style.sectionTitle">审批轨迹</h2>
+            <el-skeleton v-if="loadingApprovalLogs" :rows="3" animated />
+            <template v-else-if="approvalLogs.length > 0">
+              <el-timeline>
+                <el-timeline-item
+                  v-for="log in approvalLogs"
+                  :key="log.id"
+                  :timestamp="formatDate(log.createdAt)"
+                  :type="getTimelineType(log.action)"
+                  placement="top"
+                >
+                  <div :class="$style.timelineContent">
+                    <span :class="$style.timelineOperator">{{ log.operator }}</span>
+                    <span :class="$style.timelineAction">{{ getActionLabel(log.action) }}</span>
+                    <span :class="$style.timelineNode">「{{ log.nodeName }}」</span>
+                    <span v-if="log.comment" :class="$style.timelineComment">— {{ log.comment }}</span>
+                  </div>
+                </el-timeline-item>
+              </el-timeline>
+            </template>
+            <el-empty v-else description="暂无审批记录" :image-size="60" />
+          </div>
         </div>
       </template>
     </el-scrollbar>
@@ -439,6 +500,32 @@ watch(() => props.id, async (newId) => {
 .table {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.timelineContent {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.timelineOperator {
+  font-weight: 600;
+  color: #303133;
+}
+
+.timelineAction {
+  color: #606266;
+}
+
+.timelineNode {
+  color: #909399;
+  font-size: 13px;
+}
+
+.timelineComment {
+  color: #909399;
+  font-size: 13px;
 }
 
 /* Active token highlight on flow nodes */

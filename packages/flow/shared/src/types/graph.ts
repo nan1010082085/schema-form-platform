@@ -1,4 +1,4 @@
-import type { BpmnNodeConfig } from './bpmn.js'
+import type { BpmnNodeConfig, RejectPolicy } from './bpmn.js'
 
 export interface FlowNodeData {
   id: string
@@ -29,4 +29,5 @@ export interface FlowGraph {
 
 export interface FlowGraphMetadata {
   viewport?: { x: number; y: number; zoom: number }
+  defaultRejectPolicy?: RejectPolicy
 }

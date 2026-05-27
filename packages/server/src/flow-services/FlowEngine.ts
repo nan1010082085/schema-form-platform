@@ -1,14 +1,42 @@
 import { v4 as uuidv4 } from 'uuid'
 import { parseBpmnGraph, BpmnElementType } from '@schema-form/flow-shared'
-import type { FlowToken, FlowInstanceStatus } from '@schema-form/flow-shared'
+import type { FlowToken, FlowInstanceStatus, RejectPolicy } from '@schema-form/flow-shared'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { FlowVersionModel } from '../flow-models/FlowVersion.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { TimerJobModel } from '../flow-models/TimerJob.js'
+import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 import { parseTimerValue } from './TimerService.js'
 
 export class FlowEngine {
+  private async getRejectPolicy(instance: { versionId: string }, nodeId: string): Promise<RejectPolicy> {
+    const flowVersion = await FlowVersionModel.findById(instance.versionId)
+    const globalPolicy: RejectPolicy = flowVersion?.metadata?.defaultRejectPolicy ?? 'reject-on-all'
+
+    const model = parseBpmnGraph(flowVersion!.graph)
+    const node = model.getNode(nodeId)
+    const nodePolicy = node?.config?.rejectPolicy
+
+    if (!nodePolicy || nodePolicy === 'follow-global') return globalPolicy
+    return nodePolicy
+  }
+
+  private async logApproval(params: {
+    instanceId: string
+    nodeId: string
+    nodeName: string
+    taskId: string
+    action: string
+    operator: string
+    comment?: string
+    outcome?: string
+  }): Promise<void> {
+    await ApprovalLogModel.create({
+      _id: uuidv4(),
+      ...params,
+    })
+  }
   async startFlow(
     definitionId: string,
     variables: Record<string, unknown> = {},
@@ -461,7 +489,19 @@ export class FlowEngine {
     const instance = await FlowInstanceModel.findById(task.instanceId)
     if (!instance) throw new Error('Instance not found')
 
-    // Write form data to instance variables if formVariable is configured
+    // Log approval action
+    const operator = task.assignee ?? task.candidateUsers?.[0] ?? 'unknown'
+    await this.logApproval({
+      instanceId: instance._id,
+      nodeId: task.nodeId,
+      nodeName: task.nodeName,
+      taskId: task._id,
+      action: outcome === 'rejected' ? 'reject' : 'approve',
+      operator,
+      outcome: outcome ?? undefined,
+    })
+
+    // Write form data to instance variables only if formVariable is configured
     const flowVersion = await FlowVersionModel.findById(instance.versionId)
     if (flowVersion && formData) {
       const model = parseBpmnGraph(flowVersion.graph)
@@ -477,6 +517,32 @@ export class FlowEngine {
     if (!token) {
       await instance.save()
       return
+    }
+
+    // Handle rejection policy for or-sign nodes
+    if (outcome === 'rejected' && flowVersion) {
+      const model = parseBpmnGraph(flowVersion.graph)
+      const node = model.getNode(task.nodeId)
+      if (node?.config.approvalMode === 'or-sign') {
+        const rejectPolicy = await this.getRejectPolicy(instance, task.nodeId)
+        if (rejectPolicy === 'reject-on-any') {
+          // Cancel all remaining tasks for this node
+          await TaskInstanceModel.updateMany(
+            { instanceId: instance._id, nodeId: task.nodeId, status: { $in: ['pending', 'claimed'] } },
+            { status: 'cancelled' },
+          )
+          // Advance token past the node (treat as completed despite rejection)
+          token.state = 'active'
+          const outEdges = model.getOutgoing(task.nodeId)
+          if (outEdges.length > 0) {
+            token.nodeId = outEdges[0].targetNodeId
+          }
+          await instance.save()
+          await this.advance(instance._id)
+          return
+        }
+        // reject-on-all: let remaining tasks complete normally (current behavior)
+      }
     }
 
     token.state = 'active'
