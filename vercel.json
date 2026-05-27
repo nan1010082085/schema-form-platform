@@ -25,6 +25,6 @@
     }
   ],
   "crons": [
-    { "path": "/api/flow-timers/check", "schedule": "* * * * *" }
+    { "path": "/api/flow-timers/check", "schedule": "0 0 * * *" }
   ]
 }
