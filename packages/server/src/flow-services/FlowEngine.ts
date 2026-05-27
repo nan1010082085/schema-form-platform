@@ -89,107 +89,101 @@ export class FlowEngine {
 
           case BpmnElementType.UserTask: {
             const outEdges = model.getOutgoing(token.nodeId)
+            const approvalMode = node.config.approvalMode ?? 'single'
 
-            if (node.config.multiInstance) {
-              const { type, collection } = node.config.multiInstance
-              const items = (instance.variables[collection] as unknown[]) ?? []
-
-              if (items.length === 0) {
-                token.nodeId = outEdges[0].targetNodeId
-                changed = true
-                break
-              }
-
-              const existingTasks = await TaskInstanceModel.find({
+            if (approvalMode === 'single') {
+              const existingTask = await TaskInstanceModel.findOne({
                 instanceId: instance._id,
                 nodeId: token.nodeId,
-                status: { $in: ['pending', 'claimed', 'completed'] },
+                status: { $in: ['pending', 'claimed'] },
               })
-
-              if (existingTasks.length === 0) {
+              if (!existingTask) {
                 token.state = 'waiting'
-                if (type === 'parallel') {
-                  for (let i = 0; i < items.length; i++) {
-                    await TaskInstanceModel.create({
-                      _id: uuidv4(),
-                      instanceId: instance._id,
-                      nodeId: token.nodeId,
-                      nodeName: node.config.label,
-                      status: 'pending',
-                      candidateUsers: node.config.assignee ? [node.config.assignee] : [],
-                      formSchemaId: node.config.formSchemaId,
-                      formVersion: node.config.formVersion,
-                      priority: 1,
-                      multiInstanceIndex: i,
-                      multiInstanceItem: items[i],
-                    })
-                  }
-                } else {
-                  await TaskInstanceModel.create({
-                    _id: uuidv4(),
-                    instanceId: instance._id,
-                    nodeId: token.nodeId,
-                    nodeName: node.config.label,
-                    status: 'pending',
-                    candidateUsers: node.config.assignee ? [node.config.assignee] : [],
-                    formSchemaId: node.config.formSchemaId,
-                    formVersion: node.config.formVersion,
-                    priority: 1,
-                    multiInstanceIndex: 0,
-                    multiInstanceItem: items[0],
-                  })
-                }
+                await TaskInstanceModel.create({
+                  _id: uuidv4(),
+                  instanceId: instance._id,
+                  nodeId: token.nodeId,
+                  nodeName: node.config.label,
+                  status: 'pending',
+                  candidateUsers: node.config.assignee ? [node.config.assignee] : [],
+                  formSchemaId: node.config.formSchemaId,
+                  formVersion: node.config.formVersion,
+                  priority: 1,
+                })
                 changed = true
-              } else {
-                const completedCount = existingTasks.filter(t => t.status === 'completed').length
-
-                if (completedCount === items.length) {
-                  token.state = 'active'
-                  token.nodeId = outEdges[0].targetNodeId
-                  changed = true
-                } else if (type === 'sequential') {
-                  const currentIdx = existingTasks.length - 1
-                  const currentTask = existingTasks[currentIdx]
-                  if (currentTask.status === 'completed' && currentIdx < items.length - 1) {
-                    await TaskInstanceModel.create({
-                      _id: uuidv4(),
-                      instanceId: instance._id,
-                      nodeId: token.nodeId,
-                      nodeName: node.config.label,
-                      status: 'pending',
-                      candidateUsers: node.config.assignee ? [node.config.assignee] : [],
-                      formSchemaId: node.config.formSchemaId,
-                      formVersion: node.config.formVersion,
-                      priority: 1,
-                      multiInstanceIndex: currentIdx + 1,
-                      multiInstanceItem: items[currentIdx + 1],
-                    })
-                    changed = true
-                  }
-                }
               }
               break
             }
 
-            const existingTask = await TaskInstanceModel.findOne({
+            // Multi-assignee modes (countersign / or-sign)
+            const collection = node.config.assigneeCollection
+            const assignees = collection
+              ? ((instance.variables[collection] as string[]) ?? [])
+              : node.config.assignee
+                ? [node.config.assignee]
+                : []
+
+            if (assignees.length === 0) {
+              if (outEdges.length > 0) {
+                token.nodeId = outEdges[0].targetNodeId
+                changed = true
+              }
+              break
+            }
+
+            const existingTasks = await TaskInstanceModel.find({
               instanceId: instance._id,
               nodeId: token.nodeId,
-              status: { $in: ['pending', 'claimed'] },
+              status: { $in: ['pending', 'claimed', 'completed'] },
             })
-            if (!existingTask) {
+
+            if (existingTasks.length === 0) {
               token.state = 'waiting'
-              await TaskInstanceModel.create({
-                _id: uuidv4(),
-                instanceId: instance._id,
-                nodeId: token.nodeId,
-                nodeName: node.config.label,
-                status: 'pending',
-                candidateUsers: node.config.assignee ? [node.config.assignee] : [],
-                formSchemaId: node.config.formSchemaId,
-                formVersion: node.config.formVersion,
-                priority: 1,
-              })
+              for (let i = 0; i < assignees.length; i++) {
+                await TaskInstanceModel.create({
+                  _id: uuidv4(),
+                  instanceId: instance._id,
+                  nodeId: token.nodeId,
+                  nodeName: node.config.label,
+                  status: 'pending',
+                  candidateUsers: [assignees[i]],
+                  formSchemaId: node.config.formSchemaId,
+                  formVersion: node.config.formVersion,
+                  priority: 1,
+                  multiInstanceIndex: i,
+                  multiInstanceItem: assignees[i],
+                })
+              }
               changed = true
+              break
+            }
+
+            const completedTasks = existingTasks.filter(t => t.status === 'completed')
+
+            if (approvalMode === 'countersign') {
+              const required = node.config.minApprovalCount ?? assignees.length
+              if (completedTasks.length >= required) {
+                await TaskInstanceModel.updateMany(
+                  { instanceId: instance._id, nodeId: token.nodeId, status: { $in: ['pending', 'claimed'] } },
+                  { status: 'cancelled' },
+                )
+                token.state = 'active'
+                token.nodeId = outEdges[0]?.targetNodeId ?? token.nodeId
+                changed = true
+              }
+            } else if (approvalMode === 'or-sign') {
+              if (completedTasks.length >= 1) {
+                const approvedTask = completedTasks.find(t => t.outcome === 'approved' || !t.outcome)
+                if (approvedTask) {
+                  await TaskInstanceModel.updateMany(
+                    { instanceId: instance._id, nodeId: token.nodeId, status: { $in: ['pending', 'claimed'] } },
+                    { status: 'cancelled' },
+                  )
+                  token.state = 'active'
+                  token.nodeId = outEdges[0]?.targetNodeId ?? token.nodeId
+                  changed = true
+                }
+              }
             }
             break
           }
@@ -467,32 +461,25 @@ export class FlowEngine {
     const instance = await FlowInstanceModel.findById(task.instanceId)
     if (!instance) throw new Error('Instance not found')
 
+    // Write form data to instance variables if formVariable is configured
+    const flowVersion = await FlowVersionModel.findById(instance.versionId)
+    if (flowVersion && formData) {
+      const model = parseBpmnGraph(flowVersion.graph)
+      const node = model.getNode(task.nodeId)
+      if (node?.config.formVariable) {
+        instance.variables[node.config.formVariable] = formData
+      }
+    }
+
     const token = instance.tokens.find(
       (t: FlowToken) => t.nodeId === task.nodeId && t.state === 'waiting',
     )
-    if (!token) return
-
-    if (task.multiInstanceIndex != null) {
-      const allTasks = await TaskInstanceModel.find({
-        instanceId: task.instanceId,
-        nodeId: task.nodeId,
-        status: { $in: ['pending', 'claimed', 'completed'] },
-      })
-      const completedCount = allTasks.filter(t => t.status === 'completed').length
-      const flowVersion = await FlowVersionModel.findById(instance.versionId)
-      if (!flowVersion) throw new Error('Flow version not found')
-      const model = parseBpmnGraph(flowVersion.graph)
-      const node = model.getNode(task.nodeId)
-      const collection = node?.config.multiInstance?.collection
-      const totalItems = collection ? ((instance.variables[collection] as unknown[]) ?? []).length : 0
-
-      if (completedCount >= totalItems && totalItems > 0) {
-        token.state = 'active'
-      }
-    } else {
-      token.state = 'active'
+    if (!token) {
+      await instance.save()
+      return
     }
 
+    token.state = 'active'
     await instance.save()
     await this.advance(instance._id)
   }

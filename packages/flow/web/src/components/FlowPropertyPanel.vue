@@ -13,6 +13,7 @@
       </div>
 
       <template v-if="selectedNode.type === 'user-task'">
+        <!-- Assignee -->
         <div :class="$style.section">
           <label :class="$style.label">审批人</label>
           <input
@@ -24,56 +25,143 @@
 
         <div :class="$style.divider" />
 
+        <!-- Approval mode -->
+        <div :class="$style.section">
+          <label :class="$style.label">审批模式</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="approval-mode"
+                value="single"
+                :checked="(selectedNode.data?.approvalMode ?? 'single') === 'single'"
+                @change="updateNodeData('approvalMode', 'single')"
+              />
+              单人审批
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="approval-mode"
+                value="countersign"
+                :checked="selectedNode.data?.approvalMode === 'countersign'"
+                @change="updateNodeData('approvalMode', 'countersign')"
+              />
+              会签（全部通过）
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="approval-mode"
+                value="or-sign"
+                :checked="selectedNode.data?.approvalMode === 'or-sign'"
+                @change="updateNodeData('approvalMode', 'or-sign')"
+              />
+              或签（任一通过）
+            </label>
+          </div>
+        </div>
+
+        <!-- Countersign: min approval count -->
+        <template v-if="selectedNode.data?.approvalMode === 'countersign'">
+          <div :class="$style.section">
+            <label :class="$style.label">最少通过人数</label>
+            <input
+              :class="$style.input"
+              type="number"
+              min="1"
+              :value="selectedNode.data?.minApprovalCount ?? ''"
+              placeholder="默认全部通过"
+              @input="updateNodeData('minApprovalCount', toNumberOrNull(($event.target as HTMLInputElement).value))"
+            />
+          </div>
+        </template>
+
+        <!-- Countersign / or-sign: assignee collection -->
+        <template v-if="selectedNode.data?.approvalMode === 'countersign' || selectedNode.data?.approvalMode === 'or-sign'">
+          <div :class="$style.section">
+            <label :class="$style.label">审批人集合变量</label>
+            <input
+              :class="$style.input"
+              :value="selectedNode.data?.assigneeCollection ?? ''"
+              placeholder="例: approvers"
+              @input="updateNodeData('assigneeCollection', ($event.target as HTMLInputElement).value)"
+            />
+          </div>
+          <div :class="$style.hint">
+            从流程变量中读取该名称对应的数组，为每个元素创建一个审批任务。
+          </div>
+        </template>
+
+        <div :class="$style.divider" />
+
+        <!-- Form association -->
         <div :class="$style.section">
           <label :class="$style.checkboxLabel">
             <input
               type="checkbox"
-              :checked="!!selectedNode.data?.multiInstance"
-              @change="toggleMultiInstance"
+              :checked="!!selectedNode.data?.formSchemaId"
+              @change="toggleForm"
             />
-            多实例任务
+            关联表单
           </label>
         </div>
 
-        <template v-if="selectedNode.data?.multiInstance">
+        <template v-if="selectedNode.data?.formSchemaId">
           <div :class="$style.section">
-            <label :class="$style.label">类型</label>
+            <label :class="$style.label">表单 Schema ID</label>
+            <input
+              :class="$style.input"
+              :value="selectedNode.data?.formSchemaId ?? ''"
+              placeholder="表单 Schema ID"
+              @input="updateNodeData('formSchemaId', ($event.target as HTMLInputElement).value)"
+            />
+          </div>
+
+          <div :class="$style.section">
+            <label :class="$style.label">填充模式</label>
             <div :class="$style.radioGroup">
               <label :class="$style.radioLabel">
                 <input
                   type="radio"
-                  name="mi-type"
-                  value="parallel"
-                  :checked="selectedNode.data.multiInstance.type === 'parallel'"
-                  @change="updateMultiInstance('type', 'parallel')"
+                  name="form-mode"
+                  value="create"
+                  :checked="(selectedNode.data?.formMode ?? 'create') === 'create'"
+                  @change="updateNodeData('formMode', 'create')"
                 />
-                并行（会签）
+                新建
               </label>
               <label :class="$style.radioLabel">
                 <input
                   type="radio"
-                  name="mi-type"
-                  value="sequential"
-                  :checked="selectedNode.data.multiInstance.type === 'sequential'"
-                  @change="updateMultiInstance('type', 'sequential')"
+                  name="form-mode"
+                  value="prefill"
+                  :checked="selectedNode.data?.formMode === 'prefill'"
+                  @change="updateNodeData('formMode', 'prefill')"
                 />
-                串行（或签）
+                预填
+              </label>
+              <label :class="$style.radioLabel">
+                <input
+                  type="radio"
+                  name="form-mode"
+                  value="readonly"
+                  :checked="selectedNode.data?.formMode === 'readonly'"
+                  @change="updateNodeData('formMode', 'readonly')"
+                />
+                只读
               </label>
             </div>
           </div>
 
           <div :class="$style.section">
-            <label :class="$style.label">集合变量名</label>
+            <label :class="$style.label">数据写入变量</label>
             <input
               :class="$style.input"
-              :value="selectedNode.data.multiInstance.collection"
-              placeholder="例: approvers"
-              @input="updateMultiInstance('collection', ($event.target as HTMLInputElement).value)"
+              :value="selectedNode.data?.formVariable ?? ''"
+              placeholder="例: formData"
+              @input="updateNodeData('formVariable', ($event.target as HTMLInputElement).value)"
             />
-          </div>
-
-          <div :class="$style.hint">
-            从流程变量中读取该名称对应的数组，为每个元素创建一个任务实例。
           </div>
         </template>
       </template>
@@ -95,7 +183,6 @@ import { computed } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { storeToRefs } from 'pinia'
-import type { MultiInstanceConfig } from '@schema-form/flow-shared'
 
 const { findNode } = useVueFlow()
 const { selectedNodeId, selectedEdgeId } = storeToRefs(useFlowDesignerStore())
@@ -110,23 +197,25 @@ function updateNodeData(key: string, value: unknown) {
   selectedNode.value.data = { ...selectedNode.value.data, [key]: value }
 }
 
-function toggleMultiInstance() {
+function toggleForm() {
   if (!selectedNode.value) return
-  if (selectedNode.value.data?.multiInstance) {
-    const { multiInstance: _, ...rest } = selectedNode.value.data
+  if (selectedNode.value.data?.formSchemaId) {
+    const { formSchemaId: _, formMode: _m, formVariable: _v, ...rest } = selectedNode.value.data
     selectedNode.value.data = rest
   } else {
-    const config: MultiInstanceConfig = { type: 'parallel', collection: '' }
-    selectedNode.value.data = { ...selectedNode.value.data, multiInstance: config }
+    selectedNode.value.data = {
+      ...selectedNode.value.data,
+      formSchemaId: '',
+      formMode: 'create',
+      formVariable: '',
+    }
   }
 }
 
-function updateMultiInstance(key: keyof MultiInstanceConfig, value: string) {
-  if (!selectedNode.value?.data?.multiInstance) return
-  selectedNode.value.data = {
-    ...selectedNode.value.data,
-    multiInstance: { ...selectedNode.value.data.multiInstance, [key]: value },
-  }
+function toNumberOrNull(val: string): number | null {
+  if (!val) return null
+  const n = Number(val)
+  return Number.isFinite(n) ? n : null
 }
 </script>
 
