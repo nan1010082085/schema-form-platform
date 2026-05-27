@@ -22,17 +22,55 @@ const filteredTasks = computed(() =>
   store.tasks.filter((t) => t.status === activeTab.value),
 )
 
-// Complete dialog
+// Simple complete dialog (no form)
 const completeDialogVisible = ref(false)
 const completingTask = ref<TaskInstance | null>(null)
 const completeOutcome = ref<'approved' | 'rejected'>('approved')
 const completeFormData = ref('')
 
+// Form dialog (iframe-based)
+const formDialogVisible = ref(false)
+const formTask = ref<TaskInstance | null>(null)
+const formLoading = ref(true)
+
 function openCompleteDialog(task: TaskInstance) {
   completingTask.value = task
   completeOutcome.value = 'approved'
   completeFormData.value = ''
-  completeDialogVisible.value = true
+
+  if (task.formSchemaId) {
+    formLoading.value = true
+    formTask.value = task
+    formDialogVisible.value = true
+  } else {
+    completeDialogVisible.value = true
+  }
+}
+
+function getFormUrl(schemaId: string, mode?: string) {
+  const base = `/view?id=${schemaId}`
+  if (mode === 'readonly') return `${base}&readonly=true`
+  return base
+}
+
+function onFormLoad() {
+  formLoading.value = false
+}
+
+async function handleFormApprove() {
+  if (!formTask.value) return
+  await store.completeTask(formTask.value.id, undefined, 'approved')
+  formDialogVisible.value = false
+  ElMessage.success('任务已通过')
+  store.fetchMyTasks()
+}
+
+async function handleFormReject() {
+  if (!formTask.value) return
+  await store.completeTask(formTask.value.id, undefined, 'rejected')
+  formDialogVisible.value = false
+  ElMessage.success('任务已驳回')
+  store.fetchMyTasks()
 }
 
 async function confirmComplete() {
@@ -184,7 +222,7 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
       </div>
     </el-scrollbar>
 
-    <!-- Complete Dialog -->
+    <!-- Complete Dialog (no form) -->
     <el-dialog
       v-model="completeDialogVisible"
       title="完成任务"
@@ -211,6 +249,29 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
       <template #footer>
         <el-button @click="completeDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmComplete">确认完成</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Form Dialog (iframe-based) -->
+    <el-dialog
+      v-model="formDialogVisible"
+      title="完成任务"
+      width="800px"
+      :close-on-click-modal="false"
+      append-to-body
+      destroy-on-close
+    >
+      <el-skeleton v-if="formLoading" :rows="4" animated />
+      <iframe
+        v-if="formTask?.formSchemaId"
+        :class="$style.formIframe"
+        :src="getFormUrl(formTask.formSchemaId, formTask.status === 'completed' ? 'readonly' : undefined)"
+        @load="onFormLoad"
+      />
+      <template #footer>
+        <el-button @click="formDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="handleFormReject">驳回</el-button>
+        <el-button type="primary" @click="handleFormApprove">通过</el-button>
       </template>
     </el-dialog>
   </div>
@@ -306,5 +367,12 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
 .table {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.formIframe {
+  width: 100%;
+  height: 600px;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
 }
 </style>
