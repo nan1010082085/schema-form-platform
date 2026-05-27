@@ -1,0 +1,522 @@
+// ============================================================
+// Element Plus 全局主题覆盖（:root 级别）
+// 对齐 common/style 设计规范
+// ============================================================
+@use './variables' as *;
+
+:root {
+  // ---- 主色覆盖 ----
+  --el-color-primary: #{$fg-color-primary};
+  --el-color-primary-light-3: #4d8fbe;
+  --el-color-primary-light-5: #80b0d1;
+  --el-color-primary-light-7: #b3d0e4;
+  --el-color-primary-light-8: #cce0ee;
+  --el-color-primary-light-9: #e6f0f7;
+  --el-color-primary-dark-2: #004c82;
+
+  --el-color-warning: #{$fg-color-warning};
+  --el-color-danger: #{$fg-color-danger};
+  --el-color-success: #{$fg-color-success};
+
+  // ---- 文字 ----
+  --el-text-color-primary: #{$fg-text-primary};
+  --el-text-color-regular: #{$fg-text-secondary};
+  --el-text-color-placeholder: #{$fg-text-hint};
+  --el-text-color-disabled: #{$fg-text-hint};
+
+  // ---- 边框 ----
+  --el-border-color: #{$fg-border-general};
+  --el-border-color-light: #{$fg-border-input};
+  --el-border-color-lighter: #{$fg-border-input};
+  --el-border-color-extra-light: #{$fg-border-input};
+  --el-border-color-dark: #{$fg-border-general};
+  --el-border-color-hover: #{$fg-border-focus};
+  --el-border-color-focus: #{$fg-border-focus};
+
+  // ---- 字体 ----
+  --el-font-family: #{$font-family-base};
+  --el-font-size-base: #{$fg-font-size-body};
+  --el-font-size-small: #{$fg-font-size-caption};
+  --el-font-size-large: #{$fg-font-size-body};
+
+  // ---- 圆角 ----
+  --el-border-radius-base: #{$fg-input-radius};
+  --el-border-radius-small: #{$fg-input-radius};
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+
+  // ---- 高度 ----
+  --el-component-size: 44px;
+  --el-component-size-small: 24px;
+  --el-component-size-large: 40px;
+
+  // ---- 弹窗 ----
+  --el-dialog-padding-primary: #{$fg-dialog-padding};
+}
+
+// ============================================================
+// 全局组件样式调整（对齐 common/style 设计规范）
+// ============================================================
+
+// ---- 通用组件宽度强制 100% ----
+.el-input,
+.el-select,
+.el-date-editor,
+.el-input-number,
+.el-cascader {
+  width: 100%;
+}
+
+.el-form-item {
+  margin-bottom: 0;
+}
+
+// ---- Input 输入框（无外边框，由栅格单元格 border 统一管理） ----
+.el-input__wrapper {
+  border-radius: $fg-input-radius;
+  box-shadow: none;
+  border: none;
+  outline: none;
+
+  &:hover,
+  &.is-focus,
+  &:focus {
+    box-shadow: none;
+    border: none;
+    outline: none;
+  }
+}
+
+.el-input.is-disabled .el-input__wrapper {
+  box-shadow: none;
+  background-color: $input-bg-disabled;
+}
+
+.el-form-item.is-error .el-input__wrapper {
+  box-shadow: none;
+}
+
+// ---- Textarea 文本域（无外边框，由栅格单元格统一管理） ----
+.el-textarea__inner {
+  border-radius: $fg-input-radius;
+  box-shadow: none;
+  border: none;
+  outline: none;
+
+  &:hover,
+  &:focus {
+    box-shadow: none;
+    border: none;
+    outline: none;
+  }
+}
+
+.el-textarea.is-disabled .el-textarea__inner {
+  box-shadow: none;
+  background-color: $input-bg-disabled;
+}
+
+.el-form-item.is-error .el-textarea__inner {
+  box-shadow: none;
+}
+
+// ---- Select 选择器 ----
+.el-select .el-input__wrapper {
+  border-radius: $fg-input-radius;
+  box-shadow: none;
+  border: none;
+}
+
+// ---- DatePicker 日期选择器 ----
+.el-date-editor {
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+
+  .el-input__wrapper {
+    border-radius: $fg-input-radius;
+    box-shadow: none;
+    border: none;
+  }
+
+  &.el-range-editor {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+// ---- InputNumber 数字输入 ----
+.el-input-number {
+  .el-input__wrapper {
+    border-radius: $fg-input-radius;
+    box-shadow: none;
+    border: 1px solid $fg-border-input;
+    min-height: unset;
+
+    &:hover,
+    &.is-focus {
+      border-color: $fg-border-focus;
+    }
+  }
+
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    height: 50% !important;
+    line-height: 1 !important;
+    top: 0 !important;
+  }
+
+  .el-input-number__increase {
+    top: 0 !important;
+  }
+
+  .el-input-number__decrease {
+    top: 50% !important;
+  }
+}
+
+// ---- Button 按钮（对齐 common/style：统一 32px 高度、padding 8px 16px） ----
+.el-button {
+  height: $fg-btn-height-primary;
+  padding: 8px 16px;
+  border-radius: $fg-btn-radius;
+  font-size: $fg-font-size-caption;
+  font-weight: 500;
+  line-height: 0;
+  box-sizing: border-box;
+  font-family: $font-family-base;
+}
+
+.el-button--primary {
+  &:not(.is-disabled) {
+    background: $color-primary;
+    border: 1px solid $color-primary;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-primary;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--default {
+  border-color: $border-color-base;
+  color: $fg-text-primary;
+
+  &.is-link {
+    color: $fg-text-primary;
+    background: transparent;
+    border-color: transparent;
+  }
+}
+
+.el-button--danger {
+  &:not(.is-disabled) {
+    background: $bg-color-white;
+    border: 1px solid $color-danger-light;
+    color: $color-danger-light;
+
+    &.is-link,
+    &.is-text {
+      color: $color-danger-light;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--success {
+  &:not(.is-disabled) {
+    background: $color-success;
+    border: 1px solid $color-success;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-success-light;
+      border-color: $color-success-light;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-success;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--warning {
+  &:not(.is-disabled) {
+    background: $color-warning;
+    border: 1px solid $color-warning;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-warning;
+      border-color: $color-warning;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-warning;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+.el-button--info {
+  &:not(.is-disabled) {
+    background: $color-info;
+    border: 1px solid $color-info;
+    color: $text-color-inverse;
+
+    &:hover {
+      background: $color-info;
+      border-color: $color-info;
+      color: $text-color-inverse;
+    }
+
+    &.is-plain,
+    &.is-text,
+    &.is-link {
+      color: $color-info;
+      background: transparent;
+      border-color: transparent;
+    }
+  }
+}
+
+// 禁用按钮：保持主色背景
+.is-disabled.el-button--primary {
+  background-color: $color-primary;
+  color: $text-color-inverse;
+}
+
+.is-disabled.el-button--danger {
+  background-color: $color-danger-light;
+  color: $text-color-inverse;
+}
+
+// ---- Dialog 弹窗（对齐 common/style：蓝底白字头部） ----
+.el-dialog {
+  --el-dialog-border-radius: 0;
+  padding: 0 !important;
+
+  .el-dialog__header {
+    background: $color-primary;
+    padding: 0 $spacing-md !important;
+    border-radius: 0;
+    height: $detail-item-height;
+    line-height: $detail-item-height;
+    margin-right: 0;
+
+    .el-dialog__title {
+      font-size: $fg-font-size-caption;
+      font-family: $font-family-base;
+      color: $text-color-inverse;
+    }
+
+    .el-dialog__headerbtn {
+      top: $spacing-xs;
+      right: $spacing-md;
+
+      .el-dialog__close {
+        color: $text-color-inverse;
+      }
+    }
+  }
+
+  .el-dialog__body {
+    padding: $fg-dialog-padding;
+    background: $bg-color-white;
+  }
+
+  .el-dialog__footer {
+    height: $dialog-footer-height;
+    text-align: center;
+    background: $color-primary-bg-light;
+    padding: $spacing-10px 0;
+  }
+}
+
+// ---- FormItem 标签（居中对齐） ----
+.el-form-item__label {
+  font-size: $fg-font-size-body;
+  color: $fg-text-secondary;
+  font-weight: 500;
+  text-align: center;
+}
+
+// ---- Radio 单选（对齐 common/style：专用字体） ----
+.el-radio {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+
+  .el-radio__label {
+    font-family: $font-family-special;
+  }
+}
+
+.el-radio__input.is-checked .el-radio__inner {
+  border-color: $color-primary;
+  background-color: $color-primary;
+}
+
+.el-radio__input.is-checked + .el-radio__label {
+  color: $color-primary;
+}
+
+// ---- Checkbox 多选（对齐 common/style：专用字体） ----
+.el-checkbox {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+
+  .el-checkbox__input {
+    font-family: $font-family-special;
+
+    .el-checkbox__inner {
+      width: $checkbox-size;
+      height: $checkbox-size;
+
+      &::after {
+        height: $checkbox-check-height;
+        left: $checkbox-check-left;
+        top: $checkbox-check-top;
+        width: $checkbox-check-width;
+        transform: rotate($checkbox-check-rotate) scaleY($checkbox-check-scale-y);
+      }
+    }
+  }
+}
+
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  border-color: $color-primary;
+  background-color: $color-primary;
+}
+
+.el-checkbox__input.is-checked + .el-checkbox__label {
+  color: $color-primary;
+}
+
+// ---- Table 表格 ----
+.el-table {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+
+  th.el-table__cell,
+  td.el-table__cell {
+    padding: 8px 0;
+  }
+}
+
+.el-table__header th {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+  font-weight: 500;
+  background-color: $bg-color-gray;
+}
+
+.el-table__body td {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+}
+
+// ---- Tag 标签 ----
+.el-tag {
+  border-radius: 2px;
+}
+
+// ---- Pagination 分页 ----
+.el-pagination {
+  font-size: $fg-font-size-caption;
+}
+
+// ---- Transfer 穿梭框 ----
+.el-transfer {
+  font-size: $fg-font-size-body;
+}
+
+.el-transfer-panel {
+  width: 220px;
+}
+
+// ---- Upload 上传 ----
+.el-upload-dragger {
+  border-radius: $fg-input-radius;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+}
+
+// ---- Tree 树 ----
+.el-tree {
+  font-size: $fg-font-size-body;
+  color: $fg-text-primary;
+}
+
+.el-tree-node__content {
+  height: 32px;
+}
+
+.el-tree-node.is-current > .el-tree-node__content {
+  background-color: $fg-bg-menu-hover;
+  color: $color-primary;
+}
+
+// ---- Carousel 走马灯 ----
+.el-carousel__indicator .el-carousel__button {
+  border-radius: 2px;
+}
+
+// ---- Switch ----
+.el-switch {
+  --el-switch-on-color: #{$color-primary};
+}
+
+// ---- Select 下拉选中色 ----
+.el-select-dropdown__item.is-selected {
+  color: $color-primary !important;
+}
+
+// ---- 弹窗 z-index ----
+.el-select-dropdown {
+  z-index: 3000 !important;
+}
+
+.el-picker-panel {
+  z-index: 3000 !important;
+}
+
+.el-overlay {
+  z-index: 2000 !important;
+}
+
+.el-message {
+  z-index: 9999 !important;
+}
+
+// ---- Link / Text 按钮重置（覆盖全局 .el-button 的 height/padding/border） ----
+.el-button.is-link,
+.el-button.is-text {
+  height: auto;
+  padding: 0;
+  line-height: normal;
+  border: none;
+  background: transparent;
+}
