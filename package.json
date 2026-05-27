@@ -16,6 +16,7 @@
     "build:editor-server": "pnpm --filter @schema-form/editor-server build",
     "build:server": "pnpm --filter @schema-form/server build",
     "build:flow": "pnpm --filter @schema-form/flow-web build",
+    "vercel-build": "pnpm build:server && pnpm build:editor-server && pnpm build:editor && pnpm build:flow && mkdir -p packages/portal/editor && cp -r packages/editor/web/dist/* packages/portal/editor/ && mkdir -p packages/portal/flow && cp -r packages/flow/web/dist/* packages/portal/flow/",
     "db:up": "pnpm --filter @schema-form/server db:up",
     "db:down": "pnpm --filter @schema-form/server db:down",
     "format": "pnpm -r format",
