@@ -8,6 +8,8 @@ dist-microapp/
 packages/*/node_modules/
 packages/*/dist/
 packages/*/.claude/
+packages/portal/editor/
+packages/portal/flow/
 .claude/
 
 # Env
