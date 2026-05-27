@@ -71,7 +71,9 @@
 |---|---|---|
 | `label` | 是 | 节点名称，默认"用户任务" |
 | `assigneeType` | 否 | `user` / `role` / `expression`，默认 `user` |
-| `assignee` | 否 | 指定用户/角色 ID |
+| `assignee` | 否 | 表达式模式下的审批人表达式 |
+| `candidateUsers` | 否 | 指定用户模式下的候选用户 ID 列表 |
+| `candidateRoles` | 否 | 指定角色模式下的候选角色列表 |
 | `assigneeCollection` | 否 | 变量名，指向 `variables` 中的用户 ID 数组 |
 | `approvalMode` | 否 | `single` / `countersign` / `or-sign`，默认 `single` |
 | `minApprovalCount` | 否 | 会签模式下的最少通过人数 |
