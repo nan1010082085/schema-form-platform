@@ -1,0 +1,27 @@
+{
+  "name": "@schema-form/flow-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "yangdongnan",
+  "description": "流程引擎后端 — Mongoose 模型、Koa 路由、流程执行服务",
+  "exports": {
+    ".": "./src/index.js",
+    "./routes/*": "./src/routes/*.js",
+    "./models/*": "./src/models/*.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@schema-form/flow-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.15.0",
+    "@types/koa__router": "^12.0.4",
+    "@types/node": "^22.13.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "~5.7.3",
+    "vitest": "^3.2.4"
+  }
+}

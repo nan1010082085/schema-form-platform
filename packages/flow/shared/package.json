@@ -1,0 +1,21 @@
+{
+  "name": "@schema-form/flow-shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "yangdongnan",
+  "description": "流程引擎共享层 — BPMN 类型定义、图数据结构、执行模型、表达式求值",
+  "exports": {
+    ".": "./src/index.js",
+    "./types": "./src/types/index.js",
+    "./engine": "./src/engine/index.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "typescript": "~5.7.3",
+    "vitest": "^3.2.4"
+  }
+}

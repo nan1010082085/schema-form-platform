@@ -12,6 +12,11 @@ import optionsRouter from './routes/options.js'
 import dataRouter from './routes/data.js'
 import mockRouter from './routes/mock.js'
 import docsRouter from './routes/docs.js'
+import flowRouter from './flow-routes/flow.js'
+import flowVersionRouter from './flow-routes/flowVersion.js'
+import flowInstanceRouter from './flow-routes/flowInstance.js'
+import flowTaskRouter from './flow-routes/flowTask.js'
+import flowTimerRouter from './flow-routes/flowTimer.js'
 
 const app = new Koa()
 
@@ -51,5 +56,15 @@ app.use(dataRouter.routes())
 app.use(dataRouter.allowedMethods())
 app.use(mockRouter.routes())
 app.use(mockRouter.allowedMethods())
+app.use(flowRouter.routes())
+app.use(flowRouter.allowedMethods())
+app.use(flowVersionRouter.routes())
+app.use(flowVersionRouter.allowedMethods())
+app.use(flowInstanceRouter.routes())
+app.use(flowInstanceRouter.allowedMethods())
+app.use(flowTaskRouter.routes())
+app.use(flowTaskRouter.allowedMethods())
+app.use(flowTimerRouter.routes())
+app.use(flowTimerRouter.allowedMethods())
 
 export default app
