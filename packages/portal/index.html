@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schema Form Platform</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      color: #1a1a2e;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #fff;
+      text-align: center;
+      padding: 80px 24px 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(78, 84, 200, 0.2) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: rgba(255, 255, 255, 0.72);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    /* Cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+      max-width: 1000px;
+      margin: -60px auto 0;
+      padding: 0 24px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px 28px 32px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .card-icon.editor { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .card-icon.flow   { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    .card-icon.api    { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 0.92rem;
+      color: #555;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 20px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: gap 0.2s ease;
+    }
+
+    .card-link.editor-link { color: #764ba2; }
+    .card-link.flow-link   { color: #f5576c; }
+    .card-link.api-link    { color: #0ea5e9; }
+
+    .card-link:hover { gap: 8px; }
+    .card-link::after { content: "\2192"; }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 0.82rem;
+      color: #999;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero { padding: 56px 20px 80px; }
+      .hero h1 { font-size: 1.85rem; }
+      .hero p { font-size: 1rem; }
+      .cards { gap: 20px; padding: 0 16px 48px; }
+      .card { padding: 28px 22px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <h1>Schema Form Platform</h1>
+    <p>Schema 驱动的可视化表单设计器与流程引擎。通过拖拽配置快速构建表单、审批流与数据接口。</p>
+  </section>
+
+  <main class="cards">
+    <article class="card">
+      <div class="card-icon editor" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+      </div>
+      <h2>表单编辑器</h2>
+      <p>可视化拖拽设计器，支持 30+ 组件、属性配置、事件绑定、条件联动，Schema 驱动的所见即所得编辑体验。</p>
+      <a href="/editor/" class="card-link editor-link">进入项目</a>
+    </article>
+
+    <article class="card">
+      <div class="card-icon flow" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <h2>流程引擎</h2>
+      <p>BPMN 流程设计器与运行时引擎，支持审批节点、会签或签、驳回策略、权限控制与审批轨迹追踪。</p>
+      <a href="/flow/" class="card-link flow-link">进入项目</a>
+    </article>
+
+    <article class="card">
+      <div class="card-icon api" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
+        </svg>
+      </div>
+      <h2>API 文档</h2>
+      <p>后端接口文档与健康检查，覆盖 Schema CRUD、用户认证、数据源管理、字典配置等全部 REST API。</p>
+      <a href="/api/docs" class="card-link api-link">进入项目</a>
+    </article>
+  </main>
+
+  <footer>Schema Form Platform &copy; 2026</footer>
+
+</body>
+</html>
