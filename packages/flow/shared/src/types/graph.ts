@@ -27,7 +27,14 @@ export interface FlowGraph {
   edges: FlowEdgeData[]
 }
 
+export interface FlowPermissions {
+  editors?: string[]
+  launchers?: string[]
+  viewers?: string[]
+}
+
 export interface FlowGraphMetadata {
   viewport?: { x: number; y: number; zoom: number }
   defaultRejectPolicy?: RejectPolicy
+  permissions?: FlowPermissions
 }

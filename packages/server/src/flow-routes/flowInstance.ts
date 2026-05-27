@@ -5,6 +5,7 @@ import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { startInstanceSchema } from '../flow-schemas/instanceSchemas.js'
 import { flowEngine } from '../flow-services/FlowEngine.js'
+import { flowPermissionService } from '../flow-services/FlowPermissionService.js'
 
 const requireAuth = authMiddleware({ required: true })
 
@@ -45,6 +46,14 @@ router.post('/', requireAuth, validate(startInstanceSchema), async (ctx) => {
   }
 
   const userId = (ctx.state.user as { id: string }).id
+
+  const canLaunch = await flowPermissionService.checkLaunchPermission(userId, definitionId)
+  if (!canLaunch) {
+    ctx.status = 403
+    ctx.body = { success: false, error: { message: 'You do not have permission to launch this flow.' } }
+    return
+  }
+
   const instance = await flowEngine.startFlow(definitionId, variables ?? {}, userId)
 
   ctx.status = 201

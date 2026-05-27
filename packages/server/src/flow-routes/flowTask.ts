@@ -69,7 +69,8 @@ router.post('/:id/complete', requireAuth, validate(completeTaskSchema), async (c
     return
   }
 
-  await flowEngine.completeTask(id, formData, outcome)
+  const userId = (ctx.state.user as { id: string }).id
+  await flowEngine.completeTask(id, formData, outcome, userId)
   const task = await TaskInstanceModel.findById(id)
   ctx.body = { success: true, data: task }
 })

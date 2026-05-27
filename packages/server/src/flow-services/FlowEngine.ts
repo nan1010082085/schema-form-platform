@@ -1,6 +1,31 @@
 import { v4 as uuidv4 } from 'uuid'
 import { parseBpmnGraph, BpmnElementType } from '@schema-form/flow-shared'
 import type { FlowToken, FlowInstanceStatus, RejectPolicy } from '@schema-form/flow-shared'
+import type { AssigneeType } from '@schema-form/flow-shared'
+
+/**
+ * Evaluate an assignee expression against instance variables.
+ * Returns the raw value (string, string[], or null) instead of boolean.
+ */
+function evaluateAssigneeExpression(
+  expression: string,
+  variables: Record<string, unknown>,
+): string | string[] | null {
+  if (!expression || expression.trim().length === 0) return null
+
+  const keys = Object.keys(variables)
+  const values = keys.map((k) => variables[k])
+  const fn = new Function(...keys, `return (${expression})`)
+  const result = fn(...values)
+
+  if (Array.isArray(result)) {
+    return result.map(String)
+  }
+  if (result != null) {
+    return [String(result)]
+  }
+  return null
+}
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { FlowVersionModel } from '../flow-models/FlowVersion.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
@@ -119,6 +144,35 @@ export class FlowEngine {
             const outEdges = model.getOutgoing(token.nodeId)
             const approvalMode = node.config.approvalMode ?? 'single'
 
+            // Resolve assignees based on assigneeType
+            let candidateUsers: string[] = []
+            let candidateRoles: string[] = []
+
+            const assigneeType: AssigneeType | undefined = node.config.assigneeType
+            switch (assigneeType) {
+              case 'user':
+                candidateUsers = node.config.candidateUsers ?? []
+                break
+              case 'role':
+                candidateRoles = node.config.candidateRoles ?? []
+                break
+              case 'expression': {
+                const result = evaluateAssigneeExpression(node.config.assignee ?? '', instance.variables)
+                if (Array.isArray(result)) {
+                  candidateUsers = result
+                } else if (result) {
+                  candidateUsers = [result]
+                }
+                break
+              }
+              default:
+                // Legacy: single assignee string
+                if (node.config.assignee) {
+                  candidateUsers = [node.config.assignee]
+                }
+                break
+            }
+
             if (approvalMode === 'single') {
               const existingTask = await TaskInstanceModel.findOne({
                 instanceId: instance._id,
@@ -133,7 +187,8 @@ export class FlowEngine {
                   nodeId: token.nodeId,
                   nodeName: node.config.label,
                   status: 'pending',
-                  candidateUsers: node.config.assignee ? [node.config.assignee] : [],
+                  candidateUsers,
+                  candidateRoles,
                   formSchemaId: node.config.formSchemaId,
                   formVersion: node.config.formVersion,
                   priority: 1,
@@ -147,8 +202,8 @@ export class FlowEngine {
             const collection = node.config.assigneeCollection
             const assignees = collection
               ? ((instance.variables[collection] as string[]) ?? [])
-              : node.config.assignee
-                ? [node.config.assignee]
+              : candidateUsers.length > 0
+                ? candidateUsers
                 : []
 
             if (assignees.length === 0) {
@@ -474,11 +529,20 @@ export class FlowEngine {
     }
   }
 
-  async completeTask(taskId: string, formData?: Record<string, unknown>, outcome?: string) {
+  async completeTask(taskId: string, formData?: Record<string, unknown>, outcome?: string, userId?: string) {
     const task = await TaskInstanceModel.findById(taskId)
     if (!task) throw new Error('Task not found')
     if (task.status !== 'pending' && task.status !== 'claimed') {
       throw new Error('Task is not in a completable state')
+    }
+
+    // Authorization: verify user is eligible to complete
+    if (userId) {
+      const isAssignee = task.assignee === userId
+      const inCandidateUsers = task.candidateUsers && task.candidateUsers.includes(userId)
+      if (!isAssignee && !inCandidateUsers) {
+        throw new Error('You are not authorized to complete this task')
+      }
     }
 
     task.status = 'completed'
