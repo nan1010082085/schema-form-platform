@@ -7,6 +7,7 @@
   "description": "Schema 驱动的可视化自由布局设计器与渲染器 — 支持 qiankun 微前端接入与 microapp 下层集成",
   "scripts": {
     "dev": "pnpm --parallel -r dev",
+    "dev:web": "pnpm --parallel --filter @schema-form/editor-web --filter @schema-form/flow-web dev",
     "dev:editor": "pnpm --filter @schema-form/editor-web dev",
     "dev:editor-server": "pnpm --filter @schema-form/editor-server dev",
     "dev:server": "pnpm --filter @schema-form/server dev",
