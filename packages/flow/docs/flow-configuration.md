@@ -47,6 +47,31 @@ interface FlowDefinition {
 | 指定角色 | 按角色分配任务 | `candidateRoles: string[]` |
 | 表达式 | 通过表达式动态计算审批人 | `assignee: string` |
 
+### 流程校验
+
+保存和发布前自动执行校验，规则如下：
+
+| 规则 | 级别 | 说明 |
+|---|---|---|
+| 开始事件唯一 | error | 必须有且仅有一个 startEvent |
+| 结束事件存在 | error | 至少有一个 endEvent |
+| 节点连通性 | error | 所有节点必须连接到至少一条连线 |
+| 排他网关条件 | error | 出线 >= 2 时必须有默认连线或所有出线都有条件 |
+| 用户任务审批人 | error | 必须配置 assigneeType + 对应的审批人 |
+| 定时事件配置 | error | 必须配置 timerType + timerValue |
+| 子流程关联 | error | 必须配置 subProcessDefinitionId |
+| 网关出线数量 | warning | 出线少于 2 条时提示可能不需要网关 |
+
+### 连线配置
+
+排他网关的出线需要配置条件表达式或标记为默认连线：
+
+| 字段 | 说明 |
+|---|---|
+| `label` | 连线标签（显示在画布上） |
+| `conditionExpression` | 条件表达式，使用 `${expr}` 语法，引用实例变量 |
+| `isDefault` | 默认连线，当所有条件都不匹配时走此线 |
+
 ### 版本管理（FlowVersion）
 
 每次保存流程图都会创建新版本，版本号自动递增。发布时将最新版本设为当前版本。
