@@ -12,8 +12,8 @@
         />
       </div>
 
+      <!-- ===== user-task ===== -->
       <template v-if="selectedNode.type === 'user-task'">
-        <!-- Assignee type -->
         <div :class="$style.section">
           <label :class="$style.label">指派方式</label>
           <div :class="$style.radioGroup">
@@ -50,7 +50,6 @@
           </div>
         </div>
 
-        <!-- User picker (when assigneeType='user') -->
         <div v-if="(selectedNode.data?.assigneeType ?? 'user') === 'user'" :class="$style.section">
           <label :class="$style.label">审批用户</label>
           <UserPicker
@@ -60,7 +59,6 @@
           />
         </div>
 
-        <!-- Role picker (when assigneeType='role') -->
         <div v-if="selectedNode.data?.assigneeType === 'role'" :class="$style.section">
           <label :class="$style.label">审批角色</label>
           <el-select
@@ -77,7 +75,6 @@
           </el-select>
         </div>
 
-        <!-- Expression input (when assigneeType='expression') -->
         <div v-if="selectedNode.data?.assigneeType === 'expression'" :class="$style.section">
           <label :class="$style.label">审批人表达式</label>
           <input
@@ -91,7 +88,6 @@
 
         <div :class="$style.divider" />
 
-        <!-- Approval mode -->
         <div :class="$style.section">
           <label :class="$style.label">审批模式</label>
           <div :class="$style.radioGroup">
@@ -128,7 +124,6 @@
           </div>
         </div>
 
-        <!-- Countersign: min approval count -->
         <template v-if="selectedNode.data?.approvalMode === 'countersign'">
           <div :class="$style.section">
             <label :class="$style.label">最少通过人数</label>
@@ -143,7 +138,6 @@
           </div>
         </template>
 
-        <!-- Countersign / or-sign: assignee collection -->
         <template v-if="selectedNode.data?.approvalMode === 'countersign' || selectedNode.data?.approvalMode === 'or-sign'">
           <div :class="$style.section">
             <label :class="$style.label">审批人集合变量</label>
@@ -159,7 +153,6 @@
           </div>
         </template>
 
-        <!-- Rejection policy -->
         <div :class="$style.section">
           <label :class="$style.label">驳回策略</label>
           <div :class="$style.radioGroup">
@@ -198,7 +191,6 @@
 
         <div :class="$style.divider" />
 
-        <!-- Form association -->
         <div :class="$style.section">
           <label :class="$style.checkboxLabel">
             <input
@@ -269,11 +261,282 @@
           </div>
         </template>
       </template>
+
+      <!-- ===== timer-event ===== -->
+      <template v-if="selectedNode.type === 'timer-event'">
+        <div :class="$style.section">
+          <label :class="$style.label">定时类型</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="timer-type"
+                value="duration"
+                :checked="(selectedNode.data?.timerType ?? 'duration') === 'duration'"
+                @change="updateNodeData('timerType', 'duration')"
+              />
+              持续时间
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="timer-type"
+                value="date"
+                :checked="selectedNode.data?.timerType === 'date'"
+                @change="updateNodeData('timerType', 'date')"
+              />
+              指定日期
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="timer-type"
+                value="cycle"
+                :checked="selectedNode.data?.timerType === 'cycle'"
+                @change="updateNodeData('timerType', 'cycle')"
+              />
+              循环
+            </label>
+          </div>
+        </div>
+        <div :class="$style.section">
+          <label :class="$style.label">定时值</label>
+          <input
+            :class="$style.input"
+            type="text"
+            :value="selectedNode.data?.timerValue ?? ''"
+            :placeholder="timerPlaceholder"
+            @input="updateNodeData('timerValue', ($event.target as HTMLInputElement).value)"
+          />
+          <div :class="$style.hint">{{ timerHint }}</div>
+        </div>
+      </template>
+
+      <!-- ===== exclusive-gateway ===== -->
+      <template v-if="selectedNode.type === 'exclusive-gateway'">
+        <div :class="$style.section">
+          <label :class="$style.label">默认流向</label>
+          <input
+            :class="$style.input"
+            type="text"
+            :value="selectedNode.data?.defaultFlow ?? ''"
+            placeholder="默认连线 ID（可选）"
+            @input="updateNodeData('defaultFlow', ($event.target as HTMLInputElement).value)"
+          />
+          <div :class="$style.hint">当所有条件都不匹配时走此连线，也可在连线上标记「默认」</div>
+        </div>
+      </template>
+
+      <!-- ===== service-task ===== -->
+      <template v-if="selectedNode.type === 'service-task'">
+        <div :class="$style.section">
+          <label :class="$style.label">服务类型</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="service-type"
+                value="http"
+                :checked="(selectedNode.data?.serviceType ?? 'http') === 'http'"
+                @change="updateNodeData('serviceType', 'http')"
+              />
+              HTTP 请求
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="service-type"
+                value="function"
+                :checked="selectedNode.data?.serviceType === 'function'"
+                @change="updateNodeData('serviceType', 'function')"
+              />
+              函数调用
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="service-type"
+                value="script"
+                :checked="selectedNode.data?.serviceType === 'script'"
+                @change="updateNodeData('serviceType', 'script')"
+              />
+              脚本
+            </label>
+          </div>
+        </div>
+        <div :class="$style.section">
+          <label :class="$style.label">服务配置</label>
+          <textarea
+            :class="$style.textarea"
+            :value="serviceConfigJson"
+            placeholder='{"url": "https://...", "method": "POST"}'
+            @input="onServiceConfigInput"
+          />
+          <div :class="$style.hint">JSON 格式的服务配置</div>
+        </div>
+      </template>
+
+      <!-- ===== script-task ===== -->
+      <template v-if="selectedNode.type === 'script-task'">
+        <div :class="$style.section">
+          <label :class="$style.label">脚本语言</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="script-lang"
+                value="javascript"
+                :checked="(selectedNode.data?.scriptLanguage ?? 'javascript') === 'javascript'"
+                @change="updateNodeData('scriptLanguage', 'javascript')"
+              />
+              JavaScript
+            </label>
+          </div>
+        </div>
+        <div :class="$style.section">
+          <label :class="$style.label">脚本内容</label>
+          <textarea
+            :class="$style.textarea"
+            rows="6"
+            :value="selectedNode.data?.scriptContent ?? ''"
+            placeholder="// 脚本代码"
+            @input="updateNodeData('scriptContent', ($event.target as HTMLTextAreaElement).value)"
+          />
+        </div>
+      </template>
+
+      <!-- ===== sub-process ===== -->
+      <template v-if="selectedNode.type === 'sub-process'">
+        <div :class="$style.section">
+          <label :class="$style.label">子流程定义 ID</label>
+          <input
+            :class="$style.input"
+            type="text"
+            :value="selectedNode.data?.subProcessDefinitionId ?? ''"
+            placeholder="输入子流程定义 ID"
+            @input="updateNodeData('subProcessDefinitionId', ($event.target as HTMLInputElement).value)"
+          />
+          <div :class="$style.hint">关联的子流程 FlowDefinition ID</div>
+        </div>
+      </template>
+
+      <!-- ===== send-task ===== -->
+      <template v-if="selectedNode.type === 'send-task'">
+        <div :class="$style.section">
+          <label :class="$style.label">服务类型</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="send-service-type"
+                value="http"
+                :checked="(selectedNode.data?.serviceType ?? 'http') === 'http'"
+                @change="updateNodeData('serviceType', 'http')"
+              />
+              HTTP 请求
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="send-service-type"
+                value="function"
+                :checked="selectedNode.data?.serviceType === 'function'"
+                @change="updateNodeData('serviceType', 'function')"
+              />
+              函数调用
+            </label>
+          </div>
+        </div>
+        <div :class="$style.section">
+          <label :class="$style.label">服务配置</label>
+          <textarea
+            :class="$style.textarea"
+            :value="serviceConfigJson"
+            placeholder='{"url": "https://...", "method": "POST"}'
+            @input="onServiceConfigInput"
+          />
+          <div :class="$style.hint">JSON 格式的服务配置</div>
+        </div>
+      </template>
+
+      <!-- ===== receive-task ===== -->
+      <template v-if="selectedNode.type === 'receive-task'">
+        <div :class="$style.section">
+          <label :class="$style.label">服务类型</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="receive-service-type"
+                value="http"
+                :checked="(selectedNode.data?.serviceType ?? 'http') === 'http'"
+                @change="updateNodeData('serviceType', 'http')"
+              />
+              HTTP 请求
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="receive-service-type"
+                value="function"
+                :checked="selectedNode.data?.serviceType === 'function'"
+                @change="updateNodeData('serviceType', 'function')"
+              />
+              函数调用
+            </label>
+          </div>
+        </div>
+        <div :class="$style.section">
+          <label :class="$style.label">服务配置</label>
+          <textarea
+            :class="$style.textarea"
+            :value="serviceConfigJson"
+            placeholder='{"url": "https://...", "method": "POST"}'
+            @input="onServiceConfigInput"
+          />
+          <div :class="$style.hint">JSON 格式的服务配置</div>
+        </div>
+      </template>
     </div>
 
-    <div v-else-if="selectedEdgeId" :class="$style.content">
+    <!-- ===== Edge panel ===== -->
+    <div v-else-if="selectedEdge" :class="$style.content">
       <div :class="$style.title">连线属性</div>
-      <p :class="$style.placeholder">连线配置面板将在 Phase 3 实现</p>
+
+      <div :class="$style.section">
+        <label :class="$style.label">连线标签</label>
+        <input
+          :class="$style.input"
+          type="text"
+          :value="selectedEdge.label ?? ''"
+          placeholder="连线名称"
+          @input="updateEdgeData('label', ($event.target as HTMLInputElement).value)"
+        />
+      </div>
+
+      <div :class="$style.section">
+        <label :class="$style.label">条件表达式</label>
+        <input
+          :class="$style.input"
+          type="text"
+          :value="selectedEdge.data?.conditionExpression ?? ''"
+          placeholder="例: ${amount > 10000}"
+          @input="updateEdgeData('conditionExpression', ($event.target as HTMLInputElement).value)"
+        />
+        <div :class="$style.hint">排他网关出线的路由条件，使用 ${expr} 语法</div>
+      </div>
+
+      <div :class="$style.section">
+        <label :class="$style.checkboxLabel">
+          <input
+            type="checkbox"
+            :checked="selectedEdge.data?.isDefault ?? false"
+            @change="updateEdgeData('isDefault', ($event.target as HTMLInputElement).checked)"
+          />
+          设为默认连线
+        </label>
+        <div :class="$style.hint">当所有条件都不匹配时走此连线</div>
+      </div>
     </div>
 
     <div v-else :class="$style.empty">
@@ -285,17 +548,25 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
+import type { Edge } from '@vue-flow/core'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { storeToRefs } from 'pinia'
 import UserPicker from './UserPicker.vue'
 
-const { findNode } = useVueFlow()
+const { findNode, getEdges } = useVueFlow()
 const { selectedNodeId, selectedEdgeId } = storeToRefs(useFlowDesignerStore())
 
 const selectedNode = computed(() => {
   if (!selectedNodeId.value) return null
   return findNode(selectedNodeId.value)
 })
+
+const selectedEdge = computed<Edge | null>(() => {
+  if (!selectedEdgeId.value) return null
+  return getEdges.value.find((e) => e.id === selectedEdgeId.value) ?? null
+})
+
+/* --- Node helpers --- */
 
 function updateNodeData(key: string, value: unknown) {
   if (!selectedNode.value) return
@@ -321,6 +592,52 @@ function toNumberOrNull(val: string): number | null {
   if (!val) return null
   const n = Number(val)
   return Number.isFinite(n) ? n : null
+}
+
+/* --- Timer-event computed --- */
+
+const timerType = computed(() => (selectedNode.value?.data?.timerType as string) ?? 'duration')
+
+const timerPlaceholder = computed(() => {
+  switch (timerType.value) {
+    case 'date': return '2026-06-01T09:00:00Z'
+    case 'cycle': return 'R3/PT1H'
+    default: return 'PT2H'
+  }
+})
+
+const timerHint = computed(() => {
+  switch (timerType.value) {
+    case 'date': return 'ISO 8601 日期时间'
+    case 'cycle': return 'ISO 8601 循环，R3/PT1H（每小时重复3次）'
+    default: return 'ISO 8601 持续时间，如 PT2H（2小时）、P3D（3天）'
+  }
+})
+
+/* --- Service config (shared by service-task / send-task / receive-task) --- */
+
+const serviceConfigJson = computed(() => {
+  const cfg = selectedNode.value?.data?.serviceConfig
+  if (!cfg) return ''
+  if (typeof cfg === 'string') return cfg
+  try { return JSON.stringify(cfg, null, 2) } catch { return '' }
+})
+
+function onServiceConfigInput(e: Event) {
+  const raw = (e.target as HTMLTextAreaElement).value
+  try {
+    const parsed = JSON.parse(raw)
+    updateNodeData('serviceConfig', parsed)
+  } catch {
+    updateNodeData('serviceConfig', raw)
+  }
+}
+
+/* --- Edge helpers --- */
+
+function updateEdgeData(key: string, value: unknown) {
+  if (!selectedEdge.value) return
+  selectedEdge.value.data = { ...selectedEdge.value.data, [key]: value }
 }
 </script>
 
@@ -398,6 +715,24 @@ function toNumberOrNull(val: string): number | null {
   height: 1px;
   background: #ebeef5;
   margin: 12px 0;
+}
+
+.textarea {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  color: #303133;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #409eff;
 }
 
 .hint {

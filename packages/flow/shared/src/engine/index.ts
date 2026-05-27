@@ -5,3 +5,5 @@ export { evaluateExpression, ExpressionEvaluationError } from './ExpressionEvalu
 export { DEFAULT_NODE_SIZES, DEFAULT_NODE_CONFIGS } from './constants.js'
 export { exportToBpmnXml } from './BpmnXmlExporter.js'
 export { importFromBpmnXml } from './BpmnXmlImporter.js'
+export { validateFlow } from './FlowValidator.js'
+export type { ValidationError } from './FlowValidator.js'
