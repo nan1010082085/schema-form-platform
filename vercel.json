@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm build:server && pnpm build:editor-server && pnpm build:editor && pnpm build:flow && mkdir -p packages/portal/editor && cp -r packages/editor/web/dist/* packages/portal/editor/ && mkdir -p packages/portal/flow && cp -r packages/flow/web/dist/* packages/portal/flow/",
+  "buildCommand": "pnpm vercel-build",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "packages/portal",
   "functions": {
