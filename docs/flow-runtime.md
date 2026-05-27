@@ -108,6 +108,41 @@ start → running → completed
 
 ---
 
+## 权限体系
+
+### 流程级权限
+
+FlowDefinition 的 `permissions` 字段控制谁能编辑、发起、查看流程：
+
+| 权限类型 | 空列表行为 | 检查点 |
+|---|---|---|
+| `editors` | 所有已登录用户可编辑 | PUT/DELETE/publish 路由 |
+| `launchers` | 所有已登录用户可发起 | POST /api/flow-instances |
+| `viewers` | 所有已登录用户可查看 | GET /api/flow-instances |
+
+创建人（`createdBy`）始终拥有编辑和查看权限，不受限制。
+
+### 节点级人员配置
+
+UserTask 节点通过 `assigneeType` 决定任务分配方式：
+
+| assigneeType | 引擎行为 | 配置字段 |
+|---|---|---|
+| `user` | 使用 `candidateUsers` 作为候选用户列表 | `candidateUsers: string[]` |
+| `role` | 使用 `candidateRoles` 作为候选角色列表 | `candidateRoles: string[]` |
+| `expression` | 求值 `assignee` 表达式，结果作为候选用户 | `assignee: string` |
+| 默认 | 使用 `assignee` 单值作为候选用户 | `assignee: string` |
+
+### 任务操作权限
+
+| 操作 | 权限检查 |
+|---|---|
+| claim | 用户必须在 `candidateUsers` 列表中 |
+| complete | 用户必须是任务的 `assignee` |
+| delegate | 用户必须是任务的 `assignee` |
+
+---
+
 ## 审批日志
 
 每次审批操作都会写入 `ApprovalLog`：
@@ -180,6 +215,13 @@ interface ApprovalLogEntry {
 |---|---|---|
 | `GET` | `/api/flow-approvals?instanceId=xxx` | 查询实例的审批日志 |
 
+### 用户
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/users?q=xxx` | 搜索用户（按 username/displayName 匹配） |
+| `GET` | `/api/users/:id` | 获取单个用户信息 |
+
 ### 定时器
 
 | 方法 | 路径 | 说明 |
@@ -201,6 +243,7 @@ interface ApprovalLogEntry {
 | `status` | enum | `draft` / `published` / `archived` |
 | `currentVersionId` | string | 当前发布版本 ID |
 | `createdBy` | string | 创建人 |
+| `permissions` | object | `{ editors: string[], launchers: string[], viewers: string[] }` |
 
 索引：`name`、`status`、`createdBy`
 
