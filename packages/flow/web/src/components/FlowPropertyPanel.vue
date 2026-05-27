@@ -93,6 +93,43 @@
           </div>
         </template>
 
+        <!-- Rejection policy -->
+        <div :class="$style.section">
+          <label :class="$style.label">驳回策略</label>
+          <div :class="$style.radioGroup">
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="reject-policy"
+                value="follow-global"
+                :checked="(selectedNode.data?.rejectPolicy ?? 'follow-global') === 'follow-global'"
+                @change="updateNodeData('rejectPolicy', 'follow-global')"
+              />
+              跟随流程
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="reject-policy"
+                value="reject-on-all"
+                :checked="selectedNode.data?.rejectPolicy === 'reject-on-all'"
+                @change="updateNodeData('rejectPolicy', 'reject-on-all')"
+              />
+              全部驳回才驳回
+            </label>
+            <label :class="$style.radioLabel">
+              <input
+                type="radio"
+                name="reject-policy"
+                value="reject-on-any"
+                :checked="selectedNode.data?.rejectPolicy === 'reject-on-any'"
+                @change="updateNodeData('rejectPolicy', 'reject-on-any')"
+              />
+              一票驳回即驳回
+            </label>
+          </div>
+        </div>
+
         <div :class="$style.divider" />
 
         <!-- Form association -->
@@ -162,6 +199,7 @@
               placeholder="例: formData"
               @input="updateNodeData('formVariable', ($event.target as HTMLInputElement).value)"
             />
+            <div :class="$style.hint">仅传递条件表达式需要的字段摘要</div>
           </div>
         </template>
       </template>

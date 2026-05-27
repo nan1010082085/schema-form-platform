@@ -1,4 +1,6 @@
+import { v4 as uuidv4 } from 'uuid'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
+import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 
 export class TaskService {
   async getMyTasks(userId: string, page = 1, pageSize = 20) {
@@ -31,6 +33,17 @@ export class TaskService {
     task.status = 'claimed'
     task.assignee = userId
     await task.save()
+
+    await ApprovalLogModel.create({
+      _id: uuidv4(),
+      instanceId: task.instanceId,
+      nodeId: task.nodeId,
+      nodeName: task.nodeName,
+      taskId: task._id,
+      action: 'claim',
+      operator: userId,
+    })
+
     return task
   }
 
@@ -41,9 +54,22 @@ export class TaskService {
       throw new Error('Task cannot be delegated')
     }
 
+    const operator = task.assignee ?? task.candidateUsers?.[0] ?? 'unknown'
     task.status = 'delegated'
     task.assignee = targetUserId
     await task.save()
+
+    await ApprovalLogModel.create({
+      _id: uuidv4(),
+      instanceId: task.instanceId,
+      nodeId: task.nodeId,
+      nodeName: task.nodeName,
+      taskId: task._id,
+      action: 'delegate',
+      operator,
+      outcome: targetUserId,
+    })
+
     return task
   }
 }

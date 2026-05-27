@@ -19,6 +19,7 @@ export type GatewayDirection = 'converging' | 'diverging'
 export type TimerType = 'duration' | 'date' | 'cycle'
 export type ApprovalMode = 'single' | 'countersign' | 'or-sign'
 export type FormMode = 'create' | 'prefill' | 'readonly'
+export type RejectPolicy = 'reject-on-all' | 'reject-on-any'
 
 export interface MultiInstanceConfig {
   type: 'sequential' | 'parallel'
@@ -48,5 +49,6 @@ export interface BpmnNodeConfig {
   scriptContent?: string
   messageRef?: string
   documentation?: string
+  rejectPolicy?: RejectPolicy | 'follow-global'
   multiInstance?: MultiInstanceConfig
 }

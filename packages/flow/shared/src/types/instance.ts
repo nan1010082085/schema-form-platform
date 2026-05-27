@@ -43,3 +43,18 @@ export interface TaskInstanceData {
   createdAt: Date
   updatedAt: Date
 }
+
+export type ApprovalAction = 'claim' | 'approve' | 'reject' | 'delegate' | 'comment'
+
+export interface ApprovalLogEntry {
+  id: string
+  instanceId: string
+  nodeId: string
+  nodeName: string
+  taskId: string
+  action: ApprovalAction
+  operator: string
+  comment?: string
+  outcome?: string
+  createdAt: Date
+}
