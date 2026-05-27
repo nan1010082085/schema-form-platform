@@ -6,13 +6,26 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     // ---- Redirects ----
-    { path: '/', redirect: '/editor' },
+    { path: '/', redirect: '/instances' },
     {
       path: '/renderer',
       redirect: (to) => `/view?id=${to.query.id || ''}`,
     },
 
-    // ---- Editor pages ----
+    // ---- 带全局布局的管理页面 ----
+    {
+      path: '/',
+      component: () => import('@/components/AppLayout.vue'),
+      children: [
+        {
+          path: 'instances',
+          name: 'instances',
+          component: () => import('@/views/InstancesView.vue'),
+        },
+      ],
+    },
+
+    // ---- 全屏页面（无布局壳）----
     {
       path: '/editor',
       name: 'editor',
