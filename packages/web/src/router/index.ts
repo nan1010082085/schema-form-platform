@@ -40,6 +40,22 @@ const router = createRouter({
           component: () => import('@/views/InstancesView.vue'),
         },
         {
+          path: 'flows',
+          name: 'flow-list',
+          component: () => import('@/views/FlowListView.vue'),
+        },
+        {
+          path: 'tasks',
+          name: 'task-inbox',
+          component: () => import('@/views/TaskInboxView.vue'),
+        },
+        {
+          path: 'flow-instance/:id',
+          name: 'flow-instance-detail',
+          component: () => import('@/views/FlowInstanceDetailView.vue'),
+          props: true,
+        },
+        {
           path: 'docs',
           name: 'docs',
           component: () => import('@/views/DocsIndexView.vue'),
@@ -58,6 +74,11 @@ const router = createRouter({
       path: '/editor',
       name: 'editor',
       component: () => import('@/views/EditorView.vue'),
+    },
+    {
+      path: '/flow-designer',
+      name: 'flow-designer',
+      component: () => import('@schema-form/flow-web').then((m) => m.FlowDesigner),
     },
     {
       path: '/preview',

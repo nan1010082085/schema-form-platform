@@ -1,0 +1,30 @@
+{
+  "name": "@schema-form/flow-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "yangdongnan",
+  "description": "流程设计器前端 — Vue Flow 可视化画布、BPMN 节点组件、流程属性面板",
+  "exports": {
+    ".": "./src/index.js",
+    "./components/*": "./src/components/*.vue"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@schema-form/flow-shared": "workspace:*",
+    "@vue-flow/core": "^1.44.0",
+    "@vue-flow/background": "^1.3.2",
+    "@vue-flow/controls": "^1.1.2",
+    "@vue-flow/minimap": "^1.5.2"
+  },
+  "devDependencies": {
+    "pinia": "^2.3.0",
+    "typescript": "~5.7.3",
+    "vite": "^6.3.0",
+    "vitest": "^3.2.4",
+    "vue": "^3.5.0",
+    "vue-tsc": "^2.2.0"
+  }
+}
