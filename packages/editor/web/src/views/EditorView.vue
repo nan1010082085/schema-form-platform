@@ -35,6 +35,7 @@ import {
   Clock,
   DArrowLeft,
   DArrowRight,
+  Document,
 } from '@element-plus/icons-vue'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
@@ -57,6 +58,7 @@ const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
 const leftPanelVisible = ref(true)
 const rightPanelVisible = ref(true)
+const showLogPanel = ref(false)
 
 // ================================================================
 // Mode
@@ -445,6 +447,19 @@ function handleClearCanvas() {
           </button>
         </div>
 
+        <!-- Log panel toggle (preview only) -->
+        <template v-if="mode === 'preview'">
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': showLogPanel }"
+            title="执行日志"
+            @click="showLogPanel = !showLogPanel"
+          >
+            <el-icon :size="14"><Document /></el-icon>
+          </button>
+          <div class="editor-view__divider" />
+        </template>
+
         <template v-if="mode === 'edit'">
           <div class="editor-view__divider" />
 
@@ -522,7 +537,7 @@ function handleClearCanvas() {
             @save-preview="handleSavePreview"
           />
         </div>
-        <EventLogPanel v-if="mode === 'edit'" />
+        <EventLogPanel v-if="mode === 'preview' && showLogPanel" />
       </div>
 
       <!-- Right panel -->
