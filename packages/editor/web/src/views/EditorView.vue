@@ -570,15 +570,16 @@ function handleClearCanvas() {
           />
         </div>
         <EventLogPanel v-if="mode === 'preview' && showLogPanel" />
-        <!-- Store 数据面板 -->
-        <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-panel">
-          <div class="editor-view__code-header">
-            <span class="editor-view__code-title">Store 数据</span>
-            <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
-          </div>
-          <div class="editor-view__code-scroll">
-            <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
-          </div>
+      </div>
+
+      <!-- Store 数据面板（全屏覆盖） -->
+      <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-overlay">
+        <div class="editor-view__code-header">
+          <span class="editor-view__code-title">Store 数据</span>
+          <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
+        </div>
+        <div class="editor-view__code-scroll">
+          <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
         </div>
       </div>
 
@@ -871,6 +872,7 @@ function handleClearCanvas() {
     flex-direction: column;
     overflow: hidden;
     background: var(--el-fill-color-light);
+    position: relative;
   }
 
   &__canvas-scroll {
@@ -890,12 +892,16 @@ function handleClearCanvas() {
     overflow: hidden;
   }
 
-  &__code-panel {
+  &__code-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    height: 300px;
-    border-top: 1px solid var(--el-border-color-lighter);
     background: var(--el-bg-color);
+    z-index: 50;
   }
 
   &__code-header {
