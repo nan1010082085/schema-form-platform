@@ -68,8 +68,8 @@ function handleClose() {
     </div>
 
     <template #footer>
-      <el-button size="small" @click="handleClose">取消</el-button>
-      <el-button type="primary" size="small" @click="handleSave">保存</el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSave">保存</el-button>
     </template>
   </EnhancedDialog>
 </template>

@@ -572,18 +572,13 @@ describe('Linkage Integration', () => {
 
       const schema: PartialWidget[] = [
         {
-          type: 'grid-row',
+          type: 'card',
           children: [
             {
-              type: 'grid-col',
-              children: [
-                {
-                  type: 'input',
-                  field: 'nested',
-                  label: 'Nested',
-                  linkages: widget.linkages,
-                },
-              ],
+              type: 'input',
+              field: 'nested',
+              label: 'Nested',
+              linkages: widget.linkages,
             },
           ],
         },

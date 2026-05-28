@@ -106,14 +106,13 @@ function handleNodeDrop(draggingNode: SchemaTreeNode, dropNode: SchemaTreeNode, 
 
 function getTypeZh(type: string): string {
   const map: Record<string, string> = {
-    'grid-row': '行', 'grid-col': '列', 'page': '页', 'card': '卡片',
-    'toolbar': '工具栏', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
-    'steps': '步骤条', 'tabs': '标签页',
+    'card': '卡片', 'title': '标题', 'divider': '分割线', 'spacer': '间距',
+    'tabs': '标签页',
     'input': '输入框', 'number': '数字', 'select': '下拉选择', 'radio': '单选',
-    'checkbox': '多选', 'date': '日期', 'date-range': '日期范围',
+    'checkbox': '多选', 'date': '日期',
     'textarea': '多行文本', 'richtext': '富文本',
     'button-list': '按钮', 'toolbar-buttons': '工具栏按钮', 'upload': '上传',
-    'table': '表格', 'pagination': '分页', 'file-list': '文件列表',
+    'table': '表格', 'file-list': '文件列表',
     'transfer': '穿梭框',
     'banner': '横幅', 'tree-layout': '树形',
     'date-time-slot': '日期时段', 'dialog': '弹窗', 'search-list': '搜索列表',
@@ -195,12 +194,11 @@ function handleToggleHidden(data: SchemaTreeNode, e: Event) {
 
 // ---- Node icon mapping ----
 const NODE_ICONS: Record<string, string> = {
-  'grid-row': '蔊', 'grid-col': '▥', 'page': '📄', 'toolbar': '🔧',
   'card': '🃏', 'title': 'T', 'divider': '—', 'spacer': '␣',
-  'steps': '👣', 'tabs': '📑', 'input': '✏️', 'number': '#',
+  'tabs': '📑', 'input': '✏️', 'number': '#',
   'select': '▼', 'radio': '◉', 'checkbox': '☑', 'date': '📅',
-  'date-range': '📅', 'textarea': '📝', 'richtext': '📰',
-  'toolbar-buttons': '🔧', 'upload': '📤', 'table': '📊', 'pagination': '📑',
+  'textarea': '📝', 'richtext': '📰',
+  'toolbar-buttons': '🔧', 'upload': '📤', 'table': '📊',
 }
 
 function getNodeIcon(type: SchemaType): string {

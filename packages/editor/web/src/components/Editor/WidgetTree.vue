@@ -148,7 +148,8 @@ function getIcon(type: string): string {
 <style module>
 .tree {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;

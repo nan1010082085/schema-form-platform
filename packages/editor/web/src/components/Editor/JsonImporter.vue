@@ -38,7 +38,6 @@ const schemaTypeOptions: { label: string; value: SchemaType }[] = [
   { label: '单选', value: 'radio' },
   { label: '复选框', value: 'checkbox' },
   { label: '日期', value: 'date' },
-  { label: '日期范围', value: 'date-range' },
   { label: '文本域', value: 'textarea' },
   { label: '富文本', value: 'richtext' },
   { label: '上传', value: 'upload' },

@@ -72,7 +72,8 @@ const activeTab = ref<'components' | 'structure'>('components')
 <style scoped lang="scss">
 .left-panel {
   width: 100%;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
   background: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color-lighter);
   display: flex;
@@ -112,6 +113,8 @@ const activeTab = ref<'components' | 'structure'>('components')
   &__content {
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 

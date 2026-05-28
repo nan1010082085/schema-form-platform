@@ -26,39 +26,11 @@ function initMockData() {
   const demoId = 'mock-demo-001'
   const demoSchema: PartialWidget[] = [
     {
-      type: 'page',
+      type: 'card',
       children: [
-        {
-          type: 'grid-row',
-          children: [
-            {
-              type: 'grid-col',
-              span: 12,
-              children: [
-                { type: 'input', field: 'userName', label: '用户名', props: { placeholder: '请输入用户名' } },
-              ],
-            },
-            {
-              type: 'grid-col',
-              span: 12,
-              children: [
-                { type: 'select', field: 'userRole', label: '角色', options: [{ label: '管理员', value: 'admin' }, { label: '普通用户', value: 'user' }] },
-              ],
-            },
-          ],
-        },
-        {
-          type: 'grid-row',
-          children: [
-            {
-              type: 'grid-col',
-              span: 24,
-              children: [
-                { type: 'textarea', field: 'remark', label: '备注', props: { placeholder: '请输入备注' } },
-              ],
-            },
-          ],
-        },
+        { type: 'input', field: 'userName', label: '用户名', props: { placeholder: '请输入用户名' } },
+        { type: 'select', field: 'userRole', label: '角色', options: [{ label: '管理员', value: 'admin' }, { label: '普通用户', value: 'user' }] },
+        { type: 'textarea', field: 'remark', label: '备注', props: { placeholder: '请输入备注' } },
       ],
     },
   ]

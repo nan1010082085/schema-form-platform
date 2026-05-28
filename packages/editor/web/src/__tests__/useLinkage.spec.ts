@@ -455,22 +455,17 @@ describe('useLinkage', () => {
     it('works with nested children', () => {
       const schema: PartialWidget[] = [
         {
-          type: 'grid-row',
+          type: 'card',
           children: [
             {
-              type: 'grid-col',
-              children: [
+              type: 'input',
+              field: 'nested',
+              label: '嵌套字段',
+              linkages: [
                 {
-                  type: 'input',
-                  field: 'nested',
-                  label: '嵌套字段',
-                  linkages: [
-                    {
-                      type: 'visible',
-                      watchFields: ['toggle'],
-                      condition: 'values.toggle === true',
-                    },
-                  ],
+                  type: 'visible',
+                  watchFields: ['toggle'],
+                  condition: 'values.toggle === true',
                 },
               ],
             },

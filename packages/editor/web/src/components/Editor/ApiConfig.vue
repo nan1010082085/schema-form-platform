@@ -261,46 +261,43 @@ defineExpose({ testConnection, testing })
         <!-- 分组 1：请求配置 -->
         <div :class="s.card">
           <div :class="s.cardTitle">请求配置</div>
-          <div :class="s.cardBody">
-            <!-- URL -->
-            <div :class="s.field">
-              <label :class="s.label">URL <span :class="s.required">*</span></label>
-              <el-input
-                :model-value="api?.url ?? ''"
-                placeholder="/api/options"
-                @update:model-value="emitApiField('url', $event)"
-              />
-            </div>
+          <!-- URL -->
+          <div :class="s.row">
+            <label :class="s.label">URL <span :class="s.required">*</span></label>
+            <el-input
+              :model-value="api?.url ?? ''"
+              placeholder="/api/options"
+              style="flex: 1"
+              @update:model-value="emitApiField('url', $event)"
+            />
+          </div>
 
-            <!-- 请求方法 + 超时并排 -->
-            <div :class="s.row">
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">请求方法</label>
-                <el-select
-                  :model-value="api?.method ?? 'get'"
-                  style="width: 100%"
-                  @update:model-value="emitApiField('method', $event as 'get' | 'post')"
-                >
-                  <el-option label="GET" value="get" />
-                  <el-option label="POST" value="post" />
-                </el-select>
-              </div>
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">超时 (ms)</label>
-                <el-input-number
-                  :model-value="api?.timeout ?? 5000"
-                  :min="1000"
-                  :step="1000"
-                  controls-position="right"
-                  style="width: 100%"
-                  @update:model-value="emitApiField('timeout', $event ?? 5000)"
-                />
-              </div>
-            </div>
+          <!-- 请求方法 + 超时并排 -->
+          <div :class="s.row">
+            <label :class="s.label">方法</label>
+            <el-select
+              :model-value="api?.method ?? 'get'"
+              style="flex: 1"
+              @update:model-value="emitApiField('method', $event as 'get' | 'post')"
+            >
+              <el-option label="GET" value="get" />
+              <el-option label="POST" value="post" />
+            </el-select>
+            <label :class="s.label">超时</label>
+            <el-input-number
+              :model-value="api?.timeout ?? 5000"
+              :min="1000"
+              :step="1000"
+              controls-position="right"
+              style="flex: 1"
+              @update:model-value="emitApiField('timeout', $event ?? 5000)"
+            />
+          </div>
 
-            <!-- 查询参数 -->
-            <div :class="s.field">
-              <label :class="s.label">查询参数 (JSON)</label>
+          <!-- 查询参数 -->
+          <div :class="s.row">
+            <label :class="s.label">参数</label>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
               <el-input
                 :model-value="paramsText"
                 type="textarea"
@@ -311,38 +308,40 @@ defineExpose({ testConnection, testing })
               />
               <div v-if="paramsError" :class="s.error">{{ paramsError }}</div>
             </div>
+          </div>
 
-            <!-- 请求头 Headers -->
-            <div :class="s.field">
-              <label :class="s.label">请求头 (Headers)</label>
-              <div :class="s.kvList">
-                <div v-for="(row, idx) in headerRows" :key="idx" :class="s.kvRow">
-                  <el-input
-                    :model-value="row.key"
-                    placeholder="Header-Name"
-                    @update:model-value="handleHeaderKeyChange(idx, $event)"
-                  />
-                  <el-input
-                    :model-value="row.value"
-                    placeholder="value"
-                    @update:model-value="handleHeaderValueChange(idx, $event)"
-                  />
-                  <el-button
-                    type="danger"
-                    :icon="Delete"
-                    link
-                    @click="removeHeaderRow(idx)"
-                  />
-                </div>
-                <el-button size="small" link type="primary" @click="addHeaderRow">
-                  + 添加
-                </el-button>
+          <!-- 请求头 Headers -->
+          <div :class="s.row">
+            <label :class="s.label">请求头</label>
+            <div :class="s.kvList" style="flex: 1">
+              <div v-for="(row, idx) in headerRows" :key="idx" :class="s.kvRow">
+                <el-input
+                  :model-value="row.key"
+                  placeholder="Header-Name"
+                  @update:model-value="handleHeaderKeyChange(idx, $event)"
+                />
+                <el-input
+                  :model-value="row.value"
+                  placeholder="value"
+                  @update:model-value="handleHeaderValueChange(idx, $event)"
+                />
+                <el-button
+                  type="danger"
+                  :icon="Delete"
+                  link
+                  @click="removeHeaderRow(idx)"
+                />
               </div>
+              <el-button size="small" link type="primary" @click="addHeaderRow">
+                + 添加
+              </el-button>
             </div>
+          </div>
 
-            <!-- 请求体 Body（仅 POST） -->
-            <div v-if="isPost" :class="s.field">
-              <label :class="s.label">请求体 (Body JSON)</label>
+          <!-- 请求体 Body（仅 POST） -->
+          <div v-if="isPost" :class="s.row">
+            <label :class="s.label">Body</label>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
               <el-input
                 :model-value="bodyText"
                 type="textarea"
@@ -359,100 +358,86 @@ defineExpose({ testConnection, testing })
         <!-- 分组 2：数据映射 -->
         <div :class="s.card">
           <div :class="s.cardTitle">数据映射</div>
-          <div :class="s.cardBody">
-            <div :class="s.field">
-              <label :class="s.label">数据路径</label>
-              <el-input
-                :model-value="api?.dataPath ?? ''"
-                placeholder="result.records"
-                @update:model-value="emitApiField('dataPath', $event || undefined)"
-              />
-            </div>
-            <div :class="s.row">
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">标签字段</label>
-                <el-input
-                  :model-value="api?.labelKey ?? 'label'"
-                  placeholder="label"
-                  @update:model-value="emitApiField('labelKey', $event)"
-                />
-              </div>
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">值字段</label>
-                <el-input
-                  :model-value="api?.valueKey ?? 'value'"
-                  placeholder="value"
-                  @update:model-value="emitApiField('valueKey', $event)"
-                />
-              </div>
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">子节点字段</label>
-                <el-input
-                  :model-value="api?.childrenKey ?? ''"
-                  placeholder="children"
-                  @update:model-value="emitApiField('childrenKey', $event || undefined)"
-                />
-              </div>
-            </div>
+          <div :class="s.row">
+            <label :class="s.label">路径</label>
+            <el-input
+              :model-value="api?.dataPath ?? ''"
+              placeholder="result.records"
+              style="flex: 1"
+              @update:model-value="emitApiField('dataPath', $event || undefined)"
+            />
+          </div>
+          <div :class="s.row">
+            <label :class="s.label">标签</label>
+            <el-input
+              :model-value="api?.labelKey ?? 'label'"
+              placeholder="label"
+              style="flex: 1"
+              @update:model-value="emitApiField('labelKey', $event)"
+            />
+            <label :class="s.label">值</label>
+            <el-input
+              :model-value="api?.valueKey ?? 'value'"
+              placeholder="value"
+              style="flex: 1"
+              @update:model-value="emitApiField('valueKey', $event)"
+            />
+            <label :class="s.label">子节点</label>
+            <el-input
+              :model-value="api?.childrenKey ?? ''"
+              placeholder="children"
+              style="flex: 1"
+              @update:model-value="emitApiField('childrenKey', $event || undefined)"
+            />
           </div>
         </div>
 
         <!-- 分组 3：加载策略 -->
         <div :class="s.card">
           <div :class="s.cardTitle">加载策略</div>
-          <div :class="s.cardBody">
-            <div :class="s.row">
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">立即加载</label>
-                <el-switch
-                  :model-value="api?.immediate !== false"
-                  @update:model-value="emitApiField('immediate', $event)"
-                />
-              </div>
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">缓存时间 (ms)</label>
-                <el-input-number
-                  :model-value="api?.ttl ?? 0"
-                  :min="0"
-                  :step="1000"
-                  controls-position="right"
-                  style="width: 100%"
-                  @update:model-value="emitApiField('ttl', $event ?? 0)"
-                />
-              </div>
+          <div :class="s.row">
+            <label :class="s.label">加载</label>
+            <el-switch
+              :model-value="api?.immediate !== false"
+              @update:model-value="emitApiField('immediate', $event)"
+            />
+            <label :class="s.label">缓存</label>
+            <el-input-number
+              :model-value="api?.ttl ?? 0"
+              :min="0"
+              :step="1000"
+              controls-position="right"
+              style="flex: 1"
+              @update:model-value="emitApiField('ttl', $event ?? 0)"
+            />
+          </div>
+          <div :class="s.row">
+            <label :class="s.label">重试</label>
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1">
+              <el-switch
+                :model-value="api?.enableRetry ?? false"
+                @update:model-value="emitApiField('enableRetry', $event)"
+              />
+              <el-input-number
+                v-if="api?.enableRetry"
+                :model-value="api?.retryCount ?? 3"
+                :min="1"
+                :max="5"
+                controls-position="right"
+                style="width: 100px"
+                @update:model-value="emitApiField('retryCount', $event ?? 3)"
+              />
             </div>
-            <div :class="s.row">
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">重试</label>
-                <div style="display: flex; align-items: center; gap: 8px">
-                  <el-switch
-                    :model-value="api?.enableRetry ?? false"
-                    @update:model-value="emitApiField('enableRetry', $event)"
-                  />
-                  <el-input-number
-                    v-if="api?.enableRetry"
-                    :model-value="api?.retryCount ?? 3"
-                    :min="1"
-                    :max="5"
-                    controls-position="right"
-                    style="width: 100px"
-                    @update:model-value="emitApiField('retryCount', $event ?? 3)"
-                  />
-                </div>
-              </div>
-              <div :class="s.field" style="flex: 1">
-                <label :class="s.label">缓存策略</label>
-                <el-select
-                  :model-value="api?.cacheLevel ?? 'memory'"
-                  style="width: 100%"
-                  @update:model-value="emitApiField('cacheLevel', $event as 'memory' | 'indexeddb' | 'both')"
-                >
-                  <el-option label="内存" value="memory" />
-                  <el-option label="IndexedDB" value="indexeddb" />
-                  <el-option label="两者" value="both" />
-                </el-select>
-              </div>
-            </div>
+            <label :class="s.label">策略</label>
+            <el-select
+              :model-value="api?.cacheLevel ?? 'memory'"
+              style="flex: 1"
+              @update:model-value="emitApiField('cacheLevel', $event as 'memory' | 'indexeddb' | 'both')"
+            >
+              <el-option label="内存" value="memory" />
+              <el-option label="IndexedDB" value="indexeddb" />
+              <el-option label="两者" value="both" />
+            </el-select>
           </div>
         </div>
 
@@ -537,7 +522,6 @@ defineExpose({ testConnection, testing })
 <style module="s">
 .root {
   height: 100%;
-  /* 统一表单控件高度 32px */
 }
 
 .toggle {
@@ -547,7 +531,7 @@ defineExpose({ testConnection, testing })
 
 .layout {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   align-items: stretch;
   height: 100%;
 }
@@ -558,29 +542,36 @@ defineExpose({ testConnection, testing })
   min-height: 0;
   height: 100%;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+/* ---- Test panel (right side) ---- */
 .test {
-  width: 340px;
+  width: 280px;
   flex-shrink: 0;
-  height: 100%;
   min-height: 0;
-  overflow-y: auto;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  background: var(--bg-color-gray-light);
 }
 
 .testTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #303133;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f2f5;
+  color: var(--text-color-primary);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color-light);
 }
 
 .testBody {
-  padding: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
 }
 
 .testSuccess {
@@ -592,7 +583,7 @@ defineExpose({ testConnection, testing })
   background: #f0f9eb;
   border: 1px solid #e1f3d8;
   border-radius: 4px;
-  color: #67c23a;
+  color: var(--color-success);
   font-size: 12px;
   font-weight: 500;
 }
@@ -606,7 +597,7 @@ defineExpose({ testConnection, testing })
   background: #fef0f0;
   border: 1px solid #fde2e2;
   border-radius: 4px;
-  color: #f56c6c;
+  color: var(--color-danger);
   font-size: 12px;
   font-weight: 500;
 }
@@ -617,7 +608,7 @@ defineExpose({ testConnection, testing })
 
 .previewLabel {
   font-size: 11px;
-  color: #909399;
+  color: var(--text-color-placeholder);
   margin-bottom: 4px;
 }
 
@@ -625,8 +616,8 @@ defineExpose({ testConnection, testing })
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
   font-size: 11px;
   line-height: 1.4;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
+  background: var(--bg-color-gray);
+  border: 1px solid var(--border-color-light);
   border-radius: 4px;
   padding: 8px;
   margin: 0;
@@ -634,11 +625,11 @@ defineExpose({ testConnection, testing })
   white-space: pre;
   max-height: 200px;
   overflow-y: auto;
-  color: #303133;
+  color: var(--text-color-primary);
 }
 
 .previewCodeError {
-  color: #909399;
+  color: var(--text-color-placeholder);
 }
 
 .optionsList {
@@ -650,7 +641,7 @@ defineExpose({ testConnection, testing })
   justify-content: space-between;
   padding: 3px 0;
   font-size: 11px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--border-color-light);
 }
 
 .optionItem:last-child {
@@ -658,12 +649,12 @@ defineExpose({ testConnection, testing })
 }
 
 .optionLabel {
-  color: #303133;
+  color: var(--text-color-primary);
   font-weight: 500;
 }
 
 .optionValue {
-  color: #909399;
+  color: var(--text-color-placeholder);
   font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
   font-size: 10px;
 }
@@ -677,7 +668,7 @@ defineExpose({ testConnection, testing })
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #409eff;
+  color: var(--color-primary);
 }
 
 .suggestion code {
@@ -696,7 +687,7 @@ defineExpose({ testConnection, testing })
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #f56c6c;
+  color: var(--color-danger);
 }
 
 .suggestionError code {
@@ -710,37 +701,25 @@ defineExpose({ testConnection, testing })
 .removeRow {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 0;
 }
 
 /* ---- Group card ---- */
 .card {
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.card:last-child {
-  margin-bottom: 0;
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg-color-gray-light);
 }
 
 .cardTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #303133;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f2f5;
-  border-radius: 8px 8px 0 0;
-}
-
-.cardBody {
-  padding: 16px;
+  color: var(--text-color-primary);
 }
 
 /* ---- Form fields ---- */
 .field {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .field:last-child {
@@ -748,25 +727,27 @@ defineExpose({ testConnection, testing })
 }
 
 .label {
-  display: block;
+  width: 50px;
+  flex-shrink: 0;
   font-size: 12px;
-  font-weight: 500;
-  color: #606266;
-  margin-bottom: 4px;
+  color: var(--text-color-secondary);
+  line-height: 32px;
 }
 
 .required {
-  color: #f56c6c;
+  color: var(--color-danger);
 }
 
 .row {
   display: flex;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .error {
   font-size: 11px;
-  color: #f56c6c;
+  color: var(--color-danger);
   margin-top: 3px;
 }
 

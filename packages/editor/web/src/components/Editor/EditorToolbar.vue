@@ -75,7 +75,7 @@ const emit = defineEmits<{
   'move-down': []
   'zindex-up': []
   'zindex-down': []
-  'group': [containerType: 'card' | 'page' | 'toolbar']
+  'group': [containerType: 'card']
   'ungroup': []
   'validate': []
   'toggle-thumbnail': []
@@ -179,7 +179,7 @@ function handleZIndexUp() { if (hasSelection.value) emit('zindex-up') }
 function handleZIndexDown() { if (hasSelection.value) emit('zindex-down') }
 function handleUndo() { if (props.canUndo) emit('undo') }
 function handleRedo() { if (props.canRedo) emit('redo') }
-function handleGroup(type: 'card' | 'page' | 'toolbar') { if (props.canGroup) emit('group', type) }
+function handleGroup(type: 'card') { if (props.canGroup) emit('group', type) }
 function handleUngroup() { if (props.canUngroup) emit('ungroup') }
 
 // ---- Keyboard shortcuts ----

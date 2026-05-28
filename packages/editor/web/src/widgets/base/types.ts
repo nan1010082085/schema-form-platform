@@ -15,7 +15,6 @@ export type BasicType =
   | 'radio'
   | 'checkbox'
   | 'date'
-  | 'date-range'
   | 'textarea'
   | 'richtext'
   | 'button'
@@ -32,13 +31,6 @@ export type BasicType =
   | 'banner'
   | 'tree-layout'
   | 'date-time-slot'
-  | 'pagination'
-  | 'file-preview'
-  | 'grid-row'
-  | 'grid-col'
-  | 'page'
-  | 'toolbar'
-  | 'steps'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType
@@ -549,7 +541,6 @@ export const FULL_WIDTH_TYPES = [
   'transfer',
   'banner',
   'tree-layout',
-  'pagination',
   'file-list',
   'search-list',
   'editable-table',

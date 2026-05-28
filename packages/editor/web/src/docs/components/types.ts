@@ -25,10 +25,16 @@ export interface ExposeDoc {
   description: string
 }
 
+/** 文档示例用的宽松 PartialWidget，type 允许任意字符串以兼容遗留类型 */
+type DocWidget = Omit<PartialWidget, 'type' | 'children'> & {
+  type: string
+  children?: DocWidget[]
+}
+
 export interface SchemaExample {
   title: string
   description?: string
-  schema: PartialWidget[]
+  schema: DocWidget[]
   /**
    * 弹窗管理模式
    * - 'internal'（默认）：由 FormGrid 内部管理弹窗，弹窗在 demo 区域内部渲染

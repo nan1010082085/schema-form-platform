@@ -6,7 +6,7 @@
  *   api-config-invalid, circular-linkage + P2 improvements
  */
 import { getComponentMap } from '@/widgets/registry'
-import type { PartialWidget } from '@/widgets/base/types'
+import type { PartialWidget, SchemaType } from '@/widgets/base/types'
 import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useConstant'
 
 /**
@@ -22,9 +22,6 @@ const FALLBACK_SCHEMA_TYPES = new Set([
   'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
   'file-list', 'transfer',
   'search-list', 'editable-table',
-  // Legacy types still accepted by the renderer
-  'page', 'toolbar', 'steps', 'date-range', 'file-preview', 'pagination',
-  'grid-row', 'grid-col',
 ])
 
 /** Valid SchemaType values — lazily generated from widget registry */
@@ -39,7 +36,7 @@ function getValidSchemaTypes(): Set<string> {
 }
 
 /** Types that are containers (support children) */
-const CONTAINER_TYPES = new Set<string>(['card', 'page', 'toolbar', 'single-col', 'double-col', 'triple-col', 'quad-col'])
+const CONTAINER_TYPES = new Set<string>(['card', 'single-col', 'double-col', 'triple-col', 'quad-col'])
 
 /** Get the category of a component type: 'basic', 'business', or 'layout' */
 function getComponentCategory(type: string): 'basic' | 'business' | 'layout' {
@@ -49,7 +46,7 @@ function getComponentCategory(type: string): 'basic' | 'business' | 'layout' {
 }
 
 /** Types that don't require a `field` property even though they're not layout types */
-const NO_FIELD_TYPES = new Set<string>(['button-list', 'pagination', 'file-list', 'file-preview', 'toolbar-buttons', 'search-list'])
+const NO_FIELD_TYPES = new Set<string>(['button', 'toolbar-buttons', 'title', 'banner', 'file-list', 'search-list'])
 
 /** Types that typically have options (select/radio/checkbox) */
 const OPTION_TYPES = new Set<string>(['select', 'radio', 'checkbox'])
@@ -155,7 +152,7 @@ export function validateSchema(schema: PartialWidget[]): ValidationResult {
       }
 
       // 2. Missing field on non-layout components
-      if (!LAYOUT_TYPES.has(item.type) && !NO_FIELD_TYPES.has(item.type) && !item.field) {
+      if (!LAYOUT_TYPES.has(item.type as SchemaType) && !NO_FIELD_TYPES.has(item.type) && !item.field) {
         errors.push({
           path: itemPath,
           type: 'missing-field',

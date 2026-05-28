@@ -13,12 +13,7 @@ export const ID_HASH_LENGTH = 5
 
 /** 可容纳子节点的布局容器类型 */
 export const LAYOUT_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
-  'grid-row',
-  'grid-col',
-  'page',
-  'toolbar',
   'card',
-  'steps',
   'tabs',
   'single-col',
   'double-col',
@@ -29,11 +24,6 @@ export const LAYOUT_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
 /** 编辑器中可接受拖放的容器类型 */
 export const EDITABLE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
   'card',
-  'page',
-  'toolbar',
-  'grid-row',
-  'grid-col',
-  'steps',
   'tabs',
   'single-col',
   'double-col',
@@ -53,23 +43,23 @@ export function canNest(type: SchemaType): boolean {
   return LAYOUT_CONTAINER_TYPES.has(type)
 }
 
-/** 布局/容器组件（单一数据源：所有布局类组件类型） */
+/** 布局/容器组件（layout + container 分组） */
 export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
-  'grid-row', 'grid-col',
-  'page', 'toolbar', 'card', 'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
-  'single-col', 'double-col', 'triple-col', 'quad-col',
+  'card', 'tabs', 'single-col', 'double-col', 'triple-col', 'quad-col',
+  'divider', 'spacer',
+  'form', 'dialog',
 ])
 
-/** 基础组件 */
+/** 表单控件 + 操作按钮 + 静态展示 + 表格（form + action + static + table 分组） */
 export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
-  'input', 'number', 'select', 'radio', 'checkbox', 'date', 'date-range',
-  'textarea', 'richtext',
-  'toolbar-buttons', 'button', 'table', 'pagination',
+  'input', 'number', 'select', 'radio', 'checkbox', 'date', 'textarea',
+  'richtext', 'upload', 'date-time-slot',
+  'button', 'toolbar-buttons',
+  'title', 'banner',
+  'table', 'search-list', 'editable-table',
 ])
 
-/** 业务组件（不参与本次重构） */
+/** 业务组件（business 分组） */
 export const BUSINESS_TYPES: ReadonlySet<SchemaType> = new Set([
-  'upload', 'file-list', 'transfer',
-  'banner', 'tree-layout', 'date-time-slot',
-  'toolbar-buttons', 'search-list', 'editable-table',
+  'tree-layout', 'file-list', 'transfer',
 ])

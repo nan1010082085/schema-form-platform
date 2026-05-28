@@ -28,13 +28,9 @@ describe('validateSchema', () => {
   it('passes validation for a valid simple schema', () => {
     const schema: PartialWidget[] = [
       {
-        type: 'grid-row',
+        type: 'card',
         children: [
-          {
-            type: 'grid-col',
-            span: 24,
-            children: [{ type: 'input', field: 'name', label: 'Name' }],
-          },
+          { type: 'input', field: 'name', label: 'Name' },
         ],
       },
     ]
@@ -174,11 +170,11 @@ describe('validateSchema', () => {
     expect(missingErrors[0].message).toContain('input')
   })
 
-  it('does not require field on layout type (grid-row)', () => {
+  it('does not require field on layout type (card)', () => {
     const schema: PartialWidget[] = [
       {
-        type: 'grid-row',
-        children: [{ type: 'grid-col', span: 12, children: [] }],
+        type: 'card',
+        children: [],
       },
     ]
     const result = validateSchema(schema)
@@ -215,20 +211,6 @@ describe('validateSchema', () => {
 
   // ---------- steps and tabs ----------
 
-  it('accepts steps as a valid type without requiring a field', () => {
-    const schema: PartialWidget[] = [
-      {
-        type: 'steps',
-        children: [{ type: 'input', field: 'step1', label: 'Step 1' }],
-      },
-    ]
-    const result = validateSchema(schema)
-    const typeErrors = result.errors.filter((e) => e.type === 'invalid-type')
-    expect(typeErrors).toHaveLength(0)
-    const missingErrors = result.errors.filter((e) => e.type === 'missing-field')
-    expect(missingErrors).toHaveLength(0)
-  })
-
   it('accepts tabs as a valid type without requiring a field', () => {
     const schema: PartialWidget[] = [
       {
@@ -246,12 +228,12 @@ describe('validateSchema', () => {
   // ---------- nesting violation ----------
 
   it('detects basic component nested inside business component', () => {
-    // upload is business, input is basic
+    // tree-layout is business, input is basic
     const schema: PartialWidget[] = [
       {
-        type: 'upload',
-        field: 'files',
-        label: 'Files',
+        type: 'tree-layout',
+        field: 'tree',
+        label: 'Tree',
         children: [
           { type: 'input', field: 'desc', label: 'Description' },
         ],
@@ -261,18 +243,18 @@ describe('validateSchema', () => {
     const nestingErrors = result.errors.filter((e) => e.type === 'nesting-violation')
     expect(nestingErrors).toHaveLength(1)
     expect(nestingErrors[0].severity).toBe('error')
-    expect(nestingErrors[0].message).toContain('upload')
+    expect(nestingErrors[0].message).toContain('tree-layout')
     expect(nestingErrors[0].message).toContain('input')
   })
 
   it('detects business component nested inside basic component', () => {
-    // toolbar-buttons is basic, upload is business
+    // toolbar-buttons is action (basic category), tree-layout is business
     const schema: PartialWidget[] = [
       {
         type: 'toolbar-buttons',
         buttons: [{ text: 'Submit' }],
         children: [
-          { type: 'upload', field: 'file', label: 'File' },
+          { type: 'tree-layout', field: 'tree', label: 'Tree' },
         ],
       },
     ]
@@ -281,7 +263,7 @@ describe('validateSchema', () => {
     expect(nestingErrors).toHaveLength(1)
     expect(nestingErrors[0].severity).toBe('error')
     expect(nestingErrors[0].message).toContain('toolbar-buttons')
-    expect(nestingErrors[0].message).toContain('upload')
+    expect(nestingErrors[0].message).toContain('tree-layout')
   })
 
   it('allows basic components nested inside layout containers', () => {
@@ -317,7 +299,7 @@ describe('validateSchema', () => {
   it('allows mixed basic and business inside layout containers', () => {
     const schema: PartialWidget[] = [
       {
-        type: 'grid-row',
+        type: 'card',
         children: [
           { type: 'input', field: 'name', label: 'Name' },
           { type: 'upload', field: 'file', label: 'File' },
@@ -335,9 +317,9 @@ describe('validateSchema', () => {
         type: 'card',
         children: [
           {
-            type: 'upload',
-            field: 'files',
-            label: 'Files',
+            type: 'tree-layout',
+            field: 'tree',
+            label: 'Tree',
             children: [
               { type: 'input', field: 'desc', label: 'Desc' },
             ],
