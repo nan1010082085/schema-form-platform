@@ -47,6 +47,10 @@ export const searchListConfig: WidgetConfig = {
     { id: 'reset', label: '重置按钮', description: '点击重置时触发' },
   ],
   configPanels: ['events', 'api', 'variables'] as const,
+  receivableEvents: [
+    { name: 'refresh', description: '重新加载列表数据' },
+    { name: 'reset-search', description: '重置搜索条件并刷新' },
+  ],
   propertyPanel: {
     basic: ['label'],
     style: [],

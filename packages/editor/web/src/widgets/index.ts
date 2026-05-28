@@ -23,10 +23,15 @@ import { FgTreeLayout, createTreeLayoutWidget, treeLayoutConfig } from './tree-l
 import { FgDateTimeSlot, createDateTimeSlotWidget, dateTimeSlotConfig } from './date-time-slot'
 import { FgTimePicker, createTimePickerWidget, timePickerConfig } from './time-picker'
 import { FgCascader, createCascaderWidget, cascaderConfig } from './cascader'
+import { FgColorPicker, createColorPickerWidget, colorPickerConfig } from './color-picker'
+import { FgTagInput, createTagInputWidget, tagInputConfig } from './tag-input'
+import { FgAutocomplete, createAutocompleteWidget, autocompleteConfig } from './autocomplete'
 import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
 import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
 import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
 import { FgSwitch, createSwitchWidget, switchConfig } from './switch'
+import { FgSlider, createSliderWidget, sliderConfig } from './slider'
+import { FgRate, createRateWidget, rateConfig } from './rate'
 import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
@@ -217,6 +222,26 @@ export function registerAllWidgets() {
     config: switchConfig,
   })
 
+  registerWidget({
+    name: sliderConfig.name,
+    displayName: sliderConfig.displayName,
+    type: 'slider',
+    group: 'form',
+    component: FgSlider,
+    create: createSliderWidget,
+    config: sliderConfig,
+  })
+
+  registerWidget({
+    name: rateConfig.name,
+    displayName: rateConfig.displayName,
+    type: 'rate',
+    group: 'form',
+    component: FgRate,
+    create: createRateWidget,
+    config: rateConfig,
+  })
+
   registerWidget({ name: richtextConfig.name, displayName: richtextConfig.displayName, type: 'richtext', group: 'form', component: FgRichtext, create: createRichtextWidget, config: richtextConfig })
   registerWidget({ name: uploadConfig.name, displayName: uploadConfig.displayName, type: 'upload', group: 'form', component: FgUpload, create: createUploadWidget, config: uploadConfig })
   registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
@@ -232,6 +257,12 @@ export function registerAllWidgets() {
   })
 
   registerWidget({ name: cascaderConfig.name, displayName: cascaderConfig.displayName, type: 'cascader', group: 'form', component: FgCascader, create: createCascaderWidget, config: cascaderConfig })
+
+  registerWidget({ name: colorPickerConfig.name, displayName: colorPickerConfig.displayName, type: 'color-picker', group: 'form', component: FgColorPicker, create: createColorPickerWidget, config: colorPickerConfig })
+
+  registerWidget({ name: tagInputConfig.name, displayName: tagInputConfig.displayName, type: 'tag-input', group: 'form', component: FgTagInput, create: createTagInputWidget, config: tagInputConfig })
+
+  registerWidget({ name: autocompleteConfig.name, displayName: autocompleteConfig.displayName, type: 'autocomplete', group: 'form', component: FgAutocomplete, create: createAutocompleteWidget, config: autocompleteConfig })
 
   // Static widgets (静态展示)
   registerWidget({

@@ -53,7 +53,8 @@ export const LAYOUT_TYPES: ReadonlySet<SchemaType> = new Set([
 /** 表单控件 + 操作按钮 + 静态展示 + 表格（form + action + static + table 分组） */
 export const BASIC_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'number', 'select', 'radio', 'checkbox', 'date', 'textarea',
-  'richtext', 'upload', 'date-time-slot', 'time-picker', 'switch', 'cascader',
+  'richtext', 'upload', 'date-time-slot', 'time-picker', 'switch', 'slider', 'cascader', 'rate', 'color-picker',
+  'tag-input', 'autocomplete',
   'button', 'toolbar-buttons',
   'title', 'banner',
   'table', 'search-list', 'editable-table',

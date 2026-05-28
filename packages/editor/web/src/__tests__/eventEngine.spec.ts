@@ -12,6 +12,11 @@ vi.mock('@/composables/useLogger', () => ({
   })),
 }))
 
+const mockRequestUrl = vi.fn()
+vi.mock('@/utils/apiClient', () => ({
+  apiClient: { requestUrl: (...args: unknown[]) => mockRequestUrl(...args) },
+}))
+
 describe('evaluateCondition', () => {
   it('evaluates simple expression', () => {
     expect(evaluateCondition('status === "active"', { status: 'active' })).toBe(true)
@@ -234,9 +239,7 @@ describe('executeEventAction', () => {
     it('copies text to clipboard', async () => {
       const writeTextSpy = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText: writeTextSpy } })
-      executeEventAction({ type: 'copy', text: 'Hello World' }, ctx)
-      // Wait for the promise to resolve
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await executeEventAction({ type: 'copy', text: 'Hello World' }, ctx)
       expect(writeTextSpy).toHaveBeenCalledWith('Hello World')
     })
 
@@ -244,8 +247,7 @@ describe('executeEventAction', () => {
       const writeTextSpy = vi.fn().mockResolvedValue(undefined)
       Object.assign(navigator, { clipboard: { writeText: writeTextSpy } })
       ctx = createMockContext({ getFormData: vi.fn().mockReturnValue({ email: 'test@example.com' }) })
-      executeEventAction({ type: 'copy', text: 'formData.email' }, ctx)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await executeEventAction({ type: 'copy', text: 'formData.email' }, ctx)
       expect(writeTextSpy).toHaveBeenCalledWith('test@example.com')
     })
 
@@ -274,41 +276,36 @@ describe('executeEventAction', () => {
   })
 
   describe('api', () => {
-    it('emits api-call event with url and method', () => {
-      executeEventAction({ type: 'api', apiUrl: '/api/users', apiMethod: 'get' }, ctx)
-      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
-        url: '/api/users',
-        method: 'get',
-        params: undefined,
-      })
+    it('calls apiClient.requestUrl and emits api-success', async () => {
+      mockRequestUrl.mockResolvedValue({ ok: true })
+      await executeEventAction({ type: 'api', apiUrl: '/api/users', apiMethod: 'get' }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('get', '/api/users', undefined)
+      expect(ctx.emit).toHaveBeenCalledWith('api-success', { url: '/api/users', response: { ok: true } })
     })
 
-    it('defaults to post method', () => {
-      executeEventAction({ type: 'api', apiUrl: '/api/users' }, ctx)
-      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
-        url: '/api/users',
-        method: 'post',
-        params: undefined,
-      })
+    it('defaults to post method', async () => {
+      mockRequestUrl.mockResolvedValue({})
+      await executeEventAction({ type: 'api', apiUrl: '/api/users' }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/api/users', undefined)
     })
 
-    it('sends formData as params when apiParams is "formData"', () => {
+    it('sends formData as params when apiParams is "formData"', async () => {
       ctx = createMockContext({ getFormData: vi.fn().mockReturnValue({ name: 'test' }) })
-      executeEventAction({ type: 'api', apiUrl: '/api/save', apiParams: 'formData' }, ctx)
-      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
-        url: '/api/save',
-        method: 'post',
-        params: { name: 'test' },
-      })
+      mockRequestUrl.mockResolvedValue({})
+      await executeEventAction({ type: 'api', apiUrl: '/api/save', apiParams: 'formData' }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/api/save', { name: 'test' })
     })
 
-    it('sends custom params', () => {
-      executeEventAction({ type: 'api', apiUrl: '/api/query', apiParams: { id: 123 } }, ctx)
-      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
-        url: '/api/query',
-        method: 'post',
-        params: { id: 123 },
-      })
+    it('emits api-error on request failure', async () => {
+      mockRequestUrl.mockRejectedValue(new Error('network error'))
+      await executeEventAction({ type: 'api', apiUrl: '/api/fail' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('api-error', { url: '/api/fail', error: 'Error: network error' })
+    })
+
+    it('sends custom params', async () => {
+      mockRequestUrl.mockResolvedValue({})
+      await executeEventAction({ type: 'api', apiUrl: '/api/query', apiParams: { id: 123 } }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/api/query', { id: 123 })
     })
 
     it('does nothing if apiUrl is missing', () => {
@@ -484,7 +481,7 @@ describe('triggerWidgetEvent', () => {
     expect(ctx.submitForm).not.toHaveBeenCalled()
   })
 
-  it('executes action chain in order', () => {
+  it('executes action chain in order', async () => {
     const callOrder: string[] = []
     vi.mocked(ctx.submitForm).mockImplementation(() => { callOrder.push('submit') })
     vi.mocked(ctx.resetForm).mockImplementation(() => { callOrder.push('reset') })
@@ -505,11 +502,11 @@ describe('triggerWidgetEvent', () => {
       ],
     }
 
-    triggerWidgetEvent(widget, 'click', ctx)
+    await triggerWidgetEvent(widget, 'click', ctx)
     expect(callOrder).toEqual(['submit', 'reset'])
   })
 
-  it('does nothing if widget has no events', () => {
+  it('does nothing if widget has no events', async () => {
     const widget: Widget = {
       id: 'btn1',
       name: 'FgButton',

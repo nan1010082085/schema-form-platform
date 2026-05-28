@@ -338,7 +338,7 @@ describe('变量系统', () => {
       }
     })
 
-    it('事件链中连续修改变量', () => {
+    it('事件链中连续修改变量', async () => {
       const widget: Widget = {
         id: 'btn1',
         name: 'FgButton',
@@ -353,12 +353,12 @@ describe('变量系统', () => {
         }],
       }
 
-      triggerWidgetEvent(widget, 'click', ctx)
+      await triggerWidgetEvent(widget, 'click', ctx)
       expect(variables.actionCount).toBe(1)
       expect(variables.lastAction).toBe('clicked')
     })
 
-    it('变量变化影响后续动作的条件判断', () => {
+    it('变量变化影响后续动作的条件判断', async () => {
       const widget: Widget = {
         id: 'btn1',
         name: 'FgButton',
@@ -377,7 +377,7 @@ describe('变量系统', () => {
       }
 
       // 前三次应该执行
-      triggerWidgetEvent(widget, 'click', ctx)
+      await triggerWidgetEvent(widget, 'click', ctx)
       expect(ctx.submitForm).toHaveBeenCalledTimes(1)
       expect(variables.actionCount).toBe(1)
     })

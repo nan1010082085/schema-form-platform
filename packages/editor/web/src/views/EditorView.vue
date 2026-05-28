@@ -22,6 +22,9 @@ import { registerAllWidgets } from '@/widgets'
 import EditorCanvas from '@/components/Editor/EditorCanvas.vue'
 import EditorLeftPanel from '@/components/Editor/EditorLeftPanel.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
+import EventLogPanel from '@/components/Editor/EventLogPanel.vue'
+import { setLogCollector } from '@/composables/useLogger'
+import { useEventLog } from '@/composables/useEventLog'
 import type { Widget } from '@/widgets/base/types'
 import {
   CopyDocument,
@@ -88,6 +91,10 @@ function handleCanvasSizeChange(preset: string) {
 // ================================================================
 
 onMounted(async () => {
+  // 接入事件日志收集器
+  const { push } = useEventLog()
+  setLogCollector(push)
+
   const id = route.query.id as string | undefined
   if (id) {
     // TODO: Load from API when backend is ready
@@ -503,16 +510,19 @@ function handleClearCanvas() {
         />
       </div>
 
-      <!-- Center: canvas -->
+      <!-- Center: canvas + log panel -->
       <div class="editor-view__center">
-        <EditorCanvas
-          ref="editorCanvasRef"
-          @open-event="handleOpenEvent"
-          @open-rule="handleOpenRule"
-          @open-api="handleOpenApi"
-          @open-variables="handleOpenVariables"
-          @save-preview="handleSavePreview"
-        />
+        <div class="editor-view__canvas-scroll">
+          <EditorCanvas
+            ref="editorCanvasRef"
+            @open-event="handleOpenEvent"
+            @open-rule="handleOpenRule"
+            @open-api="handleOpenApi"
+            @open-variables="handleOpenVariables"
+            @save-preview="handleSavePreview"
+          />
+        </div>
+        <EventLogPanel v-if="mode === 'edit'" />
       </div>
 
       <!-- Right panel -->
@@ -800,8 +810,16 @@ function handleClearCanvas() {
   &__center {
     flex: 1;
     min-width: 0;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: var(--el-fill-color-light);
+  }
+
+  &__canvas-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
     padding: 24px;
   }
 

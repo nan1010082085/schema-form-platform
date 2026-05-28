@@ -17,11 +17,11 @@ import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useCons
 const FALLBACK_SCHEMA_TYPES = new Set([
   'form', 'card', 'tabs', 'dialog',
   'single-col', 'double-col', 'triple-col', 'quad-col',
-  'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea', 'switch',
+  'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea', 'switch', 'slider',
   'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
   'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot', 'time-picker',
-  'file-list', 'transfer', 'cascader',
-  'search-list', 'editable-table',
+  'file-list', 'transfer', 'cascader', 'rate', 'color-picker',
+  'search-list', 'editable-table', 'tag-input', 'autocomplete',
 ])
 
 /** Valid SchemaType values — lazily generated from widget registry */
