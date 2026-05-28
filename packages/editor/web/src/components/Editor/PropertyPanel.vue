@@ -23,6 +23,7 @@ import TableColumnsEditor from './TableColumnsEditor.vue'
 import type { TableColumn } from '../../widgets/table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
 import OptionsEditor from './OptionsEditor.vue'
+import RulesEditor from './RulesEditor.vue'
 import EventConfigDialog from './EventConfigDialog.vue'
 import LinkageConfigDialog from './LinkageConfigDialog.vue'
 import OptionsApiConfigDialog from './OptionsApiConfigDialog.vue'
@@ -584,6 +585,14 @@ function updateBoardProperty(key: string, value: unknown) {
                   mode="padding"
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
                   @update="updateStylePatch"
+                />
+              </div>
+              <!-- 校验规则编辑器 -->
+              <div v-else-if="item.type === 'rules'" :class="$style.columnsSection">
+                <div :class="$style.columnsLabel">{{ item.label }}</div>
+                <RulesEditor
+                  :rules="(item.value as import('element-plus').FormItemRule[] | undefined)"
+                  @update:rules="(v: import('element-plus').FormItemRule[] | undefined) => updateProperty(item.key, v)"
                 />
               </div>
               <PropertyField

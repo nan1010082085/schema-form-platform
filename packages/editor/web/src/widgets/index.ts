@@ -21,9 +21,12 @@ import { FgUpload, createUploadWidget, uploadConfig } from './upload'
 import { FgBanner, createBannerWidget, bannerConfig } from './banner'
 import { FgTreeLayout, createTreeLayoutWidget, treeLayoutConfig } from './tree-layout'
 import { FgDateTimeSlot, createDateTimeSlotWidget, dateTimeSlotConfig } from './date-time-slot'
+import { FgTimePicker, createTimePickerWidget, timePickerConfig } from './time-picker'
+import { FgCascader, createCascaderWidget, cascaderConfig } from './cascader'
 import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
 import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
 import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
+import { FgSwitch, createSwitchWidget, switchConfig } from './switch'
 import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
@@ -204,9 +207,31 @@ export function registerAllWidgets() {
     config: textareaConfig,
   })
 
+  registerWidget({
+    name: switchConfig.name,
+    displayName: switchConfig.displayName,
+    type: 'switch',
+    group: 'form',
+    component: FgSwitch,
+    create: createSwitchWidget,
+    config: switchConfig,
+  })
+
   registerWidget({ name: richtextConfig.name, displayName: richtextConfig.displayName, type: 'richtext', group: 'form', component: FgRichtext, create: createRichtextWidget, config: richtextConfig })
   registerWidget({ name: uploadConfig.name, displayName: uploadConfig.displayName, type: 'upload', group: 'form', component: FgUpload, create: createUploadWidget, config: uploadConfig })
   registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
+
+  registerWidget({
+    name: timePickerConfig.name,
+    displayName: timePickerConfig.displayName,
+    type: 'time-picker',
+    group: 'form',
+    component: FgTimePicker,
+    create: createTimePickerWidget,
+    config: timePickerConfig,
+  })
+
+  registerWidget({ name: cascaderConfig.name, displayName: cascaderConfig.displayName, type: 'cascader', group: 'form', component: FgCascader, create: createCascaderWidget, config: cascaderConfig })
 
   // Static widgets (静态展示)
   registerWidget({

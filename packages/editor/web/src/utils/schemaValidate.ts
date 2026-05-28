@@ -17,10 +17,10 @@ import { BASIC_TYPES, BUSINESS_TYPES, LAYOUT_TYPES } from '@/composables/useCons
 const FALLBACK_SCHEMA_TYPES = new Set([
   'form', 'card', 'tabs', 'dialog',
   'single-col', 'double-col', 'triple-col', 'quad-col',
-  'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea',
+  'input', 'select', 'number', 'radio', 'checkbox', 'date', 'textarea', 'switch',
   'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
-  'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
-  'file-list', 'transfer',
+  'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot', 'time-picker',
+  'file-list', 'transfer', 'cascader',
   'search-list', 'editable-table',
 ])
 

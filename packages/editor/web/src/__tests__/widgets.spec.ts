@@ -118,9 +118,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 30 widget types', () => {
+  it('registers exactly 33 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(30)
+    expect(all).toHaveLength(33)
   })
 
   it('getComponentMap returns a component for every registered type', () => {
