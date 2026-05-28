@@ -15,20 +15,8 @@ import { isFullWidthType } from '@/widgets/base/types'
  */
 export function createDefaultSchema(type: SchemaType): PartialWidget {
   // ---- Layout types ----
-  if (type === 'grid-row') {
-    return { type: 'grid-row', children: [], style: { height: '44px' } }
-  }
-  if (type === 'grid-col') {
-    return { type: 'grid-col', span: 12, children: [], style: { height: '44px' } }
-  }
   if (type === 'card') {
     return { type: 'card', label: 'Card', children: [], style: { padding: '16px', borderRadius: '4px', backgroundColor: '#f5f7fa' } }
-  }
-  if (type === 'page') {
-    return { type: 'page', children: [], style: { padding: '24px' } }
-  }
-  if (type === 'toolbar') {
-    return { type: 'toolbar', children: [], style: { padding: '8px 16px' } }
   }
   if (type === 'title') {
     return { type: 'title', label: 'Title' }
@@ -39,23 +27,11 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
   if (type === 'spacer') {
     return { type: 'spacer' }
   }
-  if (type === 'steps') {
-    return {
-      type: 'steps',
-      props: {
-        steps: [{ title: 'Step 1' }, { title: 'Step 2' }],
-      },
-      children: [
-        { type: 'grid-row', children: [] },
-        { type: 'grid-row', children: [] },
-      ],
-    }
-  }
   if (type === 'tabs') {
     return {
       type: 'tabs',
       props: { tabs: [{ title: 'Tab 1' }] },
-      children: [{ type: 'grid-row', children: [] }],
+      children: [{ type: 'card', children: [] }],
       style: { backgroundColor: '#f5f7fa' },
     }
   }
@@ -119,9 +95,6 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
     case 'date':
       item = { ...base, label: 'Date', style: { height: '40px' } }
       break
-    case 'date-range':
-      item = { ...base, label: 'Date Range', style: { height: '40px' } }
-      break
     case 'richtext':
       item = { ...base, label: 'Rich Text', style: { height: '120px' } }
       break
@@ -148,9 +121,6 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
       break
     case 'table':
       item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true } }
-      break
-    case 'pagination':
-      item = { type: 'pagination', props: { currentPage: 1, pageSize: 10, total: 0 } }
       break
     case 'search-list':
       item = {

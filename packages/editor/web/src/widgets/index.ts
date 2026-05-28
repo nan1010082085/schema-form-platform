@@ -31,22 +31,12 @@ import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-co
 import { FgQuadCol, createQuadColWidget, quadColConfig } from './quad-col'
 
 export function registerAllWidgets() {
-  // Container widgets
-  registerWidget({
-    name: formConfig.name,
-    displayName: formConfig.displayName,
-    type: 'form',
-    group: 'container',
-    component: FgForm,
-    create: createFormWidget,
-    config: formConfig,
-  })
-
+  // Layout widgets (结构布局)
   registerWidget({
     name: cardConfig.name,
     displayName: cardConfig.displayName,
     type: 'card',
-    group: 'container',
+    group: 'layout',
     component: FgCard,
     create: createCardWidget,
     config: cardConfig,
@@ -56,10 +46,81 @@ export function registerAllWidgets() {
     name: tabsConfig.name,
     displayName: tabsConfig.displayName,
     type: 'tabs',
-    group: 'container',
+    group: 'layout',
     component: FgTabs,
     create: createTabsWidget,
     config: tabsConfig,
+  })
+
+  registerWidget({
+    name: singleColConfig.name,
+    displayName: singleColConfig.displayName,
+    type: 'single-col',
+    group: 'layout',
+    component: FgSingleCol,
+    create: createSingleColWidget,
+    config: singleColConfig,
+  })
+
+  registerWidget({
+    name: doubleColConfig.name,
+    displayName: doubleColConfig.displayName,
+    type: 'double-col',
+    group: 'layout',
+    component: FgDoubleCol,
+    create: createDoubleColWidget,
+    config: doubleColConfig,
+  })
+
+  registerWidget({
+    name: tripleColConfig.name,
+    displayName: tripleColConfig.displayName,
+    type: 'triple-col',
+    group: 'layout',
+    component: FgTripleCol,
+    create: createTripleColWidget,
+    config: tripleColConfig,
+  })
+
+  registerWidget({
+    name: quadColConfig.name,
+    displayName: quadColConfig.displayName,
+    type: 'quad-col',
+    group: 'layout',
+    component: FgQuadCol,
+    create: createQuadColWidget,
+    config: quadColConfig,
+  })
+
+  registerWidget({
+    name: dividerConfig.name,
+    displayName: dividerConfig.displayName,
+    type: 'divider',
+    group: 'layout',
+    component: FgDivider,
+    create: createDividerWidget,
+    config: dividerConfig,
+  })
+
+  registerWidget({
+    name: spacerConfig.name,
+    displayName: spacerConfig.displayName,
+    type: 'spacer',
+    group: 'layout',
+    component: FgSpacer,
+    create: createSpacerWidget,
+    config: spacerConfig,
+  })
+
+  // Container widgets (容器)
+  registerWidget({
+    name: formConfig.name,
+    displayName: formConfig.displayName,
+    type: 'form',
+    group: 'container',
+    component: FgForm,
+    create: createFormWidget,
+    config: formConfig,
   })
 
   registerWidget({
@@ -72,48 +133,7 @@ export function registerAllWidgets() {
     config: dialogConfig,
   })
 
-  registerWidget({
-    name: singleColConfig.name,
-    displayName: singleColConfig.displayName,
-    type: 'single-col',
-    group: 'container',
-    component: FgSingleCol,
-    create: createSingleColWidget,
-    config: singleColConfig,
-  })
-
-  registerWidget({
-    name: doubleColConfig.name,
-    displayName: doubleColConfig.displayName,
-    type: 'double-col',
-    group: 'container',
-    component: FgDoubleCol,
-    create: createDoubleColWidget,
-    config: doubleColConfig,
-  })
-
-  registerWidget({
-    name: tripleColConfig.name,
-    displayName: tripleColConfig.displayName,
-    type: 'triple-col',
-    group: 'container',
-    component: FgTripleCol,
-    create: createTripleColWidget,
-    config: tripleColConfig,
-  })
-
-  registerWidget({
-    name: quadColConfig.name,
-    displayName: quadColConfig.displayName,
-    type: 'quad-col',
-    group: 'container',
-    component: FgQuadCol,
-    create: createQuadColWidget,
-    config: quadColConfig,
-  })
-
-  // Basic widgets
-  // Form widgets
+  // Form widgets (表单控件)
   registerWidget({
     name: inputConfig.name,
     displayName: inputConfig.displayName,
@@ -184,6 +204,11 @@ export function registerAllWidgets() {
     config: textareaConfig,
   })
 
+  registerWidget({ name: richtextConfig.name, displayName: richtextConfig.displayName, type: 'richtext', group: 'form', component: FgRichtext, create: createRichtextWidget, config: richtextConfig })
+  registerWidget({ name: uploadConfig.name, displayName: uploadConfig.displayName, type: 'upload', group: 'form', component: FgUpload, create: createUploadWidget, config: uploadConfig })
+  registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
+
+  // Static widgets (静态展示)
   registerWidget({
     name: titleConfig.name,
     displayName: titleConfig.displayName,
@@ -195,30 +220,21 @@ export function registerAllWidgets() {
   })
 
   registerWidget({
-    name: dividerConfig.name,
-    displayName: dividerConfig.displayName,
-    type: 'divider',
+    name: bannerConfig.name,
+    displayName: bannerConfig.displayName,
+    type: 'banner',
     group: 'static',
-    component: FgDivider,
-    create: createDividerWidget,
-    config: dividerConfig,
+    component: FgBanner,
+    create: createBannerWidget,
+    config: bannerConfig,
   })
 
-  registerWidget({
-    name: spacerConfig.name,
-    displayName: spacerConfig.displayName,
-    type: 'spacer',
-    group: 'static',
-    component: FgSpacer,
-    create: createSpacerWidget,
-    config: spacerConfig,
-  })
-
+  // Action widgets (操作按钮)
   registerWidget({
     name: toolbarButtonsConfig.name,
     displayName: toolbarButtonsConfig.displayName,
     type: 'toolbar-buttons',
-    group: 'basic',
+    group: 'action',
     component: FgToolbarButtons,
     create: createToolbarButtonsWidget,
     config: toolbarButtonsConfig,
@@ -228,30 +244,19 @@ export function registerAllWidgets() {
     name: buttonConfig.name,
     displayName: buttonConfig.displayName,
     type: 'button',
-    group: 'basic',
+    group: 'action',
     component: FgButton,
     create: createButtonWidget,
     config: buttonConfig,
   })
 
-  registerWidget({
-    name: tableConfig.name,
-    displayName: tableConfig.displayName,
-    type: 'table',
-    group: 'table',
-    component: FgTable,
-    create: createTableWidget,
-    config: tableConfig,
-  })
+  // Business widgets (业务组件)
+  registerWidget({ name: treeLayoutConfig.name, displayName: treeLayoutConfig.displayName, type: 'tree-layout', group: 'business', component: FgTreeLayout, create: createTreeLayoutWidget, config: treeLayoutConfig })
+  registerWidget({ name: fileListConfig.name, displayName: fileListConfig.displayName, type: 'file-list', group: 'business', component: FgFileList, create: createFileListWidget, config: fileListConfig })
+  registerWidget({ name: transferConfig.name, displayName: transferConfig.displayName, type: 'transfer', group: 'business', component: FgTransfer, create: createTransferWidget, config: transferConfig })
 
-  // New widgets
-  registerWidget({ name: richtextConfig.name, displayName: richtextConfig.displayName, type: 'richtext', group: 'form', component: FgRichtext, create: createRichtextWidget, config: richtextConfig })
-  registerWidget({ name: uploadConfig.name, displayName: uploadConfig.displayName, type: 'upload', group: 'form', component: FgUpload, create: createUploadWidget, config: uploadConfig })
-  registerWidget({ name: bannerConfig.name, displayName: bannerConfig.displayName, type: 'banner', group: 'static', component: FgBanner, create: createBannerWidget, config: bannerConfig })
-  registerWidget({ name: treeLayoutConfig.name, displayName: treeLayoutConfig.displayName, type: 'tree-layout', group: 'basic', component: FgTreeLayout, create: createTreeLayoutWidget, config: treeLayoutConfig })
-  registerWidget({ name: dateTimeSlotConfig.name, displayName: dateTimeSlotConfig.displayName, type: 'date-time-slot', group: 'form', component: FgDateTimeSlot, create: createDateTimeSlotWidget, config: dateTimeSlotConfig })
-  registerWidget({ name: fileListConfig.name, displayName: fileListConfig.displayName, type: 'file-list', group: 'basic', component: FgFileList, create: createFileListWidget, config: fileListConfig })
-  registerWidget({ name: transferConfig.name, displayName: transferConfig.displayName, type: 'transfer', group: 'basic', component: FgTransfer, create: createTransferWidget, config: transferConfig })
+  // Table widgets (表格)
+  registerWidget({ name: tableConfig.name, displayName: tableConfig.displayName, type: 'table', group: 'table', component: FgTable, create: createTableWidget, config: tableConfig })
   registerWidget({ name: searchListConfig.name, displayName: searchListConfig.displayName, type: 'search-list', group: 'table', component: FgSearchList, create: createSearchListWidget, config: searchListConfig })
   registerWidget({ name: editableTableConfig.name, displayName: editableTableConfig.displayName, type: 'editable-table', group: 'table', component: FgEditableTable, create: createEditableTableWidget, config: editableTableConfig })
 }

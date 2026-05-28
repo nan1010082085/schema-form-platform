@@ -118,12 +118,12 @@ export function buildSchemaTree(schema: PartialWidget[]): SchemaTreeNode[] {
   function walk(items: PartialWidget[], parentPath: number[]): SchemaTreeNode[] {
     return items.map((item, index) => {
       const path = [...parentPath, index]
-      const isContainer = CONTAINER_TYPES.has(item.type) || (Array.isArray(item.children) && item.children.length > 0 && ['grid-row', 'grid-col', 'steps', 'tabs'].includes(item.type))
+      const isContainer = CONTAINER_TYPES.has(item.type) || (Array.isArray(item.children) && item.children.length > 0 && item.type === 'tabs')
       const label = item.label || item.field || item.type
       return {
         id: path.join('-'),
         path,
-        type: item.type,
+        type: item.type as SchemaType,
         label,
         field: item.field,
         isContainer,
@@ -138,7 +138,7 @@ export function buildSchemaTree(schema: PartialWidget[]): SchemaTreeNode[] {
  * Check if a schema item is a container type that can hold children.
  */
 export function isContainerType(item: PartialWidget): boolean {
-  return CONTAINER_TYPES.has(item.type) && Array.isArray(item.children)
+  return CONTAINER_TYPES.has(item.type as SchemaType) && Array.isArray(item.children)
 }
 
 /**
@@ -147,8 +147,6 @@ export function isContainerType(item: PartialWidget): boolean {
 function getDefaultContainerLabel(type: SchemaType): string {
   switch (type) {
     case 'card': return 'Card'
-    case 'page': return 'Page'
-    case 'toolbar': return 'Toolbar'
     default: return type
   }
 }

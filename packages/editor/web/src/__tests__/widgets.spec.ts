@@ -168,10 +168,10 @@ describe('Widget Registry & Loading', () => {
       expect(w.group).toBe('container')
     }
 
-    const basics = getWidgetsByGroup('basic')
+    const basics = getWidgetsByGroup('form')
     expect(basics.length).toBeGreaterThanOrEqual(1)
     for (const w of basics) {
-      expect(w.group).toBe('basic')
+      expect(w.group).toBe('form')
     }
   })
 
@@ -274,8 +274,7 @@ describe('Widget Default Schema', () => {
   ]
 
   const layoutTypes: SchemaType[] = [
-    'grid-row', 'grid-col', 'card', 'page', 'toolbar',
-    'title', 'divider', 'spacer', 'steps', 'tabs', 'dialog',
+    'card', 'title', 'divider', 'spacer', 'tabs', 'dialog',
     'tree-layout',
   ]
 
@@ -319,18 +318,6 @@ describe('Widget Default Schema', () => {
       })
     })
   }
-
-  it('grid-row has children array', () => {
-    const schema = createDefaultSchema('grid-row')
-    expect(Array.isArray(schema.children)).toBe(true)
-    expect(schema.children).toHaveLength(0)
-  })
-
-  it('grid-col has span and children', () => {
-    const schema = createDefaultSchema('grid-col')
-    expect(schema.span).toBe(12)
-    expect(Array.isArray(schema.children)).toBe(true)
-  })
 
   it('card has label, children, and style', () => {
     const schema = createDefaultSchema('card')

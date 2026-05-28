@@ -776,6 +776,8 @@ function handleClearCanvas() {
   &__left {
     width: 260px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
     background: var(--el-bg-color);
     border-right: 1px solid var(--el-border-color-lighter);
     overflow: hidden;
@@ -806,6 +808,8 @@ function handleClearCanvas() {
   &__right {
     width: 300px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
     background: var(--el-bg-color);
     border-left: 1px solid var(--el-border-color-lighter);
     overflow: hidden;

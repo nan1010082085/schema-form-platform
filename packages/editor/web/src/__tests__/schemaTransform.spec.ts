@@ -9,7 +9,7 @@
  * - ungroupContainer extracts children
  * - moveItem reorders correctly
  * - buildSchemaTree generates correct tree structure for flat and nested schema
- * - isContainerType identifies card/page/toolbar correctly
+ * - isContainerType identifies card correctly
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -194,10 +194,10 @@ describe('schemaTransform', () => {
       expect(card.children![1].field).toBe('c')
     })
 
-    it('wraps selected items in a page container', () => {
-      const result = groupAsContainer(schema, [0, 1], 'page')
+    it('wraps selected items in a card container', () => {
+      const result = groupAsContainer(schema, [0, 1], 'card')
       expect(result).toHaveLength(3)
-      expect(result[0].type).toBe('page')
+      expect(result[0].type).toBe('card')
       expect(result[0].children).toHaveLength(2)
     })
 
@@ -350,19 +350,6 @@ describe('schemaTransform', () => {
       expect(cardNode.children[0].path).toEqual([1, 0])
     })
 
-    it('identifies grid-row with children as container', () => {
-      const schema: PartialWidget[] = [
-        {
-          type: 'grid-row',
-          children: [
-            { type: 'grid-col', span: 12, children: [] },
-          ],
-        },
-      ]
-      const tree = buildSchemaTree(schema)
-      expect(tree[0].isContainer).toBe(true)
-    })
-
     it('uses field as fallback label when label is missing', () => {
       const schema: PartialWidget[] = [
         { type: 'input', field: 'customField' },
@@ -394,22 +381,6 @@ describe('schemaTransform', () => {
     it('does not identify card without children as container', () => {
       const item: PartialWidget = { type: 'card' }
       expect(isContainerType(item)).toBe(false)
-    })
-
-    it('identifies page as container', () => {
-      const item: PartialWidget = {
-        type: 'page',
-        children: [],
-      }
-      expect(isContainerType(item)).toBe(true)
-    })
-
-    it('identifies toolbar as container', () => {
-      const item: PartialWidget = {
-        type: 'toolbar',
-        children: [],
-      }
-      expect(isContainerType(item)).toBe(true)
     })
 
     it('does not identify input as container', () => {

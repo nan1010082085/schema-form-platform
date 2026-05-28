@@ -11,11 +11,12 @@ import { getWidgetsByGroup, type WidgetRegistryItem } from '@/widgets/registry'
 import type { SchemaType } from '@/widgets/base/types'
 
 const GROUP_LABELS: Record<string, string> = {
-  container: '容器部件',
-  basic: '基础部件',
-  static: '静态部件',
+  layout: '布局部件',
   form: '表单部件',
+  container: '容器部件',
   table: '表格部件',
+  action: '操作部件',
+  static: '静态部件',
   business: '业务部件',
 }
 
@@ -127,7 +128,8 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
 .panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .search {

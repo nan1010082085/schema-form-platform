@@ -40,12 +40,11 @@ function generateSchema(fieldCount: number, withContainer = true): PartialWidget
   const fields: PartialWidget[] = []
   for (let i = 0; i < fieldCount; i++) {
     fields.push({
-      type: 'grid-col', span: 12,
-      children: [{ type: 'input', field: `field_${i}`, label: `字段 ${i + 1}` }],
+      type: 'input', field: `field_${i}`, label: `字段 ${i + 1}`,
     })
   }
   if (!withContainer) return fields
-  return [{ type: 'page', children: [{ type: 'card', children: [{ type: 'grid-row', children: fields }] }] }]
+  return [{ type: 'card', children: fields }]
 }
 
 function generateWithLinkage(count: number): PartialWidget[] {
@@ -54,14 +53,11 @@ function generateWithLinkage(count: number): PartialWidget[] {
   ]
   for (let i = 0; i < count; i++) {
     items.push({
-      type: 'grid-col', span: 12,
-      children: [{
-        type: 'input', field: `linked_${i}`, label: `联动字段 ${i + 1}`,
-        linkages: [{ type: 'visible', watchFields: ['trigger'], condition: 'values.trigger === "a"' }],
-      }],
+      type: 'input', field: `linked_${i}`, label: `联动字段 ${i + 1}`,
+      linkages: [{ type: 'visible', watchFields: ['trigger'], condition: 'values.trigger === "a"' }],
     })
   }
-  return [{ type: 'page', children: [{ type: 'card', children: [{ type: 'grid-row', children: items }] }] }]
+  return [{ type: 'card', children: items }]
 }
 
 describe('Performance benchmarks', () => {

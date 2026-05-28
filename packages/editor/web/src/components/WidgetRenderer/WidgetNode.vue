@@ -15,7 +15,7 @@
  */
 import { computed, inject, provide, ref, onMounted, onUnmounted } from 'vue'
 import type { ComputedRef, ComponentPublicInstance } from 'vue'
-import type { Widget, PartialWidget, SchemaType, LinkageState } from '../../widgets/base/types'
+import type { Widget, PartialWidget, LinkageState } from '../../widgets/base/types'
 import type { FormData } from './types'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import { EVENT_CONTEXT_KEY, FORM_GRID_LINKAGE_KEY, DIALOG_REGISTRY_KEY } from './types'
@@ -32,25 +32,25 @@ const props = defineProps<{
 
 const compMap = getComponentMap()
 
-const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
+const CONTAINER_TYPES: ReadonlySet<string> = new Set([
   'form', 'card', 'tabs', 'dialog',
   'single-col', 'double-col', 'triple-col', 'quad-col',
 ])
 
 /** 表单类组件（支持 change 事件） */
-const FORM_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
+const FORM_COMPONENT_TYPES: ReadonlySet<string> = new Set([
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'richtext', 'upload',
   'date-time-slot',
 ])
 
 /** 输入类组件（支持 focus/blur 事件） */
-const INPUT_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
+const INPUT_COMPONENT_TYPES: ReadonlySet<string> = new Set([
   'input', 'select', 'number', 'textarea', 'richtext',
 ])
 
 /** 可点击组件（支持 click 事件） */
-const CLICKABLE_TYPES: ReadonlySet<SchemaType> = new Set([
+const CLICKABLE_TYPES: ReadonlySet<string> = new Set([
   'button', 'toolbar-buttons', 'title', 'divider', 'spacer', 'banner',
 ])
 

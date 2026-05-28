@@ -115,6 +115,7 @@ function handleClose() {
   >
     <div :class="$style.body">
       <!-- URL -->
+      <!-- URL -->
       <div :class="$style.row">
         <label :class="$style.label">请求地址</label>
         <el-input
@@ -208,6 +209,14 @@ function handleClose() {
   gap: 12px;
 }
 
+/* 统一表单控件高度 32px（与 EventConfigDialog 对齐） */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -218,15 +227,15 @@ function handleClose() {
   width: 80px;
   flex-shrink: 0;
   font-size: 12px;
-  color: #606266;
+  color: var(--text-color-secondary);
   line-height: 32px;
 }
 
 .section {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--border-color-light);
   border-radius: 6px;
   padding: 10px;
-  background: #fafbfc;
+  background: var(--bg-color-gray-light);
 }
 
 .sectionHeader {
@@ -239,7 +248,7 @@ function handleClose() {
 .sectionTitle {
   font-size: 12px;
   font-weight: 500;
-  color: #606266;
+  color: var(--text-color-secondary);
 }
 
 .headerRow {
