@@ -9,6 +9,7 @@ vi.mock('@/composables/useLogger', () => ({
     rule: vi.fn(),
     event: vi.fn(),
     debug: vi.fn(),
+    api: vi.fn(),
   })),
 }))
 
