@@ -59,12 +59,32 @@ const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 const leftPanelVisible = ref(true)
 const rightPanelVisible = ref(true)
 const showLogPanel = ref(false)
+const showCodePanel = ref(false)
 
 // ================================================================
 // Mode
 // ================================================================
 
 const mode = computed(() => editorStore.mode)
+
+/** Store 完整数据快照（供 code 面板展示） */
+const storeSnapshot = computed(() => {
+  const data = {
+    board: {
+      id: boardStore.id,
+      name: boardStore.name,
+      status: boardStore.status,
+      canvas: boardStore.canvas,
+    },
+    widgets: widgetStore.widgets,
+    editor: {
+      mode: editorStore.mode,
+      selectedId: editorStore.selectedId,
+      isDirty: editorStore.isDirty,
+    },
+  }
+  return JSON.stringify(data, null, 2)
+})
 
 // ================================================================
 // Canvas size presets
@@ -447,7 +467,7 @@ function handleClearCanvas() {
           </button>
         </div>
 
-        <!-- Log panel toggle (preview only) -->
+        <!-- Debug panels toggle (preview only) -->
         <template v-if="mode === 'preview'">
           <button
             class="editor-view__icon-btn"
@@ -456,6 +476,18 @@ function handleClearCanvas() {
             @click="showLogPanel = !showLogPanel"
           >
             <el-icon :size="14"><Document /></el-icon>
+          </button>
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': showCodePanel }"
+            title="Store 数据"
+            @click="showCodePanel = !showCodePanel"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="5 4 1 8 5 12" />
+              <polyline points="11 4 15 8 11 12" />
+              <line x1="9" y1="2" x2="7" y2="14" />
+            </svg>
           </button>
           <div class="editor-view__divider" />
         </template>
@@ -525,7 +557,7 @@ function handleClearCanvas() {
         />
       </div>
 
-      <!-- Center: canvas + log panel -->
+      <!-- Center: canvas + debug panels -->
       <div class="editor-view__center">
         <div class="editor-view__canvas-scroll">
           <EditorCanvas
@@ -538,6 +570,16 @@ function handleClearCanvas() {
           />
         </div>
         <EventLogPanel v-if="mode === 'preview' && showLogPanel" />
+        <!-- Store 数据面板 -->
+        <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-panel">
+          <div class="editor-view__code-header">
+            <span class="editor-view__code-title">Store 数据</span>
+            <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
+          </div>
+          <div class="editor-view__code-scroll">
+            <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
+          </div>
+        </div>
       </div>
 
       <!-- Right panel -->
@@ -846,6 +888,45 @@ function handleClearCanvas() {
     background: var(--el-bg-color);
     border-left: 1px solid var(--el-border-color-lighter);
     overflow: hidden;
+  }
+
+  &__code-panel {
+    display: flex;
+    flex-direction: column;
+    height: 300px;
+    border-top: 1px solid var(--el-border-color-lighter);
+    background: var(--el-bg-color);
+  }
+
+  &__code-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    flex-shrink: 0;
+  }
+
+  &__code-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  &__code-scroll {
+    flex: 1;
+    overflow: auto;
+  }
+
+  &__code-pre {
+    margin: 0;
+    padding: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #303133;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 }
 </style>
