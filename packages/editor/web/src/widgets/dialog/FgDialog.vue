@@ -62,9 +62,13 @@ const microappUrl = computed(() => {
   const baseUrl = (widgetData.value.props?.microappBaseUrl as string) || window.location.origin
   return publishId ? `${baseUrl}/child/schemaForm/preview/${publishId}` : ''
 })
+const microappData = computed(() => ({
+  publishId: widgetData.value.props?.publishId as string,
+  baseUrl: (widgetData.value.props?.microappBaseUrl as string) || '',
+}))
 
-function handleMicroappLoad() {
-  logger.info('microapp loaded:', microappUrl.value)
+function handleMicroappDataChange(e: CustomEvent) {
+  logger.info('micro-app data change:', e.detail)
 }
 
 // ---- Provide form context（dialog 内部子组件使用） ----
@@ -133,14 +137,15 @@ async function handleCancel() {
 
   <!-- 预览/运行时模式 -->
   <template v-else>
-    <!-- 微应用模式 -->
+    <!-- 微应用模式（micro-app 框架） -->
     <div v-if="contentMode === 'microapp'" :class="styles.microappContainer">
-      <iframe
+      <micro-app
         v-if="microappUrl"
-        :src="microappUrl"
-        frameborder="0"
+        name="schema-form-dialog"
+        :url="microappUrl"
+        :data="microappData"
         :class="styles.microappIframe"
-        @load="handleMicroappLoad"
+        @datachange="handleMicroappDataChange"
       />
     </div>
 
