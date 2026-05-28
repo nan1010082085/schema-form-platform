@@ -19,6 +19,7 @@ export type BasicType =
   | 'richtext'
   | 'button'
   | 'upload'
+  | 'switch'
   | 'table'
   | 'search-list'
   | 'editable-table'
@@ -31,6 +32,8 @@ export type BasicType =
   | 'banner'
   | 'tree-layout'
   | 'date-time-slot'
+  | 'time-picker'
+  | 'cascader'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType
