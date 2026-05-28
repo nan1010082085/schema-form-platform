@@ -48,6 +48,12 @@ import { singleColConfig } from '@/widgets/single-col/config'
 import { doubleColConfig } from '@/widgets/double-col/config'
 import { tripleColConfig } from '@/widgets/triple-col/config'
 import { quadColConfig } from '@/widgets/quad-col/config'
+import { switchConfig } from '@/widgets/switch/config'
+import { cascaderConfig } from '@/widgets/cascader/config'
+import { timePickerConfig } from '@/widgets/time-picker/config'
+import { sliderConfig } from '@/widgets/slider/config'
+import { rateConfig } from '@/widgets/rate/config'
+import { colorPickerConfig } from '@/widgets/color-picker/config'
 
 // --- createDefaultSchema ---
 import { createDefaultSchema } from '@/utils/schemaDefaults'
@@ -73,6 +79,8 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
   'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot',
   'file-list', 'transfer',
   'search-list', 'editable-table',
+  'switch', 'cascader', 'time-picker',
+  'slider', 'rate', 'color-picker',
 ]
 
 const ALL_CONFIGS = [
@@ -106,6 +114,12 @@ const ALL_CONFIGS = [
   { name: 'double-col', config: doubleColConfig },
   { name: 'triple-col', config: tripleColConfig },
   { name: 'quad-col', config: quadColConfig },
+  { name: 'switch', config: switchConfig },
+  { name: 'cascader', config: cascaderConfig },
+  { name: 'time-picker', config: timePickerConfig },
+  { name: 'slider', config: sliderConfig },
+  { name: 'rate', config: rateConfig },
+  { name: 'color-picker', config: colorPickerConfig },
 ]
 
 // =====================================================================
@@ -118,9 +132,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 33 widget types', () => {
+  it('registers exactly 38 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(33)
+    expect(all).toHaveLength(38)
   })
 
   it('getComponentMap returns a component for every registered type', () => {

@@ -68,4 +68,8 @@ export const dialogConfig: WidgetConfig = {
     { id: 'cancel', label: '取消按钮', description: '点击取消时触发' },
   ],
   configPanels: ['events', 'variables'],
+  receivableEvents: [
+    { name: 'open', description: '打开弹窗' },
+    { name: 'close', description: '关闭弹窗' },
+  ],
 }

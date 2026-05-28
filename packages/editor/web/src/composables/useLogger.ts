@@ -8,6 +8,14 @@ const COLORS = {
   api: 'color: #67c23a; font-weight: bold',
 } as const
 
+// 日志收集器 — 供 UI 面板消费
+type LogCollector = (scope: string, level: 'event' | 'rule' | 'api', args: unknown[]) => void
+let _collector: LogCollector | null = null
+
+export function setLogCollector(fn: LogCollector) {
+  _collector = fn
+}
+
 export function useLogger(scope: string) {
   const isDev = import.meta.env.DEV
 
@@ -24,13 +32,18 @@ export function useLogger(scope: string) {
     }
   }
 
+  function logAndCollect(level: 'event' | 'rule' | 'api', color: string, ...args: unknown[]) {
+    log('info', color, ...args)
+    _collector?.(scope, level, args)
+  }
+
   return {
     info: (...args: unknown[]) => log('info', '', ...args),
     warn: (...args: unknown[]) => log('warn', '', ...args),
     error: (...args: unknown[]) => log('error', '', ...args),
     debug: (...args: unknown[]) => log('debug', '', ...args),
-    event: (...args: unknown[]) => log('info', COLORS.event, ...args),
-    rule: (...args: unknown[]) => log('info', COLORS.rule, ...args),
-    api: (...args: unknown[]) => log('info', COLORS.api, ...args),
+    event: (...args: unknown[]) => logAndCollect('event', COLORS.event, ...args),
+    rule: (...args: unknown[]) => logAndCollect('rule', COLORS.rule, ...args),
+    api: (...args: unknown[]) => logAndCollect('api', COLORS.api, ...args),
   }
 }

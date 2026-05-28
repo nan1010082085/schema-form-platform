@@ -33,6 +33,10 @@ export const tableConfig: WidgetConfig = {
     { key: 'tableData', type: 'array', description: '表格数据' },
   ],
   configPanels: ['api', 'variables'],
+  receivableEvents: [
+    { name: 'refresh', description: '重新加载表格数据' },
+    { name: 'set-data', description: '设置表格数据', params: { data: '数据数组' } },
+  ],
   propertyPanel: {
     basic: ['label'],
     style: [],

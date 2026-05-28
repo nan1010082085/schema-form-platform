@@ -7,6 +7,7 @@
 import type { Widget, SchemaEventAction, FormFieldValue } from '../widgets/base/types'
 import { useLogger } from '@/composables/useLogger'
 import { checkSecurity } from '@/utils/expression'
+import { apiClient } from '@/utils/apiClient'
 
 const logger = useLogger('EventEngine')
 
@@ -48,10 +49,10 @@ export interface EventExecutionContext {
  * @param action - 事件动作定义
  * @param ctx - 执行上下文
  */
-export function executeEventAction(
+export async function executeEventAction(
   action: SchemaEventAction,
   ctx: EventExecutionContext,
-): void {
+): Promise<void> {
   switch (action.type) {
     case 'show': {
       if (!action.target) break
@@ -143,11 +144,8 @@ export function executeEventAction(
     case 'copy': {
       if (action.text) {
         const text = resolveTextValue(action.text, ctx)
-        navigator.clipboard.writeText(text).then(() => {
-          logger.event('copy:', text)
-        }).catch((err) => {
-          logger.warn('copy failed:', err)
-        })
+        await navigator.clipboard.writeText(text)
+        logger.event('copy:', text)
       }
       break
     }
@@ -160,13 +158,17 @@ export function executeEventAction(
     }
     case 'api': {
       if (action.apiUrl) {
-        logger.event(`api: ${action.apiMethod ?? 'post'} ${action.apiUrl}`)
-        // API 调用由上层实现（actionExecutor 或 WidgetRenderer）
-        ctx.emit('api-call', {
-          url: action.apiUrl,
-          method: action.apiMethod ?? 'post',
-          params: action.apiParams === 'formData' ? ctx.getFormData() : action.apiParams,
-        })
+        const method = action.apiMethod ?? 'post'
+        const params = action.apiParams === 'formData' ? ctx.getFormData() : action.apiParams
+        logger.event(`api: ${method} ${action.apiUrl}`)
+        try {
+          const response = await apiClient.requestUrl<unknown>(method, action.apiUrl, params)
+          logger.event(`api success: ${action.apiUrl}`, response)
+          ctx.emit('api-success', { url: action.apiUrl, response })
+        } catch (err) {
+          logger.warn(`api error: ${action.apiUrl}`, err)
+          ctx.emit('api-error', { url: action.apiUrl, error: String(err) })
+        }
       }
       break
     }
@@ -265,7 +267,11 @@ export async function triggerWidgetEvent(
 
     // 执行动作链
     for (const action of event.actions) {
-      executeEventAction(action, ctx)
+      try {
+        await executeEventAction(action, ctx)
+      } catch (err) {
+        logger.warn(`action "${action.type}" failed:`, err)
+      }
     }
   }
 }

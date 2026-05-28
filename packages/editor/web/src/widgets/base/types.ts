@@ -20,6 +20,8 @@ export type BasicType =
   | 'button'
   | 'upload'
   | 'switch'
+  | 'slider'
+  | 'rate'
   | 'table'
   | 'search-list'
   | 'editable-table'
@@ -34,6 +36,10 @@ export type BasicType =
   | 'date-time-slot'
   | 'time-picker'
   | 'cascader'
+  | 'rate'
+  | 'color-picker'
+  | 'tag-input'
+  | 'autocomplete'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType

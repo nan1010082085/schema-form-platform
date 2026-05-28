@@ -41,7 +41,7 @@ const CONTAINER_TYPES: ReadonlySet<string> = new Set([
 const FORM_COMPONENT_TYPES: ReadonlySet<string> = new Set([
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'richtext', 'upload',
-  'date-time-slot', 'time-picker', 'cascader', 'switch',
+  'date-time-slot', 'time-picker', 'cascader', 'switch', 'slider', 'rate', 'color-picker', 'tag-input', 'autocomplete',
 ])
 
 /** 输入类组件（支持 focus/blur 事件） */

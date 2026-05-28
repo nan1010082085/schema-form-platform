@@ -13,6 +13,11 @@ import { describe, it, expect, vi } from 'vitest'
 import { reactive } from 'vue'
 import { executeEventAction, triggerWidgetEvent, type EventExecutionContext } from '@/engine/eventEngine'
 import { useLinkage } from '@/composables/useLinkage'
+
+const mockRequestUrl = vi.fn()
+vi.mock('@/utils/apiClient', () => ({
+  apiClient: { requestUrl: (...args: unknown[]) => mockRequestUrl(...args) },
+}))
 import type { PartialWidget, Widget, SchemaEventAction } from '@/widgets/base/types'
 import type { FormData } from '@/components/WidgetRenderer/types'
 
@@ -560,23 +565,21 @@ describe('三大配置系统 + 变量系统 交互集成', () => {
       expect(triggerEvent).toHaveBeenCalledWith('table1', 'refresh')
     })
 
-    it('api 动作发送请求', () => {
+    it('api 动作发送请求', async () => {
+      mockRequestUrl.mockResolvedValue({ success: true })
       const ctx = createCtx({
         getFormData: vi.fn().mockReturnValue({ name: 'test' }),
       })
 
-      executeEventAction({
+      await executeEventAction({
         type: 'api',
         apiUrl: '/api/save',
         apiMethod: 'post',
         apiParams: 'formData',
       }, ctx)
 
-      expect(ctx.emit).toHaveBeenCalledWith('api-call', {
-        url: '/api/save',
-        method: 'post',
-        params: { name: 'test' },
-      })
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/api/save', { name: 'test' })
+      expect(ctx.emit).toHaveBeenCalledWith('api-success', { url: '/api/save', response: { success: true } })
     })
 
     it('navigate 动作触发路由跳转', () => {
