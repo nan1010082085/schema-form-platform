@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import type { App as VueApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -10,18 +11,40 @@ import router from './router'
 import { configureApiClient } from './utils/apiClient'
 import { registerAllWidgets } from './widgets'
 
-const app = createApp(App)
-const pinia = createPinia()
+let app: VueApp | null = null
 
-app.use(pinia)
-app.use(router)
-app.use(ElementPlus)
-registerAllWidgets()
+function render(props?: Record<string, unknown>) {
+  const container = props?.container as HTMLElement | undefined
+  app = createApp(App)
+  const pinia = createPinia()
 
-// 初始化 Schema API 客户端
-configureApiClient({
-  baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
-  useMock: import.meta.env.VITE_USE_MOCK === 'true',
-})
+  app.use(pinia)
+  app.use(router)
+  app.use(ElementPlus)
+  registerAllWidgets()
 
-app.mount('#app')
+  configureApiClient({
+    baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
+    useMock: import.meta.env.VITE_USE_MOCK === 'true',
+  })
+
+  app.mount(container ? container.querySelector('#app') || container : '#app')
+}
+
+// Standalone mode — render directly
+if (!window.__MICRO_APP_ENVIRONMENT__) {
+  render()
+}
+
+// micro-app lifecycle hooks
+export async function bootstrap() {}
+
+export async function mount(props: Record<string, unknown>) {
+  render(props)
+}
+
+export async function unmount() {
+  app?.unmount()
+  app = null
+  router.replace('/')
+}

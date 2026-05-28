@@ -13,6 +13,7 @@ import type { FormData } from '@/components/WidgetRenderer'
 import type { PartialWidget } from '@/widgets/base/types'
 import { useAppStore } from '@/stores/app'
 import { fetchPublishedSchema } from '@/utils/apiClient'
+import { sendToHost } from '@/microapp/bridge'
 
 const route = useRoute()
 const formRef = ref<InstanceType<typeof WidgetRenderer>>()
@@ -72,19 +73,19 @@ function handleMessage(event: MessageEvent) {
 
     case 'fg:get-data':
       if (formRef.value) {
-        window.parent?.postMessage({
+        sendToHost({
           type: 'fg:data-response',
           id: schemaId.value,
           data: formRef.value.getFormData(),
-        }, '*')
+        })
       }
       break
 
     case 'fg:validate':
       formRef.value?.validate().then(() => {
-        window.parent?.postMessage({ type: 'fg:validate-response', id: schemaId.value, valid: true }, '*')
+        sendToHost({ type: 'fg:validate-response', id: schemaId.value, valid: true })
       }).catch(() => {
-        window.parent?.postMessage({ type: 'fg:validate-response', id: schemaId.value, valid: false }, '*')
+        sendToHost({ type: 'fg:validate-response', id: schemaId.value, valid: false })
       })
       break
 
@@ -95,11 +96,11 @@ function handleMessage(event: MessageEvent) {
 }
 
 function handleSubmit(data: FormData) {
-  window.parent?.postMessage({
+  sendToHost({
     type: 'fg:submit',
     id: schemaId.value,
     data,
-  }, '*')
+  })
 }
 
 onMounted(() => window.addEventListener('message', handleMessage))
