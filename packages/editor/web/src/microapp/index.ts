@@ -35,7 +35,7 @@ import { createPinia, type Pinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
-import { configureApiClient, fetchPublishedSchema, ApiError } from '@/utils/apiClient'
+import { configureApiClient, fetchPublishedSchema } from '@/utils/apiClient'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
 import SchemaRender from '@/components/WidgetRenderer/SchemaRender.vue'
@@ -132,8 +132,45 @@ function schemaToWidgets(schemaItems: Array<Record<string, unknown>>): Widget[] 
 // 渲染应用
 // ============================================================
 
-/** 创建 Vue 应用并挂载 SchemaRender */
-function createMicroappVueApp(container: HTMLElement, widgets: Widget[]): void {
+export interface CreateMicroappOptions {
+  container: HTMLElement
+  publishId?: string
+  baseUrl?: string
+  token?: string
+  /** 已转换好的 widgets（跳过 fetchSchema） */
+  widgets?: Widget[]
+}
+
+/** 创建 Vue 应用并挂载 SchemaRender，返回 formApi */
+export async function createMicroappVueApp(options: CreateMicroappOptions): Promise<MicroappApi> {
+  const { container, publishId, baseUrl, token, widgets: presetWidgets } = options
+
+  // 清理已有实例
+  destroyMicroapp()
+
+  // 配置 API 客户端
+  if (baseUrl || token) {
+    configureApiClient({
+      baseUrl,
+      getToken: token ? () => token! : undefined,
+    })
+  }
+
+  // 获取 widgets
+  let widgets: Widget[]
+  if (presetWidgets) {
+    widgets = presetWidgets
+  } else if (publishId) {
+    const publishedSchema = await fetchPublishedSchema(publishId)
+    if (!publishedSchema) {
+      throw new Error(`[Microapp] Published schema not found: ${publishId}`)
+    }
+    widgets = schemaToWidgets(publishedSchema.json as unknown as Array<Record<string, unknown>>)
+  } else {
+    throw new Error('[Microapp] Either widgets or publishId is required')
+  }
+
+  // 创建 Vue 应用
   app = createApp({
     setup() {
       return () =>
@@ -158,77 +195,31 @@ function createMicroappVueApp(container: HTMLElement, widgets: Widget[]): void {
   })
   widgetStore.loadWidgets(widgets)
 
+  hostContainer = container
   app.mount(container)
+
+  // 构建 formApi
+  const formApi = buildFormApi(widgetStore)
+
+  // micro-app 框架：暴露方法给主应用
+  if (typeof window !== 'undefined') {
+    ;(window as unknown as Record<string, unknown>).__MICRO_APP_EXPOSE_METHODS__ = formApi
+  }
+
+  // postMessage 通信（iframe 场景）
+  initMicroappGuest(formApi)
+
+  return formApi
 }
 
 // ============================================================
 // 主入口
 // ============================================================
 
-/**
- * 加载并渲染 microapp。
- *
- * 流程：
- * 1. 解析容器 DOM 元素
- * 2. 配置 API 客户端
- * 3. 通过 publishId 从后端获取已发布的 Schema
- * 4. 将 Schema 转换为 Widget 树
- * 5. 创建 Vue 应用并挂载到容器
- * 6. 初始化 postMessage 通信
- * 7. 返回 formApi 供外部调用
- *
- * @param config - Microapp 配置
- * @returns MicroappApi 表单操作接口
- */
-export async function loadMicroapp(config: MicroappConfig): Promise<MicroappApi> {
-  // 1. 解析容器
-  const container = typeof config.container === 'string'
-    ? document.querySelector(config.container) as HTMLElement
-    : config.container
-
-  if (!container) {
-    throw new Error(`[Microapp] Container not found: ${config.container}`)
-  }
-
-  // 2. 清理已有实例
-  destroyMicroapp()
-
-  // 3. 配置 API 客户端
-  if (config.baseUrl || config.token) {
-    configureApiClient({
-      baseUrl: config.baseUrl,
-      getToken: config.token ? () => config.token! : undefined,
-    })
-  }
-
-  // 4. 获取已发布 Schema
-  let publishedSchema
-  try {
-    publishedSchema = await fetchPublishedSchema(config.publishId)
-  } catch (err) {
-    if (err instanceof ApiError) {
-      throw new Error(`[Microapp] Failed to fetch schema (publishId=${config.publishId}): ${err.message}`)
-    }
-    throw err
-  }
-
-  if (!publishedSchema) {
-    throw new Error(`[Microapp] Published schema not found: ${config.publishId}`)
-  }
-
-  // 5. Schema → Widget 树
-  const widgets = schemaToWidgets(publishedSchema.json as unknown as Array<Record<string, unknown>>)
-
-  // 6. 挂载 Vue 应用
-  hostContainer = container
-  createMicroappVueApp(container, widgets)
-
-  // 7. 构建 formApi
-  const widgetStore = useWidgetStore(pinia!)
-
-  const formApi: MicroappApi = {
+/** 构建 formApi — 从 widgetStore 读写数据 */
+function buildFormApi(widgetStore: ReturnType<typeof useWidgetStore>): MicroappApi {
+  const api: MicroappApi = {
     getValues() {
-      // 收集所有有 field 的 widget 的值
       const values: Record<string, unknown> = {}
       function walk(list: Widget[]) {
         for (const w of list) {
@@ -255,8 +246,7 @@ export async function loadMicroapp(config: MicroappConfig): Promise<MicroappApi>
     },
 
     async validate() {
-      // 基础校验：检查必填字段
-      const values = formApi.getValues()
+      const values = api.getValues()
       function walkRules(list: Widget[]): boolean {
         for (const w of list) {
           if (w.validationRules) {
@@ -277,12 +267,12 @@ export async function loadMicroapp(config: MicroappConfig): Promise<MicroappApi>
     },
 
     async submit() {
-      const valid = await formApi.validate()
+      const valid = await api.validate()
       if (!valid) {
         emitToHost('validationError', { message: 'Validation failed' })
         throw new Error('[Microapp] Validation failed')
       }
-      const values = formApi.getValues()
+      const values = api.getValues()
       emitToHost('submitSuccess', values)
     },
 
@@ -290,11 +280,30 @@ export async function loadMicroapp(config: MicroappConfig): Promise<MicroappApi>
       destroyMicroapp()
     },
   }
+  return api
+}
 
-  // 8. 初始化 postMessage 通信
-  initMicroappGuest(formApi)
+/**
+ * 加载并渲染 microapp（UMD 方式）。
+ *
+ * 通过 <script> 标签加载 UMD 包后调用。
+ * 如果是 micro-app 框架加载，会自动调用 lifecycle.ts 的 mount。
+ */
+export async function loadMicroapp(config: MicroappConfig): Promise<MicroappApi> {
+  const container = typeof config.container === 'string'
+    ? document.querySelector(config.container) as HTMLElement
+    : config.container
 
-  return formApi
+  if (!container) {
+    throw new Error(`[Microapp] Container not found: ${config.container}`)
+  }
+
+  return createMicroappVueApp({
+    container,
+    publishId: config.publishId,
+    baseUrl: config.baseUrl,
+    token: config.token,
+  })
 }
 
 /**
