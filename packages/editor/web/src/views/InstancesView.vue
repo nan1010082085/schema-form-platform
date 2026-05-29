@@ -394,11 +394,21 @@ const isFiltered = computed(() =>
               </div>
             </div>
             <div class="fg-instances-card__actions">
-              <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)">编辑</el-button>
-              <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)">预览</el-button>
-              <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item)">发布</el-button>
-              <el-button size="small" text :icon="Download" @click="handleExport(item)">导出</el-button>
-              <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
+              <el-tooltip content="编辑" placement="top" :show-after="300">
+                <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)" />
+              </el-tooltip>
+              <el-tooltip content="预览" placement="top" :show-after="300">
+                <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)" />
+              </el-tooltip>
+              <el-tooltip content="发布" placement="top" :show-after="300">
+                <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item)" />
+              </el-tooltip>
+              <el-tooltip content="导出" placement="top" :show-after="300">
+                <el-button size="small" text :icon="Download" @click="handleExport(item)" />
+              </el-tooltip>
+              <el-tooltip content="删除" placement="top" :show-after="300">
+                <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)" />
+              </el-tooltip>
             </div>
           </div>
         </div>
