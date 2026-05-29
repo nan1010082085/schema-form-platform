@@ -10,7 +10,7 @@ export interface WidgetRegistryItem {
   /** 组件类型 */
   type: SchemaType
   /** 分组 */
-  group: 'layout' | 'form' | 'container' | 'table' | 'action' | 'static' | 'business'
+  group: 'layout' | 'form' | 'container' | 'table' | 'action' | 'static' | 'business' | 'chart'
   /** Vue 组件 */
   component: Component
   /** 创建 Widget 的工厂函数 */

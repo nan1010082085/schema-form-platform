@@ -40,6 +40,8 @@ export type BasicType =
   | 'color-picker'
   | 'tag-input'
   | 'autocomplete'
+  | 'bar-chart' | 'line-chart' | 'pie-chart' | 'scatter-chart'
+  | 'radar' | 'gauge' | 'heatmap' | 'funnel' | 'candlestick'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType
@@ -553,6 +555,8 @@ export const FULL_WIDTH_TYPES = [
   'file-list',
   'search-list',
   'editable-table',
+  'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
+  'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',
 ] as const
 
 /**
