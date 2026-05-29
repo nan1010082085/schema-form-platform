@@ -37,7 +37,6 @@ async function handleLogin() {
           <el-input
             v-model="form.username"
             placeholder="用户名"
-            size="large"
           />
         </el-form-item>
         <el-form-item>
@@ -45,14 +44,12 @@ async function handleLogin() {
             v-model="form.password"
             type="password"
             placeholder="密码"
-            size="large"
             show-password
             @keyup.enter="handleLogin"
           />
         </el-form-item>
         <el-button
           type="primary"
-          size="large"
           :loading="loading"
           style="width: 100%"
           @click="handleLogin"

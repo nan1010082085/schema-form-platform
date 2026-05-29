@@ -14,6 +14,11 @@
   box-sizing: border-box;
 }
 
+:root {
+  --el-component-size-large: 44px;
+  --el-component-size: 44px;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
