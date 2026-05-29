@@ -39,6 +39,9 @@ import { FgPieChart, createPieChartWidget, pieChartConfig } from './pie-chart'
 import { FgScatterChart, createScatterChartWidget, scatterChartConfig } from './scatter-chart'
 import { FgRadar, createRadarWidget, radarConfig } from './radar'
 import { FgGauge, createGaugeWidget, gaugeConfig } from './gauge'
+import { FgHeatmap, createHeatmapWidget, heatmapConfig } from './heatmap'
+import { FgFunnel, createFunnelWidget, funnelConfig } from './funnel'
+import { FgCandlestick, createCandlestickWidget, candlestickConfig } from './candlestick'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
 import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-col'
@@ -329,4 +332,7 @@ export function registerAllWidgets() {
   registerWidget({ name: scatterChartConfig.name, displayName: scatterChartConfig.displayName, type: 'scatter-chart', group: 'chart', component: FgScatterChart, create: createScatterChartWidget, config: scatterChartConfig })
   registerWidget({ name: radarConfig.name, displayName: radarConfig.displayName, type: 'radar', group: 'chart', component: FgRadar, create: createRadarWidget, config: radarConfig })
   registerWidget({ name: gaugeConfig.name, displayName: gaugeConfig.displayName, type: 'gauge', group: 'chart', component: FgGauge, create: createGaugeWidget, config: gaugeConfig })
+  registerWidget({ name: heatmapConfig.name, displayName: heatmapConfig.displayName, type: 'heatmap', group: 'chart', component: FgHeatmap, create: createHeatmapWidget, config: heatmapConfig })
+  registerWidget({ name: funnelConfig.name, displayName: funnelConfig.displayName, type: 'funnel', group: 'chart', component: FgFunnel, create: createFunnelWidget, config: funnelConfig })
+  registerWidget({ name: candlestickConfig.name, displayName: candlestickConfig.displayName, type: 'candlestick', group: 'chart', component: FgCandlestick, create: createCandlestickWidget, config: candlestickConfig })
 }
