@@ -105,7 +105,15 @@ const sortedSchemas = computed(() => {
 // ---- CRUD ----
 async function handleDelete(item: SchemaListItem) {
   try {
-    await ElMessageBox.confirm(`确认删除 "${item.name}"？`, '删除确认', { type: 'warning' })
+    const isPublished = !!item.publishId
+    const message = isPublished
+      ? `"${item.name}" 已发布，删除后发布的表单将不可恢复。确认删除？`
+      : `确认删除 "${item.name}"？`
+    await ElMessageBox.confirm(message, '删除确认', {
+      type: isPublished ? 'error' : 'warning',
+      confirmButtonText: '删除',
+      confirmButtonClass: 'el-button--danger',
+    })
     const ok = await store.deleteSchema(item.id)
     if (ok) ElMessage.success('已删除')
     else ElMessage.error(store.error || '删除失败')
@@ -120,8 +128,25 @@ function handlePreview(id: string) {
   router.push({ path: '/preview', query: { id } })
 }
 
-function handlePublish(id: string) {
-  router.push({ path: '/view', query: { id } })
+async function handlePublish(item: SchemaListItem) {
+  if (item.publishId) {
+    router.push({ path: '/view', query: { id: item.id } })
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      '当前版本尚未发布，是否发布？',
+      '发布确认',
+      { type: 'info', confirmButtonText: '发布', cancelButtonText: '取消' },
+    )
+    const result = await store.publishSchema(item.id)
+    if (result) {
+      ElMessage.success('发布成功')
+      router.push({ path: '/view', query: { id: item.id } })
+    } else {
+      ElMessage.error(store.error || '发布失败')
+    }
+  } catch { /* cancelled */ }
 }
 
 // ---- Bulk operations ----
@@ -343,7 +368,7 @@ const isFiltered = computed(() =>
               />
             </div>
 
-            <div class="fg-instances-card__preview">
+            <div class="fg-instances-card__preview" @click="handleEdit(item.id)">
               <img
                 v-if="item.thumbnail"
                 :src="item.thumbnail"
@@ -359,6 +384,7 @@ const isFiltered = computed(() =>
               <h3 class="fg-instances-card__name">{{ item.name }}</h3>
               <div class="fg-instances-card__meta">
                 <el-tag :type="typeTagType(item.type)" size="small">{{ typeLabel(item.type) }}</el-tag>
+                <el-tag v-if="item.publishId" type="success" size="small">已发布</el-tag>
                 <span v-if="item.version" class="fg-instances-card__version">v{{ item.version }}</span>
                 <!-- Component count -->
                 <span v-if="item.json?.length" class="fg-instances-card__count">
@@ -370,7 +396,7 @@ const isFiltered = computed(() =>
             <div class="fg-instances-card__actions">
               <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)">编辑</el-button>
               <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)">预览</el-button>
-              <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item.id)">发布</el-button>
+              <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item)">发布</el-button>
               <el-button size="small" text :icon="Download" @click="handleExport(item)">导出</el-button>
               <el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(item)">删除</el-button>
             </div>
@@ -595,8 +621,8 @@ const isFiltered = computed(() =>
   // ---- Cards ----
   &__cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 300px));
+    gap: 12px;
   }
 
   &__pagination {
@@ -615,7 +641,7 @@ const isFiltered = computed(() =>
   background: #fff;
   border: 1px solid #e4e7ed;
   border-radius: 10px;
-  padding: 20px 24px;
+  padding: 12px 16px;
   transition: all 0.2s ease;
   position: relative;
 
@@ -638,7 +664,7 @@ const isFiltered = computed(() =>
   }
 
   &__preview {
-    margin: -20px -24px 16px;
+    margin: -12px -16px 10px;
     border-radius: 10px 10px 0 0;
     overflow: hidden;
     background: #f5f7fa;
@@ -646,6 +672,7 @@ const isFiltered = computed(() =>
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
   }
 
   &__thumbnail {
@@ -658,13 +685,13 @@ const isFiltered = computed(() =>
     color: #dcdfe6;
   }
 
-  &__body { margin-bottom: 14px; }
+  &__body { margin-bottom: 8px; }
 
   &__name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #303133;
-    margin: 0 0 10px;
+    margin: 0 0 6px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -702,8 +729,8 @@ const isFiltered = computed(() =>
     gap: 2px;
     padding-top: 12px;
     border-top: 1px solid #f0f2f5;
-    flex-wrap: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
+    overflow: visible;
 
     .el-button {
       padding: 4px 6px;
