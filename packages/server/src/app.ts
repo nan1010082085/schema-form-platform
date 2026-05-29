@@ -3,12 +3,16 @@ import cors from '@koa/cors'
 import helmet from 'koa-helmet'
 import bodyParser from 'koa-bodyparser'
 import { errorHandler } from './middleware/errorHandler.js'
-import { createRateLimit } from './middleware/rateLimit.js'
 import healthRouter from './routes/health.js'
 import authRouter from './routes/auth.js'
 import dictRouter from './routes/dict.js'
 import optionsRouter from './routes/options.js'
 import dataRouter from './routes/data.js'
+import schemaRouter from './routes/schema.js'
+import mockRouter from './routes/mock.js'
+import docsRouter from './routes/docs.js'
+import usersRouter from './routes/users.js'
+import statsRouter from './routes/stats.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
 import flowInstanceRouter from './flow-routes/flowInstance.js'
@@ -34,14 +38,21 @@ app.use(cors({
   credentials: true,
 }))
 
-// Rate limiting - must be before routes
-app.use(createRateLimit())
-
 // --- Routes ---
 app.use(healthRouter.routes())
 app.use(healthRouter.allowedMethods())
 app.use(authRouter.routes())
 app.use(authRouter.allowedMethods())
+app.use(schemaRouter.routes())
+app.use(schemaRouter.allowedMethods())
+app.use(mockRouter.routes())
+app.use(mockRouter.allowedMethods())
+app.use(docsRouter.routes())
+app.use(docsRouter.allowedMethods())
+app.use(usersRouter.routes())
+app.use(usersRouter.allowedMethods())
+app.use(statsRouter.routes())
+app.use(statsRouter.allowedMethods())
 app.use(dictRouter.routes())
 app.use(dictRouter.allowedMethods())
 app.use(optionsRouter.routes())
