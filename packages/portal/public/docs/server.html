@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@schema-form/server — 后端服务</title>
+<style>
+  :root {
+    --primary: #e67e22;
+    --primary-dark: #d35400;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #303133;
+    --text-secondary: #606266;
+    --border: #e4e7ed;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --green: #27ae60;
+    --blue: #2980b9;
+    --red: #c0392b;
+    --purple: #8e44ad;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .doc-nav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .doc-nav-back {
+    font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none !important;
+  }
+  .doc-nav-back:hover { color: var(--primary); }
+  .doc-nav-links { display: flex; gap: 4px; }
+  .doc-nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none !important; transition: all 0.15s;
+  }
+  .doc-nav-link:hover { background: #f0f2f5; color: var(--text); }
+  .doc-nav-link.active { background: var(--primary); color: #fff; }
+
+  .hero {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+    color: #fff; padding: 80px 24px 60px; text-align: center;
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 12px; }
+  .hero .pkg-name { font-size: 1.1rem; color: #f39c12; font-family: monospace; margin-bottom: 20px; }
+  .hero p { font-size: 1.15rem; color: #bdc3c7; max-width: 680px; margin: 0 auto; }
+  .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
+  .badge-koa { background: #27ae60; color: #fff; }
+  .badge-mongo { background: #4db33d; color: #fff; }
+  .badge-jwt { background: #2980b9; color: #fff; }
+  .badge-zod { background: #8e44ad; color: #fff; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .section-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); margin-bottom: 28px; }
+
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    border: 1px solid var(--border); transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 0.9rem; color: var(--text-secondary); }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin: 2px; }
+  .tag-blue { background: #ecf5ff; color: var(--blue); }
+  .tag-green { background: #f0f9eb; color: var(--green); }
+  .tag-orange { background: #fdf6ec; color: var(--primary); }
+  .tag-red { background: #fef0f0; color: var(--red); }
+  .tag-purple { background: #f4ecf7; color: var(--purple); }
+
+  .code-block {
+    background: var(--code-bg); color: var(--code-text); padding: 20px;
+    border-radius: var(--radius); font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem; overflow-x: auto; line-height: 1.7;
+  }
+  .code-block .comment { color: #6c7086; }
+  .code-block .keyword { color: #cba6f7; }
+  .code-block .string { color: #a6e3a1; }
+
+  .stat-row { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+  .stat .label { font-size: 0.85rem; color: var(--text-secondary); }
+
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  th { background: #f5f7fa; text-align: left; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fbfc; }
+  td code { background: #f5f7fa; padding: 2px 6px; border-radius: 3px; font-size: 0.82rem; }
+
+  .middleware-stack {
+    display: flex; flex-direction: column; gap: 0; margin: 20px 0;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+  .middleware-item {
+    display: flex; align-items: center; gap: 16px; padding: 14px 20px;
+    border-bottom: 1px solid var(--border); font-size: 0.9rem;
+  }
+  .middleware-item:last-child { border-bottom: none; }
+  .middleware-num {
+    min-width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+  }
+  .middleware-name { font-weight: 600; min-width: 140px; }
+  .middleware-desc { color: var(--text-secondary); }
+
+  .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin: 20px 0; }
+  .arch-layer { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; }
+  .arch-layer .layer-label { min-width: 120px; font-weight: 700; text-align: right; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .arch-items { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .arch-item { padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1); }
+  .layer-route { background: #e8f4fd; }
+  .layer-route .layer-label { color: #1976d2; }
+  .layer-middleware { background: #fff3e0; }
+  .layer-middleware .layer-label { color: #e65100; }
+  .layer-model { background: #e8f5e9; }
+  .layer-model .layer-label { color: #2e7d32; }
+  .layer-service { background: #f3e5f5; }
+  .layer-service .layer-label { color: #7b1fa2; }
+
+  .env-table td:first-child { font-family: monospace; font-weight: 600; }
+
+  .access-bar {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .access-bar .access-label { font-size: 0.85rem; color: var(--text-secondary); }
+  .access-bar .access-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px;
+    border-radius: 6px; font-size: 0.88rem; font-weight: 500; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .access-bar .access-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .access-link-primary { background: var(--primary); color: #fff; }
+  .access-link-primary:hover { background: var(--primary-dark); }
+  .access-link-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .access-link-outline:hover { background: #fdf6ec; }
+
+  .footer { text-align: center; padding: 40px 24px; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 40px; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .stat-row { justify-content: center; }
+    .arch-layer { flex-direction: column; align-items: flex-start; }
+    .arch-layer .layer-label { text-align: left; min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="doc-nav">
+  <a href="/" class="doc-nav-back">← 返回首页</a>
+  <div class="doc-nav-links">
+    <a href="/docs/web.html" class="doc-nav-link">前端</a>
+    <a href="/docs/server.html" class="doc-nav-link active">后端</a>
+    <a href="/docs/flow.html" class="doc-nav-link">流程</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>后端服务</h1>
+  <div class="pkg-name">@schema-form/server</div>
+  <p>基于 Koa.js + MongoDB 的 REST API 服务。Schema CRUD、认证鉴权、流程引擎后端、数据源管理、Mock 生成，部署于 Vercel Serverless。</p>
+  <div class="badges">
+    <span class="badge badge-koa">Koa.js</span>
+    <span class="badge badge-mongo">MongoDB</span>
+    <span class="badge badge-jwt">JWT Auth</span>
+    <span class="badge badge-zod">Zod Validation</span>
+  </div>
+</div>
+
+<div class="access-bar">
+  <span class="access-label">快速访问：</span>
+  <a href="/api/health" class="access-link access-link-primary">健康检查 →</a>
+  <a href="/api/docs" class="access-link access-link-outline">API 文档</a>
+  <a href="/editor/" class="access-link access-link-outline">表单编辑器</a>
+  <a href="/" class="access-link access-link-outline">返回首页</a>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stat-row" style="justify-content:center; margin-top:40px;">
+    <div class="stat"><div class="num">9</div><div class="label">路由文件</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">数据模型</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">中间件</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">流程服务</div></div>
+    <div class="stat"><div class="num">30s</div><div class="label">Serverless 超时</div></div>
+  </div>
+
+  <!-- Architecture -->
+  <h2 class="section-title">架构分层</h2>
+  <p class="section-desc">中间件 → 路由 → 模型 → 服务，清晰的分层架构。</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer layer-route">
+      <div class="layer-label">Routes</div>
+      <div class="arch-items">
+        <span class="arch-item">schema</span>
+        <span class="arch-item">auth</span>
+        <span class="arch-item">data</span>
+        <span class="arch-item">dict</span>
+        <span class="arch-item">options</span>
+        <span class="arch-item">mock</span>
+        <span class="arch-item">docs</span>
+        <span class="arch-item">health</span>
+        <span class="arch-item">users</span>
+        <span class="arch-item">flow</span>
+        <span class="arch-item">flowVersion</span>
+        <span class="arch-item">flowInstance</span>
+        <span class="arch-item">flowTask</span>
+        <span class="arch-item">flowTimer</span>
+        <span class="arch-item">flowApproval</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-middleware">
+      <div class="layer-label">Middleware</div>
+      <div class="arch-items">
+        <span class="arch-item">errorHandler</span>
+        <span class="arch-item">helmet</span>
+        <span class="arch-item">bodyParser</span>
+        <span class="arch-item">CORS</span>
+        <span class="arch-item">auth (JWT)</span>
+        <span class="arch-item">rateLimit</span>
+        <span class="arch-item">validate (Zod)</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-model">
+      <div class="layer-label">Models</div>
+      <div class="arch-items">
+        <span class="arch-item">FormSchema</span>
+        <span class="arch-item">PublishedSchema</span>
+        <span class="arch-item">User</span>
+        <span class="arch-item">FlowDefinition</span>
+        <span class="arch-item">FlowVersion</span>
+        <span class="arch-item">FlowInstance</span>
+        <span class="arch-item">TaskInstance</span>
+        <span class="arch-item">ApprovalLog</span>
+        <span class="arch-item">TimerJob</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-service">
+      <div class="layer-label">Services</div>
+      <div class="arch-items">
+        <span class="arch-item">FlowEngine</span>
+        <span class="arch-item">TaskService</span>
+        <span class="arch-item">TimerService</span>
+        <span class="arch-item">FlowPermissionService</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middleware Stack -->
+  <h2 class="section-title" style="margin-top:48px;">中间件栈</h2>
+  <p class="section-desc">请求按顺序经过以下中间件处理。</p>
+
+  <div class="middleware-stack">
+    <div class="middleware-item">
+      <div class="middleware-num">1</div>
+      <div class="middleware-name">errorHandler</div>
+      <div class="middleware-desc">统一错误捕获，返回标准化错误响应</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">2</div>
+      <div class="middleware-name">helmet</div>
+      <div class="middleware-desc">安全 HTTP 头（XSS、Content-Security-Policy 等）</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">3</div>
+      <div class="middleware-name">bodyParser</div>
+      <div class="middleware-desc">JSON 请求体解析</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">4</div>
+      <div class="middleware-name">CORS</div>
+      <div class="middleware-desc">跨域资源共享，通过 CORS_ORIGINS 环境变量控制</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">5</div>
+      <div class="middleware-name">auth (JWT)</div>
+      <div class="middleware-desc">JWT 令牌验证，bcryptjs 密码哈希</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">6</div>
+      <div class="middleware-name">rateLimit</div>
+      <div class="middleware-desc">请求频率限制（100 req/15min/IP）</div>
+    </div>
+    <div class="middleware-item">
+      <div class="middleware-num">7</div>
+      <div class="middleware-name">validate (Zod)</div>
+      <div class="middleware-desc">请求参数 Schema 校验</div>
+    </div>
+  </div>
+
+  <!-- API Routes -->
+  <h2 class="section-title" style="margin-top:48px;">API 路由</h2>
+  <p class="section-desc">15 个路由文件提供完整的 REST API。</p>
+
+  <h3 style="margin-bottom:16px;">Schema 管理</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方法</th><th>端点</th><th>描述</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/schemas</code></td><td>Schema 列表查询</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/schemas</code></td><td>创建 Schema</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/schemas/:id</code></td><td>获取单个 Schema</td></tr>
+        <tr><td><span class="tag tag-orange">PUT</span></td><td><code>/api/schemas/:id</code></td><td>更新 Schema</td></tr>
+        <tr><td><span class="tag tag-red">DELETE</span></td><td><code>/api/schemas/:id</code></td><td>删除 Schema</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/schemas/:id/publish</code></td><td>发布 Schema</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/schemas/published/:sourceId</code></td><td>获取已发布版本</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/schemas/:id/versions</code></td><td>版本历史列表</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/schemas/import</code></td><td>Schema 导入</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin:24px 0 16px;">认证 & 用户</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方法</th><th>端点</th><th>描述</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/auth/login</code></td><td>用户登录</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/auth/logout</code></td><td>用户登出</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/auth/me</code></td><td>当前用户信息</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/users</code></td><td>用户搜索</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin:24px 0 16px;">流程引擎</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方法</th><th>端点</th><th>描述</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/flows</code></td><td>流程定义列表</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flows</code></td><td>创建流程定义</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flows/:id/publish</code></td><td>发布流程</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/flow-instances</code></td><td>流程实例列表</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-instances/start</code></td><td>启动流程实例</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-instances/:id/terminate</code></td><td>终止流程</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/flow-tasks</code></td><td>我的待办任务</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-tasks/:id/claim</code></td><td>签收任务</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-tasks/:id/complete</code></td><td>完成任务（审批）</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-tasks/:id/delegate</code></td><td>委派任务</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/flow-approvals</code></td><td>审批日志</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/flow-timers/check</code></td><td>定时器检查（Cron）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin:24px 0 16px;">数据 & 工具</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方法</th><th>端点</th><th>描述</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/data</code></td><td>数据列表查询</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/dict/:code</code></td><td>字典查询</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/options</code></td><td>选项配置查询</td></tr>
+        <tr><td><span class="tag tag-blue">POST</span></td><td><code>/api/mock</code></td><td>Mock 数据生成</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/docs</code></td><td>API 文档</td></tr>
+        <tr><td><span class="tag tag-green">GET</span></td><td><code>/api/health</code></td><td>健康检查（含 DB ping）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Data Models -->
+  <h2 class="section-title" style="margin-top:48px;">数据模型</h2>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>FormSchema</h3>
+      <p>核心资源。UUID 主键，name、type（form/search_list）、status（draft/published）、json（Widget[] 树结构）、publishId、时间戳。</p>
+    </div>
+    <div class="card">
+      <h3>PublishedSchema</h3>
+      <p>发布版本快照。关联 sourceId，记录每次发布的完整 Schema 快照。</p>
+    </div>
+    <div class="card">
+      <h3>User</h3>
+      <p>用户账户。username、password（bcrypt 哈希）、JWT 令牌签发。</p>
+    </div>
+    <div class="card">
+      <h3>FlowDefinition</h3>
+      <p>流程定义。bpmnGraph、nodeConfigs、formSchemaId、permissions、status。</p>
+    </div>
+    <div class="card">
+      <h3>FlowInstance</h3>
+      <p>流程实例。tokens、variables、status（running/completed/terminated/suspended）。</p>
+    </div>
+    <div class="card">
+      <h3>TaskInstance</h3>
+      <p>任务实例。assignee、approvalMode、status（pending/completed/delegated）、formData。</p>
+    </div>
+  </div>
+
+  <!-- Deployment -->
+  <h2 class="section-title" style="margin-top:48px;">Vercel 部署</h2>
+  <p class="section-desc">部署于 Vercel Serverless，512MB 内存，30s 最大执行时间。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Serverless 入口</h3>
+      <p><code>api/index.ts</code> → <code>packages/server/dist/handler.js</code>。MongoDB 连接惰性初始化，支持重连和 503 降级。</p>
+    </div>
+    <div class="card">
+      <h3>Cron 任务</h3>
+      <p>每分钟触发 <code>/api/flow-timers/check</code>，评估流程定时器，推动超时任务自动处理。</p>
+    </div>
+    <div class="card">
+      <h3>路由规则</h3>
+      <p><code>/api/*</code> → Serverless Function。其他路径 → SPA（index.html）。静态资源 1 年缓存。</p>
+    </div>
+    <div class="card">
+      <h3>构建流程</h3>
+      <p><code>pnpm build:server</code>（tsc 编译）→ <code>pnpm build:web</code>（Vite 构建）。前后端独立构建。</p>
+    </div>
+  </div>
+
+  <!-- Environment -->
+  <h2 class="section-title" style="margin-top:48px;">环境变量</h2>
+
+  <div class="table-wrap">
+    <table class="env-table">
+      <thead><tr><th>变量</th><th>用途</th><th>必需</th></tr></thead>
+      <tbody>
+        <tr><td><code>MONGODB_URI</code></td><td>MongoDB 连接字符串</td><td><span class="tag tag-red">必需</span></td></tr>
+        <tr><td><code>NODE_ENV</code></td><td>development / production</td><td>可选</td></tr>
+        <tr><td><code>PORT</code></td><td>本地开发端口（默认 3001）</td><td>可选</td></tr>
+        <tr><td><code>CORS_ORIGINS</code></td><td>允许的跨域来源，逗号分隔</td><td>可选</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick Start -->
+  <h2 class="section-title" style="margin-top:48px;">快速开始</h2>
+
+  <div class="code-block">
+    <span class="comment"># 启动本地 MongoDB</span><br>
+    pnpm db:up<br><br>
+    <span class="comment"># 填充种子数据</span><br>
+    pnpm db:seed<br><br>
+    <span class="comment"># 启动后端开发服务器（端口 3001，tsx watch 热重载）</span><br>
+    pnpm dev:server<br><br>
+    <span class="comment"># 构建后端 TypeScript</span><br>
+    pnpm build:server<br><br>
+    <span class="comment"># 健康检查</span><br>
+    curl http://localhost:3001/api/health
+  </div>
+
+  <h3 style="margin-top:32px;">项目结构</h3>
+  <div class="code-block" style="margin-top:12px;">
+packages/server/<br>
+├── src/<br>
+│   ├── models/              <span class="comment">// Mongoose 数据模型</span><br>
+│   │   ├── FormSchema.ts<br>
+│   │   ├── PublishedSchema.ts<br>
+│   │   └── User.ts<br>
+│   ├── routes/              <span class="comment">// Koa 路由（9 文件）</span><br>
+│   ├── flow-models/         <span class="comment">// 流程数据模型（6 个）</span><br>
+│   ├── flow-routes/         <span class="comment">// 流程 API 路由（6 文件）</span><br>
+│   ├── flow-services/       <span class="comment">// 流程执行服务</span><br>
+│   │   ├── FlowEngine.ts    <span class="comment">// Token 驱动执行引擎</span><br>
+│   │   ├── TaskService.ts<br>
+│   │   ├── TimerService.ts<br>
+│   │   └── FlowPermissionService.ts<br>
+│   ├── flow-schemas/        <span class="comment">// Zod 验证 Schema</span><br>
+│   ├── middleware/           <span class="comment">// 中间件（4 个）</span><br>
+│   ├── app.ts               <span class="comment">// Koa 应用配置</span><br>
+│   ├── handler.ts           <span class="comment">// Vercel Serverless 入口</span><br>
+│   └── index.ts             <span class="comment">// 本地开发入口</span><br>
+├── docker-compose.yml       <span class="comment">// 本地 MongoDB 容器</span><br>
+└── seed.ts                  <span class="comment">// 种子数据</span>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>@schema-form/server · Koa.js + MongoDB · REST API · Vercel Serverless</p>
+</div>
+
+</body>
+</html>

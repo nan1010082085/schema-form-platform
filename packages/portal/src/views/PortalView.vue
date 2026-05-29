@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Odometer, Edit, Connection, User } from '@element-plus/icons-vue'
+import { Odometer, Edit, Connection, User, Document } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -11,7 +11,16 @@ const cards = [
   { title: '编辑器', desc: '可视化拖拽设计器，支持 30+ 组件', icon: Edit, route: '/editor', color: '#764ba2' },
   { title: '流程引擎', desc: 'BPMN 流程设计器与运行时引擎', icon: Connection, route: '/flow', color: '#f5576c' },
   { title: '用户管理', desc: '管理平台用户、角色与权限', icon: User, route: '/users', color: '#0ea5e9' },
+  { title: '项目文档', desc: '前端编辑器、流程引擎、后端服务的技术文档与架构说明', icon: Document, href: '/docs/web.html', color: '#43e97b' },
 ]
+
+function handleCardClick(card: typeof cards[number]) {
+  if (card.href) {
+    window.open(card.href, '_blank')
+  } else {
+    router.push(card.route!)
+  }
+}
 
 function handleLogout() {
   auth.logout()
@@ -37,9 +46,9 @@ function handleLogout() {
     <main class="cards">
       <article
         v-for="card in cards"
-        :key="card.route"
+        :key="card.route || card.href"
         class="card"
-        @click="router.push(card.route)"
+        @click="handleCardClick(card)"
       >
         <div class="card-icon" :style="{ background: card.color }">
           <el-icon :size="24" color="#fff"><component :is="card.icon" /></el-icon>

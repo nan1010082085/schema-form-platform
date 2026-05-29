@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@schema-form/web — 可视化表单设计器</title>
+<style>
+  :root {
+    --primary: #409eff;
+    --primary-dark: #337ecc;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #303133;
+    --text-secondary: #606266;
+    --border: #e4e7ed;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --green: #67c23a;
+    --orange: #e6a23c;
+    --red: #f56c6c;
+    --purple: #9b59b6;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .doc-nav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .doc-nav-back {
+    font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none !important;
+  }
+  .doc-nav-back:hover { color: var(--primary); }
+  .doc-nav-links { display: flex; gap: 4px; }
+  .doc-nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none !important; transition: all 0.15s;
+  }
+  .doc-nav-link:hover { background: #f0f2f5; color: var(--text); }
+  .doc-nav-link.active { background: var(--primary); color: #fff; }
+
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff; padding: 80px 24px 60px; text-align: center;
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 12px; }
+  .hero .pkg-name { font-size: 1.1rem; color: #8ec5fc; font-family: monospace; margin-bottom: 20px; }
+  .hero p { font-size: 1.15rem; color: #b0c4de; max-width: 640px; margin: 0 auto; }
+  .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+    border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+  }
+  .badge-vue { background: #42b883; color: #fff; }
+  .badge-ts { background: #3178c6; color: #fff; }
+  .badge-vite { background: #646cff; color: #fff; }
+  .badge-elem { background: #409eff; color: #fff; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+  .section-title {
+    font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; color: var(--text);
+  }
+  .section-desc { color: var(--text-secondary); margin-bottom: 28px; }
+
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    border: 1px solid var(--border); transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 0.9rem; color: var(--text-secondary); }
+  .card .icon { font-size: 1.4rem; }
+
+  .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 500; margin: 2px;
+  }
+  .tag-blue { background: #ecf5ff; color: var(--primary); }
+  .tag-green { background: #f0f9eb; color: var(--green); }
+  .tag-orange { background: #fdf6ec; color: var(--orange); }
+  .tag-purple { background: #f4ecf7; color: var(--purple); }
+  .tag-red { background: #fef0f0; color: var(--red); }
+
+  .code-block {
+    background: var(--code-bg); color: var(--code-text); padding: 20px;
+    border-radius: var(--radius); font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem; overflow-x: auto; line-height: 1.7;
+  }
+  .code-block .comment { color: #6c7086; }
+  .code-block .keyword { color: #cba6f7; }
+  .code-block .string { color: #a6e3a1; }
+  .code-block .func { color: #89b4fa; }
+  .code-block .type { color: #f9e2af; }
+
+  .stat-row { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+  .stat .label { font-size: 0.85rem; color: var(--text-secondary); }
+
+  .arch-diagram {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px; margin: 20px 0;
+  }
+  .arch-layer {
+    display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+    border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500;
+  }
+  .arch-layer .layer-label {
+    min-width: 120px; font-weight: 700; text-align: right; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .arch-items { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .arch-item {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.82rem;
+    background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1);
+  }
+  .layer-view { background: #e8f4fd; }
+  .layer-view .layer-label { color: #1976d2; }
+  .layer-store { background: #fff3e0; }
+  .layer-store .layer-label { color: #e65100; }
+  .layer-composable { background: #e8f5e9; }
+  .layer-composable .layer-label { color: #2e7d32; }
+  .layer-engine { background: #f3e5f5; }
+  .layer-engine .layer-label { color: #7b1fa2; }
+  .layer-utils { background: #fce4ec; }
+  .layer-utils .layer-label { color: #c62828; }
+
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  th { background: #f5f7fa; text-align: left; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fbfc; }
+
+  .access-bar {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .access-bar .access-label { font-size: 0.85rem; color: var(--text-secondary); }
+  .access-bar .access-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px;
+    border-radius: 6px; font-size: 0.88rem; font-weight: 500; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .access-bar .access-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .access-link-primary { background: var(--primary); color: #fff; }
+  .access-link-primary:hover { background: var(--primary-dark); }
+  .access-link-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .access-link-outline:hover { background: #ecf5ff; }
+
+  .footer {
+    text-align: center; padding: 40px 24px; color: var(--text-secondary);
+    font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 40px;
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .stat-row { justify-content: center; }
+    .arch-layer { flex-direction: column; align-items: flex-start; }
+    .arch-layer .layer-label { text-align: left; min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="doc-nav">
+  <a href="/" class="doc-nav-back">← 返回首页</a>
+  <div class="doc-nav-links">
+    <a href="/docs/web.html" class="doc-nav-link active">前端</a>
+    <a href="/docs/server.html" class="doc-nav-link">后端</a>
+    <a href="/docs/flow.html" class="doc-nav-link">流程</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>可视化表单设计器</h1>
+  <div class="pkg-name">@schema-form/web</div>
+  <p>Schema 驱动的可视化自由布局表单设计器与运行时渲染引擎，支持 34+ 组件、拖拽编排、事件系统、联动配置、微前端集成。</p>
+  <div class="badges">
+    <span class="badge badge-vue">Vue 3</span>
+    <span class="badge badge-ts">TypeScript</span>
+    <span class="badge badge-vite">Vite 6</span>
+    <span class="badge badge-elem">Element Plus</span>
+  </div>
+</div>
+
+<div class="access-bar">
+  <span class="access-label">快速访问：</span>
+  <a href="/editor/" class="access-link access-link-primary">进入编辑器 →</a>
+  <a href="/flow/list" class="access-link access-link-outline">流程引擎</a>
+  <a href="/" class="access-link access-link-outline">返回首页</a>
+</div>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stat-row" style="justify-content:center; margin-top:40px;">
+    <div class="stat"><div class="num">34+</div><div class="label">Widget 组件</div></div>
+    <div class="stat"><div class="num">30+</div><div class="label">Composables</div></div>
+    <div class="stat"><div class="num">8</div><div class="label">Pinia Store</div></div>
+    <div class="stat"><div class="num">22</div><div class="label">工具函数</div></div>
+    <div class="stat"><div class="num">11</div><div class="label">页面视图</div></div>
+  </div>
+
+  <!-- Architecture -->
+  <h2 class="section-title">架构分层</h2>
+  <p class="section-desc">严格的分层架构，UI 只做渲染，逻辑下沉到 Composable 和 Engine。</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer layer-view">
+      <div class="layer-label">View</div>
+      <div class="arch-items">
+        <span class="arch-item">EditorView</span>
+        <span class="arch-item">FlowListView</span>
+        <span class="arch-item">TaskInboxView</span>
+        <span class="arch-item">PreviewRenderView</span>
+        <span class="arch-item">PublishView</span>
+        <span class="arch-item">InstancesView</span>
+        <span class="arch-item">DocsIndexView</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-store">
+      <div class="layer-label">Store</div>
+      <div class="arch-items">
+        <span class="arch-item">widget</span>
+        <span class="arch-item">editor</span>
+        <span class="arch-item">api</span>
+        <span class="arch-item">drag</span>
+        <span class="arch-item">board</span>
+        <span class="arch-item">app</span>
+        <span class="arch-item">auth</span>
+        <span class="arch-item">request</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-composable">
+      <div class="layer-label">Composable</div>
+      <div class="arch-items">
+        <span class="arch-item">useDrag</span>
+        <span class="arch-item">useLinkage</span>
+        <span class="arch-item">useLifecycle</span>
+        <span class="arch-item">useDynamicOptions</span>
+        <span class="arch-item">useRightPanelConfig</span>
+        <span class="arch-item">useFormData</span>
+        <span class="arch-item">useHistory</span>
+        <span class="arch-item">useExposeWidget</span>
+        <span class="arch-item">useClipboard</span>
+        <span class="arch-item">...</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-engine">
+      <div class="layer-label">Engine</div>
+      <div class="arch-items">
+        <span class="arch-item">eventEngine</span>
+        <span class="arch-item">expressionEvaluator</span>
+        <span class="arch-item">schemaValidate</span>
+        <span class="arch-item">schemaTransform</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-utils">
+      <div class="layer-label">Widget</div>
+      <div class="arch-items">
+        <span class="arch-item">registry.ts</span>
+        <span class="arch-item">base/types.ts</span>
+        <span class="arch-item">34 个 Widget 目录</span>
+        <span class="arch-item">Schema 默认值</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget System -->
+  <h2 class="section-title" style="margin-top:48px;">Widget 体系</h2>
+  <p class="section-desc">每个 Widget 由组件实现、属性配置面板、Schema 默认值、事件/暴露系统集成四部分组成。</p>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3><span class="icon">📝</span> 表单组件</h3>
+      <p style="margin-bottom:10px;">13 种基础表单输入组件</p>
+      <span class="tag tag-blue">Input</span>
+      <span class="tag tag-blue">Number</span>
+      <span class="tag tag-blue">Select</span>
+      <span class="tag tag-blue">Radio</span>
+      <span class="tag tag-blue">Checkbox</span>
+      <span class="tag tag-blue">Date</span>
+      <span class="tag tag-blue">DateTimeSlot</span>
+      <span class="tag tag-blue">Textarea</span>
+      <span class="tag tag-blue">Richtext</span>
+      <span class="tag tag-blue">Transfer</span>
+      <span class="tag tag-blue">Upload</span>
+      <span class="tag tag-blue">FileList</span>
+      <span class="tag tag-blue">EditableTable</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">📐</span> 布局组件</h3>
+      <p style="margin-bottom:10px;">14 种布局与容器组件</p>
+      <span class="tag tag-green">Form</span>
+      <span class="tag tag-green">SingleCol</span>
+      <span class="tag tag-green">DoubleCol</span>
+      <span class="tag tag-green">TripleCol</span>
+      <span class="tag tag-green">QuadCol</span>
+      <span class="tag tag-green">Tabs</span>
+      <span class="tag tag-green">Card</span>
+      <span class="tag tag-green">Dialog</span>
+      <span class="tag tag-green">Divider</span>
+      <span class="tag tag-green">Spacer</span>
+      <span class="tag tag-green">TreeLayout</span>
+      <span class="tag tag-green">Banner</span>
+      <span class="tag tag-green">ToolbarButtons</span>
+      <span class="tag tag-green">SearchList</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">📊</span> 展示 & 数据</h3>
+      <p style="margin-bottom:10px;">7 种展示与数据组件</p>
+      <span class="tag tag-orange">Title</span>
+      <span class="tag tag-orange">Base</span>
+      <span class="tag tag-orange">Button</span>
+      <span class="tag tag-orange">Table</span>
+      <span class="tag tag-purple">Entries</span>
+      <span class="tag tag-purple">FlowList</span>
+      <span class="tag tag-purple">FlowInstanceDetail</span>
+    </div>
+  </div>
+
+  <!-- Core Features -->
+  <h2 class="section-title" style="margin-top:48px;">核心能力</h2>
+  <p class="section-desc">可视化设计器的核心功能模块。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>🎨 可视化设计器</h3>
+      <p>EditorView 为核心画布，支持拖拽组件到画布、选中编辑、Schema 树浏览、实时预览。左侧面板展示组件分组，右侧属性面板 Schema 驱动配置。</p>
+    </div>
+    <div class="card">
+      <h3>⚡ 事件引擎</h3>
+      <p>统一的 eventEngine 支持 5 种触发类型（click/change/focus/blur/close）、15+ 种动作类型（show/hide/open-dialog/switch-tab/set-value/submit/reset/emit）、条件表达式沙箱执行。</p>
+    </div>
+    <div class="card">
+      <h3>🔗 联动系统</h3>
+      <p>6 种联动类型：visible / disabled / required / options / set-value / reset-fields。通过 watchFields 监听字段变化，条件表达式驱动组件状态联动。</p>
+    </div>
+    <div class="card">
+      <h3>📦 拖拽系统</h3>
+      <p>useDrag composable 统一管理拖拽状态，支持从组件面板拖入画布、画布内排序、跨布局容器拖动。dragStore 管理全局拖拽状态。</p>
+    </div>
+    <div class="card">
+      <h3>🔄 撤销/重做</h3>
+      <p>editorStore 管理历史栈，主画布和弹窗编辑器独立管理。支持快照恢复，clipboard 剪贴板操作。</p>
+    </div>
+    <div class="card">
+      <h3>🌐 微前端集成</h3>
+      <p>通过 vite-plugin-qiankun 支持 qiankun 子应用模式（/child/schemaForm/ 前缀），同时支持 microapp 子应用集成。</p>
+    </div>
+    <div class="card">
+      <h3>🔌 数据源配置</h3>
+      <p>OptionsApiConfigDialog 支持 API 模式和字典码模式加载动态选项，JSONPath 路径提取，响应格式标准化。</p>
+    </div>
+    <div class="card">
+      <h3>📋 属性面板</h3>
+      <p>Schema 驱动的右侧属性配置面板，通过 useRightPanelConfig 动态渲染。支持 BorderEditor、SpacingEditor、ConditionBuilder 等 10+ 专用编辑器。</p>
+    </div>
+  </div>
+
+  <!-- Pages -->
+  <h2 class="section-title" style="margin-top:48px;">页面视图</h2>
+  <p class="section-desc">11 个路由页面覆盖完整业务流程。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>视图</th><th>路径</th><th>功能</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>EditorView</strong></td><td><code>/</code></td><td>主设计器画布，Schema 可视化编辑</td></tr>
+        <tr><td><strong>FlowListView</strong></td><td><code>/flows</code></td><td>流程定义列表，创建/编辑/发布</td></tr>
+        <tr><td><strong>FlowInstanceDetailView</strong></td><td><code>/flow-instances/:id</code></td><td>流程实例详情，审批轨迹追踪</td></tr>
+        <tr><td><strong>TaskInboxView</strong></td><td><code>/tasks</code></td><td>用户待办任务收件箱</td></tr>
+        <tr><td><strong>InstancesView</strong></td><td><code>/instances</code></td><td>表单实例数据管理</td></tr>
+        <tr><td><strong>PublishView</strong></td><td><code>/publish</code></td><td>Schema 发布与版本管理</td></tr>
+        <tr><td><strong>PreviewRenderView</strong></td><td><code>/preview/:id</code></td><td>Schema 运行时预览渲染</td></tr>
+        <tr><td><strong>DocsIndexView</strong></td><td><code>/docs</code></td><td>组件文档浏览器</td></tr>
+        <tr><td><strong>LoginView</strong></td><td><code>/login</code></td><td>用户登录认证</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Composables -->
+  <h2 class="section-title" style="margin-top:48px;">Composables 清单</h2>
+  <p class="section-desc">30+ 组合式函数覆盖拖拽、联动、生命周期、数据、选项等全部业务能力。</p>
+
+  <div class="grid grid-4">
+    <div class="card"><h3 style="font-size:0.9rem;">useDrag</h3><p>拖拽逻辑</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useLinkage</h3><p>字段联动引擎</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useLifecycle</h3><p>Widget 生命周期</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useDynamicOptions</h3><p>动态选项加载</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useRightPanelConfig</h3><p>右侧面板配置</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useFormData</h3><p>表单数据管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useHistory</h3><p>撤销/重做</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useExposeWidget</h3><p>组件暴露接口</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useClipboard</h3><p>剪贴板操作</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useConditionReferences</h3><p>条件引用</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useInteractionControl</h3><p>交互控制</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useLeftPanelManage</h3><p>左侧面板管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useModeControl</h3><p>模式切换</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useResize</h3><p>画布缩放</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useSnapshot</h3><p>快照管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useWidgetPanel</h3><p>组件面板</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useWidgetRenderState</h3><p>渲染状态</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useApiRequest</h3><p>API 请求</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useBreakpoint</h3><p>响应式断点</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useCache</h3><p>缓存管理</p></div>
+  </div>
+
+  <!-- Quick Start -->
+  <h2 class="section-title" style="margin-top:48px;">快速开始</h2>
+
+  <div class="code-block">
+    <span class="comment"># 安装依赖</span><br>
+    pnpm install<br><br>
+    <span class="comment"># 启动开发服务器（端口 5173）</span><br>
+    pnpm dev:web<br><br>
+    <span class="comment"># 构建生产版本</span><br>
+    pnpm build:web<br><br>
+    <span class="comment"># 类型检查</span><br>
+    <span class="keyword">cd</span> packages/web && npx vue-tsc -b --noEmit
+  </div>
+
+  <h3 style="margin-top:32px;">项目结构</h3>
+  <div class="code-block" style="margin-top:12px;">
+packages/web/<br>
+├── src/<br>
+│   ├── components/<br>
+│   │   ├── Editor/          <span class="comment">// 可视化设计器核心（36 子模块）</span><br>
+│   │   ├── WidgetRenderer/  <span class="comment">// Schema 驱动动态渲染引擎</span><br>
+│   │   └── FormGrid/        <span class="comment">// 表单栅格渲染 + 拖拽排序</span><br>
+│   ├── widgets/             <span class="comment">// 34 个 Widget 目录</span><br>
+│   │   ├── registry.ts      <span class="comment">// Widget 注册表 Map</span><br>
+│   │   └── base/types.ts    <span class="comment">// 核心类型定义</span><br>
+│   ├── stores/              <span class="comment">// Pinia 状态管理（8 Store）</span><br>
+│   ├── composables/         <span class="comment">// 30+ 组合式函数</span><br>
+│   ├── engine/              <span class="comment">// 事件执行引擎</span><br>
+│   ├── utils/               <span class="comment">// 22 个工具函数</span><br>
+│   ├── views/               <span class="comment">// 11 个页面视图</span><br>
+│   └── router/              <span class="comment">// Vue Router + qiankun 支持</span><br>
+├── vite.config.ts           <span class="comment">// 标准 SPA 构建</span><br>
+├── vite.widget.config.ts    <span class="comment">// Widget 库构建</span><br>
+└── vite.microapp.config.ts  <span class="comment">// Microapp 构建</span>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>@schema-form/web · Schema 驱动的可视化表单设计器 · Vue 3 + Element Plus + Vite</p>
+</div>
+
+</body>
+</html>
