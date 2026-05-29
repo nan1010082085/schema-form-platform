@@ -33,6 +33,9 @@ import { FgSwitch, createSwitchWidget, switchConfig } from './switch'
 import { FgSlider, createSliderWidget, sliderConfig } from './slider'
 import { FgRate, createRateWidget, rateConfig } from './rate'
 import { FgEditableTable, createEditableTableWidget, editableTableConfig } from './editable-table'
+import { FgBarChart, createBarChartWidget, barChartConfig } from './bar-chart'
+import { FgLineChart, createLineChartWidget, lineChartConfig } from './line-chart'
+import { FgPieChart, createPieChartWidget, pieChartConfig } from './pie-chart'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
 import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-col'
@@ -315,4 +318,9 @@ export function registerAllWidgets() {
   registerWidget({ name: tableConfig.name, displayName: tableConfig.displayName, type: 'table', group: 'table', component: FgTable, create: createTableWidget, config: tableConfig })
   registerWidget({ name: searchListConfig.name, displayName: searchListConfig.displayName, type: 'search-list', group: 'table', component: FgSearchList, create: createSearchListWidget, config: searchListConfig })
   registerWidget({ name: editableTableConfig.name, displayName: editableTableConfig.displayName, type: 'editable-table', group: 'table', component: FgEditableTable, create: createEditableTableWidget, config: editableTableConfig })
+
+  // Chart widgets (图表)
+  registerWidget({ name: barChartConfig.name, displayName: barChartConfig.displayName, type: 'bar-chart', group: 'chart', component: FgBarChart, create: createBarChartWidget, config: barChartConfig })
+  registerWidget({ name: lineChartConfig.name, displayName: lineChartConfig.displayName, type: 'line-chart', group: 'chart', component: FgLineChart, create: createLineChartWidget, config: lineChartConfig })
+  registerWidget({ name: pieChartConfig.name, displayName: pieChartConfig.displayName, type: 'pie-chart', group: 'chart', component: FgPieChart, create: createPieChartWidget, config: pieChartConfig })
 }
