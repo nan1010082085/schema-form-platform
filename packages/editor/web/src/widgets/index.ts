@@ -36,6 +36,9 @@ import { FgEditableTable, createEditableTableWidget, editableTableConfig } from 
 import { FgBarChart, createBarChartWidget, barChartConfig } from './bar-chart'
 import { FgLineChart, createLineChartWidget, lineChartConfig } from './line-chart'
 import { FgPieChart, createPieChartWidget, pieChartConfig } from './pie-chart'
+import { FgScatterChart, createScatterChartWidget, scatterChartConfig } from './scatter-chart'
+import { FgRadar, createRadarWidget, radarConfig } from './radar'
+import { FgGauge, createGaugeWidget, gaugeConfig } from './gauge'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
 import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-col'
@@ -323,4 +326,7 @@ export function registerAllWidgets() {
   registerWidget({ name: barChartConfig.name, displayName: barChartConfig.displayName, type: 'bar-chart', group: 'chart', component: FgBarChart, create: createBarChartWidget, config: barChartConfig })
   registerWidget({ name: lineChartConfig.name, displayName: lineChartConfig.displayName, type: 'line-chart', group: 'chart', component: FgLineChart, create: createLineChartWidget, config: lineChartConfig })
   registerWidget({ name: pieChartConfig.name, displayName: pieChartConfig.displayName, type: 'pie-chart', group: 'chart', component: FgPieChart, create: createPieChartWidget, config: pieChartConfig })
+  registerWidget({ name: scatterChartConfig.name, displayName: scatterChartConfig.displayName, type: 'scatter-chart', group: 'chart', component: FgScatterChart, create: createScatterChartWidget, config: scatterChartConfig })
+  registerWidget({ name: radarConfig.name, displayName: radarConfig.displayName, type: 'radar', group: 'chart', component: FgRadar, create: createRadarWidget, config: radarConfig })
+  registerWidget({ name: gaugeConfig.name, displayName: gaugeConfig.displayName, type: 'gauge', group: 'chart', component: FgGauge, create: createGaugeWidget, config: gaugeConfig })
 }
