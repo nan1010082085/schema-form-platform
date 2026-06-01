@@ -25,7 +25,7 @@ export function connect(url?: string): Socket {
   const serverUrl = url ?? 'http://localhost:3001'
   socket = io(serverUrl, {
     path: '/ws',
-    transports: ['websocket', 'polling'],
+    transports: ['polling'],
     autoConnect: true,
     reconnection: true,
     reconnectionDelay: 1000,
