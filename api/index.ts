@@ -16,15 +16,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  const url = req.url || ''
-
-  // Editor-specific routes -> editor-server
-  if (url.startsWith('/api/schemas') || url.startsWith('/api/mock') || url.startsWith('/api/docs') || url.startsWith('/api/users')) {
-    const mod = await import('../packages/editor/server/dist/app.js')
-    return mod.default.callback()(req, res)
-  }
-
-  // Shared routes -> shared server (auth, health, data, dict, options, flow-*)
+  // All routes -> unified server (auth, health, data, dict, options, schemas, flow-*)
   const mod = await import('../packages/server/dist/handler.js')
   return mod.default(req, res)
 }

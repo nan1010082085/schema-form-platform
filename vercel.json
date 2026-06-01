@@ -1,7 +1,7 @@
 {
   "buildCommand": "pnpm vercel-build",
   "installCommand": "pnpm install --frozen-lockfile",
-  "outputDirectory": "packages/portal",
+  "outputDirectory": "packages/portal/dist",
   "functions": {
     "api/index.ts": {
       "memory": 512,
