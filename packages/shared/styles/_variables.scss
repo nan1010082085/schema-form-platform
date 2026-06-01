@@ -1,0 +1,130 @@
+// ============================================================
+// 共享设计令牌 — editor / flow 统一引用
+// 修改此文件即可同步两个项目的视觉风格
+// ============================================================
+
+// ---------- 字体系统 ----------
+$font-family-base: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Helvetica, Arial,
+  sans-serif;
+$font-family-semibold: 'Microsoft YaHei', '微软雅黑', 'Microsoft YaHei Semibold', 'MicrosoftYaHeiSemibold', 'PingFang SC',
+  sans-serif;
+$font-family-number: 'Microsoft YaHei', '微软雅黑', 'DIN Alternate', Arial, sans-serif;
+$font-family-mono: Consolas, Monaco, monospace;
+
+// 字体大小
+$font-size-12: 12px;
+$font-size-13: 13px;
+$font-size-14: 14px;
+$font-size-16: 16px;
+$font-size-18: 18px;
+$font-size-20: 20px;
+$font-size-24: 24px;
+
+// 字重
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// ---------- 颜色系统 ----------
+// 主色系
+$color-primary: #0060A2;
+$color-primary-hover: #4581E9;
+$color-primary-light: #4581E9;
+$color-primary-lighter: #EEF5FF;
+$color-primary-dark: #0060A2;
+$color-primary-bg-light: #EEF5FF;
+
+// 功能色 - 成功
+$color-success: #26A036;
+$color-success-light: #36B37E;
+$color-success-bg: rgba(82, 196, 26, 0.1);
+
+// 功能色 - 警告
+$color-warning: #F09700;
+$color-warning-light: #FF6010;
+$color-warning-bg: rgba(255, 191, 0, 0.1);
+
+// 功能色 - 危险/错误
+$color-danger: #E50113;
+$color-danger-light: #FF6B55;
+$color-danger-bg: rgba(255, 1, 1, 0.08);
+
+// 功能色 - 信息
+$color-info: #4581E9;
+$color-info-light: #E5EFF6;
+$color-info-bg: rgba(22, 119, 255, 0.08);
+
+// 中性色 - 文字
+$text-color-title: #303133;   // 标题/深色文字（Element Plus 默认深色文字）
+$text-color-primary: #333333;
+$text-color-regular: #606266;
+$text-color-secondary: #666666;
+$text-color-muted: #909399;   // 辅助/弱化文字（原 Element Plus info 色）
+$text-color-placeholder: #969FA8;
+$text-color-disabled: #C0C4CC;
+$text-color-inverse: #FFFFFF;
+
+// 中性色 - 背景
+$bg-color-white: #FFFFFF;
+$bg-color-page: #F5F6FA;
+$bg-color-gray-light: #FAFAFA;
+$bg-color-gray: #F5F7FA;
+$bg-color-gray-dark: #E4E7ED;
+$bg-color-gray-darker: #E8E8E8; // 深灰分割线
+$bg-color-hover: #E5EFF6;
+$bg-color-surface: #FAFBFC;     // 表面/卡片背景
+$bg-color-canvas-dot: #D0D5DD;  // 画布网格点
+
+// 中性色 - 边框
+$border-color-base: #D5DDE3;
+$border-color-light: #EBEDF3;
+$border-color-dark: #D5DDE3;
+
+// 输入框
+$input-border-default: #EBEDF3;
+$input-border-hover: #4581E9;
+$input-border-focus: #1369C1;
+$input-border-disabled: #E0E0E6;
+$input-bg-disabled: #E0E0E6;
+$input-border-error: #C4040F;
+
+// 状态色
+$color-pending: #FFBF00;
+$color-approved: #52C41A;
+$color-rejected: #FF6010;
+
+// 阴影
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+$overlay-bg: rgba(0, 0, 0, 0.4);
+
+// 节点专用阴影（flow 使用）
+$shadow-node: 0 2px 8px rgba(0, 0, 0, 0.08);
+$shadow-node-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+$shadow-node-selected: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+// ---------- 尺寸系统 ----------
+$button-height: 32px;
+$button-height-lg: 40px;
+$input-height: 32px;
+$detail-item-height: 48px;
+$dialog-footer-height: 60px;
+$border-radius-sm: 2px;
+$border-radius-md: 4px;
+$border-radius-lg: 10px;
+
+// 间距
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-10px: 10px;
+$spacing-20px: 20px;

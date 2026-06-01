@@ -1,0 +1,195 @@
+// ============================================================
+// 共享 Element Plus 主题覆盖 — editor / flow 统一引用
+// ============================================================
+
+@use 'variables' as *;
+
+:root {
+  // ---- Element Plus 主色覆盖 ----
+  --el-color-primary: #{$color-primary};
+  --el-color-primary-light-3: #4d8fbe;
+  --el-color-primary-light-5: #80b0d1;
+  --el-color-primary-light-7: #b3d0e4;
+  --el-color-primary-light-8: #cce0ee;
+  --el-color-primary-light-9: #e6f0f7;
+  --el-color-primary-dark-2: #004c82;
+
+  --el-color-warning: #{$color-warning};
+  --el-color-danger: #{$color-danger};
+  --el-color-success: #{$color-success};
+
+  // ---- 文字 ----
+  --el-text-color-primary: #{$text-color-primary};
+  --el-text-color-regular: #{$text-color-secondary};
+  --el-text-color-placeholder: #{$text-color-placeholder};
+  --el-text-color-disabled: #{$text-color-placeholder};
+
+  // ---- 边框 ----
+  --el-border-color: #{$border-color-base};
+  --el-border-color-light: #{$border-color-light};
+  --el-border-color-lighter: #{$border-color-light};
+  --el-border-color-extra-light: #{$border-color-light};
+  --el-border-color-dark: #{$border-color-base};
+  --el-border-color-hover: #{$color-primary};
+  --el-border-color-focus: #{$color-primary};
+
+  // ---- 字体 ----
+  --el-font-family: #{$font-family-base};
+  --el-font-size-base: #{$font-size-14};
+  --el-font-size-small: #{$font-size-12};
+  --el-font-size-large: #{$font-size-16};
+
+  // ---- 圆角 ----
+  --el-border-radius-base: #{$border-radius-sm};
+  --el-border-radius-small: #{$border-radius-sm};
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+
+  // ---- 高度 ----
+  --el-component-size: #{$input-height};
+  --el-component-size-small: 24px;
+  --el-component-size-large: #{$button-height-lg};
+}
+
+// ============================================================
+// 全局组件样式调整
+// ============================================================
+
+// 通用宽度 100%
+.el-input,
+.el-select,
+.el-date-editor,
+.el-input-number,
+.el-cascader {
+  width: 100%;
+}
+
+// Button 按钮
+.el-button {
+  height: $button-height;
+  padding: 8px 16px;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-14;
+  font-weight: $font-weight-medium;
+  font-family: $font-family-base;
+}
+
+.el-button--primary:not(.is-disabled) {
+  &:hover {
+    color: $text-color-inverse;
+    border-color: $color-primary-hover;
+    background-color: $color-primary-hover;
+  }
+}
+
+.el-button--danger:not(.is-disabled) {
+  &:hover {
+    color: $text-color-inverse;
+    border-color: $color-danger-light;
+    background-color: $color-danger-light;
+  }
+}
+
+// FormItem 标签
+.el-form-item__label {
+  font-size: $font-size-14;
+  color: $text-color-secondary;
+  font-weight: $font-weight-medium;
+}
+
+// Table 表格
+.el-table {
+  font-size: $font-size-14;
+  color: $text-color-primary;
+}
+
+.el-table__header th {
+  font-size: $font-size-14;
+  color: $text-color-primary;
+  font-weight: $font-weight-medium;
+  background-color: $bg-color-gray;
+}
+
+// Tag 标签
+.el-tag {
+  border-radius: $border-radius-sm;
+}
+
+// Switch 开关
+.el-switch {
+  --el-switch-on-color: #{$color-primary};
+}
+
+// Select 下拉选中色
+.el-select-dropdown__item.is-selected {
+  color: $color-primary !important;
+}
+
+// 弹窗 z-index
+.el-select-dropdown {
+  z-index: 3000 !important;
+}
+
+.el-picker-panel {
+  z-index: 3000 !important;
+}
+
+.el-overlay {
+  z-index: 2000 !important;
+}
+
+.el-message {
+  z-index: 9999 !important;
+}
+
+// Link / Text 按钮重置
+.el-button.is-link,
+.el-button.is-text {
+  height: auto;
+  padding: 0;
+  line-height: normal;
+  border: none;
+  background: transparent;
+}
+
+// Dialog 弹窗（蓝底白字头部）
+.el-dialog {
+  --el-dialog-border-radius: 0;
+  padding: 0 !important;
+
+  .el-dialog__header {
+    background: $color-primary;
+    padding: 0 $spacing-md !important;
+    border-radius: 0;
+    height: $detail-item-height;
+    line-height: $detail-item-height;
+    margin-right: 0;
+
+    .el-dialog__title {
+      font-size: $font-size-14;
+      font-family: $font-family-base;
+      color: $text-color-inverse;
+    }
+
+    .el-dialog__headerbtn {
+      top: $spacing-xs;
+      right: $spacing-md;
+
+      .el-dialog__close {
+        color: $text-color-inverse;
+      }
+    }
+  }
+
+  .el-dialog__body {
+    padding: $spacing-md;
+    background: $bg-color-white;
+  }
+
+  .el-dialog__footer {
+    height: $dialog-footer-height;
+    text-align: center;
+    background: $color-primary-bg-light;
+    padding: $spacing-10px 0;
+  }
+}

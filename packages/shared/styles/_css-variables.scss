@@ -1,0 +1,99 @@
+// ============================================================
+// 共享 CSS 变量（:root 级别）— editor / flow 统一引用
+// ============================================================
+
+@use 'variables' as *;
+
+:root {
+  // 主色
+  --color-primary: #{$color-primary};
+  --color-primary-hover: #{$color-primary-hover};
+  --color-primary-light: #{$color-primary-light};
+  --color-primary-lighter: #{$color-primary-lighter};
+  --color-primary-bg-light: #{$color-primary-bg-light};
+  --color-primary-rgb: 0, 96, 162;
+
+  // 功能色
+  --color-success: #{$color-success};
+  --color-success-light: #{$color-success-light};
+  --color-success-bg: #{$color-success-bg};
+  --color-warning: #{$color-warning};
+  --color-warning-light: #{$color-warning-light};
+  --color-warning-bg: #{$color-warning-bg};
+  --color-danger: #{$color-danger};
+  --color-danger-light: #{$color-danger-light};
+  --color-danger-bg: #{$color-danger-bg};
+  --color-info: #{$color-info};
+  --color-info-light: #{$color-info-light};
+  --color-info-bg: #{$color-info-bg};
+  --color-success-rgb: 38, 160, 54;
+
+  // 文字色
+  --text-color-title: #{$text-color-title};
+  --text-color-primary: #{$text-color-primary};
+  --text-color-regular: #{$text-color-regular};
+  --text-color-secondary: #{$text-color-secondary};
+  --text-color-muted: #{$text-color-muted};
+  --text-color-placeholder: #{$text-color-placeholder};
+  --text-color-disabled: #{$text-color-disabled};
+  --text-color-inverse: #{$text-color-inverse};
+
+  // 背景色
+  --bg-color-white: #{$bg-color-white};
+  --bg-color-page: #{$bg-color-page};
+  --bg-color-gray-light: #{$bg-color-gray-light};
+  --bg-color-gray: #{$bg-color-gray};
+  --bg-color-gray-dark: #{$bg-color-gray-dark};
+  --bg-color-gray-darker: #{$bg-color-gray-darker};
+  --bg-color-hover: #{$bg-color-hover};
+  --bg-color-surface: #{$bg-color-surface};
+  --bg-color-canvas-dot: #{$bg-color-canvas-dot};
+
+  // 边框色
+  --border-color-base: #{$border-color-base};
+  --border-color-light: #{$border-color-light};
+  --border-color-dark: #{$border-color-dark};
+
+  // 状态色
+  --color-pending: #{$color-pending};
+  --color-approved: #{$color-approved};
+  --color-rejected: #{$color-rejected};
+
+  // 阴影
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+  --overlay-bg: #{$overlay-bg};
+  --shadow-node: #{$shadow-node};
+  --shadow-node-hover: #{$shadow-node-hover};
+  --shadow-node-selected: #{$shadow-node-selected};
+
+  // 尺寸
+  --button-height: #{$button-height};
+  --button-height-lg: #{$button-height-lg};
+  --input-height: #{$input-height};
+  --detail-item-height: #{$detail-item-height};
+  --border-radius-sm: #{$border-radius-sm};
+  --border-radius-md: #{$border-radius-md};
+  --border-radius-lg: #{$border-radius-lg};
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-md: #{$spacing-md};
+  --spacing-lg: #{$spacing-lg};
+  --spacing-xl: #{$spacing-xl};
+  --spacing-10px: #{$spacing-10px};
+  --spacing-20px: #{$spacing-20px};
+
+  // 字体
+  --font-family-base: #{$font-family-base};
+  --font-size-12: #{$font-size-12};
+  --font-size-13: #{$font-size-13};
+  --font-size-14: #{$font-size-14};
+  --font-size-16: #{$font-size-16};
+  --font-size-18: #{$font-size-18};
+  --font-size-20: #{$font-size-20};
+  --font-size-24: #{$font-size-24};
+  --font-weight-regular: #{$font-weight-regular};
+  --font-weight-medium: #{$font-weight-medium};
+  --font-weight-semibold: #{$font-weight-semibold};
+}

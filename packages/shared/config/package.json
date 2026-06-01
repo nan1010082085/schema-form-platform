@@ -1,0 +1,16 @@
+{
+  "name": "@schema-form/shared-config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./vite": "./vite.ts",
+    "./vitest": "./vitest.ts"
+  },
+  "dependencies": {
+    "@schema-form/micro-app": "workspace:*",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.0",
+    "vitest": "^3.1.4"
+  }
+}
