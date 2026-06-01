@@ -85,6 +85,11 @@
           <span :class="styles.aiLabel">AI</span>
         </button>
       </el-tooltip>
+      <el-tooltip content="预览" placement="bottom">
+        <button :class="styles.iconBtn" title="预览" @click="$emit('toggle-preview')">
+          <el-icon :size="14"><View /></el-icon>
+        </button>
+      </el-tooltip>
     </div>
 
     <!-- Center: preview label -->
@@ -125,16 +130,6 @@
         </el-tooltip>
       </template>
     </div>
-
-    <!-- Preview toggle (always visible, in center-right area) -->
-    <div v-if="!isPreview" :class="styles.previewToggle">
-      <div :class="styles.divider" />
-      <el-tooltip content="预览" placement="bottom">
-        <button :class="styles.iconBtn" title="预览" @click="$emit('toggle-preview')">
-          <el-icon :size="14"><View /></el-icon>
-        </button>
-      </el-tooltip>
-    </div>
   </div>
 </template>
 
@@ -142,7 +137,7 @@
 import { View, EditPen } from '@element-plus/icons-vue'
 import styles from './FlowToolbar.module.scss'
 
-const props = defineProps<{
+defineProps<{
   title?: string
   isPreview?: boolean
   showLeftPanel?: boolean
