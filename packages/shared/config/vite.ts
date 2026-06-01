@@ -47,12 +47,6 @@ export function createViteConfig(
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
-      hmr: {
-        host: 'localhost',
-        port: appConfig.devPort,
-        clientPort: appConfig.devPort,
-        protocol: 'ws',
-      },
       proxy: {
         '/api': {
           target: getApiProxyTarget(),
