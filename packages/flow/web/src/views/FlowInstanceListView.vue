@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useFlowInstanceStore, type FlowInstance } from '../stores/flowInstance.js'
+import { useFlowInstanceStore } from '../stores/flowInstance.js'
 import type { FlowInstanceStatus } from '@schema-form/flow-shared'
 import styles from './FlowInstanceListView.module.scss'
 

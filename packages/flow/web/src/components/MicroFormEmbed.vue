@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import styles from './MicroFormEmbed.module.scss'
 
 const props = defineProps<{

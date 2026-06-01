@@ -127,10 +127,6 @@ function onChange(val: string[]) {
   emit('update:modelValue', val)
 }
 
-function getDisplayLabel(value: string): string {
-  const option = options.value.find(o => o.value === value)
-  return option?.label || value
-}
 
 onMounted(() => {
   // 初始化时不加载，等下拉框打开时再加载

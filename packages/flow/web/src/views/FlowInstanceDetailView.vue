@@ -34,7 +34,7 @@ const instanceId = computed(() => route.params.id as string)
 const graphNodes = ref<Node[]>([])
 const graphEdges = ref<Edge[]>([])
 const activeTab = ref('graph')
-const vueFlowReady = ref(false)
+
 const flowName = ref('')
 
 const vueFlowApi = ref<ReturnType<typeof useVueFlow> | null>(null)

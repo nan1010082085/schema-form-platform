@@ -11,7 +11,7 @@ import type {
   FlowVersionData,
   FlowInstanceData,
   TaskInstanceData,
-  ApprovalLogEntry,
+
   FlowDefinitionListData,
   FlowVersionListData,
   FlowInstanceListData,
