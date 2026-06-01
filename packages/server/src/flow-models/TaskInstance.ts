@@ -12,7 +12,10 @@ export interface ITaskInstance {
   candidateRoles?: string[]
   formData?: Record<string, unknown>
   formSchemaId?: string
+  formPublishId?: string
   formVersion?: string
+  formMode?: string
+  hostMethods?: string[]
   outcome?: string
   dueDate?: Date
   priority: number
@@ -38,7 +41,10 @@ const taskInstanceSchema = new mongoose.Schema(
     candidateRoles: { type: [String], default: [] },
     formData: { type: mongoose.Schema.Types.Mixed, default: null },
     formSchemaId: { type: String, default: null },
+    formPublishId: { type: String, default: null },
     formVersion: { type: String, default: null },
+    formMode: { type: String, default: null },
+    hostMethods: { type: [String], default: null },
     outcome: { type: String, default: null },
     dueDate: { type: Date, default: null },
     priority: { type: Number, default: 1 },

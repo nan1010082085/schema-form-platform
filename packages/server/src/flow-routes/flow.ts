@@ -164,8 +164,12 @@ router.delete('/:id', requireAuth, async (ctx) => {
   }
 
   await FlowVersionModel.deleteMany({ definitionId: id })
+  const instances = await FlowInstanceModel.find({ definitionId: id }, { _id: 1 })
+  const instanceIds = instances.map((inst) => inst._id)
   await FlowInstanceModel.deleteMany({ definitionId: id })
-  await TaskInstanceModel.deleteMany({ instanceId: { $in: [] } })
+  if (instanceIds.length > 0) {
+    await TaskInstanceModel.deleteMany({ instanceId: { $in: instanceIds } })
+  }
   await FlowDefinitionModel.findByIdAndDelete(id)
 
   ctx.status = 200

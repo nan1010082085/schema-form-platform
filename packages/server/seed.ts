@@ -2,27 +2,31 @@
  * Database seed script.
  * Run: pnpm db:seed (or: cd packages/server && tsx seed.ts)
  */
+import 'dotenv/config'
 import { connectDatabase, mongoose } from './src/config/database.js'
 import { UserModel } from './src/models/User.js'
 import { FormSchemaModel } from './src/models/FormSchema.js'
 import { v4 as uuidv4 } from 'uuid'
 
+const users = [
+  { username: 'admin', password: 'admin123', displayName: '管理员', role: 'admin' as const },
+  { username: 'zhangsan', password: '123456', displayName: '张三', role: 'editor' as const },
+  { username: 'lisi', password: '123456', displayName: '李四', role: 'editor' as const },
+  { username: 'wangwu', password: '123456', displayName: '王五', role: 'viewer' as const },
+  { username: 'zhaoliu', password: '123456', displayName: '赵六', role: 'viewer' as const },
+]
+
 async function seed() {
   await connectDatabase()
 
-  // --- Admin user ---
-  const existingAdmin = await UserModel.findOne({ username: 'admin' })
-  if (existingAdmin) {
-    console.log('[seed] Admin user already exists, skipping.')
-  } else {
-    await UserModel.create({
-      _id: uuidv4(),
-      username: 'admin',
-      password: 'admin123', // pre-save hook will auto-hash
-      displayName: '管理员',
-      role: 'admin',
-    })
-    console.log('[seed] Admin user created (admin / admin123)')
+  for (const u of users) {
+    const existing = await UserModel.findOne({ username: u.username })
+    if (existing) {
+      console.log(`[seed] User "${u.username}" already exists, skipping.`)
+    } else {
+      await UserModel.create({ _id: uuidv4(), ...u })
+      console.log(`[seed] User created: ${u.username} / ${u.password} (${u.role})`)
+    }
   }
 
   // --- Sample schema ---

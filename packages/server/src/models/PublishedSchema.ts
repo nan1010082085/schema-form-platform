@@ -22,7 +22,7 @@ const publishedSchemaDef = new mongoose.Schema(
     type: { type: String, enum: ['form', 'search_list'], default: 'form' },
     json: { type: mongoose.Schema.Types.Mixed, required: true },
     thumbnail: { type: String, default: '' },
-    publishId: { type: String, required: true },
+    publishId: { type: String, required: true, index: true },
     version: { type: String, required: true },
     publishedAt: { type: Date, required: true },
   },

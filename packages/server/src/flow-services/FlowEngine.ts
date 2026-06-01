@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
-import { parseBpmnGraph, BpmnElementType } from '@schema-form/flow-shared'
+import { parseBpmnGraph, BpmnElementType, evaluateScript } from '@schema-form/flow-shared'
 import type { FlowToken, FlowInstanceStatus, RejectPolicy } from '@schema-form/flow-shared'
-import type { AssigneeType } from '@schema-form/flow-shared'
+import type { AssigneeType, FlowApiConfig } from '@schema-form/flow-shared'
 
 /**
  * Evaluate an assignee expression against instance variables.
@@ -190,7 +190,10 @@ export class FlowEngine {
                   candidateUsers,
                   candidateRoles,
                   formSchemaId: node.config.formSchemaId,
+                  formPublishId: node.config.formPublishId,
                   formVersion: node.config.formVersion,
+                  formMode: node.config.formMode,
+                  hostMethods: node.config.hostMethods,
                   priority: 1,
                 })
                 changed = true
@@ -199,7 +202,7 @@ export class FlowEngine {
             }
 
             // Multi-assignee modes (countersign / or-sign)
-            const collection = node.config.assigneeCollection
+            const collection = node.config.assigneeCollection ?? node.config.multiInstance?.collection
             const assignees = collection
               ? ((instance.variables[collection] as string[]) ?? [])
               : candidateUsers.length > 0
@@ -231,7 +234,10 @@ export class FlowEngine {
                   status: 'pending',
                   candidateUsers: [assignees[i]],
                   formSchemaId: node.config.formSchemaId,
+                  formPublishId: node.config.formPublishId,
                   formVersion: node.config.formVersion,
+                  formMode: node.config.formMode,
+                  hostMethods: node.config.hostMethods,
                   priority: 1,
                   multiInstanceIndex: i,
                   multiInstanceItem: assignees[i],
@@ -338,7 +344,12 @@ export class FlowEngine {
           }
 
           case BpmnElementType.ScriptTask: {
-            // TODO: Phase 5 — execute script, for now treat as pass-through
+            const scriptContent: string = node.config.scriptContent ?? ''
+            const result = evaluateScript(scriptContent, instance.variables)
+            if (result !== undefined) {
+              const resultKey: string = node.config.label ?? `scriptResult_${token.nodeId}`
+              instance.variables[resultKey] = result
+            }
             token.state = 'completed'
             const outEdges = model.getOutgoing(token.nodeId)
             if (outEdges.length > 0) {
@@ -355,17 +366,90 @@ export class FlowEngine {
           }
 
           case BpmnElementType.SendTask: {
-            // TODO: Phase 5 — send message, for now treat as pass-through
+            const apiConfig = node.config.apiConfig as FlowApiConfig | undefined
+
+            if (!apiConfig?.url) {
+              // No HTTP config — pass through (backwards compatible)
+              token.state = 'completed'
+              const outEdges = model.getOutgoing(token.nodeId)
+              if (outEdges.length > 0) {
+                instance.tokens.push({
+                  tokenId: uuidv4(),
+                  nodeId: outEdges[0].targetNodeId,
+                  state: 'active',
+                  createdAt: new Date(),
+                })
+              }
+              changed = true
+              break
+            }
+
+            const method = (apiConfig.method ?? 'post').toUpperCase()
+            let url = apiConfig.url
+
+            // For GET: append params as query string
+            if (method === 'GET' && apiConfig.params) {
+              const qs = new URLSearchParams(
+                Object.entries(apiConfig.params).map(([k, v]) => [k, String(v ?? '')]),
+              ).toString()
+              url += (url.includes('?') ? '&' : '?') + qs
+            }
+
+            const headers: Record<string, string> = { ...apiConfig.headers }
+            if (method !== 'GET' && apiConfig.body) {
+              headers['Content-Type'] ??= 'application/json'
+            }
+
+            const controller = new AbortController()
+            const timeoutMs = apiConfig.timeout ?? 30_000
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+            try {
+              const response = await fetch(url, {
+                method,
+                headers,
+                body: method !== 'GET' && apiConfig.body
+                  ? JSON.stringify(apiConfig.body)
+                  : undefined,
+                signal: controller.signal,
+              })
+              clearTimeout(timeoutId)
+
+              if (!response.ok) {
+                const text = await response.text().catch(() => '')
+                throw new Error(
+                  `SendTask HTTP ${response.status}: ${response.statusText}${text ? ` — ${text}` : ''}`,
+                )
+              }
+
+              // Extract response data via dataPath if configured
+              if (apiConfig.dataPath) {
+                const json = await response.json() as Record<string, unknown>
+                const segments = apiConfig.dataPath.split('.')
+                let value: unknown = json
+                for (const seg of segments) {
+                  if (value == null || typeof value !== 'object') { value = undefined; break }
+                  value = (value as Record<string, unknown>)[seg]
+                }
+                instance.variables[`${node.config.label}_response`] = value
+              }
+            } catch (err) {
+              clearTimeout(timeoutId)
+              instance.status = 'failed'
+              instance.completedAt = new Date()
+              await instance.save()
+              throw err
+            }
+
             token.state = 'completed'
             const outEdges = model.getOutgoing(token.nodeId)
             if (outEdges.length > 0) {
-              const newToken: FlowToken = {
+              instance.tokens.push({
                 tokenId: uuidv4(),
                 nodeId: outEdges[0].targetNodeId,
                 state: 'active',
                 createdAt: new Date(),
-              }
-              instance.tokens.push(newToken)
+              })
             }
             changed = true
             break
@@ -387,7 +471,10 @@ export class FlowEngine {
                 status: 'pending',
                 candidateUsers: node.config.assignee ? [node.config.assignee] : [],
                 formSchemaId: node.config.formSchemaId,
+                formPublishId: node.config.formPublishId,
                 formVersion: node.config.formVersion,
+                formMode: node.config.formMode,
+                hostMethods: node.config.hostMethods,
                 priority: 1,
               })
               changed = true
@@ -396,23 +483,66 @@ export class FlowEngine {
           }
 
           case BpmnElementType.InclusiveGateway: {
-            // TODO: Phase 5 — evaluate all matching conditions, for now same as ExclusiveGateway
+            const inEdges = model.getIncoming(token.nodeId)
             const outEdges = model.getOutgoing(token.nodeId)
-            let targetEdge = outEdges.find((e) => e.isDefault)
 
-            for (const edge of outEdges) {
-              if (edge.conditionExpression && !edge.isDefault) {
-                const { evaluateExpression } = await import('@schema-form/flow-shared')
-                const result = evaluateExpression(edge.conditionExpression, instance.variables)
-                if (result) {
-                  targetEdge = edge
-                  break
+            // Join behavior (converging): same as ParallelGateway
+            if (inEdges.length > 1) {
+              const waitingTokens = instance.tokens.filter(
+                (t: FlowToken) =>
+                  t.nodeId === token.nodeId &&
+                  t.state === 'active' &&
+                  t.tokenId !== token.tokenId,
+              )
+              if (waitingTokens.length < inEdges.length - 1) {
+                token.state = 'waiting'
+                changed = true
+                break
+              }
+              for (const wt of waitingTokens) {
+                wt.state = 'completed'
+              }
+              token.state = 'completed'
+
+              for (const edge of outEdges) {
+                instance.tokens.push({
+                  tokenId: uuidv4(),
+                  nodeId: edge.targetNodeId,
+                  state: 'active',
+                  createdAt: new Date(),
+                })
+              }
+              changed = true
+            } else {
+              // Fork behavior (diverging): evaluate all conditions, fork to every matching edge
+              token.state = 'completed'
+              const { evaluateExpression } = await import('@schema-form/flow-shared')
+              const matchingEdges = outEdges.filter((edge) => {
+                if (!edge.conditionExpression) return false
+                return evaluateExpression(edge.conditionExpression, instance.variables)
+              })
+
+              if (matchingEdges.length > 0) {
+                for (const edge of matchingEdges) {
+                  instance.tokens.push({
+                    tokenId: uuidv4(),
+                    nodeId: edge.targetNodeId,
+                    state: 'active',
+                    createdAt: new Date(),
+                  })
+                }
+              } else {
+                // No condition matched — fall back to defaultFlow
+                const defaultEdge = outEdges.find((e) => e.isDefault)
+                if (defaultEdge) {
+                  instance.tokens.push({
+                    tokenId: uuidv4(),
+                    nodeId: defaultEdge.targetNodeId,
+                    state: 'active',
+                    createdAt: new Date(),
+                  })
                 }
               }
-            }
-
-            if (targetEdge) {
-              token.nodeId = targetEdge.targetNodeId
               changed = true
             }
             break

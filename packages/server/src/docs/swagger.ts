@@ -30,7 +30,7 @@ const spec = {
   },
   servers: [
     { url: 'https://schema-form-platform.vercel.app', description: 'Production (Vercel)' },
-    { url: 'http://localhost:3001', description: 'Local development' },
+    { url: 'http://localhost:3002', description: 'Local development' },
   ],
   components: {
     securitySchemes: {

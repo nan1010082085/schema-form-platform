@@ -12,6 +12,7 @@ import schemaRouter from './routes/schema.js'
 import mockRouter from './routes/mock.js'
 import docsRouter from './routes/docs.js'
 import usersRouter from './routes/users.js'
+import rolesRouter from './routes/roles.js'
 import statsRouter from './routes/stats.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
@@ -19,6 +20,7 @@ import flowInstanceRouter from './flow-routes/flowInstance.js'
 import flowTaskRouter from './flow-routes/flowTask.js'
 import flowTimerRouter from './flow-routes/flowTimer.js'
 import flowApprovalRouter from './flow-routes/flowApproval.js'
+import { aiRouter } from './ai/index.js'
 
 const app = new Koa()
 
@@ -51,6 +53,8 @@ app.use(docsRouter.routes())
 app.use(docsRouter.allowedMethods())
 app.use(usersRouter.routes())
 app.use(usersRouter.allowedMethods())
+app.use(rolesRouter.routes())
+app.use(rolesRouter.allowedMethods())
 app.use(statsRouter.routes())
 app.use(statsRouter.allowedMethods())
 app.use(dictRouter.routes())
@@ -71,5 +75,7 @@ app.use(flowTimerRouter.routes())
 app.use(flowTimerRouter.allowedMethods())
 app.use(flowApprovalRouter.routes())
 app.use(flowApprovalRouter.allowedMethods())
+app.use(aiRouter.routes())
+app.use(aiRouter.allowedMethods())
 
 export default app

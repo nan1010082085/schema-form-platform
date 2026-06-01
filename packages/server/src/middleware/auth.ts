@@ -5,7 +5,7 @@ import { JWT_SECRET } from '../config/jwt.js'
 export interface JwtPayload {
   id: string
   username: string
-  role: string
+  roles: string[]
 }
 
 export function authMiddleware(options?: { required?: boolean }): Middleware {
@@ -14,7 +14,7 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
   return async (ctx, next) => {
     // 本地开发跳过认证
     if (process.env.NODE_ENV !== 'production') {
-      ctx.state.user = { id: 'dev', username: 'dev', role: 'admin' }
+      ctx.state.user = { id: 'dev', username: 'dev', roles: [] }
       await next()
       return
     }

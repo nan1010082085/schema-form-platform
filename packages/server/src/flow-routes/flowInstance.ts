@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import { validate as uuidValidate } from 'uuid'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
+import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { startInstanceSchema } from '../flow-schemas/instanceSchemas.js'
@@ -32,9 +33,22 @@ router.get('/', requireAuth, async (ctx) => {
     FlowInstanceModel.countDocuments(filter),
   ])
 
+  // Batch-fetch flow definition names
+  const definitionIds = [...new Set(items.map((i) => i.definitionId))]
+  const definitions = await FlowDefinitionModel.find(
+    { _id: { $in: definitionIds } },
+    { name: 1 },
+  )
+  const nameMap = new Map(definitions.map((d) => [d._id, d.name]))
+
+  const enriched = items.map((item) => ({
+    ...item.toJSON(),
+    definitionName: nameMap.get(item.definitionId) ?? null,
+  }))
+
   ctx.body = {
     success: true,
-    data: { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
+    data: { items: enriched, total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
   }
 })
 

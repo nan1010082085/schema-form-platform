@@ -9,12 +9,10 @@ export interface IUser {
   username: string
   password: string
   displayName: string
-  role: 'admin' | 'editor' | 'viewer'
+  roles: string[]  // 角色ID数组
   createdAt: Date
   updatedAt: Date
 }
-
-export type UserRole = IUser['role']
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,7 +20,7 @@ const userSchema = new mongoose.Schema(
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     displayName: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'editor', 'viewer'], default: 'viewer' },
+    roles: { type: [String], default: [] },  // 角色ID数组
   },
   {
     timestamps: true,
@@ -36,6 +34,9 @@ const userSchema = new mongoose.Schema(
     },
   },
 )
+
+// 给 roles 字段添加索引，支持反向查询
+userSchema.index({ roles: 1 })
 
 userSchema.pre('save', async function (this: IUser & mongoose.Document) {
   if (this.isModified('password')) {

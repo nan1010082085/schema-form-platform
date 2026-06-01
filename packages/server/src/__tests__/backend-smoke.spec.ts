@@ -87,6 +87,5 @@ describe('Backend Smoke Test (Koa + MongoDB)', () => {
     expect(body.data).toHaveProperty('database')
   })
 
-  // NOTE: Schema CRUD tests have been migrated to packages/editor/server
-  // Only shared routes (health, auth, dict, options, data, flow) remain here
+  // All routes (schema, auth, dict, options, data, flow) are now in this unified server
 })

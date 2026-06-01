@@ -32,7 +32,7 @@ router.post('/login', validate(loginSchema), async (ctx) => {
   const payload: JwtPayload = {
     id: user._id,
     username: user.username,
-    role: user.role,
+    roles: user.roles,
   }
 
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' })
