@@ -47,6 +47,10 @@ export function createViteConfig(
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
+      watch: {
+        followSymlinks: true,
+        usePolling: false,
+      },
       proxy: {
         '/api': {
           target: getApiProxyTarget(),
