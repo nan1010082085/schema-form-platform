@@ -4,10 +4,48 @@
  * 各前端包的 vite.config.ts 调用 createViteConfig(appName, import.meta.url) 获取通用配置，
  * 再通过 mergeConfig 与自定义配置合并。
  */
+import { readdirSync, statSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { UserConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { type AppName, APP_CONFIGS, getApiProxyTarget } from '@schema-form/micro-app/config'
+
+// 监视 workspace 包源码的 Vite 插件
+// Vite 的 chokidar watcher 默认忽略 node_modules，导致 pnpm workspace 符号链接指向的源码变更无法触发 HMR
+function workspaceWatchPlugin(monorepoRoot: string): Plugin {
+  return {
+    name: 'vite-plugin-workspace-watch',
+    configureServer(server) {
+      const packagesDir = join(monorepoRoot, 'packages')
+      try {
+        const dirs = readdirSync(packagesDir)
+        for (const name of dirs) {
+          const pkgDir = resolve(packagesDir, name)
+          // 监视包的直接子目录（如 shared/config、shared/socket 等）
+          try {
+            const subDirs = readdirSync(pkgDir)
+            for (const sub of subDirs) {
+              const subPath = resolve(pkgDir, sub)
+              try {
+                if (statSync(subPath).isDirectory() && sub !== 'node_modules') {
+                  server.watcher.add(subPath)
+                }
+              } catch {}
+            }
+          } catch {}
+          // web/src 也需要监视（如 flow/web/src、editor/web/src）
+          const webSrcDir = resolve(packagesDir, name, 'web', 'src')
+          try {
+            if (statSync(webSrcDir).isDirectory()) {
+              server.watcher.add(webSrcDir)
+            }
+          } catch {}
+        }
+      } catch {}
+    },
+  }
+}
 
 /**
  * 创建 Vite 通用配置
@@ -24,6 +62,7 @@ export function createViteConfig(
 ): UserConfig {
   const appConfig = APP_CONFIGS[appName]
   const rootDir = fileURLToPath(new URL('.', callerImportMetaUrl))
+  const monorepoRoot = fileURLToPath(new URL('../../..', callerImportMetaUrl))
 
   const base: UserConfig = {
     base: appConfig.basePath,
@@ -35,6 +74,7 @@ export function createViteConfig(
           },
         },
       }) as Plugin,
+      workspaceWatchPlugin(monorepoRoot),
     ],
     resolve: {
       alias: {
@@ -46,10 +86,6 @@ export function createViteConfig(
       cors: true,
       headers: {
         'Access-Control-Allow-Origin': '*',
-      },
-      watch: {
-        followSymlinks: true,
-        usePolling: false,
       },
       proxy: {
         '/api': {
