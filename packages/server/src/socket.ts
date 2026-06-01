@@ -15,7 +15,7 @@ import { Server } from 'socket.io'
 let io: Server | null = null
 
 export function initSocket(httpServer: HttpServer): Server {
-  const origins = process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:4173,http://127.0.0.1:5173'
+  const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5100,http://localhost:5200,http://localhost:5300'
 
   io = new Server(httpServer, {
     path: '/ws',
