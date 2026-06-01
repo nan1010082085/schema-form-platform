@@ -26,6 +26,24 @@
   a { color: var(--primary); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
+  .doc-nav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .doc-nav-back {
+    font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none !important;
+  }
+  .doc-nav-back:hover { color: var(--primary); }
+  .doc-nav-links { display: flex; gap: 4px; }
+  .doc-nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none !important; transition: all 0.15s;
+  }
+  .doc-nav-link:hover { background: #f0f2f5; color: var(--text); }
+  .doc-nav-link.active { background: var(--primary); color: #fff; }
+
   .hero {
     background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%);
     color: #fff; padding: 80px 24px 60px; text-align: center;
@@ -153,6 +171,16 @@
 </style>
 </head>
 <body>
+
+<nav class="doc-nav">
+  <a href="/" class="doc-nav-back">← 返回首页</a>
+  <div class="doc-nav-links">
+    <a href="/docs/web.html" class="doc-nav-link">前端</a>
+    <a href="/docs/server.html" class="doc-nav-link">后端</a>
+    <a href="/docs/flow.html" class="doc-nav-link active">流程</a>
+    <a href="/docs/ai.html" class="doc-nav-link">AI</a>
+  </div>
+</nav>
 
 <div class="hero">
   <h1>BPMN 流程引擎</h1>
@@ -468,7 +496,7 @@
     <span class="comment"># 流程后端</span><br>
     <span class="keyword">cd</span> packages/flow/server && pnpm dev<br><br>
     <span class="comment"># 流程设计器（随主应用启动）</span><br>
-    pnpm dev:web
+    pnpm dev:editor
   </div>
 
 </div>

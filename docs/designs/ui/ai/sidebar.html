@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sidebar Panel - Design</title>
+<style>
+  :root {
+    --color-primary: #0060A2;
+    --color-primary-hover: #035B9C;
+    --color-primary-bg: #EEF5FF;
+    --color-success: #26A036;
+    --color-success-bg: rgba(82, 196, 26, 0.1);
+    --color-info: #4581E9;
+    --color-info-bg: rgba(22, 119, 255, 0.08);
+    --color-danger: #E50113;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-hint: #999999;
+    --text-disabled: #C0C4CC;
+    --text-inverse: #FFFFFF;
+    --border-base: #D5DDE3;
+    --border-light: #EBEDF3;
+    --bg-white: #FFFFFF;
+    --bg-page: #F5F6FA;
+    --bg-gray: #F5F7FA;
+    --bg-gray-light: #FAFAFA;
+    --bg-hover: #E5EFF6;
+    --font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', sans-serif;
+    --radius-sm: 2px;
+    --radius-md: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-family);
+    background: var(--bg-page);
+    display: flex; justify-content: center; align-items: flex-start;
+    min-height: 100vh; padding: 40px 20px; gap: 60px; flex-wrap: wrap;
+  }
+
+  .variant { display: flex; flex-direction: column; align-items: center; }
+  .variant-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .variant-sub { font-size: 11px; color: var(--text-hint); margin-bottom: 16px; }
+
+  /* ========== Panel ========== */
+  .panel {
+    width: 400px; height: 780px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-base);
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  /* Header */
+  .header {
+    height: 48px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border-base);
+    background: var(--bg-gray-light); flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-icon {
+    width: 20px; height: 20px; border-radius: var(--radius-md);
+    background: var(--color-primary);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-inverse); font-size: 10px; font-weight: 700;
+  }
+  .header-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+  /* Fixed Agent Badge (not clickable) */
+  .agent-fixed {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: var(--radius-sm);
+    background: var(--bg-gray); border: 1px solid var(--border-light);
+    font-size: 11px; color: var(--text-secondary); font-weight: 500;
+  }
+  .agent-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .agent-dot.editor { background: var(--color-success); }
+  .agent-dot.flow { background: var(--color-info); }
+
+  /* Model indicator in header */
+  .header-model {
+    font-size: 10px; color: var(--text-hint);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .header-model-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--color-success); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  /* Context Bar */
+  .ctx {
+    padding: 6px 14px;
+    background: var(--bg-gray);
+    border-bottom: 1px solid var(--border-base);
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-hint); flex-shrink: 0;
+  }
+  .ctx-tag {
+    padding: 1px 7px; border-radius: var(--radius-sm);
+    background: var(--color-primary-bg); color: var(--color-primary);
+    font-size: 10px; font-weight: 500;
+  }
+
+  /* Messages */
+  .msgs {
+    flex: 1; overflow-y: auto; padding: 14px;
+    background: var(--bg-gray);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .msgs::-webkit-scrollbar { width: 3px; }
+  .msgs::-webkit-scrollbar-thumb { background: var(--border-base); border-radius: 2px; }
+
+  .msg { display: flex; flex-direction: column; gap: 3px; }
+  .msg-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .msg-label.user { color: var(--color-primary); }
+  .msg-label.ai { color: var(--color-success); }
+  .msg-body { font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+  .msg-body code {
+    background: var(--bg-page); padding: 1px 4px; border-radius: var(--radius-sm);
+    font-family: Consolas, Monaco, monospace; font-size: 11.5px; color: var(--color-danger);
+  }
+
+  /* Schema Card */
+  .card { margin-top: 6px; border: 1px solid var(--border-base); border-radius: var(--radius-md); overflow: hidden; background: var(--bg-white); }
+  .card-head {
+    padding: 7px 11px; background: var(--bg-gray);
+    border-bottom: 1px solid var(--border-base);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+  .card-badge { font-size: 9px; padding: 1px 6px; border-radius: var(--radius-sm); background: var(--color-success-bg); color: var(--color-success); font-weight: 500; }
+  .card-body { padding: 8px 11px; display: flex; flex-direction: column; gap: 4px; }
+  .field { display: flex; align-items: center; gap: 7px; font-size: 11.5px; padding: 3px 0; }
+  .field-icon {
+    width: 15px; height: 15px; border-radius: var(--radius-sm);
+    background: var(--color-primary-bg); display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: var(--color-primary); flex-shrink: 0;
+  }
+  .field-name { color: var(--text-primary); font-weight: 500; min-width: 72px; }
+  .field-type { color: var(--text-hint); font-size: 10px; }
+  .field-req { color: var(--color-danger); font-size: 9px; margin-left: auto; }
+  .card-actions { padding: 7px 11px; border-top: 1px solid var(--bg-page); display: flex; gap: 7px; }
+
+  /* Flow Card */
+  .flow-body { padding: 10px 11px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .fnode { padding: 5px 11px; border-radius: 14px; font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+  .fnode.start { background: var(--color-success-bg); color: var(--color-success); border: 1px solid #c8e6c9; }
+  .fnode.task { background: var(--color-info-bg); color: var(--color-info); border: 1px solid #bbdefb; }
+  .fnode.end { background: rgba(229, 1, 19, 0.08); color: var(--color-danger); border: 1px solid #f8bbd0; }
+  .farrow { color: var(--text-disabled); font-size: 11px; }
+
+  /* Buttons */
+  .btn { padding: 4px 11px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-primary { background: var(--color-primary); color: var(--text-inverse); }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-light); }
+  .btn-ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+  /* Loading */
+  .dots { display: inline-flex; gap: 4px; align-items: center; padding: 2px 0; }
+  .dots span { width: 4px; height: 4px; border-radius: 50%; background: var(--text-disabled); animation: pulse 1.2s ease-in-out infinite; }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); } 30% { opacity: 1; transform: scale(1); } }
+
+  /* Floating Input Panel */
+  .input-area {
+    padding: 10px 12px 14px;
+    background: var(--bg-gray); flex-shrink: 0;
+  }
+  .input-box {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 10px 12px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .input-field {
+    width: 100%; border: none; outline: none;
+    font-size: 12.5px; color: var(--text-primary);
+    font-family: inherit; line-height: 1.5;
+    min-height: 32px; max-height: 80px; resize: none;
+    background: transparent;
+  }
+  .input-field::placeholder { color: var(--text-disabled); }
+  .input-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 5px;
+  }
+  .input-hint { font-size: 10px; color: var(--text-disabled); display: flex; align-items: center; gap: 3px; }
+  .input-hint kbd {
+    padding: 0px 3px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-base); background: var(--bg-gray);
+    font-size: 9px; font-family: inherit;
+  }
+  .agent-select {
+    padding: 2px 6px; border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); font-size: 10px;
+    color: var(--text-hint); font-family: var(--font-family);
+    background: var(--bg-gray); outline: none; cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='7' height='4' viewBox='0 0 7 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L3.5 3.5L6 1' stroke='%23999' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+    padding-right: 16px;
+  }
+  .agent-select:focus { border-color: var(--color-primary); }
+</style>
+</head>
+<body>
+
+<!-- ========== State 1: Empty ========== -->
+<div class="variant">
+  <div class="variant-label">空状态</div>
+  <div class="variant-sub">Editor 嵌入 · 固定角色 + 模型显示</div>
+  <div class="panel">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-icon">AI</div>
+        <div class="header-title">AI Assistant</div>
+      </div>
+      <div class="header-right">
+        <div class="header-model">
+          <span class="header-model-dot"></span>
+          <span>DeepSeek</span>
+        </div>
+        <div class="agent-fixed">
+          <span class="agent-dot editor"></span>
+          <span>Editor</span>
+        </div>
+      </div>
+    </div>
+    <div class="msgs" style="justify-content:center; align-items:center;">
+      <div style="text-align:center; color:var(--text-disabled);">
+        <div style="font-size:36px; margin-bottom:8px; opacity:0.4;">&#x2726;</div>
+        <div style="font-size:13px; font-weight:500;">描述你想生成的内容</div>
+        <div style="font-size:11px; margin-top:4px;">表单、列表页、页面...</div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-box">
+        <textarea class="input-field" rows="1" placeholder="描述你想要生成的内容..."></textarea>
+        <div class="input-footer">
+          <div class="input-hint"><kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+          <select class="agent-select">
+            <option value="editor" selected>Editor</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== State 2: Editor - Schema Generation ========== -->
+<div class="variant">
+  <div class="variant-label">Editor 模式</div>
+  <div class="variant-sub">生成表单 Schema</div>
+  <div class="panel">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-icon">AI</div>
+        <div class="header-title">AI Assistant</div>
+      </div>
+      <div class="header-right">
+        <div class="header-model">
+          <span class="header-model-dot"></span>
+          <span>DeepSeek</span>
+        </div>
+        <div class="agent-fixed">
+          <span class="agent-dot editor"></span>
+          <span>Editor</span>
+        </div>
+      </div>
+    </div>
+    <div class="ctx">
+      <span>Schema:</span>
+      <span class="ctx-tag">请假申请表单</span>
+    </div>
+    <div class="msgs">
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">帮我做一个请假申请表单，需要请假类型、起止日期、事由、附件</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Editor</div>
+        <div class="msg-body">已生成表单，包含 5 个字段：</div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">表单预览</div>
+            <span class="card-badge">5 fields</span>
+          </div>
+          <div class="card-body">
+            <div class="field"><div class="field-icon">&#x25BC;</div><span class="field-name">请假类型</span><span class="field-type">Select</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4C5;</div><span class="field-name">开始日期</span><span class="field-type">DatePicker</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4C5;</div><span class="field-name">结束日期</span><span class="field-type">DatePicker</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#xB6;</div><span class="field-name">请假事由</span><span class="field-type">Textarea</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4CE;</div><span class="field-name">附件上传</span><span class="field-type">Upload</span></div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary">确认发布</button>
+            <button class="btn btn-ghost">修改</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">再加一个紧急联系人字段，必填</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Editor</div>
+        <div class="msg-body">已添加「紧急联系人」Input（必填），表单更新为 6 个字段。</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">确认，发布</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Editor</div>
+        <div class="msg-body">已发布 <code>pf_abc123</code>，可在编辑器中查看。</div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-box">
+        <textarea class="input-field" rows="1" placeholder="继续描述..."></textarea>
+        <div class="input-footer">
+          <div class="input-hint"><kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+          <select class="agent-select">
+            <option value="editor" selected>Editor</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== State 3: Flow - Flow Generation ========== -->
+<div class="variant">
+  <div class="variant-label">Flow 模式</div>
+  <div class="variant-sub">Flow 嵌入 · 固定角色</div>
+  <div class="panel">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-icon">AI</div>
+        <div class="header-title">AI Assistant</div>
+      </div>
+      <div class="header-right">
+        <div class="header-model">
+          <span class="header-model-dot"></span>
+          <span>DeepSeek</span>
+        </div>
+        <div class="agent-fixed">
+          <span class="agent-dot flow"></span>
+          <span>Flow</span>
+        </div>
+      </div>
+    </div>
+    <div class="ctx">
+      <span>Node:</span>
+      <span class="ctx-tag">请假申请</span>
+    </div>
+    <div class="msgs">
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">创建一个请假审批流程</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Flow</div>
+        <div class="msg-body">已生成流程，4 个节点：</div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">流程预览</div>
+            <span class="card-badge">4 nodes</span>
+          </div>
+          <div class="flow-body">
+            <span class="fnode start">开始</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode task">请假申请</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode task">主管审批</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode end">结束</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary">应用到画布</button>
+            <button class="btn btn-ghost">修改</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">主管审批后加一个 HR 审批</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Flow</div>
+        <div class="msg-body">已添加「HR 审批」节点：</div>
+        <div class="card">
+          <div class="flow-body">
+            <span class="fnode start">开始</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode task">请假申请</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode task">主管审批</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode task">HR 审批</span>
+            <span class="farrow">&#x2192;</span>
+            <span class="fnode end">结束</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary">应用到画布</button>
+            <button class="btn btn-ghost">继续修改</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">为请假申请节点生成表单</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Flow</div>
+        <div class="msg-body">已生成表单，包含 5 个字段：</div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">表单预览</div>
+            <span class="card-badge">5 fields</span>
+          </div>
+          <div class="card-body">
+            <div class="field"><div class="field-icon">&#x25BC;</div><span class="field-name">请假类型</span><span class="field-type">Select</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4C5;</div><span class="field-name">开始日期</span><span class="field-type">DatePicker</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4C5;</div><span class="field-name">结束日期</span><span class="field-type">DatePicker</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#xB6;</div><span class="field-name">请假事由</span><span class="field-type">Textarea</span><span class="field-req">必填</span></div>
+            <div class="field"><div class="field-icon">&#x1F4CE;</div><span class="field-name">附件上传</span><span class="field-type">Upload</span></div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary">发布并绑定</button>
+            <button class="btn btn-ghost">修改</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-box">
+        <textarea class="input-field" rows="1" placeholder="继续描述..."></textarea>
+        <div class="input-footer">
+          <div class="input-hint"><kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+          <select class="agent-select">
+            <option value="flow" selected>Flow</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== State 4: Loading ========== -->
+<div class="variant">
+  <div class="variant-label">加载中状态</div>
+  <div class="variant-sub">AI 生成中</div>
+  <div class="panel">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-icon">AI</div>
+        <div class="header-title">AI Assistant</div>
+      </div>
+      <div class="header-right">
+        <div class="header-model">
+          <span class="header-model-dot"></span>
+          <span>DeepSeek</span>
+        </div>
+        <div class="agent-fixed">
+          <span class="agent-dot editor"></span>
+          <span>Editor</span>
+        </div>
+      </div>
+    </div>
+    <div class="msgs">
+      <div class="msg">
+        <div class="msg-label user">You</div>
+        <div class="msg-body">做一个用户管理页面，包含搜索和数据表格</div>
+      </div>
+      <div class="msg">
+        <div class="msg-label ai">Editor</div>
+        <div class="msg-body"><div class="dots"><span></span><span></span><span></span></div></div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-box" style="opacity:0.6;">
+        <textarea class="input-field" rows="1" placeholder="继续描述..." disabled></textarea>
+        <div class="input-footer">
+          <div class="input-hint"><kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+          <select class="agent-select" disabled>
+            <option value="editor" selected>Editor</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

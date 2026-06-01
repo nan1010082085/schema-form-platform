@@ -2,7 +2,10 @@ packages:
   - 'packages/*'
   - 'packages/editor/*'
   - 'packages/flow/*'
+  - 'packages/shared/*'
 onlyBuiltDependencies:
   - esbuild
   - vue-demi
   - '@parcel/watcher'
+overrides:
+  is-generator-function: '1.1.0'

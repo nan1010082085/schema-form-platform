@@ -14,11 +14,14 @@
     { "source": "/editor/(.*)", "destination": "/editor/index.html" },
     { "source": "/flow/assets/(.*)", "destination": "/flow/assets/$1" },
     { "source": "/flow/(.*)", "destination": "/flow/index.html" },
+    { "source": "/ai/assets/(.*)", "destination": "/ai/assets/$1" },
+    { "source": "/ai/sidebar", "destination": "/ai/index-sidebar.html" },
+    { "source": "/ai/(.*)", "destination": "/ai/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/(editor|flow)/assets/(.*)",
+      "source": "/(editor|flow|ai)/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
