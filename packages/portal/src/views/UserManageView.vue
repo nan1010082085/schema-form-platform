@@ -9,51 +9,63 @@ interface User {
   id: string
   username: string
   displayName: string
-  role: 'admin' | 'editor' | 'viewer'
+  roles: string[]
+}
+
+interface Role {
+  id: string
+  name: string
 }
 
 const users = ref<User[]>([])
+const roles = ref<Role[]>([])
+const roleMap = ref<Record<string, string>>({})
 const loading = ref(false)
 const searchQuery = ref('')
 
-// Dialog state
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
-const form = ref({ username: '', password: '', displayName: '', role: 'viewer' as string })
+const form = ref({ username: '', password: '', displayName: '', roles: [] as string[] })
 const editingId = ref('')
 
-// Reset password dialog
 const resetPwdVisible = ref(false)
 const resetPwdForm = ref({ password: '' })
 const resetPwdUserId = ref('')
 
-const roleLabels: Record<string, string> = {
-  admin: '管理员',
-  editor: '编辑者',
-  viewer: '查看者',
+async function fetchRoles() {
+  const res = await apiClient.get<{ items: Role[] }>('/roles')
+  roles.value = res.items
+  roleMap.value = {}
+  for (const role of res.items) {
+    roleMap.value[role.id] = role.name
+  }
 }
 
 async function fetchUsers() {
   loading.value = true
   try {
     const params = searchQuery.value ? `?q=${encodeURIComponent(searchQuery.value)}` : ''
-    const res = await apiClient.get<User[]>(`/users${params}`)
-    users.value = res
+    const res = await apiClient.get<{ items: User[] }>(`/users${params}`)
+    users.value = res.items
   } finally {
     loading.value = false
   }
 }
 
+function getRoleNames(roleIds: string[]): string[] {
+  return roleIds.map(id => roleMap.value[id] || id).filter(Boolean)
+}
+
 function openCreate() {
   dialogMode.value = 'create'
-  form.value = { username: '', password: '', displayName: '', role: 'viewer' }
+  form.value = { username: '', password: '', displayName: '', roles: [] }
   dialogVisible.value = true
 }
 
 function openEdit(user: User) {
   dialogMode.value = 'edit'
   editingId.value = user.id
-  form.value = { username: user.username, password: '', displayName: user.displayName, role: user.role }
+  form.value = { username: user.username, password: '', displayName: user.displayName, roles: [...user.roles] }
   dialogVisible.value = true
 }
 
@@ -68,7 +80,7 @@ async function handleSubmit() {
   } else {
     await apiClient.put(`/users/${editingId.value}`, {
       displayName: form.value.displayName,
-      role: form.value.role,
+      roles: form.value.roles,
     })
     ElMessage.success('用户更新成功')
   }
@@ -103,19 +115,22 @@ async function handleResetPassword() {
   resetPwdVisible.value = false
 }
 
-onMounted(fetchUsers)
+onMounted(async () => {
+  await fetchRoles()
+  await fetchUsers()
+})
 </script>
 
 <template>
   <SubPageLayout title="用户管理">
-    <div class="user-manage">
-      <div class="toolbar">
+    <div :class="$style.wrapper">
+      <div :class="$style.toolbar">
         <el-input
           v-model="searchQuery"
           placeholder="搜索用户名或显示名"
           :prefix-icon="Search"
           clearable
-          style="width: 280px"
+          :class="$style.search"
           @clear="fetchUsers"
           @keyup.enter="fetchUsers"
         />
@@ -124,21 +139,30 @@ onMounted(fetchUsers)
         </el-button>
       </div>
 
-      <el-table :data="users" v-loading="loading" stripe style="width: 100%">
-        <el-table-column prop="username" label="用户名" min-width="120" />
-        <el-table-column prop="displayName" label="显示名" min-width="120" />
-        <el-table-column prop="role" label="角色" min-width="100">
+      <el-table :data="users" v-loading="loading" :class="$style.table" empty-text="暂无数据">
+        <el-table-column prop="username" label="用户名" min-width="140" />
+        <el-table-column prop="displayName" label="显示名" min-width="140" />
+        <el-table-column label="角色" min-width="200">
           <template #default="{ row }">
-            <el-tag :type="row.role === 'admin' ? 'danger' : row.role === 'editor' ? '' : 'info'">
-              {{ roleLabels[row.role] || row.role }}
+            <el-tag
+              v-for="roleName in getRoleNames(row.roles)"
+              :key="roleName"
+              size="small"
+              :class="$style.roleTag"
+              disable-transitions
+            >
+              {{ roleName }}
             </el-tag>
+            <span v-if="!row.roles || row.roles.length === 0" :class="$style.noRole">未分配</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button text size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button text size="small" @click="openResetPassword(row)">重置密码</el-button>
-            <el-button text size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <div :class="$style.actions">
+              <el-button text size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button text size="small" @click="openResetPassword(row)">重置密码</el-button>
+              <el-button text size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -149,8 +173,9 @@ onMounted(fetchUsers)
       v-model="dialogVisible"
       :title="dialogMode === 'create' ? '新增用户' : '编辑用户'"
       width="440px"
+      destroy-on-close
     >
-      <el-form label-width="80px">
+      <el-form label-width="70px">
         <el-form-item label="用户名">
           <el-input
             v-model="form.username"
@@ -165,10 +190,13 @@ onMounted(fetchUsers)
           <el-input v-model="form.displayName" placeholder="请输入显示名" />
         </el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="form.role" style="width: 100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑者" value="editor" />
-            <el-option label="查看者" value="viewer" />
+          <el-select v-model="form.roles" multiple placeholder="选择角色" style="width: 100%">
+            <el-option
+              v-for="role in roles"
+              :key="role.id"
+              :label="role.name"
+              :value="role.id"
+            />
           </el-select>
         </el-form-item>
       </el-form>
@@ -179,8 +207,8 @@ onMounted(fetchUsers)
     </el-dialog>
 
     <!-- Reset Password Dialog -->
-    <el-dialog v-model="resetPwdVisible" title="重置密码" width="400px">
-      <el-form label-width="80px">
+    <el-dialog v-model="resetPwdVisible" title="重置密码" width="400px" destroy-on-close>
+      <el-form label-width="70px">
         <el-form-item label="新密码">
           <el-input v-model="resetPwdForm.password" type="password" show-password placeholder="请输入新密码" />
         </el-form-item>
@@ -193,15 +221,40 @@ onMounted(fetchUsers)
   </SubPageLayout>
 </template>
 
-<style scoped>
-.user-manage {
-  max-width: 960px;
+<style module>
+.wrapper {
+  width: 100%;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.search {
+  width: 280px;
+}
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.roleTag {
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+
+.noRole {
+  color: var(--text-color-placeholder);
+  font-size: 13px;
 }
 </style>

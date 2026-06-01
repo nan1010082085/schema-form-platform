@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 支撑层 — 多智能体对话式生成</title>
+<style>
+  :root {
+    --primary: #6c5ce7;
+    --primary-dark: #5a4bd1;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #303133;
+    --text-secondary: #606266;
+    --border: #e4e7ed;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --green: #00b894;
+    --orange: #fdcb6e;
+    --red: #e17055;
+    --blue: #0984e3;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .doc-nav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .doc-nav-back {
+    font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none !important;
+  }
+  .doc-nav-back:hover { color: var(--primary); }
+  .doc-nav-links { display: flex; gap: 4px; }
+  .doc-nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none !important; transition: all 0.15s;
+  }
+  .doc-nav-link:hover { background: #f0f2f5; color: var(--text); }
+  .doc-nav-link.active { background: var(--primary); color: #fff; }
+
+  .hero {
+    background: linear-gradient(135deg, #0c0c1d 0%, #4a00e0 50%, #00b4d8 100%);
+    color: #fff; padding: 80px 24px 60px; text-align: center;
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 12px; }
+  .hero .pkg-name { font-size: 1.1rem; color: #a29bfe; font-family: monospace; margin-bottom: 20px; }
+  .hero p { font-size: 1.15rem; color: #dfe6e9; max-width: 720px; margin: 0 auto; }
+  .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
+  .badge-langgraph { background: #e17055; color: #fff; }
+  .badge-deepseek { background: #0984e3; color: #fff; }
+  .badge-vue { background: #42b883; color: #fff; }
+  .badge-ts { background: #3178c6; color: #fff; }
+  .badge-multiagent { background: #fdcb6e; color: #333; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .section-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+  .section-desc { color: var(--text-secondary); margin-bottom: 28px; }
+
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    border: 1px solid var(--border); transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 1.05rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 0.9rem; color: var(--text-secondary); }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; margin: 2px; }
+  .tag-purple { background: #f4ecf7; color: #7b1fa2; }
+  .tag-blue { background: #ecf5ff; color: #409eff; }
+  .tag-green { background: #f0f9eb; color: #67c23a; }
+  .tag-orange { background: #fdf6ec; color: #e6a23c; }
+  .tag-red { background: #fef0f0; color: #f56c6c; }
+  .tag-cyan { background: #e0f7fa; color: #00838f; }
+
+  .code-block {
+    background: var(--code-bg); color: var(--code-text); padding: 20px;
+    border-radius: var(--radius); font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem; overflow-x: auto; line-height: 1.7;
+  }
+  .code-block .comment { color: #6c7086; }
+  .code-block .keyword { color: #cba6f7; }
+  .code-block .string { color: #a6e3a1; }
+  .code-block .fn { color: #89b4fa; }
+  .code-block .type { color: #f9e2af; }
+
+  .stat-row { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 40px; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+  .stat .label { font-size: 0.85rem; color: var(--text-secondary); }
+
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  th { background: #f5f7fa; text-align: left; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fbfc; }
+
+  .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin: 20px 0; }
+  .arch-layer { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; }
+  .arch-layer .layer-label { min-width: 120px; font-weight: 700; text-align: right; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .arch-items { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .arch-item { padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1); }
+  .layer-palette { background: #e8f4fd; }
+  .layer-palette .layer-label { color: #1976d2; }
+  .layer-canvas { background: #e8f5e9; }
+  .layer-canvas .layer-label { color: #2e7d32; }
+  .layer-config { background: #fff3e0; }
+  .layer-config .layer-label { color: #e65100; }
+  .layer-api { background: #f3e5f5; }
+  .layer-api .layer-label { color: #7b1fa2; }
+  .layer-agent { background: #fce4ec; }
+  .layer-agent .layer-label { color: #c62828; }
+  .layer-ai { background: #e0f2f1; }
+  .layer-ai .layer-label { color: #00695c; }
+
+  .node-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+  .node-card {
+    background: var(--card); border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 16px; text-align: center; transition: all 0.2s;
+  }
+  .node-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108,92,231,0.15); }
+  .node-icon { font-size: 2rem; margin-bottom: 8px; }
+  .node-name { font-weight: 600; font-size: 0.9rem; }
+  .node-type { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+  .pkg-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
+  .pkg-tab {
+    padding: 12px 24px; font-weight: 600; font-size: 0.95rem;
+    border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer;
+  }
+  .pkg-tab.active { border-bottom-color: var(--primary); color: var(--primary); }
+
+  .flow-line { display: flex; align-items: center; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+  .flow-step {
+    padding: 8px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+    background: #f0f0f0; white-space: nowrap;
+  }
+  .flow-step.active { background: var(--primary); color: #fff; }
+  .flow-step.agent { background: #e17055; color: #fff; }
+  .flow-step.tool { background: #0984e3; color: #fff; }
+  .flow-arrow { color: var(--text-secondary); font-size: 0.9rem; }
+
+  .access-bar {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; position: sticky; top: 41px; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .access-bar .access-label { font-size: 0.85rem; color: var(--text-secondary); }
+  .access-bar .access-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px;
+    border-radius: 6px; font-size: 0.88rem; font-weight: 500; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .access-bar .access-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .access-link-primary { background: var(--primary); color: #fff; }
+  .access-link-primary:hover { background: var(--primary-dark); text-decoration: none; }
+  .access-link-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .access-link-outline:hover { background: #f4ecf7; text-decoration: none; }
+
+  .footer { text-align: center; padding: 40px 24px; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 40px; }
+
+  /* Agent card special styling */
+  .agent-card { border-left: 4px solid var(--primary); }
+  .agent-card.router { border-left-color: #fdcb6e; }
+  .agent-card.editor { border-left-color: #00b894; }
+  .agent-card.flow { border-left-color: #0984e3; }
+
+  /* Conversation flow */
+  .convo { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
+  .convo-msg { display: flex; gap: 12px; margin-bottom: 16px; }
+  .convo-msg:last-child { margin-bottom: 0; }
+  .convo-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+  .convo-avatar.user { background: #dfe6e9; color: #2d3436; }
+  .convo-avatar.ai { background: var(--primary); color: #fff; }
+  .convo-avatar.router { background: #fdcb6e; color: #333; }
+  .convo-avatar.editor { background: #00b894; color: #fff; }
+  .convo-avatar.flow { background: #0984e3; color: #fff; }
+  .convo-body { flex: 1; }
+  .convo-role { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .convo-text { font-size: 0.9rem; }
+  .convo-text code { background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
+
+  /* Phase timeline */
+  .phase-timeline { position: relative; padding-left: 32px; margin: 20px 0; }
+  .phase-timeline::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .phase-item { position: relative; margin-bottom: 24px; }
+  .phase-item::before { content: ''; position: absolute; left: -27px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--primary); background: #fff; }
+  .phase-item.done::before { background: var(--primary); }
+  .phase-label { font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .phase-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .phase-desc { font-size: 0.88rem; color: var(--text-secondary); }
+
+  /* SSE stream */
+  .sse-block { background: #0d1117; border-radius: var(--radius); padding: 20px; margin: 16px 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.82rem; line-height: 1.8; color: #c9d1d9; }
+  .sse-line { margin-bottom: 4px; }
+  .sse-event { color: #79c0ff; }
+  .sse-data { color: #a5d6ff; }
+  .sse-key { color: #ff7b72; }
+  .sse-str { color: #a5d6ff; }
+  .sse-comment { color: #8b949e; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .stat-row { justify-content: center; }
+    .arch-layer { flex-direction: column; align-items: flex-start; }
+    .arch-layer .layer-label { text-align: left; min-width: auto; }
+    .node-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .flow-line { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="doc-nav">
+  <a href="/" class="doc-nav-back">&larr; 返回首页</a>
+  <div class="doc-nav-links">
+    <a href="/docs/docs.html" class="doc-nav-link">文档首页</a>
+    <a href="/docs/web.html" class="doc-nav-link">前端</a>
+    <a href="/docs/server.html" class="doc-nav-link">后端</a>
+    <a href="/docs/flow.html" class="doc-nav-link">流程</a>
+    <a href="/docs/ai.html" class="doc-nav-link active">AI</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>AI 支撑层</h1>
+  <div class="pkg-name">packages/server/src/ai &nbsp;+&nbsp; packages/ai-app</div>
+  <p>基于 LangGraph 多智能体架构的对话式生成引擎。通过 Router / Editor / Flow 三种专家 Agent，实现表单、页面、流程图的自然语言驱动生成与迭代修改。</p>
+  <div class="badges">
+    <span class="badge badge-langgraph">LangGraph</span>
+    <span class="badge badge-deepseek">DeepSeek</span>
+    <span class="badge badge-multiagent">多智能体</span>
+    <span class="badge badge-vue">Vue 3</span>
+    <span class="badge badge-ts">TypeScript</span>
+  </div>
+</div>
+
+<div class="access-bar">
+  <span class="access-label">快速访问：</span>
+  <a href="/ai" class="access-link access-link-primary">打开 AI 助手 &rarr;</a>
+  <a href="/editor" class="access-link access-link-outline">可视化编辑器</a>
+  <a href="/flow/designer" class="access-link access-link-outline">流程设计器</a>
+</div>
+
+<div class="container">
+
+  <!-- ==================== 决策记录 ==================== -->
+  <h2 class="section-title">决策记录</h2>
+  <p class="section-desc">关键架构选型及理由</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>决策</th><th>结论</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>AI 框架</td><td><span class="tag tag-red">LangGraph</span></td><td>多步对话、状态管理、多智能体协作原生支持</td></tr>
+        <tr><td>模型提供商</td><td><span class="tag tag-blue">DeepSeek</span></td><td>成本低、中文能力强、OpenAI 兼容接口</td></tr>
+        <tr><td>语言</td><td><span class="tag tag-blue">TypeScript</span></td><td>与项目统一，类型安全</td></tr>
+        <tr><td>交互模式</td><td><span class="tag tag-green">对话式（多轮）</span></td><td>用户可逐步细化需求，支持修改与迭代</td></tr>
+        <tr><td>Agent 模式</td><td><span class="tag tag-orange">混合路由</span></td><td>自动分发 + 手动切换 + 复杂任务多专家协作</td></tr>
+        <tr><td>服务位置</td><td><span class="tag tag-purple">packages/server/src/ai/</span></td><td>复用现有服务，独立 AI 模块</td></tr>
+        <tr><td>前端位置</td><td><span class="tag tag-purple">packages/ai-app/</span></td><td>独立 Vue 3 微应用，通过 microApp 嵌入</td></tr>
+        <tr><td>集成方式</td><td><span class="tag tag-cyan">microApp</span></td><td>动态嵌入 Editor 和 Flow，与现有架构一致</td></tr>
+        <tr><td>Memory</td><td><span class="tag tag-green">LangGraph State + @langchain/mongodb</span></td><td>短期/工作记忆用 State，长期记忆用 MongoDBChatMessageHistory</td></tr>
+        <tr><td>领域知识</td><td><span class="tag tag-orange">纯 Prompt（Phase 1）</span></td><td>Widget/节点类型有限集，系统提示词装得下</td></tr>
+        <tr><td>向量存储</td><td><span class="tag tag-green">MongoDB Atlas Vector Search</span></td><td>复用现有 MongoDB Atlas，@langchain/mongodb 一套包覆盖</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== 整体架构 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">整体架构</h2>
+  <p class="section-desc">AI 微应用独立于 Editor 和 Flow，通过 microApp 嵌入宿主，服务端通过 LangGraph 编排多智能体</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer layer-canvas">
+      <div class="layer-label">Frontend</div>
+      <div class="arch-items">
+        <div class="arch-item">Editor（可视化编辑器）</div>
+        <div class="arch-item">Flow（流程设计器）</div>
+        <div class="arch-item"><strong>ai-app（AI 微应用）</strong></div>
+      </div>
+    </div>
+    <div class="arch-layer layer-config">
+      <div class="layer-label">Integration</div>
+      <div class="arch-items">
+        <div class="arch-item">microApp 嵌入</div>
+        <div class="arch-item">postMessage 通信</div>
+        <div class="arch-item">SSE 流式传输</div>
+      </div>
+    </div>
+    <div class="arch-layer layer-api">
+      <div class="layer-label">API</div>
+      <div class="arch-items">
+        <div class="arch-item">POST /api/ai/chat</div>
+        <div class="arch-item">POST /api/ai/publish</div>
+        <div class="arch-item">GET /api/ai/conversations</div>
+      </div>
+    </div>
+    <div class="arch-layer layer-agent">
+      <div class="layer-label">Agents</div>
+      <div class="arch-items">
+        <div class="arch-item"><strong>Router Agent</strong> 意图识别 &amp; 分发</div>
+        <div class="arch-item"><strong>Editor Agent</strong> Widget Schema 生成</div>
+        <div class="arch-item"><strong>Flow Agent</strong> FlowGraph 生成</div>
+      </div>
+    </div>
+    <div class="arch-layer layer-ai">
+      <div class="layer-label">Runtime</div>
+      <div class="arch-items">
+        <div class="arch-item">LangGraph StateGraph</div>
+        <div class="arch-item">DeepSeek API</div>
+        <div class="arch-item">Zod Schema 约束</div>
+        <div class="arch-item">对话持久化（MongoDB）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Agent 设计 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">智能体设计</h2>
+  <p class="section-desc">三种专家 Agent 各司其职，Router 负责分发与编排</p>
+
+  <div class="grid grid-3">
+    <div class="card agent-card router">
+      <h3><span style="color:#fdcb6e;">&#9673;</span> Router Agent</h3>
+      <p><strong>职责</strong>：意图识别，将用户请求分发到对应专家，或协调多专家协作</p>
+      <p style="margin-top:8px;"><strong>路由规则</strong></p>
+      <p>涉及表单、列表、页面、UI、组件 &rarr; Editor Agent</p>
+      <p>涉及流程、审批、节点、分支、条件 &rarr; Flow Agent</p>
+      <p>跨域需求（节点绑定表单） &rarr; 协作模式</p>
+      <div style="margin-top:12px;">
+        <span class="tag tag-orange">意图分类</span>
+        <span class="tag tag-orange">任务拆分</span>
+        <span class="tag tag-orange">结果合并</span>
+      </div>
+    </div>
+    <div class="card agent-card editor">
+      <h3><span style="color:#00b894;">&#9673;</span> Editor Agent</h3>
+      <p><strong>职责</strong>：生成/修改 Widget Schema（表单、列表页、业务页面）</p>
+      <p style="margin-top:8px;"><strong>领域知识</strong></p>
+      <p>35+ Widget 类型系统、布局容器嵌套、16 种事件动作、联动规则、校验规则</p>
+      <div style="margin-top:12px;">
+        <span class="tag tag-green">Widget 生成</span>
+        <span class="tag tag-green">布局计算</span>
+        <span class="tag tag-green">Schema 校验</span>
+      </div>
+    </div>
+    <div class="card agent-card flow">
+      <h3><span style="color:#0984e3;">&#9673;</span> Flow Agent</h3>
+      <p><strong>职责</strong>：生成/修改流程图（FlowGraph）</p>
+      <p style="margin-top:8px;"><strong>领域知识</strong></p>
+      <p>12 种 BPMN 节点类型、审批模式（会签/或签）、网关条件、表达式语法</p>
+      <div style="margin-top:12px;">
+        <span class="tag tag-blue">流程生成</span>
+        <span class="tag tag-blue">节点配置</span>
+        <span class="tag tag-blue">表达式生成</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Tools -->
+  <h3 style="margin-top:32px; margin-bottom:16px;">Agent Tools</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Editor Agent Tools</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>功能</th></tr></thead>
+          <tbody>
+            <tr><td><code>query_widgets</code></td><td>查询可用组件列表及属性定义</td></tr>
+            <tr><td><code>validate_schema</code></td><td>校验 Widget Schema 合法性</td></tr>
+            <tr><td><code>calculate_layout</code></td><td>计算布局坐标（自动排列、避免重叠）</td></tr>
+            <tr><td><code>get_field_template</code></td><td>获取常用字段模板（快速生成）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Flow Agent Tools</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>功能</th></tr></thead>
+          <tbody>
+            <tr><td><code>query_node_types</code></td><td>查询可用节点类型及配置项</td></tr>
+            <tr><td><code>validate_flow</code></td><td>校验流程图合法性（单起点、可达性）</td></tr>
+            <tr><td><code>generate_expression</code></td><td>生成条件表达式</td></tr>
+            <tr><td><code>get_flow_template</code></td><td>获取流程模板（审批流、业务流）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== AI 基础设施 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">AI 基础设施：Memory / RAG / 向量库</h2>
+  <p class="section-desc">Agent 的记忆体系、知识检索策略与向量库选型</p>
+
+  <h3 style="margin-bottom:16px;">Memory 体系</h3>
+  <p style="color:var(--text-secondary); margin-bottom:20px;">LangGraph 原生支持多层记忆，无需额外框架</p>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3><span class="tag tag-green">短期记忆</span></h3>
+      <p><strong>用途</strong>：当前对话上下文、多轮消息</p>
+      <p><strong>实现</strong>：LangGraph State 的 <code>messages[]</code></p>
+      <p><strong>生命周期</strong>：单次会话</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-blue">工作记忆</span></h3>
+      <p><strong>用途</strong>：当前正在构建的 Schema / Flow</p>
+      <p><strong>实现</strong>：LangGraph State 的 <code>currentSchema</code> / <code>currentFlow</code></p>
+      <p><strong>生命周期</strong>：单次会话</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-purple">长期记忆</span></h3>
+      <p><strong>用途</strong>：跨会话的用户偏好、历史对话</p>
+      <p><strong>实现</strong>：MongoDB <code>AIConversation</code> 集合</p>
+      <p><strong>生命周期</strong>：持久化</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px; margin-bottom:16px;">RAG 策略</h3>
+  <p style="color:var(--text-secondary); margin-bottom:20px;">核心问题：Agent 如何获取项目领域知识（Widget 类型、节点配置、Schema 结构）？</p>
+
+  <div class="grid grid-2">
+    <div class="card" style="border-left:4px solid var(--green);">
+      <h3>Phase 1：纯 Prompt + 基础向量存储</h3>
+      <p>将领域知识直接注入系统提示词，同时引入 <code>@langchain/mongodb</code> 做对话历史持久化。Widget 类型是有限集（35 种），系统提示词完全放得下。</p>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment">// Editor Agent 系统提示词包含：</span>
+<span class="keyword">const</span> editorSystemPrompt = <span class="string">`
+你是表单/页面生成专家。
+以下是可用的 Widget 类型：
+
+## 基础组件
+- input: 文本输入框
+- select: 下拉选择
+- number: 数字输入
+- date: 日期选择
+- ...
+
+## 布局组件
+- form: 表单容器
+- card: 卡片容器
+- row-col: 栅格布局
+- tabs: 选项卡
+
+## 规则
+1. 基础组件只能嵌套在布局组件内
+2. 每个组件必须有 position
+3. 布局坐标不能重叠
+`</span>
+      </div>
+      <div style="margin-top:12px;">
+        <span class="tag tag-green">延迟最低</span>
+        <span class="tag tag-green">实现最简</span>
+        <span class="tag tag-green">复用 MongoDB 实例</span>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--orange);">
+      <h3>Phase 2+：RAG（按需扩展）</h3>
+      <p>当以下条件满足时引入 RAG：</p>
+      <p style="margin-top:8px;">&#8226; 用户自定义 Widget / 模板数量增长到 Prompt 放不下</p>
+      <p>&#8226; 需要检索历史生成的优秀案例作为参考</p>
+      <p>&#8226; 需要理解项目特定的业务术语和字段命名习惯</p>
+      <div style="margin-top:16px;">
+        <span class="tag tag-orange">动态知识更新</span>
+        <span class="tag tag-orange">精准检索</span>
+        <span class="tag tag-orange">案例复用</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px; margin-bottom:16px;">向量库选型</h3>
+  <p style="color:var(--text-secondary); margin-bottom:20px;">Phase 1 即引入 <code>@langchain/mongodb</code>，使用 MongoDB Atlas Vector Search 作为向量存储</p>
+
+  <div class="card" style="border-left:4px solid var(--green); margin-bottom:20px;">
+    <h3><span class="tag tag-green">已选定</span> MongoDB Atlas Vector Search</h3>
+    <p>通过 <code>@langchain/mongodb</code> 包提供两个核心能力：</p>
+    <div class="grid grid-2" style="margin-top:12px;">
+      <div style="background:#f0f9eb; border-radius:6px; padding:12px;">
+        <div style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">MongoDBChatMessageHistory</div>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">对话历史持久化，复用现有 MongoDB 实例</p>
+        <span class="tag tag-green" style="margin-top:8px;">Phase 1 使用</span>
+      </div>
+      <div style="background:#fff3e0; border-radius:6px; padding:12px;">
+        <div style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">MongoDBAtlasVectorSearch</div>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">向量存储与语义检索，支持 RAG</p>
+        <span class="tag tag-orange" style="margin-top:8px;">Phase 2+ 使用</span>
+      </div>
+    </div>
+    <p style="margin-top:12px; font-size:0.88rem; color:var(--text-secondary);">
+      &#8226; 零额外基础设施（复用现有 MongoDB Atlas）<br>
+      &#8226; 对话数据和向量数据在同一数据库，查询效率高<br>
+      &#8226; Phase 1 先用对话持久化，Phase 2 开启向量检索，无需新增依赖
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>基础设施演进路线</h3>
+    <div style="margin-top:16px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div style="background:#f0f9eb; border:1px solid #c2e7a0; border-radius:8px; padding:16px;">
+          <div style="font-weight:700; color:#67c23a; margin-bottom:12px;">Phase 1（最小闭环）</div>
+          <p style="font-size:0.88rem;">&#8226; <strong>LangGraph State</strong> &rarr; 短期记忆 + 工作记忆</p>
+          <p style="font-size:0.88rem;">&#8226; <strong>@langchain/mongodb</strong> &rarr; 对话历史持久化</p>
+          <p style="font-size:0.88rem;">&#8226; <strong>纯 Prompt</strong> &rarr; 领域知识注入</p>
+          <p style="font-size:0.88rem;">&#8226; <strong>DeepSeek API</strong> &rarr; LLM 推理</p>
+        </div>
+        <div style="background:#fff3e0; border:1px solid #f5d5a0; border-radius:8px; padding:16px;">
+          <div style="font-weight:700; color:#e6a23c; margin-bottom:12px;">Phase 2+（按需扩展）</div>
+          <p style="font-size:0.88rem;">&#8226; <strong>@langchain/mongodb</strong> &rarr; RAG 向量检索</p>
+          <p style="font-size:0.88rem;">&#8226; 向量化 Widget 模板库</p>
+          <p style="font-size:0.88rem;">&#8226; 向量化历史优秀生成案例</p>
+          <p style="font-size:0.88rem;">&#8226; 向量化业务术语表</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 对话流程 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">对话流程</h2>
+  <p class="section-desc">一次典型的 AI 交互：从自然语言描述到 Schema 生成与发布</p>
+
+  <div class="convo">
+    <div class="convo-msg">
+      <div class="convo-avatar user">U</div>
+      <div class="convo-body">
+        <div class="convo-role">User</div>
+        <div class="convo-text">帮我做一个请假申请表单，需要请假类型、起止日期、事由、附件</div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar router">R</div>
+      <div class="convo-body">
+        <div class="convo-role">Router Agent &rarr; 识别为编辑器任务，分发到 Editor Agent</div>
+        <div class="convo-text" style="color:var(--text-secondary); font-style:italic;">路由决策：target=editor, task="生成请假申请表单"</div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar editor">E</div>
+      <div class="convo-body">
+        <div class="convo-role">Editor Agent</div>
+        <div class="convo-text">
+          已为你生成请假申请表单，包含以下字段：<br>
+          &#8226; 请假类型（Select：事假/年假/病假/婚假/产假）<br>
+          &#8226; 开始日期（DatePicker）<br>
+          &#8226; 结束日期（DatePicker）<br>
+          &#8226; 请假事由（Textarea，必填）<br>
+          &#8226; 附件上传（Upload，可选）<br>
+          <br>
+          <code>Widget[]</code> Schema 已生成，请在右侧预览面板查看。
+        </div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar user">U</div>
+      <div class="convo-body">
+        <div class="convo-role">User</div>
+        <div class="convo-text">再加一个紧急联系人字段</div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar editor">E</div>
+      <div class="convo-body">
+        <div class="convo-role">Editor Agent</div>
+        <div class="convo-text">已在表单末尾添加「紧急联系人」Input 字段（必填），Schema 已更新。</div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar user">U</div>
+      <div class="convo-body">
+        <div class="convo-role">User</div>
+        <div class="convo-text">确认，发布并绑定到当前节点</div>
+      </div>
+    </div>
+    <div class="convo-msg">
+      <div class="convo-avatar ai">AI</div>
+      <div class="convo-body">
+        <div class="convo-role">System</div>
+        <div class="convo-text">表单已发布（publishId: <code>pf_abc123</code>），已绑定到流程节点「请假申请」。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 协作模式 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">协作模式</h2>
+  <p class="section-desc">当用户需求跨越编辑器和流程两个领域时，Router 拆分任务并协调多 Agent 协作</p>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <h3>示例：创建请假审批流程</h3>
+    <p style="margin-bottom: 16px;">用户请求："创建一个请假审批流程，包含请假表单"</p>
+    <div class="flow-line">
+      <div class="flow-step agent">Router 拆分任务</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step tool">Editor Agent: 生成请假表单</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step tool">Flow Agent: 生成审批流程</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step active">合并结果 &amp; 发布</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+<span class="comment">// LangGraph 协作子图</span>
+<span class="keyword">const</span> collaborationGraph = <span class="keyword">new</span> <span class="type">StateGraph</span>(stateAnnotation)
+  .<span class="fn">addNode</span>(<span class="string">"router"</span>, routerNode)
+  .<span class="fn">addNode</span>(<span class="string">"editor"</span>, editorAgentNode)
+  .<span class="fn">addNode</span>(<span class="string">"flow"</span>, flowAgentNode)
+  .<span class="fn">addNode</span>(<span class="string">"merge"</span>, mergeResultsNode)
+  .<span class="fn">addEdge</span>(<span class="string">"router"</span>, <span class="string">"editor"</span>)
+  .<span class="fn">addEdge</span>(<span class="string">"editor"</span>, <span class="string">"flow"</span>)     <span class="comment">// Editor 先生成表单</span>
+  .<span class="fn">addEdge</span>(<span class="string">"flow"</span>, <span class="string">"merge"</span>)       <span class="comment">// Flow 用 publishId 生成流程</span>
+  .<span class="fn">addEdge</span>(<span class="string">"merge"</span>, <span class="string">"__end__"</span>)
+  </div>
+
+  <!-- ==================== API 设计 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">API 设计</h2>
+  <p class="section-desc">三个核心接口，SSE 流式对话 + 发布绑定 + 对话管理</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3><span class="tag tag-purple">POST</span> /api/ai/chat</h3>
+      <p>对话接口，SSE 流式响应。支持多轮对话，自动路由到对应 Agent。</p>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment">// Request</span>
+{
+  <span class="string">"conversationId"</span>: <span class="string">"conv_xxx"</span>,  <span class="comment">// 首次不传</span>
+  <span class="string">"message"</span>: <span class="string">"帮我做一个请假表单"</span>,
+  <span class="string">"context"</span>: {
+    <span class="string">"source"</span>: <span class="string">"flow"</span>,
+    <span class="string">"flowId"</span>: <span class="string">"flow_xxx"</span>,
+    <span class="string">"nodeId"</span>: <span class="string">"node_xxx"</span>
+  }
+}
+      </div>
+    </div>
+    <div class="card">
+      <h3>SSE 响应事件流</h3>
+      <p>服务端通过 Server-Sent Events 流式推送生成结果</p>
+      <div class="sse-block">
+        <div class="sse-line"><span class="sse-event">event: text</span></div>
+        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"content"</span>: <span class="sse-str">"已为你生成..."</span>}</span></div>
+        <div class="sse-line">&nbsp;</div>
+        <div class="sse-line"><span class="sse-event">event: schema</span></div>
+        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"payload"</span>: [...], <span class="sse-key">"description"</span>: <span class="sse-str">"表单 Schema"</span>}</span></div>
+        <div class="sse-line">&nbsp;</div>
+        <div class="sse-line"><span class="sse-event">event: done</span></div>
+        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"conversationId"</span>: <span class="sse-str">"conv_xxx"</span>}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top: 20px;">
+    <div class="card">
+      <h3><span class="tag tag-green">POST</span> /api/ai/publish</h3>
+      <p>发布生成物并绑定到目标（流程节点）</p>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment">// Request</span>
+{
+  <span class="string">"conversationId"</span>: <span class="string">"conv_xxx"</span>,
+  <span class="string">"type"</span>: <span class="string">"schema"</span>,
+  <span class="string">"payload"</span>: [ <span class="comment">/* Widget[] */</span> ],
+  <span class="string">"target"</span>: {
+    <span class="string">"type"</span>: <span class="string">"flow_node"</span>,
+    <span class="string">"flowId"</span>: <span class="string">"flow_xxx"</span>,
+    <span class="string">"nodeId"</span>: <span class="string">"node_xxx"</span>
+  }
+}
+
+<span class="comment">// Response</span>
+{
+  <span class="string">"id"</span>: <span class="string">"schema_xxx"</span>,
+  <span class="string">"publishId"</span>: <span class="string">"pf_abc123"</span>,
+  <span class="string">"boundTo"</span>: { <span class="string">"flowId"</span>: <span class="string">"..."</span>, <span class="string">"nodeId"</span>: <span class="string">"..."</span> }
+}
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-blue">GET/DELETE</span> /api/ai/conversations/:id</h3>
+      <p>对话历史管理</p>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment">// GET Response</span>
+{
+  <span class="string">"id"</span>: <span class="string">"conv_xxx"</span>,
+  <span class="string">"source"</span>: <span class="string">"flow"</span>,
+  <span class="string">"messages"</span>: [
+    { <span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"..."</span> },
+    { <span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"..."</span>,
+      <span class="string">"schema"</span>: [<span class="comment">/* Widget[] */</span>] }
+  ],
+  <span class="string">"activeAgent"</span>: <span class="string">"editor"</span>,
+  <span class="string">"createdAt"</span>: <span class="string">"2026-05-29T..."</span>
+}
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 对话状态 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">对话状态模型</h2>
+  <p class="section-desc">LangGraph StateGraph 的核心状态定义</p>
+
+  <div class="code-block">
+<span class="keyword">interface</span> <span class="type">AIConversationState</span> {
+  <span class="comment">// 对话历史</span>
+  messages: <span class="type">AIMessage</span>[]
+
+  <span class="comment">// 当前活跃的 Agent</span>
+  activeAgent: <span class="string">'router'</span> | <span class="string">'editor'</span> | <span class="string">'flow'</span>
+
+  <span class="comment">// 业务上下文</span>
+  context: {
+    source: <span class="string">'editor'</span> | <span class="string">'flow'</span> | <span class="string">'standalone'</span>
+    schemaId?: <span class="type">string</span>         <span class="comment">// 编辑器场景：当前 Schema ID</span>
+    flowId?: <span class="type">string</span>           <span class="comment">// 流程场景：当前流程 ID</span>
+    nodeId?: <span class="type">string</span>           <span class="comment">// 流程场景：当前节点 ID</span>
+    currentSchema?: <span class="type">Widget</span>[]  <span class="comment">// 当前生成的 Schema</span>
+    currentFlow?: <span class="type">FlowGraph</span>   <span class="comment">// 当前生成的 Flow</span>
+    turnCount: <span class="type">number</span>         <span class="comment">// 对话轮次</span>
+  }
+
+  <span class="comment">// 待确认操作</span>
+  pendingAction?: {
+    type: <span class="string">'preview'</span> | <span class="string">'publish'</span> | <span class="string">'modify'</span>
+    payload: <span class="type">Widget</span>[] | <span class="type">FlowGraph</span>
+    description: <span class="type">string</span>
+  }
+}
+  </div>
+
+  <!-- ==================== 前端 ai-app ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">前端 ai-app</h2>
+  <p class="section-desc">独立 Vue 3 微应用，通过 microApp 嵌入 Editor 和 Flow</p>
+
+  <div class="card" style="margin-bottom:24px;">
+    <h3>界面布局</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top:16px;">
+      <div style="background:#f5f7fa; border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center;">
+        <div style="font-weight:700; margin-bottom:12px; color:var(--primary);">对话区域</div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:8px; text-align:left; font-size:0.85rem;">
+          <div style="color:var(--text-secondary); font-size:0.75rem;">User</div>
+          帮我做一个请假申请表单
+        </div>
+        <div style="background:#f0f0ff; border:1px solid #d0d0ff; border-radius:6px; padding:12px; text-align:left; font-size:0.85rem;">
+          <div style="color:var(--primary); font-size:0.75rem;">Editor Agent</div>
+          已生成表单，包含 5 个字段...
+        </div>
+        <div style="margin-top:12px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:8px 12px; text-align:left; font-size:0.82rem; color:var(--text-secondary);">
+          输入消息...
+        </div>
+      </div>
+      <div style="background:#f5f7fa; border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center;">
+        <div style="font-weight:700; margin-bottom:12px; color:var(--green);">预览区域</div>
+        <div style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:16px; text-align:left; font-size:0.85rem;">
+          <div style="margin-bottom:8px;"><strong>请假类型</strong> <span style="color:#999;">Select</span></div>
+          <div style="margin-bottom:8px;"><strong>开始日期</strong> <span style="color:#999;">DatePicker</span></div>
+          <div style="margin-bottom:8px;"><strong>结束日期</strong> <span style="color:#999;">DatePicker</span></div>
+          <div style="margin-bottom:8px;"><strong>请假事由</strong> <span style="color:#999;">Textarea *</span></div>
+          <div style="margin-bottom:8px;"><strong>附件上传</strong> <span style="color:#999;">Upload</span></div>
+          <div><strong>紧急联系人</strong> <span style="color:#999;">Input *</span></div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+          <span style="padding:6px 16px; background:var(--primary); color:#fff; border-radius:4px; font-size:0.82rem;">发布</span>
+          <span style="padding:6px 16px; background:#fff; border:1px solid var(--border); border-radius:4px; font-size:0.82rem;">修改</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>AiChat.vue</h3>
+      <p>对话主界面，管理消息列表、输入框、SSE 流式接收</p>
+    </div>
+    <div class="card">
+      <h3>AiMessage.vue</h3>
+      <p>单条消息渲染，支持纯文本、Schema 卡片、Flow 卡片</p>
+    </div>
+    <div class="card">
+      <h3>AiPreview.vue</h3>
+      <p>Schema/Flow 预览面板，嵌入 SchemaRender 实时渲染</p>
+    </div>
+    <div class="card">
+      <h3>AiRoleSwitcher.vue</h3>
+      <p>Agent 角色切换，支持自动/手动模式</p>
+    </div>
+    <div class="card">
+      <h3>AiPublishDialog.vue</h3>
+      <p>发布确认弹窗，选择绑定目标</p>
+    </div>
+    <div class="card">
+      <h3>bridge.ts</h3>
+      <p>microApp postMessage 通信桥接</p>
+    </div>
+  </div>
+
+  <!-- ==================== 嵌入方式 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">嵌入方式</h2>
+  <p class="section-desc">ai-app 通过 microApp 嵌入宿主，通过 postMessage 双向通信</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Editor 中嵌入</h3>
+      <div class="code-block">
+<span class="comment">&lt;!-- Editor 侧边栏 --&gt;</span>
+&lt;<span class="keyword">micro-app</span>
+  <span class="fn">name</span>=<span class="string">"ai-app"</span>
+  <span class="fn">:url</span>=<span class="string">"AI_APP_URL"</span>
+  <span class="fn">:data</span>=<span class="string">"{ source: 'editor', schemaId }"</span>
+/&gt;
+      </div>
+    </div>
+    <div class="card">
+      <h3>Flow 中嵌入</h3>
+      <div class="code-block">
+<span class="comment">&lt;!-- Flow 属性面板 --&gt;</span>
+&lt;<span class="keyword">micro-app</span>
+  <span class="fn">name</span>=<span class="string">"ai-app"</span>
+  <span class="fn">:url</span>=<span class="string">"AI_APP_URL"</span>
+  <span class="fn">:data</span>=<span class="string">"{ source: 'flow', flowId, nodeId }"</span>
+/&gt;
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px; margin-bottom:12px;">通信协议</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>方向</th><th>事件</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-green">ai-app &rarr; 宿主</span></td><td><code>ai:preview-schema</code></td><td>推送生成的 Schema 到编辑器预览</td></tr>
+        <tr><td><span class="tag tag-green">ai-app &rarr; 宿主</span></td><td><code>ai:preview-flow</code></td><td>推送生成的 FlowGraph 到流程设计器预览</td></tr>
+        <tr><td><span class="tag tag-green">ai-app &rarr; 宿主</span></td><td><code>ai:published</code></td><td>通知发布完成及绑定结果</td></tr>
+        <tr><td><span class="tag tag-blue">宿主 &rarr; ai-app</span></td><td><code>ai:set-context</code></td><td>传入当前上下文（source, IDs）</td></tr>
+        <tr><td><span class="tag tag-blue">宿主 &rarr; ai-app</span></td><td><code>ai:current-schema</code></td><td>传入当前编辑器 Schema 供 AI 参考</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== 目录结构 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">目录结构</h2>
+  <p class="section-desc">服务端 AI 模块 + 前端 ai-app 微应用</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>packages/server/src/ai/</h3>
+      <div class="code-block">
+ai/
+├── index.ts              <span class="comment"># 模块入口，路由注册</span>
+├── routes.ts             <span class="comment"># /api/ai/* 路由</span>
+├── graph/
+│   ├── state.ts          <span class="comment"># State 定义</span>
+│   ├── router.ts         <span class="comment"># Router Agent</span>
+│   ├── editorAgent.ts    <span class="comment"># Editor Agent</span>
+│   ├── flowAgent.ts      <span class="comment"># Flow Agent</span>
+│   └── index.ts          <span class="comment"># StateGraph 组装</span>
+├── tools/
+│   ├── widgetTools.ts    <span class="comment"># Editor Tools</span>
+│   └── flowTools.ts      <span class="comment"># Flow Tools</span>
+├── prompts/
+│   ├── router.ts         <span class="comment"># Router 提示词</span>
+│   ├── editor.ts         <span class="comment"># Editor 提示词</span>
+│   └── flow.ts           <span class="comment"># Flow 提示词</span>
+├── schemas/
+│   └── aiSchemas.ts      <span class="comment"># Zod 校验</span>
+└── services/
+    └── conversationService.ts <span class="comment"># 对话持久化</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>packages/ai-app/</h3>
+      <div class="code-block">
+ai-app/
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── index.html
+└── src/
+    ├── main.ts
+    ├── App.vue
+    ├── api/
+    │   └── aiApi.ts      <span class="comment"># SSE + API</span>
+    ├── components/
+    │   ├── AiChat.vue
+    │   ├── AiMessage.vue
+    │   ├── AiPreview.vue
+    │   ├── AiRoleSwitcher.vue
+    │   └── AiPublishDialog.vue
+    ├── stores/
+    │   └── ai.ts         <span class="comment"># Pinia store</span>
+    ├── types/
+    │   └── index.ts
+    └── utils/
+        └── bridge.ts     <span class="comment"># postMessage</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 实施阶段 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">实施阶段</h2>
+  <p class="section-desc">分四阶段逐步落地，每阶段可独立验证</p>
+
+  <div class="phase-timeline">
+    <div class="phase-item">
+      <div class="phase-label">Phase 1</div>
+      <div class="phase-title">最小闭环</div>
+      <div class="phase-desc">
+        Server：Router Agent + Editor Agent，单轮生成 Widget Schema<br>
+        ai-app：对话 UI + Schema 预览 + 发布<br>
+        验证：描述 &rarr; 生成表单 &rarr; 预览 &rarr; 发布到 Editor
+      </div>
+    </div>
+    <div class="phase-item">
+      <div class="phase-label">Phase 2</div>
+      <div class="phase-title">多轮对话</div>
+      <div class="phase-desc">
+        Editor Agent 支持上下文感知的修改（"再加一个字段"）<br>
+        对话持久化（MongoDB）<br>
+        SSE 流式响应
+      </div>
+    </div>
+    <div class="phase-item">
+      <div class="phase-label">Phase 3</div>
+      <div class="phase-title">Flow Agent</div>
+      <div class="phase-desc">
+        Flow Agent 实现，支持流程图生成<br>
+        协作模式：Editor + Flow 联合生成<br>
+        发布绑定到 Flow 节点
+      </div>
+    </div>
+    <div class="phase-item">
+      <div class="phase-label">Phase 4</div>
+      <div class="phase-title">能力增强</div>
+      <div class="phase-desc">
+        Agent Tools 完善（模板库、校验、布局计算）<br>
+        对话历史恢复<br>
+        Schema 校验失败后自动修正
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 依赖 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">依赖</h2>
+  <p class="section-desc">新增 npm 依赖</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>包名</th><th>用途</th><th>版本</th></tr></thead>
+      <tbody>
+        <tr><td><code>@langchain/langgraph</code></td><td>多智能体状态图编排</td><td>latest</td></tr>
+        <tr><td><code>@langchain/core</code></td><td>LangChain 核心抽象（messages、tools、output parsers）</td><td>latest</td></tr>
+        <tr><td><code>@langchain/deepseek</code></td><td>DeepSeek 模型接入（OpenAI 兼容协议）</td><td>latest</td></tr>
+        <tr><td><code>@langchain/mongodb</code></td><td>MongoDB 集成：向量存储 + 对话历史持久化</td><td>latest</td></tr>
+        <tr><td><code>zod</code></td><td>结构化输出 Schema 约束</td><td>^3.x</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>schema-form-platform &mdash; AI 支撑层架构设计文档 &mdash; 2026-05-29</p>
+</div>
+
+</body>
+</html>

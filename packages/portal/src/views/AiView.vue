@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { getAppUrl } from '@schema-form/micro-app/config'
 
-const url = getAppUrl('editor', import.meta.env.DEV)
+const url = getAppUrl('ai', import.meta.env.DEV)
 </script>
 
 <template>
   <micro-app
-    name="editor"
+    name="ai"
     :url="url"
     :data="{}"
     iframe

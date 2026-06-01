@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>@schema-form/web — 可视化表单设计器</title>
+<title>@schema-form/editor-web — 可视化表单设计器</title>
 <style>
   :root {
     --primary: #409eff;
@@ -179,28 +179,30 @@
 <nav class="doc-nav">
   <a href="/" class="doc-nav-back">← 返回首页</a>
   <div class="doc-nav-links">
+    <a href="/docs/docs.html" class="doc-nav-link">文档首页</a>
     <a href="/docs/web.html" class="doc-nav-link active">前端</a>
     <a href="/docs/server.html" class="doc-nav-link">后端</a>
     <a href="/docs/flow.html" class="doc-nav-link">流程</a>
+    <a href="/docs/ai.html" class="doc-nav-link">AI</a>
   </div>
 </nav>
 
 <div class="hero">
   <h1>可视化表单设计器</h1>
-  <div class="pkg-name">@schema-form/web</div>
-  <p>Schema 驱动的可视化自由布局表单设计器与运行时渲染引擎，支持 34+ 组件、拖拽编排、事件系统、联动配置、微前端集成。</p>
+  <div class="pkg-name">@schema-form/editor-web</div>
+  <p>Schema 驱动的可视化自由布局表单设计器与运行时渲染引擎，支持 49 组件、拖拽编排、事件系统、联动配置、图表集成、微前端接入。</p>
   <div class="badges">
-    <span class="badge badge-vue">Vue 3</span>
-    <span class="badge badge-ts">TypeScript</span>
-    <span class="badge badge-vite">Vite 6</span>
-    <span class="badge badge-elem">Element Plus</span>
+    <span class="badge badge-vue">Vue 3.5</span>
+    <span class="badge badge-ts">TypeScript 5.7</span>
+    <span class="badge badge-vite">Vite 6.3</span>
+    <span class="badge badge-elem">Element Plus 2.9</span>
   </div>
 </div>
 
 <div class="access-bar">
   <span class="access-label">快速访问：</span>
   <a href="/editor/" class="access-link access-link-primary">进入编辑器 →</a>
-  <a href="/flow/list" class="access-link access-link-outline">流程引擎</a>
+  <a href="/instances" class="access-link access-link-outline">实例管理</a>
   <a href="/" class="access-link access-link-outline">返回首页</a>
 </div>
 
@@ -208,11 +210,12 @@
 
   <!-- Stats -->
   <div class="stat-row" style="justify-content:center; margin-top:40px;">
-    <div class="stat"><div class="num">34+</div><div class="label">Widget 组件</div></div>
-    <div class="stat"><div class="num">30+</div><div class="label">Composables</div></div>
-    <div class="stat"><div class="num">8</div><div class="label">Pinia Store</div></div>
-    <div class="stat"><div class="num">22</div><div class="label">工具函数</div></div>
-    <div class="stat"><div class="num">11</div><div class="label">页面视图</div></div>
+    <div class="stat"><div class="num">49</div><div class="label">Widget 组件</div></div>
+    <div class="stat"><div class="num">32</div><div class="label">Composables</div></div>
+    <div class="stat"><div class="num">7</div><div class="label">Pinia Store</div></div>
+    <div class="stat"><div class="num">20</div><div class="label">工具函数</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">页面视图</div></div>
+    <div class="stat"><div class="num">35</div><div class="label">编辑器组件</div></div>
   </div>
 
   <!-- Architecture -->
@@ -224,12 +227,11 @@
       <div class="layer-label">View</div>
       <div class="arch-items">
         <span class="arch-item">EditorView</span>
-        <span class="arch-item">FlowListView</span>
-        <span class="arch-item">TaskInboxView</span>
+        <span class="arch-item">InstancesView</span>
         <span class="arch-item">PreviewRenderView</span>
         <span class="arch-item">PublishView</span>
-        <span class="arch-item">InstancesView</span>
-        <span class="arch-item">DocsIndexView</span>
+        <span class="arch-item">WidgetDocsView</span>
+        <span class="arch-item">NotFoundView</span>
       </div>
     </div>
     <div class="arch-layer layer-store">
@@ -241,7 +243,6 @@
         <span class="arch-item">drag</span>
         <span class="arch-item">board</span>
         <span class="arch-item">app</span>
-        <span class="arch-item">auth</span>
         <span class="arch-item">request</span>
       </div>
     </div>
@@ -257,6 +258,8 @@
         <span class="arch-item">useHistory</span>
         <span class="arch-item">useExposeWidget</span>
         <span class="arch-item">useClipboard</span>
+        <span class="arch-item">useSnapshot</span>
+        <span class="arch-item">useEventLog</span>
         <span class="arch-item">...</span>
       </div>
     </div>
@@ -267,6 +270,7 @@
         <span class="arch-item">expressionEvaluator</span>
         <span class="arch-item">schemaValidate</span>
         <span class="arch-item">schemaTransform</span>
+        <span class="arch-item">actionExecutor</span>
       </div>
     </div>
     <div class="arch-layer layer-utils">
@@ -274,7 +278,8 @@
       <div class="arch-items">
         <span class="arch-item">registry.ts</span>
         <span class="arch-item">base/types.ts</span>
-        <span class="arch-item">34 个 Widget 目录</span>
+        <span class="arch-item">49 个 Widget 目录</span>
+        <span class="arch-item">8 个分组</span>
         <span class="arch-item">Schema 默认值</span>
       </div>
     </div>
@@ -282,12 +287,12 @@
 
   <!-- Widget System -->
   <h2 class="section-title" style="margin-top:48px;">Widget 体系</h2>
-  <p class="section-desc">每个 Widget 由组件实现、属性配置面板、Schema 默认值、事件/暴露系统集成四部分组成。</p>
+  <p class="section-desc">49 个 Widget 分为 8 个分组，每个 Widget 由组件实现、属性配置面板、Schema 默认值、事件/暴露系统集成四部分组成。</p>
 
   <div class="grid grid-3">
     <div class="card">
-      <h3><span class="icon">📝</span> 表单组件</h3>
-      <p style="margin-bottom:10px;">13 种基础表单输入组件</p>
+      <h3><span class="icon">📝</span> 表单组件（20）</h3>
+      <p style="margin-bottom:10px;">基础表单输入组件</p>
       <span class="tag tag-blue">Input</span>
       <span class="tag tag-blue">Number</span>
       <span class="tag tag-blue">Select</span>
@@ -297,39 +302,73 @@
       <span class="tag tag-blue">DateTimeSlot</span>
       <span class="tag tag-blue">Textarea</span>
       <span class="tag tag-blue">Richtext</span>
-      <span class="tag tag-blue">Transfer</span>
+      <span class="tag tag-blue">Switch</span>
+      <span class="tag tag-blue">Slider</span>
+      <span class="tag tag-blue">Rate</span>
       <span class="tag tag-blue">Upload</span>
-      <span class="tag tag-blue">FileList</span>
-      <span class="tag tag-blue">EditableTable</span>
+      <span class="tag tag-blue">TimePicker</span>
+      <span class="tag tag-blue">Cascader</span>
+      <span class="tag tag-blue">ColorPicker</span>
+      <span class="tag tag-blue">TagInput</span>
+      <span class="tag tag-blue">Autocomplete</span>
+      <span class="tag tag-blue">Transfer</span>
     </div>
     <div class="card">
-      <h3><span class="icon">📐</span> 布局组件</h3>
-      <p style="margin-bottom:10px;">14 种布局与容器组件</p>
-      <span class="tag tag-green">Form</span>
+      <h3><span class="icon">📐</span> 布局组件（8）</h3>
+      <p style="margin-bottom:10px;">页面排版与容器布局</p>
+      <span class="tag tag-green">Card</span>
+      <span class="tag tag-green">Tabs</span>
       <span class="tag tag-green">SingleCol</span>
       <span class="tag tag-green">DoubleCol</span>
       <span class="tag tag-green">TripleCol</span>
       <span class="tag tag-green">QuadCol</span>
-      <span class="tag tag-green">Tabs</span>
-      <span class="tag tag-green">Card</span>
-      <span class="tag tag-green">Dialog</span>
       <span class="tag tag-green">Divider</span>
       <span class="tag tag-green">Spacer</span>
-      <span class="tag tag-green">TreeLayout</span>
-      <span class="tag tag-green">Banner</span>
-      <span class="tag tag-green">ToolbarButtons</span>
-      <span class="tag tag-green">SearchList</span>
     </div>
     <div class="card">
-      <h3><span class="icon">📊</span> 展示 & 数据</h3>
-      <p style="margin-bottom:10px;">7 种展示与数据组件</p>
-      <span class="tag tag-orange">Title</span>
-      <span class="tag tag-orange">Base</span>
-      <span class="tag tag-orange">Button</span>
+      <h3><span class="icon">📦</span> 容器组件（2）</h3>
+      <p style="margin-bottom:10px;">顶层容器与弹窗</p>
+      <span class="tag tag-green">Form</span>
+      <span class="tag tag-green">Dialog</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">📊</span> 表格组件（3）</h3>
+      <p style="margin-bottom:10px;">数据表格与列表</p>
       <span class="tag tag-orange">Table</span>
-      <span class="tag tag-purple">Entries</span>
-      <span class="tag tag-purple">FlowList</span>
-      <span class="tag tag-purple">FlowInstanceDetail</span>
+      <span class="tag tag-orange">SearchList</span>
+      <span class="tag tag-orange">EditableTable</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">🎯</span> 操作组件（2）</h3>
+      <p style="margin-bottom:10px;">按钮与工具栏</p>
+      <span class="tag tag-orange">Button</span>
+      <span class="tag tag-orange">ToolbarButtons</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">🏷️</span> 静态组件（2）</h3>
+      <p style="margin-bottom:10px;">纯展示元素</p>
+      <span class="tag tag-purple">Title</span>
+      <span class="tag tag-purple">Banner</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">🔧</span> 业务组件（3）</h3>
+      <p style="margin-bottom:10px;">专用业务能力组件</p>
+      <span class="tag tag-purple">TreeLayout</span>
+      <span class="tag tag-purple">FileList</span>
+      <span class="tag tag-purple">Transfer</span>
+    </div>
+    <div class="card">
+      <h3><span class="icon">📈</span> 图表组件（9）</h3>
+      <p style="margin-bottom:10px;">ECharts 数据可视化</p>
+      <span class="tag tag-red">BarChart</span>
+      <span class="tag tag-red">LineChart</span>
+      <span class="tag tag-red">PieChart</span>
+      <span class="tag tag-red">ScatterChart</span>
+      <span class="tag tag-red">Radar</span>
+      <span class="tag tag-red">Gauge</span>
+      <span class="tag tag-red">Heatmap</span>
+      <span class="tag tag-red">Funnel</span>
+      <span class="tag tag-red">Candlestick</span>
     </div>
   </div>
 
@@ -340,67 +379,94 @@
   <div class="grid grid-2">
     <div class="card">
       <h3>🎨 可视化设计器</h3>
-      <p>EditorView 为核心画布，支持拖拽组件到画布、选中编辑、Schema 树浏览、实时预览。左侧面板展示组件分组，右侧属性面板 Schema 驱动配置。</p>
+      <p>EditorView 三栏布局：左侧面板（部件库 + 结构树）+ 中间画布 + 右侧属性面板。工具栏居中放置面板抽屉控制、撤销/重做、复制/删除等操作按钮，右侧为缩放、模式切换、保存发布。</p>
     </div>
     <div class="card">
       <h3>⚡ 事件引擎</h3>
-      <p>统一的 eventEngine 支持 5 种触发类型（click/change/focus/blur/close）、15+ 种动作类型（show/hide/open-dialog/switch-tab/set-value/submit/reset/emit）、条件表达式沙箱执行。</p>
+      <p>纯逻辑层 eventEngine，通过 EventExecutionContext 注入运行时能力。支持 14 种动作类型：show/hide/open-dialog/close-dialog/switch-tab/set-value/submit/reset/emit/set-variable/trigger-event/post-message/close-tab/copy/refresh/api/navigate。</p>
     </div>
     <div class="card">
       <h3>🔗 联动系统</h3>
-      <p>6 种联动类型：visible / disabled / required / options / set-value / reset-fields。通过 watchFields 监听字段变化，条件表达式驱动组件状态联动。</p>
+      <p>6 种联动类型：visible / disabled / required / options / set-value / reset-fields。通过 watchFields 监听字段变化，条件表达式驱动 then/else 分支，支持 optionsApi 动态加载。</p>
     </div>
     <div class="card">
       <h3>📦 拖拽系统</h3>
-      <p>useDrag composable 统一管理拖拽状态，支持从组件面板拖入画布、画布内排序、跨布局容器拖动。dragStore 管理全局拖拽状态。</p>
+      <p>useDrag + useDragEditor 双层 composable 管理拖拽逻辑。dragStore 维护全局拖拽状态，支持从组件面板拖入画布、画布内排序、跨布局容器拖动，对齐辅助线（guidelines）和碰撞检测（collision）。</p>
     </div>
     <div class="card">
-      <h3>🔄 撤销/重做</h3>
-      <p>editorStore 管理历史栈，主画布和弹窗编辑器独立管理。支持快照恢复，clipboard 剪贴板操作。</p>
+      <h3>🔄 撤销 / 重做</h3>
+      <p>editorStore 管理历史栈，主画布和弹窗编辑器独立管理。useSnapshot 提供快照恢复，useClipboard 处理剪贴板操作。路由守卫拦截未保存离开。</p>
     </div>
     <div class="card">
       <h3>🌐 微前端集成</h3>
-      <p>通过 vite-plugin-qiankun 支持 qiankun 子应用模式（/child/schemaForm/ 前缀），同时支持 microapp 子应用集成。</p>
+      <p>支持 qiankun 子应用模式（vite-plugin-qiankun）和 micro-app 模式（@micro-zoe/micro-app）。路由自动切换 memory history，AI 协作通过 @schema-form/socket 实现实时同步。</p>
     </div>
     <div class="card">
       <h3>🔌 数据源配置</h3>
-      <p>OptionsApiConfigDialog 支持 API 模式和字典码模式加载动态选项，JSONPath 路径提取，响应格式标准化。</p>
+      <p>OptionsApiConfigDialog 支持 API 模式和字典码模式加载动态选项。responseNormalizer 标准化响应格式，optionsCache 缓存选项数据，requestQueue 管理请求队列。</p>
     </div>
     <div class="card">
       <h3>📋 属性面板</h3>
-      <p>Schema 驱动的右侧属性配置面板，通过 useRightPanelConfig 动态渲染。支持 BorderEditor、SpacingEditor、ConditionBuilder 等 10+ 专用编辑器。</p>
+      <p>Schema 驱动的右侧属性配置面板，通过 useRightPanelConfig 动态渲染。包含 15+ 专用编辑器：BorderEditor、SpacingEditor、ConditionBuilder、OptionsEditor、TableColumnsEditor、EventConfigDialog、VariableConfigDialog 等。</p>
+    </div>
+    <div class="card">
+      <h3>📐 自由布局</h3>
+      <p>Widget 携带 position（x, y, w, h, zIndex）实现绝对定位自由布局。EditorCanvas 处理画布缩放、拖拽定位，EditorOverlay 提供选中框和拖拽手柄。支持画布尺寸预设切换。</p>
+    </div>
+    <div class="card">
+      <h3>📊 图表集成</h3>
+      <p>9 种 ECharts 图表 Widget（Bar/Line/Pie/Scatter/Radar/Gauge/Heatmap/Funnel/Candlestick），通过 Schema 配置图表数据和样式，支持数据源绑定和动态刷新。</p>
     </div>
   </div>
 
   <!-- Pages -->
   <h2 class="section-title" style="margin-top:48px;">页面视图</h2>
-  <p class="section-desc">11 个路由页面覆盖完整业务流程。</p>
+  <p class="section-desc">6 个路由页面，编辑器/预览/发布为全屏独立布局，实例/文档使用全局 AppLayout 壳。</p>
 
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>视图</th><th>路径</th><th>功能</th></tr>
+        <tr><th>视图</th><th>路径</th><th>布局</th><th>功能</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>EditorView</strong></td><td><code>/</code></td><td>主设计器画布，Schema 可视化编辑</td></tr>
-        <tr><td><strong>FlowListView</strong></td><td><code>/flows</code></td><td>流程定义列表，创建/编辑/发布</td></tr>
-        <tr><td><strong>FlowInstanceDetailView</strong></td><td><code>/flow-instances/:id</code></td><td>流程实例详情，审批轨迹追踪</td></tr>
-        <tr><td><strong>TaskInboxView</strong></td><td><code>/tasks</code></td><td>用户待办任务收件箱</td></tr>
-        <tr><td><strong>InstancesView</strong></td><td><code>/instances</code></td><td>表单实例数据管理</td></tr>
-        <tr><td><strong>PublishView</strong></td><td><code>/publish</code></td><td>Schema 发布与版本管理</td></tr>
-        <tr><td><strong>PreviewRenderView</strong></td><td><code>/preview/:id</code></td><td>Schema 运行时预览渲染</td></tr>
-        <tr><td><strong>DocsIndexView</strong></td><td><code>/docs</code></td><td>组件文档浏览器</td></tr>
-        <tr><td><strong>LoginView</strong></td><td><code>/login</code></td><td>用户登录认证</td></tr>
+        <tr><td><strong>EditorView</strong></td><td><code>/editor</code></td><td>全屏</td><td>主设计器画布，三栏布局，49 组件可视化编辑</td></tr>
+        <tr><td><strong>InstancesView</strong></td><td><code>/instances</code></td><td>AppLayout</td><td>表单实例列表管理，创建/编辑/删除/发布</td></tr>
+        <tr><td><strong>PreviewRenderView</strong></td><td><code>/preview</code></td><td>全屏</td><td>Schema 运行时预览渲染，支持事件日志面板</td></tr>
+        <tr><td><strong>PublishView</strong></td><td><code>/view</code></td><td>全屏</td><td>已发布 Schema 的只读渲染视图</td></tr>
+        <tr><td><strong>WidgetDocsView</strong></td><td><code>/docs</code></td><td>AppLayout</td><td>组件文档浏览器，查看 Widget 属性与示例</td></tr>
+        <tr><td><strong>NotFoundView</strong></td><td><code>/*</code></td><td>独立</td><td>404 页面</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Stores -->
+  <h2 class="section-title" style="margin-top:48px;">Pinia Store</h2>
+  <p class="section-desc">7 个 Store 明确职责分工，Widget 数据、编辑器交互、画布视口、拖拽状态各自独立。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Store</th><th>文件</th><th>职责</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>widgetStore</strong></td><td><code>stores/widget.ts</code></td><td>Widget 集合 CRUD、树结构遍历、位置/容器操作，Widget 数据的唯一 source of truth</td></tr>
+        <tr><td><strong>editorStore</strong></td><td><code>stores/editor.ts</code></td><td>选中、模式切换、撤销/重做历史（主画布 + 弹窗独立）、剪贴板、脏标记</td></tr>
+        <tr><td><strong>apiStore</strong></td><td><code>stores/api.ts</code></td><td>Schema 后端 CRUD：列表、保存、发布</td></tr>
+        <tr><td><strong>dragStore</strong></td><td><code>stores/drag.ts</code></td><td>全局拖拽状态</td></tr>
+        <tr><td><strong>boardStore</strong></td><td><code>stores/board.ts</code></td><td>画布视口：缩放、名称、尺寸预设</td></tr>
+        <tr><td><strong>appStore</strong></td><td><code>stores/app.ts</code></td><td>全局应用状态</td></tr>
+        <tr><td><strong>requestStore</strong></td><td><code>stores/request.ts</code></td><td>HTTP 请求状态管理</td></tr>
       </tbody>
     </table>
   </div>
 
   <!-- Composables -->
   <h2 class="section-title" style="margin-top:48px;">Composables 清单</h2>
-  <p class="section-desc">30+ 组合式函数覆盖拖拽、联动、生命周期、数据、选项等全部业务能力。</p>
+  <p class="section-desc">32 个组合式函数覆盖拖拽、联动、生命周期、数据、选项、布局等全部业务能力。</p>
 
   <div class="grid grid-4">
     <div class="card"><h3 style="font-size:0.9rem;">useDrag</h3><p>拖拽逻辑</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useDragEditor</h3><p>编辑器拖拽增强</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useLinkage</h3><p>字段联动引擎</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useLifecycle</h3><p>Widget 生命周期</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useDynamicOptions</h3><p>动态选项加载</p></div>
@@ -409,17 +475,128 @@
     <div class="card"><h3 style="font-size:0.9rem;">useHistory</h3><p>撤销/重做</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useExposeWidget</h3><p>组件暴露接口</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useClipboard</h3><p>剪贴板操作</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useSnapshot</h3><p>快照管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useEventLog</h3><p>事件日志收集</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useConditionReferences</h3><p>条件引用</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useInteractionControl</h3><p>交互控制</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useLeftPanelManage</h3><p>左侧面板管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useEditorLayout</h3><p>编辑器布局</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useModeControl</h3><p>模式切换</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useResize</h3><p>画布缩放</p></div>
-    <div class="card"><h3 style="font-size:0.9rem;">useSnapshot</h3><p>快照管理</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useWidgetPanel</h3><p>组件面板</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useWidgetRenderState</h3><p>渲染状态</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useWidgetLifecycle</h3><p>Widget 生命周期钩子</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useWidgetOptions</h3><p>Widget 选项管理</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useApiRequest</h3><p>API 请求</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useBreakpoint</h3><p>响应式断点</p></div>
     <div class="card"><h3 style="font-size:0.9rem;">useCache</h3><p>缓存管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useListData</h3><p>列表数据管理</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">usePropertyAdapters</h3><p>属性适配器</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useIdGenerate</h3><p>ID 生成</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useLocale</h3><p>国际化</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useLogger</h3><p>日志工具</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useConstant</h3><p>共享常量</p></div>
+    <div class="card"><h3 style="font-size:0.9rem;">useWorkerRequest</h3><p>Web Worker 通信</p></div>
+  </div>
+
+  <!-- Editor Components -->
+  <h2 class="section-title" style="margin-top:48px;">编辑器组件</h2>
+  <p class="section-desc">35 个 Editor 子模块，覆盖画布、面板、编辑器、对话框等全部 UI 能力。</p>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>画布 & 布局</h3>
+      <p>EditorCanvas、EditorOverlay、EditorLeftPanel、EditorRightPanel、EditorToolbar</p>
+    </div>
+    <div class="card">
+      <h3>属性编辑器</h3>
+      <p>PropertyPanel、PropertyField、PropertySection、BorderEditor、BorderRadiusEditor、SpacingEditor、ColumnsEditor、ButtonEditor、OptionsEditor</p>
+    </div>
+    <div class="card">
+      <h3>配置对话框</h3>
+      <p>EventConfigDialog、LinkageConfigDialog、OptionsApiConfigDialog、RequestConfigDialog、VariableConfigDialog</p>
+    </div>
+    <div class="card">
+      <h3>数据 & 列表</h3>
+      <p>TableColumnsEditor、SearchFieldsEditor、RowActionsEditor、ActionListEditor、GenericArrayEditor</p>
+    </div>
+    <div class="card">
+      <h3>规则 & 条件</h3>
+      <p>ConditionBuilder、RulesEditor、LinkageConfig</p>
+    </div>
+    <div class="card">
+      <h3>工具 & 面板</h3>
+      <p>ComponentPanel、WidgetTree、SchemaTree、WidgetContextMenu、JsonImporter、EventLogPanel、FlowPreview、ApiConfig</p>
+    </div>
+  </div>
+
+  <!-- Event Engine -->
+  <h2 class="section-title" style="margin-top:48px;">事件引擎</h2>
+  <p class="section-desc">纯逻辑层，无 Vue/Store 依赖，通过 EventExecutionContext 注入运行时能力。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>触发器</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>click</code></td><td>按钮/组件点击</td></tr>
+        <tr><td><code>change</code></td><td>值变化</td></tr>
+        <tr><td><code>focus</code> / <code>blur</code></td><td>聚焦/失焦</td></tr>
+        <tr><td><code>submit</code></td><td>表单提交</td></tr>
+        <tr><td><code>close</code> / <code>open</code></td><td>弹窗关闭/打开</td></tr>
+        <tr><td><code>confirm</code> / <code>cancel</code></td><td>确认/取消</td></tr>
+        <tr><td><code>refresh</code></td><td>数据刷新</td></tr>
+        <tr><td><code>api-success</code> / <code>api-error</code></td><td>API 请求结果</td></tr>
+        <tr><td><code>mounted</code></td><td>组件挂载</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>动作类型</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>show</code> / <code>hide</code></td><td>显示/隐藏目标组件</td></tr>
+        <tr><td><code>open-dialog</code> / <code>close-dialog</code></td><td>打开/关闭弹窗</td></tr>
+        <tr><td><code>switch-tab</code> / <code>close-tab</code></td><td>切换/关闭 Tab 页</td></tr>
+        <tr><td><code>set-value</code></td><td>设置目标组件值</td></tr>
+        <tr><td><code>submit</code> / <code>reset</code></td><td>提交/重置表单</td></tr>
+        <tr><td><code>emit</code></td><td>触发自定义事件</td></tr>
+        <tr><td><code>set-variable</code></td><td>设置变量值</td></tr>
+        <tr><td><code>trigger-event</code></td><td>触发其他组件事件</td></tr>
+        <tr><td><code>post-message</code></td><td>发送 postMessage</td></tr>
+        <tr><td><code>copy</code></td><td>复制文本到剪贴板</td></tr>
+        <tr><td><code>refresh</code></td><td>刷新数据</td></tr>
+        <tr><td><code>api</code></td><td>发起 API 请求</td></tr>
+        <tr><td><code>navigate</code></td><td>页面跳转</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Widget Lifecycle -->
+  <h2 class="section-title" style="margin-top:48px;">Widget 生命周期</h2>
+  <p class="section-desc">9 个生命周期钩子，覆盖 Widget 从初始化到销毁的完整生命周期。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>钩子</th><th>触发时机</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>onInit</code></td><td>Widget 初始化</td></tr>
+        <tr><td><code>onMount</code></td><td>组件挂载到 DOM</td></tr>
+        <tr><td><code>onUnmount</code></td><td>组件从 DOM 卸载</td></tr>
+        <tr><td><code>onDataChange</code></td><td>Widget 数据变化</td></tr>
+        <tr><td><code>onVisibleChange</code></td><td>可见性变化</td></tr>
+        <tr><td><code>onBeforeSubmit</code></td><td>表单提交前</td></tr>
+        <tr><td><code>onAfterLoad</code></td><td>数据加载完成后</td></tr>
+        <tr><td><code>onOpen</code></td><td>弹窗/容器打开</td></tr>
+        <tr><td><code>onClose</code></td><td>弹窗/容器关闭</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- Quick Start -->
@@ -429,30 +606,33 @@
     <span class="comment"># 安装依赖</span><br>
     pnpm install<br><br>
     <span class="comment"># 启动开发服务器（端口 5173）</span><br>
-    pnpm dev:web<br><br>
+    pnpm dev:editor<br><br>
     <span class="comment"># 构建生产版本</span><br>
-    pnpm build:web<br><br>
-    <span class="comment"># 类型检查</span><br>
-    <span class="keyword">cd</span> packages/web && npx vue-tsc -b --noEmit
+    pnpm build:editor<br><br>
+    <span class="comment"># 运行测试</span><br>
+    pnpm --filter @schema-form/editor-web test<br><br>
+    <span class="comment"># 测试覆盖率</span><br>
+    pnpm --filter @schema-form/editor-web test -- --coverage
   </div>
 
   <h3 style="margin-top:32px;">项目结构</h3>
   <div class="code-block" style="margin-top:12px;">
-packages/web/<br>
+packages/editor/web/<br>
 ├── src/<br>
 │   ├── components/<br>
-│   │   ├── Editor/          <span class="comment">// 可视化设计器核心（36 子模块）</span><br>
+│   │   ├── Editor/          <span class="comment">// 可视化设计器核心（35 子模块）</span><br>
 │   │   ├── WidgetRenderer/  <span class="comment">// Schema 驱动动态渲染引擎</span><br>
 │   │   └── FormGrid/        <span class="comment">// 表单栅格渲染 + 拖拽排序</span><br>
-│   ├── widgets/             <span class="comment">// 34 个 Widget 目录</span><br>
-│   │   ├── registry.ts      <span class="comment">// Widget 注册表 Map</span><br>
-│   │   └── base/types.ts    <span class="comment">// 核心类型定义</span><br>
-│   ├── stores/              <span class="comment">// Pinia 状态管理（8 Store）</span><br>
-│   ├── composables/         <span class="comment">// 30+ 组合式函数</span><br>
-│   ├── engine/              <span class="comment">// 事件执行引擎</span><br>
-│   ├── utils/               <span class="comment">// 22 个工具函数</span><br>
-│   ├── views/               <span class="comment">// 11 个页面视图</span><br>
-│   └── router/              <span class="comment">// Vue Router + qiankun 支持</span><br>
+│   ├── widgets/             <span class="comment">// 49 个 Widget 目录 + registry</span><br>
+│   │   ├── registry.ts      <span class="comment">// Widget 注册表 Map&lt;SchemaType, WidgetRegistryItem&gt;</span><br>
+│   │   ├── base/types.ts    <span class="comment">// 核心类型定义（685 行）</span><br>
+│   │   └── entries/         <span class="comment">// 27 个入口文件 + renderer</span><br>
+│   ├── stores/              <span class="comment">// Pinia 状态管理（7 Store）</span><br>
+│   ├── composables/         <span class="comment">// 32 个组合式函数</span><br>
+│   ├── engine/              <span class="comment">// 事件执行引擎（纯逻辑层）</span><br>
+│   ├── utils/               <span class="comment">// 20 个工具函数</span><br>
+│   ├── views/               <span class="comment">// 6 个页面视图</span><br>
+│   └── router/              <span class="comment">// Vue Router + qiankun/micro-app 支持</span><br>
 ├── vite.config.ts           <span class="comment">// 标准 SPA 构建</span><br>
 ├── vite.widget.config.ts    <span class="comment">// Widget 库构建</span><br>
 └── vite.microapp.config.ts  <span class="comment">// Microapp 构建</span>
@@ -461,7 +641,7 @@ packages/web/<br>
 </div>
 
 <div class="footer">
-  <p>@schema-form/web · Schema 驱动的可视化表单设计器 · Vue 3 + Element Plus + Vite</p>
+  <p>@schema-form/editor-web v1.0.0-rc.1 · Schema 驱动的可视化表单设计器 · Vue 3.5 + Element Plus 2.9 + Vite 6.3</p>
 </div>
 
 </body>

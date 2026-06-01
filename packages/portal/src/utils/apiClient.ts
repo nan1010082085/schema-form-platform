@@ -19,16 +19,8 @@ export interface ApiResponse<T> {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
-function getToken(): string {
-  return localStorage.getItem('token') || ''
-}
-
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {}
-  const token = getToken()
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
   }
@@ -40,12 +32,6 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   })
 
   const json = (await response.json()) as ApiResponse<T>
-
-  if (response.status === 401) {
-    localStorage.removeItem('token')
-    window.location.href = '/login'
-    throw new ApiError(json.error?.message ?? 'Unauthorized', 401)
-  }
 
   if (!json.success) {
     throw new ApiError(json.error?.message ?? 'Request failed', response.status, json.error?.details)

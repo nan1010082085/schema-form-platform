@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { ArrowLeft } from '@element-plus/icons-vue'
 
 defineProps<{
@@ -8,76 +7,57 @@ defineProps<{
 }>()
 
 const router = useRouter()
-const auth = useAuthStore()
-
-function handleLogout() {
-  auth.logout()
-  router.push({ name: 'login' })
-}
 </script>
 
 <template>
-  <div class="sub-page">
-    <header class="sub-page-header">
-      <div class="header-left">
-        <el-button :icon="ArrowLeft" text @click="router.push('/')">
-          返回入口
-        </el-button>
-        <span class="page-title">{{ title }}</span>
-      </div>
-      <div class="header-right">
-        <span class="username">{{ auth.user?.displayName }}</span>
-        <el-button text @click="handleLogout">退出</el-button>
-      </div>
+  <div :class="$style.layout">
+    <header :class="$style.header">
+      <el-button :icon="ArrowLeft" text :class="$style.backBtn" @click="router.push('/')">
+        返回
+      </el-button>
+      <span :class="$style.title">{{ title }}</span>
     </header>
-    <main class="sub-page-content">
+    <main :class="$style.content">
       <slot />
     </main>
   </div>
 </template>
 
-<style scoped>
-.sub-page {
+<style module>
+.layout {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg-color-page);
 }
 
-.sub-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  height: 56px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
-  flex-shrink: 0;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a2e;
-}
-
-.header-right {
+.header {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
 }
 
-.username {
+.backBtn {
   font-size: 14px;
-  color: #666;
+  color: var(--text-color-secondary);
 }
 
-.sub-page-content {
+.backBtn:hover {
+  color: var(--color-primary);
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.content {
   flex: 1;
   padding: 24px;
 }

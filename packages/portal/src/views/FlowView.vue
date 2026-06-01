@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import SubPageLayout from '@/components/SubPageLayout.vue'
+import { getAppUrl } from '@schema-form/micro-app/config'
+
+const url = getAppUrl('flow', import.meta.env.DEV)
 </script>
 
 <template>
-  <SubPageLayout title="流程引擎">
-    <micro-app
-      name="flow"
-      :url="'http://localhost:5174/flow/'"
-      :data="{ token: localStorage.getItem('token') }"
-      style="width: 100%; height: calc(100vh - 56px); border: none"
-    />
-  </SubPageLayout>
+  <micro-app
+    name="flow"
+    :url="url"
+    :data="{}"
+    iframe
+    style="width: 100%; height: 100%; border: none; display: block"
+  />
 </template>
