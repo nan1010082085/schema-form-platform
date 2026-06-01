@@ -1,17 +1,21 @@
 <template>
   <div
-    :class="$style.canvas"
+    :class="styles.canvas"
     @drop="onDrop"
     @dragover="onDragOver"
   >
     <VueFlow
-      v-model:nodes="nodes"
-      v-model:edges="edges"
-      :class="$style.flow"
+      v-model:nodes="flowGraph.nodes"
+      v-model:edges="flowGraph.edges"
+      :class="styles.flow"
       :default-edge-options="defaultEdgeOptions"
       :snap-to-grid="true"
       :snap-grid="[10, 10]"
-      fit-view-on-init
+      :nodes-connectable="!readOnly"
+      :nodes-draggable="!readOnly"
+      :edges-updatable="!readOnly"
+      :elements-selectable="!readOnly"
+      :default-viewport="{ zoom: 1, x: 0, y: 0 }"
     >
       <template #node-start-event="nodeProps">
         <StartEventNode v-bind="nodeProps" />
@@ -46,20 +50,28 @@
       <template #node-receive-task="nodeProps">
         <ReceiveTaskNode v-bind="nodeProps" />
       </template>
+      <template #node-sub-process="nodeProps">
+        <SubProcessNode v-bind="nodeProps" />
+      </template>
 
-      <Background :gap="10" :size="1" />
+      <template #edge-animated-edge="edgeProps">
+        <AnimatedEdge v-bind="edgeProps" />
+      </template>
+
+      <Background :gap="20" :size="0.8" color="#d0d5dd" />
       <Controls />
     </VueFlow>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
-import type { Node, Edge } from '@vue-flow/core'
+import '@vue-flow/controls/dist/style.css'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
+import { useFlowGraphStore } from '../stores/flowGraph.js'
 import {
   StartEventNode,
   EndEventNode,
@@ -72,7 +84,10 @@ import {
   ExclusiveGatewayNode,
   ParallelGatewayNode,
   InclusiveGatewayNode,
+  SubProcessNode,
 } from './nodes/index.js'
+import { AnimatedEdge } from './edges/index.js'
+import styles from './FlowCanvas.module.scss'
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -89,45 +104,42 @@ const BPMN_TYPE_TO_VF_TYPE: Record<string, string> = {
   'bpmn-exclusive-gateway': 'exclusive-gateway',
   'bpmn-parallel-gateway': 'parallel-gateway',
   'bpmn-inclusive-gateway': 'inclusive-gateway',
+  'bpmn-sub-process': 'sub-process',
 }
 
 const defaultEdgeOptions = {
-  type: 'smoothstep' as const,
-  style: { stroke: '#a0a0a0', strokeWidth: 1.5 },
+  type: 'animated-edge' as const,
+  style: { stroke: 'var(--el-border-color)', strokeWidth: 1.5 },
   markerEnd: { type: MarkerType.ArrowClosed },
 }
 
 const props = defineProps<{
-  initialNodes?: Node[]
-  initialEdges?: Edge[]
+  readOnly?: boolean
 }>()
 
-const store = useFlowDesignerStore()
-const nodes = ref<Node[]>(props.initialNodes ?? [])
-const edges = ref<Edge[]>(props.initialEdges ?? [])
+const readOnly = computed(() => props.readOnly ?? false)
+
+const designerStore = useFlowDesignerStore()
+const flowGraph = useFlowGraphStore()
 
 const {
   onNodeClick,
   onEdgeClick,
   onPaneClick,
   onConnect,
-  addNodes,
-  addEdges,
   getNodes,
   getEdges,
-  toObject,
-  removeNodes,
-  removeEdges,
-  fitView,
   screenToFlowCoordinate,
-} = useVueFlow()
+  fitView,
+} = useVueFlow({ id: 'flow-canvas' })
 
-onNodeClick(({ node }) => store.selectNode(node.id))
-onEdgeClick(({ edge }) => store.selectEdge(edge.id))
-onPaneClick(() => store.clearSelection())
+onNodeClick(({ node }) => designerStore.selectNode(node.id))
+onEdgeClick(({ edge }) => designerStore.selectEdge(edge.id))
+onPaneClick(() => designerStore.clearSelection())
 
 onConnect((params) => {
-  addEdges({
+  if (readOnly.value) return
+  flowGraph.addEdge({
     id: `e-${params.source}-${params.target}`,
     source: params.source,
     target: params.target,
@@ -136,13 +148,18 @@ onConnect((params) => {
   })
 })
 
+// Debounced history push on data change
 let historyTimer: ReturnType<typeof setTimeout> | null = null
-watch([nodes, edges], () => {
-  if (historyTimer) clearTimeout(historyTimer)
-  historyTimer = setTimeout(() => {
-    store.pushHistory(toObject())
-  }, 200)
-}, { deep: true })
+watch(
+  () => [flowGraph.nodes, flowGraph.edges],
+  () => {
+    if (historyTimer) clearTimeout(historyTimer)
+    historyTimer = setTimeout(() => {
+      designerStore.pushHistory(flowGraph.getSnapshot())
+    }, 200)
+  },
+  { deep: true },
+)
 
 function onKeyDown(e: KeyboardEvent) {
   const target = e.target as HTMLElement
@@ -151,8 +168,8 @@ function onKeyDown(e: KeyboardEvent) {
   if (e.key === 'Delete' || e.key === 'Backspace') {
     const selectedNodes = getNodes.value.filter(n => n.selected)
     const selectedEdges = getEdges.value.filter(e => e.selected)
-    if (selectedNodes.length) removeNodes(selectedNodes.map(n => n.id))
-    if (selectedEdges.length) removeEdges(selectedEdges.map(e => e.id))
+    for (const n of selectedNodes) flowGraph.removeNode(n.id)
+    for (const e of selectedEdges) flowGraph.removeEdge(e.id)
   }
 }
 
@@ -162,6 +179,7 @@ function onDragOver(e: DragEvent) {
 }
 
 function onDrop(e: DragEvent) {
+  if (readOnly.value) return
   if (!e.dataTransfer) return
   const raw = e.dataTransfer.getData('application/bpmn-node')
   if (!raw) return
@@ -181,41 +199,23 @@ function onDrop(e: DragEvent) {
     y: e.clientY - payload.height / 2,
   })
 
-  addNodes({
-    id: `node-${Date.now()}`,
+  flowGraph.addNode({
+    id: `node-${crypto.randomUUID()}`,
     type: vfType,
     position,
     data: payload.data,
   })
 }
 
-onMounted(() => window.addEventListener('keydown', onKeyDown))
+onMounted(() => {
+  if (!readOnly.value) window.addEventListener('keydown', onKeyDown)
+})
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeyDown)
   if (historyTimer) clearTimeout(historyTimer)
 })
 
 defineExpose({
-  getGraph: () => toObject(),
-  loadGraph: (data: { nodes: Node[]; edges: Edge[] }) => {
-    nodes.value = data.nodes
-    edges.value = data.edges
-    nextTick(() => fitView())
-  },
-  addNode: (node: Node) => addNodes(node),
+  fitView,
 })
 </script>
-
-<style module>
-.canvas {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.flow {
-  width: 100%;
-  height: 100%;
-}
-</style>

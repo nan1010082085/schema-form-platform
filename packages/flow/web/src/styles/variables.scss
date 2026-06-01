@@ -1,0 +1,18 @@
+// ============================================================
+// Flow 设计令牌 — 引用共享样式包
+// ============================================================
+
+@use '../../../../shared/styles/variables' as *;
+
+// ---------- CSS 变量（:root） ----------
+@use '../../../../shared/styles/css-variables';
+
+// ---------- 节点强调色（flow 专用） ----------
+:root {
+  --node-accent-script: #7b1fa2;
+  --node-accent-send: #e65100;
+  --node-accent-receive: #00695c;
+  --node-accent-subprocess: #7b1fa2;
+
+  --spacing-12px: 12px;
+}

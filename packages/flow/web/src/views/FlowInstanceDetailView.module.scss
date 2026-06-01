@@ -1,0 +1,158 @@
+.instanceDetail {
+  padding: var(--spacing-lg);
+}
+.infoCard {
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-20px);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+}
+.infoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.label {
+  font-size: var(--font-size-12);
+  color: var(--text-color-placeholder);
+}
+.value {
+  font-size: var(--font-size-14);
+  color: var(--text-color-primary);
+}
+.mono {
+  font-family: monospace;
+}
+.graphContainer {
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-md);
+  height: 500px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.flowGraph {
+  width: 100%;
+  height: 100%;
+}
+.tokenNode {
+  font-family: monospace;
+  font-size: var(--font-size-12);
+}
+.tokenState {
+  margin-left: var(--spacing-sm);
+}
+.emptyTip {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-color-placeholder);
+  font-size: var(--font-size-14);
+}
+
+/* --- Node state styles (applied by VueFlow to node wrapper divs) --- */
+
+:global(.node-active) {
+  box-shadow: 0 0 0 2px var(--color-primary),
+              0 0 12px rgba(var(--color-primary-rgb), 0.4);
+  animation: node-pulse 2s ease-in-out infinite;
+  will-change: box-shadow;
+  border-radius: var(--border-radius-md);
+  position: relative;
+}
+
+:global(.node-active)::before {
+  content: '\2699';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 22px;
+  height: 22px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: gear-spin 3s linear infinite;
+  border: 2px solid var(--bg-color-white);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--bg-color-white);
+}
+
+@keyframes gear-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+:global(.node-completed) {
+  box-shadow: 0 0 0 2px var(--color-success);
+  border-radius: var(--border-radius-md);
+}
+
+:global(.node-completed)::after {
+  content: '\2713';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  background: var(--color-success);
+  color: var(--bg-color-white);
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 700;
+  z-index: 10;
+  pointer-events: none;
+}
+
+:global(.node-waiting) {
+  opacity: 0.5;
+  border-radius: var(--border-radius-md);
+}
+
+:global(.node-waiting) :global(.vue-flow__node-content),
+:global(.node-waiting) > div > div {
+  border-style: dashed !important;
+  border-color: var(--border-color-light) !important;
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--color-primary),
+                0 0 12px rgba(var(--color-primary-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--color-primary),
+                0 0 24px rgba(var(--color-primary-rgb), 0.6);
+  }
+}
+
+/* --- Edge state styles (applied by VueFlow to edge group elements) --- */
+
+:global(.edge-active) :global(.vue-flow__edge-path) {
+  stroke: var(--color-primary) !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 4px rgba(var(--color-primary-rgb), 0.5));
+}
+
+:global(.edge-completed) :global(.vue-flow__edge-path) {
+  stroke: var(--color-success) !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
+}
+
+:global(.edge-pending) :global(.vue-flow__edge-path) {
+  stroke: var(--border-color-light) !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: 6 4 !important;
+  animation: none !important;
+}

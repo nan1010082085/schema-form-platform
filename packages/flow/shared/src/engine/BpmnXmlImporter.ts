@@ -18,6 +18,20 @@ const TAG_TO_BPMN_TYPE: Record<string, BpmnElementType> = {
   'bpmn:subprocess': BpmnElementType.SubProcess,
 }
 
+function parseNodeConfig(element: Element): Record<string, unknown> {
+  const extElements = element.querySelector('bpmn\\:extensionElements, extensionElements')
+  if (!extElements) return {}
+
+  const configEl = extElements.querySelector('sf\\:nodeConfig, nodeConfig')
+  if (!configEl?.textContent) return {}
+
+  try {
+    return JSON.parse(configEl.textContent)
+  } catch {
+    return {}
+  }
+}
+
 function parseTimerConfig(element: Element): { timerType?: TimerType; timerValue?: string } {
   const timerDef = element.querySelector('bpmn\\:timerEventDefinition, timerEventDefinition')
   if (!timerDef) return {}
@@ -80,6 +94,8 @@ export function importFromBpmnXml(xml: string): FlowGraph {
       ? parseTimerConfig(child as Element)
       : {}
 
+    const extensionConfig = parseNodeConfig(child as Element)
+
     const nodeData: FlowNodeData = {
       id,
       shape: `bpmn-${bpmnType}`,
@@ -90,6 +106,7 @@ export function importFromBpmnXml(xml: string): FlowGraph {
       data: {
         bpmnType,
         label: name,
+        ...extensionConfig,
         ...timerConfig,
       },
     }

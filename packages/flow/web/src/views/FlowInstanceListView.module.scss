@@ -1,0 +1,32 @@
+.flowInstanceList {
+  padding: var(--spacing-lg);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-20px);
+}
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color-primary);
+}
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+}
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}

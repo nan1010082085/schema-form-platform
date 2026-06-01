@@ -1,0 +1,132 @@
+.designer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--el-fill-color-light);
+}
+
+.drawer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--el-bg-color);
+}
+
+.drawerLeft {
+  width: 240px;
+  border-right: 1px solid var(--el-border-color-lighter);
+}
+
+.drawerRight {
+  width: 500px;
+  border-left: 1px solid var(--el-border-color-lighter);
+}
+
+.aiDrawer {
+  width: 400px;
+  border-left: 1px solid var(--el-border-color-lighter);
+}
+
+.aiDrawerInner {
+  width: 400px;
+  height: 100%;
+}
+
+.drawer.drawerClosed {
+  width: 0;
+  border: none;
+}
+
+.aiIframe {
+  width: 400px;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.noErrors {
+  padding: 12px 0;
+  color: var(--el-color-success);
+  font-size: 14px;
+}
+
+.errorList {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.errorItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--el-fill-color-light);
+  font-size: 13px;
+}
+
+.errorItem:last-child {
+  border-bottom: none;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.errorLevel .badge {
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+}
+
+.warnLevel .badge {
+  background: var(--el-color-warning-light-9);
+  color: var(--el-color-warning);
+}
+
+.errMsg {
+  color: var(--el-text-color-primary);
+}
+
+.errId {
+  color: var(--el-text-color-placeholder);
+  font-size: 12px;
+}
+
+.formPreview {
+  border-top: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.formPreviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.formPreviewTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.versionTable {
+  max-height: 400px;
+}

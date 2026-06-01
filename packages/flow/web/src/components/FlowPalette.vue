@@ -1,13 +1,14 @@
 <template>
-  <div class="flow-palette">
-    <div class="flow-palette__title">流程元素</div>
-    <div class="flow-palette__group">
-      <div class="flow-palette__group-title">事件</div>
-      <div class="flow-palette__items">
+  <div :class="styles.palette">
+    <div :class="styles.title">流程元素</div>
+    <div :class="styles.group">
+      <div :class="styles.groupTitle">事件</div>
+      <div :class="styles.items">
         <div
           v-for="item in eventItems"
           :key="item.type"
-          class="flow-palette__item"
+          :class="styles.item"
+          data-test="palette-item"
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
@@ -15,13 +16,14 @@
         </div>
       </div>
     </div>
-    <div class="flow-palette__group">
-      <div class="flow-palette__group-title">任务</div>
-      <div class="flow-palette__items">
+    <div :class="styles.group">
+      <div :class="styles.groupTitle">任务</div>
+      <div :class="styles.items">
         <div
           v-for="item in taskItems"
           :key="item.type"
-          class="flow-palette__item"
+          :class="styles.item"
+          data-test="palette-item"
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
@@ -29,13 +31,14 @@
         </div>
       </div>
     </div>
-    <div class="flow-palette__group">
-      <div class="flow-palette__group-title">网关</div>
-      <div class="flow-palette__items">
+    <div :class="styles.group">
+      <div :class="styles.groupTitle">网关</div>
+      <div :class="styles.items">
         <div
           v-for="item in gatewayItems"
           :key="item.type"
-          class="flow-palette__item"
+          :class="styles.item"
+          data-test="palette-item"
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
@@ -48,6 +51,7 @@
 
 <script setup lang="ts">
 import { BpmnElementType, DEFAULT_NODE_CONFIGS, DEFAULT_NODE_SIZES } from '@schema-form/flow-shared'
+import styles from './FlowPalette.module.scss'
 
 interface PaletteItem {
   type: BpmnElementType
@@ -88,52 +92,3 @@ function onDragStart(event: DragEvent, item: PaletteItem) {
   }))
 }
 </script>
-
-<style module>
-.flow-palette {
-  width: 200px;
-  background: #fff;
-  border-right: 1px solid #e4e7ed;
-  overflow-y: auto;
-  padding: 12px;
-}
-
-.flow-palette__title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #303133;
-}
-
-.flow-palette__group {
-  margin-bottom: 16px;
-}
-
-.flow-palette__group-title {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.flow-palette__items {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.flow-palette__item {
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: grab;
-  user-select: none;
-  transition: border-color 0.2s;
-}
-
-.flow-palette__item:hover {
-  border-color: #409eff;
-  color: #409eff;
-}
-</style>

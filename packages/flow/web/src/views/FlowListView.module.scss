@@ -1,0 +1,21 @@
+.flowList {
+  padding: var(--spacing-lg);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-20px);
+}
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color-primary);
+}
+.actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+}

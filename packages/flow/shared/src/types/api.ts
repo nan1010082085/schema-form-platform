@@ -1,6 +1,8 @@
 import type { FlowGraph, FlowGraphMetadata, FlowPermissions } from './graph.js'
 import type { FlowInstanceStatus } from './instance.js'
 
+export type { FlowApiConfig } from './apiConfig.js'
+
 export interface CreateFlowDefinitionDto {
   name: string
   description?: string

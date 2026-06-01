@@ -1,7 +1,7 @@
 export { ExecutableModel } from './ExecutableModel.js'
 export type { ParsedNode, ParsedEdge } from './ExecutableModel.js'
 export { parseBpmnGraph, BpmnParseError } from './BpmnParser.js'
-export { evaluateExpression, ExpressionEvaluationError } from './ExpressionEvaluator.js'
+export { evaluateExpression, evaluateScript, ExpressionEvaluationError } from './ExpressionEvaluator.js'
 export { DEFAULT_NODE_SIZES, DEFAULT_NODE_CONFIGS } from './constants.js'
 export { exportToBpmnXml } from './BpmnXmlExporter.js'
 export { importFromBpmnXml } from './BpmnXmlImporter.js'

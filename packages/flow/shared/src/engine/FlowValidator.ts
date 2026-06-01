@@ -93,7 +93,7 @@ export function validateFlow(graph: FlowGraph): ValidationError[] {
       const hasRole = node.data.assigneeType === 'role' && (node.data.candidateRoles?.length ?? 0) > 0
       const hasExpression = node.data.assigneeType === 'expression' && !!node.data.assignee
       const hasLegacy = !node.data.assigneeType && !!node.data.assignee
-      const hasCollection = !!node.data.assigneeCollection
+      const hasCollection = !!(node.data.assigneeCollection || node.data.multiInstance?.collection)
 
       if (!hasAssignee && !hasRole && !hasExpression && !hasLegacy && !hasCollection) {
         errors.push({

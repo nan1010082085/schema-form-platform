@@ -1,0 +1,104 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  min-height: 0;
+  background: var(--el-bg-color);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: var(--el-font-size-small);
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.widgetNameRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+}
+
+.widgetType {
+  font-weight: 600;
+  font-size: var(--el-font-size-small);
+  color: var(--el-text-color-primary);
+}
+
+.copyIdIcon {
+  color: var(--el-text-color-placeholder);
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.15s;
+}
+
+.copyIdIcon:hover {
+  color: var(--el-color-primary);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.edgeItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--el-border-radius-base);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+}
+
+.edgeItem:hover {
+  background: var(--el-fill-color-light);
+}
+
+.edgeLabel {
+  font-size: var(--el-font-size-extra-small);
+  color: var(--el-text-color-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.defaultTag {
+  font-size: 11px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  padding: 1px 6px;
+  border-radius: var(--el-border-radius-base);
+  flex-shrink: 0;
+}
+
+.edgeTarget {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  flex-shrink: 0;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyText {
+  color: var(--el-text-color-disabled);
+  font-size: var(--el-font-size-base);
+}

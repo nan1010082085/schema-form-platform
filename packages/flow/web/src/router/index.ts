@@ -1,13 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
+
+// micro-app 模式下使用 memory history，避免子应用路由篡改宿主 URL
+const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: isMicroApp() ? createMemoryHistory() : createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/LoginView.vue'),
-    },
     {
       path: '/',
       component: () => import('@/components/AppLayout.vue'),
@@ -22,6 +20,12 @@ const router = createRouter({
           path: 'tasks',
           name: 'task-inbox',
           component: () => import('@/views/TaskInboxView.vue'),
+        },
+        {
+          path: 'instances',
+          name: 'flow-instances',
+          component: () => import('@/views/FlowInstanceListView.vue'),
+          meta: { title: '流程实例' },
         },
         {
           path: 'instance/:id',

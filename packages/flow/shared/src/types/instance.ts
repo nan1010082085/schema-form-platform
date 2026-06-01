@@ -6,6 +6,7 @@ export interface FlowToken {
   tokenId: string
   nodeId: string
   parentTokenId?: string
+  multiInstanceGroupId?: string
   state: FlowTokenState
   createdAt: Date
 }
@@ -36,10 +37,15 @@ export interface TaskInstanceData {
   candidateRoles?: string[]
   formData?: Record<string, unknown>
   formSchemaId?: string
+  formPublishId?: string
   formVersion?: string
+  formMode?: 'edit' | 'view'
+  hostMethods?: string[]
   outcome?: string
   dueDate?: Date
   priority: number
+  multiInstanceIndex?: number
+  multiInstanceItem?: string
   createdAt: Date
   updatedAt: Date
 }

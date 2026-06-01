@@ -1,5 +1,6 @@
-import type { FlowGraph } from '../types/graph.js'
+import type { FlowGraph, FlowNodeData } from '../types/graph.js'
 import { BpmnElementType } from '../types/bpmn.js'
+import type { BpmnNodeConfig } from '../types/bpmn.js'
 
 const BPMN_TYPE_MAP: Record<string, string> = {
   [BpmnElementType.StartEvent]: 'bpmn:startEvent',
@@ -24,6 +25,30 @@ function escapeXml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/** Fields already represented as XML attributes or child elements — skip in extension blob. */
+const SKIP_KEYS = new Set<string>(['bpmnType', 'label', 'timerType', 'timerValue'])
+
+function buildNodeConfigJson(node: FlowNodeData): string {
+  const config: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(node.data as BpmnNodeConfig)) {
+    if (SKIP_KEYS.has(key)) continue
+    if (value === undefined || value === null) continue
+    config[key] = value
+  }
+  if (Object.keys(config).length === 0) return ''
+  return JSON.stringify(config)
+}
+
+function renderExtensionElements(node: FlowNodeData, indent: string): string[] {
+  const json = buildNodeConfigJson(node)
+  if (!json) return []
+  return [
+    `${indent}<bpmn:extensionElements>`,
+    `${indent}  <sf:nodeConfig>${escapeXml(json)}</sf:nodeConfig>`,
+    `${indent}</bpmn:extensionElements>`,
+  ]
+}
+
 export function exportToBpmnXml(
   graph: FlowGraph,
   processId = 'Process_1',
@@ -37,6 +62,7 @@ export function exportToBpmnXml(
   lines.push('  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"')
   lines.push('  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"')
   lines.push('  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"')
+  lines.push('  xmlns:sf="http://schema-form.io/schema/bpmn"')
   lines.push('  id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">')
 
   lines.push(`  <bpmn:process id="${processId}" name="${processName}" isExecutable="true">`)
@@ -48,24 +74,36 @@ export function exportToBpmnXml(
     const indent = '    '
     const attrs = `id="${node.id}" name="${escapeXml(node.data.label)}"`
 
-    if (node.data.bpmnType === BpmnElementType.TimerEvent) {
-      lines.push(`${indent}<${tag} ${attrs}>`)
-      lines.push(`${indent}  <bpmn:timerEventDefinition id="TimerDef_${node.id}">`)
-      if (node.data.timerType === 'duration') {
-        lines.push(`${indent}    <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeDuration>`)
-      } else if (node.data.timerType === 'date') {
-        lines.push(`${indent}    <bpmn:timeDate xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeDate>`)
-      } else if (node.data.timerType === 'cycle') {
-        lines.push(`${indent}    <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeCycle>`)
-      }
-      lines.push(`${indent}  </bpmn:timerEventDefinition>`)
-      lines.push(`${indent}</${tag}>`)
-    } else if (node.data.bpmnType === BpmnElementType.SubProcess) {
-      lines.push(`${indent}<${tag} ${attrs}>`)
-      lines.push(`${indent}</${tag}>`)
-    } else {
+    const childIndent = `${indent}  `
+    const extensions = renderExtensionElements(node, childIndent)
+    const hasChildren = node.data.bpmnType === BpmnElementType.TimerEvent
+      || node.data.bpmnType === BpmnElementType.SubProcess
+      || extensions.length > 0
+
+    if (!hasChildren) {
       lines.push(`${indent}<${tag} ${attrs} />`)
+      continue
     }
+
+    lines.push(`${indent}<${tag} ${attrs}>`)
+
+    if (node.data.bpmnType === BpmnElementType.TimerEvent) {
+      lines.push(`${childIndent}<bpmn:timerEventDefinition id="TimerDef_${node.id}">`)
+      if (node.data.timerType === 'duration') {
+        lines.push(`${childIndent}  <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeDuration>`)
+      } else if (node.data.timerType === 'date') {
+        lines.push(`${childIndent}  <bpmn:timeDate xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeDate>`)
+      } else if (node.data.timerType === 'cycle') {
+        lines.push(`${childIndent}  <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeCycle>`)
+      }
+      lines.push(`${childIndent}</bpmn:timerEventDefinition>`)
+    }
+
+    for (const extLine of extensions) {
+      lines.push(extLine)
+    }
+
+    lines.push(`${indent}</${tag}>`)
   }
 
   for (const edge of graph.edges) {

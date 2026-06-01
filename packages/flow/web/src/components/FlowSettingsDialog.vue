@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import type { FlowPermissions, RejectPolicy } from '@schema-form/flow-shared'
+import type { FlowPermissions, FlowPermissionItem } from '@schema-form/flow-shared'
 import UserPicker from './UserPicker.vue'
+import styles from './FlowSettingsDialog.module.scss'
 
 interface SettingsData {
   name: string
   description: string
   category: string
   permissions: FlowPermissions
-  defaultRejectPolicy: RejectPolicy
+  defaultRejectPolicy: 'reject-on-all' | 'reject-on-any'
 }
 
 const props = defineProps<{
@@ -43,6 +44,19 @@ watch(() => props.visible, (v) => {
   }
 })
 
+// 将 FlowPermissionItem[] 转换为 string[] 供 UserPicker 使用
+function permissionItemsToStrings(items: FlowPermissionItem[]): string[] {
+  return items.map(item => `${item.type}:${item.id}`)
+}
+
+// 将 string[] 转换为 FlowPermissionItem[]
+function stringsToPermissionItems(strings: string[]): FlowPermissionItem[] {
+  return strings.map(str => {
+    const [type, id] = str.split(':')
+    return { type: type as 'user' | 'role', id }
+  })
+}
+
 function onCancel() {
   emit('update:visible', false)
 }
@@ -68,48 +82,61 @@ function onSave() {
     title="流程设置"
     :model-value="visible"
     width="560px"
+    :close-on-click-modal="false"
     @close="onCancel"
   >
-    <div class="settings-form">
-      <div class="field">
-        <label class="field-label">流程名称</label>
+    <div :class="styles.settingsForm">
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">流程名称</label>
         <el-input v-model="form.name" placeholder="输入流程名称" />
       </div>
 
-      <div class="field">
-        <label class="field-label">描述</label>
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">描述</label>
         <el-input v-model="form.description" type="textarea" :rows="3" placeholder="流程描述" />
       </div>
 
-      <div class="field">
-        <label class="field-label">分类</label>
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">分类</label>
         <el-input v-model="form.category" placeholder="输入流程分类" />
       </div>
 
       <el-divider />
 
-      <div class="section-header">流程权限</div>
+      <div :class="styles.sectionHeader">流程权限</div>
 
-      <div class="field">
-        <label class="field-label">编辑权限</label>
-        <UserPicker v-model="form.permissions.editors" placeholder="选择可编辑的用户" />
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">编辑权限</label>
+        <UserPicker
+          :model-value="permissionItemsToStrings(form.permissions.editors ?? [])"
+          placeholder="选择可编辑的用户或角色"
+          @update:model-value="form.permissions.editors = stringsToPermissionItems($event)"
+        />
       </div>
 
-      <div class="field">
-        <label class="field-label">发起权限</label>
-        <UserPicker v-model="form.permissions.launchers" placeholder="选择可发起的用户" />
-        <div class="field-hint">留空表示所有人可发起</div>
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">发起权限</label>
+        <UserPicker
+          :model-value="permissionItemsToStrings(form.permissions.launchers ?? [])"
+          placeholder="选择可发起的用户或角色"
+          @update:model-value="form.permissions.launchers = stringsToPermissionItems($event)"
+        />
+        <div :class="styles.fieldHint">留空表示所有人可发起</div>
       </div>
 
-      <div class="field">
-        <label class="field-label">查看权限</label>
-        <UserPicker v-model="form.permissions.viewers" placeholder="选择可查看的用户" />
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">查看权限</label>
+        <UserPicker
+          :model-value="permissionItemsToStrings(form.permissions.viewers ?? [])"
+          placeholder="选择可查看的用户或角色"
+          @update:model-value="form.permissions.viewers = stringsToPermissionItems($event)"
+        />
       </div>
 
       <el-divider />
 
-      <div class="field">
-        <label class="field-label">默认驳回策略</label>
+      <div :class="styles.field">
+        <label :class="styles.fieldLabel">默认驳回策略</label>
         <el-radio-group v-model="form.defaultRejectPolicy">
           <el-radio value="reject-on-all">全部驳回才驳回</el-radio>
           <el-radio value="reject-on-any">一票驳回即驳回</el-radio>
@@ -123,36 +150,3 @@ function onSave() {
     </template>
   </el-dialog>
 </template>
-
-<style scoped>
-.settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #606266;
-}
-
-.field-hint {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
-}
-
-.section-header {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 4px;
-}
-</style>

@@ -1,0 +1,39 @@
+.taskInbox {
+  padding: var(--spacing-lg);
+}
+.header {
+  margin-bottom: var(--spacing-20px);
+}
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+.tabBadge {
+  margin-left: var(--spacing-sm);
+}
+.formPanel {
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+.formPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-12px) var(--spacing-md);
+  background: var(--bg-color-gray);
+  border-bottom: 1px solid var(--border-color-base);
+}
+.formPanelTitle {
+  font-size: var(--font-size-14);
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+.formPanelActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}

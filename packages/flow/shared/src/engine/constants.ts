@@ -2,9 +2,9 @@ import { BpmnElementType } from '../types/bpmn.js'
 import type { BpmnNodeConfig } from '../types/bpmn.js'
 
 export const DEFAULT_NODE_SIZES: Record<BpmnElementType, { width: number; height: number }> = {
-  [BpmnElementType.StartEvent]: { width: 36, height: 36 },
-  [BpmnElementType.EndEvent]: { width: 36, height: 36 },
-  [BpmnElementType.TimerEvent]: { width: 36, height: 36 },
+  [BpmnElementType.StartEvent]: { width: 200, height: 36 },
+  [BpmnElementType.EndEvent]: { width: 200, height: 36 },
+  [BpmnElementType.TimerEvent]: { width: 200, height: 36 },
   [BpmnElementType.UserTask]: { width: 160, height: 80 },
   [BpmnElementType.ServiceTask]: { width: 160, height: 80 },
   [BpmnElementType.ScriptTask]: { width: 160, height: 80 },

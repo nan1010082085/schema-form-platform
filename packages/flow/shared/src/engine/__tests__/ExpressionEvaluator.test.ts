@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateExpression, ExpressionEvaluationError } from '../ExpressionEvaluator.js'
+import { evaluateExpression, evaluateScript, ExpressionEvaluationError } from '../ExpressionEvaluator.js'
 
 describe('evaluateExpression', () => {
   describe('basic boolean values', () => {
@@ -142,6 +142,79 @@ describe('evaluateExpression', () => {
         expect(err).toBeInstanceOf(Error)
         expect((err as Error).name).toBe('ExpressionEvaluationError')
       }
+    })
+  })
+})
+
+describe('evaluateScript', () => {
+  describe('return values', () => {
+    it('returns the computed value, not a boolean', () => {
+      expect(evaluateScript('1 + 2', {})).toBe(3)
+    })
+
+    it('returns a string value', () => {
+      expect(evaluateScript("'hello' + ' ' + 'world'", {})).toBe('hello world')
+    })
+
+    it('returns an object value', () => {
+      const result = evaluateScript('({ key: "value", count: 42 })', {})
+      expect(result).toEqual({ key: 'value', count: 42 })
+    })
+
+    it('returns an array value', () => {
+      const result = evaluateScript('[1, 2, 3]', {})
+      expect(result).toEqual([1, 2, 3])
+    })
+
+    it('returns undefined for empty script', () => {
+      expect(evaluateScript('', {})).toBeUndefined()
+    })
+
+    it('returns undefined for whitespace-only script', () => {
+      expect(evaluateScript('   ', {})).toBeUndefined()
+    })
+  })
+
+  describe('variable access', () => {
+    it('accesses injected variables', () => {
+      expect(evaluateScript('amount + 10', { amount: 100 })).toBe(110)
+    })
+
+    it('accesses nested object properties', () => {
+      const vars = { user: { name: 'Alice', age: 30 } }
+      expect(evaluateScript('user.name', vars)).toBe('Alice')
+    })
+
+    it('supports template-style concatenation', () => {
+      const vars = { firstName: 'John', lastName: 'Doe' }
+      expect(evaluateScript('firstName + " " + lastName', vars)).toBe('John Doe')
+    })
+  })
+
+  describe('blocked patterns', () => {
+    it.each([
+      'import("fs")',
+      'require("fs")',
+      'eval("1+1")',
+      'fetch("http://evil.com")',
+      'process.exit()',
+      'window.location',
+    ] as const)('blocks dangerous pattern: %s', (expr) => {
+      expect(() => evaluateScript(expr, {})).toThrow(ExpressionEvaluationError)
+    })
+  })
+
+  describe('length limit', () => {
+    it('throws when script exceeds 10000 characters', () => {
+      const longScript = '"x"'.repeat(3334) // ~10002 chars
+      expect(() => evaluateScript(longScript, {})).toThrow(ExpressionEvaluationError)
+      expect(() => evaluateScript(longScript, {})).toThrow(/超过最大长度限制/)
+    })
+  })
+
+  describe('invalid syntax', () => {
+    it('throws for malformed script', () => {
+      expect(() => evaluateScript('=== !!!', {})).toThrow(ExpressionEvaluationError)
     })
   })
 })

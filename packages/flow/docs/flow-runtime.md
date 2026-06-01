@@ -71,8 +71,8 @@ start → running → completed
 | `timerEvent` | 创建 TimerJob，Token 进入 `waiting` 状态，定时器到期后恢复 |
 | `userTask` | 根据 `approvalMode` 创建 TaskInstance，Token 进入 `waiting` |
 | `serviceTask` | 立即完成，产生新 Token 继续推进 |
-| `scriptTask` | 当前为透传（TODO Phase 5），直接完成并推进 |
-| `sendTask` | 当前为透传（TODO Phase 5），直接完成并推进 |
+| `scriptTask` | 调用 `evaluateScript` 执行脚本，返回值存入实例变量，然后推进 |
+| `sendTask` | 根据 `apiConfig` 发起 HTTP 请求，成功后推进；失败则实例进入 `failed` |
 | `receiveTask` | 创建 TaskInstance 等待外部消息确认 |
 | `exclusiveGateway` | 评估条件表达式，选择第一条匹配的出线，未匹配走默认流向 |
 | `parallelGateway` | 发散：分裂 Token；汇聚：等待所有分支到达后合并 |

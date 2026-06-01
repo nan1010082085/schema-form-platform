@@ -3,14 +3,24 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
+import type { TaskInstance } from '../stores/flowInstance.js'
+import { flowApi } from '../api/flowApi.js'
+import MicroFormEmbed from '../components/MicroFormEmbed.vue'
+import UserPicker from '../components/UserPicker.vue'
+import styles from './TaskInboxView.module.scss'
 
 const router = useRouter()
 const store = useFlowInstanceStore()
 
 const activeTab = ref('pending')
 const delegateVisible = ref(false)
-const delegateTarget = ref('')
+const delegateTarget = ref<string[]>([])
 const delegateTaskId = ref('')
+
+// Form integration state
+const activeTask = ref<TaskInstance | null>(null)
+const formRef = ref<InstanceType<typeof MicroFormEmbed>>()
+const completing = ref(false)
 
 onMounted(() => {
   store.fetchMyTasks()
@@ -25,7 +35,7 @@ const claimedTasks = computed(() =>
 )
 
 const completedTasks = computed(() =>
-  store.tasks.filter((t) => t.status === 'completed' || t.status === 'approved' || t.status === 'rejected'),
+  store.tasks.filter((t) => t.status === 'completed'),
 )
 
 const displayTasks = computed(() => {
@@ -80,28 +90,70 @@ async function handleComplete(taskId: string) {
 
 function openDelegate(taskId: string) {
   delegateTaskId.value = taskId
-  delegateTarget.value = ''
+  delegateTarget.value = []
   delegateVisible.value = true
 }
 
 async function confirmDelegate() {
-  if (!delegateTarget.value.trim()) {
-    ElMessage.warning('请输入委派目标')
+  if (delegateTarget.value.length === 0) {
+    ElMessage.warning('请选择委派目标')
     return
   }
-  await store.completeTask(delegateTaskId.value, { delegateTo: delegateTarget.value }, 'delegated')
+  await flowApi.delegateTask(delegateTaskId.value, { targetUserId: delegateTarget.value[0] })
   delegateVisible.value = false
+  await store.fetchMyTasks()
   ElMessage.success('委派成功')
 }
 
 function viewInstance(instanceId: string) {
   router.push({ name: 'flow-instance-detail', params: { id: instanceId } })
 }
+
+function selectTask(task: TaskInstance) {
+  if (task.status !== 'claimed') return
+  activeTask.value = task
+}
+
+function closeForm() {
+  activeTask.value = null
+}
+
+async function handleFormSubmit() {
+  if (!activeTask.value || !formRef.value) return
+  completing.value = true
+  try {
+    let formData: Record<string, unknown> = {}
+    if (activeTask.value.formPublishId) {
+      formData = (await formRef.value.getValues()) as Record<string, unknown>
+    }
+    await store.completeTask(activeTask.value.id, formData, 'completed')
+    activeTask.value = null
+    ElMessage.success('任务已完成')
+  } catch (e) {
+    ElMessage.error('提交失败')
+  } finally {
+    completing.value = false
+  }
+}
+
+async function handleFormValidate() {
+  if (!formRef.value) return
+  try {
+    const valid = await formRef.value.validate()
+    if (valid) {
+      ElMessage.success('表单校验通过')
+    } else {
+      ElMessage.warning('表单校验未通过')
+    }
+  } catch {
+    ElMessage.warning('表单校验未通过')
+  }
+}
 </script>
 
 <template>
-  <div class="task-inbox">
-    <div class="header">
+  <div :class="styles.taskInbox">
+    <div :class="styles.header">
       <h2>我的任务</h2>
     </div>
 
@@ -109,13 +161,13 @@ function viewInstance(instanceId: string) {
       <el-tab-pane label="待处理" name="pending">
         <template #label>
           待处理
-          <el-badge :value="pendingTasks.length" :hidden="pendingTasks.length === 0" class="tabBadge" />
+          <el-badge :value="pendingTasks.length" :hidden="pendingTasks.length === 0" :class="styles.tabBadge" />
         </template>
       </el-tab-pane>
       <el-tab-pane label="已认领" name="claimed">
         <template #label>
           已认领
-          <el-badge :value="claimedTasks.length" :hidden="claimedTasks.length === 0" class="tabBadge" />
+          <el-badge :value="claimedTasks.length" :hidden="claimedTasks.length === 0" :class="styles.tabBadge" />
         </template>
       </el-tab-pane>
       <el-tab-pane label="已完成" name="completed" />
@@ -157,7 +209,7 @@ function viewInstance(instanceId: string) {
             v-if="row.status === 'claimed'"
             size="small"
             type="success"
-            @click="handleComplete(row.id)"
+            @click="row.formPublishId ? selectTask(row) : handleComplete(row.id)"
           >
             完成
           </el-button>
@@ -172,8 +224,27 @@ function viewInstance(instanceId: string) {
       </el-table-column>
     </el-table>
 
+    <!-- Form panel for claimed tasks with bound forms -->
+    <div v-if="activeTask" :class="styles.formPanel">
+      <div :class="styles.formPanelHeader">
+        <span :class="styles.formPanelTitle">{{ activeTask.nodeName }} — 审批表单</span>
+        <div :class="styles.formPanelActions">
+          <el-button size="small" @click="handleFormValidate">校验</el-button>
+          <el-button size="small" type="primary" :loading="completing" @click="handleFormSubmit">提交并完成</el-button>
+          <el-button size="small" text @click="closeForm">关闭</el-button>
+        </div>
+      </div>
+      <MicroFormEmbed
+        ref="formRef"
+        :publish-id="activeTask.formPublishId ?? ''"
+        :mode="(activeTask.formMode ?? 'edit') as 'edit' | 'view'"
+        :host-methods="activeTask.hostMethods ?? ['setValues', 'getValues', 'validate']"
+        :initial-data="activeTask.formData"
+      />
+    </div>
+
     <el-dialog v-model="delegateVisible" title="委派任务" width="400px">
-      <el-input v-model="delegateTarget" placeholder="请输入委派目标用户名" />
+      <UserPicker v-model="delegateTarget" placeholder="搜索并选择委派目标" />
       <template #footer>
         <el-button @click="delegateVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmDelegate">确认委派</el-button>
@@ -181,21 +252,3 @@ function viewInstance(instanceId: string) {
     </el-dialog>
   </div>
 </template>
-
-<style scoped>
-.task-inbox {
-  padding: 24px;
-}
-.header {
-  margin-bottom: 20px;
-}
-.header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #303133;
-}
-.tabBadge {
-  margin-left: 6px;
-}
-</style>

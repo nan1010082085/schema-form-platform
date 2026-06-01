@@ -1,8 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
-import type { FlowExportObject } from '@vue-flow/core'
+import type { Node, Edge } from '@vue-flow/core'
 
-export type GraphSnapshot = FlowExportObject
+export interface GraphSnapshot {
+  nodes: Node[]
+  edges: Edge[]
+}
 
 export const useFlowDesignerStore = defineStore('flowDesigner', () => {
   const selectedNodeId = ref<string | null>(null)

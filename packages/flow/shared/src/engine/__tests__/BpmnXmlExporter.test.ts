@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { exportToBpmnXml } from '../BpmnXmlExporter.js'
 import { BpmnElementType } from '../../types/bpmn.js'
-import type { FlowGraph } from '../../types/graph.js'
+import type { FlowGraph, FlowNodeData } from '../../types/graph.js'
 
 function makeGraph(nodes: FlowGraph['nodes'] = [], edges: FlowGraph['edges'] = []): FlowGraph {
   return { nodes, edges }
@@ -254,5 +254,148 @@ describe('exportToBpmnXml', () => {
     const xml = exportToBpmnXml(graph)
     // The node should not appear in the process section as a BPMN element
     expect(xml).not.toMatch(/<bpmn:\w+ id="unknown1"/)
+  })
+
+  describe('extension elements', () => {
+    it('includes sf namespace in definitions', () => {
+      const xml = exportToBpmnXml(makeGraph())
+      expect(xml).toContain('xmlns:sf="http://schema-form.io/schema/bpmn"')
+    })
+
+    it('omits extension elements when node has no extra config', () => {
+      const graph = makeGraph([{
+        id: 'start1',
+        shape: 'bpmn-startEvent',
+        x: 0, y: 0, width: 36, height: 36,
+        data: { bpmnType: BpmnElementType.StartEvent, label: 'Start' },
+      }])
+      const xml = exportToBpmnXml(graph)
+      expect(xml).not.toContain('extensionElements')
+      // Should remain self-closing
+      expect(xml).toContain('<bpmn:startEvent id="start1" name="Start" />')
+    })
+
+    it('exports userTask with rich config as extension elements', () => {
+      const graph = makeGraph([{
+        id: 'task1',
+        shape: 'bpmn-userTask',
+        x: 200, y: 100, width: 160, height: 80,
+        data: {
+          bpmnType: BpmnElementType.UserTask,
+          label: '审批',
+          assigneeType: 'user',
+          candidateUsers: ['u1', 'u2'],
+          approvalMode: 'single',
+          formSchemaId: 'form-abc',
+          formMode: 'edit',
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      expect(xml).toContain('<bpmn:extensionElements>')
+      expect(xml).toContain('<sf:nodeConfig>')
+      expect(xml).toContain('</sf:nodeConfig>')
+      expect(xml).toContain('</bpmn:extensionElements>')
+      // Verify the JSON content contains the config (XML-escaped quotes)
+      expect(xml).toContain('&quot;assigneeType&quot;:&quot;user&quot;')
+      expect(xml).toContain('&quot;formSchemaId&quot;:&quot;form-abc&quot;')
+      expect(xml).toContain('&quot;approvalMode&quot;:&quot;single&quot;')
+      // bpmnType and label should NOT be in the extension
+      expect(xml).not.toMatch(/<sf:nodeConfig>.*&quot;bpmnType&quot;.*<\/sf:nodeConfig>/)
+    })
+
+    it('exports gateway with gatewayDirection', () => {
+      const graph = makeGraph([{
+        id: 'gw1',
+        shape: 'bpmn-exclusiveGateway',
+        x: 400, y: 200, width: 40, height: 40,
+        data: {
+          bpmnType: BpmnElementType.ExclusiveGateway,
+          label: 'Decision',
+          gatewayDirection: 'diverging',
+          defaultFlow: 'flow-yes',
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      expect(xml).toContain('&quot;gatewayDirection&quot;:&quot;diverging&quot;')
+      expect(xml).toContain('&quot;defaultFlow&quot;:&quot;flow-yes&quot;')
+    })
+
+    it('exports timerEvent with both timer definition and extension config', () => {
+      const graph = makeGraph([{
+        id: 'timer1',
+        shape: 'bpmn-timerEvent',
+        x: 100, y: 300, width: 36, height: 36,
+        data: {
+          bpmnType: BpmnElementType.TimerEvent,
+          label: 'Wait',
+          timerType: 'duration',
+          timerValue: 'PT5M',
+          documentation: 'Wait 5 minutes before proceeding',
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      // Standard timer definition preserved
+      expect(xml).toContain('<bpmn:timerEventDefinition')
+      expect(xml).toContain('<bpmn:timeDuration')
+      // Extension elements for extra config
+      expect(xml).toContain('<sf:nodeConfig>')
+      expect(xml).toContain('&quot;documentation&quot;:&quot;Wait 5 minutes before proceeding&quot;')
+      // timerType/timerValue should NOT be duplicated in extension
+      expect(xml).not.toMatch(/<sf:nodeConfig>.*&quot;timerType&quot;.*<\/sf:nodeConfig>/)
+    })
+
+    it('exports subProcess with subProcessDefinitionId', () => {
+      const graph = makeGraph([{
+        id: 'sub1',
+        shape: 'bpmn-subProcess',
+        x: 50, y: 50, width: 300, height: 200,
+        data: {
+          bpmnType: BpmnElementType.SubProcess,
+          label: 'Sub',
+          subProcessDefinitionId: 'sub-def-123',
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      expect(xml).toContain('&quot;subProcessDefinitionId&quot;:&quot;sub-def-123&quot;')
+    })
+
+    it('exports serviceTask with apiConfig', () => {
+      const graph = makeGraph([{
+        id: 'svc1',
+        shape: 'bpmn-serviceTask',
+        x: 200, y: 200, width: 160, height: 80,
+        data: {
+          bpmnType: BpmnElementType.ServiceTask,
+          label: 'Call API',
+          serviceType: 'http',
+          apiConfig: {
+            url: 'https://api.example.com/submit',
+            method: 'post',
+            timeout: 5000,
+          },
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      expect(xml).toContain('&quot;serviceType&quot;:&quot;http&quot;')
+      expect(xml).toContain('&quot;url&quot;:&quot;https://api.example.com/submit&quot;')
+    })
+
+    it('properly escapes XML special characters in JSON content', () => {
+      const graph = makeGraph([{
+        id: 'task1',
+        shape: 'bpmn-userTask',
+        x: 0, y: 0, width: 160, height: 80,
+        data: {
+          bpmnType: BpmnElementType.UserTask,
+          label: 'Task',
+          documentation: 'Use <b>bold</b> & "quotes"',
+        },
+      }])
+      const xml = exportToBpmnXml(graph)
+      // The JSON string itself should be XML-escaped
+      expect(xml).toContain('&lt;b&gt;bold&lt;/b&gt;')
+      expect(xml).toContain('&amp;')
+      expect(xml).toContain('&quot;')
+    })
   })
 })

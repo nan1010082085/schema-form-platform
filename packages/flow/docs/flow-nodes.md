@@ -129,9 +129,9 @@
 | `scriptLanguage` | 否 | 脚本语言标识 |
 | `scriptContent` | 否 | 脚本内容 |
 
-**执行行为**：当前为透传（TODO Phase 5），直接完成并推进。
+**执行行为**：引擎调用 `evaluateScript` 执行 `scriptContent`，沙箱化运行（禁止 import/require/eval/fetch 等）。脚本返回值存储到实例变量中（key 为节点 label），然后 Token 继续推进。
 
-**使用场景**：在流程中嵌入自定义脚本逻辑。
+**使用场景**：在流程中嵌入自定义脚本逻辑，如数据计算、条件判断、变量转换。
 
 ---
 
@@ -144,13 +144,12 @@
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `label` | 是 | 节点名称，默认"发送任务" |
-| `serviceType` | 否 | `http` / `function` / `script`，默认 `http` |
-| `serviceConfig` | 否 | 发送配置 |
+| `apiConfig` | 否 | HTTP 请求配置（url、method、params、headers、body、timeout、dataPath） |
 | `messageRef` | 否 | 消息引用 |
 
-**执行行为**：当前为透传（TODO Phase 5），直接完成并推进。
+**执行行为**：引擎根据 `apiConfig` 发起 HTTP 请求（支持 GET/POST），超时可配置。请求成功后，若配置了 `dataPath` 则从响应中提取数据存入实例变量。请求失败时实例进入 `failed` 状态。若未配置 `apiConfig.url` 则透传。
 
-**使用场景**：发送邮件、通知、消息推送。
+**使用场景**：发送邮件、通知、消息推送、调用外部 Webhook。
 
 ---
 

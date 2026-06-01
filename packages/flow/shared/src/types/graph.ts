@@ -27,10 +27,15 @@ export interface FlowGraph {
   edges: FlowEdgeData[]
 }
 
+export interface FlowPermissionItem {
+  type: 'user' | 'role'
+  id: string
+}
+
 export interface FlowPermissions {
-  editors?: string[]
-  launchers?: string[]
-  viewers?: string[]
+  editors?: FlowPermissionItem[]
+  launchers?: FlowPermissionItem[]
+  viewers?: FlowPermissionItem[]
 }
 
 export interface FlowGraphMetadata {

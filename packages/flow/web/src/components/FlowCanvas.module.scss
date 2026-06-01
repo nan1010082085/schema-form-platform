@@ -1,0 +1,14 @@
+.canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border-radius: var(--border-radius-base);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  :global(.vue-flow) {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+  }
+}

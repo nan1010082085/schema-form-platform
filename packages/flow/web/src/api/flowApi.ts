@@ -7,6 +7,16 @@ import type {
   DelegateTaskDto,
   FlowListQuery,
   FlowInstanceQuery,
+  FlowDefinitionData,
+  FlowVersionData,
+  FlowInstanceData,
+  TaskInstanceData,
+  ApprovalLogEntry,
+  FlowDefinitionListData,
+  FlowVersionListData,
+  FlowInstanceListData,
+  TaskInstanceListData,
+  ApprovalLogListData,
 } from '@schema-form/flow-shared'
 
 const API_BASE = '/api'
@@ -16,6 +26,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`)
+  }
   const json = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? 'Request failed')
   return json.data
@@ -29,19 +43,19 @@ export const flowApi = {
     if (query?.status) params.set('status', query.status)
     if (query?.page) params.set('page', String(query.page))
     if (query?.pageSize) params.set('pageSize', String(query.pageSize))
-    return request<unknown>(`/flows?${params}`)
+    return request<FlowDefinitionListData>(`/flows?${params}`)
   },
 
-  getFlow: (id: string) => request<unknown>(`/flows/${id}`),
+  getFlow: (id: string) => request<FlowDefinitionData>(`/flows/${id}`),
 
   createFlow: (data: CreateFlowDefinitionDto) =>
-    request<unknown>('/flows', {
+    request<FlowDefinitionData>('/flows', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   updateFlow: (id: string, data: UpdateFlowDefinitionDto) =>
-    request<unknown>(`/flows/${id}`, {
+    request<FlowDefinitionData>(`/flows/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
@@ -50,24 +64,24 @@ export const flowApi = {
     request<null>(`/flows/${id}`, { method: 'DELETE' }),
 
   publishFlow: (id: string) =>
-    request<unknown>(`/flows/${id}/publish`, { method: 'POST' }),
+    request<FlowDefinitionData>(`/flows/${id}/publish`, { method: 'POST' }),
 
   // Versions
   listVersions: (definitionId: string, page?: number, pageSize?: number) => {
     const params = new URLSearchParams()
     if (page) params.set('page', String(page))
     if (pageSize) params.set('pageSize', String(pageSize))
-    return request<unknown>(`/flows/${definitionId}/versions?${params}`)
+    return request<FlowVersionListData>(`/flows/${definitionId}/versions?${params}`)
   },
 
   getVersion: (definitionId: string, versionId: string) =>
-    request<unknown>(`/flows/${definitionId}/versions/${versionId}`),
+    request<FlowVersionData>(`/flows/${definitionId}/versions/${versionId}`),
 
   getLatestVersion: (definitionId: string) =>
-    request<unknown>(`/flows/${definitionId}/versions/latest`),
+    request<FlowVersionData>(`/flows/${definitionId}/versions/latest`),
 
   saveVersion: (definitionId: string, data: SaveFlowVersionDto) =>
-    request<unknown>(`/flows/${definitionId}/versions`, {
+    request<FlowVersionData>(`/flows/${definitionId}/versions`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -79,54 +93,74 @@ export const flowApi = {
     if (query?.status) params.set('status', query.status)
     if (query?.page) params.set('page', String(query.page))
     if (query?.pageSize) params.set('pageSize', String(query.pageSize))
-    return request<unknown>(`/flow-instances?${params}`)
+    return request<FlowInstanceListData>(`/flow-instances?${params}`)
   },
 
-  getInstance: (id: string) => request<unknown>(`/flow-instances/${id}`),
+  getInstance: (id: string) => request<FlowInstanceData>(`/flow-instances/${id}`),
 
   startInstance: (data: StartFlowInstanceDto) =>
-    request<unknown>('/flow-instances', {
+    request<FlowInstanceData>('/flow-instances', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   terminateInstance: (id: string) =>
-    request<unknown>(`/flow-instances/${id}/terminate`, { method: 'POST' }),
+    request<FlowInstanceData>(`/flow-instances/${id}/terminate`, { method: 'POST' }),
 
   suspendInstance: (id: string) =>
-    request<unknown>(`/flow-instances/${id}/suspend`, { method: 'POST' }),
+    request<FlowInstanceData>(`/flow-instances/${id}/suspend`, { method: 'POST' }),
 
   resumeInstance: (id: string) =>
-    request<unknown>(`/flow-instances/${id}/resume`, { method: 'POST' }),
+    request<FlowInstanceData>(`/flow-instances/${id}/resume`, { method: 'POST' }),
 
   // Tasks
   getMyTasks: (page?: number, pageSize?: number) => {
     const params = new URLSearchParams()
     if (page) params.set('page', String(page))
     if (pageSize) params.set('pageSize', String(pageSize))
-    return request<unknown>(`/flow-tasks/my?${params}`)
+    return request<TaskInstanceListData>(`/flow-tasks/my?${params}`)
   },
 
-  getTask: (id: string) => request<unknown>(`/flow-tasks/${id}`),
+  getTask: (id: string) => request<TaskInstanceData>(`/flow-tasks/${id}`),
 
   claimTask: (id: string) =>
-    request<unknown>(`/flow-tasks/${id}/claim`, { method: 'POST' }),
+    request<TaskInstanceData>(`/flow-tasks/${id}/claim`, { method: 'POST' }),
 
   completeTask: (id: string, data: CompleteTaskDto) =>
-    request<unknown>(`/flow-tasks/${id}/complete`, {
+    request<TaskInstanceData>(`/flow-tasks/${id}/complete`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   delegateTask: (id: string, data: DelegateTaskDto) =>
-    request<unknown>(`/flow-tasks/${id}/delegate`, {
+    request<TaskInstanceData>(`/flow-tasks/${id}/delegate`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  // Users
-  searchUsers: (q: string) => {
+  // Users - 支持分页
+  searchUsers: (q: string, page?: number, pageSize?: number) => {
     const params = new URLSearchParams({ q })
-    return request<unknown>(`/users?${params}`)
+    if (page) params.set('page', String(page))
+    if (pageSize) params.set('pageSize', String(pageSize))
+    return request<{ items: Array<{ id: string; username: string; displayName: string; roles: string[] }>; total: number }>(`/users?${params}`)
   },
+
+  // Roles - 新增
+  searchRoles: (q: string, page?: number, pageSize?: number) => {
+    const params = new URLSearchParams({ q })
+    if (page) params.set('page', String(page))
+    if (pageSize) params.set('pageSize', String(pageSize))
+    return request<{ items: Array<{ id: string; name: string; description?: string }>; total: number }>(`/roles?${params}`)
+  },
+
+  // Approval logs
+  getApprovalLogs: (instanceId: string) => {
+    const params = new URLSearchParams({ instanceId })
+    return request<ApprovalLogListData>(`/flow-approvals?${params}`)
+  },
+
+  // Published forms (editor-server)
+  getPublishedForms: () =>
+    request<Array<{ id: string; publishId: string; name: string }>>('/schemas/published'),
 }

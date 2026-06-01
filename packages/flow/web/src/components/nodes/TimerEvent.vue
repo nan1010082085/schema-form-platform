@@ -1,13 +1,17 @@
 <template>
-  <div :class="[$style.node, { [$style.selected]: props.selected }]">
-    <Handle type="target" :position="Position.Top" :class="$style.handle" />
-    <span :class="$style.icon">⏱</span>
-    <Handle type="source" :position="Position.Bottom" :class="$style.handle" />
+  <div :class="[styles.node, { [styles.selected]: props.selected }]">
+    <Handle type="target" :position="Position.Top" :class="styles.handle" />
+    <svg :class="styles.icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+    <Handle type="source" :position="Position.Bottom" :class="styles.handle" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
+import styles from './TimerEvent.module.scss'
 
 const props = defineProps<{
   id: string
@@ -15,34 +19,3 @@ const props = defineProps<{
   selected?: boolean
 }>()
 </script>
-
-<style module>
-.node {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #e0f2f1;
-  border: 2px dashed #009688;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: grab;
-}
-
-.selected {
-  box-shadow: 0 0 0 2px #009688;
-}
-
-.icon {
-  font-size: 14px;
-  pointer-events: none;
-  user-select: none;
-}
-
-.handle {
-  width: 8px;
-  height: 8px;
-  background: #fff;
-  border: 1px solid #409eff;
-}
-</style>

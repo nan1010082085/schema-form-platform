@@ -1,0 +1,94 @@
+.field-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  min-height: var(--el-component-size);
+}
+
+.field-row:last-child {
+  margin-bottom: 0;
+}
+
+.field-row--textarea {
+  align-items: flex-start;
+}
+
+.field-row__label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: var(--el-font-size-extra-small);
+  color: var(--el-text-color-regular);
+  font-weight: 500;
+  line-height: var(--el-component-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-row--textarea .field-row__label {
+  line-height: 1;
+  padding-top: 10px;
+}
+
+.field-row__control {
+  flex: 1;
+  min-width: 0;
+  height: var(--el-component-size);
+  display: flex;
+  align-items: center;
+}
+
+.field-row__control--textarea {
+  height: auto;
+  align-items: flex-start;
+}
+
+/* Element Plus 组件高度覆盖 */
+.field-row__control :deep(.el-input),
+.field-row__control :deep(.el-select),
+.field-row__control :deep(.el-input-number) {
+  width: 100%;
+}
+
+.field-row__control :deep(.el-input .el-input__wrapper) {
+  height: var(--el-component-size);
+  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
+}
+
+.field-row__control :deep(.el-input .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.field-row__control :deep(.el-input .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.field-row__control :deep(.el-select .el-input__wrapper) {
+  height: var(--el-component-size);
+  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
+}
+
+.field-row__control :deep(.el-select .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.field-row__control :deep(.el-select .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.field-row__control :deep(.el-input-number .el-input__wrapper) {
+  height: var(--el-component-size);
+  min-height: 0;
+}
+
+.field-row__control :deep(.el-textarea .el-textarea__inner) {
+  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
+}
+
+.field-row__control :deep(.el-textarea .el-textarea__inner:hover) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+.field-row__control :deep(.el-textarea .el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
