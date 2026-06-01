@@ -4,6 +4,7 @@ import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import { useChartOption } from '../base/useChartOption'
 import { echarts, type EChartsType } from '../base/echarts'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 
@@ -47,7 +48,7 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
       gap: 2,
       label: showLabel ? { show: true, position: 'inside' } : undefined,
       labelLine: { length: 10, lineStyle: { width: 1, type: 'solid' } },
-      itemStyle: { borderColor: '#fff', borderWidth: 1 },
+      itemStyle: { borderColor: 'var(--bg-color-white)', borderWidth: 1 },
       emphasis: { label: { fontSize: 20 } },
       data: seriesData,
     }],
@@ -102,13 +103,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="chartRef" :class="$style.container" />
+  <div ref="chartRef" :class="styles.container" />
 </template>
-
-<style module>
-.container {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-}
-</style>

@@ -7,7 +7,7 @@ export const titleConfig: WidgetConfig = {
   defaultStyle: {
     width: '100%',
     fontSize: '20px',
-    color: '#303133',
+    color: 'var(--text-color-title)',
   },
   configPanels: ['events'],
   defaultProps: {

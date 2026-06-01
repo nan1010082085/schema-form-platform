@@ -31,6 +31,7 @@ import {
   deleteSchema as apiDeleteSchema,
   publishSchema as apiPublishSchema,
   fetchPublishedSchema as apiFetchPublishedSchema,
+  fetchPublishedByPublishId as apiFetchPublishedByPublishId,
 } from '@/utils/apiClient'
 
 /** 默认分页大小 */
@@ -272,8 +273,8 @@ export const useApiStore = defineStore('schema', () => {
    * @returns 是否成功删除
    */
   async function deleteSchema(id: string): Promise<boolean> {
-    const result = await withErrorHandling(() => apiDeleteSchema(id))
-    if (result !== null) {
+    await withErrorHandling(() => apiDeleteSchema(id))
+    if (!error.value) {
       // 从清单中移除
       schemas.value = schemas.value.filter((s) => s.id !== id)
       if (currentSchema.value?.id === id) {
@@ -355,6 +356,14 @@ export const useApiStore = defineStore('schema', () => {
     }
   }
 
+  async function fetchPublishedByPublishId(publishId: string): Promise<PublishedSchemaItem | null> {
+    try {
+      return await apiFetchPublishedByPublishId(publishId)
+    } catch {
+      return null
+    }
+  }
+
   return {
     // 状态
     schemas,
@@ -384,6 +393,7 @@ export const useApiStore = defineStore('schema', () => {
     // 发布操作
     publishSchema,
     fetchPublishedSchema,
+    fetchPublishedByPublishId,
     // 错误管理
     clearError,
   }

@@ -15,7 +15,7 @@ export interface FlowInstanceData {
   id: string
   definitionId: string
   versionId: string
-  version: number
+  version: string
   status: FlowInstanceStatus
   variables: Record<string, unknown>
   tokens: FlowToken[]

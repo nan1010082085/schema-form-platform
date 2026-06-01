@@ -4,7 +4,7 @@ import type { FlowGraph, FlowGraphMetadata } from '@schema-form/flow-shared'
 export interface IFlowVersion {
   _id: string
   definitionId: string
-  version: number
+  version: string
   graph: FlowGraph
   metadata?: FlowGraphMetadata
   createdAt: Date
@@ -15,7 +15,7 @@ const flowVersionSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
     definitionId: { type: String, required: true, index: true },
-    version: { type: Number, required: true },
+    version: { type: String, required: true },
     graph: {
       nodes: { type: [mongoose.Schema.Types.Mixed], required: true },
       edges: { type: [mongoose.Schema.Types.Mixed], required: true },

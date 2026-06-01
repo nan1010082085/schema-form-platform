@@ -1,0 +1,116 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.boxWrapper {
+  position: relative;
+  width: 72px;
+  height: 56px;
+}
+
+.box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--border-color-light);
+  background: var(--bg-color-gray-light);
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centerLabel {
+  font-size: 10px;
+  color: var(--text-color-muted);
+}
+
+.linkBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-color-light);
+  border-radius: 4px;
+  background: var(--bg-color-white);
+  cursor: pointer;
+  color: var(--text-color-muted);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.linkBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.linkBtnActive {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlLabel {
+  width: 32px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  text-align: right;
+}
+
+.numberInput {
+  flex: 1;
+}
+
+/* 四角独立输入网格 */
+.controlsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.gridCell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gridLabel {
+  width: 24px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-color-secondary);
+  text-align: right;
+}
+
+.gridInput {
+  flex: 1;
+  min-width: 0;
+}

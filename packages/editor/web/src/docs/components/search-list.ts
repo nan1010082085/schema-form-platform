@@ -48,7 +48,7 @@ const doc: ComponentDoc = {
         ],
         columns: [
           { prop: 'id', label: '订单号', render: 'text', width: '120' },
-          { prop: 'status', label: '状态', render: 'badge', colorMap: { paid: '#67c23a', unpaid: '#f56c6c' } },
+          { prop: 'status', label: '状态', render: 'badge', colorMap: { paid: 'var(--color-success)', unpaid: 'var(--color-danger)' } },
           { prop: 'amount', label: '金额', render: 'text', align: 'right' },
         ],
         rowActions: [

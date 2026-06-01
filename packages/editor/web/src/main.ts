@@ -1,50 +1,45 @@
 import { createApp } from 'vue'
-import type { App as VueApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import '@/styles/variables.scss'
 import '@/styles/theme.scss'
+import { createChildApp } from '@schema-form/micro-app/child'
+import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
+import { applyThemeInline, installThemeWatchdog } from '@/microapp/themeGuard'
 
 import App from './App.vue'
 import router from './router'
 import { configureApiClient } from './utils/apiClient'
 import { registerAllWidgets } from './widgets'
 
-let app: VueApp | null = null
-
-function render(props?: Record<string, unknown>) {
-  const container = props?.container as HTMLElement | undefined
-  app = createApp(App)
-  const pinia = createPinia()
-
-  app.use(pinia)
-  app.use(router)
-  app.use(ElementPlus)
-  registerAllWidgets()
-
-  configureApiClient({
-    baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
-    useMock: import.meta.env.VITE_USE_MOCK === 'true',
-  })
-
-  app.mount(container ? container.querySelector('#app') || container : '#app')
+// 独立运行时初始化 micro-app 引擎（作为子应用嵌入宿主时宿主已初始化）
+if (window.__MICRO_APP_ENVIRONMENT__) {
+  installStyleGuard()
+  applyThemeInline()
+  installThemeWatchdog()
+} else {
+  initMicroApp()
+  applyThemeInline()
+  installThemeWatchdog()
 }
 
-// Standalone mode — render directly
-if (!window.__MICRO_APP_ENVIRONMENT__) {
-  render()
-}
+createChildApp({
+  createApp: () => {
+    const app = createApp(App)
+    const pinia = createPinia()
 
-// micro-app lifecycle hooks
-export async function bootstrap() {}
+    app.use(pinia)
+    app.use(router)
+    app.use(ElementPlus)
+    registerAllWidgets()
 
-export async function mount(props: Record<string, unknown>) {
-  render(props)
-}
+    configureApiClient({
+      baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
+      useMock: import.meta.env.VITE_USE_MOCK === 'true',
+    })
 
-export async function unmount() {
-  app?.unmount()
-  app = null
-  router.replace('/')
-}
+    return app
+  },
+  router,
+})

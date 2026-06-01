@@ -7,6 +7,7 @@
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
 import type { TableColumn } from '../../widgets/table/config'
+import styles from './TableColumnsEditor.module.scss'
 
 const props = defineProps<{
   columns: TableColumn[]
@@ -59,19 +60,19 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
 </script>
 
 <template>
-  <div :class="$style.editor">
-    <div v-if="columns.length === 0" :class="$style.empty">
+  <div :class="styles.editor">
+    <div v-if="columns.length === 0" :class="styles.empty">
       未配置列。
     </div>
 
     <div
       v-for="(col, idx) in columns"
       :key="idx"
-      :class="$style.item"
+      :class="styles.item"
     >
-      <div :class="$style.itemHeader">
-        <span :class="$style.itemTitle">列 {{ idx + 1 }}</span>
-        <div :class="$style.itemActions">
+      <div :class="styles.itemHeader">
+        <span :class="styles.itemTitle">列 {{ idx + 1 }}</span>
+        <div :class="styles.itemActions">
           <el-button
             :icon="Top"
             size="small"
@@ -96,8 +97,8 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
         </div>
       </div>
 
-      <div :class="$style.field">
-        <label :class="$style.label">字段名</label>
+      <div :class="styles.field">
+        <label :class="styles.label">字段名</label>
         <el-input
           :model-value="col.prop"
           size="small"
@@ -106,8 +107,8 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
         />
       </div>
 
-      <div :class="$style.field">
-        <label :class="$style.label">标签</label>
+      <div :class="styles.field">
+        <label :class="styles.label">标签</label>
         <el-input
           :model-value="col.label"
           size="small"
@@ -116,8 +117,8 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
         />
       </div>
 
-      <div :class="$style.field">
-        <label :class="$style.label">宽度</label>
+      <div :class="styles.field">
+        <label :class="styles.label">宽度</label>
         <el-input-number
           :model-value="col.width"
           size="small"
@@ -130,8 +131,8 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
         />
       </div>
 
-      <div :class="$style.field">
-        <label :class="$style.label">固定列</label>
+      <div :class="styles.field">
+        <label :class="styles.label">固定列</label>
         <el-select
           :model-value="col.fixed"
           size="small"
@@ -160,58 +161,3 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
     </el-button>
   </div>
 </template>
-
-<style module>
-.editor {
-  width: 100%;
-}
-
-.empty {
-  text-align: center;
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-  padding: 12px 0;
-}
-
-.item {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: var(--el-fill-color-lighter);
-}
-
-.itemHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.itemTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.itemActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.field {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  min-height: 32px;
-}
-
-.label {
-  width: 60px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 32px;
-}
-</style>

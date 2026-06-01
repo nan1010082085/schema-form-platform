@@ -60,8 +60,9 @@ router.post('/', requireAuth, validate(saveVersionSchema), async (ctx) => {
     return
   }
 
-  const latestVersion = await FlowVersionModel.findOne({ definitionId }).sort({ version: -1 })
-  const nextVersion = latestVersion ? latestVersion.version + 1 : 1
+  const now = new Date()
+  const pad = (n: number, len: number) => String(n).padStart(len, '0')
+  const nextVersion = `v${now.getFullYear()}${pad(now.getMonth() + 1, 2)}${pad(now.getDate(), 2)}${pad(now.getHours(), 2)}${pad(now.getMinutes(), 2)}${pad(now.getSeconds(), 2)}`
 
   const version = await FlowVersionModel.create({
     _id: uuidv4(),

@@ -31,6 +31,7 @@ import VariableConfigDialog from './VariableConfigDialog.vue'
 import type { WidgetVariable } from '../../widgets/base/types'
 import { usePropertyAdapters } from '../../composables/usePropertyAdapters'
 import { useClipboard } from '../../composables/useClipboard'
+import styles from './style.module.scss'
 
 const editorStore = useEditorStore()
 const widgetStore = useWidgetStore()
@@ -407,21 +408,21 @@ function updateBoardProperty(key: string, value: unknown) {
 </script>
 
 <template>
-  <div :class="$style.panel">
-    <div :class="$style.header">属性配置</div>
+  <div :class="styles.panel">
+    <div :class="styles.header">属性配置</div>
 
     <!-- 未选中部件时：显示画布配置 -->
     <template v-if="!selectedWidget">
-      <el-scrollbar :class="$style.scroll">
-        <div :class="$style.section">
-          <div :class="$style.sectionHeader" @click="canvasExpanded = !canvasExpanded">
-            <el-icon :size="12" :class="$style.arrow">
+      <el-scrollbar :class="styles.scroll">
+        <div :class="styles.section">
+          <div :class="styles.sectionHeader" @click="canvasExpanded = !canvasExpanded">
+            <el-icon :size="12" :class="styles.arrow">
               <ArrowDown v-if="canvasExpanded" />
               <ArrowRight v-else />
             </el-icon>
-            <span :class="$style.sectionLabel">画布配置</span>
+            <span :class="styles.sectionLabel">画布配置</span>
           </div>
-          <div v-if="canvasExpanded" :class="$style.sectionBody">
+          <div v-if="canvasExpanded" :class="styles.sectionBody">
             <PropertyField
               v-for="item in boardPropertyItems"
               :key="item.key"
@@ -431,7 +432,7 @@ function updateBoardProperty(key: string, value: unknown) {
               :desc="item.desc"
               @update="(v: unknown) => updateBoardProperty(item.key, v)"
             />
-            <div :class="$style.variableBtn">
+            <div :class="styles.variableBtn">
               <el-button size="small" @click="boardVariableDialogVisible = true">
                 画布变量 ({{ boardStore.variables.length }})
               </el-button>
@@ -450,56 +451,56 @@ function updateBoardProperty(key: string, value: unknown) {
     </template>
 
     <template v-else>
-      <div :class="$style.widgetNameRow">
-        <span :class="$style.widgetType">{{ widgetConfig?.displayName }}</span>
+      <div :class="styles.widgetNameRow">
+        <span :class="styles.widgetType">{{ widgetConfig?.displayName }}</span>
         <ElTooltip
           v-if="widgetConfig?.config.description"
           :content="widgetConfig.config.description"
           placement="top"
           :show-after="500"
         >
-          <el-icon :class="$style.questionIcon"><QuestionFilled /></el-icon>
+          <el-icon :class="styles.questionIcon"><QuestionFilled /></el-icon>
         </ElTooltip>
         <el-tooltip v-if="selectedWidget" content="复制部件 ID" placement="top" :show-after="500">
           <el-icon
-            :class="$style.copyIdIcon"
+            :class="styles.copyIdIcon"
             @click="copyWidgetId"
           ><CopyDocument /></el-icon>
         </el-tooltip>
       </div>
 
       <!-- 动态配置入口（由 widget config.configPanels 声明驱动）—— 顶部横向按钮 -->
-      <div v-if="configPanels.length" :class="$style.configActions">
+      <div v-if="configPanels.length" :class="styles.configActions">
         <el-scrollbar>
-          <div :class="$style.configButtons">
+          <div :class="styles.configButtons">
             <el-popover placement="bottom-start" :width="280" trigger="click">
               <template #reference>
-                <div :class="$style.helpIconWrap">
-                  <el-icon :class="$style.helpIcon"><QuestionFilled /></el-icon>
+                <div :class="styles.helpIconWrap">
+                  <el-icon :class="styles.helpIcon"><QuestionFilled /></el-icon>
                 </div>
               </template>
-              <div :class="$style.helpContent" v-html="configHelpText" />
+              <div :class="styles.helpContent" v-html="configHelpText" />
             </el-popover>
             <template v-for="panel in configPanels" :key="panel">
-              <el-button v-if="panel === 'events'" size="small" plain @click="openEventDialog">
+              <el-button v-if="panel === 'events'" plain @click="openEventDialog">
                 事件配置
-                <span v-if="selectedWidget.events?.length" :class="$style.badge">
+                <span v-if="selectedWidget.events?.length" :class="styles.badge">
                   {{ selectedWidget.events.length }}
                 </span>
               </el-button>
-              <el-button v-if="panel === 'rules'" size="small" plain @click="openRuleDialog">
+              <el-button v-if="panel === 'rules'" plain @click="openRuleDialog">
                 规则配置
-                <span v-if="selectedWidget.rules?.length" :class="$style.badge">
+                <span v-if="selectedWidget.rules?.length" :class="styles.badge">
                   {{ selectedWidget.rules.length }}
                 </span>
               </el-button>
-              <el-button v-if="panel === 'api'" size="small" plain @click="openApiDialog">
+              <el-button v-if="panel === 'api'" plain @click="openApiDialog">
                 数据源
-                <span v-if="selectedWidget.api" :class="$style.badge">1</span>
+                <span v-if="selectedWidget.api" :class="styles.badge">1</span>
               </el-button>
-              <el-button v-if="panel === 'variables'" size="small" plain @click="variableDialogVisible = true">
+              <el-button v-if="panel === 'variables'" plain @click="variableDialogVisible = true">
                 变量
-                <span v-if="selectedWidget.variables?.length" :class="$style.badge">
+                <span v-if="selectedWidget.variables?.length" :class="styles.badge">
                   {{ selectedWidget.variables.length }}
                 </span>
               </el-button>
@@ -508,38 +509,38 @@ function updateBoardProperty(key: string, value: unknown) {
         </el-scrollbar>
       </div>
 
-      <el-scrollbar :class="$style.scroll">
+      <el-scrollbar :class="styles.scroll">
         <!-- 手风琴分区 -->
         <div
           v-for="section in propertySections"
           :key="section.key"
-          :class="$style.section"
+          :class="styles.section"
         >
           <div
-            :class="$style.sectionHeader"
+            :class="styles.sectionHeader"
             @click="toggleSection(section.key)"
           >
-            <el-icon :size="12" :class="$style.arrow">
+            <el-icon :size="12" :class="styles.arrow">
               <ArrowDown v-if="expandedSections.has(section.key)" />
               <ArrowRight v-else />
             </el-icon>
-            <span :class="$style.sectionLabel">{{ section.label }}</span>
-            <span :class="$style.sectionCount">{{ section.items.length }}</span>
+            <span :class="styles.sectionLabel">{{ section.label }}</span>
+            <span :class="styles.sectionCount">{{ section.items.length }}</span>
           </div>
 
-          <div v-if="expandedSections.has(section.key)" :class="$style.sectionBody">
+          <div v-if="expandedSections.has(section.key)" :class="styles.sectionBody">
             <template v-for="item in section.items" :key="item.key">
               <!-- 列配置：直接渲染 TableColumnsEditor -->
-              <div v-if="item.type === 'columns'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-if="item.type === 'columns'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <TableColumnsEditor
                   :columns="(item.value as TableColumn[]) ?? []"
                   @update:columns="(v: TableColumn[]) => updateProperty(item.key, v)"
                 />
               </div>
               <!-- 通用数组编辑器 -->
-              <div v-else-if="item.type === 'array-editor'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'array-editor'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <GenericArrayEditor
                   :value="(item.value as unknown[]) ?? []"
                   :fields="item.fields ?? []"
@@ -554,24 +555,24 @@ function updateBoardProperty(key: string, value: unknown) {
                 @update="(v: unknown) => updateProperty(item.key, v)"
               />
               <!-- 边框可视化编辑器 -->
-              <div v-else-if="item.type === 'border-editor'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'border-editor'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <BorderEditor
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
                   @update="updateStylePatch"
                 />
               </div>
               <!-- 圆角可视化编辑器 -->
-              <div v-else-if="item.type === 'border-radius-editor'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'border-radius-editor'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <BorderRadiusEditor
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
                   @update="updateStylePatch"
                 />
               </div>
               <!-- 外边距可视化编辑器 -->
-              <div v-else-if="item.type === 'spacing-margin-editor'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'spacing-margin-editor'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <SpacingEditor
                   mode="margin"
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
@@ -579,8 +580,8 @@ function updateBoardProperty(key: string, value: unknown) {
                 />
               </div>
               <!-- 内边距可视化编辑器 -->
-              <div v-else-if="item.type === 'spacing-padding-editor'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'spacing-padding-editor'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <SpacingEditor
                   mode="padding"
                   :value="(selectedWidget?.style as Record<string, string>) ?? {}"
@@ -588,8 +589,8 @@ function updateBoardProperty(key: string, value: unknown) {
                 />
               </div>
               <!-- 校验规则编辑器 -->
-              <div v-else-if="item.type === 'rules'" :class="$style.columnsSection">
-                <div :class="$style.columnsLabel">{{ item.label }}</div>
+              <div v-else-if="item.type === 'rules'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
                 <RulesEditor
                   :rules="(item.value as import('element-plus').FormItemRule[] | undefined)"
                   @update:rules="(v: import('element-plus').FormItemRule[] | undefined) => updateProperty(item.key, v)"
@@ -642,208 +643,3 @@ function updateBoardProperty(key: string, value: unknown) {
   </div>
 </template>
 
-<style module>
-.panel {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  background: #fff;
-}
-
-.header {
-  padding: 12px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a2e;
-  flex-shrink: 0;
-  border-bottom: 1px solid #f0f2f5;
-}
-
-.empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-  color: #c0c4cc;
-  font-size: 13px;
-}
-
-.widgetNameRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 16px;
-  border-bottom: 1px solid #f0f2f5;
-  flex-shrink: 0;
-}
-
-.widgetType {
-  font-weight: 600;
-  font-size: 13px;
-  color: #303133;
-}
-
-.questionIcon {
-  color: var(--el-text-color-placeholder);
-  cursor: help;
-  font-size: 14px;
-}
-
-.questionIcon:hover {
-  color: var(--el-color-primary);
-}
-
-.copyIdIcon {
-  color: var(--el-text-color-placeholder);
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.copyIdIcon:hover {
-  color: var(--el-color-primary);
-}
-
-.scroll {
-  flex: 1;
-  min-height: 0;
-}
-
-.section {
-  border-bottom: 1px solid #f0f2f5;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s;
-}
-
-.sectionHeader:hover {
-  background: #f5f7fa;
-}
-
-.arrow {
-  color: #909399;
-  flex-shrink: 0;
-}
-
-.sectionLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #303133;
-  flex: 1;
-}
-
-.sectionCount {
-  font-size: 11px;
-  color: #c0c4cc;
-  background: #f0f2f5;
-  border-radius: 8px;
-  padding: 0 6px;
-  line-height: 18px;
-}
-
-.sectionBody {
-  padding: 8px 16px;
-  background: #fafbfc;
-  border-top: 1px solid #f0f2f5;
-}
-
-.variableBtn {
-  margin-top: 8px;
-}
-
-.columnsSection {
-  margin-bottom: 8px;
-}
-
-.columnsLabel {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.configActions {
-  padding: 8px 16px;
-  border-bottom: 1px solid #f0f2f5;
-  flex-shrink: 0;
-}
-
-.configButtons {
-  display: flex;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  margin-left: 4px;
-  font-size: 11px;
-  line-height: 1;
-  color: #fff;
-  background: var(--el-color-primary);
-  border-radius: 8px;
-}
-
-.helpIconWrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color 0.15s;
-}
-
-.helpIconWrap:hover {
-  background-color: var(--el-color-primary-light-9);
-}
-
-.helpIcon {
-  font-size: 14px;
-  color: #909399;
-  transition: color 0.15s;
-}
-
-.helpIconWrap:hover .helpIcon {
-  color: var(--el-color-primary);
-}
-
-.helpContent {
-  font-size: 12px;
-  line-height: 1.8;
-  color: #606266;
-}
-
-.helpContent p {
-  margin: 0 0 6px;
-}
-
-.helpContent strong {
-  color: #303133;
-}
-
-.helpContent ul {
-  margin: 2px 0 8px;
-  padding-left: 16px;
-}
-
-.helpContent li {
-  margin-bottom: 2px;
-}
-</style>

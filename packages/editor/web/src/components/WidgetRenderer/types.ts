@@ -114,6 +114,12 @@ export type { PartialWidget, LinkageType, SchemaLinkage, LinkageState }
 export interface FormGridProps {
   /** Widget 定义列表（支持完整 Widget 或 schema 形态的 PartialWidget） */
   schema: PartialWidget[]
+  /**
+   * 布局模式
+   * - 'flow'（默认）：流式布局，使用 WidgetNode 渲染（忽略 position）
+   * - 'absolute'：绝对定位，使用 SchemaNode 渲染（保留 position，与编辑器画布一致）
+   */
+  layout?: 'flow' | 'absolute'
   /** 用户上下文 */
   user?: FormGridContext['user']
   /** 请求上下文 */

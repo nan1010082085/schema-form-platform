@@ -11,6 +11,8 @@ const router = useRouter()
 const store = useFlowDefinitionStore()
 const instanceStore = useFlowInstanceStore()
 
+const publishingId = ref<string | null>(null)
+const COOLDOWN_MS = 2000
 const createDialogVisible = ref(false)
 const createForm = reactive({
   name: '',
@@ -66,11 +68,15 @@ async function handleDelete(id: string, name: string) {
 }
 
 async function handlePublish(id: string) {
+  if (publishingId.value) return
+  publishingId.value = id
   try {
     await store.publishDefinition(id)
     ElMessage.success('发布成功')
   } catch {
     ElMessage.error('发布失败')
+  } finally {
+    setTimeout(() => { publishingId.value = null }, COOLDOWN_MS)
   }
 }
 
@@ -147,9 +153,11 @@ function formatDate(dateStr: string) {
               v-if="row.status === 'draft'"
               size="small"
               type="success"
+              :loading="publishingId === row.id"
+              :disabled="publishingId !== null"
               @click="handlePublish(row.id)"
             >
-              发布
+              {{ publishingId === row.id ? '发布中...' : '发布' }}
             </el-button>
             <el-button
               v-if="row.status === 'published'"

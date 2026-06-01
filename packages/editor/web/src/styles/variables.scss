@@ -72,9 +72,11 @@ $color-link-file: #2071D5; // 文件链接色
 $color-link-view: #015FA1; // 查看链接色
 
 // 中性色 - 文字
+$text-color-title: #303133;   // 标题/深色文字（Element Plus 默认深色文字）
 $text-color-primary: #333333; // 主文字
 $text-color-regular: #606266; // 常规
 $text-color-secondary: #666666; // 次要
+$text-color-muted: #909399;   // 辅助/弱化文字（原 Element Plus info 色）
 $text-color-placeholder: #969FA8; // 占位/弱化
 $text-color-disabled: #C0C4CC;
 $text-color-inverse: #FFFFFF; // 白底上的反色
@@ -85,6 +87,9 @@ $bg-color-page: #F5F6FA;
 $bg-color-gray-light: #FAFAFA;
 $bg-color-gray: #F5F7FA;
 $bg-color-gray-dark: #E4E7ED;
+$bg-color-gray-darker: #E8E8E8; // 深灰分割线
+$bg-color-surface: #FAFBFC;     // 表面/卡片背景
+$bg-color-canvas-dot: #D0D5DD;  // 画布网格点
 $bg-color-blue-light: #EEF5FF;
 $bg-color-blue-lighter: #EEF5FF;
 $bg-color-blue-table: #E6EDF6;
@@ -139,19 +144,19 @@ $scrollbar-thumb-color: #ccc;
 $scrollbar-track-color: #f1f1f1;
 
 // Element UI 按钮颜色变量
-// 主要按钮（primary）
-$el-button-primary-bg: #165DFF;
+// 主要按钮（primary）— 对齐品牌色 $color-primary
+$el-button-primary-bg: $color-primary;
 $el-button-primary-text: #FFFFFF;
-$el-button-primary-border: #165DFF;
-$el-button-primary-hover-bg: #0E42D2;
+$el-button-primary-border: $color-primary;
+$el-button-primary-hover-bg: $color-primary;
 $el-button-primary-hover-text: #FFFFFF;
-$el-button-primary-hover-border: #0E42D2;
-$el-button-primary-active-bg: #0A36A0;
+$el-button-primary-hover-border: $color-primary;
+$el-button-primary-active-bg: $color-primary-dark;
 $el-button-primary-active-text: #FFFFFF;
-$el-button-primary-active-border: #0A36A0;
-$el-button-primary-disabled-bg: rgba(22, 93, 255, 0.7);
+$el-button-primary-active-border: $color-primary-dark;
+$el-button-primary-disabled-bg: $color-primary;
 $el-button-primary-disabled-text: rgba(255, 255, 255, 0.7);
-$el-button-primary-disabled-border: rgba(22, 93, 255, 0.7);
+$el-button-primary-disabled-border: $color-primary;
 
 // 次要按钮（default）
 $el-button-default-bg: #FFFFFF;
@@ -167,19 +172,19 @@ $el-button-default-disabled-bg: rgba(255, 255, 255, 0.7);
 $el-button-default-disabled-text: rgba(96, 98, 102, 0.7);
 $el-button-default-disabled-border: rgba(220, 220, 220, 0.7);
 
-// 成功按钮（success）
-$el-button-success-bg: #36B37E;
+// 成功按钮（success）— 对齐品牌色 $color-success
+$el-button-success-bg: $color-success;
 $el-button-success-text: #FFFFFF;
-$el-button-success-border: #36B37E;
-$el-button-success-hover-bg: #278E64;
+$el-button-success-border: $color-success;
+$el-button-success-hover-bg: $color-success-light;
 $el-button-success-hover-text: #FFFFFF;
-$el-button-success-hover-border: #278E64;
-$el-button-success-active-bg: #1A7350;
+$el-button-success-hover-border: $color-success-light;
+$el-button-success-active-bg: $color-success;
 $el-button-success-active-text: #FFFFFF;
-$el-button-success-active-border: #1A7350;
-$el-button-success-disabled-bg: rgba(54, 179, 126, 0.7);
+$el-button-success-active-border: $color-success;
+$el-button-success-disabled-bg: $color-success;
 $el-button-success-disabled-text: rgba(255, 255, 255, 0.7);
-$el-button-success-disabled-border: rgba(54, 179, 126, 0.7);
+$el-button-success-disabled-border: $color-success;
 
 // 警告按钮（warning）
 $el-button-warning-bg: #FF7D00;
@@ -322,10 +327,10 @@ $calendar-cell-width: 40px;
 :root {
   // ========== 统一颜色主题（保留原有变量） ==========
   --color-white: #{$bg-color-white};
-  --main-color: var(--el-color-primary); // 主色
+  --main-color: var(--color-primary); // 主色
   --sub-color: var(--el-color-primary-light-5); // 浅蓝1
   --sub-color-8: var(--el-color-primary-light-8); // 浅蓝2
-  --sub-color-9: var(--el-color-primary-light-9); // 浅蓝2
+  --sub-color-9: var(--color-primary-lighter); // 浅蓝2
 
   // ========== 字体系统 ==========
   // 字体族
@@ -346,12 +351,12 @@ $calendar-cell-width: 40px;
   --font-size-36: #{$font-size-36};
 
   // 字体大小（Element UI 变量，保留兼容）
-  --font-size-extra-large: var(--el-font-size-extra-large); // 超大号字体
-  --font-size-large: var(--el-font-size-large); // 大号字体
-  --font-size-medium: var(--el-font-size-medium); // 中等字体
-  --font-size-base: var(--el-font-size-base); // 基本字体
-  --font-size-small: var(--el-font-size-small); // 小号字体
-  --font-size-extra-small: var(--el-font-size-extra-small); // 超小号字体
+  --font-size-extra-large: var(--font-size-16); // 超大号字体
+  --font-size-large: var(--font-size-16); // 大号字体
+  --font-size-medium: var(--font-size-14); // 中等字体
+  --font-size-base: var(--font-size-14); // 基本字体
+  --font-size-small: var(--font-size-12); // 小号字体
+  --font-size-extra-small: var(--font-size-12); // 超小号字体
 
   // 字重
   --font-weight-regular: #{$font-weight-regular};
@@ -405,11 +410,11 @@ $calendar-cell-width: 40px;
   --color-link-view: #{$color-link-view}; // 查看链接色
 
   // 中性色 - 文字
-  --text-color-primary: #{$text-color-primary}; // 主文字（覆盖 Element 变量，使用固定值）
-  --text-color-regular: var(--el-text-color-regular); // 常规（保留 Element 变量）
+  --text-color-primary: #{$text-color-primary}; // 主文字
+  --text-color-regular: #{$text-color-regular}; // 常规
   --text-color-secondary: #{$text-color-secondary}; // 次要
-  --text-color-placeholder: var(--el-text-color-placeholder); // 占位/弱化（保留 Element 变量）
-  --text-color-disabled: var(--el-text-color-disabled); // 禁用（保留 Element 变量）
+  --text-color-placeholder: #{$text-color-placeholder}; // 占位/弱化
+  --text-color-disabled: #{$text-color-disabled}; // 禁用
   --text-color-inverse: #{$text-color-inverse}; // 白底上的反色
 
   // 中性色 - 背景
@@ -428,7 +433,7 @@ $calendar-cell-width: 40px;
 
   // 中性色 - 边框
   --border-color-base: #{$border-color-base};
-  --border-color-light: var(--el-border-color-light); // 保留 Element 变量
+  --border-color-light: #{$border-color-light};
   --border-color-light-alt: #{$border-color-light-alt};
   --border-color-medium: #{$border-color-medium};
   --border-color-dark: #{$border-color-dark};

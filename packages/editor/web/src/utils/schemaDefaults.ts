@@ -16,7 +16,7 @@ import { isFullWidthType } from '@/widgets/base/types'
 export function createDefaultSchema(type: SchemaType): PartialWidget {
   // ---- Layout types ----
   if (type === 'card') {
-    return { type: 'card', label: 'Card', children: [], style: { padding: '16px', borderRadius: '4px', backgroundColor: '#f5f7fa' } }
+    return { type: 'card', label: 'Card', children: [], style: { padding: '16px', borderRadius: '4px', backgroundColor: 'var(--bg-color-gray)' } }
   }
   if (type === 'title') {
     return { type: 'title', label: 'Title' }
@@ -32,7 +32,7 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
       type: 'tabs',
       props: { tabs: [{ title: 'Tab 1' }] },
       children: [{ type: 'card', children: [] }],
-      style: { backgroundColor: '#f5f7fa' },
+      style: { backgroundColor: 'var(--bg-color-gray)' },
     }
   }
   if (type === 'dialog') {
@@ -41,7 +41,7 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
       label: 'Dialog',
       props: { title: 'Dialog', width: '400px' },
       children: [],
-      style: { backgroundColor: '#f5f7fa' },
+      style: { backgroundColor: 'var(--bg-color-gray)' },
     }
   }
 

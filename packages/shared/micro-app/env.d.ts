@@ -11,3 +11,18 @@ declare module '@micro-zoe/micro-app' {
   const microApp: MicroApp
   export default microApp
 }
+
+/** micro-app 子应用全局对象 */
+interface MicroAppInstance {
+  getData(): Record<string, unknown> | undefined
+  addDataListener(handler: (data: Record<string, unknown>) => void): void
+  removeDataListener(handler: (data: Record<string, unknown>) => void): void
+}
+
+declare global {
+  interface Window {
+    __MICRO_APP_ENVIRONMENT__?: boolean
+    __MICRO_APP_NAME__?: string
+    microApp?: MicroAppInstance
+  }
+}

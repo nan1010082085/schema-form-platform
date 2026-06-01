@@ -8,6 +8,7 @@
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import styles from './RequestConfigDialog.module.scss'
 
 interface RequestConfig {
   apiUrl: string
@@ -113,11 +114,11 @@ function handleClose() {
     width="560px"
     @update:model-value="emit('update:visible', $event)"
   >
-    <div :class="$style.body">
+    <div :class="styles.body">
       <!-- URL -->
       <!-- URL -->
-      <div :class="$style.row">
-        <label :class="$style.label">请求地址</label>
+      <div :class="styles.row">
+        <label :class="styles.label">请求地址</label>
         <el-input
           v-model="localConfig.apiUrl"
           size="small"
@@ -126,8 +127,8 @@ function handleClose() {
       </div>
 
       <!-- Method -->
-      <div :class="$style.row">
-        <label :class="$style.label">请求方法</label>
+      <div :class="styles.row">
+        <label :class="styles.label">请求方法</label>
         <el-select
           v-model="localConfig.apiMethod"
           size="small"
@@ -143,9 +144,9 @@ function handleClose() {
       </div>
 
       <!-- Headers -->
-      <div :class="$style.section">
-        <div :class="$style.sectionHeader">
-          <span :class="$style.sectionTitle">请求头 (Headers)</span>
+      <div :class="styles.section">
+        <div :class="styles.sectionHeader">
+          <span :class="styles.sectionTitle">请求头 (Headers)</span>
           <el-button
             type="primary"
             :icon="Plus"
@@ -160,7 +161,7 @@ function handleClose() {
         <div
           v-for="(entry, idx) in headerEntries"
           :key="idx"
-          :class="$style.headerRow"
+          :class="styles.headerRow"
         >
           <el-input
             v-model="entry.key"
@@ -185,8 +186,8 @@ function handleClose() {
       </div>
 
       <!-- Response Data Path -->
-      <div :class="$style.row">
-        <label :class="$style.label">数据路径</label>
+      <div :class="styles.row">
+        <label :class="styles.label">数据路径</label>
         <el-input
           v-model="localConfig.responseDataPath"
           size="small"
@@ -201,60 +202,3 @@ function handleClose() {
     </template>
   </EnhancedDialog>
 </template>
-
-<style module>
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 统一表单控件高度 32px（与 EventConfigDialog 对齐） */
-.body :global(.el-input__wrapper),
-.body :global(.el-select .el-input__wrapper),
-.body :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.label {
-  width: 80px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--text-color-secondary);
-  line-height: 32px;
-}
-
-.section {
-  border: 1px solid var(--border-color-light);
-  border-radius: 6px;
-  padding: 10px;
-  background: var(--bg-color-gray-light);
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.sectionTitle {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-color-secondary);
-}
-
-.headerRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-</style>

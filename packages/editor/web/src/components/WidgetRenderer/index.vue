@@ -5,6 +5,7 @@ import type { FormInstance } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import SchemaRender from './SchemaRender.vue'
+import type { Widget } from '../../widgets/base/types'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
 // FgDialog import removed — internal dialog rendered inline below
 import type { PartialWidget } from '../../widgets/base/types'
@@ -30,7 +31,6 @@ import {
 } from './types'
 import type { DialogRegistry } from './types'
 import type { EventExecutionContext } from './types'
-import type { Widget } from '../../widgets/base/types'
 import { useLinkage } from '@/composables/useLinkage'
 import { useFormData } from '@/composables/useFormData'
 import { useLifecycle } from '@/composables/useLifecycle'
@@ -38,6 +38,7 @@ import { useLocale } from '@/composables/useLocale'
 import { useLogger } from '@/composables/useLogger'
 import { apiClient } from '@/utils/apiClient'
 import { triggerWidgetEvent } from '@/engine/eventEngine'
+import styles from './style.module.scss'
 
 const logger = useLogger('WidgetRenderer')
 
@@ -55,6 +56,27 @@ const props = defineProps<FormGridProps & {
   /** 只读模式：禁用所有表单输入，隐藏内部按钮（文件列表保留） */
   readonly?: boolean
 }>()
+
+const isAbsoluteLayout = computed(() => props.layout === 'absolute')
+
+/** 绝对定位模式下，计算所有 widget 的包围盒，确保容器能容纳 */
+const absoluteContainerStyle = computed(() => {
+  if (!isAbsoluteLayout.value) return undefined
+  let maxRight = 0
+  let maxBottom = 0
+  function walk(items: PartialWidget[]) {
+    for (const item of items) {
+      const pos = item.position
+      if (pos) {
+        maxRight = Math.max(maxRight, (pos.x ?? 0) + (pos.w ?? 0))
+        maxBottom = Math.max(maxBottom, (pos.y ?? 0) + (pos.h ?? 0))
+      }
+      if (item.children?.length) walk(item.children)
+    }
+  }
+  walk(props.schema)
+  return { position: 'relative' as const, minHeight: `${maxBottom}px`, minWidth: `${maxRight}px` }
+})
 
 const emit = defineEmits<{
   'submit': [data: FormData]
@@ -480,8 +502,14 @@ defineExpose({
 
 <template>
   <el-config-provider :locale="epLocale">
-    <div v-loading="loading" class="fg">
-      <el-form ref="formRef" :model="formData">
+    <div v-loading="loading" :class="styles.fg" :style="absoluteContainerStyle">
+      <!-- 绝对定位模式：与编辑器画布一致，保留 position 坐标 -->
+      <template v-if="isAbsoluteLayout">
+        <SchemaRender :widgets="(schema as Widget[])" mode="preview" />
+      </template>
+
+      <!-- 流式布局模式（默认）：WidgetNode 流式渲染 -->
+      <el-form v-else ref="formRef" :model="formData">
         <template v-for="(item, idx) in schema" :key="idx">
           <ErrorBoundary
             v-if="!item.hidden"
@@ -528,7 +556,3 @@ defineExpose({
     </div>
   </el-config-provider>
 </template>
-
-<style lang="scss">
-@use './style.scss';
-</style>

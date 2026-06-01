@@ -1,0 +1,111 @@
+.body {
+  height: 60vh;
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+}
+
+/* 统一表单控件高度 32px */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.form {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview {
+  width: 280px;
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  background: var(--bg-color-surface);
+}
+
+.previewTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-title);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.previewBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.card {
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg-color-surface);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-title);
+}
+
+.cardNum {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.label {
+  width: 50px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-regular);
+  line-height: 32px;
+}
+
+.conditionArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.watchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}

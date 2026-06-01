@@ -3,9 +3,9 @@ const COLORS = {
   warn: '',
   error: '',
   debug: '',
-  event: 'color: #409eff; font-weight: bold',
+  event: 'color: #0060A2; font-weight: bold',
   rule: 'color: #9c27b0; font-weight: bold',
-  api: 'color: #67c23a; font-weight: bold',
+  api: 'color: #26A036; font-weight: bold',
 } as const
 
 // 日志收集器 — 供 UI 面板消费

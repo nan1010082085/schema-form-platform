@@ -1,0 +1,115 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-page);
+}
+
+/* ---- 顶栏 ---- */
+.topbar {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-base);
+  background: var(--bg-gray-light);
+  flex-shrink: 0;
+}
+
+.topbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbarLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbarIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.topbarBrand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.topbarDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-base);
+}
+
+.topbarNav {
+  display: flex;
+  gap: 2px;
+}
+
+.topbarNavItem {
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.topbarNavItem:hover {
+  background: var(--bg-gray);
+}
+
+.topbarNavItemActive {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modelBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-gray);
+  border: 1px solid var(--border-light);
+  font-size: 11px;
+  color: var(--text-hint);
+}
+
+.modelDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+.modelName {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ---- 主体 ---- */
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}

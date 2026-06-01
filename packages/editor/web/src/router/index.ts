@@ -1,9 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
 
+// micro-app 模式下使用 memory history，避免子应用路由篡改宿主 URL
+const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: isMicroApp() ? createMemoryHistory() : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     // ---- Redirects ----
     { path: '/', redirect: '/instances' },
@@ -21,6 +24,11 @@ const router = createRouter({
           path: 'instances',
           name: 'instances',
           component: () => import('@/views/InstancesView.vue'),
+        },
+        {
+          path: 'docs',
+          name: 'widget-docs',
+          component: () => import('@/views/WidgetDocsView.vue'),
         },
       ],
     },
@@ -74,8 +82,10 @@ router.beforeEach((to, from) => {
         allowEditorLeave = true
         router.push(to.fullPath)
       }).catch(() => {
-        // 用户取消：恢复浏览器 URL 到当前路由
-        window.history.pushState(null, '', router.resolve(from.fullPath).href)
+        // 用户取消：恢复浏览器 URL 到当前路由（仅非 micro-app 模式）
+        if (!isMicroApp()) {
+          window.history.pushState(null, '', router.resolve(from.fullPath).href)
+        }
       })
       return false
     }

@@ -7,6 +7,7 @@
  */
 import { Plus, Delete, Top, Bottom } from '@element-plus/icons-vue'
 import type { ArrayFieldSchema } from '../../widgets/base/types'
+import styles from './GenericArrayEditor.module.scss'
 
 export type { ArrayFieldSchema }
 
@@ -68,19 +69,19 @@ function getItemTitle(item: unknown, index: number): string {
 </script>
 
 <template>
-  <div :class="$style.editor">
-    <div v-if="value.length === 0" :class="$style.empty">
+  <div :class="styles.editor">
+    <div v-if="value.length === 0" :class="styles.empty">
       暂无数据
     </div>
 
     <div
       v-for="(item, idx) in value"
       :key="idx"
-      :class="$style.item"
+      :class="styles.item"
     >
-      <div :class="$style.itemHeader">
-        <span :class="$style.itemTitle">#{{ getItemTitle(item, idx) }}</span>
-        <div :class="$style.itemActions">
+      <div :class="styles.itemHeader">
+        <span :class="styles.itemTitle">#{{ getItemTitle(item, idx) }}</span>
+        <div :class="styles.itemActions">
           <el-button
             :icon="Top"
             size="small"
@@ -108,9 +109,9 @@ function getItemTitle(item: unknown, index: number): string {
       <div
         v-for="field in fields"
         :key="field.key"
-        :class="$style.field"
+        :class="styles.field"
       >
-        <label :class="$style.label">{{ field.label }}</label>
+        <label :class="styles.label">{{ field.label }}</label>
 
         <el-input
           v-if="field.type === 'text'"
@@ -165,58 +166,3 @@ function getItemTitle(item: unknown, index: number): string {
     </el-button>
   </div>
 </template>
-
-<style module>
-.editor {
-  width: 100%;
-}
-
-.empty {
-  text-align: center;
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-  padding: 12px 0;
-}
-
-.item {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: var(--el-fill-color-lighter);
-}
-
-.itemHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.itemTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.itemActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.field {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  min-height: 32px;
-}
-
-.label {
-  width: 60px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 32px;
-}
-</style>

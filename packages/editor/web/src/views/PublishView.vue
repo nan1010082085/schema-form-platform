@@ -12,8 +12,12 @@ import { WidgetRenderer } from '@/components/WidgetRenderer'
 import type { FormData } from '@/components/WidgetRenderer'
 import type { PartialWidget } from '@/widgets/base/types'
 import { useAppStore } from '@/stores/app'
-import { fetchPublishedSchema } from '@/utils/apiClient'
+import { fetchPublishedSchema, fetchPublishedByPublishId } from '@/utils/apiClient'
 import { sendToHost } from '@/microapp/bridge'
+import { registerAllWidgets } from '@/widgets'
+import styles from './PublishView.module.scss'
+
+registerAllWidgets()
 
 const route = useRoute()
 const formRef = ref<InstanceType<typeof WidgetRenderer>>()
@@ -34,7 +38,11 @@ async function loadSchema(id: string) {
   schemaName.value = ''
 
   try {
-    const publishedSchema = await fetchPublishedSchema(id)
+    // 优先按 publishId 查找，找不到再按 sourceId 查找
+    let publishedSchema = await fetchPublishedByPublishId(id)
+    if (!publishedSchema) {
+      publishedSchema = await fetchPublishedSchema(id)
+    }
     if (!publishedSchema) {
       error.value = `未找到 ID 为 "${id}" 的已发布 Schema`
       return
@@ -108,14 +116,14 @@ onUnmounted(() => window.removeEventListener('message', handleMessage))
 </script>
 
 <template>
-  <div class="fg-renderer">
-    <div v-if="loading" class="fg-renderer__loading">
+  <div :class="styles['fg-renderer']">
+    <div v-if="loading" :class="styles['fg-renderer__loading']">
       <el-icon class="is-loading" :size="24"><Loading /></el-icon>
       <span>加载中...</span>
     </div>
 
-    <div v-else-if="error" class="fg-renderer__error">
-      <el-icon :size="48" color="#E50113"><CircleCloseFilled /></el-icon>
+    <div v-else-if="error" :class="styles['fg-renderer__error']">
+      <el-icon :size="48" color="var(--color-danger)"><CircleCloseFilled /></el-icon>
       <p>{{ error }}</p>
     </div>
 
@@ -123,6 +131,7 @@ onUnmounted(() => window.removeEventListener('message', handleMessage))
       v-else
       ref="formRef"
       :schema="schema"
+      layout="absolute"
       :user="context.user"
       :request="context.request"
       :global="context.global"
@@ -130,21 +139,3 @@ onUnmounted(() => window.removeEventListener('message', handleMessage))
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.fg-renderer {
-  min-height: 100vh;
-  background: #f5f7fa;
-
-  &__loading,
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    gap: 12px;
-    color: #666;
-  }
-}
-</style>

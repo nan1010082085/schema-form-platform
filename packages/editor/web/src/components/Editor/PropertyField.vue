@@ -6,6 +6,7 @@
  * 所有输入事件统一通过 'update' emit 向上传递。
  */
 import { ElInput, ElInputNumber, ElSwitch, ElSelect, ElOption, ElColorPicker, ElTooltip } from 'element-plus'
+import styles from './PropertyField.module.scss'
 
 interface SelectOption {
   label: string
@@ -30,11 +31,11 @@ function handleUpdate(val: unknown) {
 </script>
 
 <template>
-  <div :class="$style.field">
+  <div :class="styles.field">
     <ElTooltip :content="desc || label" placement="top" :disabled="!desc && label.length <= 4" :show-after="500">
-      <label :class="$style.label">{{ label.length > 4 ? label.slice(0, 4) + '…' : label }}</label>
+      <label :class="styles.label">{{ label.length > 4 ? label.slice(0, 4) + '…' : label }}</label>
     </ElTooltip>
-    <div :class="$style.control">
+    <div :class="styles.control">
       <!-- 文本输入 -->
       <ElInput
         v-if="type === 'text'"
@@ -95,31 +96,3 @@ function handleUpdate(val: unknown) {
   </div>
 </template>
 
-<style module>
-.field {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  min-height: 32px;
-}
-
-.label {
-  width: 70px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 32px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.control {
-  flex: 1;
-  min-width: 0;
-  height: 32px;
-  display: flex;
-  align-items: center;
-}
-
-</style>

@@ -9,6 +9,7 @@
 import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { useConditionReferences } from '@/composables/useConditionReferences'
+import styles from './ConditionBuilder.module.scss'
 
 interface ConditionClause {
   field: string
@@ -169,17 +170,17 @@ function needsValue(operator: string): boolean {
 </script>
 
 <template>
-  <div :class="$style.builder">
+  <div :class="styles.builder">
     <div
       v-for="(clause, ci) in clauses"
       :key="ci"
-      :class="$style.clause"
+      :class="styles.clause"
     >
       <!-- 逻辑切换（非第一个子句） -->
       <el-select
         v-if="ci > 0"
         :model-value="clause.logic"
-        :class="$style.logicSelect"
+        :class="styles.logicSelect"
         @update:model-value="updateClause(ci, 'logic', $event)"
       >
         <el-option label="且" value="&&" />
@@ -191,7 +192,7 @@ function needsValue(operator: string): boolean {
         :model-value="clause.field"
         filterable
         placeholder="选择字段"
-        :class="$style.fieldSelect"
+        :class="styles.fieldSelect"
         @update:model-value="updateClause(ci, 'field', $event)"
       >
         <el-option-group v-if="fieldRefs.length > 0" label="表单字段">
@@ -223,7 +224,7 @@ function needsValue(operator: string): boolean {
       <!-- 运算符 -->
       <el-select
         :model-value="clause.operator"
-        :class="$style.opSelect"
+        :class="styles.opSelect"
         @update:model-value="updateClause(ci, 'operator', $event)"
       >
         <el-option
@@ -239,7 +240,7 @@ function needsValue(operator: string): boolean {
         v-if="needsValue(clause.operator)"
         :model-value="clause.value"
         placeholder="比较值"
-        :class="$style.valueInput"
+        :class="styles.valueInput"
         @update:model-value="updateClause(ci, 'value', $event)"
       />
 
@@ -254,7 +255,7 @@ function needsValue(operator: string): boolean {
     </div>
 
     <!-- 空状态 -->
-    <div v-if="clauses.length === 0" :class="$style.empty">
+    <div v-if="clauses.length === 0" :class="styles.empty">
       {{ required ? '请添加条件' : '无条件，始终执行' }}
     </div>
 
@@ -270,78 +271,9 @@ function needsValue(operator: string): boolean {
     </el-button>
 
     <!-- 表达式预览 -->
-    <div v-if="clauses.length > 0" :class="$style.preview">
-      <span :class="$style.previewLabel">表达式:</span>
-      <code :class="$style.previewCode">{{ modelValue || '...' }}</code>
+    <div v-if="clauses.length > 0" :class="styles.preview">
+      <span :class="styles.previewLabel">表达式:</span>
+      <code :class="styles.previewCode">{{ modelValue || '...' }}</code>
     </div>
   </div>
 </template>
-
-<style module>
-.builder {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* 统一表单控件高度 32px */
-.builder :global(.el-input__wrapper),
-.builder :global(.el-select .el-input__wrapper),
-.builder :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-.clause {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.logicSelect {
-  width: 64px;
-}
-
-.fieldSelect {
-  width: 200px;
-}
-
-.opSelect {
-  width: 100px;
-}
-
-.valueInput {
-  flex: 1;
-  min-width: 80px;
-}
-
-.empty {
-  font-size: 12px;
-  color: #c0c4cc;
-  text-align: center;
-  padding: 6px 0;
-}
-
-.preview {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: #f4f4f5;
-  border-radius: 4px;
-  margin-top: 4px;
-}
-
-.previewLabel {
-  font-size: 11px;
-  color: #909399;
-  flex-shrink: 0;
-}
-
-.previewCode {
-  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 11px;
-  color: var(--el-color-primary);
-  word-break: break-all;
-}
-</style>

@@ -1,22 +1,51 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 
-useExposeWidget((wd) => ({
-  get value() { return wd.value.defaultValue },
+const fileList = ref<{ name: string; url: string }[]>([])
+
+useExposeWidget(() => ({
+  get value() { return fileList.value },
 }))
+
+function handleUpload() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.multiple = (widgetData.value.props?.multiple as boolean) ?? false
+  input.accept = (widgetData.value.props?.accept as string) || ''
+  input.onchange = () => {
+    const files = input.files
+    if (!files) return
+    for (const file of Array.from(files)) {
+      fileList.value.push({ name: file.name, url: URL.createObjectURL(file) })
+    }
+  }
+  input.click()
+}
+
+function handleRemove(index: number) {
+  fileList.value.splice(index, 1)
+}
 </script>
+
 <template>
-  <div :class="$style.container">
-    <div :class="$style.title">{{ (widgetData.props?.title as string) || '附件' }}</div>
-    <div :class="$style.empty">暂无文件</div>
+  <div :class="styles.container">
+    <div :class="styles.title">{{ (widgetData.props?.title as string) || '附件' }}</div>
+    <div :class="styles.body">
+      <div :class="styles.list">
+        <div v-if="!fileList.length" :class="styles.empty">暂无文件</div>
+        <div v-for="(file, i) in fileList" :key="i" :class="styles.item">
+          <span :class="styles.fileName">{{ file.name }}</span>
+          <span :class="styles.remove" @click="handleRemove(i)">×</span>
+        </div>
+      </div>
+      <el-button type="primary" :class="styles.uploadBtn" @click="handleUpload">
+        {{ (widgetData.props?.buttonText as string) || '上传文件' }}
+      </el-button>
+    </div>
   </div>
 </template>
-<style module>
-.container { border: 1px solid #ebeef5; border-radius: 4px; padding: 12px; }
-.title { font-weight: 600; margin-bottom: 8px; }
-.empty { color: #909399; font-size: 13px; }
-</style>

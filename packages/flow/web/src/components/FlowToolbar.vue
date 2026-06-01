@@ -103,12 +103,14 @@
             </svg>
           </button>
         </el-tooltip>
-        <button :class="[styles.iconBtn, styles.iconBtnOutline]" title="校验" @click="$emit('validate')">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 8 7 11 12 5" />
-            <circle cx="8" cy="8" r="6.5" />
-          </svg>
-        </button>
+        <el-tooltip content="校验流程" placement="bottom">
+          <button :class="[styles.iconBtn, styles.iconBtnOutline]" title="校验" @click="$emit('validate')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 8 7 11 12 5" />
+              <circle cx="8" cy="8" r="6.5" />
+            </svg>
+          </button>
+        </el-tooltip>
         <button :class="[styles.btn, styles.btnOutline]" title="设置" @click="$emit('settings')">设置</button>
         <button :class="[styles.btn, styles.btnOutline]" title="保存" @click="$emit('save')">保存</button>
         <button :class="[styles.btn, styles.btnPrimary]" title="发布" :disabled="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</button>

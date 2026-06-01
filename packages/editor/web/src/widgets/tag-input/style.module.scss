@@ -1,0 +1,10 @@
+.tagInput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid var(--border-color-base);
+  border-radius: 4px;
+  min-height: 32px;
+}

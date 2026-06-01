@@ -1,0 +1,10 @@
+.canvas {
+  position: relative;
+  overflow: auto;
+}
+
+.canvasGrid {
+  background-image:
+    radial-gradient(circle, var(--bg-color-canvas-dot) 0.8px, transparent 0.8px);
+  background-size: 20px 20px;
+}

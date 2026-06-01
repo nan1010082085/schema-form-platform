@@ -8,10 +8,11 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Delete, Edit, View, Promotion, List, Document, Sort, Download, Upload } from '@element-plus/icons-vue'
+import { Search, Plus, Delete, Edit, View, Promotion, List, Document, Sort, Download, Upload, Clock } from '@element-plus/icons-vue'
 import { useApiStore } from '@/stores/api'
 import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
 import { importSchema } from '@/utils/apiClient'
+import VersionHistoryDialog from '@/components/Editor/VersionHistoryDialog.vue'
 import type { SchemaListItem, SchemaDetail } from '@/types/api'
 
 const router = useRouter()
@@ -24,6 +25,8 @@ const activeTab = ref<'all' | 'form' | 'search-list'>('all')
 const sortBy = ref<'newest' | 'oldest' | 'name'>('newest')
 const bulkMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
+const publishingId = ref<string | null>(null)
+const COOLDOWN_MS = 2000
 
 const filterTabs = [
   { label: '全部', value: 'all' as const },
@@ -124,29 +127,35 @@ function handleEdit(id: string) {
   router.push({ path: '/editor', query: { id } })
 }
 
-function handlePreview(id: string) {
-  router.push({ path: '/preview', query: { id } })
+function handlePreview(item: SchemaListItem) {
+  if (item.publishId) {
+    // 预览发布版本
+    router.push({ path: '/view', query: { id: item.publishId } })
+  } else {
+    // 未发布则预览编辑版本
+    router.push({ path: '/editor', query: { id: item.id, mode: 'preview' } })
+  }
 }
 
 async function handlePublish(item: SchemaListItem) {
-  if (item.publishId) {
-    router.push({ path: '/view', query: { id: item.id } })
-    return
-  }
+  if (publishingId.value) return
   try {
     await ElMessageBox.confirm(
-      '当前版本尚未发布，是否发布？',
+      `确认发布 "${item.name}" 的最新版本？`,
       '发布确认',
       { type: 'info', confirmButtonText: '发布', cancelButtonText: '取消' },
     )
+    publishingId.value = item.id
     const result = await store.publishSchema(item.id)
     if (result) {
       ElMessage.success('发布成功')
-      router.push({ path: '/view', query: { id: item.id } })
+      store.fetchSchemas()
     } else {
       ElMessage.error(store.error || '发布失败')
     }
-  } catch { /* cancelled */ }
+  } catch { /* cancelled */ } finally {
+    setTimeout(() => { publishingId.value = null }, COOLDOWN_MS)
+  }
 }
 
 // ---- Bulk operations ----
@@ -246,6 +255,30 @@ function typeTagType(type: string): '' | 'success' | 'info' | 'warning' | 'dange
 const isFiltered = computed(() =>
   activeTab.value !== 'all' || (searchInput.value && searchInput.value.trim().length > 0),
 )
+
+// ---- Version History ----
+const versionDialogVisible = ref(false)
+const versionDialogEditId = ref<string | null>(null)
+const versionDialogVersion = ref<string | undefined>(undefined)
+const versionDialogName = ref<string | undefined>(undefined)
+
+function handleShowVersions(item: SchemaListItem) {
+  versionDialogEditId.value = item.editId
+  versionDialogVersion.value = item.version
+  versionDialogName.value = item.name
+  versionDialogVisible.value = true
+}
+
+function handleLoadVersion(version: string) {
+  // 加载特定版本后跳转到编辑器
+  if (versionDialogEditId.value) {
+    router.push({ path: '/editor', query: { editId: versionDialogEditId.value, version } })
+  }
+}
+
+function handleVersionPublished() {
+  store.fetchSchemas()
+}
 </script>
 
 <template>
@@ -255,7 +288,7 @@ const isFiltered = computed(() =>
       <div class="fg-instances__header">
         <div class="fg-instances__title-row">
           <div>
-            <h1>Schema 实例管理</h1>
+            <h1>实例管理</h1>
             <p class="fg-instances__subtitle">管理所有表单和搜索列表实例</p>
           </div>
           <div class="fg-instances__header-actions">
@@ -397,11 +430,14 @@ const isFiltered = computed(() =>
               <el-tooltip content="编辑" placement="top" :show-after="300">
                 <el-button size="small" text type="primary" :icon="Edit" @click="handleEdit(item.id)" />
               </el-tooltip>
-              <el-tooltip content="预览" placement="top" :show-after="300">
-                <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item.id)" />
+              <el-tooltip :content="item.publishId ? '预览发布版本' : '预览编辑版本'" placement="top" :show-after="300">
+                <el-button size="small" text type="warning" :icon="View" @click="handlePreview(item)" />
+              </el-tooltip>
+              <el-tooltip content="版本历史" placement="top" :show-after="300">
+                <el-button size="small" text :icon="Clock" @click="handleShowVersions(item)" />
               </el-tooltip>
               <el-tooltip content="发布" placement="top" :show-after="300">
-                <el-button size="small" text type="success" :icon="Promotion" @click="handlePublish(item)" />
+                <el-button size="small" text type="success" :icon="Promotion" :loading="publishingId === item.id" :disabled="publishingId !== null" @click="handlePublish(item)" />
               </el-tooltip>
               <el-tooltip content="导出" placement="top" :show-after="300">
                 <el-button size="small" text :icon="Download" @click="handleExport(item)" />
@@ -483,6 +519,16 @@ const isFiltered = computed(() =>
         <el-button type="primary" :loading="importLoading" @click="confirmImport">导入</el-button>
       </template>
     </el-dialog>
+
+    <!-- Version History Dialog -->
+    <VersionHistoryDialog
+      v-model:visible="versionDialogVisible"
+      :edit-id="versionDialogEditId"
+      :current-version="versionDialogVersion"
+      :schema-name="versionDialogName"
+      @load-version="handleLoadVersion"
+      @published="handleVersionPublished"
+    />
   </div>
 </template>
 
@@ -497,8 +543,6 @@ const isFiltered = computed(() =>
 
   // ---- Header ----
   &__header {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 28px 24px 0;
   }
 
@@ -581,15 +625,11 @@ const isFiltered = computed(() =>
 
   // ---- Content area ----
   &__content {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 20px 24px 0;
   }
 
   // ---- States ----
   &__state--empty {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 100px 24px 0;
     text-align: center;
   }
@@ -618,8 +658,6 @@ const isFiltered = computed(() =>
   }
 
   &__state--no-results {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 60px 24px 0;
     text-align: center;
     color: #909399;

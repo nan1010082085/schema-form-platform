@@ -9,6 +9,7 @@ import { ref, watch, computed } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import type { WidgetVariable } from '../../widgets/base/types'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import styles from './VariableConfigDialog.module.scss'
 
 const props = defineProps<{
   visible: boolean
@@ -102,9 +103,9 @@ function handleClose() {
     width="600px"
     @update:model-value="emit('update:visible', $event)"
   >
-    <div :class="$style.body">
+    <div :class="styles.body">
       <!-- 空状态 -->
-      <div v-if="localVariables.length === 0" :class="$style.empty">
+      <div v-if="localVariables.length === 0" :class="styles.empty">
         暂无变量，点击下方按钮添加。
       </div>
 
@@ -112,10 +113,10 @@ function handleClose() {
       <div
         v-for="(v, i) in localVariables"
         :key="i"
-        :class="$style.card"
+        :class="styles.card"
       >
-        <div :class="$style.cardHeader">
-          <span :class="$style.cardTitle">变量 {{ i + 1 }}</span>
+        <div :class="styles.cardHeader">
+          <span :class="styles.cardTitle">变量 {{ i + 1 }}</span>
           <el-button
             type="danger"
             :icon="Delete"
@@ -125,8 +126,8 @@ function handleClose() {
           />
         </div>
 
-        <div :class="$style.row">
-          <label :class="$style.label">名称</label>
+        <div :class="styles.row">
+          <label :class="styles.label">名称</label>
           <el-input
             v-model="v.name"
             placeholder="变量名（如 isAdmin）"
@@ -134,8 +135,8 @@ function handleClose() {
           />
         </div>
 
-        <div :class="$style.row">
-          <label :class="$style.label">类型</label>
+        <div :class="styles.row">
+          <label :class="styles.label">类型</label>
           <el-select
             v-model="v.type"
             style="width: 120px"
@@ -149,7 +150,7 @@ function handleClose() {
             />
           </el-select>
 
-          <label :class="$style.label" style="margin-left: 8px">默认值</label>
+          <label :class="styles.label" style="margin-left: 8px">默认值</label>
           <el-switch
             v-if="v.type === 'boolean'"
             v-model="v.defaultValue"
@@ -176,8 +177,8 @@ function handleClose() {
           />
         </div>
 
-        <div :class="$style.row">
-          <label :class="$style.label">描述</label>
+        <div :class="styles.row">
+          <label :class="styles.label">描述</label>
           <el-input
             v-model="v.description"
             placeholder="可选，变量用途说明"
@@ -187,7 +188,7 @@ function handleClose() {
       </div>
 
       <!-- 错误提示 -->
-      <div v-if="nameError" :class="$style.error">{{ nameError }}</div>
+      <div v-if="nameError" :class="styles.error">{{ nameError }}</div>
 
       <!-- 添加变量 -->
       <el-button
@@ -207,79 +208,3 @@ function handleClose() {
     </template>
   </EnhancedDialog>
 </template>
-
-<style module>
-.body {
-  max-height: 60vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 统一表单控件高度 32px */
-.body :global(.el-input__wrapper),
-.body :global(.el-select .el-input__wrapper),
-.body :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-/* el-input-number 内部的 el-input 与其他表单控件保持 32px 一致 */
-.body :global(.el-input-number .el-input__wrapper) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-/* el-input-number 使用 Element Plus 原生样式 */
-.body :global(.el-input-number) {
-  --el-input-number-width: 200px;
-}
-
-.empty {
-  text-align: center;
-  color: #909399;
-  font-size: 13px;
-  padding: 24px 0;
-}
-
-.card {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  padding: 12px;
-  background: #fafbfc;
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.cardTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.label {
-  width: 50px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: #606266;
-}
-
-.error {
-  color: #f56c6c;
-  font-size: 12px;
-  padding: 0 4px;
-}
-</style>

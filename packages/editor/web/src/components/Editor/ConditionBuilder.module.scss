@@ -1,0 +1,66 @@
+.builder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 统一表单控件高度 32px */
+.builder :global(.el-input__wrapper),
+.builder :global(.el-select .el-input__wrapper),
+.builder :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.clause {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logicSelect {
+  width: 64px;
+}
+
+.fieldSelect {
+  width: 200px;
+}
+
+.opSelect {
+  width: 100px;
+}
+
+.valueInput {
+  flex: 1;
+  min-width: 80px;
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--text-color-disabled);
+  text-align: center;
+  padding: 6px 0;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--bg-color-gray);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.previewLabel {
+  font-size: 11px;
+  color: var(--text-color-muted);
+  flex-shrink: 0;
+}
+
+.previewCode {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--color-primary);
+  word-break: break-all;
+}

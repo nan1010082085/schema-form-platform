@@ -147,16 +147,20 @@
 
 // ---- InputNumber 数字输入 ----
 .el-input-number {
-  .el-input__wrapper {
-    border-radius: $fg-input-radius;
-    box-shadow: none;
-    border: 1px solid $fg-border-input;
-    min-height: unset;
+  border: 1px solid $fg-border-input;
+  border-radius: $fg-input-radius;
+  box-sizing: border-box;
 
-    &:hover,
-    &.is-focus {
-      border-color: $fg-border-focus;
-    }
+  &:hover,
+  &.is-focus {
+    border-color: $fg-border-focus;
+  }
+
+  .el-input__wrapper {
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    min-height: unset;
   }
 
   .el-input-number__decrease,

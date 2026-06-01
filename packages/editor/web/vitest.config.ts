@@ -1,29 +1,16 @@
-import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
+import { createVitestConfig } from '@schema-form/shared-config/vitest'
 
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['src/__tests__/backend-smoke.spec.ts'],
-    coverage: {
-      provider: 'v8',
-      include: ['src/**/*.{ts,vue}'],
-      exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/main.ts'],
-      thresholds: {
-        statements: 60,
-        branches: 50,
-        functions: 60,
-        lines: 60,
-      },
+export default createVitestConfig({
+  callerImportMetaUrl: import.meta.url,
+  exclude: ['src/__tests__/backend-smoke.spec.ts'],
+  coverage: {
+    include: ['src/**/*.{ts,vue}'],
+    exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/main.ts'],
+    thresholds: {
+      statements: 60,
+      branches: 50,
+      functions: 60,
+      lines: 60,
     },
   },
 })

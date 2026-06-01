@@ -8,7 +8,7 @@ const doc: ComponentDoc = {
   author: 'yangdongnan',
   props: [
     { name: 'buttons', type: 'SchemaButtonConfig[]', default: '[]', description: '按钮配置数组' },
-    { name: 'background', type: 'string', default: '#EEF5FF', description: '动态背景色' }
+    { name: 'background', type: 'string', default: 'var(--color-primary-lighter)', description: '动态背景色' }
   ],
   events: [],
   slots: [],
@@ -48,7 +48,7 @@ const doc: ComponentDoc = {
               type: 'grid-col', span: 24, align: 'center', children: [
                 {
                   type: 'toolbar-buttons',
-                  props: { background: '#FFF7E6' },
+                  props: { background: 'var(--color-warning-bg)' },
                   buttons: [
                     { text: '审批通过', buttonType: 'primary' },
                     { text: '驳回', buttonType: 'danger' }

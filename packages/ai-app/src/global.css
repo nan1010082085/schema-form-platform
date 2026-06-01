@@ -1,0 +1,11 @@
+/* 全局高度重置 — 供 main-sidebar.ts 使用（不经过 App.vue 时缺少此规则） */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#app {
+  height: 100%;
+}

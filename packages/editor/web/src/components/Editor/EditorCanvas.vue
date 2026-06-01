@@ -21,6 +21,7 @@ import type { Widget } from '../../widgets/base/types'
 import type { DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
 import { triggerWidgetEvent } from '../../engine'
 import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from '../WidgetRenderer/types'
+import styles from './EditorCanvas.module.scss'
 
 const emit = defineEmits<{
   openEvent: [widget: Widget]
@@ -157,7 +158,7 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
 </script>
 
 <template>
-  <div ref="canvasRef" :class="[$style.canvas, { [$style.canvasGrid]: !isPreview }]" :style="canvasStyle">
+  <div ref="canvasRef" :class="[styles.canvas, { [styles.canvasGrid]: !isPreview }]" :style="canvasStyle">
     <!-- 预览模式：纯净渲染，无编辑交互层 -->
     <SchemaRender v-if="isPreview" :widgets="widgetStore.widgets" />
     <!-- 编辑模式：带选中、拖拽、缩放的交互层 -->
@@ -172,15 +173,3 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
   </div>
 </template>
 
-<style module>
-.canvas {
-  position: relative;
-  overflow: auto;
-}
-
-.canvasGrid {
-  background-image:
-    radial-gradient(circle, #d0d5dd 0.8px, transparent 0.8px);
-  background-size: 20px 20px;
-}
-</style>

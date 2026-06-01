@@ -11,6 +11,7 @@ import { ref, watch } from 'vue'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import type { SchemaEventAction, EventActionType, ReceivableEventConfig } from '../../widgets/base/types'
+import styles from './ActionListEditor.module.scss'
 
 // ---- Types ----
 
@@ -205,9 +206,9 @@ function handleChange() {
 </script>
 
 <template>
-  <div :class="$style.section">
-    <div :class="$style.sectionHeader">
-      <span :class="$style.sectionTitle">动作列表</span>
+  <div :class="styles.section">
+    <div :class="styles.sectionHeader">
+      <span :class="styles.sectionTitle">动作列表</span>
       <el-button
         type="primary"
         :icon="Plus"
@@ -219,17 +220,17 @@ function handleChange() {
       </el-button>
     </div>
 
-    <div v-if="localActions.length === 0" :class="$style.sectionEmpty">
+    <div v-if="localActions.length === 0" :class="styles.sectionEmpty">
       暂无动作
     </div>
 
     <div
       v-for="(action, ai) in localActions"
       :key="ai"
-      :class="$style.actionCard"
+      :class="styles.actionCard"
     >
-      <div :class="$style.actionHeader">
-        <span :class="$style.actionIndex">动作 {{ ai + 1 }}</span>
+      <div :class="styles.actionHeader">
+        <span :class="styles.actionIndex">动作 {{ ai + 1 }}</span>
         <el-button
           type="danger"
           :icon="Delete"
@@ -240,8 +241,8 @@ function handleChange() {
       </div>
 
       <!-- action type -->
-      <div :class="$style.row">
-        <label :class="$style.label">类型</label>
+      <div :class="styles.row">
+        <label :class="styles.label">类型</label>
         <el-select
           v-model="action.type"
           style="flex: 1"
@@ -258,8 +259,8 @@ function handleChange() {
 
       <!-- target: open-dialog / hide / visible / disabled / switch-tab / refresh / show -->
       <template v-if="['open-dialog', 'hide', 'visible', 'disabled', 'switch-tab', 'refresh', 'show'].includes(action.type)">
-        <div :class="$style.row">
-          <label :class="$style.label">目标</label>
+        <div :class="styles.row">
+          <label :class="styles.label">目标</label>
           <el-select
             v-model="action.target"
             filterable
@@ -278,8 +279,8 @@ function handleChange() {
       </template>
 
       <!-- switch-tab: value (tab key) -->
-      <div v-if="action.type === 'switch-tab'" :class="$style.row">
-        <label :class="$style.label">标签</label>
+      <div v-if="action.type === 'switch-tab'" :class="styles.row">
+        <label :class="styles.label">标签</label>
         <el-input
           v-model="action.value"
           placeholder="标签 key"
@@ -290,8 +291,8 @@ function handleChange() {
 
       <!-- set-value: target (field) + value -->
       <template v-if="action.type === 'set-value'">
-        <div :class="$style.row">
-          <label :class="$style.label">目标</label>
+        <div :class="styles.row">
+          <label :class="styles.label">目标</label>
           <el-select
             v-model="action.target"
             filterable
@@ -307,8 +308,8 @@ function handleChange() {
             />
           </el-select>
         </div>
-        <div :class="$style.row">
-          <label :class="$style.label">值</label>
+        <div :class="styles.row">
+          <label :class="styles.label">值</label>
           <el-input
             v-model="action.value"
             placeholder="要设置的值"
@@ -320,8 +321,8 @@ function handleChange() {
 
       <!-- fetch-data / api: URL + method -->
       <template v-if="action.type === 'fetch-data' || action.type === 'api'">
-        <div :class="$style.row">
-          <label :class="$style.label">URL</label>
+        <div :class="styles.row">
+          <label :class="styles.label">URL</label>
           <el-input
             v-model="action.apiUrl"
             placeholder="/api/data"
@@ -329,8 +330,8 @@ function handleChange() {
             @update:model-value="handleChange"
           />
         </div>
-        <div :class="$style.row">
-          <label :class="$style.label">方法</label>
+        <div :class="styles.row">
+          <label :class="styles.label">方法</label>
           <el-select
             v-model="action.apiMethod"
             style="width: 120px"
@@ -346,8 +347,8 @@ function handleChange() {
 
       <!-- set-variable: variable + value -->
       <template v-if="action.type === 'set-variable'">
-        <div :class="$style.row">
-          <label :class="$style.label">变量</label>
+        <div :class="styles.row">
+          <label :class="styles.label">变量</label>
           <el-input
             v-model="action.variable"
             placeholder="变量名"
@@ -355,8 +356,8 @@ function handleChange() {
             @update:model-value="handleChange"
           />
         </div>
-        <div :class="$style.row">
-          <label :class="$style.label">值</label>
+        <div :class="styles.row">
+          <label :class="styles.label">值</label>
           <el-input
             v-model="action.value"
             placeholder="要设置的值"
@@ -368,8 +369,8 @@ function handleChange() {
 
       <!-- trigger-event: target (component) + event (from receivableEvents or free input) -->
       <template v-if="action.type === 'trigger-event'">
-        <div :class="$style.row">
-          <label :class="$style.label">目标</label>
+        <div :class="styles.row">
+          <label :class="styles.label">目标</label>
           <el-select
             v-model="action.eventTarget"
             filterable
@@ -385,8 +386,8 @@ function handleChange() {
             />
           </el-select>
         </div>
-        <div :class="$style.row">
-          <label :class="$style.label">事件</label>
+        <div :class="styles.row">
+          <label :class="styles.label">事件</label>
           <el-select
             v-if="action.eventTarget && getReceivableEvents(action.eventTarget).length > 0"
             v-model="action.eventName"
@@ -414,8 +415,8 @@ function handleChange() {
 
       <!-- navigate: path -->
       <template v-if="action.type === 'navigate'">
-        <div :class="$style.row">
-          <label :class="$style.label">路径</label>
+        <div :class="styles.row">
+          <label :class="styles.label">路径</label>
           <el-input
             v-model="action.value"
             placeholder="/path"
@@ -427,8 +428,8 @@ function handleChange() {
 
       <!-- emit: value -->
       <template v-if="action.type === 'emit'">
-        <div :class="$style.row">
-          <label :class="$style.label">值</label>
+        <div :class="styles.row">
+          <label :class="styles.label">值</label>
           <el-input
             v-model="action.value"
             placeholder="事件 payload"
@@ -440,8 +441,8 @@ function handleChange() {
 
       <!-- post-message: message (JSON) -->
       <template v-if="action.type === 'post-message'">
-        <div :class="$style.row">
-          <label :class="$style.label">消息</label>
+        <div :class="styles.row">
+          <label :class="styles.label">消息</label>
           <el-input
             v-model="action.message"
             placeholder='{"type":"save"}'
@@ -453,8 +454,8 @@ function handleChange() {
 
       <!-- copy: text -->
       <template v-if="action.type === 'copy'">
-        <div :class="$style.row">
-          <label :class="$style.label">内容</label>
+        <div :class="styles.row">
+          <label :class="styles.label">内容</label>
           <el-input
             v-model="action.text"
             placeholder="复制内容（支持 formData.xxx）"
@@ -465,87 +466,9 @@ function handleChange() {
       </template>
 
       <!-- 无需配置的类型 -->
-      <div v-if="NO_CONFIG_TYPES.has(action.type)" :class="$style.noConfigHint">
+      <div v-if="NO_CONFIG_TYPES.has(action.type)" :class="styles.noConfigHint">
         此动作无需额外配置
       </div>
     </div>
   </div>
 </template>
-
-<style module>
-.section {
-  margin-top: 8px;
-  border-top: 1px solid #ebeef5;
-  padding-top: 8px;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.sectionTitle {
-  font-size: 12px;
-  font-weight: 500;
-  color: #606266;
-}
-
-.sectionEmpty {
-  font-size: 12px;
-  color: #c0c4cc;
-  text-align: center;
-  padding: 8px 0;
-}
-
-.actionCard {
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  padding: 8px;
-  margin-bottom: 8px;
-  background: #fff;
-}
-
-.actionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.actionIndex {
-  font-size: 12px;
-  font-weight: 500;
-  color: #606266;
-}
-
-.row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.label {
-  width: 50px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: #606266;
-  line-height: 32px;
-}
-
-.noConfigHint {
-  font-size: 11px;
-  color: #909399;
-  padding: 4px 0;
-}
-
-/* 统一表单控件高度 32px */
-.section :global(.el-input__wrapper),
-.section :global(.el-select .el-input__wrapper),
-.section :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-</style>

@@ -24,6 +24,7 @@ import { triggerWidgetEvent, type EventExecutionContext } from '../../engine/eve
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
 import EnhancedDialog from '../EnhancedDialog.vue'
+import styles from './SchemaNode.module.scss'
 
 const props = defineProps<{
   widget: Widget
@@ -294,7 +295,7 @@ const wrapperStyle = computed(() => {
       <div
         v-if="isEditMode"
         :data-widget-id="widget.id"
-        :class="[$style.nodeWrapper, $style.nodeWrapperEdit, $style.interactiveContainer]"
+        :class="[styles.nodeWrapper, styles.nodeWrapperEdit, styles.interactiveContainer]"
         :style="wrapperStyle"
         @click.stop="handleInteractiveContainerClick()"
       >
@@ -307,7 +308,7 @@ const wrapperStyle = computed(() => {
         />
         <div
           v-if="filteredChildren.length"
-          :class="$style.childrenLayer"
+          :class="styles.childrenLayer"
         >
           <SchemaRender
             :widgets="filteredChildren"
@@ -351,10 +352,10 @@ const wrapperStyle = computed(() => {
       v-else-if="isContainer"
       :data-widget-id="widget.id"
       :class="[
-        $style.nodeWrapper,
+        styles.nodeWrapper,
         {
-          [$style.nodeWrapperEdit]: isEditMode,
-          [$style.interactiveContainer]: INTERACTIVE_CONTAINER_TYPES.has(widget.type),
+          [styles.nodeWrapperEdit]: isEditMode,
+          [styles.interactiveContainer]: INTERACTIVE_CONTAINER_TYPES.has(widget.type),
         },
       ]"
       :style="wrapperStyle"
@@ -371,7 +372,7 @@ const wrapperStyle = computed(() => {
       <!-- 子部件层：绝对定位，相对于容器定位（自渲染容器跳过） -->
       <div
         v-if="filteredChildren.length && !isSelfRendering"
-        :class="$style.childrenLayer"
+        :class="styles.childrenLayer"
       >
         <SchemaRender
           :widgets="filteredChildren"
@@ -386,7 +387,7 @@ const wrapperStyle = computed(() => {
     <div
       v-else
       :data-widget-id="widget.id"
-      :class="[$style.nodeWrapper, { [$style.nodeWrapperEdit]: isEditMode }]"
+      :class="[styles.nodeWrapper, { [styles.nodeWrapperEdit]: isEditMode }]"
       :style="wrapperStyle"
       @change="FORM_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('change', $event) : handlePreviewEvent('change', $event))"
       @focus="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('focus') : handlePreviewEvent('focus'))"
@@ -414,38 +415,3 @@ const wrapperStyle = computed(() => {
     </div>
   </template>
 </template>
-
-<style module>
-.nodeWrapper {
-  box-sizing: border-box;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* 强制所有直接子元素（widget 根元素）填满容器 */
-.nodeWrapper > * {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* 容器内部子部件的渲染容器 */
-.childrenLayer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.nodeWrapperEdit {
-  outline: 1px dashed #c0c4cc;
-  outline-offset: -1px;
-}
-
-/* 交互式容器：wrapper 作为 elementFromPoint 的回退目标，接收合成 click 事件 */
-.interactiveContainer {
-  pointer-events: auto;
-}
-</style>

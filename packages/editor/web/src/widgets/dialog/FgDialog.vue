@@ -144,6 +144,7 @@ async function handleCancel() {
         name="schema-form-dialog"
         :url="microappUrl"
         :data="microappData"
+        iframe
         :class="styles.microappIframe"
         @datachange="handleMicroappDataChange"
       />

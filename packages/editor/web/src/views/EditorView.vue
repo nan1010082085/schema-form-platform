@@ -10,9 +10,10 @@
  * - useDragStore   — 拖拽状态
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useClipboard } from '@/composables/useClipboard'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
+import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import { useSnapshot } from '@/composables/useSnapshot'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
@@ -29,13 +30,12 @@ import type { Widget } from '@/widgets/base/types'
 import {
   CopyDocument,
   Delete,
-  View,
   EditPen,
   FullScreen,
   Clock,
-  DArrowLeft,
-  DArrowRight,
   Document,
+  View,
+  Refresh,
 } from '@element-plus/icons-vue'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
@@ -44,11 +44,11 @@ import type { VersionEntry } from '@/types/api'
 registerAllWidgets()
 
 const route = useRoute()
+const router = useRouter()
 const boardStore = useBoardStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
 const apiStore = useApiStore()
-const { copy } = useClipboard()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
@@ -60,6 +60,27 @@ const leftPanelVisible = ref(true)
 const rightPanelVisible = ref(true)
 const showLogPanel = ref(false)
 const showCodePanel = ref(false)
+const showAiDrawer = ref(false)
+const aiBaseUrl = import.meta.env.VITE_AI_URL || 'http://localhost:5300/ai/index-sidebar.html'
+
+const aiDrawerData = computed(() => ({
+  source: 'editor',
+  currentSchema: widgetStore.widgets,
+}))
+
+function handleAiDataChange(data: Record<string, unknown>) {
+  const { type, payload } = data as { type: string; payload: unknown }
+  if (type === 'ai:published' && payload) {
+    ElMessage.success('AI 已发布 Schema')
+  }
+  if (type === 'ai:open-in-editor' && payload) {
+    const { schema } = payload as { schema: unknown[] | null }
+    if (schema && Array.isArray(schema)) {
+      widgetStore.loadWidgets(schema as Widget[])
+      ElMessage.success('已加载 AI 生成的 Schema')
+    }
+  }
+}
 
 // ================================================================
 // Mode
@@ -118,22 +139,60 @@ onMounted(async () => {
   setLogCollector(push)
 
   const id = route.query.id as string | undefined
-  if (id) {
-    // TODO: Load from API when backend is ready
-    // const detail = await apiStore.fetchSchemaById(id)
-    // if (detail) {
-    //   boardStore.loadBoard({ id: detail.id, name: detail.name, status: detail.status })
-    //   widgetStore.loadWidgets(detail.json)
-    //   currentEditId.value = detail.editId
-    //   currentVersion.value = detail.version
-    // }
-    console.log('[EditorView] Load schema:', id)
+  const editId = route.query.editId as string | undefined
+  const version = route.query.version as string | undefined
+
+  if (editId && version) {
+    // 加载特定版本
+    const detail = await fetchVersion(editId, version)
+    if (detail) {
+      boardStore.loadBoard({
+        id: detail.id,
+        name: detail.name,
+        status: (detail.status as 'draft' | 'published') || 'draft',
+      })
+      widgetStore.loadWidgets(detail.json as Widget[])
+      currentEditId.value = editId
+      currentVersion.value = version
+    }
+  } else if (id) {
+    const detail = await apiStore.fetchSchemaById(id)
+    if (detail) {
+      boardStore.loadBoard({
+        id: detail.id,
+        name: detail.name,
+        status: (detail.status as 'draft' | 'published') || 'draft',
+      })
+      widgetStore.loadWidgets(detail.json as Widget[])
+      currentEditId.value = detail.editId
+      currentVersion.value = detail.version
+    }
   }
 
   // Set default board name if empty
   if (!boardStore.name) {
     boardStore.name = '未命名画布'
   }
+
+  // 支持通过 mode 参数直接进入预览模式
+  const mode = route.query.mode as string | undefined
+  if (mode === 'preview') {
+    editorStore.setMode('preview')
+  }
+
+  // Socket: 监听 AI 推送事件
+  connectSocket()
+  onAiApply((data: AiApplyEvent) => {
+    if (data.type === 'schema' && Array.isArray(data.payload)) {
+      widgetStore.loadWidgets(data.payload as unknown as Widget[])
+      ElMessage.success('已应用 AI 生成的 Schema')
+    }
+  })
+  onAiPublished((data: AiPublishedEvent) => {
+    if (data.type === 'schema') {
+      ElMessage.success('AI 已发布 Schema')
+    }
+  })
 })
 
 // 页面刷新/关闭拦截
@@ -231,11 +290,6 @@ function handleDeleteWidget() {
   editorStore.pushHistory([...widgetStore.widgets])
 }
 
-function handleCopyId() {
-  if (!editorStore.selectedId) return
-  copy(editorStore.selectedId, '已复制部件 ID')
-}
-
 // ================================================================
 // Zoom controls
 // ================================================================
@@ -252,29 +306,66 @@ function handleZoomOut() {
 // Save
 // ================================================================
 
+const saving = ref(false)
+const publishing = ref(false)
+const COOLDOWN_MS = 2000
+
 async function handleSave() {
-  // 1. Capture full canvas snapshot
-  const canvasEl = editorCanvasRef.value?.canvasRef
-  let thumbnail = ''
-  if (canvasEl) {
-    thumbnail = await captureElement(canvasEl)
+  if (saving.value) return
+  saving.value = true
+  try {
+    const canvasEl = editorCanvasRef.value?.canvasRef
+    let thumbnail = ''
+    if (canvasEl) {
+      thumbnail = await captureElement(canvasEl)
+    }
+
+    const result = await apiStore.saveSchema(
+      widgetStore.widgets,
+      boardStore.name,
+      boardStore.id || undefined,
+      thumbnail,
+    )
+
+    if (result) {
+      boardStore.id = result.id
+      currentEditId.value = result.editId
+      currentVersion.value = result.version
+      editorStore.markClean()
+      ElMessage.success('已保存')
+    } else {
+      ElMessage.error(apiStore.error || '保存失败')
+    }
+  } finally {
+    setTimeout(() => { saving.value = false }, COOLDOWN_MS)
   }
+}
 
-  // 2. Call API
-  const result = await apiStore.saveSchema(
-    widgetStore.widgets,
-    boardStore.name,
-    boardStore.id || undefined,
-    thumbnail,
-  )
+async function handlePublish() {
+  if (!boardStore.id || publishing.value) return
 
-  // 3. Update local state
-  if (result) {
-    boardStore.id = result.id
-    editorStore.markClean()
-    ElMessage.success('已保存')
-  } else {
-    ElMessage.error(apiStore.error || '保存失败')
+  try {
+    await ElMessageBox.confirm(
+      '确认发布当前版本？',
+      '发布确认',
+      { type: 'info', confirmButtonText: '发布', cancelButtonText: '取消' },
+    )
+  } catch { return }
+
+  publishing.value = true
+  try {
+    await handleSave()
+    if (!boardStore.id) return
+
+    const result = await apiStore.publishSchema(boardStore.id)
+    if (result) {
+      boardStore.status = 'published'
+      ElMessage.success('发布成功')
+    } else {
+      ElMessage.error(apiStore.error || '发布失败')
+    }
+  } finally {
+    setTimeout(() => { publishing.value = false }, COOLDOWN_MS)
   }
 }
 
@@ -298,18 +389,23 @@ const currentVersion = ref('')
 const versionPopoverVisible = ref(false)
 const versionList = ref<VersionEntry[]>([])
 const versionLoading = ref(false)
+const versionPage = ref(1)
+const versionTotal = ref(0)
+const versionPageSize = 10
 
 function formatVersion(v: string): string {
   if (!v || v.length !== 14) return v
   return `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)} ${v.slice(8, 10)}:${v.slice(10, 12)}:${v.slice(12, 14)}`
 }
 
-async function loadVersionList() {
+async function loadVersionList(page = 1) {
   if (!currentEditId.value) return
   versionLoading.value = true
+  versionPage.value = page
   try {
-    const res = await fetchVersions(currentEditId.value)
+    const res = await fetchVersions(currentEditId.value, page, versionPageSize)
     versionList.value = res.items
+    versionTotal.value = res.total ?? 0
   } catch {
     versionList.value = []
   } finally {
@@ -317,11 +413,14 @@ async function loadVersionList() {
   }
 }
 
+function handleVersionPageChange(page: number) {
+  loadVersionList(page)
+}
+
 async function handleLoadVersion(entry: VersionEntry) {
   if (!currentEditId.value) return
   try {
     const detail = await fetchVersion(currentEditId.value, entry.version)
-    // 编辑器保存的数据始终包含完整 Widget 字段（id/name/position）
     widgetStore.loadWidgets(detail.json as unknown as Widget[])
     currentVersion.value = entry.version
     editorStore.markClean()
@@ -346,54 +445,71 @@ function handleClearCanvas() {
 <template>
   <div class="editor-view" @keydown="handleKeyDown">
     <!-- Top toolbar -->
-    <div class="editor-view__toolbar">
-      <!-- Left: name + panel toggles (edit mode only) -->
-      <div v-if="mode === 'edit'" class="editor-view__toolbar-left">
-        <input
-          v-model="boardStore.name"
-          class="editor-view__name-input"
-          placeholder="未命名画布"
-        />
-        <span v-if="currentVersion" class="editor-view__version-badge">v{{ formatVersion(currentVersion) }}</span>
+    <div :class="['editor-view__toolbar', { 'editor-view__toolbar--preview': mode === 'preview' }]">
+      <!-- Left: back + name -->
+      <div class="editor-view__toolbar-left">
+        <button class="editor-view__icon-btn" title="返回" @click="router.push('/')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
         <div class="editor-view__divider" />
-        <button
-          class="editor-view__icon-btn"
-          :class="{ 'editor-view__icon-btn--active': leftPanelVisible }"
-          title="部件面板"
-          @click="leftPanelVisible = !leftPanelVisible"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
-            <line x1="5.5" y1="2" x2="5.5" y2="14"/>
-          </svg>
-        </button>
-        <button
-          class="editor-view__icon-btn"
-          :class="{ 'editor-view__icon-btn--active': rightPanelVisible }"
-          title="属性面板"
-          @click="rightPanelVisible = !rightPanelVisible"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
-            <line x1="10.5" y1="2" x2="10.5" y2="14"/>
-          </svg>
-        </button>
+        <template v-if="mode === 'edit'">
+          <input
+            v-model="boardStore.name"
+            class="editor-view__name-input"
+            placeholder="未命名画布"
+          />
+          <span v-if="currentVersion" class="editor-view__version-badge">v{{ formatVersion(currentVersion) }}</span>
+        </template>
       </div>
 
-      <!-- Center: edit operations -->
+      <!-- Center: panel toggles + operations + AI -->
       <div v-if="mode === 'edit'" class="editor-view__toolbar-center">
+        <el-tooltip :content="leftPanelVisible ? '隐藏部件面板' : '显示部件面板'" placement="bottom">
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': leftPanelVisible }"
+            title="部件面板"
+            @click="leftPanelVisible = !leftPanelVisible"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="2" width="14" height="12" rx="1" />
+              <line x1="5" y1="2" x2="5" y2="14" />
+            </svg>
+          </button>
+        </el-tooltip>
         <div class="editor-view__btn-group">
           <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.canUndo" @click="handleUndo">
-              <el-icon :size="14"><DArrowLeft /></el-icon>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 3 2 7 6 11" />
+                <path d="M2 7h8a4 4 0 0 1 0 8H7" />
+              </svg>
             </button>
           </el-tooltip>
           <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.canRedo" @click="handleRedo">
-              <el-icon :size="14"><DArrowRight /></el-icon>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="10 3 14 7 10 11" />
+                <path d="M14 7H6a4 4 0 0 0 0 8h3" />
+              </svg>
             </button>
           </el-tooltip>
         </div>
+        <el-tooltip :content="rightPanelVisible ? '隐藏属性面板' : '显示属性面板'" placement="bottom">
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': rightPanelVisible }"
+            title="属性面板"
+            @click="rightPanelVisible = !rightPanelVisible"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="2" width="14" height="12" rx="1" />
+              <line x1="11" y1="2" x2="11" y2="14" />
+            </svg>
+          </button>
+        </el-tooltip>
         <div class="editor-view__btn-group">
           <el-tooltip content="复制部件 (Ctrl+C)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleCopyWidget">
@@ -406,95 +522,62 @@ function handleClearCanvas() {
             </button>
           </el-tooltip>
         </div>
-        <div class="editor-view__btn-group">
-          <el-tooltip content="复制部件 ID" placement="bottom">
-            <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleCopyId">
-              <el-icon :size="14"><CopyDocument /></el-icon>
-            </button>
-          </el-tooltip>
-        </div>
-      </div>
-
-      <!-- Right: zoom, mode, save -->
-      <div class="editor-view__toolbar-right">
-        <!-- Canvas size (edit only) -->
-        <el-dropdown v-if="mode === 'edit'" trigger="click" @command="handleCanvasSizeChange">
-          <button class="editor-view__icon-btn" title="画布尺寸">
-            <el-icon :size="14"><FullScreen /></el-icon>
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="preset in canvasSizePresets"
-                :key="preset.value"
-                :command="preset.value"
-                :class="{ 'is-active': canvasSizePreset === preset.value }"
-              >
-                {{ preset.label }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
         <div class="editor-view__divider" />
-
-        <!-- Zoom -->
-        <div class="editor-view__zoom-group">
-          <button class="editor-view__icon-btn" :disabled="boardStore.canvas.zoom <= 50" @click="handleZoomOut">-</button>
-          <span class="editor-view__zoom-value">{{ boardStore.canvas.zoom }}%</span>
-          <button class="editor-view__icon-btn" :disabled="boardStore.canvas.zoom >= 200" @click="handleZoomIn">+</button>
-        </div>
-
-        <div class="editor-view__divider" />
-
-        <!-- Mode switch -->
-        <div class="editor-view__mode-switcher">
+        <el-tooltip content="AI 助手" placement="bottom">
           <button
-            class="editor-view__mode-btn"
-            :class="{ 'editor-view__mode-btn--active': mode === 'edit' }"
-            title="编辑模式"
-            @click="editorStore.setMode('edit')"
+            class="editor-view__icon-btn editor-view__ai-btn"
+            :class="{ 'editor-view__icon-btn--active': showAiDrawer }"
+            @click="showAiDrawer = !showAiDrawer"
           >
-            <el-icon :size="12"><EditPen /></el-icon>
+            <span class="editor-view__ai-label">AI</span>
           </button>
+        </el-tooltip>
+        <div class="editor-view__divider" />
+        <el-tooltip content="预览" placement="bottom">
           <button
-            class="editor-view__mode-btn"
-            :class="{ 'editor-view__mode-btn--active': mode === 'preview' }"
-            title="预览模式"
+            class="editor-view__icon-btn"
+            title="预览"
             @click="editorStore.setMode('preview')"
           >
-            <el-icon :size="12"><View /></el-icon>
+            <el-icon :size="14"><View /></el-icon>
           </button>
-        </div>
+        </el-tooltip>
+      </div>
 
-        <!-- Debug panels toggle (preview only) -->
-        <template v-if="mode === 'preview'">
-          <button
-            class="editor-view__icon-btn"
-            :class="{ 'editor-view__icon-btn--active': showLogPanel }"
-            title="执行日志"
-            @click="showLogPanel = !showLogPanel"
-          >
-            <el-icon :size="14"><Document /></el-icon>
-          </button>
-          <button
-            class="editor-view__icon-btn"
-            :class="{ 'editor-view__icon-btn--active': showCodePanel }"
-            title="Store 数据"
-            @click="showCodePanel = !showCodePanel"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="5 4 1 8 5 12" />
-              <polyline points="11 4 15 8 11 12" />
-              <line x1="9" y1="2" x2="7" y2="14" />
-            </svg>
-          </button>
-          <div class="editor-view__divider" />
-        </template>
+      <!-- Center: preview mode -->
+      <div v-if="mode === 'preview'" class="editor-view__toolbar-center">
+        <span class="editor-view__preview-label">预览模式</span>
+      </div>
 
+      <!-- Right: version + save + publish -->
+      <div class="editor-view__toolbar-right">
         <template v-if="mode === 'edit'">
+          <!-- Canvas size -->
+          <el-dropdown trigger="click" @command="handleCanvasSizeChange">
+            <button class="editor-view__icon-btn" title="画布尺寸">
+              <el-icon :size="14"><FullScreen /></el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="preset in canvasSizePresets"
+                  :key="preset.value"
+                  :command="preset.value"
+                  :class="{ 'is-active': canvasSizePreset === preset.value }"
+                >
+                  {{ preset.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <div class="editor-view__divider" />
-
+          <!-- Zoom -->
+          <div class="editor-view__zoom-group">
+            <button class="editor-view__icon-btn" :disabled="boardStore.canvas.zoom <= 50" @click="handleZoomOut">-</button>
+            <span class="editor-view__zoom-value">{{ boardStore.canvas.zoom }}%</span>
+            <button class="editor-view__icon-btn" :disabled="boardStore.canvas.zoom >= 200" @click="handleZoomIn">+</button>
+          </div>
+          <div class="editor-view__divider" />
           <!-- Version history -->
           <el-popover
             v-model:visible="versionPopoverVisible"
@@ -504,13 +587,16 @@ function handleClearCanvas() {
             @show="loadVersionList"
           >
             <template #reference>
-              <button class="editor-view__icon-btn" title="版本历史" @click="versionPopoverVisible = !versionPopoverVisible">
+              <button class="editor-view__icon-btn" title="版本历史">
                 <el-icon :size="14"><Clock /></el-icon>
               </button>
             </template>
             <div class="editor-view__version-panel">
               <div class="editor-view__version-header">
                 <span class="editor-view__version-title">版本历史</span>
+                <el-button size="small" text @click="loadVersionList(versionPage)">
+                  <el-icon><Refresh /></el-icon>
+                </el-button>
               </div>
               <div v-if="versionLoading" class="editor-view__version-loading">加载中...</div>
               <div v-else-if="versionList.length === 0" class="editor-view__version-empty">暂无版本记录</div>
@@ -537,11 +623,60 @@ function handleClearCanvas() {
                   >加载</el-button>
                 </div>
               </div>
+              <div v-if="versionTotal > versionPageSize" class="editor-view__version-pagination">
+                <el-pagination
+                  v-model:current-page="versionPage"
+                  :page-size="versionPageSize"
+                  :total="versionTotal"
+                  layout="prev, pager, next"
+                  small
+                  @current-change="handleVersionPageChange"
+                />
+              </div>
             </div>
           </el-popover>
-
           <button class="editor-view__btn editor-view__btn--outline" @click="handleClearCanvas">清空</button>
-          <button class="editor-view__btn editor-view__btn--primary" @click="handleSave">保存</button>
+          <button class="editor-view__btn editor-view__btn--outline" :disabled="saving" @click="handleSave">
+            <el-icon v-if="saving" class="is-loading" :size="14"><Refresh /></el-icon>
+            {{ saving ? '保存中...' : '保存' }}
+          </button>
+          <button
+            v-if="boardStore.id"
+            class="editor-view__btn editor-view__btn--primary"
+            :disabled="publishing"
+            @click="handlePublish"
+          >
+            <el-icon v-if="publishing" class="is-loading" :size="14"><Refresh /></el-icon>
+            {{ publishing ? '发布中...' : '发布' }}
+          </button>
+        </template>
+        <template v-if="mode === 'preview'">
+          <!-- Mode switch back to edit -->
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': showLogPanel }"
+            title="执行日志"
+            @click="showLogPanel = !showLogPanel"
+          >
+            <el-icon :size="14"><Document /></el-icon>
+          </button>
+          <button
+            class="editor-view__icon-btn"
+            :class="{ 'editor-view__icon-btn--active': showCodePanel }"
+            title="Store 数据"
+            @click="showCodePanel = !showCodePanel"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="5 4 1 8 5 12" />
+              <polyline points="11 4 15 8 11 12" />
+              <line x1="9" y1="2" x2="7" y2="14" />
+            </svg>
+          </button>
+          <div class="editor-view__divider" />
+          <button class="editor-view__btn editor-view__btn--outline" @click="editorStore.setMode('edit')">
+            <el-icon :size="12"><EditPen /></el-icon>
+            <span>退出预览</span>
+          </button>
         </template>
       </div>
     </div>
@@ -549,7 +684,10 @@ function handleClearCanvas() {
     <!-- Body: left panel + canvas + right panel -->
     <div class="editor-view__body">
       <!-- Left panel -->
-      <div v-if="leftPanelVisible && mode === 'edit'" class="editor-view__left">
+      <div
+        v-if="mode === 'edit'"
+        :class="['editor-view__left', { 'editor-view__left--closed': !leftPanelVisible }]"
+      >
         <EditorLeftPanel
           :schema-status="boardStore.status"
           :schema-type="'form'"
@@ -570,22 +708,44 @@ function handleClearCanvas() {
           />
         </div>
         <EventLogPanel v-if="mode === 'preview' && showLogPanel" />
-      </div>
 
-      <!-- Store 数据面板（全屏覆盖） -->
-      <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-overlay">
-        <div class="editor-view__code-header">
-          <span class="editor-view__code-title">Store 数据</span>
-          <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
+        <!-- Store 数据面板（全屏覆盖） -->
+        <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-overlay">
+          <div class="editor-view__code-header">
+            <span class="editor-view__code-title">Store 数据</span>
+            <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
+          </div>
+          <div class="editor-view__code-scroll">
+            <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
+          </div>
         </div>
-        <div class="editor-view__code-scroll">
-          <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
-        </div>
+
       </div>
 
       <!-- Right panel -->
-      <div v-if="rightPanelVisible && mode === 'edit'" class="editor-view__right">
+      <div
+        v-if="mode === 'edit'"
+        :class="['editor-view__right', { 'editor-view__right--closed': !rightPanelVisible }]"
+      >
         <PropertyPanel />
+      </div>
+
+      <!-- AI drawer -->
+      <div
+        v-if="mode === 'edit'"
+        :class="['editor-view__ai-drawer', { 'editor-view__ai-drawer--open': showAiDrawer }]"
+      >
+        <div class="editor-view__ai-inner">
+          <micro-app
+            v-if="showAiDrawer"
+            name="ai-sidebar-editor"
+            :url="aiBaseUrl + '?agent=editor'"
+            :data="aiDrawerData"
+            iframe
+            class="editor-view__ai-iframe"
+            @datachange="handleAiDataChange"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -609,6 +769,11 @@ function handleClearCanvas() {
     flex-shrink: 0;
     gap: 4px;
     z-index: 100;
+
+    &--preview {
+      background: var(--el-color-primary-light-9);
+      border-bottom-color: var(--el-color-primary-light-5);
+    }
   }
 
   &__toolbar-left,
@@ -669,6 +834,7 @@ function handleClearCanvas() {
     border-radius: var(--el-border-radius-small);
     transition: all 0.15s;
     flex-shrink: 0;
+    padding: 0;
 
     &:hover:not(:disabled) {
       background: var(--el-fill-color-light);
@@ -705,36 +871,13 @@ function handleClearCanvas() {
     user-select: none;
   }
 
-  &__mode-switcher {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 2px;
-    background: var(--el-fill-color-light);
+  &__preview-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-color-primary);
+    padding: 3px 10px;
+    background: var(--el-color-primary-light-8);
     border-radius: var(--el-border-radius-small);
-    flex-shrink: 0;
-  }
-
-  &__mode-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 24px;
-    border: none;
-    background: transparent;
-    color: var(--el-text-color-secondary);
-    cursor: pointer;
-    border-radius: 3px;
-    transition: all 0.15s;
-
-    &:hover { color: var(--el-text-color-regular); }
-
-    &--active {
-      background: var(--el-bg-color);
-      color: var(--el-color-primary);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    }
   }
 
   &__btn {
@@ -772,11 +915,14 @@ function handleClearCanvas() {
   }
 
   &__version-panel {
-    max-height: 320px;
+    max-height: 400px;
     overflow-y: auto;
   }
 
   &__version-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--el-border-color-lighter);
     margin-bottom: 8px;
@@ -786,6 +932,14 @@ function handleClearCanvas() {
     font-size: 14px;
     font-weight: 600;
     color: var(--el-text-color-primary);
+  }
+
+  &__version-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--el-border-color-lighter);
   }
 
   &__version-loading,
@@ -841,27 +995,28 @@ function handleClearCanvas() {
     overflow: hidden;
   }
 
-  &__left {
-    width: 260px;
+  &__left,
+  &__right,
+  &__ai-drawer {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    background: var(--el-bg-color);
-    border-right: 1px solid var(--el-border-color-lighter);
     overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--el-bg-color);
   }
 
-  &__left-tabs {
-    height: 100%;
+  &__left {
+    width: 260px;
+    border-right: 1px solid var(--el-border-color-lighter);
 
-    :deep(.el-tabs__content) {
-      padding: 0;
-      height: calc(100% - 40px);
-      overflow: auto;
+    &--closed {
+      width: 0;
+      border-right: none;
     }
 
-    :deep(.el-tab-pane) {
-      height: 100%;
+    > * {
+      min-width: 260px;
     }
   }
 
@@ -872,7 +1027,6 @@ function handleClearCanvas() {
     flex-direction: column;
     overflow: hidden;
     background: var(--el-fill-color-light);
-    position: relative;
   }
 
   &__canvas-scroll {
@@ -884,12 +1038,67 @@ function handleClearCanvas() {
 
   &__right {
     width: 300px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--el-bg-color);
     border-left: 1px solid var(--el-border-color-lighter);
-    overflow: hidden;
+
+    &--closed {
+      width: 0;
+      border-left: none;
+    }
+
+    > * {
+      min-width: 300px;
+    }
+  }
+
+  &__ai-btn {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  &__ai-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--el-color-primary);
+    color: var(--el-color-white);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+
+  &__icon-btn--active &__ai-label {
+    box-shadow: 0 0 0 2px var(--el-color-primary-light-5);
+  }
+
+  &__ai-drawer {
+    width: 400px;
+    border-left: 1px solid var(--el-border-color-lighter);
+
+    &--open {
+      width: 400px;
+    }
+
+    &:not(&--open) {
+      width: 0;
+      border-left: none;
+    }
+  }
+
+  &__ai-inner {
+    width: 400px;
+    height: 100%;
+  }
+
+  &__ai-iframe {
+    width: 400px;
+    height: 100%;
+    border: none;
+    display: block;
   }
 
   &__code-overlay {

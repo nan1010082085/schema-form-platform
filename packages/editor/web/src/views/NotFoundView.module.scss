@@ -1,0 +1,24 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--bg-color-page);
+}
+
+.content {
+  text-align: center;
+}
+
+.code {
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--text-color-disabled);
+  margin: 0 0 8px;
+}
+
+.message {
+  font-size: 16px;
+  color: var(--text-color-muted);
+  margin: 0 0 24px;
+}

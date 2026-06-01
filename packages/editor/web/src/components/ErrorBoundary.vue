@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref, onErrorCaptured, computed, h } from 'vue'
 import { ElButton } from 'element-plus'
+import styles from './ErrorBoundary.module.scss'
 
 export default defineComponent({
   name: 'ErrorBoundary',
@@ -43,16 +44,16 @@ export default defineComponent({
 
     return () => {
       if (hasError.value) {
-        return h('div', { class: 'fg-error-boundary' }, [
-          h('div', { class: 'fg-error-boundary__inner' }, [
-            h('div', { class: 'fg-error-boundary__header' }, [
-              h('span', { class: 'fg-error-boundary__icon' }, '!'),
-              h('span', { class: 'fg-error-boundary__title' }, '渲染错误'),
+        return h('div', { class: styles['fg-error-boundary'] }, [
+          h('div', { class: styles['fg-error-boundary__inner'] }, [
+            h('div', { class: styles['fg-error-boundary__header'] }, [
+              h('span', { class: styles['fg-error-boundary__icon'] }, '!'),
+              h('span', { class: styles['fg-error-boundary__title'] }, '渲染错误'),
             ]),
             nodeInfo.value
-              ? h('div', { class: 'fg-error-boundary__info' }, nodeInfo.value)
+              ? h('div', { class: styles['fg-error-boundary__info'] }, nodeInfo.value)
               : null,
-            h('div', { class: 'fg-error-boundary__message' }, error.value?.message ?? '未知错误'),
+            h('div', { class: styles['fg-error-boundary__message'] }, error.value?.message ?? '未知错误'),
             h(
               ElButton,
               { size: 'small', type: 'primary', onClick: retry },
@@ -70,57 +71,3 @@ export default defineComponent({
   },
 })
 </script>
-
-<style scoped lang="scss">
-.fg-error-boundary {
-  border: 1px dashed #f56c6c;
-  border-radius: 4px;
-  padding: 12px;
-  background: #fef0f0;
-  margin: 4px 0;
-
-  &__inner {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #f56c6c;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  &__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #f56c6c;
-  }
-
-  &__info {
-    font-size: 12px;
-    color: #909399;
-    font-family: monospace;
-  }
-
-  &__message {
-    font-size: 12px;
-    color: #e6a23c;
-    word-break: break-all;
-  }
-}
-</style>

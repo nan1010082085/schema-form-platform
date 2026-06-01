@@ -299,7 +299,7 @@ router.get('/:param/versions', async (ctx) => {
   }
 
   // 获取发布版本号
-  const published = await PublishedSchemaModel.findOne({ sourceId: schema._id })
+  const published = await PublishedSchemaModel.findOne({ sourceId: schema.editId })
 
   // 版本列表 = 历史快照 + 当前版本（最新）
   const allVersions = [
@@ -315,11 +315,18 @@ router.get('/:param/versions', async (ctx) => {
   // 按版本号降序排列
   allVersions.sort((a, b) => b.version.localeCompare(a.version))
 
+  // 分页切片
+  const pageSize = Math.max(1, parseInt(pageSizeStr as string, 10) || 20)
+  const start = (page - 1) * pageSize
+  const items = allVersions.slice(start, start + pageSize)
+
   ctx.body = {
     success: true,
     data: {
-      items: allVersions,
+      items,
       total: allVersions.length,
+      page,
+      pageSize,
     },
   }
 })

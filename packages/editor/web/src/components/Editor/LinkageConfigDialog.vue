@@ -20,6 +20,7 @@ import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 import FlowPreview from '@/components/Editor/FlowPreview.vue'
 import type { FlowItem } from '@/components/Editor/FlowPreview.vue'
+import styles from './LinkageConfigDialog.module.scss'
 
 const props = defineProps<{
   visible: boolean
@@ -185,11 +186,11 @@ const flowItems = computed<FlowItem[]>(() =>
     width="1100px"
     @update:model-value="emit('update:visible', $event)"
   >
-    <div :class="$style.body">
+    <div :class="styles.body">
       <!-- 左侧：配置表单 -->
-      <div :class="$style.form">
+      <div :class="styles.form">
       <!-- 空状态 -->
-      <div v-if="localRules.length === 0" :class="$style.empty">
+      <div v-if="localRules.length === 0" :class="styles.empty">
         暂无规则，点击下方按钮添加。
       </div>
 
@@ -197,10 +198,10 @@ const flowItems = computed<FlowItem[]>(() =>
       <div
         v-for="(rule, ri) in localRules"
         :key="ri"
-        :class="$style.card"
+        :class="styles.card"
       >
-        <div :class="$style.cardHeader">
-          <span :class="$style.cardTitle">规则 <span :class="$style.cardNum">{{ ri + 1 }}</span></span>
+        <div :class="styles.cardHeader">
+          <span :class="styles.cardTitle">规则 <span :class="styles.cardNum">{{ ri + 1 }}</span></span>
           <el-button
             type="danger"
             :icon="Delete"
@@ -211,13 +212,13 @@ const flowItems = computed<FlowItem[]>(() =>
         </div>
 
         <!-- watches（辅助配置，帮助用户理解触发来源） -->
-        <div :class="$style.row">
-          <label :class="$style.label">监听</label>
-          <div :class="$style.conditionArea">
+        <div :class="styles.row">
+          <label :class="styles.label">监听</label>
+          <div :class="styles.conditionArea">
             <div
               v-for="(w, wi) in rule.watches"
               :key="wi"
-              :class="$style.watchRow"
+              :class="styles.watchRow"
             >
               <el-select
                 v-model="w.source"
@@ -255,9 +256,9 @@ const flowItems = computed<FlowItem[]>(() =>
         </div>
 
         <!-- condition -->
-        <div :class="$style.row">
-          <label :class="$style.label">条件</label>
-          <div :class="$style.conditionArea">
+        <div :class="styles.row">
+          <label :class="styles.label">条件</label>
+          <div :class="styles.conditionArea">
             <ConditionBuilder v-model="rule.condition" required />
           </div>
         </div>
@@ -283,9 +284,9 @@ const flowItems = computed<FlowItem[]>(() =>
       </div>
 
       <!-- 右侧：流程预览 -->
-      <div :class="$style.preview">
-        <div :class="$style.previewTitle">规则流预览</div>
-        <div :class="$style.previewBody">
+      <div :class="styles.preview">
+        <div :class="styles.previewTitle">规则流预览</div>
+        <div :class="styles.previewBody">
           <FlowPreview :items="flowItems" />
         </div>
       </div>
@@ -297,117 +298,3 @@ const flowItems = computed<FlowItem[]>(() =>
     </template>
   </EnhancedDialog>
 </template>
-
-<style module>
-.body {
-  height: 60vh;
-  display: flex;
-  gap: 16px;
-  min-height: 0;
-}
-
-/* 统一表单控件高度 32px */
-.body :global(.el-input__wrapper),
-.body :global(.el-select .el-input__wrapper),
-.body :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-.form {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.preview {
-  width: 280px;
-  flex-shrink: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  background: #fafbfc;
-}
-
-.previewTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: #303133;
-  padding: 10px 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.previewBody {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 12px;
-}
-
-.empty {
-  text-align: center;
-  color: #909399;
-  font-size: 13px;
-  padding: 24px 0;
-}
-
-.card {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  padding: 12px;
-  background: #fafbfc;
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.cardTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.cardNum {
-  color: var(--el-color-primary);
-  font-weight: 700;
-}
-
-.row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.label {
-  width: 50px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: #606266;
-  line-height: 32px;
-}
-
-.conditionArea {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.watchRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-</style>

@@ -34,6 +34,7 @@ export const gaugeConfig: WidgetConfig = {
   ],
   propertyPanel: {
     basic: ['label'],
+    style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },
       { key: 'min', label: '最小值', type: 'number', default: 0 },

@@ -9,6 +9,7 @@ import { ref, computed } from 'vue'
 import { Search, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
 import { getWidgetsByGroup, type WidgetRegistryItem } from '@/widgets/registry'
 import type { SchemaType } from '@/widgets/base/types'
+import styles from './ComponentPanel.module.scss'
 
 const GROUP_LABELS: Record<string, string> = {
   layout: '布局部件',
@@ -70,8 +71,8 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
 </script>
 
 <template>
-  <div :class="$style.panel">
-    <div :class="$style.search">
+  <div :class="styles.panel">
+    <div :class="styles.search">
       <el-input
         v-model="searchQuery"
         size="small"
@@ -84,144 +85,43 @@ function handleDragStart(event: DragEvent, type: SchemaType) {
       </el-input>
     </div>
 
-    <el-scrollbar :class="$style.scroll">
+    <el-scrollbar :class="styles.scroll">
       <div
         v-for="group in filteredGroups"
         :key="group.key"
-        :class="$style.group"
+        :class="styles.group"
       >
         <!-- 分组标题（点击折叠/展开） -->
         <div
-          :class="$style.groupHeader"
+          :class="styles.groupHeader"
           @click="toggleGroup(group.key)"
         >
-          <el-icon :size="12" :class="$style.arrow">
+          <el-icon :size="12" :class="styles.arrow">
             <ArrowDown v-if="expandedGroups.has(group.key)" />
             <ArrowRight v-else />
           </el-icon>
-          <span :class="$style.groupLabel">{{ group.label }}</span>
-          <span :class="$style.groupCount">{{ group.items.length }}</span>
+          <span :class="styles.groupLabel">{{ group.label }}</span>
+          <span :class="styles.groupCount">{{ group.items.length }}</span>
         </div>
 
         <!-- 组件列表 -->
-        <div v-if="expandedGroups.has(group.key)" :class="$style.groupBody">
+        <div v-if="expandedGroups.has(group.key)" :class="styles.groupBody">
           <div
             v-for="item in group.items"
             :key="item.type"
-            :class="$style.item"
+            :class="styles.item"
             draggable="true"
             @dragstart="handleDragStart($event, item.type)"
           >
-            <span :class="$style.itemLabel">{{ item.displayName }}</span>
+            <span :class="styles.itemLabel">{{ item.displayName }}</span>
           </div>
         </div>
       </div>
 
-      <div v-if="filteredGroups.length === 0" :class="$style.empty">
+      <div v-if="filteredGroups.length === 0" :class="styles.empty">
         无匹配部件
       </div>
     </el-scrollbar>
   </div>
 </template>
 
-<style module>
-.panel {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.search {
-  padding: 8px 10px;
-  flex-shrink: 0;
-}
-
-.scroll {
-  flex: 1;
-  height: 0;
-}
-
-.group {
-  border-bottom: 1px solid #f0f2f5;
-}
-
-.groupHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s;
-}
-
-.groupHeader:hover {
-  background: #f5f7fa;
-}
-
-.arrow {
-  color: #909399;
-  flex-shrink: 0;
-  transition: transform 0.2s;
-}
-
-.groupLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #303133;
-  flex: 1;
-}
-
-.groupCount {
-  font-size: 11px;
-  color: #c0c4cc;
-  background: #f0f2f5;
-  border-radius: 8px;
-  padding: 0 6px;
-  line-height: 18px;
-}
-
-.groupBody {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 0 10px 10px;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 4px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  cursor: grab;
-  transition: all 0.15s;
-  background: #fafbfc;
-}
-
-.item:hover {
-  border-color: var(--el-color-primary);
-  background: #ecf5ff;
-}
-
-.item:active {
-  cursor: grabbing;
-  opacity: 0.7;
-}
-
-.itemLabel {
-  font-size: 12px;
-  color: #303133;
-  font-weight: 500;
-  text-align: center;
-}
-
-.empty {
-  padding: 24px;
-  text-align: center;
-  color: #c0c4cc;
-  font-size: 12px;
-}
-</style>

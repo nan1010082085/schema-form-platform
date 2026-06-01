@@ -85,7 +85,7 @@ describe('FlowInstanceDetailView', () => {
       id: 'inst-001',
       definitionId: 'def-001',
       versionId: 'ver-001',
-      version: 1,
+      version: 'v20260528100000',
       status: 'running',
       variables: { key1: 'value1' },
       tokens: [

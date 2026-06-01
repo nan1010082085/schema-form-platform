@@ -1,0 +1,152 @@
+/**
+ * AI 应用类型定义
+ *
+ * 对齐后端 AIConversationState 和 API 响应结构。
+ */
+
+// ---- Widget（简化引用，完整类型在 editor 包） ----
+
+/** Widget 位置信息 */
+export interface WidgetPosition {
+  x: number
+  y: number
+  w: number
+  h: number
+  zIndex?: number
+}
+
+/** Widget 基础结构（对齐 editor/widgets/base/types.ts） */
+export interface Widget {
+  id: string
+  type: string
+  field?: string
+  label?: string
+  props?: Record<string, unknown>
+  position?: WidgetPosition
+  children?: Widget[]
+  events?: unknown[]
+  rules?: unknown[]
+  variables?: unknown[]
+}
+
+// ---- FlowGraph（对齐后端 FlowGraph 结构） ----
+
+export interface FlowNodeData {
+  bpmnType: string
+  label?: string
+  [key: string]: unknown
+}
+
+export interface FlowNode {
+  id: string
+  data: FlowNodeData
+  position?: { x: number; y: number }
+  width?: number
+  height?: number
+}
+
+export interface FlowEdgeData {
+  conditionExpression?: string
+  isDefault?: boolean
+  [key: string]: unknown
+}
+
+export interface FlowEdge {
+  id: string
+  source: { cell: string }
+  target: { cell: string }
+  data?: FlowEdgeData
+}
+
+export interface FlowGraph {
+  nodes: FlowNode[]
+  edges: FlowEdge[]
+}
+
+// ---- 对话消息 ----
+
+export interface ToolCallInfo {
+  name: string
+  arguments: Record<string, unknown>
+  result?: unknown
+}
+
+export interface AIMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  thinking?: string
+  thinkingExpanded?: boolean
+  tip?: string
+  toolCalls?: ToolCallInfo[]
+  toolCallsExpanded?: boolean
+  schema?: Widget[]
+  flow?: FlowGraph
+  timestamp: Date
+}
+
+// ---- 对话请求 ----
+
+export interface ChatRequest {
+  conversationId?: string
+  message: string
+  context: ChatContext
+}
+
+export interface ChatContext {
+  source: 'editor' | 'flow' | 'standalone'
+  schemaId?: string
+  flowId?: string
+  nodeId?: string
+}
+
+// ---- SSE 事件 ----
+
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'done' | 'error'
+
+export interface SSEEvent {
+  type: SSEEventType
+  content?: string
+  payload?: Widget[] | FlowGraph
+  description?: string
+  conversationId?: string
+  /** Tool call event data */
+  phase?: 'calling' | 'result'
+  tools?: Array<{ id: string; name: string; arguments?: Record<string, unknown>; result?: unknown }>
+}
+
+// ---- 发布 ----
+
+export interface PublishRequest {
+  conversationId: string
+  type: 'schema' | 'flow'
+  payload: Widget[] | FlowGraph
+  target?: {
+    type: 'flow_node'
+    flowId: string
+    nodeId: string
+  }
+}
+
+export interface PublishResponse {
+  id: string
+  publishId?: string
+  boundTo?: {
+    flowId: string
+    nodeId: string
+  }
+}
+
+// ---- 对话列表 ----
+
+export interface Conversation {
+  id: string
+  title: string
+  source: 'editor' | 'flow' | 'standalone'
+  activeAgent: 'router' | 'editor' | 'flow'
+  createdAt: string
+  updatedAt: string
+}
+
+// ---- Agent ----
+
+export type AgentType = 'editor' | 'flow'

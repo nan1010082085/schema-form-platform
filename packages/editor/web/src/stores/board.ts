@@ -29,7 +29,7 @@ export const useBoardStore = defineStore('board', () => {
   const canvas = ref<CanvasConfig>({
     width: 1920,
     height: 1080,
-    backgroundColor: '#f5f7fa',
+    backgroundColor: 'var(--bg-color-gray)',
     padding: '0px',
     zoom: 100,
   })

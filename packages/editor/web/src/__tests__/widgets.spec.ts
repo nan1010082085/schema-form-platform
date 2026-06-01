@@ -54,6 +54,15 @@ import { timePickerConfig } from '@/widgets/time-picker/config'
 import { sliderConfig } from '@/widgets/slider/config'
 import { rateConfig } from '@/widgets/rate/config'
 import { colorPickerConfig } from '@/widgets/color-picker/config'
+import { barChartConfig } from '@/widgets/bar-chart/config'
+import { lineChartConfig } from '@/widgets/line-chart/config'
+import { pieChartConfig } from '@/widgets/pie-chart/config'
+import { scatterChartConfig } from '@/widgets/scatter-chart/config'
+import { radarConfig } from '@/widgets/radar/config'
+import { gaugeConfig } from '@/widgets/gauge/config'
+import { heatmapConfig } from '@/widgets/heatmap/config'
+import { funnelConfig } from '@/widgets/funnel/config'
+import { candlestickConfig } from '@/widgets/candlestick/config'
 
 // --- createDefaultSchema ---
 import { createDefaultSchema } from '@/utils/schemaDefaults'
@@ -81,6 +90,8 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
   'search-list', 'editable-table',
   'switch', 'cascader', 'time-picker',
   'slider', 'rate', 'color-picker',
+  'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
+  'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',
 ]
 
 const ALL_CONFIGS = [
@@ -120,6 +131,15 @@ const ALL_CONFIGS = [
   { name: 'slider', config: sliderConfig },
   { name: 'rate', config: rateConfig },
   { name: 'color-picker', config: colorPickerConfig },
+  { name: 'bar-chart', config: barChartConfig },
+  { name: 'line-chart', config: lineChartConfig },
+  { name: 'pie-chart', config: pieChartConfig },
+  { name: 'scatter-chart', config: scatterChartConfig },
+  { name: 'radar', config: radarConfig },
+  { name: 'gauge', config: gaugeConfig },
+  { name: 'heatmap', config: heatmapConfig },
+  { name: 'funnel', config: funnelConfig },
+  { name: 'candlestick', config: candlestickConfig },
 ]
 
 // =====================================================================
@@ -132,9 +152,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 38 widget types', () => {
+  it('registers exactly 47 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(38)
+    expect(all).toHaveLength(47)
   })
 
   it('getComponentMap returns a component for every registered type', () => {

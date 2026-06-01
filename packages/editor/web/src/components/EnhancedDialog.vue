@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount } from 'vue'
 import { FullScreen, ScaleToOriginal, Close, QuestionFilled } from '@element-plus/icons-vue'
+import styles from './EnhancedDialog.module.scss'
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -125,11 +126,11 @@ onBeforeUnmount(() => {
   >
     <template #header>
       <div
-        :class="$style.header"
+        :class="styles.header"
         @mousedown="onHeaderMousedown"
       >
-        <span :class="$style.title">{{ title }}</span>
-        <div :class="$style.headerActions">
+        <span :class="styles.title">{{ title }}</span>
+        <div :class="styles.headerActions">
           <el-popover
             v-if="helpContent"
             placement="bottom-end"
@@ -137,16 +138,16 @@ onBeforeUnmount(() => {
             trigger="click"
           >
             <template #reference>
-              <el-icon :class="$style.headerBtn" @click.stop>
+              <el-icon :class="styles.headerBtn" @click.stop>
                 <QuestionFilled />
               </el-icon>
             </template>
-            <div :class="$style.helpContent" v-html="helpContent" />
+            <div :class="styles.helpContent" v-html="helpContent" />
           </el-popover>
           <el-icon
             v-if="showFullscreenBtn && !isFullscreen"
             data-testid="fullscreen-btn"
-            :class="$style.headerBtn"
+            :class="styles.headerBtn"
             @click.stop="toggleFullscreen"
           >
             <FullScreen />
@@ -154,13 +155,13 @@ onBeforeUnmount(() => {
           <el-icon
             v-if="showFullscreenBtn && isFullscreen"
             data-testid="fullscreen-btn"
-            :class="$style.headerBtn"
+            :class="styles.headerBtn"
             @click.stop="toggleFullscreen"
           >
             <ScaleToOriginal />
           </el-icon>
           <el-icon
-            :class="$style.headerBtn"
+            :class="styles.headerBtn"
             @click.stop="handleClose"
           >
             <Close />
@@ -176,62 +177,6 @@ onBeforeUnmount(() => {
     </template>
   </el-dialog>
 </template>
-
-<style module>
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: v-bind("props.draggable && !isFullscreen ? 'move' : 'default'");
-  user-select: none;
-}
-
-.title {
-  flex: 1;
-  color: #fff;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.headerBtn {
-  cursor: pointer;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  transition: color 0.15s;
-}
-
-.headerBtn:hover {
-  color: #fff;
-}
-
-.helpContent {
-  font-size: 12px;
-  line-height: 1.8;
-  color: #606266;
-}
-
-.helpContent p {
-  margin: 0 0 6px;
-}
-
-.helpContent strong {
-  color: #303133;
-}
-
-.helpContent ul {
-  margin: 2px 0 8px;
-  padding-left: 16px;
-}
-
-.helpContent li {
-  margin-bottom: 2px;
-}
-</style>
 
 <style>
 .el-dialog.is-fullscreen {

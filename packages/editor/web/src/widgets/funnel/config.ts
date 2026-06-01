@@ -37,6 +37,7 @@ export const funnelConfig: WidgetConfig = {
   ],
   propertyPanel: {
     basic: ['label'],
+    style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'nameField', label: '名称字段', type: 'input', placeholder: '如: name' },
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },

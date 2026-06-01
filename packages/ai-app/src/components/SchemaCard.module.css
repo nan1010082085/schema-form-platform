@@ -1,0 +1,136 @@
+.card {
+  margin-top: 6px;
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  border-radius: var(--ai-radius-md, 4px);
+  overflow: hidden;
+  background: var(--ai-bg-white, #FFFFFF);
+}
+
+.compact .field {
+  padding: 3px 0;
+  font-size: 11.5px;
+}
+
+.compact .head {
+  padding: 7px 11px;
+}
+
+.compact .body {
+  padding: 8px 11px;
+}
+
+.compact .actions {
+  padding: 7px 11px;
+}
+
+.head {
+  padding: 8px 12px;
+  background: var(--ai-bg-gray, #F5F7FA);
+  border-bottom: 1px solid var(--ai-border-base, #D5DDE3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ai-text-secondary, #666666);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--ai-radius-sm, 2px);
+  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
+  color: var(--ai-color-success, #26A036);
+  font-weight: 500;
+}
+
+.body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.fieldIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--ai-radius-sm, 2px);
+  background: var(--ai-color-primary-bg, #EEF5FF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--ai-color-primary, #0060A2);
+  flex-shrink: 0;
+}
+
+.fieldName {
+  color: var(--ai-text-primary, #333333);
+  font-weight: 500;
+  min-width: 76px;
+}
+
+.fieldType {
+  color: var(--ai-text-hint, #999999);
+  font-size: 11px;
+}
+
+.fieldReq {
+  color: var(--ai-color-danger, #E50113);
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.actions {
+  padding: 8px 12px;
+  border-top: 1px solid var(--ai-bg-page, #F5F6FA);
+  display: flex;
+  gap: 8px;
+}
+
+.btnPrimary {
+  padding: 5px 14px;
+  border-radius: var(--ai-radius-sm, 2px);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: var(--ai-color-primary, #0060A2);
+  color: var(--ai-text-inverse, #FFFFFF);
+  font-family: inherit;
+}
+
+.btnPrimary:hover {
+  background: var(--ai-color-primary-hover, #035B9C);
+}
+
+.btnGhost {
+  padding: 5px 14px;
+  border-radius: var(--ai-radius-sm, 2px);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ai-text-secondary, #666666);
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  font-family: inherit;
+}
+
+.btnGhost:hover {
+  border-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #0060A2);
+}

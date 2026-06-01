@@ -1,0 +1,75 @@
+.section {
+  margin-top: 8px;
+  border-top: 1px solid var(--border-color-light);
+  padding-top: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-regular);
+}
+
+.sectionEmpty {
+  font-size: 12px;
+  color: var(--text-color-disabled);
+  text-align: center;
+  padding: 8px 0;
+}
+
+.actionCard {
+  border: 1px solid var(--bg-color-gray-dark);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: var(--bg-color-white);
+}
+
+.actionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.actionIndex {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-regular);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.label {
+  width: 50px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-regular);
+  line-height: 32px;
+}
+
+.noConfigHint {
+  font-size: 11px;
+  color: var(--text-color-muted);
+  padding: 4px 0;
+}
+
+/* 统一表单控件高度 32px */
+.section :global(.el-input__wrapper),
+.section :global(.el-select .el-input__wrapper),
+.section :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}

@@ -9,6 +9,7 @@ import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import styles from './OptionsApiConfigDialog.module.scss'
 
 const props = defineProps<{
   visible: boolean
@@ -59,7 +60,7 @@ function handleClose() {
     width="900px"
     @update:model-value="emit('update:visible', $event)"
   >
-    <div :class="$style.body">
+    <div :class="styles.body">
       <ApiConfig
         :api="localApi"
         @update:api="handleApiUpdate"
@@ -73,10 +74,3 @@ function handleClose() {
     </template>
   </EnhancedDialog>
 </template>
-
-<style module>
-.body {
-  height: 60vh;
-  overflow: hidden;
-}
-</style>

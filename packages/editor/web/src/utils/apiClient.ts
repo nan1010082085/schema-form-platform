@@ -273,6 +273,21 @@ export async function publishSchema(id: string, version?: string): Promise<Publi
   )
 }
 
+export async function fetchPublishedByPublishId(publishId: string): Promise<PublishedSchemaItem | null> {
+  if (apiClient.isMockEnabled()) {
+    const { mockFetchPublishedSchema } = await import('./mockApi')
+    return mockFetchPublishedSchema(publishId)
+  }
+  try {
+    return await apiClient.get<PublishedSchemaItem>(
+      `/schemas/published/by-publish-id/${encodeURIComponent(publishId)}`,
+    )
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null
+    throw err
+  }
+}
+
 export async function fetchPublishedSchema(editId: string): Promise<PublishedSchemaItem | null> {
   if (apiClient.isMockEnabled()) {
     const { mockFetchPublishedSchema } = await import('./mockApi')
@@ -329,14 +344,24 @@ export interface VersionListResponse {
   total: number
 }
 
-export async function fetchVersions(editId: string): Promise<VersionListResponse> {
+export async function fetchVersions(editId: string, page?: number, pageSize?: number): Promise<VersionListResponse> {
+  const params = new URLSearchParams()
+  if (page) params.set('page', String(page))
+  if (pageSize) params.set('pageSize', String(pageSize))
+  const qs = params.toString()
   return apiClient.get<VersionListResponse>(
-    `/schemas/${encodeURIComponent(editId)}/versions`,
+    `/schemas/${encodeURIComponent(editId)}/versions${qs ? `?${qs}` : ''}`,
   )
 }
 
 export async function fetchVersion(editId: string, version: string): Promise<SchemaDetail> {
   return apiClient.get<SchemaDetail>(
+    `/schemas/${encodeURIComponent(editId)}/versions/${encodeURIComponent(version)}`,
+  )
+}
+
+export async function deleteVersion(editId: string, version: string): Promise<null> {
+  return apiClient.delete<null>(
     `/schemas/${encodeURIComponent(editId)}/versions/${encodeURIComponent(version)}`,
   )
 }

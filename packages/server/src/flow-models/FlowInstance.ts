@@ -5,7 +5,7 @@ export interface IFlowInstance {
   _id: string
   definitionId: string
   versionId: string
-  version: number
+  version: string
   status: FlowInstanceStatus
   variables: Record<string, unknown>
   tokens: FlowToken[]
@@ -38,7 +38,7 @@ const flowInstanceSchema = new mongoose.Schema(
     _id: { type: String, required: true },
     definitionId: { type: String, required: true, index: true },
     versionId: { type: String, required: true },
-    version: { type: Number, required: true },
+    version: { type: String, required: true },
     status: {
       type: String,
       enum: ['running', 'completed', 'terminated', 'suspended', 'failed'],

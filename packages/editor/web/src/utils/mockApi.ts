@@ -14,41 +14,11 @@ import type {
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
-import type { PartialWidget } from '@/widgets/base/types'
 
 // ---- 内存存储 ----
 
 const MOCK_SCHEMAS = new Map<string, SchemaListItem>()
 const MOCK_PUBLISHED = new Map<string, PublishedSchemaItem>()
-
-// 初始化一个 demo schema
-function initMockData() {
-  const demoId = 'mock-demo-001'
-  const demoSchema: PartialWidget[] = [
-    {
-      type: 'card',
-      children: [
-        { type: 'input', field: 'userName', label: '用户名', props: { placeholder: '请输入用户名' } },
-        { type: 'select', field: 'userRole', label: '角色', options: [{ label: '管理员', value: 'admin' }, { label: '普通用户', value: 'user' }] },
-        { type: 'textarea', field: 'remark', label: '备注', props: { placeholder: '请输入备注' } },
-      ],
-    },
-  ]
-
-  MOCK_SCHEMAS.set(demoId, {
-    id: demoId,
-    editId: demoId,
-    version: '20250101000000',
-    name: 'Demo Form',
-    type: 'form',
-    status: 'draft',
-    json: demoSchema,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })
-}
-
-initMockData()
 
 // ---- Mock API 实现 ----
 

@@ -40,6 +40,7 @@ export const radarConfig: WidgetConfig = {
   ],
   propertyPanel: {
     basic: ['label'],
+    style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'categoryField', label: '分类字段', type: 'input', placeholder: '如: category' },
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },

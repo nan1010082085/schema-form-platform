@@ -1,0 +1,135 @@
+.sidebar {
+  width: 240px;
+  background: var(--ai-bg-gray, #F5F7FA);
+  border-right: 1px solid var(--ai-border-base, #D5DDE3);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.header {
+  height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ai-border-base, #D5DDE3);
+  background: var(--ai-bg-gray-light, #FAFAFA);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ai-text-hint, #999999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.newBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ai-radius-md, 4px);
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  background: var(--ai-bg-white, #FFFFFF);
+  color: var(--ai-text-secondary, #666666);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.newBtn:hover {
+  border-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: var(--ai-border-base, #D5DDE3);
+  border-radius: 2px;
+}
+
+.item {
+  padding: 10px 12px;
+  border-radius: var(--ai-radius-md, 4px);
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background 0.1s;
+}
+
+.item:hover {
+  background: var(--ai-bg-hover, #E5EFF6);
+}
+
+.item.active {
+  background: var(--ai-color-primary-bg, #EEF5FF);
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ai-text-primary, #333333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemMeta {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.itemTag {
+  padding: 0 5px;
+  border-radius: var(--ai-radius-sm, 2px);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.itemTag.editor {
+  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
+  color: var(--ai-color-success, #26A036);
+}
+
+.itemTag.flow {
+  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
+  color: var(--ai-color-info, #4581E9);
+}
+
+.deleteBtn {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--ai-text-disabled, #C0C4CC);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.deleteBtn:hover {
+  color: var(--ai-color-danger, #E50113);
+}
+
+.empty {
+  text-align: center;
+  padding: 24px 0;
+  font-size: 12px;
+  color: var(--ai-text-disabled, #C0C4CC);
+}

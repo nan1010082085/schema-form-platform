@@ -35,6 +35,7 @@ export const heatmapConfig: WidgetConfig = {
   ],
   propertyPanel: {
     basic: ['label'],
+    style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'xField', label: 'X 轴字段', type: 'input', placeholder: '如: x' },
       { key: 'yField', label: 'Y 轴字段', type: 'input', placeholder: '如: y' },

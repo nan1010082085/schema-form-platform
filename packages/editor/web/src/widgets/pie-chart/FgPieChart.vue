@@ -4,6 +4,7 @@ import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import { useChartOption } from '../base/useChartOption'
 import { echarts, type EChartsType } from '../base/echarts'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 
@@ -105,13 +106,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="chartRef" :class="$style.container" />
+  <div ref="chartRef" :class="styles.container" />
 </template>
-
-<style module>
-.container {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-}
-</style>

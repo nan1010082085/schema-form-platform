@@ -1,0 +1,43 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+}
+
+.menu {
+  position: fixed;
+  z-index: 9999;
+  background: var(--bg-color-white);
+  border: 1px solid var(--bg-color-gray-dark);
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  min-width: 140px;
+}
+
+.header {
+  padding: 6px 16px;
+  font-size: 12px;
+  color: var(--text-color-muted);
+  border-bottom: 1px solid var(--bg-color-page);
+  margin-bottom: 4px;
+}
+
+.item {
+  padding: 6px 16px;
+  font-size: 13px;
+  color: var(--text-color-title);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.item:hover {
+  background: var(--bg-color-gray);
+  color: var(--color-primary);
+}
+
+.divider {
+  height: 1px;
+  background: var(--bg-color-page);
+  margin: 4px 0;
+}

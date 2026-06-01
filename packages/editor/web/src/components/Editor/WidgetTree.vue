@@ -12,6 +12,7 @@ import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import type { Widget } from '../../widgets/base/types'
 import { getWidget } from '../../widgets/registry'
+import styles from './WidgetTree.module.scss'
 
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
@@ -94,9 +95,9 @@ function getIcon(type: string): string {
 </script>
 
 <template>
-  <div :class="$style.tree">
+  <div :class="styles.tree">
     <el-scrollbar>
-      <div v-if="treeData.length === 0" :class="$style.empty">
+      <div v-if="treeData.length === 0" :class="styles.empty">
         暂无部件
       </div>
       <el-tree
@@ -112,15 +113,15 @@ function getIcon(type: string): string {
         <template #default="{ data }">
           <div
             :class="[
-              $style.node,
-              { [$style.nodeSelected]: selectedId === data.id },
+              styles.node,
+              { [styles.nodeSelected]: selectedId === data.id },
             ]"
             @click="handleNodeClick(data)"
           >
             <!-- 展开箭头 -->
             <span
               v-if="data.isContainer && data.children.length"
-              :class="$style.expandBtn"
+              :class="styles.expandBtn"
               @click.stop="toggleExpand(data)"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
@@ -128,16 +129,16 @@ function getIcon(type: string): string {
                 <path v-else d="M3.5 2l3 3-3 3z"/>
               </svg>
             </span>
-            <span v-else :class="[$style.expandBtn, $style.expandPlaceholder]" />
+            <span v-else :class="[styles.expandBtn, styles.expandPlaceholder]" />
 
             <!-- 图标 -->
-            <span :class="$style.icon">{{ getIcon(data.type) }}</span>
+            <span :class="styles.icon">{{ getIcon(data.type) }}</span>
 
             <!-- 类型标签 -->
-            <span :class="$style.badge">{{ data.label }}</span>
+            <span :class="styles.badge">{{ data.label }}</span>
 
             <!-- 字段名 -->
-            <span v-if="data.widget.field" :class="$style.field">{{ data.widget.field }}</span>
+            <span v-if="data.widget.field" :class="styles.field">{{ data.widget.field }}</span>
           </div>
         </template>
       </el-tree>
@@ -145,106 +146,3 @@ function getIcon(type: string): string {
   </div>
 </template>
 
-<style module>
-.tree {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  :deep(.el-scrollbar) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  :deep(.el-tree) {
-    background: transparent;
-
-    .el-tree-node__content {
-      height: auto;
-      padding: 3px 8px 3px 0;
-    }
-
-    /* 隐藏 el-tree 自带展开图标 */
-    .el-tree-node__expand-icon {
-      display: none;
-    }
-
-    .el-tree-node.is-current > .el-tree-node__content {
-      background-color: var(--el-color-primary-light-9);
-    }
-  }
-}
-
-.empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80px;
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-}
-
-.node {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 0;
-  min-width: 0;
-  width: 100%;
-  cursor: pointer;
-}
-
-.nodeSelected {
-  color: var(--el-color-primary);
-}
-
-.expandBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  color: var(--el-text-color-secondary);
-  flex-shrink: 0;
-}
-
-.expandPlaceholder {
-  visibility: hidden;
-}
-
-.icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.badge {
-  display: inline-block;
-  padding: 1px 5px;
-  font-size: 11px;
-  background: var(--el-fill-color-light);
-  border-radius: 3px;
-  color: var(--el-text-color-regular);
-  white-space: nowrap;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-
-.field {
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1;
-}
-</style>

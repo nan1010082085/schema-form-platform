@@ -2,6 +2,7 @@
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
@@ -20,41 +21,19 @@ const dynamicStyle = computed(() => ({
 
 <template>
   <div
-    :class="$style.richtext"
+    :class="styles.richtext"
     :style="dynamicStyle"
   >
-    <div :class="$style.toolbar">
+    <div :class="styles.toolbar">
       <span>B</span>
       <span>I</span>
       <span>U</span>
     </div>
     <div
-      :class="$style.content"
+      :class="styles.content"
       :contenteditable="!(widgetData.props?.readonly as boolean)"
     >
       {{ (widgetData.props?.placeholder as string) || '请输入内容' }}
     </div>
   </div>
 </template>
-
-<style module>
-.richtext {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.toolbar {
-  display: flex;
-  gap: 8px;
-  padding: 4px 8px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #dcdfe6;
-  font-weight: bold;
-}
-.content {
-  padding: 8px;
-  min-height: 120px;
-  color: #999;
-  outline: none;
-}
-</style>

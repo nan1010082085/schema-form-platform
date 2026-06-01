@@ -3,6 +3,7 @@ import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useExposeWidget } from '../../composables/useExposeWidget'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
@@ -43,7 +44,7 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div :class="$style.tagInput" :style="dynamicStyle">
+  <div :class="styles.tagInput" :style="dynamicStyle">
     <el-tag
       v-for="tag in tags"
       :key="tag"
@@ -66,16 +67,3 @@ function handleKeydown(e: KeyboardEvent) {
     />
   </div>
 </template>
-
-<style module>
-.tagInput {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-  padding: 4px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 4px;
-  min-height: 32px;
-}
-</style>

@@ -1,0 +1,19 @@
+.richtext {
+  border: 1px solid var(--border-color-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-color-gray);
+  border-bottom: 1px solid var(--border-color-light);
+  font-weight: bold;
+}
+.content {
+  padding: 8px;
+  min-height: 120px;
+  color: var(--text-color-placeholder);
+  outline: none;
+}

@@ -10,6 +10,7 @@
 import { ref, computed } from 'vue'
 import { ElInputNumber, ElTooltip } from 'element-plus'
 import { Link } from '@element-plus/icons-vue'
+import styles from './BorderRadiusEditor.module.scss'
 
 const props = defineProps<{
   value?: Record<string, string>
@@ -93,13 +94,13 @@ const previewStyle = computed(() => {
 </script>
 
 <template>
-  <div :class="$style.editor">
+  <div :class="styles.editor">
     <!-- 视觉预览区域 -->
-    <div :class="$style.preview">
-      <div :class="$style.boxWrapper">
-        <div :class="$style.box" :style="previewStyle">
-          <div :class="$style.center">
-            <span :class="$style.centerLabel">{{ linked ? linkedValue : tlVal }}px</span>
+    <div :class="styles.preview">
+      <div :class="styles.boxWrapper">
+        <div :class="styles.box" :style="previewStyle">
+          <div :class="styles.center">
+            <span :class="styles.centerLabel">{{ linked ? linkedValue : tlVal }}px</span>
           </div>
         </div>
       </div>
@@ -107,7 +108,7 @@ const previewStyle = computed(() => {
       <!-- Link toggle -->
       <ElTooltip :content="linked ? '解除链接' : '链接四角'" placement="top" :show-after="300">
         <button
-          :class="[$style.linkBtn, linked && $style.linkBtnActive]"
+          :class="[styles.linkBtn, linked && styles.linkBtnActive]"
           @click="toggleLinked"
         >
           <el-icon :size="14"><Link /></el-icon>
@@ -116,190 +117,71 @@ const previewStyle = computed(() => {
     </div>
 
     <!-- 链接模式：单个输入 -->
-    <div v-if="linked" :class="$style.controls">
-      <div :class="$style.controlRow">
-        <label :class="$style.controlLabel">圆角</label>
+    <div v-if="linked" :class="styles.controls">
+      <div :class="styles.controlRow">
+        <label :class="styles.controlLabel">圆角</label>
         <ElInputNumber
           :model-value="linkedValue"
           :min="0"
           :max="200"
           size="small"
           controls-position="right"
-          :class="$style.numberInput"
+          :class="styles.numberInput"
           @update:model-value="applyLinked"
         />
       </div>
     </div>
 
     <!-- 解除链接：4 个独立输入 -->
-    <div v-else :class="$style.controlsGrid">
-      <div :class="$style.gridCell">
-        <label :class="$style.gridLabel">左上</label>
+    <div v-else :class="styles.controlsGrid">
+      <div :class="styles.gridCell">
+        <label :class="styles.gridLabel">左上</label>
         <ElInputNumber
           :model-value="tlVal"
           :min="0"
           :max="200"
           size="small"
           controls-position="right"
-          :class="$style.gridInput"
+          :class="styles.gridInput"
           @update:model-value="(v: number | undefined) => applyCorner('topLeft', v)"
         />
       </div>
-      <div :class="$style.gridCell">
-        <label :class="$style.gridLabel">右上</label>
+      <div :class="styles.gridCell">
+        <label :class="styles.gridLabel">右上</label>
         <ElInputNumber
           :model-value="trVal"
           :min="0"
           :max="200"
           size="small"
           controls-position="right"
-          :class="$style.gridInput"
+          :class="styles.gridInput"
           @update:model-value="(v: number | undefined) => applyCorner('topRight', v)"
         />
       </div>
-      <div :class="$style.gridCell">
-        <label :class="$style.gridLabel">右下</label>
+      <div :class="styles.gridCell">
+        <label :class="styles.gridLabel">右下</label>
         <ElInputNumber
           :model-value="brVal"
           :min="0"
           :max="200"
           size="small"
           controls-position="right"
-          :class="$style.gridInput"
+          :class="styles.gridInput"
           @update:model-value="(v: number | undefined) => applyCorner('bottomRight', v)"
         />
       </div>
-      <div :class="$style.gridCell">
-        <label :class="$style.gridLabel">左下</label>
+      <div :class="styles.gridCell">
+        <label :class="styles.gridLabel">左下</label>
         <ElInputNumber
           :model-value="blVal"
           :min="0"
           :max="200"
           size="small"
           controls-position="right"
-          :class="$style.gridInput"
+          :class="styles.gridInput"
           @update:model-value="(v: number | undefined) => applyCorner('bottomLeft', v)"
         />
       </div>
     </div>
   </div>
 </template>
-
-<style module>
-.editor {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-
-.boxWrapper {
-  position: relative;
-  width: 72px;
-  height: 56px;
-}
-
-.box {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border: 2px solid #dcdfe6;
-  background: #fafafa;
-}
-
-.center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.centerLabel {
-  font-size: 10px;
-  color: #909399;
-}
-
-.linkBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  color: #909399;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.linkBtn:hover {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-}
-
-.linkBtnActive {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-  background: #ecf5ff;
-}
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.controlRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.controlLabel {
-  width: 32px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  text-align: right;
-}
-
-.numberInput {
-  flex: 1;
-}
-
-/* 四角独立输入网格 */
-.controlsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.gridCell {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.gridLabel {
-  width: 24px;
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  text-align: right;
-}
-
-.gridInput {
-  flex: 1;
-  min-width: 0;
-}
-</style>

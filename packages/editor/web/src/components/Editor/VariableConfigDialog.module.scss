@@ -1,0 +1,73 @@
+.body {
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 统一表单控件高度 32px */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+/* el-input-number 内部的 el-input 与其他表单控件保持 32px 一致 */
+.body :global(.el-input-number .el-input__wrapper) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+/* el-input-number 使用 Element Plus 原生样式 */
+.body :global(.el-input-number) {
+  --el-input-number-width: 200px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.card {
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg-color-surface);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-title);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.label {
+  width: 50px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-regular);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 12px;
+  padding: 0 4px;
+}

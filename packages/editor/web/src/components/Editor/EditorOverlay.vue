@@ -22,6 +22,7 @@ import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { ResizeHandle } from '../../composables/useResize'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import WidgetContextMenu from './WidgetContextMenu.vue'
+import styles from './EditorOverlay.module.scss'
 
 // ================================================================
 // 递归展开 Widget 树，子组件坐标转为画布绝对坐标
@@ -152,7 +153,7 @@ const selectionStyle = computed(() => {
     top: `${y + delta.my}px`,
     width: `${w.position.w + delta.bw}px`,
     height: `${w.position.h + delta.bh}px`,
-    border: '2px solid var(--el-color-primary)',
+    border: '2px solid var(--color-primary)',
     pointerEvents: 'none' as const,
     zIndex: 9999,
   }
@@ -230,7 +231,7 @@ const containerHighlightStyle = computed(() => {
     top: `${c.position.y}px`,
     width: `${c.position.w}px`,
     height: `${c.position.h}px`,
-    border: '2px dashed var(--el-color-primary)',
+    border: '2px dashed var(--color-primary)',
     backgroundColor: 'rgba(64, 158, 255, 0.1)',
     pointerEvents: 'none' as const,
     zIndex: 9998,
@@ -345,13 +346,13 @@ function handleDrop(e: DragEvent) {
 <template>
   <div
     ref="overlayRef"
-    :class="$style.overlay"
+    :class="styles.overlay"
     @click="handleOverlayClick"
     @dragover="handleDragOver"
     @drop="handleDrop"
   >
     <!-- 渲染层：事件穿透由 hitArea 层控制 -->
-    <div :class="$style.renderLayer">
+    <div :class="styles.renderLayer">
       <SchemaRender :widgets="widgetStore.widgets" mode="edit" />
     </div>
 
@@ -359,7 +360,7 @@ function handleDrop(e: DragEvent) {
     <div
       v-for="fw in flatWidgets"
       :key="fw.widget.id"
-      :class="$style.hitArea"
+      :class="styles.hitArea"
       :style="(() => {
         const d = getStyleSizeDelta(fw.widget)
         return {
@@ -388,7 +389,7 @@ function handleDrop(e: DragEvent) {
       <div
         v-for="handle in handles"
         :key="handle.type"
-        :class="$style.resizeHandle"
+        :class="styles.resizeHandle"
         :style="handle.style"
         @mousedown.stop="handleHandleMouseDown($event, handle.type)"
       />
@@ -397,7 +398,7 @@ function handleDrop(e: DragEvent) {
     <!-- 辅助线 -->
     <svg
       v-if="guideLines.length"
-      :class="$style.guideLines"
+      :class="styles.guideLines"
       :width="boardStore.canvas.width"
       :height="boardStore.canvas.height"
     >
@@ -408,7 +409,7 @@ function handleDrop(e: DragEvent) {
         :y1="line.type === 'horizontal' ? line.position : line.start"
         :x2="line.type === 'vertical' ? line.position : line.end"
         :y2="line.type === 'horizontal' ? line.position : line.end"
-        stroke="#409eff"
+        stroke="#0060A2"
         stroke-width="1"
         stroke-opacity="0.6"
         stroke-dasharray="4,4"
@@ -434,40 +435,3 @@ function handleDrop(e: DragEvent) {
   </div>
 </template>
 
-<style module>
-.overlay {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.renderLayer {
-  pointer-events: none;
-  position: relative;
-  z-index: 0;
-}
-
-.hitArea {
-  cursor: move;
-  pointer-events: auto;
-}
-
-.resizeHandle {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #fff;
-  border: 1px solid var(--el-color-primary);
-  z-index: 10000;
-  pointer-events: auto;
-  cursor: nw-resize;
-}
-
-.guideLines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 10001;
-}
-</style>

@@ -39,6 +39,7 @@ export const candlestickConfig: WidgetConfig = {
   ],
   propertyPanel: {
     basic: ['label'],
+    style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'dateField', label: '日期字段', type: 'input', placeholder: '如: date' },
       { key: 'openField', label: '开盘字段', type: 'input', placeholder: '如: open' },

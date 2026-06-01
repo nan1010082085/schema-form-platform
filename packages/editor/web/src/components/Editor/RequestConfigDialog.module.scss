@@ -1,0 +1,54 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 统一表单控件高度 32px（与 EventConfigDialog 对齐） */
+.body :global(.el-input__wrapper),
+.body :global(.el-select .el-input__wrapper),
+.body :global(.el-button:not(.is-text):not(.is-link)) {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  line-height: 32px;
+}
+
+.section {
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--bg-color-gray-light);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}

@@ -7,6 +7,7 @@
  */
 import { ref, watch } from 'vue'
 import { ElInput } from 'element-plus'
+import styles from './OptionsEditor.module.scss'
 
 interface DictItem {
   label: string
@@ -55,13 +56,13 @@ function updateOptionValue(index: number, value: string) {
 </script>
 
 <template>
-  <div :class="$style.container">
-    <div :class="$style.label">{{ label }}</div>
-    <div :class="$style.list">
+  <div :class="styles.container">
+    <div :class="styles.label">{{ label }}</div>
+    <div :class="styles.list">
       <div
         v-for="(opt, i) in localOptions"
         :key="i"
-        :class="$style.row"
+        :class="styles.row"
       >
         <ElInput
           :model-value="opt.label"
@@ -75,66 +76,9 @@ function updateOptionValue(index: number, value: string) {
           size="small"
           @update:model-value="(v: string) => updateOptionValue(i, v)"
         />
-        <button :class="$style.remove" @click="removeOption(i)">&times;</button>
+        <button :class="styles.remove" @click="removeOption(i)">&times;</button>
       </div>
-      <button :class="$style.add" @click="addOption">+ 添加选项</button>
+      <button :class="styles.add" @click="addOption">+ 添加选项</button>
     </div>
   </div>
 </template>
-
-<style module>
-.container {
-  margin-bottom: 8px;
-}
-
-.label {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.remove {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  color: #f56c6c;
-  cursor: pointer;
-  font-size: 16px;
-  flex-shrink: 0;
-  border-radius: 4px;
-}
-
-.remove:hover {
-  background: #fef0f0;
-}
-
-.add {
-  border: 1px dashed #dcdfe6;
-  background: transparent;
-  color: #909399;
-  font-size: 12px;
-  padding: 4px 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.add:hover {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-}
-</style>

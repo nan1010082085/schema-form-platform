@@ -1,0 +1,52 @@
+.editor {
+  width: 100%;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-color-placeholder);
+  font-size: 12px;
+  padding: 12px 0;
+}
+
+.item {
+  border: 1px solid var(--border-color-light);
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--bg-color-gray-light);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.itemTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color-title);
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  min-height: 32px;
+}
+
+.label {
+  width: 60px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  line-height: 32px;
+}

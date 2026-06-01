@@ -16,6 +16,7 @@ import type { SearchFieldConfig } from '../base/types'
 import { useWorkerRequest } from '@/composables/useWorkerRequest'
 import { useLogger } from '@/composables/useLogger'
 import { useExposeWidget } from '@/composables/useExposeWidget'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const eventCtx = inject(EVENT_CONTEXT_KEY, null)
@@ -132,17 +133,17 @@ defineExpose({
 </script>
 
 <template>
-  <div :class="$style.container">
+  <div :class="styles.container">
     <!-- 标题 -->
-    <div :class="$style.header">
-      <span :class="$style.title">{{ (widgetData.props?.title as string) || '列表' }}</span>
+    <div :class="styles.header">
+      <span :class="styles.title">{{ (widgetData.props?.title as string) || '列表' }}</span>
     </div>
 
     <!-- 搜索表单 -->
-    <div v-if="searchFields.length > 0" :class="$style.searchBar">
+    <div v-if="searchFields.length > 0" :class="styles.searchBar">
       <template v-for="field in searchFields" :key="field.field">
-        <div :class="$style.searchItem">
-          <span v-if="field.label" :class="$style.searchLabel">{{ field.label }}</span>
+        <div :class="styles.searchItem">
+          <span v-if="field.label" :class="styles.searchLabel">{{ field.label }}</span>
           <el-input
             v-if="field.type === 'input'"
             v-model="searchModel[field.field]"
@@ -187,7 +188,7 @@ defineExpose({
           />
         </div>
       </template>
-      <div :class="$style.searchActions">
+      <div :class="styles.searchActions">
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
       </div>
@@ -199,7 +200,7 @@ defineExpose({
       :data="tableData"
       :stripe="widgetData.props?.stripe !== false"
       :border="widgetData.props?.border !== false"
-      :class="$style.table"
+      :class="styles.table"
     >
       <el-table-column
         v-for="col in columns"
@@ -217,68 +218,8 @@ defineExpose({
       :total="total"
       :page-size="pageSize"
       :current-page="currentPage"
-      :class="$style.pagination"
+      :class="styles.pagination"
       @current-change="handlePageChange"
     />
   </div>
 </template>
-
-<style module>
-.container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-}
-
-.header {
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 14px;
-  color: #303133;
-}
-
-.searchBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
-  background: #fafafa;
-}
-
-.searchItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.searchLabel {
-  font-size: 13px;
-  color: #606266;
-  white-space: nowrap;
-}
-
-.searchActions {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.table {
-  flex: 1;
-  min-height: 0;
-}
-
-.pagination {
-  padding: 12px;
-  display: flex;
-  justify-content: flex-end;
-}
-</style>

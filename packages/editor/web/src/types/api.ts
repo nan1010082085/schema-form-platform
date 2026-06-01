@@ -38,6 +38,7 @@ export interface SchemaListItem {
   status: SchemaStatusValue
   json?: PartialWidget[]
   thumbnail?: string
+  publishId?: string
   createdAt: string
   updatedAt: string
 }

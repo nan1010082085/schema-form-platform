@@ -10,6 +10,7 @@
 import { ref, computed } from 'vue'
 import { ElInputNumber, ElColorPicker, ElSelect, ElOption, ElTooltip } from 'element-plus'
 import { Link } from '@element-plus/icons-vue'
+import styles from './BorderEditor.module.scss'
 
 const props = defineProps<{
   value?: Record<string, string>
@@ -146,44 +147,44 @@ const borderStyleOptions = [
 </script>
 
 <template>
-  <div :class="$style.editor">
+  <div :class="styles.editor">
     <!-- 视觉预览区域 -->
-    <div :class="$style.preview">
-      <div :class="$style.box">
+    <div :class="styles.preview">
+      <div :class="styles.box">
         <!-- Top -->
         <div
-          :class="[$style.side, $style.sideTop, activeSide === 'top' && $style.sideActive]"
+          :class="[styles.side, styles.sideTop, activeSide === 'top' && styles.sideActive]"
           :style="getSideStyle('top')"
           @click="selectSide('top')"
         />
         <!-- Right -->
         <div
-          :class="[$style.side, $style.sideRight, activeSide === 'right' && $style.sideActive]"
+          :class="[styles.side, styles.sideRight, activeSide === 'right' && styles.sideActive]"
           :style="getSideStyle('right')"
           @click="selectSide('right')"
         />
         <!-- Bottom -->
         <div
-          :class="[$style.side, $style.sideBottom, activeSide === 'bottom' && $style.sideActive]"
+          :class="[styles.side, styles.sideBottom, activeSide === 'bottom' && styles.sideActive]"
           :style="getSideStyle('bottom')"
           @click="selectSide('bottom')"
         />
         <!-- Left -->
         <div
-          :class="[$style.side, $style.sideLeft, activeSide === 'left' && $style.sideActive]"
+          :class="[styles.side, styles.sideLeft, activeSide === 'left' && styles.sideActive]"
           :style="getSideStyle('left')"
           @click="selectSide('left')"
         />
         <!-- Center label -->
-        <div :class="$style.center">
-          <span :class="$style.centerLabel">{{ currentWidth }}px</span>
+        <div :class="styles.center">
+          <span :class="styles.centerLabel">{{ currentWidth }}px</span>
         </div>
       </div>
 
       <!-- Link toggle -->
       <ElTooltip :content="linked ? '解除链接' : '链接四边'" placement="top" :show-after="300">
         <button
-          :class="[$style.linkBtn, linked && $style.linkBtnActive]"
+          :class="[styles.linkBtn, linked && styles.linkBtnActive]"
           @click="toggleLinked"
         >
           <el-icon :size="14"><Link /></el-icon>
@@ -192,7 +193,7 @@ const borderStyleOptions = [
     </div>
 
     <!-- 选中边提示（仅解除链接模式） -->
-    <div v-if="!linked" :class="$style.sideHint">
+    <div v-if="!linked" :class="styles.sideHint">
       <template v-if="activeSide">
         当前编辑：{{ { top: '上边', right: '右边', bottom: '下边', left: '左边' }[activeSide] }}
       </template>
@@ -200,25 +201,25 @@ const borderStyleOptions = [
     </div>
 
     <!-- 编辑控件 -->
-    <div :class="$style.controls">
-      <div :class="$style.controlRow">
-        <label :class="$style.controlLabel">宽度</label>
+    <div :class="styles.controls">
+      <div :class="styles.controlRow">
+        <label :class="styles.controlLabel">宽度</label>
         <ElInputNumber
           :model-value="currentWidth"
           :min="0"
           :max="20"
           size="small"
           controls-position="right"
-          :class="$style.numberInput"
+          :class="styles.numberInput"
           @update:model-value="onWidthChange"
         />
       </div>
-      <div :class="$style.controlRow">
-        <label :class="$style.controlLabel">样式</label>
+      <div :class="styles.controlRow">
+        <label :class="styles.controlLabel">样式</label>
         <ElSelect
           :model-value="currentStyle"
           size="small"
-          :class="$style.selectInput"
+          :class="styles.selectInput"
           @update:model-value="onStyleChange"
         >
           <ElOption
@@ -229,8 +230,8 @@ const borderStyleOptions = [
           />
         </ElSelect>
       </div>
-      <div :class="$style.controlRow">
-        <label :class="$style.controlLabel">颜色</label>
+      <div :class="styles.controlRow">
+        <label :class="styles.controlLabel">颜色</label>
         <ElColorPicker
           :model-value="currentColor"
           size="small"
@@ -241,145 +242,3 @@ const borderStyleOptions = [
     </div>
   </div>
 </template>
-
-<style module>
-.editor {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-
-.box {
-  position: relative;
-  width: 72px;
-  height: 56px;
-  background: #fafafa;
-}
-
-.side {
-  position: absolute;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.side:hover {
-  background-color: rgba(64, 158, 255, 0.15);
-}
-
-.sideActive {
-  background-color: rgba(64, 158, 255, 0.3) !important;
-}
-
-.sideTop {
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  border-top: 2px solid #dcdfe6;
-}
-
-.sideRight {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 6px;
-  border-right: 2px solid #dcdfe6;
-}
-
-.sideBottom {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  border-bottom: 2px solid #dcdfe6;
-}
-
-.sideLeft {
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 6px;
-  border-left: 2px solid #dcdfe6;
-}
-
-.center {
-  position: absolute;
-  inset: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.centerLabel {
-  font-size: 10px;
-  color: #909399;
-}
-
-.sideHint {
-  font-size: 11px;
-  color: #909399;
-  text-align: center;
-}
-
-.linkBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  color: #909399;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.linkBtn:hover {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-}
-
-.linkBtnActive {
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-  background: #ecf5ff;
-}
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.controlRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.controlLabel {
-  width: 32px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  text-align: right;
-}
-
-.numberInput {
-  flex: 1;
-}
-
-.selectInput {
-  flex: 1;
-}
-</style>

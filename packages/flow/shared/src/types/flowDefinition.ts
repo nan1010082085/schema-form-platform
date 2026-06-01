@@ -19,7 +19,7 @@ export interface FlowDefinitionData {
 export interface FlowVersionData {
   id: string
   definitionId: string
-  version: number
+  version: string
   graph: FlowGraph
   metadata?: FlowGraphMetadata
   createdAt: Date
