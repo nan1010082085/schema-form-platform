@@ -94,7 +94,7 @@ function on<K extends keyof BridgeIncomingEvents>(
     listeners.set(type, new Set())
 
     if (isMicroApp() && window.microApp) {
-      // micro-app 模式：监听 datachange 事件
+      // micro-app 模式：通过 addDataListener 监听宿主数据变化
       const dataChangeHandler = (data: Record<string, unknown>) => {
         if (data?.type && typeof data.type === 'string') {
           const handlers = listeners.get(data.type)
@@ -105,7 +105,11 @@ function on<K extends keyof BridgeIncomingEvents>(
           }
         }
       }
-      window.microApp.addEventListener('datachange', dataChangeHandler)
+      if (typeof window.microApp.addEventListener === 'function') {
+        window.microApp.addEventListener('datachange', dataChangeHandler)
+      } else if (typeof window.microApp.addDataListener === 'function') {
+        window.microApp.addDataListener(dataChangeHandler)
+      }
     } else {
       // standalone 模式：监听 postMessage
       window.addEventListener('message', (event: MessageEvent) => {

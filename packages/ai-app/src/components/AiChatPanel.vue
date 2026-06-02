@@ -15,6 +15,7 @@ export interface AiChatPanelProps {
 
 const props = withDefaults(defineProps<AiChatPanelProps>(), {
   agentOptions: () => [
+    { value: 'auto', label: 'Auto' },
     { value: 'editor', label: 'Editor' },
     { value: 'flow', label: 'Flow' },
   ],
@@ -28,7 +29,7 @@ const emit = defineEmits<{
 }>()
 
 const inputText = ref('')
-const selectedAgent = ref<AgentType>(props.agent)
+const selectedAgent = ref<AgentType>('auto')
 const messagesRef = ref<HTMLElement>()
 
 /** Transform store AIMessage into display-oriented props for AiMessage component */
@@ -63,7 +64,9 @@ function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
 }
 
 function getLabel(msg: AIMessage): string {
-  return msg.role === 'user' ? 'You' : (props.agent === 'editor' ? 'Editor' : 'Flow')
+  if (msg.role === 'user') return 'You'
+  if (props.agent === 'auto') return 'AI'
+  return props.agent === 'editor' ? 'Editor' : 'Flow'
 }
 
 function scrollToBottom() {
@@ -110,7 +113,7 @@ function handleCardAction(
       <div :class="$style.headerLeft">
         <span :class="$style.title">{{ title }}</span>
         <span :class="[$style.roleBadge, $style[agent]]">
-          {{ agent === 'editor' ? 'Editor' : 'Flow' }}
+          {{ agent === 'auto' ? 'Auto' : agent === 'editor' ? 'Editor' : 'Flow' }}
         </span>
       </div>
       <div :class="$style.headerActions">
@@ -169,19 +172,20 @@ function handleCardAction(
           <div :class="$style.inputHint">
             <kbd>Enter</kbd>&nbsp;发送&nbsp;&middot;&nbsp;<kbd>Shift+Enter</kbd>&nbsp;换行
           </div>
-          <select
+          <el-select
             v-model="selectedAgent"
             :class="$style.agentSelect"
             :disabled="disabled"
+            size="small"
+            teleport="disabled"
           >
-            <option
+            <el-option
               v-for="opt in agentOptions"
               :key="opt.value"
+              :label="opt.label"
               :value="opt.value"
-            >
-              {{ opt.label }}
-            </option>
-          </select>
+            />
+          </el-select>
         </div>
       </div>
     </div>

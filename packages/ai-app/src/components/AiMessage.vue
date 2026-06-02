@@ -37,7 +37,7 @@ export interface AiMessageProps {
   /** label shown above the message, e.g. "You", "Editor", "Flow" */
   label: string
   /** agent type for coloring — only used when role is 'assistant' */
-  agent?: 'editor' | 'flow'
+  agent?: 'editor' | 'flow' | 'auto'
   content?: string
   thinking?: string
   tip?: string

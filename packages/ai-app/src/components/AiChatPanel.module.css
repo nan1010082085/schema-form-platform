@@ -38,6 +38,11 @@
   font-weight: 500;
 }
 
+.roleBadge.auto {
+  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #0060A2);
+}
+
 .roleBadge.editor {
   background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
   color: var(--ai-color-success, #26A036);
@@ -183,24 +188,42 @@
   font-family: inherit;
 }
 
-/* Native agent select — matches design exactly */
+/* Agent select — el-select themed */
 .agentSelect {
-  padding: 3px 8px;
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: var(--ai-radius-sm, 2px);
-  font-size: 11px;
-  color: var(--ai-text-hint, #999999);
-  font-family: inherit;
-  background: var(--ai-bg-gray, #F5F7FA);
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23999' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  padding-right: 20px;
+  --el-select-border-color-hover: var(--ai-color-primary, #0060A2);
+  --el-select-input-focus-border-color: var(--ai-color-primary, #0060A2);
+  --el-select-input-color: var(--ai-color-primary, #0060A2);
+  --el-select-input-font-size: 11px;
+  --el-fill-color-light: var(--ai-color-primary-bg, #EEF5FF);
+  width: 88px;
+  flex-shrink: 0;
 }
 
-.agentSelect:focus {
-  border-color: var(--ai-color-primary, #0060A2);
+.agentSelect :deep(.el-input__wrapper) {
+  background-color: var(--ai-color-primary-bg, #EEF5FF);
+}
+
+.agentSelect :deep(.el-input__inner) {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.agentSelect :deep(.el-input__suffix) {
+  color: var(--ai-color-primary, #0060A2);
+}
+
+/* 下拉面板选项主题色 */
+.agentSelect :deep(.el-select-dropdown__item) {
+  font-size: 11px;
+}
+
+.agentSelect :deep(.el-select-dropdown__item.is-hovering) {
+  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.agentSelect :deep(.el-select-dropdown__item.is-selected) {
+  color: var(--ai-color-primary, #0060A2);
+  font-weight: 600;
 }

@@ -24,7 +24,7 @@ export const useAiStore = defineStore('ai', () => {
   const conversations = ref<Conversation[]>([])
   const currentConversationId = ref<string | null>(null)
   const messages = ref<AIMessage[]>([])
-  const activeAgent = ref<AgentType>('editor')
+  const activeAgent = ref<AgentType>('auto')
   const context = ref<ChatContext>({ source: 'standalone' })
   const loading = ref(false)
   const currentSchema = ref<Widget[] | null>(null)
@@ -166,7 +166,8 @@ export const useAiStore = defineStore('ai', () => {
 
   function switchAgent(agent: AgentType): void {
     activeAgent.value = agent
-    context.value.source = agent
+    // 'auto' 对应后端 standalone 模式，由 Router Agent 自动分发
+    context.value.source = agent === 'auto' ? 'standalone' : (agent as 'editor' | 'flow')
   }
 
   function clearConversation(): void {

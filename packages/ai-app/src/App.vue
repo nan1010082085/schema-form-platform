@@ -37,6 +37,28 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
   --radius-sm: 2px;
   --radius-md: 4px;
 
+  /* Element Plus 主题覆盖 — 与 shared/styles/_theme.scss 保持一致 */
+  --el-color-primary: #0060A2;
+  --el-color-primary-light-3: #4d8fbe;
+  --el-color-primary-light-5: #80b0d1;
+  --el-color-primary-light-7: #b3d0e4;
+  --el-color-primary-light-8: #cce0ee;
+  --el-color-primary-light-9: #e6f0f7;
+  --el-color-primary-dark-2: #004c82;
+  --el-color-warning: #F09700;
+  --el-color-danger: #E50113;
+  --el-color-success: #26A036;
+  --el-text-color-primary: #333333;
+  --el-text-color-regular: #666666;
+  --el-text-color-placeholder: #999999;
+  --el-border-color: #D5DDE3;
+  --el-border-color-light: #EBEDF3;
+  --el-border-color-lighter: #EBEDF3;
+  --el-border-color-extra-light: #EBEDF3;
+  --el-border-radius-base: 2px;
+  --el-border-radius-small: 2px;
+  --el-font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', sans-serif;
+
   /* 组件层令牌（--ai- 前缀，与组件 fallback 值一致） */
   --ai-color-primary: #0060A2;
   --ai-color-primary-hover: #035B9C;
@@ -73,4 +95,10 @@ body {
 #app {
   height: 100%;
 }
+
+/* el-config-provider 是 RouterView 的直接父容器，必须撑满 */
+#app > :first-child {
+  height: 100%;
+}
+
 </style>
