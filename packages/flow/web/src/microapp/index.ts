@@ -9,14 +9,9 @@ import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { createChildApp } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
-import type { Router } from 'vue-router'
 import App from '../App.vue'
 import { applyThemeInline, installThemeWatchdog } from './themeGuard.js'
-
-export interface FlowChildAppOptions {
-  /** Vue Router 实例 */
-  router: Router
-}
+import { createFlowRouter } from '../router/index.js'
 
 /**
  * 初始化 flow 子应用
@@ -24,9 +19,7 @@ export interface FlowChildAppOptions {
  * - 子应用模式：仅安装样式守卫，引擎由宿主启动
  * - standalone 模式：启动 micro-app 引擎 + 样式守卫
  */
-export function createFlowChildApp(options: FlowChildAppOptions): void {
-  const { router } = options
-
+export function createFlowChildApp(): void {
   if (window.__MICRO_APP_ENVIRONMENT__) {
     installStyleGuard()
   } else {
@@ -36,14 +29,17 @@ export function createFlowChildApp(options: FlowChildAppOptions): void {
   applyThemeInline()
   installThemeWatchdog()
 
+  let router: ReturnType<typeof createFlowRouter>
+
   createChildApp({
     createApp: () => {
+      router = createFlowRouter()
       const app = createApp(App)
       app.use(createPinia())
       app.use(router)
       app.use(ElementPlus)
       return app
     },
-    router,
+    getRouter: () => router,
   })
 }

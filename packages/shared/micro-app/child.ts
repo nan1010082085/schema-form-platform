@@ -18,11 +18,12 @@ declare global {
 
 let app: VueApp | null = null
 
-function unmountApp(router?: ChildAppOptions['router']): void {
+function unmountApp(router?: ChildAppOptions['router'], getRouter?: ChildAppOptions['getRouter']): void {
   if (!app) return
+  const r = router ?? getRouter?.()
   app.unmount()
   app = null
-  router?.replace('/')
+  r?.replace('/')
 }
 
 /**
@@ -59,7 +60,7 @@ function getMicroAppContainer(appName: string): Element | null {
  * ```
  */
 export function createChildApp(options: ChildAppOptions): void {
-  const { createApp, selector = '#app', router, mount, unmount, bootstrap } = options
+  const { createApp, selector = '#app', mount, unmount, bootstrap } = options
 
   function render(container?: Element | null) {
     app = createApp()
@@ -79,7 +80,7 @@ export function createChildApp(options: ChildAppOptions): void {
     }
 
     window.unmount = async () => {
-      unmountApp(router)
+      unmountApp(options.router, options.getRouter)
       await unmount?.()
     }
 

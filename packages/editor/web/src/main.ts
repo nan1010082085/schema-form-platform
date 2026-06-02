@@ -9,7 +9,7 @@ import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
 import { applyThemeInline, installThemeWatchdog } from '@/microapp/themeGuard'
 
 import App from './App.vue'
-import router from './router'
+import { createEditorRouter } from './router'
 import { configureApiClient } from './utils/apiClient'
 import { registerAllWidgets } from './widgets'
 
@@ -24,8 +24,11 @@ if (window.__MICRO_APP_ENVIRONMENT__) {
   installThemeWatchdog()
 }
 
+let router: ReturnType<typeof createEditorRouter>
+
 createChildApp({
   createApp: () => {
+    router = createEditorRouter()
     const app = createApp(App)
     const pinia = createPinia()
 
@@ -41,5 +44,5 @@ createChildApp({
 
     return app
   },
-  router,
+  getRouter: () => router,
 })

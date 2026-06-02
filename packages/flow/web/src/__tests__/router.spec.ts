@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import router from '../router/index'
+import { createFlowRouter } from '../router/index'
 
 describe('router', () => {
+  const router = createFlowRouter()
+
   it('has instances route', () => {
     const route = router.getRoutes().find((r) => r.path === '/instances')
     expect(route).toBeDefined()

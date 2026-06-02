@@ -60,6 +60,15 @@ export interface ChildAppOptions extends ChildAppHooks {
   selector?: string
   /** 路由实例（unmount 时重置） */
   router?: { replace: (path: string) => void }
+  /**
+   * 延迟获取路由实例（unmount 时调用）
+   *
+   * 用于 micro-app 模式下 router 在 createApp 回调内部创建的场景：
+   * 模块顶层执行时 __MICRO_APP_ENVIRONMENT__ 尚未注入，无法判断 history 类型，
+   * 因此必须将 router 创建延迟到 window.mount 触发时。
+   * getRouter 在 unmount 阶段被调用，此时 router 已经通过 createApp 回调创建完毕。
+   */
+  getRouter?: () => { replace: (path: string) => void } | undefined
 }
 
 // ---- Bridge 通信 ----
