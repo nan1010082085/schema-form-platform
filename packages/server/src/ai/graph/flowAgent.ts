@@ -2,12 +2,12 @@
  * Flow Agent node.
  *
  * Calls DeepSeek to generate FlowGraph JSON (nodes + edges) from natural language.
- * Supports streaming with tool calling: `streamFlowAgent()`.
+ * System prompt 从 @schema-form/shared-ai 动态构建，Flow 节点扩展自动覆盖。
  */
 
 import OpenAI from 'openai'
 import type { AIConversationState } from './state.js'
-import { FLOW_SYSTEM_PROMPT } from '../prompts/flow.js'
+import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { FLOW_TOOLS, executeFlowTool, validateFlowGraph } from '../tools/flowTools.js'
 import {
   getClient,
@@ -21,6 +21,25 @@ import {
   type StreamEvent,
   type ToolCallAccumulator,
 } from './agentBase.js'
+
+// 动态加载 metadata 并构建 prompt
+let flowSystemPrompt: string | null = null
+
+async function loadMetadata() {
+  const { readFileSync } = await import('node:fs')
+  const { dirname, join } = await import('node:path')
+  const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
+  const jsonPath = join(dirname(pkgPath), 'metadata.json')
+  return JSON.parse(readFileSync(jsonPath, 'utf-8'))
+}
+
+async function getFlowSystemPrompt(): Promise<string> {
+  if (!flowSystemPrompt) {
+    const metadata = await loadMetadata()
+    flowSystemPrompt = buildFlowSystemPrompt(metadata)
+  }
+  return flowSystemPrompt
+}
 
 // ────────────────────────────────────────────
 // Helpers
@@ -83,7 +102,8 @@ export async function* streamFlowAgent(
   state: AIConversationState,
 ): AsyncGenerator<StreamEvent> {
   const openai = getClient()
-  const messages = buildMessages(state, FLOW_SYSTEM_PROMPT, buildUserMessage)
+  const systemPrompt = await getFlowSystemPrompt()
+  const messages = buildMessages(state, systemPrompt, buildUserMessage)
   let fullContent = ''
   let toolRound = 0
 
@@ -213,6 +233,14 @@ export async function* streamFlowAgent(
 
   if (parsed.answer) {
     yield { type: 'text', content: parsed.answer }
+  } else if (fullContent.trim()) {
+    // Fallback：模型没有使用 <answer> 标签时，将去除 think 标签后的内容作为回答
+    const fallback = fullContent
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .trim()
+    if (fallback) {
+      yield { type: 'text', content: fallback }
+    }
   }
 
   if (parsed.tip) {

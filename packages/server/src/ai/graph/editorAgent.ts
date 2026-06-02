@@ -2,14 +2,13 @@
  * Editor Agent node.
  *
  * Calls DeepSeek to generate Widget Schema JSON from natural language.
- * Supports streaming with tool calling: `streamEditorAgent()`.
+ * System prompt 从 @schema-form/shared-ai 动态构建，Widget 扩展自动覆盖。
  */
 
 import OpenAI from 'openai'
 import type { AIConversationState } from './state.js'
-import { EDITOR_SYSTEM_PROMPT } from '../prompts/editor.js'
-import { EDITOR_TOOLS, executeEditorTool } from '../tools/editorTools.js'
-import { validateSchema } from '../tools/widgetTools.js'
+import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
+import { EDITOR_TOOLS, executeEditorTool, getWidgetCatalogueFromMetadata } from '../tools/editorTools.js'
 import {
   getClient,
   buildMessages,
@@ -22,6 +21,25 @@ import {
   type StreamEvent,
   type ToolCallAccumulator,
 } from './agentBase.js'
+
+// 动态加载 metadata 并构建 prompt
+let editorSystemPrompt: string | null = null
+
+async function loadMetadata() {
+  const { readFileSync } = await import('node:fs')
+  const { dirname, join } = await import('node:path')
+  const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
+  const jsonPath = join(dirname(pkgPath), 'metadata.json')
+  return JSON.parse(readFileSync(jsonPath, 'utf-8'))
+}
+
+async function getEditorSystemPrompt(): Promise<string> {
+  if (!editorSystemPrompt) {
+    const metadata = await loadMetadata()
+    editorSystemPrompt = buildEditorSystemPrompt(metadata)
+  }
+  return editorSystemPrompt
+}
 
 // ────────────────────────────────────────────
 // Helpers
@@ -80,7 +98,8 @@ export async function* streamEditorAgent(
   state: AIConversationState,
 ): AsyncGenerator<StreamEvent> {
   const openai = getClient()
-  const messages = buildMessages(state, EDITOR_SYSTEM_PROMPT, buildUserMessage)
+  const systemPrompt = await getEditorSystemPrompt()
+  const messages = buildMessages(state, systemPrompt, buildUserMessage)
   let fullContent = ''
   let toolRound = 0
 
@@ -210,6 +229,14 @@ export async function* streamEditorAgent(
 
   if (parsed.answer) {
     yield { type: 'text', content: parsed.answer }
+  } else if (fullContent.trim()) {
+    // Fallback：模型没有使用 <answer> 标签时，将去除 think 标签后的内容作为回答
+    const fallback = fullContent
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .trim()
+    if (fallback) {
+      yield { type: 'text', content: fallback }
+    }
   }
 
   if (parsed.tip) {
@@ -218,7 +245,31 @@ export async function* streamEditorAgent(
 
   const widgets = parseSchemaFromOutput(parsed.schemaRaw)
   if (widgets.length > 0) {
-    const validation = validateSchema(widgets)
+    // 校验：从 metadata 获取有效类型集合
+    const meta = await getWidgetCatalogueFromMetadata()
+    const validTypes = new Set(meta.map(w => w.type))
+    const containerTypes = new Set(meta.filter(w => w.canHaveChildren).map(w => w.type))
+    const errors: Array<{ path: string; message: string }> = []
+
+    function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        const path = prefix ? `${prefix}[${i}]` : `[${i}]`
+        const type = node.type as string | undefined
+        if (!type) { errors.push({ path: `${path}.type`, message: '缺少 type' }); continue }
+        if (!validTypes.has(type)) { errors.push({ path: `${path}.type`, message: `无效类型 "${type}"` }); continue }
+        if (!node.id) errors.push({ path: `${path}.id`, message: '缺少 id' })
+        if (containerTypes.has(type)) {
+          if (!Array.isArray(node.children)) errors.push({ path: `${path}.children`, message: `容器 "${type}" 需要 children` })
+          else walk(node.children as Record<string, unknown>[], path, depth + 1)
+        } else if (depth === 0) {
+          errors.push({ path, message: `基础组件 "${type}" 必须嵌套在容器内` })
+        }
+      }
+    }
+    walk(widgets, '', 0)
+
+    const validation = { valid: errors.length === 0, errors }
     if (!validation.valid) {
       yield {
         type: 'error',
