@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 支撑层 — 多智能体对话式生成</title>
+<title>AI 支撑层 — LangGraph 多智能体对话式生成</title>
 <style>
   :root {
     --primary: #6c5ce7;
@@ -53,7 +53,7 @@
   .hero p { font-size: 1.15rem; color: #dfe6e9; max-width: 720px; margin: 0 auto; }
   .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
-  .badge-openai { background: #10a37f; color: #fff; }
+  .badge-langgraph { background: #1a1a2e; color: #fff; }
   .badge-deepseek { background: #0984e3; color: #fff; }
   .badge-vue { background: #42b883; color: #fff; }
   .badge-ts { background: #3178c6; color: #fff; }
@@ -236,10 +236,10 @@
 
 <div class="hero">
   <h1>AI 支撑层</h1>
-  <div class="pkg-name">packages/server/src/ai &nbsp;+&nbsp; packages/ai-app</div>
-  <p>基于 OpenAI SDK 直连 DeepSeek API 的多智能体对话式生成引擎。通过 Router / Editor / Flow 三种专家 Agent，实现表单 Schema 与流程图的自然语言驱动生成与迭代修改。</p>
+  <div class="pkg-name">packages/server/src/ai &nbsp;+&nbsp; packages/shared/ai &nbsp;+&nbsp; packages/ai-app</div>
+  <p>基于 LangGraph StateGraph 的多智能体对话式生成引擎。通过 Router / Editor / Flow 三种专家 Agent，配合 14 个 StructuredTool，实现表单 Schema 与流程图的自然语言驱动生成与迭代修改。</p>
   <div class="badges">
-    <span class="badge badge-openai">OpenAI SDK</span>
+    <span class="badge badge-langgraph">LangGraph</span>
     <span class="badge badge-deepseek">DeepSeek</span>
     <span class="badge badge-multiagent">多智能体</span>
     <span class="badge badge-vue">Vue 3</span>
@@ -256,6 +256,15 @@
 
 <div class="container">
 
+  <!-- Stats -->
+  <div class="stat-row" style="justify-content:center; margin-top:40px;">
+    <div class="stat"><div class="num">14</div><div class="label">StructuredTool</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Agent 节点</div></div>
+    <div class="stat"><div class="num">2</div><div class="label">ToolNode</div></div>
+    <div class="stat"><div class="num">5</div><div class="label">Graph 节点</div></div>
+    <div class="stat"><div class="num">9</div><div class="label">SSE 事件类型</div></div>
+  </div>
+
   <!-- ==================== 决策记录 ==================== -->
   <h2 class="section-title">决策记录</h2>
   <p class="section-desc">关键架构选型及理由</p>
@@ -263,24 +272,24 @@
     <table>
       <thead><tr><th>决策</th><th>结论</th><th>理由</th></tr></thead>
       <tbody>
-        <tr><td>AI SDK</td><td><span class="tag tag-green">OpenAI SDK</span></td><td>DeepSeek 兼容 OpenAI 接口，直接用 openai npm 包调用，零额外抽象层</td></tr>
-        <tr><td>模型提供商</td><td><span class="tag tag-blue">DeepSeek</span></td><td>成本低、中文能力强、tool calling 支持完善</td></tr>
-        <tr><td>Agent 循环</td><td><span class="tag tag-orange">while(true) 工具循环</span></td><td>最多 5 轮，LLM streaming + tool_calls 累积 + 执行 + 写回 messages</td></tr>
-        <tr><td>输出格式</td><td><span class="tag tag-purple">XML 标签（think/answer/tip/schema）</span></td><td>比 JSON 更稳定，DeepSeek 对 XML 标签遵循度高</td></tr>
-        <tr><td>交互模式</td><td><span class="tag tag-green">对话式（多轮）</span></td><td>用户可逐步细化需求，支持修改与迭代</td></tr>
-        <tr><td>Agent 路由</td><td><span class="tag tag-orange">standalone 用 Router，其余按 source 直分</span></td><td>编辑器/流程宿主已知来源，standalone 需 LLM 分类意图</td></tr>
-        <tr><td>服务位置</td><td><span class="tag tag-purple">packages/server/src/ai/</span></td><td>复用现有 Koa 服务，独立 AI 模块</td></tr>
+        <tr><td>Agent 框架</td><td><span class="tag tag-green">LangGraph StateGraph</span></td><td>取代手写 while(true) 循环，声明式图编排、内置条件路由、流式事件、状态检查点</td></tr>
+        <tr><td>模型</td><td><span class="tag tag-blue">deepseek-chat + JSON Mode</span></td><td>成本低、中文能力强、tool calling 支持完善；JSON Mode 确保结构化输出</td></tr>
+        <tr><td>LLM 接入</td><td><span class="tag tag-purple">ChatOpenAI (@langchain/openai)</span></td><td>LangChain 生态标准接口，支持 bindTools / streaming / modelKwargs</td></tr>
+        <tr><td>工具格式</td><td><span class="tag tag-orange">StructuredTool (zod schema)</span></td><td>14 个工具，类型安全的参数校验，自动生成 JSON Schema 供 LLM 调用</td></tr>
+        <tr><td>工具执行</td><td><span class="tag tag-blue">ToolNode (@langchain/langgraph/prebuilt)</span></td><td>LangGraph 内置工具执行节点，自动解析 tool_calls 并执行</td></tr>
+        <tr><td>状态管理</td><td><span class="tag tag-green">Annotation.Root() + MessagesAnnotation</span></td><td>LangGraph 原生状态定义，消息自动合并，自定义字段 last-write-wins</td></tr>
+        <tr><td>流式传输</td><td><span class="tag tag-cyan">graph.streamEvents() + SSE</span></td><td>LangGraph v2 事件流，覆盖节点执行、LLM token、工具调用全流程</td></tr>
+        <tr><td>状态持久化</td><td><span class="tag tag-orange">MemorySaver（开发）</span></td><td>进程内检查点；生产环境可替换为 MongoDB-backed checkpointer</td></tr>
+        <tr><td>领域知识</td><td><span class="tag tag-purple">@schema-form/shared-ai 动态 metadata</span></td><td>构建时从 editor/flow 提取 metadata.json，promptBuilder 自动生成 system prompt</td></tr>
         <tr><td>前端位置</td><td><span class="tag tag-purple">packages/ai-app/</span></td><td>独立 Vue 3 + Pinia 微应用，两种入口模式</td></tr>
         <tr><td>通信协议</td><td><span class="tag tag-cyan">Socket + bridge（postMessage/micro-app）</span></td><td>实时通信用 Socket，宿主嵌入用 bridge 双通道</td></tr>
-        <tr><td>对话持久化</td><td><span class="tag tag-green">MongoDB Mongoose</span></td><td>AIConversationModel 存储完整对话历史、工具调用记录、生成物</td></tr>
-        <tr><td>领域知识</td><td><span class="tag tag-orange">纯 Prompt</span></td><td>47 种 Widget + 12 种 BPMN 节点，有限集直接注入 system prompt</td></tr>
       </tbody>
     </table>
   </div>
 
   <!-- ==================== 整体架构 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">整体架构</h2>
-  <p class="section-desc">AI 微应用独立于 Editor 和 Flow，通过 bridge 嵌入宿主，服务端通过 OpenAI SDK 直连 DeepSeek，Agent 内部使用 while(true) 工具调用循环</p>
+  <p class="section-desc">LangGraph StateGraph 编排 5 个节点（router + 2 agent + 2 toolNode），通过 conditional edges 实现路由分发和工具调用循环</p>
 
   <div class="arch-diagram">
     <div class="arch-layer layer-canvas">
@@ -296,8 +305,7 @@
       <div class="arch-items">
         <div class="arch-item">Socket 实时通信</div>
         <div class="arch-item">bridge（postMessage / micro-app）</div>
-        <div class="arch-item">SSE 流式传输</div>
-        <div class="arch-item">fetch + ReadableStream</div>
+        <div class="arch-item">SSE 流式传输（fetch + ReadableStream）</div>
       </div>
     </div>
     <div class="arch-layer layer-api">
@@ -311,75 +319,193 @@
       </div>
     </div>
     <div class="arch-layer layer-agent">
-      <div class="layer-label">Agents</div>
+      <div class="layer-label">LangGraph</div>
       <div class="arch-items">
-        <div class="arch-item"><strong>Router Agent</strong> 意图识别 &amp; 分发（仅 standalone）</div>
-        <div class="arch-item"><strong>Editor Agent</strong> Widget Schema 生成</div>
-        <div class="arch-item"><strong>Flow Agent</strong> FlowGraph 生成</div>
+        <div class="arch-item"><strong>routerNode</strong> 意图识别 &amp; 分发</div>
+        <div class="arch-item"><strong>editorAgentNode</strong> Widget Schema 生成</div>
+        <div class="arch-item"><strong>flowAgentNode</strong> FlowGraph 生成</div>
+        <div class="arch-item"><strong>editorToolNode</strong> 6 工具执行</div>
+        <div class="arch-item"><strong>flowToolNode</strong> 6 工具执行</div>
       </div>
     </div>
     <div class="arch-layer layer-ai">
       <div class="layer-label">Runtime</div>
       <div class="arch-items">
-        <div class="arch-item">OpenAI SDK（baseURL: api.deepseek.com）</div>
-        <div class="arch-item">DeepSeek Chat 模型</div>
-        <div class="arch-item">while(true) 工具调用循环（max 5 轮）</div>
-        <div class="arch-item">XML 结构化输出解析</div>
-        <div class="arch-item">对话持久化（MongoDB）</div>
+        <div class="arch-item">ChatOpenAI（deepseek-chat）</div>
+        <div class="arch-item">JSON Mode（response_format）</div>
+        <div class="arch-item">14 StructuredTool（zod schema）</div>
+        <div class="arch-item">MemorySaver 检查点</div>
+        <div class="arch-item">@schema-form/shared-ai 动态 metadata</div>
       </div>
     </div>
   </div>
 
+  <!-- ==================== Graph 结构 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">LangGraph StateGraph</h2>
+  <p class="section-desc">声明式图编排：5 个节点 + 条件边路由，工具调用循环由 LangGraph 自动管理</p>
+
+  <div class="code-block">
+<span class="comment">// graph/graph.ts — StateGraph 组装</span>
+<span class="keyword">import</span> { StateGraph, END, START } <span class="keyword">from</span> <span class="string">'@langchain/langgraph'</span>
+<span class="keyword">import</span> { ToolNode } <span class="keyword">from</span> <span class="string">'@langchain/langgraph/prebuilt'</span>
+
+<span class="comment">// ToolNode 自动执行 LLM 返回的 tool_calls</span>
+<span class="keyword">const</span> editorToolNode = <span class="keyword">new</span> <span class="type">ToolNode</span>(editorTools)  <span class="comment">// 6 StructuredTool</span>
+<span class="keyword">const</span> flowToolNode = <span class="keyword">new</span> <span class="type">ToolNode</span>(flowTools)    <span class="comment">// 6 StructuredTool</span>
+
+<span class="keyword">const</span> builder = <span class="keyword">new</span> <span class="type">StateGraph</span>(AgentStateAnnotation)
+  <span class="comment">// 节点注册</span>
+  .<span class="fn">addNode</span>(<span class="string">'router'</span>, routerNode)
+  .<span class="fn">addNode</span>(<span class="string">'editor'</span>, editorAgentNode)
+  .<span class="fn">addNode</span>(<span class="string">'editorTools'</span>, editorToolNode)
+  .<span class="fn">addNode</span>(<span class="string">'flow'</span>, flowAgentNode)
+  .<span class="fn">addNode</span>(<span class="string">'flowTools'</span>, flowToolNode)
+
+  <span class="comment">// 入口</span>
+  .<span class="fn">addEdge</span>(START, <span class="string">'router'</span>)
+
+  <span class="comment">// Router → Agent（条件路由）</span>
+  .<span class="fn">addConditionalEdges</span>(<span class="string">'router'</span>, routeAfterRouter)
+
+  <span class="comment">// Agent → ToolNode 或 END（检查是否有 tool_calls）</span>
+  .<span class="fn">addConditionalEdges</span>(<span class="string">'editor'</span>, shouldCallTools)
+  .<span class="fn">addConditionalEdges</span>(<span class="string">'flow'</span>, shouldCallTools)
+
+  <span class="comment">// ToolNode → 回到对应 Agent（工具结果写回）</span>
+  .<span class="fn">addEdge</span>(<span class="string">'editorTools'</span>, <span class="string">'editor'</span>)
+  .<span class="fn">addEdge</span>(<span class="string">'flowTools'</span>, <span class="string">'flow'</span>)
+
+<span class="keyword">const</span> graph = builder.<span class="fn">compile</span>({ checkpointer })
+  </div>
+
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>图流转路径</h3>
+      <div class="flow-line" style="margin-top:12px;">
+        <span class="flow-step active">START</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step agent">router</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step agent">editor / flow</span>
+        <span class="flow-arrow">&harr;</span>
+        <span class="flow-step tool">ToolNode</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active">END</span>
+      </div>
+      <p style="margin-top:12px; font-size:0.88rem; color:var(--text-secondary);">
+        工具调用循环自动管理：Agent 返回 tool_calls 时路由到 ToolNode，执行后回到 Agent，无 tool_calls 时结束。
+      </p>
+    </div>
+    <div class="card">
+      <h3>条件边函数</h3>
+      <p style="margin-top:8px;"><code>routeAfterRouter(state)</code></p>
+      <p>根据 <code>state.currentAgent</code> 分发到 editor / flow / END</p>
+      <p style="margin-top:8px;"><code>shouldCallTools(state)</code></p>
+      <p>检查最后一条 AIMessage 是否有 <code>tool_calls</code>，有则路由到对应 ToolNode，否则 END</p>
+    </div>
+  </div>
+
+  <!-- ==================== State Annotation ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">状态定义（Annotation.Root）</h2>
+  <p class="section-desc">LangGraph Annotation 定义图状态，MessagesAnnotation 提供消息合并语义</p>
+
+  <div class="code-block">
+<span class="comment">// graph/state.ts — AgentStateAnnotation</span>
+<span class="keyword">import</span> { Annotation, MessagesAnnotation } <span class="keyword">from</span> <span class="string">'@langchain/langgraph'</span>
+
+<span class="keyword">export const</span> AgentStateAnnotation = Annotation.<span class="fn">Root</span>({
+  <span class="comment">// 消息字段继承 MessagesAnnotation（自动合并语义）</span>
+  ...MessagesAnnotation.spec,
+
+  <span class="comment">// 会话标识</span>
+  sessionId: <span class="type">Annotation</span>&lt;string&gt;({ reducer: (_, next) =&gt; next, default: () =&gt; <span class="string">''</span> }),
+  conversationId: <span class="type">Annotation</span>&lt;string&gt;({ reducer: (_, next) =&gt; next, default: () =&gt; <span class="string">''</span> }),
+
+  <span class="comment">// 当前活跃 Agent</span>
+  currentAgent: <span class="type">Annotation</span>&lt;<span class="string">'router'</span> | <span class="string">'editor'</span> | <span class="string">'flow'</span>&gt;({
+    reducer: (_, next) =&gt; next,
+    default: () =&gt; <span class="string">'router'</span>,
+  }),
+
+  <span class="comment">// 业务上下文</span>
+  context: <span class="type">Annotation</span>&lt;AIContext&gt;({
+    reducer: (_, next) =&gt; next,
+    default: () =&gt; ({ source: <span class="string">'standalone'</span>, turnCount: <span class="type">0</span> }),
+  }),
+
+  <span class="comment">// 任务链（Router 分解复杂请求）</span>
+  taskChain: <span class="type">Annotation</span>&lt;TaskStep[]&gt;({ reducer: (_, next) =&gt; next, default: () =&gt; [] }),
+  currentStepIndex: <span class="type">Annotation</span>&lt;number&gt;({ reducer: (_, next) =&gt; next, default: () =&gt; <span class="type">0</span> }),
+
+  <span class="comment">// 工具状态、错误、澄清、偏好、历史摘要...</span>
+  needsTool: <span class="type">Annotation</span>&lt;boolean&gt;({ ... }),
+  toolResults: <span class="type">Annotation</span>&lt;AgentToolResult[]&gt;({ ... }),
+  error: <span class="type">Annotation</span>&lt;AIError | null&gt;({ ... }),
+  preferences: <span class="type">Annotation</span>&lt;Record&lt;string, unknown&gt;&gt;({ ... }),
+  historySummary: <span class="type">Annotation</span>&lt;string&gt;({ ... }),
+})
+  </div>
+
   <!-- ==================== Agent 设计 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">智能体设计</h2>
-  <p class="section-desc">三种专家 Agent 各司其职，Router 仅在 standalone 模式下使用，编辑器/流程场景按 source 直接分发</p>
+  <p class="section-desc">三种专家 Agent 各司其职，Router 通过 LLM JSON Mode 分类意图，支持多步任务链</p>
 
   <div class="grid grid-3">
     <div class="card agent-card router">
       <h3><span style="color:#fdcb6e;">&#9673;</span> Router Agent</h3>
-      <p><strong>职责</strong>：意图识别，将 standalone 请求分发到对应专家</p>
-      <p style="margin-top:8px;"><strong>触发条件</strong></p>
-      <p>仅在 <code>source === 'standalone'</code> 时激活</p>
+      <p><strong>职责</strong>：意图识别，将请求分发到对应专家</p>
       <p style="margin-top:8px;"><strong>实现</strong></p>
-      <p>调用 DeepSeek 分类意图，返回 <code>{ target: 'editor' | 'flow' }</code>，失败时降级为关键词匹配</p>
+      <p>ChatOpenAI (deepseek-chat) + JSON Mode，温度 0，maxTokens 200</p>
+      <p style="margin-top:8px;"><strong>输出</strong></p>
+      <p><code>{ target: 'editor' | 'flow' | 'chain' }</code></p>
+      <p>支持 <code>chain</code> 模式拆分多步任务链</p>
+      <p style="margin-top:8px;"><strong>降级</strong></p>
+      <p>LLM 失败时回退到关键词匹配（FLOW_KEYWORDS）</p>
       <div style="margin-top:12px;">
         <span class="tag tag-orange">LLM 意图分类</span>
-        <span class="tag tag-orange">关键词降级</span>
+        <span class="tag tag-orange">JSON Mode</span>
+        <span class="tag tag-orange">任务链</span>
       </div>
     </div>
     <div class="card agent-card editor">
       <h3><span style="color:#00b894;">&#9673;</span> Editor Agent</h3>
-      <p><strong>职责</strong>：生成/修改 Widget Schema（表单、列表页、业务页面）</p>
+      <p><strong>职责</strong>：生成/修改 Widget Schema</p>
+      <p style="margin-top:8px;"><strong>实现</strong></p>
+      <p>ChatOpenAI (deepseek-chat) + JSON Mode + bindTools(editorTools)</p>
+      <p>温度 0.7，maxTokens 8192，streaming: true</p>
       <p style="margin-top:8px;"><strong>领域知识</strong></p>
-      <p>47 种 Widget（8 组：容器 2、布局 8、表单 18、静态 2、操作 2、表格 3、业务 3、图表 9）</p>
-      <p style="margin-top:8px;"><strong>输出格式</strong></p>
-      <p><code>&lt;think&gt;</code> + <code>&lt;answer&gt;</code> + <code>&lt;tip&gt;</code> + <code>&lt;schema&gt;</code></p>
+      <p>system prompt 由 <code>buildEditorSystemPrompt(metadata)</code> 动态生成</p>
+      <p>包含 Widget 目录、事件系统、联动系统、变量系统、输出格式</p>
       <div style="margin-top:12px;">
-        <span class="tag tag-green">Widget 生成</span>
-        <span class="tag tag-green">工具调用</span>
-        <span class="tag tag-green">Schema 校验</span>
+        <span class="tag tag-green">6 StructuredTool</span>
+        <span class="tag tag-green">动态 prompt</span>
+        <span class="tag tag-green">JSON Mode</span>
       </div>
     </div>
     <div class="card agent-card flow">
       <h3><span style="color:#0984e3;">&#9673;</span> Flow Agent</h3>
       <p><strong>职责</strong>：生成/修改流程图（FlowGraph）</p>
+      <p style="margin-top:8px;"><strong>实现</strong></p>
+      <p>ChatOpenAI (deepseek-chat) + JSON Mode + bindTools(flowTools)</p>
+      <p>温度 0.7，maxTokens 8192，streaming: true</p>
       <p style="margin-top:8px;"><strong>领域知识</strong></p>
-      <p>12 种 BPMN 节点类型、审批模式（会签/或签）、网关条件、表达式语法</p>
-      <p style="margin-top:8px;"><strong>输出格式</strong></p>
-      <p><code>&lt;think&gt;</code> + <code>&lt;answer&gt;</code> + <code>&lt;tip&gt;</code> + <code>&lt;schema&gt;</code>（flow_update）</p>
+      <p>system prompt 由 <code>buildFlowSystemPrompt(metadata)</code> 动态生成</p>
+      <p>包含 12 种 BPMN 节点、校验规则、布局规则、典型模式</p>
       <div style="margin-top:12px;">
-        <span class="tag tag-blue">流程生成</span>
-        <span class="tag tag-blue">工具调用</span>
-        <span class="tag tag-blue">Flow 校验</span>
+        <span class="tag tag-blue">6 StructuredTool</span>
+        <span class="tag tag-blue">动态 prompt</span>
+        <span class="tag tag-blue">JSON Mode</span>
       </div>
     </div>
   </div>
 
-  <!-- Agent Tools -->
-  <h3 style="margin-top:32px; margin-bottom:16px;">Agent Tools（5 + 5）</h3>
-  <div class="grid grid-2">
+  <!-- ==================== Tools ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">工具系统（14 StructuredTool）</h2>
+  <p class="section-desc">所有工具使用 @langchain/core/tools 的 tool() 函数定义，zod schema 约束参数，返回统一的 ToolResult 格式</p>
+
+  <div class="grid grid-3">
     <div class="card">
-      <h3>Editor Agent Tools</h3>
+      <h3>Editor Agent Tools（6）</h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Tool</th><th>功能</th></tr></thead>
@@ -387,14 +513,15 @@
             <tr><td><code>search_schemas</code></td><td>按关键词/类型搜索已有表单 Schema</td></tr>
             <tr><td><code>get_schema_detail</code></td><td>获取 Schema 完整 JSON 内容</td></tr>
             <tr><td><code>search_published_schemas</code></td><td>搜索已发布 Schema 版本</td></tr>
-            <tr><td><code>get_widget_catalogue</code></td><td>获取 Widget 组件目录（47 种，8 分类）</td></tr>
+            <tr><td><code>get_widget_catalogue</code></td><td>获取 Widget 组件目录（动态 metadata）</td></tr>
+            <tr><td><code>semantic_search_schemas</code></td><td>语义搜索 Schema（Jaccard 相似度）</td></tr>
             <tr><td><code>validate_schema</code></td><td>校验 Widget Schema 结构正确性</td></tr>
           </tbody>
         </table>
       </div>
     </div>
     <div class="card">
-      <h3>Flow Agent Tools</h3>
+      <h3>Flow Agent Tools（6）</h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Tool</th><th>功能</th></tr></thead>
@@ -403,107 +530,70 @@
             <tr><td><code>get_flow_detail</code></td><td>获取流程定义详情（含完整 FlowGraph）</td></tr>
             <tr><td><code>search_users</code></td><td>搜索用户（用于审批指派人配置）</td></tr>
             <tr><td><code>search_schemas</code></td><td>搜索表单（用于 userTask 表单绑定）</td></tr>
+            <tr><td><code>generate_schema</code></td><td>调用 Editor Agent 生成表单 Schema</td></tr>
             <tr><td><code>validate_flow</code></td><td>校验 FlowGraph 结构正确性</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-  </div>
-
-  <!-- ==================== 工具调用循环 ==================== -->
-  <h2 class="section-title" style="margin-top:48px;">工具调用循环（核心机制）</h2>
-  <p class="section-desc">Editor Agent 和 Flow Agent 共享相同的工具调用循环模式：while(true) + LLM streaming + tool_calls 累积 + 执行 + 写回</p>
-
-  <div class="code-block">
-<span class="comment">// Agent 工具调用循环（agentBase.ts 共享基础设施）</span>
-<span class="keyword">while</span> (<span class="keyword">true</span>) {
-  <span class="comment">// 1. LLM streaming 请求（带 tools 定义）</span>
-  <span class="keyword">const</span> stream = <span class="keyword">await</span> openai.chat.completions.create({
-    model: <span class="string">'deepseek-chat'</span>,
-    messages,
-    tools: EDITOR_TOOLS,  <span class="comment">// 或 FLOW_TOOLS</span>
-    tool_choice: <span class="string">'auto'</span>,
-    stream: <span class="keyword">true</span>,
-  })
-
-  <span class="comment">// 2. 遍历 stream chunk，累积 tool_calls</span>
-  <span class="keyword">for await</span> (<span class="keyword">const</span> chunk <span class="keyword">of</span> stream) {
-    <span class="keyword">if</span> (delta.tool_calls) { <span class="comment">/* 累积到 toolCallMap */</span> }
-    <span class="keyword">else</span> { <span class="comment">/* 累积 content，提取 thinking 流式事件 */</span> }
-  }
-
-  <span class="comment">// 3. 无 tool_calls → 跳出循环</span>
-  <span class="keyword">if</span> (toolCallMap.size === <span class="type">0</span>) <span class="keyword">break</span>
-
-  <span class="comment">// 4. 超过 5 轮 → 报错跳出</span>
-  toolRound++
-  <span class="keyword">if</span> (toolRound > MAX_TOOL_ROUNDS) <span class="keyword">break</span>
-
-  <span class="comment">// 5. 执行工具 → 结果写入 messages</span>
-  <span class="keyword">const</span> toolCalls = <span class="fn">parseToolCalls</span>(toolCallMap)
-  <span class="keyword">yield</span> { type: <span class="string">'tool_call'</span>, toolCalls }  <span class="comment">// 前端展示</span>
-  <span class="keyword">for</span> (<span class="keyword">const</span> tc <span class="keyword">of</span> toolCalls) {
-    <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="fn">executeToolWithTimeout</span>(tc)
-    messages.push({ role: <span class="string">'tool'</span>, tool_call_id: tc.id, content: result })
-  }
-  <span class="keyword">yield</span> { type: <span class="string">'tool_call'</span>, toolResults }
-
-  <span class="comment">// 6. 重置状态 → 下一轮 LLM（带工具结果）</span>
-  fullContent = <span class="string">''</span>
-}
-
-<span class="comment">// 循环结束后 → parseStructuredOutput(fullContent)</span>
-<span class="comment">// → yield text / tip / schema / flow</span>
-  </div>
-
-  <div class="grid grid-3" style="margin-top:20px;">
     <div class="card">
-      <h3><span class="tag tag-blue">基础设施</span> agentBase.ts</h3>
-      <p>两个 Agent 共享的底层能力：</p>
-      <p style="margin-top:8px;">&#8226; <code>getClient()</code> — OpenAI 单例（baseURL: api.deepseek.com）</p>
-      <p>&#8226; <code>buildMessages()</code> — 历史消息 + system prompt 构建</p>
-      <p>&#8226; <code>parseStructuredOutput()</code> — XML 标签解析</p>
-      <p>&#8226; <code>processThinkingDelta()</code> — think 标签流式提取</p>
-      <p>&#8226; <code>withRetry()</code> — 指数退避重试（429/5xx）</p>
-      <p>&#8226; <code>executeToolWithTimeout()</code> — 30s 超时执行</p>
-    </div>
-    <div class="card">
-      <h3><span class="tag tag-green">结构化输出</span> XML 标签</h3>
-      <p>工具调用循环结束后，从最终 content 中解析：</p>
-      <div class="code-block" style="margin-top:12px;">
-<span class="comment">&lt;!-- Editor Agent 输出 --&gt;</span>
-<span class="keyword">&lt;think&gt;</span>分析用户需求...<span class="keyword">&lt;/think&gt;</span>
-<span class="keyword">&lt;answer&gt;</span>已为你生成表单...<span class="keyword">&lt;/answer&gt;</span>
-<span class="keyword">&lt;tip&gt;</span>建议添加必填校验...<span class="keyword">&lt;/tip&gt;</span>
-<span class="keyword">&lt;schema&gt;</span>{ type: <span class="string">"schema_update"</span>, widgets: [...] }<span class="keyword">&lt;/schema&gt;</span>
+      <h3>Widget Tools（2）</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>功能</th></tr></thead>
+          <tbody>
+            <tr><td><code>query_widgets</code></td><td>查询 Widget 组件目录（按分类筛选）</td></tr>
+            <tr><td><code>validate_widget_schema</code></td><td>校验 Widget Schema 结构正确性</td></tr>
+          </tbody>
+        </table>
       </div>
+      <p style="margin-top:12px; font-size:0.85rem; color:var(--text-secondary);">
+        Widget Tools 为独立工具集，供 schemaGenerator 等辅助模块使用。
+      </p>
     </div>
-    <div class="card">
-      <h3><span class="tag tag-orange">容错机制</span></h3>
-      <p>&#8226; <strong>工具超时</strong>：每个工具 30s 限时</p>
-      <p>&#8226; <strong>轮次上限</strong>：最多 5 轮工具调用</p>
-      <p>&#8226; <strong>重试策略</strong>：指数退避，最多 3 次</p>
-      <p>&#8226; <strong>Router 降级</strong>：LLM 失败时用关键词匹配</p>
-      <p>&#8226; <strong>输出容错</strong>：无 answer 标签时回退到去除 think 后的纯文本</p>
-      <p>&#8226; <strong>SSE 心跳</strong>：15s 间隔保持连接</p>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>工具定义格式</h3>
+    <div class="code-block" style="margin-top:12px;">
+<span class="comment">// tools/editorTools.ts — StructuredTool 定义</span>
+<span class="keyword">import</span> { tool } <span class="keyword">from</span> <span class="string">'@langchain/core/tools'</span>
+<span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">'zod'</span>
+
+<span class="keyword">export const</span> searchSchemasTool = <span class="fn">tool</span>(
+  <span class="keyword">async</span> ({ keyword, type, limit }): <span class="type">Promise</span>&lt;ToolResult&gt; =&gt; {
+    <span class="comment">// MongoDB 查询逻辑</span>
+    <span class="keyword">const</span> schemas = <span class="keyword">await</span> FormSchemaModel.<span class="fn">find</span>(filter).<span class="fn">lean</span>()
+    <span class="keyword">return</span> { success: <span class="keyword">true</span>, data: { total, schemas }, summary }
+  },
+  {
+    name: <span class="string">'search_schemas'</span>,
+    description: <span class="string">'搜索已有的表单 Schema 列表...'</span>,
+    schema: z.<span class="fn">object</span>({
+      keyword: z.<span class="fn">string</span>().<span class="fn">optional</span>().<span class="fn">describe</span>(<span class="string">'按名称模糊搜索'</span>),
+      type: z.<span class="fn">enum</span>([<span class="string">'form'</span>, <span class="string">'search_list'</span>]).<span class="fn">optional</span>(),
+      limit: z.<span class="fn">number</span>().<span class="fn">optional</span>().<span class="fn">default</span>(<span class="type">10</span>),
+    }),
+  },
+)
     </div>
   </div>
 
   <!-- ==================== SSE 事件流 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">SSE 事件流</h2>
-  <p class="section-desc">服务端通过 Server-Sent Events 流式推送 7 种事件类型 + 1 种完成信号</p>
+  <p class="section-desc">通过 graph.streamEvents() 获取 LangGraph v2 事件流，映射为 9 种 SSE 事件类型</p>
 
   <div class="table-wrap">
     <table>
       <thead><tr><th>type</th><th>含义</th><th>数据结构</th></tr></thead>
       <tbody>
-        <tr><td><code>thinking</code></td><td>LLM 思考过程流式输出</td><td><code>{ content: string }</code></td></tr>
-        <tr><td><code>text</code></td><td>正式回答文本</td><td><code>{ content: string }</code></td></tr>
-        <tr><td><code>tip</code></td><td>使用建议 / 优化提示</td><td><code>{ content: string }</code></td></tr>
+        <tr><td><code>text</code></td><td>LLM 内容 token 流式输出</td><td><code>{ content: string }</code></td></tr>
+        <tr><td><code>tool_call</code></td><td>工具调用（calling / result 两阶段）</td><td><code>{ phase, tools: [...] }</code></td></tr>
         <tr><td><code>schema</code></td><td>生成的 Widget Schema</td><td><code>{ payload: Widget[], description: string }</code></td></tr>
         <tr><td><code>flow</code></td><td>生成的 FlowGraph</td><td><code>{ payload: FlowGraph, description: string }</code></td></tr>
-        <tr><td><code>tool_call</code></td><td>工具调用（calling / result 两阶段）</td><td><code>{ phase, tools: [...] }</code></td></tr>
-        <tr><td><code>done</code></td><td>流结束，携带 conversationId</td><td><code>{ conversationId: string }</code></td></tr>
+        <tr><td><code>task_chain</code></td><td>多步任务链步骤</td><td><code>{ steps: TaskStep[], currentIndex }</code></td></tr>
+        <tr><td><code>agent_switch</code></td><td>Agent 切换通知</td><td><code>{ agent: 'editor' | 'flow' }</code></td></tr>
+        <tr><td><code>done</code></td><td>流结束</td><td><code>{ conversationId: string }</code></td></tr>
         <tr><td><code>error</code></td><td>错误信息</td><td><code>{ content: string }</code></td></tr>
       </tbody>
     </table>
@@ -511,13 +601,28 @@
 
   <div class="grid grid-2" style="margin-top:20px;">
     <div class="card">
-      <h3>SSE 流示例（带工具调用）</h3>
+      <h3>streamEvents 映射</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>LangGraph 事件</th><th>映射为 SSE</th></tr></thead>
+          <tbody>
+            <tr><td><code>on_chain_start</code> (editor/flow)</td><td><code>agent_switch</code></td></tr>
+            <tr><td><code>on_chain_end</code> (router)</td><td><code>task_chain</code>（如果有）</td></tr>
+            <tr><td><code>on_chat_model_stream</code></td><td><code>text</code>（跳过 router）</td></tr>
+            <tr><td><code>on_tool_start</code></td><td><code>tool_call</code> (phase: calling)</td></tr>
+            <tr><td><code>on_tool_end</code></td><td><code>tool_call</code> (phase: result) + <code>schema</code>/<code>flow</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>SSE 流示例</h3>
       <div class="sse-block">
-        <div class="sse-line"><span class="sse-event">event: thinking</span></div>
-        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"content"</span>: <span class="sse-str">"用户需要一个请假表单..."</span>}</span></div>
+        <div class="sse-line"><span class="sse-event">event: agent_switch</span></div>
+        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"agent"</span>: <span class="sse-str">"editor"</span>}</span></div>
         <div class="sse-line">&nbsp;</div>
         <div class="sse-line"><span class="sse-event">event: tool_call</span></div>
-        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"phase"</span>: <span class="sse-str">"calling"</span>, <span class="sse-key">"tools"</span>: [{<span class="sse-key">"name"</span>: <span class="sse-str">"get_widget_catalogue"</span>, ...}]}</span></div>
+        <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"phase"</span>: <span class="sse-str">"calling"</span>, <span class="sse-key">"tools"</span>: [{<span class="sse-key">"name"</span>: <span class="sse-str">"get_widget_catalogue"</span>}]}</span></div>
         <div class="sse-line">&nbsp;</div>
         <div class="sse-line"><span class="sse-event">event: tool_call</span></div>
         <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"phase"</span>: <span class="sse-str">"result"</span>, <span class="sse-key">"tools"</span>: [{<span class="sse-key">"name"</span>: <span class="sse-str">"get_widget_catalogue"</span>, <span class="sse-key">"result"</span>: {...}}]}</span></div>
@@ -532,35 +637,11 @@
         <div class="sse-line"><span class="sse-data">data: {<span class="sse-key">"conversationId"</span>: <span class="sse-str">"conv_xxx"</span>}</span></div>
       </div>
     </div>
-    <div class="card">
-      <h3>SSE 客户端实现</h3>
-      <p>前端使用 <strong>fetch + ReadableStream</strong>（非 EventSource），因为需要 POST 请求体。</p>
-      <div class="code-block" style="margin-top:12px;">
-<span class="comment">// ai-app SSE 客户端</span>
-<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="fn">fetch</span>(<span class="string">'/api/ai/chat'</span>, {
-  method: <span class="string">'POST'</span>,
-  headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
-  body: <span class="fn">JSON.stringify</span>({ message, context }),
-})
-
-<span class="keyword">const</span> reader = response.body!.<span class="fn">getReader</span>()
-<span class="keyword">const</span> decoder = <span class="keyword">new</span> <span class="type">TextDecoder</span>()
-
-<span class="keyword">while</span> (<span class="keyword">true</span>) {
-  <span class="keyword">const</span> { done, value } = <span class="keyword">await</span> reader.<span class="fn">read</span>()
-  <span class="keyword">if</span> (done) <span class="keyword">break</span>
-  <span class="keyword">const</span> text = decoder.<span class="fn">decode</span>(value)
-  <span class="comment">// 解析 "data: {...}\n\n" 格式</span>
-  <span class="fn">parseSSELines</span>(text, handleEvent)
-}
-      </div>
-      <p style="margin-top:12px;"><strong>选择 fetch 而非 EventSource 的原因</strong>：EventSource 仅支持 GET，无法发送 POST 请求体。</p>
-    </div>
   </div>
 
   <!-- ==================== 对话流程 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">对话流程</h2>
-  <p class="section-desc">一次典型的 AI 交互：从自然语言描述到 Schema 生成，包含工具调用</p>
+  <p class="section-desc">一次典型的 AI 交互：从自然语言描述到 Schema 生成，LangGraph 自动管理工具调用循环</p>
 
   <div class="convo">
     <div class="convo-msg">
@@ -571,13 +652,22 @@
       </div>
     </div>
     <div class="convo-msg">
+      <div class="convo-avatar router">R</div>
+      <div class="convo-body">
+        <div class="convo-role">Router Node（JSON Mode 意图分类）</div>
+        <div class="convo-text" style="color:var(--text-secondary); font-style:italic;">
+          输出: { "target": "editor" }<br>
+          设置 state.currentAgent = 'editor'
+        </div>
+      </div>
+    </div>
+    <div class="convo-msg">
       <div class="convo-avatar editor">E</div>
       <div class="convo-body">
-        <div class="convo-role">Editor Agent &rarr; 工具调用：get_widget_catalogue + validate_schema</div>
+        <div class="convo-role">Editor Agent Node &rarr; 工具调用（LangGraph 自动路由到 editorToolNode）</div>
         <div class="convo-text" style="color:var(--text-secondary); font-style:italic;">
-          thinking: 分析需求，需要 Select + DatePicker + Textarea + Upload 组件...<br>
           tool_call [calling]: get_widget_catalogue({ category: "form" })<br>
-          tool_call [result]: 返回 18 种表单组件定义<br>
+          tool_call [result]: 返回 20 种表单组件定义<br>
           &hellip;<br>
           tool_call [calling]: validate_schema({ widgets: [...] })<br>
           tool_call [result]: { valid: true, errors: [] }
@@ -587,7 +677,7 @@
     <div class="convo-msg">
       <div class="convo-avatar editor">E</div>
       <div class="convo-body">
-        <div class="convo-role">Editor Agent &rarr; 结构化输出</div>
+        <div class="convo-role">Editor Agent Node（最终响应，无 tool_calls）</div>
         <div class="convo-text">
           已为你生成请假申请表单，包含以下字段：<br>
           &#8226; 请假类型（Select：事假/年假/病假/婚假/产假）<br>
@@ -610,82 +700,57 @@
     <div class="convo-msg">
       <div class="convo-avatar editor">E</div>
       <div class="convo-body">
-        <div class="convo-role">Editor Agent（第 2 轮，携带当前 Schema 上下文）</div>
+        <div class="convo-role">Editor Agent（携带 currentSchema 上下文）</div>
         <div class="convo-text">已在表单末尾添加「紧急联系人」Input 字段（必填），Schema 已更新。</div>
-      </div>
-    </div>
-    <div class="convo-msg">
-      <div class="convo-avatar user">U</div>
-      <div class="convo-body">
-        <div class="convo-role">User</div>
-        <div class="convo-text">确认，发布</div>
-      </div>
-    </div>
-    <div class="convo-msg">
-      <div class="convo-avatar ai">AI</div>
-      <div class="convo-body">
-        <div class="convo-role">System &rarr; POST /api/ai/publish</div>
-        <div class="convo-text">表单已发布（publishId: <code>pf_abc123</code>）。</div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== 对话状态模型 ==================== -->
-  <h2 class="section-title" style="margin-top:48px;">对话状态模型</h2>
-  <p class="section-desc">AIConversationState — 服务端 Agent 共享的状态定义（graph/state.ts）</p>
+  <!-- ==================== 共享 AI 包 ==================== -->
+  <h2 class="section-title" style="margin-top:48px;">@schema-form/shared-ai</h2>
+  <p class="section-desc">构建时从 editor/flow 提取元数据，动态生成 system prompt，保证 AI 知识与编辑器/流程引擎单一数据源</p>
 
-  <div class="code-block">
-<span class="keyword">interface</span> <span class="type">AIConversationState</span> {
-  <span class="comment">// 对话历史</span>
-  messages: <span class="type">AIMessage</span>[]
-
-  <span class="comment">// 当前活跃的 Agent</span>
-  activeAgent: <span class="string">'router'</span> | <span class="string">'editor'</span> | <span class="string">'flow'</span>
-
-  <span class="comment">// 业务上下文</span>
-  context: {
-    source: <span class="string">'editor'</span> | <span class="string">'flow'</span> | <span class="string">'standalone'</span>
-    schemaId?: <span class="type">string</span>         <span class="comment">// 编辑器场景：当前 Schema ID</span>
-    flowId?: <span class="type">string</span>           <span class="comment">// 流程场景：当前流程 ID</span>
-    nodeId?: <span class="type">string</span>           <span class="comment">// 流程场景：当前节点 ID</span>
-    currentSchema?: <span class="type">Record</span>&lt;string, unknown&gt;[]  <span class="comment">// 当前 Widget 树（供参考）</span>
-    currentFlow?: { nodes: ...; edges: ... }    <span class="comment">// 当前 FlowGraph（供参考）</span>
-    turnCount: <span class="type">number</span>         <span class="comment">// 对话轮次</span>
-  }
-
-  <span class="comment">// 错误状态</span>
-  error?: { message: <span class="type">string</span>; recoverable: <span class="type">boolean</span> }
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>metadata.json（构建时自动生成）</h3>
+      <p style="margin-top:8px;">包含 Widget 目录（49 种）、Flow 节点目录（12 种）、系统类型（事件/联动/容器/变量）。</p>
+      <div class="code-block" style="margin-top:12px;">
+{
+  <span class="string">"version"</span>: <span class="string">"2026-06-02"</span>,
+  <span class="string">"generatedAt"</span>: <span class="string">"2026-06-02T..."</span>,
+  <span class="string">"widgets"</span>: [
+    { <span class="string">"type"</span>: <span class="string">"input"</span>, <span class="string">"group"</span>: <span class="string">"form"</span>,
+      <span class="string">"displayName"</span>: <span class="string">"文本输入"</span>,
+      <span class="string">"keyProps"</span>: [<span class="string">"placeholder"</span>, <span class="string">"maxlength"</span>],
+      <span class="string">"defaultSize"</span>: { <span class="string">"w"</span>: <span class="type">280</span>, <span class="string">"h"</span>: <span class="type">44</span> },
+      <span class="string">"exposedValues"</span>: [...],
+      <span class="string">"receivableEvents"</span>: [...] }
+  ],
+  <span class="string">"flowNodes"</span>: [...],
+  <span class="string">"systems"</span>: { <span class="string">"eventActionTypes"</span>: [...], ... }
 }
+      </div>
+    </div>
+    <div class="card">
+      <h3>promptBuilder.ts（动态 prompt 构建）</h3>
+      <p style="margin-top:8px;">从 metadata 自动生成完整的 system prompt，包含 Widget 表格、Flow 节点表格、事件系统、联动系统、变量系统、输出格式、典型示例。</p>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment">// 导出 3 个 prompt</span>
+<span class="keyword">export function</span> <span class="fn">buildEditorSystemPrompt</span>(metadata)
+  <span class="comment">// → Widget 表格 + 事件/联动/变量 + 输出格式</span>
 
-<span class="comment">// MongoDB 持久化模型（conversationService.ts）</span>
-<span class="keyword">interface</span> <span class="type">IAIConversation</span> {
-  _id: <span class="type">string</span>            <span class="comment">// UUID</span>
-  source: <span class="type">AgentSource</span>
-  schemaId?: <span class="type">string</span>
-  flowId?: <span class="type">string</span>
-  nodeId?: <span class="type">string</span>
-  version?: <span class="type">string</span>       <span class="comment">// Schema 版本关联</span>
-  messages: <span class="type">AIConversationMessage</span>[]
-  activeAgent: <span class="type">ActiveAgent</span>
-  <span class="comment">// timestamps: createdAt, updatedAt</span>
-}
+<span class="keyword">export function</span> <span class="fn">buildFlowSystemPrompt</span>(metadata)
+  <span class="comment">// → BPMN 节点表格 + 校验规则 + 布局规则</span>
 
-<span class="comment">// 单条消息结构</span>
-<span class="keyword">interface</span> <span class="type">AIConversationMessage</span> {
-  role: <span class="string">'user'</span> | <span class="string">'assistant'</span> | <span class="string">'system'</span>
-  content: <span class="type">string</span>
-  thinking?: <span class="type">string</span>      <span class="comment">// Agent 思考过程</span>
-  tip?: <span class="type">string</span>           <span class="comment">// 使用建议</span>
-  toolCalls?: { name: <span class="type">string</span>; arguments: ...; result?: ... }[]
-  schema?: <span class="type">Record</span>&lt;string, unknown&gt;[]  <span class="comment">// Widget Schema</span>
-  flow?: <span class="type">Record</span>&lt;string, unknown&gt;     <span class="comment">// FlowGraph</span>
-  timestamp: <span class="type">Date</span>
-}
+<span class="keyword">export const</span> ROUTER_SYSTEM_PROMPT
+  <span class="comment">// → 意图分类规则（稳定，不依赖 metadata）</span>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== 前端 ai-app ==================== -->
   <h2 class="section-title" style="margin-top:48px;">前端 ai-app</h2>
-  <p class="section-desc">独立 Vue 3 + Pinia 微应用，两种入口模式，通过 bridge 与宿主通信</p>
+  <p class="section-desc">独立 Vue 3 + Pinia 微应用，两种入口模式，通过 SSE 订阅 LangGraph 流式事件</p>
 
   <div class="card" style="margin-bottom:24px;">
     <h3>两种入口模式</h3>
@@ -697,7 +762,7 @@
           &#8226; 左侧：<code>AiConversationList</code> 对话历史列表<br>
           &#8226; 中间：<code>AiChatPanel</code> 消息流 + 输入框<br>
           &#8226; 右侧：<code>AiPreviewPanel</code> Schema/Flow 预览<br>
-          &#8226; 入口：<code>main.ts</code> &rarr; <code>router.ts</code> &rarr; <code>/ai</code>
+          &#8226; 入口：<code>/ai</code> 路由
         </p>
       </div>
       <div style="background:#ecf5ff; border:1px solid #b3d8ff; border-radius:8px; padding:20px;">
@@ -706,7 +771,7 @@
         <p style="font-size:0.85rem; color:var(--text-secondary);">
           &#8226; 仅 <code>AiChatPanel</code> 聊天面板<br>
           &#8226; 预览通过 bridge 推送到宿主<br>
-          &#8226; 入口：<code>main-sidebar.ts</code> &rarr; 抽屉组件<br>
+          &#8226; Agent 固定显示为 Badge（不可切换）<br>
           &#8226; 宿主通过 micro-app 嵌入
         </p>
       </div>
@@ -715,28 +780,18 @@
 
   <div class="grid grid-3">
     <div class="card">
-      <h3>AiChatPanel.vue</h3>
-      <p>对话主界面，管理消息列表、输入框、SSE 流式接收。展示 thinking 折叠区、tool_call 进度、消息渲染。</p>
+      <h3>useAiStore（Pinia）</h3>
+      <p>共享状态管理：对话列表、当前消息、加载状态、生成物（currentSchema / currentFlow）、任务链。</p>
+      <p style="margin-top:8px;"><code>sendMessage()</code> 订阅 SSE 流，逐事件更新 messages 和生成物。</p>
     </div>
     <div class="card">
       <h3>AiMessage.vue</h3>
-      <p>单条消息渲染，支持纯文本、thinking 折叠区、tip 提示。</p>
+      <p>消息渲染组件，支持 thinking 折叠区、toolCalls 折叠区（含参数/结果）、tip 提示、嵌入式 SchemaCard / FlowCard。</p>
     </div>
     <div class="card">
-      <h3>SchemaCard.vue / FlowCard.vue</h3>
-      <p>生成物卡片组件，展示 Schema 预览或 FlowGraph 预览，支持发布操作。</p>
-    </div>
-    <div class="card">
-      <h3>AiPreviewPanel.vue</h3>
-      <p>右侧面板，实时渲染生成的 Schema 或 FlowGraph，支持交互预览。</p>
-    </div>
-    <div class="card">
-      <h3>AiConversationList.vue</h3>
-      <p>对话历史列表，支持切换、删除对话，显示对话来源和 Agent 标识。</p>
-    </div>
-    <div class="card">
-      <h3>bridge.ts</h3>
-      <p>宿主通信桥接，支持 micro-app 模式（dispatch/getData）和 standalone 模式（postMessage）双通道。</p>
+      <h3>双通道写回</h3>
+      <p><strong>Socket</strong>：通过 <code>@schema-form/socket</code> 实时推送到宿主（<code>emitAiApply</code> / <code>emitAiPublished</code>）。</p>
+      <p style="margin-top:4px;"><strong>Bridge</strong>：通过 postMessage / micro-app 推送（<code>ai:published</code> / <code>ai:open-in-editor</code>）。</p>
     </div>
   </div>
 
@@ -784,29 +839,9 @@
     </table>
   </div>
 
-  <div class="card" style="margin-top:16px;">
-    <h3>bridge 双通道实现</h3>
-    <div class="grid grid-2" style="margin-top:12px;">
-      <div style="background:#f0f9eb; border-radius:6px; padding:12px;">
-        <div style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">micro-app 模式</div>
-        <p style="font-size:0.85rem; color:var(--text-secondary);">
-          发送：<code>window.microApp.dispatch()</code><br>
-          接收：<code>microApp.addEventListener('datachange')</code>
-        </p>
-      </div>
-      <div style="background:#ecf5ff; border-radius:6px; padding:12px;">
-        <div style="font-weight:600; font-size:0.9rem; margin-bottom:4px;">standalone 模式</div>
-        <p style="font-size:0.85rem; color:var(--text-secondary);">
-          发送：<code>window.parent.postMessage()</code><br>
-          接收：<code>window.addEventListener('message')</code>
-        </p>
-      </div>
-    </div>
-  </div>
-
   <!-- ==================== 目录结构 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">目录结构</h2>
-  <p class="section-desc">服务端 AI 模块 + 前端 ai-app 微应用</p>
+  <p class="section-desc">服务端 AI 模块 + 共享 AI 包 + 前端 ai-app 微应用</p>
 
   <div class="grid grid-2">
     <div class="card">
@@ -816,120 +851,82 @@ ai/
 ├── index.ts              <span class="comment"># 模块入口，路由注册</span>
 ├── routes.ts             <span class="comment"># /api/ai/* 路由（SSE chat, publish, conversations）</span>
 ├── graph/
-│   ├── state.ts          <span class="comment"># AIConversationState 类型定义</span>
-│   ├── agentBase.ts      <span class="comment"># 共享基础设施（OpenAI client, 消息构建, XML 解析, 工具循环）</span>
-│   ├── router.ts         <span class="comment"># Router Agent（LLM 分类 + 关键词降级）</span>
-│   ├── editorAgent.ts    <span class="comment"># Editor Agent（AsyncGenerator 流式输出）</span>
-│   └── flowAgent.ts      <span class="comment"># Flow Agent（AsyncGenerator 流式输出）</span>
+│   ├── state.ts          <span class="comment"># AgentStateAnnotation（Annotation.Root）</span>
+│   ├── graph.ts          <span class="comment"># StateGraph 组装（5 节点 + 条件边）</span>
+│   ├── router.ts         <span class="comment"># Router Node（LLM JSON Mode 分类）</span>
+│   ├── editorAgent.ts    <span class="comment"># Editor Agent Node（bindTools + streaming）</span>
+│   ├── flowAgent.ts      <span class="comment"># Flow Agent Node（bindTools + streaming）</span>
+│   ├── checkpointer.ts   <span class="comment"># MemorySaver 单例</span>
+│   └── agentBase.ts      <span class="comment"># 共享工具（OpenAI client, 重试, regex）</span>
 ├── tools/
-│   ├── editorTools.ts    <span class="comment"># Editor 5 工具 + WIDGET_CATALOGUE（47 种）</span>
-│   ├── flowTools.ts      <span class="comment"># Flow 5 工具 + validateFlowGraph</span>
-│   └── widgetTools.ts    <span class="comment"># Widget 查询 + Schema 校验</span>
+│   ├── editorTools.ts    <span class="comment"># 6 StructuredTool（search/detail/catalogue/validate）</span>
+│   ├── flowTools.ts      <span class="comment"># 6 StructuredTool（search/detail/users/schemas/generate/validate）</span>
+│   ├── widgetTools.ts    <span class="comment"># 2 StructuredTool（query_widgets, validate_widget_schema）</span>
+│   └── schemaGenerator.ts<span class="comment"># 辅助：直接 LLM 调用生成 Schema</span>
 ├── prompts/
 │   ├── router.ts         <span class="comment"># Router 系统提示词</span>
-│   ├── editor.ts         <span class="comment"># Editor 系统提示词（含 47 种 Widget 知识）</span>
-│   └── flow.ts           <span class="comment"># Flow 系统提示词（含 12 种 BPMN 节点）</span>
+│   ├── editor.ts         <span class="comment"># Editor 系统提示词（备用，优先用 promptBuilder）</span>
+│   └── flow.ts           <span class="comment"># Flow 系统提示词（备用，优先用 promptBuilder）</span>
 ├── schemas/
-│   └── aiSchemas.ts      <span class="comment"># 请求体校验 Schema</span>
+│   └── aiSchemas.ts      <span class="comment"># 请求体校验 Schema（zod）</span>
 ├── services/
 │   └── conversationService.ts <span class="comment"># AIConversationModel + CRUD</span>
 └── __tests__/            <span class="comment"># Agent 测试</span>
       </div>
     </div>
     <div class="card">
-      <h3>packages/ai-app/</h3>
+      <h3>packages/shared/ai/</h3>
       <div class="code-block">
+shared/ai/
+├── package.json          <span class="comment"># @schema-form/shared-ai</span>
+├── metadata.json         <span class="comment"># 构建时自动生成的 Widget/Flow 元数据</span>
+├── types.ts              <span class="comment"># AIMetadata, WidgetAIMetadata, FlowNodeAIMetadata</span>
+├── promptBuilder.ts      <span class="comment"># buildEditorSystemPrompt / buildFlowSystemPrompt</span>
+├── systemKnowledge.ts    <span class="comment"># 事件系统、联动系统、变量系统知识</span>
+└── index.ts              <span class="comment"># 统一导出</span>
+      </div>
+      <div class="code-block" style="margin-top:12px;">
+<span class="comment"># packages/ai-app/</span>
 ai-app/
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── index.html
-└── src/
-    ├── main.ts           <span class="comment"># 完整页面入口</span>
-    ├── main-sidebar.ts   <span class="comment"># 抽屉模式入口</span>
-    ├── App.vue
-    ├── router.ts
-    ├── api/
-    │   └── aiApi.ts      <span class="comment"># SSE fetch + API 封装</span>
-    ├── views/
-    │   ├── AiChatView.vue      <span class="comment"># 三栏完整页面</span>
-    │   └── AiSidebarView.vue   <span class="comment"># 400px 抽屉模式</span>
-    ├── components/
-    │   ├── AiChatPanel.vue     <span class="comment"># 聊天面板</span>
-    │   ├── AiConversationList.vue <span class="comment"># 对话列表</span>
-    │   ├── AiMessage.vue       <span class="comment"># 消息渲染</span>
-    │   ├── AiPreviewPanel.vue  <span class="comment"># 预览面板</span>
-    │   ├── AiLoadingDots.vue   <span class="comment"># 加载动画</span>
-    │   ├── SchemaCard.vue      <span class="comment"># Schema 卡片</span>
-    │   └── FlowCard.vue        <span class="comment"># Flow 卡片</span>
-    ├── stores/
-    │   └── ai.ts         <span class="comment"># Pinia store（对话、消息、生成物状态）</span>
-    ├── types/
-    │   └── index.ts      <span class="comment"># 类型定义</span>
-    └── utils/
-        └── bridge.ts     <span class="comment"># 宿主通信桥（micro-app + postMessage）</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 实施阶段 ==================== -->
-  <h2 class="section-title" style="margin-top:48px;">实施阶段</h2>
-  <p class="section-desc">分阶段逐步落地，每阶段可独立验证</p>
-
-  <div class="phase-timeline">
-    <div class="phase-item done">
-      <div class="phase-label">Phase 1 &mdash; 已完成</div>
-      <div class="phase-title">最小闭环</div>
-      <div class="phase-desc">
-        Server：Router Agent + Editor Agent，单轮生成 Widget Schema<br>
-        ai-app：AiChatView + AiSidebarView + Schema 预览 + 发布<br>
-        验证：描述 &rarr; 生成表单 &rarr; 预览 &rarr; 发布到 Editor
-      </div>
-    </div>
-    <div class="phase-item done">
-      <div class="phase-label">Phase 2 &mdash; 已完成</div>
-      <div class="phase-title">多轮对话 + 工具调用</div>
-      <div class="phase-desc">
-        Editor Agent 支持上下文感知的修改（携带 currentSchema）<br>
-        对话持久化（MongoDB AIConversationModel）<br>
-        SSE 流式响应（fetch + ReadableStream）<br>
-        工具调用循环（search_schemas, get_widget_catalogue, validate_schema 等 5 工具）
-      </div>
-    </div>
-    <div class="phase-item done">
-      <div class="phase-label">Phase 3 &mdash; 已完成</div>
-      <div class="phase-title">Flow Agent</div>
-      <div class="phase-desc">
-        Flow Agent 实现，支持流程图生成<br>
-        5 个 Flow 工具（search_flows, get_flow_detail, search_users, search_schemas, validate_flow）<br>
-        发布流程到 FlowVersionModel
-      </div>
-    </div>
-    <div class="phase-item done">
-      <div class="phase-label">Phase 4 &mdash; 已完成</div>
-      <div class="phase-title">能力增强</div>
-      <div class="phase-desc">
-        XML 结构化输出（think/answer/tip/schema 标签）<br>
-        对话历史恢复（按 version 关联 Schema 上下文）<br>
-        Schema/Flow 校验失败后报错提示<br>
-        bridge 双通道通信（micro-app + postMessage）
+├── src/
+│   ├── views/
+│   │   ├── AiChatView.vue      <span class="comment"># 三栏完整页面</span>
+│   │   └── AiSidebarView.vue   <span class="comment"># 400px 抽屉模式</span>
+│   ├── components/
+│   │   ├── AiChatPanel.vue     <span class="comment"># 聊天面板</span>
+│   │   ├── AiMessage.vue       <span class="comment"># 消息渲染（thinking/toolCalls/cards）</span>
+│   │   ├── AiPreviewPanel.vue  <span class="comment"># 预览面板</span>
+│   │   ├── AiConversationList.vue <span class="comment"># 对话列表</span>
+│   │   ├── SchemaCard.vue      <span class="comment"># Schema 卡片</span>
+│   │   └── FlowCard.vue        <span class="comment"># Flow 卡片</span>
+│   ├── stores/
+│   │   └── ai.ts         <span class="comment"># useAiStore（Pinia）</span>
+│   ├── api/
+│   │   └── aiApi.ts      <span class="comment"># SSE fetch + API 封装</span>
+│   ├── types/
+│   │   └── index.ts      <span class="comment"># 类型定义</span>
+│   └── utils/
+│       └── bridge.ts     <span class="comment"># 宿主通信桥</span>
       </div>
     </div>
   </div>
 
   <!-- ==================== 依赖 ==================== -->
   <h2 class="section-title" style="margin-top:48px;">依赖</h2>
-  <p class="section-desc">实际使用的 npm 依赖（无 LangGraph）</p>
+  <p class="section-desc">LangGraph 生态依赖</p>
 
   <div class="table-wrap">
     <table>
       <thead><tr><th>包名</th><th>用途</th><th>位置</th></tr></thead>
       <tbody>
-        <tr><td><code>openai</code></td><td>OpenAI SDK，直连 DeepSeek API（baseURL: api.deepseek.com）</td><td>server</td></tr>
+        <tr><td><code>@langchain/langgraph</code></td><td>StateGraph, END, START, MemorySaver</td><td>server</td></tr>
+        <tr><td><code>@langchain/openai</code></td><td>ChatOpenAI（deepseek-chat + JSON Mode）</td><td>server</td></tr>
+        <tr><td><code>@langchain/core</code></td><td>tool(), HumanMessage, SystemMessage, AIMessage</td><td>server</td></tr>
+        <tr><td><code>@langchain/community</code></td><td>社区扩展（预留）</td><td>server</td></tr>
+        <tr><td><code>zod</code></td><td>StructuredTool 参数 schema 定义</td><td>server</td></tr>
         <tr><td><code>mongoose</code></td><td>AIConversationModel 对话持久化</td><td>server</td></tr>
-        <tr><td><code>uuid</code></td><td>对话 ID 生成</td><td>server</td></tr>
         <tr><td><code>vue</code> + <code>pinia</code></td><td>ai-app 前端框架 + 状态管理</td><td>ai-app</td></tr>
-        <tr><td><code>vue-router</code></td><td>ai-app 路由（AiChatView / AiSidebarView）</td><td>ai-app</td></tr>
+        <tr><td><code>@schema-form/socket</code></td><td>Socket 实时通信（双通道写回）</td><td>ai-app</td></tr>
       </tbody>
     </table>
   </div>
@@ -937,7 +934,7 @@ ai-app/
 </div>
 
 <div class="footer">
-  <p>schema-form-platform &mdash; AI 支撑层架构设计文档 &mdash; 2026-06-01</p>
+  <p>schema-form-platform &mdash; AI 支撑层架构设计文档 &mdash; LangGraph StateGraph &mdash; 2026-06-02</p>
 </div>
 
 </body>

@@ -599,6 +599,50 @@
     </table>
   </div>
 
+  <!-- AI Integration -->
+  <h2 class="section-title" style="margin-top:48px;">AI 集成</h2>
+  <p class="section-desc">AI 微应用（packages/ai-app）通过 SSE 流式订阅 LangGraph 事件，实现对话式 Schema/Flow 生成。Editor 和 Flow 通过双通道接收 AI 生成物。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>双入口模式</h3>
+      <p style="margin-top:8px;"><strong>AiChatView</strong>（独立页面 <code>/ai</code>）</p>
+      <p>三栏布局：对话列表 + 聊天面板 + 预览面板。Agent 可切换（editor / flow / auto）。</p>
+      <p style="margin-top:8px;"><strong>AiSidebarView</strong>（抽屉模式）</p>
+      <p>400px 单栏，嵌入 Editor / Flow 宿主。Agent 固定，预览通过 bridge 推送到宿主。</p>
+    </div>
+    <div class="card">
+      <h3>useAiStore（共享状态）</h3>
+      <p style="margin-top:8px;">Pinia store 管理：对话列表、当前消息、加载状态、生成物（currentSchema / currentFlow）、任务链。</p>
+      <p style="margin-top:8px;"><code>sendMessage()</code> 通过 fetch + ReadableStream 订阅 SSE 流，逐事件更新 messages 和生成物。</p>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card">
+      <h3>SSE 事件处理</h3>
+      <p style="margin-top:8px;">9 种事件类型：</p>
+      <span class="tag tag-blue">text</span>
+      <span class="tag tag-blue">tool_call</span>
+      <span class="tag tag-blue">schema</span>
+      <span class="tag tag-blue">flow</span>
+      <span class="tag tag-blue">task_chain</span>
+      <span class="tag tag-blue">agent_switch</span>
+      <span class="tag tag-blue">thinking</span>
+      <span class="tag tag-blue">tip</span>
+      <span class="tag tag-blue">done</span>
+      <p style="margin-top:8px; font-size:0.85rem; color:var(--text-secondary);">
+        text 事件累积到 content，tool_call 更新 toolCalls 数组，schema/flow 更新 currentSchema/currentFlow。
+      </p>
+    </div>
+    <div class="card">
+      <h3>双通道写回</h3>
+      <p style="margin-top:8px;"><strong>Socket 通道</strong>：通过 <code>@schema-form/socket</code> 的 <code>emitAiApply()</code> / <code>emitAiPublished()</code> 实时推送到宿主。</p>
+      <p style="margin-top:8px;"><strong>Bridge 通道</strong>：通过 postMessage（standalone）或 micro-app dispatch（qiankun）推送 <code>ai:published</code> / <code>ai:open-in-editor</code> 事件。</p>
+      <p style="margin-top:8px; font-size:0.85rem; color:var(--text-secondary);">两个通道同时写入，确保无论宿主使用哪种嵌入方式都能收到生成物。</p>
+    </div>
+  </div>
+
   <!-- Quick Start -->
   <h2 class="section-title" style="margin-top:48px;">快速开始</h2>
 
@@ -641,7 +685,7 @@ packages/editor/web/<br>
 </div>
 
 <div class="footer">
-  <p>@schema-form/editor-web v1.0.0-rc.1 · Schema 驱动的可视化表单设计器 · Vue 3.5 + Element Plus 2.9 + Vite 6.3</p>
+  <p>@schema-form/editor-web v1.0.0-rc.1 · Schema 驱动的可视化表单设计器 · Vue 3.5 + Element Plus 2.9 + Vite 6.3 · 2026-06-02</p>
 </div>
 
 </body>
