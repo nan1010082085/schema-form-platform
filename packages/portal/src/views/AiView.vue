@@ -9,6 +9,7 @@ const url = getAppUrl('ai', import.meta.env.DEV)
     name="ai"
     :url="url"
     :data="{}"
+    destroy
     iframe
     style="width: 100%; height: 100%; border: none; display: block"
   />

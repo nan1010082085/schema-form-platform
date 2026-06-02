@@ -27,8 +27,14 @@ export function installStyleGuard(): void {
         if (node instanceof HTMLStyleElement && node.textContent) {
           node.textContent = node.textContent.replace(
             /([^{}]+)\{[^}]*\}/g,
-            (match, selectors: string) =>
-              /(?:^|[:,\s])\s*(?:::root|:root|html|body)\b/.test(selectors) ? '' : match,
+            (match, selectors: string) => {
+              // 保留 :root 的 CSS 变量定义（不会影响宿主页面）
+              if (/\b:root\b/.test(selectors) && !/\b(html|body)\b/.test(selectors)) {
+                return match
+              }
+              // 删除 html / body 的视觉样式规则
+              return /(?:^|[:,\s])\s*(?:html|body)\b/.test(selectors) ? '' : match
+            },
           )
         }
       }
@@ -52,6 +58,30 @@ export function installStyleGuard(): void {
 export function initMicroApp(): void {
   microApp.start()
   installStyleGuard()
+}
+
+/**
+ * 预加载子应用
+ *
+ * 在宿主启动时调用，提前加载子应用的 HTML 和 JS，
+ * 避免用户首次导航时白屏等待。
+ *
+ * @param apps - 预加载配置数组，每项包含 name 和 url
+ *
+ * @example
+ * ```ts
+ * import { preFetchApps } from '@schema-form/micro-app/host'
+ * import { getAppUrl } from '@schema-form/micro-app/config'
+ *
+ * preFetchApps([
+ *   { name: 'editor', url: getAppUrl('editor', import.meta.env.DEV) },
+ *   { name: 'flow',   url: getAppUrl('flow',   import.meta.env.DEV) },
+ *   { name: 'ai',     url: getAppUrl('ai',     import.meta.env.DEV) },
+ * ])
+ * ```
+ */
+export function preFetchApps(apps: Array<{ name: string; url: string; iframe?: boolean }>): void {
+  microApp.preFetch(apps)
 }
 
 /** 子应用加载状态 */

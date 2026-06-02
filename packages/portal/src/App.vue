@@ -16,12 +16,19 @@
   box-sizing: border-box;
 }
 
+html,
 body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
   font-family: var(--font-family-base);
   color: var(--text-color-primary);
   background: var(--bg-color-page);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
 }
 
 /* ============================================================

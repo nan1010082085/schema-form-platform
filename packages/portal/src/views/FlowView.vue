@@ -9,6 +9,7 @@ const url = getAppUrl('flow', import.meta.env.DEV)
     name="flow"
     :url="url"
     :data="{}"
+    destroy
     iframe
     style="width: 100%; height: 100%; border: none; display: block"
   />
