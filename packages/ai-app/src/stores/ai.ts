@@ -15,6 +15,7 @@ import type {
   Widget,
   FlowGraph,
   SSEEvent,
+  TaskChainStep,
 } from '@/types'
 import { chat, getConversations, getConversationDetail, deleteConversation, publish } from '@/api/aiApi'
 
@@ -30,6 +31,8 @@ export const useAiStore = defineStore('ai', () => {
   const currentSchema = ref<Widget[] | null>(null)
   const currentFlow = ref<FlowGraph | null>(null)
   const error = ref<string | null>(null)
+  const taskChain = ref<TaskChainStep[]>([])
+  const taskChainIndex = ref(0)
 
   // ---- Getters ----
 
@@ -152,6 +155,13 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
+      case 'task_chain':
+        if (event.steps) {
+          taskChain.value = event.steps
+          taskChainIndex.value = event.currentIndex ?? 0
+        }
+        break
+
       case 'done':
         if (event.conversationId) {
           currentConversationId.value = event.conversationId
@@ -176,6 +186,8 @@ export const useAiStore = defineStore('ai', () => {
     currentSchema.value = null
     currentFlow.value = null
     error.value = null
+    taskChain.value = []
+    taskChainIndex.value = 0
   }
 
   async function loadConversations(): Promise<void> {
@@ -253,6 +265,8 @@ export const useAiStore = defineStore('ai', () => {
     currentSchema,
     currentFlow,
     error,
+    taskChain,
+    taskChainIndex,
 
     // getters
     currentConversation,

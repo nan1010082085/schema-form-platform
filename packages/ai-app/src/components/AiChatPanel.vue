@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import AiMessage from './AiMessage.vue'
-import type { AIMessage, AgentType } from '@/types'
+import TaskChainBar from './TaskChainBar.vue'
+import type { AIMessage, AgentType, TaskChainStep } from '@/types'
 import type { MessageEmbeddedCard } from './AiMessage.vue'
 
 export interface AiChatPanelProps {
@@ -11,6 +12,8 @@ export interface AiChatPanelProps {
   loading?: boolean
   disabled?: boolean
   agentOptions?: Array<{ value: AgentType; label: string }>
+  taskChain?: TaskChainStep[]
+  taskChainIndex?: number
 }
 
 const props = withDefaults(defineProps<AiChatPanelProps>(), {
@@ -129,6 +132,13 @@ function handleCardAction(
         </button>
       </div>
     </div>
+
+    <!-- Task Chain Bar -->
+    <TaskChainBar
+      v-if="taskChain && taskChain.length > 1"
+      :steps="taskChain"
+      :current-index="taskChainIndex ?? 0"
+    />
 
     <!-- Messages -->
     <div ref="messagesRef" :class="$style.messages">

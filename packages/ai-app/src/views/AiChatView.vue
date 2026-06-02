@@ -17,7 +17,7 @@ import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
 import type { PreviewSchemaData, PreviewFlowData, PreviewTab } from '@/components/AiPreviewPanel.vue'
 
 const store = useAiStore()
-const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId } =
+const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex } =
   storeToRefs(store)
 
 // ---- Preview data ----
@@ -163,6 +163,8 @@ onMounted(() => {
         :agent="activeAgent"
         :messages="messages"
         :loading="loading"
+        :task-chain="taskChain"
+        :task-chain-index="taskChainIndex"
         @send="handleSend"
         @clear-messages="handleClearMessages"
         @card-primary-action="handlePrimaryAction"

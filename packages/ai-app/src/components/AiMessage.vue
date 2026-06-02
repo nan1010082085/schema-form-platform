@@ -63,6 +63,8 @@ function formatToolName(name: string): string {
     search_published_schemas: '搜索已发布表单',
     get_widget_catalogue: '查询组件目录',
     validate_schema: '校验 Schema',
+    semantic_search_schemas: '语义搜索表单',
+    generate_schema: '生成表单',
     search_flows: '搜索流程',
     get_flow_detail: '获取流程详情',
     search_users: '搜索用户',
@@ -107,6 +109,9 @@ function formatToolName(name: string): string {
           </div>
           <div v-if="tc.result !== undefined" :class="$style.toolCallResult">
             <div :class="$style.toolCallResultLabel">结果</div>
+            <div v-if="(tc.result as Record<string, unknown>)?.summary" :class="$style.toolCallSummary">
+              {{ (tc.result as Record<string, unknown>).summary }}
+            </div>
             <pre :class="$style.toolCallResultPre">{{ JSON.stringify(tc.result, null, 2) }}</pre>
           </div>
         </div>

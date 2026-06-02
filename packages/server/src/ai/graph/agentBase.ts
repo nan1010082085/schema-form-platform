@@ -1,15 +1,20 @@
 /**
  * Shared agent infrastructure.
  *
- * Extracts common patterns used by editorAgent and flowAgent:
- * - OpenAI client initialization
- * - Message history building
+ * Utility functions used across the AI agent system:
+ * - OpenAI client singleton
+ * - Model configuration per task type
+ * - Message building for direct LLM calls (schemaGenerator)
  * - Structured output parsing (think/answer/tip/schema tags)
- * - Tool calling loop with streaming
+ * - Retry with exponential backoff
+ * - Regex safety
+ *
+ * Note: LangGraph handles the main agent loop, tool execution,
+ * and streaming. These utilities are retained for schemaGenerator.ts
+ * and tool implementations.
  */
 
 import OpenAI from 'openai'
-import type { AIConversationState } from './state.js'
 
 // ────────────────────────────────────────────
 // OpenAI client (shared singleton)
@@ -32,24 +37,83 @@ export function getClient(): OpenAI {
 }
 
 // ────────────────────────────────────────────
-// Message history builder
+// Model configuration per task type
 // ────────────────────────────────────────────
 
+export type TaskType = 'router' | 'generate_simple' | 'generate_complex' | 'analyze'
+
+/**
+ * Select model by task type.
+ *
+ * - router: intent classification, cheap and fast
+ * - generate_simple: simple generation (single form, single list), V3
+ * - generate_complex: complex reasoning (multi-step, linkage, nested), R1
+ * - analyze: analysis/diagnosis tasks, V3
+ */
+export function getModelForTask(taskType: TaskType): string {
+  const modelMap: Record<TaskType, string> = {
+    router: 'deepseek-chat',
+    generate_simple: 'deepseek-chat',
+    generate_complex: 'deepseek-reasoner',
+    analyze: 'deepseek-chat',
+  }
+  return modelMap[taskType] ?? 'deepseek-chat'
+}
+
+/**
+ * Classify task complexity from user message using heuristic rules.
+ */
+export function classifyTaskComplexity(message: string): TaskType {
+  const complexIndicators = [
+    '联动', '条件', '动态', '多步', '复杂',
+    '同时', '并且', '然后', '之后',
+    '审批', '流程', '表单',
+    '会签', '或签', '分支',
+  ]
+
+  const matchCount = complexIndicators.filter((kw) => message.includes(kw)).length
+
+  if (matchCount >= 2) return 'generate_complex'
+
+  return 'generate_simple'
+}
+
+// ────────────────────────────────────────────
+// Message history builder (with truncation)
+// ────────────────────────────────────────────
+
+const MAX_HISTORY_MESSAGES = 10
+
+/**
+ * Build LLM message array from conversation state.
+ *
+ * Used by schemaGenerator.ts for direct (non-graph) LLM calls.
+ * LangGraph nodes handle message management via the graph state.
+ *
+ * Accepts a loose state shape since schemaGenerator constructs its own.
+ */
 export function buildMessages(
-  state: AIConversationState,
+  state: { messages: Array<{ role: string; content: string }>; [key: string]: unknown },
   systemPrompt: string,
-  buildUserMessage: (state: AIConversationState) => string,
+  buildUserMessage: (state: { messages: Array<{ role: string; content: string }>; [key: string]: unknown }) => string,
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
   ]
 
   const historyMessages = state.messages.slice(0, -1)
-  for (const msg of historyMessages) {
+  const truncatedHistory = historyMessages.length > MAX_HISTORY_MESSAGES
+    ? historyMessages.slice(-MAX_HISTORY_MESSAGES)
+    : historyMessages
+
+  for (const msg of truncatedHistory) {
     if (msg.role === 'user') {
       messages.push({ role: 'user', content: msg.content })
     } else if (msg.role === 'assistant') {
-      messages.push({ role: 'assistant', content: msg.content })
+      const content = msg.content.length > 2000
+        ? msg.content.slice(0, 2000) + '...(已截断)'
+        : msg.content
+      messages.push({ role: 'assistant', content })
     }
   }
 
@@ -92,97 +156,6 @@ export function parseStructuredOutput(raw: string): ParsedStructuredOutput {
 }
 
 // ────────────────────────────────────────────
-// Tool calling types
-// ────────────────────────────────────────────
-
-export interface ToolCallAccumulator {
-  id: string
-  name: string
-  argumentsJson: string
-}
-
-export interface StreamToolCall {
-  id: string
-  name: string
-  arguments: Record<string, unknown>
-}
-
-export interface StreamToolResult {
-  id: string
-  name: string
-  result: unknown
-}
-
-export const MAX_TOOL_ROUNDS = 5
-
-// ────────────────────────────────────────────
-// Streaming SSE event types (unified)
-// ────────────────────────────────────────────
-
-export interface StreamEvent {
-  type: 'thinking' | 'text' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'error'
-  content?: string
-  payload?: unknown
-  toolCalls?: StreamToolCall[]
-  toolResults?: StreamToolResult[]
-}
-
-// ────────────────────────────────────────────
-// Thinking stream handler
-// ────────────────────────────────────────────
-
-export interface ThinkingState {
-  inThink: boolean
-  thinkClosed: boolean
-  fullContent: string
-}
-
-export function createThinkingState(): ThinkingState {
-  return { inThink: false, thinkClosed: false, fullContent: '' }
-}
-
-/**
- * Process a content delta for thinking extraction.
- * Returns thinking events to yield, or null if not a thinking chunk.
- */
-export function processThinkingDelta(
-  content: string,
-  state: ThinkingState,
-): StreamEvent[] {
-  const events: StreamEvent[] = []
-  state.fullContent += content
-
-  if (!state.inThink && !state.thinkClosed) {
-    const thinkStart = state.fullContent.indexOf('<think>')
-    if (thinkStart !== -1) {
-      const afterTag = state.fullContent.slice(thinkStart + 7)
-      if (afterTag.length > 0) {
-        state.inThink = true
-        events.push({ type: 'thinking', content: afterTag })
-      }
-    }
-    return events
-  }
-
-  if (state.inThink && !state.thinkClosed) {
-    const thinkEnd = state.fullContent.indexOf('</think>')
-    if (thinkEnd !== -1) {
-      const thinkContent = state.fullContent.slice(
-        state.fullContent.indexOf('<think>') + 7,
-        thinkEnd,
-      )
-      events.push({ type: 'thinking', content: thinkContent })
-      state.thinkClosed = true
-      state.inThink = false
-    } else {
-      events.push({ type: 'thinking', content })
-    }
-  }
-
-  return events
-}
-
-// ────────────────────────────────────────────
 // Regex safety
 // ────────────────────────────────────────────
 
@@ -216,7 +189,6 @@ export async function withRetry<T>(
       lastError = err instanceof Error ? err : new Error(String(err))
       if (attempt === maxRetries) break
 
-      // Only retry on transient errors
       const status = (err as { status?: number }).status
       const isTransient = !status || [429, 500, 502, 503, 504].includes(status)
       if (!isTransient) break
@@ -226,33 +198,4 @@ export async function withRetry<T>(
     }
   }
   throw lastError
-}
-
-// ────────────────────────────────────────────
-// Tool execution with timeout
-// ────────────────────────────────────────────
-
-const TOOL_TIMEOUT_MS = 30_000
-
-/**
- * Execute a tool function with a timeout.
- * Returns a result object even on failure (never throws).
- */
-export async function executeToolWithTimeout<T>(
-  fn: () => Promise<T>,
-  toolName: string,
-  timeoutMs = TOOL_TIMEOUT_MS,
-): Promise<{ success: true; data: T } | { success: false; error: string }> {
-  try {
-    const result = await Promise.race([
-      fn(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Tool "${toolName}" timed out after ${timeoutMs}ms`)), timeoutMs),
-      ),
-    ])
-    return { success: true, data: result }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return { success: false, error: `Tool "${toolName}" failed: ${message}` }
-  }
 }

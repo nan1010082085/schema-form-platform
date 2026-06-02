@@ -84,6 +84,20 @@ export interface AIMessage {
   timestamp: Date
 }
 
+// ---- 上下文 ----
+
+export interface ChatContext {
+  source: 'editor' | 'flow' | 'standalone'
+  schemaId?: string
+  flowId?: string
+  nodeId?: string
+  version?: string
+  /** 用户偏好（如布局风格、label 宽度约定） */
+  preferences?: Record<string, unknown>
+  /** 前文摘要（长对话时压缩早期消息） */
+  historySummary?: string
+}
+
 // ---- 对话请求 ----
 
 export interface ChatRequest {
@@ -92,17 +106,9 @@ export interface ChatRequest {
   context: ChatContext
 }
 
-export interface ChatContext {
-  source: 'editor' | 'flow' | 'standalone'
-  schemaId?: string
-  flowId?: string
-  nodeId?: string
-  version?: string
-}
-
 // ---- SSE 事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'done' | 'error'
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'task_chain' | 'done' | 'error'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -113,6 +119,17 @@ export interface SSEEvent {
   /** Tool call event data */
   phase?: 'calling' | 'result'
   tools?: Array<{ id: string; name: string; arguments?: Record<string, unknown>; result?: unknown }>
+  /** Task chain event data */
+  steps?: TaskChainStep[]
+  currentIndex?: number
+}
+
+// ---- 任务链 ----
+
+export interface TaskChainStep {
+  agent: 'editor' | 'flow'
+  description: string
+  status: 'pending' | 'running' | 'done' | 'skipped'
 }
 
 // ---- 发布 ----

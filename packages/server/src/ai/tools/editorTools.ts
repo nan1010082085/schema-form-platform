@@ -1,368 +1,437 @@
 /**
- * Editor Agent tools — OpenAI function calling format.
+ * Editor Agent tools — LangGraph StructuredTool format.
  *
- * Provides schema search, widget catalogue, and validation capabilities
- * for the Editor Agent to query real data during generation.
+ * Widget 目录从 @schema-form/shared-ai 动态读取，
+ * 新增 Widget 后重新运行提取脚本即可自动覆盖。
  */
 
-import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
+import { tool } from '@langchain/core/tools'
 import { FormSchemaModel } from '../../models/FormSchema.js'
 import { PublishedSchemaModel } from '../../models/PublishedSchema.js'
 import { escapeRegex } from '../graph/agentBase.js'
+import { z } from 'zod'
 
 // ────────────────────────────────────────────
-// OpenAI tool definitions
+// AI 元数据类型（与 @schema-form/shared-ai 对齐）
 // ────────────────────────────────────────────
 
-export const EDITOR_TOOLS = [
-  {
-    type: 'function' as const,
-    function: {
-      name: 'search_schemas',
-      description: '搜索已有的表单 Schema 列表。可用于查找现有 Schema 作为参考、查找用户想修改的 Schema、或检查是否已存在同名 Schema。',
-      parameters: {
-        type: 'object',
-        properties: {
-          keyword: { type: 'string', description: '按名称模糊搜索的关键词' },
-          type: { type: 'string', enum: ['form', 'search_list'], description: '按类型筛选' },
-          limit: { type: 'number', description: '返回数量上限，默认 10' },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'get_schema_detail',
-      description: '获取指定 Schema 的完整 JSON 内容，包括所有 Widget 配置。用于深入了解现有 Schema 结构以便修改。',
-      parameters: {
-        type: 'object',
-        properties: {
-          schemaId: { type: 'string', description: 'Schema 的 _id' },
-        },
-        required: ['schemaId'],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'search_published_schemas',
-      description: '搜索已发布的 Schema 版本。可用于查找可复用的已发布模板。',
-      parameters: {
-        type: 'object',
-        properties: {
-          keyword: { type: 'string', description: '按名称模糊搜索' },
-          limit: { type: 'number', description: '返回数量上限，默认 10' },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'get_widget_catalogue',
-      description: '获取 Widget 组件目录，包含所有可用组件类型及其关键属性。可按分类筛选。',
-      parameters: {
-        type: 'object',
-        properties: {
-          category: {
-            type: 'string',
-            enum: ['container', 'layout', 'form', 'static', 'action', 'table', 'business', 'chart'],
-            description: '按组件分类筛选，不传则返回全部',
-          },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'validate_schema',
-      description: '校验 Widget Schema JSON 的结构正确性。在生成 Schema 后调用此工具确认无误再返回给用户。',
-      parameters: {
-        type: 'object',
-        properties: {
-          widgets: {
-            type: 'array',
-            description: '要校验的 Widget 数组',
-            items: { type: 'object' },
-          },
-        },
-        required: ['widgets'],
-      },
-    },
-  },
-]
+interface WidgetAIMetadata {
+  type: string
+  group: string
+  canHaveChildren: boolean
+  displayName: string
+  description: string
+  defaultProps: Record<string, unknown>
+  keyProps: string[]
+  defaultSize: { w: number; h: number } | null
+  exposedValues: Array<{ key: string; type: string; description: string; example?: unknown }>
+  receivableEvents: Array<{ name: string; description: string; params?: Record<string, string> }>
+  eventTargets: Array<{ id: string; label: string; description?: string }>
+  configPanels: string[]
+}
+
+interface AIMetadata {
+  version: string
+  generatedAt: string
+  widgets: WidgetAIMetadata[]
+  flowNodes: Array<{ type: string; label: string; description: string; size: { width: number; height: number }; category: string }>
+  systems: { eventActionTypes: string[]; linkageTypes: string[]; containerTypes: string[]; variableTypes: string[] }
+}
 
 // ────────────────────────────────────────────
-// Tool execution
+// 动态加载 metadata
+// ────────────────────────────────────────────
+
+let metadata: AIMetadata | null = null
+
+async function getMetadata(): Promise<AIMetadata> {
+  if (!metadata) {
+    // 从 shared/ai/metadata.json 读取（构建时自动生成）
+    const { readFileSync } = await import('node:fs')
+    const { join, dirname } = await import('node:path')
+    // 通过 package.json 定位 shared/ai 目录
+    const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
+    const aiDir = dirname(pkgPath)
+    const jsonPath = join(aiDir, 'metadata.json')
+    metadata = JSON.parse(readFileSync(jsonPath, 'utf-8')) as AIMetadata
+  }
+  return metadata
+}
+
+export async function getWidgetCatalogueFromMetadata(): Promise<WidgetAIMetadata[]> {
+  const meta = await getMetadata()
+  return meta.widgets
+}
+
+// ────────────────────────────────────────────
+// Tool result type
 // ────────────────────────────────────────────
 
 interface ToolResult {
   success: boolean
   data?: unknown
   error?: string
-}
-
-export async function executeEditorTool(
-  name: string,
-  args: Record<string, unknown>,
-): Promise<ToolResult> {
-  switch (name) {
-    case 'search_schemas':
-      return searchSchemas(args)
-    case 'get_schema_detail':
-      return getSchemaDetail(args)
-    case 'search_published_schemas':
-      return searchPublishedSchemas(args)
-    case 'get_widget_catalogue':
-      return getWidgetCatalogue(args)
-    case 'validate_schema':
-      return validateSchemaTool(args)
-    default:
-      return { success: false, error: `Unknown tool: ${name}` }
-  }
+  /** 自然语言摘要，LLM 可直接引用 */
+  summary?: string
 }
 
 // ────────────────────────────────────────────
-// Implementations
+// LangGraph tools
 // ────────────────────────────────────────────
 
-async function searchSchemas(args: Record<string, unknown>): Promise<ToolResult> {
-  const keyword = args.keyword as string | undefined
-  const type = args.type as string | undefined
-  const limit = (args.limit as number) || 10
+export const searchSchemasTool = tool(
+  async ({ keyword, type, limit }): Promise<ToolResult> => {
+    const filter: Record<string, unknown> = {}
+    if (keyword) {
+      filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
+    }
+    if (type) {
+      filter.type = type
+    }
 
-  const filter: Record<string, unknown> = {}
-  if (keyword) {
-    filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
-  }
-  if (type) {
-    filter.type = type
-  }
+    const schemas = await FormSchemaModel.find(filter)
+      .select('_id editId name type status version createdAt updatedAt')
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean()
 
-  const schemas = await FormSchemaModel.find(filter)
-    .select('_id editId name type status version createdAt updatedAt')
-    .sort({ updatedAt: -1 })
-    .limit(limit)
-    .lean()
+    const mapped = schemas.map((s: Record<string, unknown>) => ({
+      id: s._id,
+      editId: s.editId,
+      name: s.name,
+      type: s.type,
+      status: s.status,
+      version: s.version,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }))
 
-  return {
-    success: true,
-    data: {
-      total: schemas.length,
-      schemas: schemas.map((s: Record<string, unknown>) => ({
-        id: s._id,
-        editId: s.editId,
-        name: s.name,
-        type: s.type,
-        status: s.status,
-        version: s.version,
-        createdAt: s.createdAt,
-        updatedAt: s.updatedAt,
-      })),
-    },
-  }
-}
+    const summary = schemas.length === 0
+      ? `没有找到${keyword ? `包含"${keyword}"的` : ''}Schema`
+      : `找到 ${schemas.length} 个 Schema：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（${s.type}，${s.status}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
 
-async function getSchemaDetail(args: Record<string, unknown>): Promise<ToolResult> {
-  const schemaId = args.schemaId as string
-  if (!schemaId) {
-    return { success: false, error: 'schemaId is required' }
-  }
-
-  const schema = await FormSchemaModel.findById(schemaId).lean() as Record<string, unknown> | null
-  if (!schema) {
-    return { success: false, error: `Schema ${schemaId} not found` }
-  }
-
-  return {
-    success: true,
-    data: {
-      id: schema._id,
-      editId: schema.editId,
-      name: schema.name,
-      type: schema.type,
-      status: schema.status,
-      version: schema.version,
-      json: schema.json,
-      createdAt: schema.createdAt,
-      updatedAt: schema.updatedAt,
-    },
-  }
-}
-
-async function searchPublishedSchemas(args: Record<string, unknown>): Promise<ToolResult> {
-  const keyword = args.keyword as string | undefined
-  const limit = (args.limit as number) || 10
-
-  const filter: Record<string, unknown> = {}
-  if (keyword) {
-    filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
-  }
-
-  const schemas = await PublishedSchemaModel.find(filter)
-    .select('_id sourceId name type publishId version publishedAt')
-    .sort({ publishedAt: -1 })
-    .limit(limit)
-    .lean()
-
-  return {
-    success: true,
-    data: {
-      total: schemas.length,
-      schemas: schemas.map((s: Record<string, unknown>) => ({
-        id: s._id,
-        sourceId: s.sourceId,
-        name: s.name,
-        type: s.type,
-        publishId: s.publishId,
-        version: s.version,
-        publishedAt: s.publishedAt,
-      })),
-    },
-  }
-}
-
-interface WidgetTypeInfo {
-  type: string
-  category: string
-  description: string
-  keyProps: string[]
-  canHaveChildren: boolean
-}
-
-export const WIDGET_CATALOGUE: WidgetTypeInfo[] = [
-  // Container
-  { type: 'form', category: 'container', description: '表单容器', keyProps: ['labelWidth', 'labelPosition'], canHaveChildren: true },
-  { type: 'dialog', category: 'container', description: '弹窗容器', keyProps: ['title', 'width', 'contentMode', 'draggable', 'showFooter'], canHaveChildren: true },
-  // Layout
-  { type: 'card', category: 'layout', description: '卡片容器', keyProps: ['title', 'shadow'], canHaveChildren: true },
-  { type: 'tabs', category: 'layout', description: '标签页容器', keyProps: ['type', 'tabPosition', 'editable'], canHaveChildren: true },
-  { type: 'single-col', category: 'layout', description: '单列布局', keyProps: ['colWidths', 'gutter'], canHaveChildren: true },
-  { type: 'double-col', category: 'layout', description: '双列布局', keyProps: ['colWidths', 'gutter'], canHaveChildren: true },
-  { type: 'triple-col', category: 'layout', description: '三列布局', keyProps: ['colWidths', 'gutter'], canHaveChildren: true },
-  { type: 'quad-col', category: 'layout', description: '四列布局', keyProps: ['colWidths', 'gutter'], canHaveChildren: true },
-  { type: 'divider', category: 'layout', description: '分割线', keyProps: ['direction'], canHaveChildren: false },
-  { type: 'spacer', category: 'layout', description: '间距', keyProps: ['height'], canHaveChildren: false },
-  // Form
-  { type: 'input', category: 'form', description: '文本输入', keyProps: ['placeholder', 'maxlength', 'showWordLimit', 'clearable'], canHaveChildren: false },
-  { type: 'number', category: 'form', description: '数字输入', keyProps: ['min', 'max', 'step', 'precision'], canHaveChildren: false },
-  { type: 'select', category: 'form', description: '下拉选择', keyProps: ['multiple', 'filterable', 'clearable'], canHaveChildren: false },
-  { type: 'radio', category: 'form', description: '单选框组', keyProps: [], canHaveChildren: false },
-  { type: 'checkbox', category: 'form', description: '复选框组', keyProps: [], canHaveChildren: false },
-  { type: 'date', category: 'form', description: '日期选择', keyProps: ['type', 'format', 'valueFormat'], canHaveChildren: false },
-  { type: 'textarea', category: 'form', description: '多行文本', keyProps: ['rows', 'autosize'], canHaveChildren: false },
-  { type: 'switch', category: 'form', description: '开关', keyProps: ['activeText', 'inactiveText', 'activeValue', 'inactiveValue'], canHaveChildren: false },
-  { type: 'slider', category: 'form', description: '滑块', keyProps: ['min', 'max', 'step', 'showStops', 'range'], canHaveChildren: false },
-  { type: 'rate', category: 'form', description: '评分', keyProps: ['max', 'allowHalf', 'showText', 'texts'], canHaveChildren: false },
-  { type: 'richtext', category: 'form', description: '富文本', keyProps: ['toolbar'], canHaveChildren: false },
-  { type: 'upload', category: 'form', description: '文件上传', keyProps: ['action', 'accept', 'multiple', 'limit', 'listType'], canHaveChildren: false },
-  { type: 'date-time-slot', category: 'form', description: '时间段', keyProps: [], canHaveChildren: false },
-  { type: 'time-picker', category: 'form', description: '时间选择', keyProps: ['isRange', 'format'], canHaveChildren: false },
-  { type: 'cascader', category: 'form', description: '级联选择', keyProps: ['props'], canHaveChildren: false },
-  { type: 'color-picker', category: 'form', description: '颜色选择', keyProps: ['showAlpha', 'predefine'], canHaveChildren: false },
-  { type: 'tag-input', category: 'form', description: '标签输入', keyProps: [], canHaveChildren: false },
-  { type: 'autocomplete', category: 'form', description: '自动补全', keyProps: [], canHaveChildren: false },
-  // Static
-  { type: 'title', category: 'static', description: '标题', keyProps: ['text', 'level'], canHaveChildren: false },
-  { type: 'banner', category: 'static', description: '横幅提示', keyProps: ['text', 'type', 'closable'], canHaveChildren: false },
-  // Action
-  { type: 'button', category: 'action', description: '单个按钮', keyProps: ['text', 'type', 'icon', 'size'], canHaveChildren: false },
-  { type: 'toolbar-buttons', category: 'action', description: '工具栏按钮组', keyProps: ['buttons'], canHaveChildren: false },
-  // Table
-  { type: 'table', category: 'table', description: '数据表格', keyProps: ['columns', 'pagination', 'border', 'stripe'], canHaveChildren: false },
-  { type: 'editable-table', category: 'table', description: '可编辑表格', keyProps: ['columns', 'addable', 'deletable'], canHaveChildren: false },
-  { type: 'search-list', category: 'table', description: '搜索列表页', keyProps: ['searchFields', 'columns', 'listApi', 'rowActions'], canHaveChildren: false },
-  // Business
-  { type: 'tree-layout', category: 'business', description: '树形布局', keyProps: ['direction'], canHaveChildren: true },
-  { type: 'file-list', category: 'business', description: '文件列表', keyProps: ['editable'], canHaveChildren: false },
-  { type: 'transfer', category: 'business', description: '穿梭框', keyProps: ['data', 'filterable'], canHaveChildren: false },
-  // Chart
-  { type: 'bar-chart', category: 'chart', description: '柱状图', keyProps: ['xAxis', 'yAxis', 'series'], canHaveChildren: false },
-  { type: 'line-chart', category: 'chart', description: '折线图', keyProps: ['xAxis', 'yAxis', 'series', 'smooth'], canHaveChildren: false },
-  { type: 'pie-chart', category: 'chart', description: '饼图', keyProps: ['series', 'radius'], canHaveChildren: false },
-  { type: 'scatter-chart', category: 'chart', description: '散点图', keyProps: ['xAxis', 'yAxis'], canHaveChildren: false },
-  { type: 'radar', category: 'chart', description: '雷达图', keyProps: ['indicator', 'series'], canHaveChildren: false },
-  { type: 'gauge', category: 'chart', description: '仪表盘', keyProps: ['min', 'max', 'series'], canHaveChildren: false },
-  { type: 'heatmap', category: 'chart', description: '热力图', keyProps: ['xAxis', 'yAxis', 'series'], canHaveChildren: false },
-  { type: 'funnel', category: 'chart', description: '漏斗图', keyProps: ['series'], canHaveChildren: false },
-  { type: 'candlestick', category: 'chart', description: 'K线图', keyProps: ['xAxis', 'series'], canHaveChildren: false },
-]
-
-const VALID_TYPES = new Set(WIDGET_CATALOGUE.map((w) => w.type))
-const CONTAINER_TYPES = new Set(
-  WIDGET_CATALOGUE.filter((w) => w.canHaveChildren).map((w) => w.type),
+    return {
+      success: true,
+      data: { total: schemas.length, schemas: mapped },
+      summary,
+    }
+  },
+  {
+    name: 'search_schemas',
+    description: '搜索已有的表单 Schema 列表。可用于查找现有 Schema 作为参考、查找用户想修改的 Schema、或检查是否已存在同名 Schema。',
+    schema: z.object({
+      keyword: z.string().optional().describe('按名称模糊搜索的关键词'),
+      type: z.enum(['form', 'search_list']).optional().describe('按类型筛选'),
+      limit: z.number().optional().default(10).describe('返回数量上限，默认 10'),
+    }),
+  },
 )
 
-function getWidgetCatalogue(args: Record<string, unknown>): ToolResult {
-  const category = args.category as string | undefined
-  const filtered = category
-    ? WIDGET_CATALOGUE.filter((w) => w.category === category)
-    : WIDGET_CATALOGUE
+export const getSchemaDetailTool = tool(
+  async ({ schemaId }): Promise<ToolResult> => {
+    const schema = await FormSchemaModel.findById(schemaId).lean() as Record<string, unknown> | null
+    if (!schema) {
+      return { success: false, error: `Schema ${schemaId} not found` }
+    }
 
-  return {
-    success: true,
-    data: { total: filtered.length, widgets: filtered },
-  }
-}
+    const widgetCount = Array.isArray(schema.json) ? (schema.json as unknown[]).length : 0
 
-interface ValidationError {
-  path: string
-  message: string
-}
+    return {
+      success: true,
+      data: {
+        id: schema._id,
+        editId: schema.editId,
+        name: schema.name,
+        type: schema.type,
+        status: schema.status,
+        version: schema.version,
+        json: schema.json,
+        createdAt: schema.createdAt,
+        updatedAt: schema.updatedAt,
+      },
+      summary: `Schema "${schema.name}"（${schema.type}，${schema.status}）包含 ${widgetCount} 个组件`,
+    }
+  },
+  {
+    name: 'get_schema_detail',
+    description: '获取指定 Schema 的完整 JSON 内容，包括所有 Widget 配置。用于深入了解现有 Schema 结构以便修改。',
+    schema: z.object({
+      schemaId: z.string().describe('Schema 的 _id'),
+    }),
+  },
+)
 
-function validateSchemaTool(args: Record<string, unknown>): ToolResult {
-  const widgets = args.widgets as Record<string, unknown>[]
-  if (!Array.isArray(widgets)) {
-    return { success: false, error: 'widgets must be an array' }
-  }
+export const searchPublishedSchemasTool = tool(
+  async ({ keyword, limit }): Promise<ToolResult> => {
+    const filter: Record<string, unknown> = {}
+    if (keyword) {
+      filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
+    }
 
-  const errors: ValidationError[] = []
+    const schemas = await PublishedSchemaModel.find(filter)
+      .select('_id sourceId name type publishId version publishedAt')
+      .sort({ publishedAt: -1 })
+      .limit(limit)
+      .lean()
 
-  function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
-    for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i]
-      const path = prefix ? `${prefix}[${i}]` : `[${i}]`
+    const mapped = schemas.map((s: Record<string, unknown>) => ({
+      id: s._id,
+      sourceId: s.sourceId,
+      name: s.name,
+      type: s.type,
+      publishId: s.publishId,
+      version: s.version,
+      publishedAt: s.publishedAt,
+    }))
 
-      const type = node.type as string | undefined
-      if (!type) {
-        errors.push({ path: `${path}.type`, message: '缺少 type 字段' })
-        continue
-      }
-      if (!VALID_TYPES.has(type)) {
-        errors.push({ path: `${path}.type`, message: `无效的组件类型 "${type}"` })
-        continue
-      }
+    const summary = schemas.length === 0
+      ? '没有找到已发布的 Schema'
+      : `找到 ${schemas.length} 个已发布 Schema：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（v${s.version}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
 
-      const id = node.id as string | undefined
-      if (!id) {
-        errors.push({ path: `${path}.id`, message: '缺少 id 字段' })
-      }
+    return {
+      success: true,
+      data: { total: schemas.length, schemas: mapped },
+      summary,
+    }
+  },
+  {
+    name: 'search_published_schemas',
+    description: '搜索已发布的 Schema 版本。可用于查找可复用的已发布模板。',
+    schema: z.object({
+      keyword: z.string().optional().describe('按名称模糊搜索'),
+      limit: z.number().optional().default(10).describe('返回数量上限，默认 10'),
+    }),
+  },
+)
 
-      const isContainer = CONTAINER_TYPES.has(type)
-      const children = node.children as Record<string, unknown>[] | undefined
+export const getWidgetCatalogueTool = tool(
+  async ({ category }): Promise<ToolResult> => {
+    const widgets = await getWidgetCatalogueFromMetadata()
 
-      if (isContainer) {
-        if (!Array.isArray(children)) {
-          errors.push({ path: `${path}.children`, message: `容器组件 "${type}" 必须有 children 数组` })
-        } else {
-          walk(children, path, depth + 1)
+    const filtered = category
+      ? widgets.filter((w) => w.group === category)
+      : widgets
+
+    const groupLabel = category ? `${category} 分组` : '全部'
+    const summary = `${groupLabel}共 ${filtered.length} 个组件：${filtered.slice(0, 5).map(w => w.displayName).join('、')}${filtered.length > 5 ? '等' : ''}`
+
+    return {
+      success: true,
+      data: { total: filtered.length, widgets: filtered },
+      summary,
+    }
+  },
+  {
+    name: 'get_widget_catalogue',
+    description: '获取 Widget 组件目录，包含所有可用组件类型及其关键属性。可按分类筛选。',
+    schema: z.object({
+      category: z.enum(['container', 'layout', 'form', 'static', 'action', 'table', 'business', 'chart'])
+        .optional()
+        .describe('按组件分类筛选，不传则返回全部'),
+    }),
+  },
+)
+
+export const semanticSearchSchemasTool = tool(
+  async ({ query, limit }): Promise<ToolResult> => {
+    // 提取查询关键词（中文分词 + 英文分词）
+    const queryTokens = extractTokens(query)
+
+    // 获取所有 Schema（限制 100 个，避免全表扫描）
+    const schemas = await FormSchemaModel.find()
+      .select('_id editId name type status version json createdAt updatedAt')
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .lean()
+
+    // 计算每个 Schema 的相似度分数
+    const scored = schemas.map((schema: Record<string, unknown>) => {
+      const nameTokens = extractTokens(String(schema.name ?? ''))
+      // 从 json 中提取组件类型和字段名作为特征
+      const jsonTokens = extractTokensFromSchema(schema.json)
+      const allTokens = new Set([...nameTokens, ...jsonTokens])
+
+      const score = jaccardSimilarity(queryTokens, allTokens)
+      return { schema, score }
+    })
+
+    // 按分数排序，取 top N
+    scored.sort((a, b) => b.score - a.score)
+    const results = scored.slice(0, limit).filter((s) => s.score > 0)
+
+    const mapped = results.map((r) => ({
+      id: r.schema._id,
+      editId: r.schema.editId,
+      name: r.schema.name,
+      type: r.schema.type,
+      status: r.schema.status,
+      version: r.schema.version,
+      score: Math.round(r.score * 100),
+      createdAt: r.schema.createdAt,
+      updatedAt: r.schema.updatedAt,
+    }))
+
+    const summary = mapped.length === 0
+      ? `没有找到与"${query}"语义相似的 Schema`
+      : `找到 ${mapped.length} 个相似 Schema：${mapped.slice(0, 3).map((s) => `${String(s.name)}（相似度 ${s.score}%）`).join('、')}`
+
+    return {
+      success: true,
+      data: { total: mapped.length, schemas: mapped },
+      summary,
+    }
+  },
+  {
+    name: 'semantic_search_schemas',
+    description: '语义搜索已有 Schema。当用户说"类似那个请假表单"、"像上次做的用户管理页面"时使用。基于语义相似度匹配，而非关键词。',
+    schema: z.object({
+      query: z.string().describe('自然语言描述，如"请假申请表单"、"用户管理列表页"'),
+      limit: z.number().optional().default(5).describe('返回数量上限，默认 5'),
+    }),
+  },
+)
+
+export const validateSchemaTool = tool(
+  async ({ widgets }): Promise<ToolResult> => {
+    const meta = await getMetadata()
+    const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
+    const CONTAINER_TYPES = new Set(
+      meta.widgets.filter((w) => w.canHaveChildren).map((w) => w.type),
+    )
+
+    interface ValidationError {
+      path: string
+      message: string
+    }
+
+    const errors: ValidationError[] = []
+
+    function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        const path = prefix ? `${prefix}[${i}]` : `[${i}]`
+
+        const type = node.type as string | undefined
+        if (!type) {
+          errors.push({ path: `${path}.type`, message: '缺少 type 字段' })
+          continue
         }
-      } else if (depth === 0 && !isContainer) {
-        errors.push({ path, message: `基础组件 "${type}" 必须嵌套在布局容器内` })
+        if (!VALID_TYPES.has(type)) {
+          errors.push({ path: `${path}.type`, message: `无效的组件类型 "${type}"` })
+          continue
+        }
+
+        const id = node.id as string | undefined
+        if (!id) {
+          errors.push({ path: `${path}.id`, message: '缺少 id 字段' })
+        }
+
+        const isContainer = CONTAINER_TYPES.has(type)
+        const children = node.children as Record<string, unknown>[] | undefined
+
+        if (isContainer) {
+          if (!Array.isArray(children)) {
+            errors.push({ path: `${path}.children`, message: `容器组件 "${type}" 必须有 children 数组` })
+          } else {
+            walk(children, path, depth + 1)
+          }
+        } else if (depth === 0 && !isContainer) {
+          errors.push({ path, message: `基础组件 "${type}" 必须嵌套在布局容器内` })
+        }
+      }
+    }
+
+    walk(widgets as Record<string, unknown>[], '', 0)
+
+    const summary = errors.length === 0
+      ? `Schema 校验通过，共 ${(widgets as unknown[]).length} 个组件`
+      : `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}${errors.length > 3 ? '等' : ''}`
+
+    return {
+      success: true,
+      data: { valid: errors.length === 0, errors },
+      summary,
+    }
+  },
+  {
+    name: 'validate_schema',
+    description: '校验 Widget Schema JSON 的结构正确性。在生成 Schema 后调用此工具确认无误再返回给用户。',
+    schema: z.object({
+      widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
+    }),
+  },
+)
+
+// ────────────────────────────────────────────
+// Exported tool array for ToolNode
+// ────────────────────────────────────────────
+
+export const editorTools = [
+  searchSchemasTool,
+  getSchemaDetailTool,
+  searchPublishedSchemasTool,
+  getWidgetCatalogueTool,
+  semanticSearchSchemasTool,
+  validateSchemaTool,
+]
+
+// ────────────────────────────────────────────
+// Utilities (shared with other modules)
+// ────────────────────────────────────────────
+
+/** 中文 + 英文分词 */
+function extractTokens(text: string): Set<string> {
+  const tokens = new Set<string>()
+
+  // 英文单词
+  const englishWords = text.match(/[a-zA-Z]+/g) ?? []
+  for (const word of englishWords) {
+    tokens.add(word.toLowerCase())
+  }
+
+  // 中文：按字符 bigram
+  const chineseChars = text.match(/[一-鿿]+/g) ?? []
+  for (const segment of chineseChars) {
+    for (let i = 0; i < segment.length - 1; i++) {
+      tokens.add(segment.slice(i, i + 2))
+    }
+    if (segment.length > 0) tokens.add(segment)
+  }
+
+  return tokens
+}
+
+/** 从 Schema JSON 中提取特征 tokens */
+function extractTokensFromSchema(json: unknown): Set<string> {
+  const tokens = new Set<string>()
+  if (!Array.isArray(json)) return tokens
+
+  function walk(nodes: Record<string, unknown>[]): void {
+    for (const node of nodes) {
+      if (node.type) tokens.add(String(node.type))
+      if (node.field) tokens.add(String(node.field))
+      if (node.label) {
+        for (const t of extractTokens(String(node.label))) {
+          tokens.add(t)
+        }
+      }
+      if (Array.isArray(node.children)) {
+        walk(node.children as Record<string, unknown>[])
       }
     }
   }
 
-  walk(widgets, '', 0)
+  walk(json as Record<string, unknown>[])
+  return tokens
+}
 
-  return {
-    success: true,
-    data: { valid: errors.length === 0, errors },
+/** Jaccard 相似度 */
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0
+  let intersection = 0
+  for (const item of a) {
+    if (b.has(item)) intersection++
   }
+  const union = a.size + b.size - intersection
+  return union === 0 ? 0 : intersection / union
 }

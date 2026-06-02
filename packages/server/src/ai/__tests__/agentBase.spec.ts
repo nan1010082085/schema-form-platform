@@ -13,10 +13,7 @@ import {
   getClient,
   buildMessages,
   parseStructuredOutput,
-  createThinkingState,
-  processThinkingDelta,
   escapeRegex,
-  MAX_TOOL_ROUNDS,
 } from '../graph/agentBase.js'
 import type { AIConversationState } from '../graph/state.js'
 
@@ -141,66 +138,6 @@ describe('parseStructuredOutput', () => {
   })
 })
 
-describe('createThinkingState', () => {
-  it('returns initial state', () => {
-    const state = createThinkingState()
-    expect(state.inThink).toBe(false)
-    expect(state.thinkClosed).toBe(false)
-    expect(state.fullContent).toBe('')
-  })
-})
-
-describe('processThinkingDelta', () => {
-  it('returns empty events before think tag', () => {
-    const state = createThinkingState()
-    const events = processThinkingDelta('hello ', state)
-    expect(events).toHaveLength(0)
-    expect(state.fullContent).toBe('hello ')
-  })
-
-  it('emits thinking events after think tag opens', () => {
-    const state = createThinkingState()
-    // Simulate receiving "<think>\n分析" in chunks
-    processThinkingDelta('<think>', state)
-    const events = processThinkingDelta('分析', state)
-    expect(events).toHaveLength(1)
-    expect(events[0].type).toBe('thinking')
-    expect(events[0].content).toBe('分析')
-    expect(state.inThink).toBe(true)
-  })
-
-  it('closes thinking at </think> tag', () => {
-    const state = createThinkingState()
-    state.fullContent = '<think>\n内容'
-    state.inThink = true
-
-    const events = processThinkingDelta('</think>', state)
-    expect(events).toHaveLength(1)
-    expect(events[0].type).toBe('thinking')
-    expect(state.inThink).toBe(false)
-    expect(state.thinkClosed).toBe(true)
-  })
-
-  it('emits thinking content while in think block', () => {
-    const state = createThinkingState()
-    state.fullContent = '<think>\n'
-    state.inThink = true
-
-    const events = processThinkingDelta('更多内容', state)
-    expect(events).toHaveLength(1)
-    expect(events[0].type).toBe('thinking')
-    expect(events[0].content).toBe('更多内容')
-  })
-
-  it('does not emit events after think is closed', () => {
-    const state = createThinkingState()
-    state.thinkClosed = true
-
-    const events = processThinkingDelta('后续内容', state)
-    expect(events).toHaveLength(0)
-  })
-})
-
 describe('escapeRegex', () => {
   it('escapes special regex characters', () => {
     expect(escapeRegex('hello.world')).toBe('hello\\.world')
@@ -222,11 +159,5 @@ describe('escapeRegex', () => {
 
   it('escapes all special chars in a complex string', () => {
     expect(escapeRegex('user@example.com (test)')).toBe('user@example\\.com \\(test\\)')
-  })
-})
-
-describe('MAX_TOOL_ROUNDS', () => {
-  it('is set to 5', () => {
-    expect(MAX_TOOL_ROUNDS).toBe(5)
   })
 })

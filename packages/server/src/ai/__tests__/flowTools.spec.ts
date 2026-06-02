@@ -29,7 +29,15 @@ vi.mock('../../models/User.js', () => ({
   },
 }))
 
-import { executeFlowTool, validateFlowGraph, FLOW_TOOLS } from '../tools/flowTools.js'
+import {
+  flowTools,
+  searchFlowsTool,
+  getFlowDetailTool,
+  searchUsersTool,
+  searchSchemasForFlowTool,
+  validateFlowTool,
+  validateFlowGraph,
+} from '../tools/flowTools.js'
 import { FlowDefinitionModel } from '../../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../../flow-models/FlowVersion.js'
 import { FormSchemaModel } from '../../models/FormSchema.js'
@@ -39,30 +47,25 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('FLOW_TOOLS', () => {
-  it('defines 5 tools', () => {
-    expect(FLOW_TOOLS).toHaveLength(5)
+describe('flowTools', () => {
+  it('defines 6 tools', () => {
+    expect(flowTools).toHaveLength(6)
   })
 
   it('has correct tool names', () => {
-    const names = FLOW_TOOLS.map((t) => t.function.name)
+    const names = flowTools.map((t) => t.name)
     expect(names).toEqual([
       'search_flows',
       'get_flow_detail',
       'search_users',
       'search_schemas',
+      'generate_schema',
       'validate_flow',
     ])
   })
 })
 
-describe('executeFlowTool', () => {
-  it('returns error for unknown tool', async () => {
-    const result = await executeFlowTool('unknown_tool', {})
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('Unknown tool')
-  })
-
+describe('tool.invoke()', () => {
   describe('search_flows', () => {
     it('searches with keyword', async () => {
       const mockFlows = [{ _id: 'f1', name: '审批流程', description: 'test', status: 'draft' }]
@@ -76,9 +79,10 @@ describe('executeFlowTool', () => {
         }),
       } as any)
 
-      const result = await executeFlowTool('search_flows', { keyword: '审批' })
-      expect(result.success).toBe(true)
-      expect(result.data).toHaveProperty('total', 1)
+      const result = await searchFlowsTool.invoke({ keyword: '审批' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
+      expect(parsed.data).toHaveProperty('total', 1)
       expect(FlowDefinitionModel.find).toHaveBeenCalledWith(
         expect.objectContaining({
           $or: expect.arrayContaining([
@@ -99,8 +103,9 @@ describe('executeFlowTool', () => {
         }),
       } as any)
 
-      const result = await executeFlowTool('search_flows', { status: 'published' })
-      expect(result.success).toBe(true)
+      const result = await searchFlowsTool.invoke({ status: 'published' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
       expect(FlowDefinitionModel.find).toHaveBeenCalledWith(
         expect.objectContaining({ status: 'published' }),
       )
@@ -131,15 +136,10 @@ describe('executeFlowTool', () => {
         lean: vi.fn().mockResolvedValue(mockVersion),
       } as any)
 
-      const result = await executeFlowTool('get_flow_detail', { flowId: 'f1' })
-      expect(result.success).toBe(true)
-      expect(result.data).toHaveProperty('graph')
-    })
-
-    it('returns error when flowId is missing', async () => {
-      const result = await executeFlowTool('get_flow_detail', {})
-      expect(result.success).toBe(false)
-      expect(result.error).toContain('flowId is required')
+      const result = await getFlowDetailTool.invoke({ flowId: 'f1' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
+      expect(parsed.data).toHaveProperty('graph')
     })
 
     it('returns error when flow not found', async () => {
@@ -147,9 +147,10 @@ describe('executeFlowTool', () => {
         lean: vi.fn().mockResolvedValue(null),
       } as any)
 
-      const result = await executeFlowTool('get_flow_detail', { flowId: 'nonexistent' })
-      expect(result.success).toBe(false)
-      expect(result.error).toContain('not found')
+      const result = await getFlowDetailTool.invoke({ flowId: 'nonexistent' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(false)
+      expect(parsed.error).toContain('not found')
     })
   })
 
@@ -166,9 +167,10 @@ describe('executeFlowTool', () => {
         }),
       } as any)
 
-      const result = await executeFlowTool('search_users', { keyword: 'admin' })
-      expect(result.success).toBe(true)
-      expect(result.data).toHaveProperty('total', 1)
+      const result = await searchUsersTool.invoke({ keyword: 'admin' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
+      expect(parsed.data).toHaveProperty('total', 1)
     })
   })
 
@@ -185,15 +187,16 @@ describe('executeFlowTool', () => {
         }),
       } as any)
 
-      const result = await executeFlowTool('search_schemas', { keyword: '用户' })
-      expect(result.success).toBe(true)
-      expect(result.data).toHaveProperty('total', 1)
+      const result = await searchSchemasForFlowTool.invoke({ keyword: '用户' })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
+      expect(parsed.data).toHaveProperty('total', 1)
     })
   })
 
   describe('validate_flow', () => {
-    it('validates a correct flow', () => {
-      const result = executeFlowTool('validate_flow', {
+    it('validates a correct flow', async () => {
+      const result = await validateFlowTool.invoke({
         flow: {
           nodes: [
             { id: 'n1', data: { bpmnType: 'startEvent' } },
@@ -202,13 +205,20 @@ describe('executeFlowTool', () => {
           edges: [],
         },
       })
-      // validateFlowTool is synchronous
       expect(result).toBeDefined()
     })
 
-    it('returns error for missing nodes/edges', () => {
-      const result = executeFlowTool('validate_flow', { flow: {} })
-      expect(result).toBeDefined()
+    it('returns validation errors for flow with issues', async () => {
+      const result = await validateFlowTool.invoke({
+        flow: {
+          nodes: [{ id: 'n1', data: { bpmnType: 'userTask', label: '审批' } }],
+          edges: [],
+        },
+      })
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      expect(parsed.success).toBe(true)
+      expect(parsed.data.valid).toBe(false)
+      expect(parsed.data.errors.length).toBeGreaterThan(0)
     })
   })
 })

@@ -17,10 +17,12 @@
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "@koa/router": "^13.1.0",
-    "@langchain/core": "^0.3.51",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.1.48",
     "@langchain/langgraph": "^0.2.60",
-    "openai": "^4.78.0",
+    "@langchain/openai": "^1.4.7",
     "@schema-form/flow-shared": "workspace:*",
+    "@schema-form/shared-ai": "workspace:*",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.3",
@@ -29,8 +31,9 @@
     "koa-helmet": "^9.0.0",
     "koa-ratelimit": "^6.0.0",
     "mongoose": "^8.9.0",
-    "uuid": "^11.1.0",
+    "openai": "^4.78.0",
     "socket.io": "^4.8.0",
+    "uuid": "^11.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

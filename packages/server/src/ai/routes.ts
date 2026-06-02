@@ -1,20 +1,20 @@
 /**
  * AI API routes.
  *
- * POST /api/ai/chat            — SSE streaming chat endpoint
+ * POST /api/ai/chat            — SSE streaming chat endpoint (LangGraph streamEvents)
  * POST /api/ai/publish         — Publish generated artifact
  * GET  /api/ai/conversations   — List conversations
+ * GET  /api/ai/conversations/:id — Get conversation detail
  * DELETE /api/ai/conversations/:id — Delete a conversation
  */
 
 import Router from '@koa/router'
 import { PassThrough } from 'node:stream'
 import { v4 as uuidv4 } from 'uuid'
+import { HumanMessage } from '@langchain/core/messages'
 import { validate } from '../middleware/validate.js'
 import { chatRequestSchema, publishRequestSchema } from './schemas/aiSchemas.js'
-import { streamEditorAgent } from './graph/editorAgent.js'
-import { streamFlowAgent } from './graph/flowAgent.js'
-import { routerNode } from './graph/router.js'
+import { graph } from './graph/graph.js'
 import {
   createConversation,
   getConversation,
@@ -26,24 +26,107 @@ import { FormSchemaModel } from '../models/FormSchema.js'
 import { PublishedSchemaModel } from '../models/PublishedSchema.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../flow-models/FlowVersion.js'
-import type { AIConversationState, AIMessage } from './graph/state.js'
+import type { AIMessage } from './graph/state.js'
 
 const router = new Router({ prefix: '/api/ai' })
 
 // ────────────────────────────────────────────
-// POST /api/ai/chat  (SSE)
+// Structured output streaming parser
+// ────────────────────────────────────────────
+
+interface ThinkingState {
+  inThink: boolean
+  thinkClosed: boolean
+  fullContent: string
+}
+
+function createThinkingState(): ThinkingState {
+  return { inThink: false, thinkClosed: false, fullContent: '' }
+}
+
+/**
+ * Process a content delta for structured tag extraction.
+ *
+ * Handles incremental parsing of <think>, <answer>, <tip> tags
+ * from the LLM's streamed output. Returns events to emit.
+ */
+function processStructuredDelta(
+  content: string,
+  state: ThinkingState,
+): Array<{ type: string; content?: string }> {
+  const events: Array<{ type: string; content?: string }> = []
+  state.fullContent += content
+
+  // Phase 1: looking for <think> opening tag
+  if (!state.inThink && !state.thinkClosed) {
+    const thinkStart = state.fullContent.indexOf('<think>')
+    if (thinkStart !== -1) {
+      const afterTag = state.fullContent.slice(thinkStart + 7)
+      if (afterTag.length > 0) {
+        state.inThink = true
+        events.push({ type: 'thinking', content: afterTag })
+      }
+    }
+    return events
+  }
+
+  // Phase 2: inside <think> block
+  if (state.inThink && !state.thinkClosed) {
+    const thinkEnd = state.fullContent.indexOf('</think>')
+    if (thinkEnd !== -1) {
+      const thinkContent = state.fullContent.slice(
+        state.fullContent.indexOf('<think>') + 7,
+        thinkEnd,
+      )
+      events.push({ type: 'thinking', content: thinkContent })
+      state.thinkClosed = true
+      state.inThink = false
+    } else {
+      events.push({ type: 'thinking', content })
+    }
+  }
+
+  return events
+}
+
+/**
+ * Extract content between XML-style tags from accumulated text.
+ */
+function extractTagContent(text: string, tag: string): string {
+  const re = new RegExp(`<${tag}>\\s*([\\s\\S]*?)\\s*</${tag}>`)
+  const m = text.match(re)
+  return m ? m[1].trim() : ''
+}
+
+// ────────────────────────────────────────────
+// Tool names that produce structured payloads
+// ────────────────────────────────────────────
+
+const SCHEMA_TOOLS = new Set(['validate_schema'])
+const FLOW_TOOLS = new Set(['validate_flow'])
+const GENERATE_SCHEMA_TOOL = 'generate_schema'
+
+// ────────────────────────────────────────────
+// POST /api/ai/chat  (SSE via LangGraph streamEvents)
 // ────────────────────────────────────────────
 
 router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const { conversationId, message, context } = ctx.request.body as {
     conversationId?: string
     message: string
-    context: { source: string; schemaId?: string; flowId?: string; nodeId?: string; version?: string }
+    context: {
+      source: string
+      schemaId?: string
+      flowId?: string
+      nodeId?: string
+      version?: string
+      preferences?: Record<string, unknown>
+      historySummary?: string
+    }
   }
 
-  // Resolve or create conversation
+  // ── Resolve or create conversation ──
   let convo
-  let existingMessages: AIMessage[] = []
   let turnCount = 1
 
   if (conversationId) {
@@ -53,14 +136,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       ctx.body = { success: false, error: { message: 'Conversation not found.' } }
       return
     }
-    existingMessages = convo.messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-      schema: m.schema,
-      flow: m.flow,
-      timestamp: m.timestamp,
-    }))
-    turnCount = existingMessages.filter((m) => m.role === 'user').length + 1
+    turnCount = convo.messages.filter((m) => m.role === 'user').length + 1
   } else {
     convo = await createConversation({
       source: context.source as 'editor' | 'flow' | 'standalone',
@@ -71,13 +147,12 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     })
   }
 
-  // Load current schema if schemaId is provided
+  // ── Load current schema if schemaId provided ──
   let currentSchema: Record<string, unknown>[] | undefined
   if (context.schemaId) {
     const schema = await FormSchemaModel.findById(context.schemaId)
     if (schema) {
       if (context.version && schema.version !== context.version) {
-        // Requested a historical version — look in versions array
         const snapshot = schema.versions.find((v: { version: string }) => v.version === context.version)
         if (snapshot) {
           currentSchema = Array.isArray(snapshot.json)
@@ -85,38 +160,39 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             : undefined
         }
       }
-      // Fallback to current version if snapshot not found or no version requested
       if (!currentSchema && Array.isArray(schema.json)) {
         currentSchema = schema.json as Record<string, unknown>[]
       }
     }
   }
 
-  // Load current flow graph if flowId is provided
+  // ── Load current flow graph if flowId provided ──
   let currentFlow: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] } | undefined
   if (context.flowId) {
     const flowVersion = await FlowVersionModel.findOne({ definitionId: context.flowId })
       .sort({ version: -1 })
       .lean() as Record<string, unknown> | null
     if (flowVersion?.graph && typeof flowVersion.graph === 'object') {
-      const graph = flowVersion.graph as Record<string, unknown>
+      const g = flowVersion.graph as Record<string, unknown>
       currentFlow = {
-        nodes: Array.isArray(graph.nodes) ? graph.nodes as Record<string, unknown>[] : [],
-        edges: Array.isArray(graph.edges) ? graph.edges as Record<string, unknown>[] : [],
+        nodes: Array.isArray(g.nodes) ? g.nodes as Record<string, unknown>[] : [],
+        edges: Array.isArray(g.edges) ? g.edges as Record<string, unknown>[] : [],
       }
     }
   }
 
-  // Build state for the graph
+  // ── Persist user message ──
   const userMessage: AIMessage = {
     role: 'user',
     content: message,
     timestamp: new Date(),
   }
+  await appendMessage(convo._id, userMessage)
 
-  const graphState: AIConversationState = {
-    messages: [...existingMessages, userMessage],
-    activeAgent: 'router',
+  // ── Build LangGraph input state ──
+  const threadId = convo._id
+  const graphInput = {
+    messages: [new HumanMessage(message)],
     context: {
       source: context.source as 'editor' | 'flow' | 'standalone',
       schemaId: context.schemaId,
@@ -125,13 +201,14 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       currentSchema,
       currentFlow,
       turnCount,
+      preferences: context.preferences,
+      historySummary: context.historySummary,
     },
+    sessionId: threadId,
+    currentAgent: 'router' as const,
   }
 
-  // Persist the user message
-  await appendMessage(convo._id, userMessage)
-
-  // --- SSE response ---
+  // ── SSE response setup ──
   ctx.set({
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -152,91 +229,209 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     stream.write(':heartbeat\n\n')
   }, 15_000)
 
+  // ── Streaming state ──
+  let currentAgent: 'router' | 'editor' | 'flow' = 'router'
+  const thinkingState = createThinkingState()
+  let accumulatedContent = ''
+  const toolCallRegistry: Array<{ id?: string; name: string; arguments: Record<string, unknown>; result?: unknown }> = []
+  const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
+
   try {
-    // Resolve agent — use router for standalone, direct for editor/flow
-    let resolvedAgent: 'editor' | 'flow'
-    if (context.source === 'standalone') {
-      const routerResult = await routerNode(graphState)
-      resolvedAgent = routerResult.activeAgent === 'flow' ? 'flow' : 'editor'
-      graphState.activeAgent = resolvedAgent
-    } else {
-      resolvedAgent = context.source as 'editor' | 'flow'
-    }
+    const eventStream = graph.streamEvents(graphInput, {
+      version: 'v2',
+      configurable: { thread_id: threadId },
+    })
 
-    const streamGen = resolvedAgent === 'flow'
-      ? streamFlowAgent(graphState)
-      : streamEditorAgent(graphState)
-
-    const accumulatedMessage: AIMessage = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-    }
-    const accumulatedToolCalls: Array<{ name: string; arguments: Record<string, unknown>; result?: unknown }> = []
-
-    for await (const event of streamGen) {
-      switch (event.type) {
-        case 'thinking':
-          send({ type: 'thinking', content: event.content })
-          break
-
-        case 'text':
-          accumulatedMessage.content = event.content ?? ''
-          send({ type: 'text', content: event.content })
-          break
-
-        case 'tip':
-          accumulatedMessage.tip = event.content
-          send({ type: 'tip', content: event.content })
-          break
-
-        case 'schema':
-          accumulatedMessage.schema = event.payload as unknown as AIMessage['schema']
-          send({ type: 'schema', payload: event.payload, description: accumulatedMessage.content })
-          break
-
-        case 'flow':
-          accumulatedMessage.flow = event.payload as AIMessage['flow']
-          send({ type: 'flow', payload: event.payload, description: accumulatedMessage.content })
-          break
-
-        case 'tool_call':
-          if (event.toolCalls) {
-            for (const tc of event.toolCalls) {
-              accumulatedToolCalls.push({ name: tc.name, arguments: tc.arguments })
-            }
-            send({
-              type: 'tool_call',
-              phase: 'calling',
-              tools: event.toolCalls.map((tc) => ({ id: tc.id, name: tc.name, arguments: tc.arguments })),
-            })
+    for await (const event of eventStream) {
+      switch (event.event) {
+        // ── Node execution start ──
+        case 'on_chain_start': {
+          const nodeName = event.name as string
+          if (nodeName === 'editor' || nodeName === 'flow') {
+            currentAgent = nodeName
+            send({ type: 'agent_switch', agent: nodeName })
           }
-          if (event.toolResults) {
-            for (const tr of event.toolResults) {
-              const existing = accumulatedToolCalls.find((t) => t.name === tr.name && !t.result)
-              if (existing) {
-                existing.result = tr.result
+          break
+        }
+
+        // ── Router node finished — extract task chain ──
+        case 'on_chain_end': {
+          const nodeName = event.name as string
+
+          if (nodeName === 'router') {
+            const output = event.data?.output as Record<string, unknown> | undefined
+            if (output?.taskChain && Array.isArray(output.taskChain) && output.taskChain.length > 0) {
+              const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
+              send({
+                type: 'task_chain',
+                steps: steps.map((s) => ({
+                  agent: s.agent,
+                  description: s.description,
+                  status: s.status,
+                })),
+                currentIndex: (output.currentStepIndex as number) ?? 0,
+              })
+            }
+          }
+
+          // Graph finished
+          if (nodeName === '__end__') {
+            // Extract final tip if present and not yet emitted
+            if (!thinkingState.inThink && thinkingState.thinkClosed) {
+              const tip = extractTagContent(thinkingState.fullContent, 'tip')
+              if (tip) {
+                send({ type: 'tip', content: tip })
               }
             }
-            send({
-              type: 'tool_call',
-              phase: 'result',
-              tools: event.toolResults.map((tr) => ({ id: tr.id, name: tr.name, result: tr.result })),
-            })
           }
           break
+        }
 
-        case 'error':
-          send({ type: 'error', content: event.content })
+        // ── LLM token streaming ──
+        case 'on_chat_model_stream': {
+          const chunk = event.data?.chunk as { content?: unknown } | undefined
+          if (!chunk?.content || typeof chunk.content !== 'string') break
+
+          // Router output is internal JSON — don't stream to client
+          if (currentAgent === 'router') break
+
+          const delta = chunk.content
+          accumulatedContent += delta
+
+          // Parse structured output tags
+          const parsedEvents = processStructuredDelta(delta, thinkingState)
+          for (const pe of parsedEvents) {
+            send(pe)
+          }
+
+          // After think tag closes, emit answer text
+          if (thinkingState.thinkClosed) {
+            const answerContent = extractTagContent(thinkingState.fullContent, 'answer')
+            if (answerContent) {
+              // Emit the full answer (not incremental — frontend replaces content)
+              send({ type: 'text', content: answerContent })
+            } else {
+              // No <answer> tag — stream raw content after think block
+              const afterThink = thinkingState.fullContent.slice(
+                thinkingState.fullContent.indexOf('</think>') + 8,
+              )
+              if (afterThink) {
+                send({ type: 'text', content: afterThink })
+              }
+            }
+          }
           break
+        }
+
+        // ── Tool call started ──
+        case 'on_tool_start': {
+          const toolName = event.name as string
+          const toolArgs = (event.data?.input as Record<string, unknown>) ?? {}
+
+          toolCallRegistry.push({
+            id: event.run_id as string | undefined,
+            name: toolName,
+            arguments: toolArgs,
+          })
+
+          send({
+            type: 'tool_call',
+            phase: 'calling',
+            tools: [{ id: event.run_id, name: toolName, arguments: toolArgs }],
+          })
+
+          // Capture schema/flow payloads from validation tool arguments
+          if (SCHEMA_TOOLS.has(toolName) && toolArgs.widgets) {
+            pendingPayloads.set(event.run_id as string, toolArgs.widgets as Record<string, unknown>[])
+          }
+          if (FLOW_TOOLS.has(toolName) && toolArgs.flow) {
+            pendingPayloads.set(event.run_id as string, toolArgs.flow as Record<string, unknown>)
+          }
+          break
+        }
+
+        // ── Tool call finished ──
+        case 'on_tool_end': {
+          const toolName = event.name as string
+          const toolResult = event.data?.output
+
+          // Update registry
+          const entry = toolCallRegistry.find((t) => t.name === toolName && !t.result)
+          if (entry) {
+            entry.result = toolResult
+          }
+
+          send({
+            type: 'tool_call',
+            phase: 'result',
+            tools: [{ id: event.run_id, name: toolName, result: toolResult }],
+          })
+
+          // Emit schema event from pending payload
+          if (SCHEMA_TOOLS.has(toolName)) {
+            const payload = pendingPayloads.get(event.run_id as string)
+            if (payload) {
+              send({
+                type: 'schema',
+                payload,
+                description: extractTagContent(thinkingState.fullContent, 'answer') || accumulatedContent,
+              })
+              pendingPayloads.delete(event.run_id as string)
+            }
+          }
+
+          // Emit flow event from pending payload
+          if (FLOW_TOOLS.has(toolName)) {
+            const payload = pendingPayloads.get(event.run_id as string)
+            if (payload) {
+              send({
+                type: 'flow',
+                payload,
+                description: extractTagContent(thinkingState.fullContent, 'answer') || accumulatedContent,
+              })
+              pendingPayloads.delete(event.run_id as string)
+            }
+          }
+
+          // Emit schema from generate_schema tool result
+          if (toolName === GENERATE_SCHEMA_TOOL) {
+            const result = toolResult as Record<string, unknown> | undefined
+            const resultData = result?.data as Record<string, unknown> | undefined
+            if (resultData?.widgets) {
+              send({
+                type: 'schema',
+                payload: resultData.widgets,
+                description: (resultData.summary as string) ?? '',
+              })
+            }
+          }
+          break
+        }
       }
     }
 
-    // Persist the assistant message
-    if (accumulatedToolCalls.length > 0) {
-      accumulatedMessage.toolCalls = accumulatedToolCalls
+    // ── Persist assistant message ──
+    const answerContent = extractTagContent(thinkingState.fullContent, 'answer')
+    const tipContent = extractTagContent(thinkingState.fullContent, 'tip')
+    const finalContent = answerContent || accumulatedContent
+
+    const assistantMessage: AIMessage = {
+      role: 'assistant',
+      content: finalContent,
+      timestamp: new Date(),
     }
-    await appendMessage(convo._id, accumulatedMessage)
+    if (tipContent) {
+      assistantMessage.tip = tipContent
+    }
+    if (toolCallRegistry.length > 0) {
+      assistantMessage.toolCalls = toolCallRegistry.map((tc) => ({
+        name: tc.name,
+        arguments: tc.arguments,
+        result: tc.result,
+      }))
+    }
+
+    await appendMessage(convo._id, assistantMessage)
 
     // Done event
     send({ type: 'done', conversationId: convo._id })
@@ -320,7 +515,6 @@ router.post('/publish', validate(publishRequestSchema), async (ctx) => {
     const flowGraph = payload as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
     const now = new Date()
 
-    // Create or update flow definition
     let definitionId = target?.flowId
     if (!definitionId) {
       const def = await FlowDefinitionModel.create({
@@ -334,11 +528,9 @@ router.post('/publish', validate(publishRequestSchema), async (ctx) => {
       definitionId = def._id
     }
 
-    // Generate timestamp version
     const pad = (n: number, len: number) => String(n).padStart(len, '0')
     const nextVersion = `v${now.getFullYear()}${pad(now.getMonth() + 1, 2)}${pad(now.getDate(), 2)}${pad(now.getHours(), 2)}${pad(now.getMinutes(), 2)}${pad(now.getSeconds(), 2)}`
 
-    // Create flow version
     const version = await FlowVersionModel.create({
       _id: uuidv4(),
       definitionId,
@@ -346,7 +538,6 @@ router.post('/publish', validate(publishRequestSchema), async (ctx) => {
       graph: flowGraph,
     })
 
-    // Update definition's current version
     await FlowDefinitionModel.findByIdAndUpdate(definitionId, {
       currentVersionId: version._id,
     })

@@ -1,0 +1,79 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--ai-bg-subtle, #F0F5FF);
+  border-bottom: 1px solid var(--ai-border-light, #E8E8E8);
+  font-size: 12px;
+  overflow-x: auto;
+}
+
+.label {
+  font-weight: 600;
+  color: var(--ai-text-muted, #909399);
+  flex-shrink: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--ai-radius-sm, 3px);
+  background: var(--ai-bg-page, #F5F6FA);
+  white-space: nowrap;
+}
+
+.step.current {
+  background: var(--ai-color-primary, #0060A2);
+  color: #fff;
+}
+
+.step.done {
+  opacity: 0.7;
+}
+
+.step.running {
+  background: var(--ai-color-primary-light, #E6F4FF);
+  border: 1px solid var(--ai-color-primary, #0060A2);
+}
+
+.stepIcon {
+  font-size: 10px;
+}
+
+.step.current .stepIcon {
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.stepAgent {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.stepDesc {
+  font-size: 11px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arrow {
+  color: var(--ai-text-muted, #909399);
+  font-size: 12px;
+}

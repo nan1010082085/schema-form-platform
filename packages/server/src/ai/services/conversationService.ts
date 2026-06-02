@@ -7,7 +7,7 @@
 
 import mongoose from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
-import type { AIMessage, ActiveAgent, AgentSource } from '../graph/state.js'
+import type { AIMessage, ActiveAgent, AgentSource, TaskStep } from '../graph/state.js'
 
 // ────────────────────────────────────────────
 // Mongoose model
@@ -33,6 +33,12 @@ export interface IAIConversation {
   version?: string
   messages: AIConversationMessage[]
   activeAgent: ActiveAgent
+  /** 任务链（Router 拆解复杂需求时设置） */
+  taskChain?: TaskStep[]
+  /** 当前执行到任务链的哪一步 */
+  currentStepIndex?: number
+  /** 中间产物缓存（schema/flow 生成结果） */
+  intermediateResults?: Record<string, unknown>
   createdAt: Date
   updatedAt: Date
 }
@@ -65,6 +71,14 @@ const aiConversationSchema = new mongoose.Schema<IAIConversation>(
     version: { type: String },
     messages: { type: [messageSchema], default: [] },
     activeAgent: { type: String, enum: ['router', 'editor', 'flow'], default: 'router' },
+    taskChain: [{
+      agent: { type: String, enum: ['editor', 'flow'], required: true },
+      description: { type: String, required: true },
+      status: { type: String, enum: ['pending', 'running', 'done', 'skipped'], default: 'pending' },
+      result: { type: mongoose.Schema.Types.Mixed },
+    }],
+    currentStepIndex: { type: Number, default: 0 },
+    intermediateResults: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,
@@ -187,4 +201,59 @@ export async function getMessages(conversationId: string): Promise<AIMessage[]> 
     flow: m.flow,
     timestamp: m.timestamp,
   }))
+}
+
+/**
+ * Update the task chain for a conversation.
+ */
+export async function updateTaskChain(
+  conversationId: string,
+  taskChain: TaskStep[],
+  currentStepIndex: number,
+): Promise<void> {
+  await AIConversationModel.findByIdAndUpdate(conversationId, {
+    $set: { taskChain, currentStepIndex },
+  })
+}
+
+/**
+ * Update a specific step in the task chain.
+ */
+export async function updateTaskStep(
+  conversationId: string,
+  stepIndex: number,
+  patch: Partial<TaskStep>,
+): Promise<void> {
+  const updateFields: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(patch)) {
+    updateFields[`taskChain.${stepIndex}.${key}`] = value
+  }
+  await AIConversationModel.findByIdAndUpdate(conversationId, {
+    $set: updateFields,
+  })
+}
+
+/**
+ * Store an intermediate result (e.g., generated schema for later use by flow agent).
+ */
+export async function setIntermediateResult(
+  conversationId: string,
+  key: string,
+  value: unknown,
+): Promise<void> {
+  await AIConversationModel.findByIdAndUpdate(conversationId, {
+    $set: { [`intermediateResults.${key}`]: value },
+  })
+}
+
+/**
+ * Get an intermediate result.
+ */
+export async function getIntermediateResult(
+  conversationId: string,
+  key: string,
+): Promise<unknown> {
+  const convo = await AIConversationModel.findById(conversationId).select('intermediateResults')
+  if (!convo?.intermediateResults) return null
+  return (convo.intermediateResults as Record<string, unknown>)[key] ?? null
 }

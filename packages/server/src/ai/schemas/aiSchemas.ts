@@ -15,6 +15,8 @@ export const chatRequestSchema = z.object({
     flowId: z.string().optional(),
     nodeId: z.string().optional(),
     version: z.string().optional(),
+    preferences: z.record(z.string(), z.unknown()).optional(),
+    historySummary: z.string().optional(),
   }),
 }).strict()
 

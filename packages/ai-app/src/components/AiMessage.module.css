@@ -179,6 +179,17 @@
   word-break: break-all;
 }
 
+.toolCallSummary {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-bg-subtle, #F0F5FF);
+  border-radius: var(--ai-radius-sm, 3px);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
 /* Tip section */
 .tip {
   display: flex;

@@ -1,33 +1,106 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect } from 'vitest'
-import { queryWidgets, validateSchema } from '../tools/widgetTools.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-describe('queryWidgets', () => {
-  it('returns all widgets when no category filter', () => {
-    const result = queryWidgets()
+// vi.hoisted ensures this data is available when vi.mock factory runs
+const { mockWidgets } = vi.hoisted(() => {
+  const mockWidgets = [
+    // container (2)
+    { type: 'dialog', group: 'container', canHaveChildren: true, displayName: '弹窗', description: '弹窗容器', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'form', group: 'container', canHaveChildren: true, displayName: '表单', description: '表单容器', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // layout (8)
+    { type: 'card', group: 'layout', canHaveChildren: true, displayName: '卡片', description: '卡片容器', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'divider', group: 'layout', canHaveChildren: false, displayName: '分割线', description: '分割线', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'double-col', group: 'layout', canHaveChildren: true, displayName: '双列布局', description: '双列', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'quad-col', group: 'layout', canHaveChildren: true, displayName: '四列布局', description: '四列', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'single-col', group: 'layout', canHaveChildren: true, displayName: '单列布局', description: '单列', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'spacer', group: 'layout', canHaveChildren: false, displayName: '间距', description: '间距', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'tabs', group: 'layout', canHaveChildren: true, displayName: '标签页', description: '标签页', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'triple-col', group: 'layout', canHaveChildren: true, displayName: '三列布局', description: '三列', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // form (18)
+    { type: 'autocomplete', group: 'form', canHaveChildren: false, displayName: '自动补全', description: '自动补全', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'cascader', group: 'form', canHaveChildren: false, displayName: '级联选择', description: '级联', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'checkbox', group: 'form', canHaveChildren: false, displayName: '复选框', description: '复选', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'color-picker', group: 'form', canHaveChildren: false, displayName: '颜色选择', description: '颜色', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'date', group: 'form', canHaveChildren: false, displayName: '日期', description: '日期', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'date-time-slot', group: 'form', canHaveChildren: false, displayName: '时间插槽', description: '时间插槽', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'input', group: 'form', canHaveChildren: false, displayName: '输入框', description: '输入框', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'number', group: 'form', canHaveChildren: false, displayName: '数字输入', description: '数字', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'radio', group: 'form', canHaveChildren: false, displayName: '单选框', description: '单选', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'rate', group: 'form', canHaveChildren: false, displayName: '评分', description: '评分', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'richtext', group: 'form', canHaveChildren: false, displayName: '富文本', description: '富文本', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'select', group: 'form', canHaveChildren: false, displayName: '选择框', description: '选择', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'slider', group: 'form', canHaveChildren: false, displayName: '滑块', description: '滑块', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'switch', group: 'form', canHaveChildren: false, displayName: '开关', description: '开关', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'tag-input', group: 'form', canHaveChildren: false, displayName: '标签输入', description: '标签', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'textarea', group: 'form', canHaveChildren: false, displayName: '文本域', description: '文本域', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'time-picker', group: 'form', canHaveChildren: false, displayName: '时间选择', description: '时间', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'upload', group: 'form', canHaveChildren: false, displayName: '上传', description: '上传', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // static (2)
+    { type: 'banner', group: 'static', canHaveChildren: false, displayName: '横幅', description: '横幅', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'title', group: 'static', canHaveChildren: false, displayName: '标题', description: '标题', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // action (2)
+    { type: 'button', group: 'action', canHaveChildren: false, displayName: '按钮', description: '按钮', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'toolbar-buttons', group: 'action', canHaveChildren: false, displayName: '工具栏按钮', description: '工具栏', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // table (3)
+    { type: 'editable-table', group: 'table', canHaveChildren: false, displayName: '可编辑表格', description: '可编辑表格', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'search-list', group: 'table', canHaveChildren: false, displayName: '搜索列表', description: '搜索列表', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'table', group: 'table', canHaveChildren: false, displayName: '表格', description: '表格', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // business (3)
+    { type: 'file-list', group: 'business', canHaveChildren: false, displayName: '文件列表', description: '文件列表', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'transfer', group: 'business', canHaveChildren: false, displayName: '穿梭框', description: '穿梭', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'tree-layout', group: 'business', canHaveChildren: false, displayName: '树形布局', description: '树形', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    // chart (9)
+    { type: 'bar-chart', group: 'chart', canHaveChildren: false, displayName: '柱状图', description: '柱状图', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'candlestick', group: 'chart', canHaveChildren: false, displayName: 'K线图', description: 'K线', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'funnel', group: 'chart', canHaveChildren: false, displayName: '漏斗图', description: '漏斗', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'gauge', group: 'chart', canHaveChildren: false, displayName: '仪表盘', description: '仪表', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'heatmap', group: 'chart', canHaveChildren: false, displayName: '热力图', description: '热力', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'line-chart', group: 'chart', canHaveChildren: false, displayName: '折线图', description: '折线', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'pie-chart', group: 'chart', canHaveChildren: false, displayName: '饼图', description: '饼图', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'radar', group: 'chart', canHaveChildren: false, displayName: '雷达图', description: '雷达', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+    { type: 'scatter-chart', group: 'chart', canHaveChildren: false, displayName: '散点图', description: '散点', defaultProps: {}, keyProps: [], defaultSize: null, exposedValues: [], receivableEvents: [], eventTargets: [], configPanels: [] },
+  ]
+  return { mockWidgets }
+})
+
+vi.mock('../tools/editorTools.js', () => ({
+  getWidgetCatalogueFromMetadata: vi.fn().mockResolvedValue(mockWidgets),
+}))
+
+import { queryWidgets, validateSchema, queryWidgetsTool, validateWidgetSchemaTool } from '../tools/widgetTools.js'
+import { getWidgetCatalogueFromMetadata } from '../tools/editorTools.js'
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(getWidgetCatalogueFromMetadata).mockResolvedValue(mockWidgets)
+})
+
+describe('queryWidgets (utility)', () => {
+  it('returns all widgets when no category filter', async () => {
+    const result = await queryWidgets()
     expect(result.total).toBeGreaterThan(30)
     expect(result.widgets.length).toBe(result.total)
   })
 
-  it('filters by category', () => {
-    const layout = queryWidgets('layout')
-    expect(layout.widgets.every((w) => w.category === 'layout')).toBe(true)
+  it('filters by category', async () => {
+    const layout = await queryWidgets('layout')
+    expect(layout.widgets.every((w) => w.group === 'layout')).toBe(true)
     expect(layout.total).toBeGreaterThan(0)
 
-    const form = queryWidgets('form')
-    expect(form.widgets.every((w) => w.category === 'form')).toBe(true)
+    const form = await queryWidgets('form')
+    expect(form.widgets.every((w) => w.group === 'form')).toBe(true)
   })
 
-  it('returns empty for unknown category', () => {
-    const result = queryWidgets('nonexistent')
+  it('returns empty for unknown category', async () => {
+    const result = await queryWidgets('nonexistent')
     expect(result.total).toBe(0)
     expect(result.widgets).toEqual([])
   })
 
-  it('includes expected widget types', () => {
-    const all = queryWidgets()
+  it('includes expected widget types', async () => {
+    const all = await queryWidgets()
     const types = all.widgets.map((w) => w.type)
     expect(types).toContain('input')
     expect(types).toContain('select')
@@ -38,7 +111,7 @@ describe('queryWidgets', () => {
   })
 })
 
-describe('validateSchema', () => {
+describe('validateSchema (utility)', () => {
   const makeWidget = (overrides: Record<string, unknown> = {}) => ({
     id: '550e8400-e29b-41d4-a716-446655440000',
     type: 'input',
@@ -59,82 +132,118 @@ describe('validateSchema', () => {
     children,
   })
 
-  it('validates a simple valid schema', () => {
-    const result = validateSchema([makeContainer([makeWidget()])])
+  it('validates a simple valid schema', async () => {
+    const result = await validateSchema([makeContainer([makeWidget()])])
     expect(result.valid).toBe(true)
     expect(result.errors).toEqual([])
   })
 
-  it('rejects widget without type', () => {
-    const result = validateSchema([{ id: '550e8400-e29b-41d4-a716-446655440000', position: { x: 0, y: 0, w: 1, h: 1 } }])
+  it('rejects widget without type', async () => {
+    const result = await validateSchema([{ id: '550e8400-e29b-41d4-a716-446655440000', position: { x: 0, y: 0, w: 1, h: 1 } }])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('type'))).toBe(true)
   })
 
-  it('rejects invalid widget type', () => {
-    const result = validateSchema([makeContainer([makeWidget({ type: 'nonexistent' })])])
+  it('rejects invalid widget type', async () => {
+    const result = await validateSchema([makeContainer([makeWidget({ type: 'nonexistent' })])])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('nonexistent'))).toBe(true)
   })
 
-  it('rejects missing id', () => {
-    const result = validateSchema([makeContainer([makeWidget({ id: undefined })])])
+  it('rejects missing id', async () => {
+    const result = await validateSchema([makeContainer([makeWidget({ id: undefined })])])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('id'))).toBe(true)
   })
 
-  it('rejects non-UUID id', () => {
-    const result = validateSchema([makeContainer([makeWidget({ id: 'not-a-uuid' })])])
-    expect(result.valid).toBe(false)
-    expect(result.errors.some((e) => e.message.includes('UUID'))).toBe(true)
-  })
-
-  it('rejects missing position', () => {
-    const result = validateSchema([makeContainer([makeWidget({ position: undefined })])])
+  it('rejects missing position', async () => {
+    const result = await validateSchema([makeContainer([makeWidget({ position: undefined })])])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('position'))).toBe(true)
   })
 
-  it('rejects negative position values', () => {
-    const result = validateSchema([makeContainer([makeWidget({ position: { x: -1, y: 0, w: 1, h: 1 } })])])
+  it('rejects negative position values', async () => {
+    const result = await validateSchema([makeContainer([makeWidget({ position: { x: -1, y: 0, w: 1, h: 1 } })])])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('non-negative'))).toBe(true)
   })
 
-  it('rejects top-level non-container widget', () => {
-    const result = validateSchema([makeWidget()])
+  it('rejects top-level non-container widget', async () => {
+    const result = await validateSchema([makeWidget()])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('nested inside a layout container'))).toBe(true)
   })
 
-  it('rejects container without children array', () => {
-    const result = validateSchema([{ ...makeContainer(), children: undefined }])
+  it('rejects container without children array', async () => {
+    const result = await validateSchema([{ ...makeContainer(), children: undefined }])
     expect(result.valid).toBe(false)
     expect(result.errors.some((e) => e.message.includes('children'))).toBe(true)
   })
 
-  it('validates nested structure recursively', () => {
+  it('validates nested structure recursively', async () => {
     const nested = makeContainer([
       makeContainer([makeWidget()]),
     ])
-    const result = validateSchema([nested])
+    const result = await validateSchema([nested])
     expect(result.valid).toBe(true)
   })
 
-  it('reports error for missing type (stops early)', () => {
-    const result = validateSchema([
+  it('reports error for missing type (stops early)', async () => {
+    const result = await validateSchema([
       makeWidget({ id: undefined, type: undefined, position: undefined }),
     ])
     expect(result.valid).toBe(false)
-    // Missing type causes `continue`, so only the type error is reported
     expect(result.errors.some((e) => e.message.includes('type'))).toBe(true)
   })
 
-  it('reports multiple errors when type is valid but other fields missing', () => {
-    const result = validateSchema([
+  it('reports multiple errors when type is valid but other fields missing', async () => {
+    const result = await validateSchema([
       makeContainer([makeWidget({ id: undefined, position: undefined })]),
     ])
     expect(result.valid).toBe(false)
     expect(result.errors.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe('queryWidgetsTool (LangGraph tool)', () => {
+  it('invokes with no arguments and returns all widgets', async () => {
+    const result = await queryWidgetsTool.invoke({})
+    const parsed = typeof result === 'string' ? JSON.parse(result) : result
+    expect(parsed.total).toBeGreaterThan(30)
+  })
+
+  it('invokes with category filter', async () => {
+    const result = await queryWidgetsTool.invoke({ category: 'form' })
+    const parsed = typeof result === 'string' ? JSON.parse(result) : result
+    expect(parsed.total).toBeGreaterThan(0)
+    expect(parsed.widgets.every((w: { group: string }) => w.group === 'form')).toBe(true)
+  })
+})
+
+describe('validateWidgetSchemaTool (LangGraph tool)', () => {
+  it('invokes with valid schema', async () => {
+    const widget = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      type: 'input',
+      position: { x: 0, y: 0, w: 12, h: 2 },
+    }
+    const container = {
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      type: 'form',
+      position: { x: 0, y: 0, w: 24, h: 10 },
+      children: [widget],
+    }
+    const result = await validateWidgetSchemaTool.invoke({ widgets: [container] })
+    const parsed = typeof result === 'string' ? JSON.parse(result) : result
+    expect(parsed.valid).toBe(true)
+  })
+
+  it('invokes with invalid schema and returns errors', async () => {
+    const result = await validateWidgetSchemaTool.invoke({
+      widgets: [{ id: '550e8400-e29b-41d4-a716-446655440000', position: { x: 0, y: 0, w: 1, h: 1 } }],
+    })
+    const parsed = typeof result === 'string' ? JSON.parse(result) : result
+    expect(parsed.valid).toBe(false)
+    expect(parsed.errors.length).toBeGreaterThan(0)
   })
 })

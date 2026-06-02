@@ -1,41 +1,22 @@
 /**
- * Widget domain knowledge and validation.
+ * Widget domain knowledge and validation — LangGraph StructuredTool format.
  *
- * - query_widgets: returns the Widget type catalogue (from editorTools)
- * - validate_schema: validates a Widget[] tree for structural correctness
+ * 从 @schema-form/shared-ai metadata 动态读取组件目录，
+ * 不再维护硬编码副本。
  */
 
-import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
-import { WIDGET_CATALOGUE } from './editorTools.js'
-
-const VALID_TYPES = new Set(WIDGET_CATALOGUE.map((w) => w.type))
-const CONTAINER_TYPES = new Set(
-  WIDGET_CATALOGUE.filter((w) => w.canHaveChildren).map((w) => w.type),
-)
+import { tool } from '@langchain/core/tools'
+import { getWidgetCatalogueFromMetadata } from './editorTools.js'
+import { z } from 'zod'
 
 // ────────────────────────────────────────────
-// Tool: query_widgets
+// Tool result types
 // ────────────────────────────────────────────
 
 interface QueryWidgetsResult {
   total: number
-  widgets: typeof WIDGET_CATALOGUE
+  widgets: Awaited<ReturnType<typeof getWidgetCatalogueFromMetadata>>
 }
-
-/**
- * Returns the full Widget type catalogue, optionally filtered by category.
- */
-export function queryWidgets(category?: string): QueryWidgetsResult {
-  const filtered = category
-    ? WIDGET_CATALOGUE.filter((w) => w.category === category)
-    : WIDGET_CATALOGUE
-
-  return { total: filtered.length, widgets: filtered }
-}
-
-// ────────────────────────────────────────────
-// Tool: validate_schema
-// ────────────────────────────────────────────
 
 interface ValidationError {
   path: string
@@ -47,15 +28,31 @@ interface ValidateSchemaResult {
   errors: ValidationError[]
 }
 
+// ────────────────────────────────────────────
+// Direct utility exports (backward compatibility)
+// ────────────────────────────────────────────
+
 /**
- * Validates a Widget[] tree for structural correctness:
- * - Every widget has a valid type
- * - Every widget has a UUID id
- * - Layout components have children array
- * - Non-layout components do NOT have children
- * - Nested structure respects the "layout-only containers" rule
+ * Returns the full Widget type catalogue, optionally filtered by category.
  */
-export function validateSchema(widgets: Record<string, unknown>[]): ValidateSchemaResult {
+export async function queryWidgets(category?: string): Promise<QueryWidgetsResult> {
+  const allWidgets = await getWidgetCatalogueFromMetadata()
+  const filtered = category
+    ? allWidgets.filter((w) => w.group === category)
+    : allWidgets
+
+  return { total: filtered.length, widgets: filtered }
+}
+
+/**
+ * Validates a Widget[] tree for structural correctness.
+ * 类型集合从 metadata 动态获取，新增 Widget 自动覆盖。
+ */
+export async function validateSchema(widgets: Record<string, unknown>[]): Promise<ValidateSchemaResult> {
+  const metaWidgets = await getWidgetCatalogueFromMetadata()
+  const VALID_TYPES = new Set(metaWidgets.map((w) => w.type))
+  const CONTAINER_TYPES = new Set(metaWidgets.filter((w) => w.canHaveChildren).map((w) => w.type))
+
   const errors: ValidationError[] = []
 
   function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
@@ -78,8 +75,6 @@ export function validateSchema(widgets: Record<string, unknown>[]): ValidateSche
       const id = node.id as string | undefined
       if (!id) {
         errors.push({ path: `${path}.id`, message: 'Widget is missing required "id" field.' })
-      } else if (!uuidValidate(id)) {
-        errors.push({ path: `${path}.id`, message: `Widget id "${id}" is not a valid UUID.` })
       }
 
       // position check
@@ -117,3 +112,44 @@ export function validateSchema(widgets: Record<string, unknown>[]): ValidateSche
   walk(widgets, '', 0)
   return { valid: errors.length === 0, errors }
 }
+
+// ────────────────────────────────────────────
+// LangGraph tools
+// ────────────────────────────────────────────
+
+export const queryWidgetsTool = tool(
+  async ({ category }): Promise<QueryWidgetsResult> => {
+    return queryWidgets(category)
+  },
+  {
+    name: 'query_widgets',
+    description: '获取 Widget 组件目录，包含所有可用组件类型及其关键属性。可按分类筛选。',
+    schema: z.object({
+      category: z.enum(['container', 'layout', 'form', 'static', 'action', 'table', 'business', 'chart'])
+        .optional()
+        .describe('按组件分类筛选，不传则返回全部'),
+    }),
+  },
+)
+
+export const validateWidgetSchemaTool = tool(
+  async ({ widgets }): Promise<ValidateSchemaResult> => {
+    return validateSchema(widgets as Record<string, unknown>[])
+  },
+  {
+    name: 'validate_widget_schema',
+    description: '校验 Widget Schema JSON 的结构正确性。检查类型合法性、ID 存在性、嵌套规则等。',
+    schema: z.object({
+      widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
+    }),
+  },
+)
+
+// ────────────────────────────────────────────
+// Exported tool array
+// ────────────────────────────────────────────
+
+export const widgetTools = [
+  queryWidgetsTool,
+  validateWidgetSchemaTool,
+]

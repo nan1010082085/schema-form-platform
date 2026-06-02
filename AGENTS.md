@@ -129,10 +129,12 @@ pnpm db:seed              # 种子数据
 
 **FormSchema** — 核心资源：
 - `_id`: UUID string（非 ObjectId）
-- `name`, `type`（form | search_list）, `status`（draft | published）
+- `name`: String（表单名称）
+- `type`: String（form | search_list）
+- `status`: String（draft | published）
 - `json`: Mixed — 存储 schema 树结构（`FormSchemaItem[]`）
-- `publishId`: 发布版本的唯一标识
-- `timestamps`: createdAt / updatedAt
+- `publishId`: String — 发布版本的唯一标识
+- `timestamps`: Date — createdAt / updatedAt
 
 ### TypeScript 配置
 
