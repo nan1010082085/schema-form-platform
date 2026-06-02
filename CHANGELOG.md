@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased] - 2026-06-01
+
+### Fixed
+- AI Agent 工具调用后无输出：增加 fallback 逻辑，当模型未使用 `<answer>` 标签时提取 `<think>` 外的内容
+- AI Agent 工具调用后不继续思考：在 system prompt 中增加工具调用行为规范，明确要求工具调用后必须用 XML 标签格式输出
+- Portal 子应用白屏 + 路径错误：将三个子应用的 Vue Router 从模块顶层单例改为工厂函数，在 `createApp` 回调内延迟创建，确保 `__MICRO_APP_ENVIRONMENT__` 已注入
+
+### Added
+- AI 对话版本关联：`AIConversationModel` 增加 `version` 字段，对话记录 Schema 版本，加载历史对话时按版本恢复上下文
+- 文档全面更新：`docs/ai.html` 重写为实际架构（移除 LangGraph，更新工具列表、SSE 事件、目录结构等），`README.md` 更新项目结构和端口
+
+### Changed
+- `createChildApp()` 支持 `getRouter` 延迟获取 router（`packages/shared/micro-app/child.ts`）
+- Editor/Flow/AI 子应用 router 改为工厂函数导出（`createEditorRouter` / `createFlowRouter` / `createAiRouter`）
+
 ## [1.0.0-rc.2] - 2026-05-25
 
 ### Fixed
