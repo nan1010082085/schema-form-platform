@@ -105,7 +105,7 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'text':
         if (event.content) {
-          msg.content = event.content
+          msg.content = (msg.content ?? '') + event.content
         }
         break
 

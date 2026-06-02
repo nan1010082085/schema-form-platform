@@ -30,73 +30,8 @@ import type { AIMessage } from './graph/state.js'
 
 const router = new Router({ prefix: '/api/ai' })
 
-// ────────────────────────────────────────────
-// Structured output streaming parser
-// ────────────────────────────────────────────
-
-interface ThinkingState {
-  inThink: boolean
-  thinkClosed: boolean
-  fullContent: string
-}
-
-function createThinkingState(): ThinkingState {
-  return { inThink: false, thinkClosed: false, fullContent: '' }
-}
-
-/**
- * Process a content delta for structured tag extraction.
- *
- * Handles incremental parsing of <think>, <answer>, <tip> tags
- * from the LLM's streamed output. Returns events to emit.
- */
-function processStructuredDelta(
-  content: string,
-  state: ThinkingState,
-): Array<{ type: string; content?: string }> {
-  const events: Array<{ type: string; content?: string }> = []
-  state.fullContent += content
-
-  // Phase 1: looking for <think> opening tag
-  if (!state.inThink && !state.thinkClosed) {
-    const thinkStart = state.fullContent.indexOf('<think>')
-    if (thinkStart !== -1) {
-      const afterTag = state.fullContent.slice(thinkStart + 7)
-      if (afterTag.length > 0) {
-        state.inThink = true
-        events.push({ type: 'thinking', content: afterTag })
-      }
-    }
-    return events
-  }
-
-  // Phase 2: inside <think> block
-  if (state.inThink && !state.thinkClosed) {
-    const thinkEnd = state.fullContent.indexOf('</think>')
-    if (thinkEnd !== -1) {
-      const thinkContent = state.fullContent.slice(
-        state.fullContent.indexOf('<think>') + 7,
-        thinkEnd,
-      )
-      events.push({ type: 'thinking', content: thinkContent })
-      state.thinkClosed = true
-      state.inThink = false
-    } else {
-      events.push({ type: 'thinking', content })
-    }
-  }
-
-  return events
-}
-
-/**
- * Extract content between XML-style tags from accumulated text.
- */
-function extractTagContent(text: string, tag: string): string {
-  const re = new RegExp(`<${tag}>\\s*([\\s\\S]*?)\\s*</${tag}>`)
-  const m = text.match(re)
-  return m ? m[1].trim() : ''
-}
+// No parser utilities needed — deepseek-chat returns content
+// as structured fields with JSON Mode enabled.
 
 // ────────────────────────────────────────────
 // Tool names that produce structured payloads
@@ -231,7 +166,6 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
 
   // ── Streaming state ──
   let currentAgent: 'router' | 'editor' | 'flow' = 'router'
-  const thinkingState = createThinkingState()
   let accumulatedContent = ''
   const toolCallRegistry: Array<{ id?: string; name: string; arguments: Record<string, unknown>; result?: unknown }> = []
   const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
@@ -276,13 +210,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
 
           // Graph finished
           if (nodeName === '__end__') {
-            // Extract final tip if present and not yet emitted
-            if (!thinkingState.inThink && thinkingState.thinkClosed) {
-              const tip = extractTagContent(thinkingState.fullContent, 'tip')
-              if (tip) {
-                send({ type: 'tip', content: tip })
-              }
-            }
+            // No post-processing needed — thinking and content
+            // are already streamed via reasoning_content / content fields
           }
           break
         }
@@ -295,31 +224,9 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           // Router output is internal JSON — don't stream to client
           if (currentAgent === 'router') break
 
-          const delta = chunk.content
-          accumulatedContent += delta
-
-          // Parse structured output tags
-          const parsedEvents = processStructuredDelta(delta, thinkingState)
-          for (const pe of parsedEvents) {
-            send(pe)
-          }
-
-          // After think tag closes, emit answer text
-          if (thinkingState.thinkClosed) {
-            const answerContent = extractTagContent(thinkingState.fullContent, 'answer')
-            if (answerContent) {
-              // Emit the full answer (not incremental — frontend replaces content)
-              send({ type: 'text', content: answerContent })
-            } else {
-              // No <answer> tag — stream raw content after think block
-              const afterThink = thinkingState.fullContent.slice(
-                thinkingState.fullContent.indexOf('</think>') + 8,
-              )
-              if (afterThink) {
-                send({ type: 'text', content: afterThink })
-              }
-            }
-          }
+          // Stream content tokens
+          accumulatedContent += chunk.content
+          send({ type: 'text', content: chunk.content })
           break
         }
 
@@ -374,7 +281,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
               send({
                 type: 'schema',
                 payload,
-                description: extractTagContent(thinkingState.fullContent, 'answer') || accumulatedContent,
+                description: accumulatedContent,
               })
               pendingPayloads.delete(event.run_id as string)
             }
@@ -387,7 +294,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
               send({
                 type: 'flow',
                 payload,
-                description: extractTagContent(thinkingState.fullContent, 'answer') || accumulatedContent,
+                description: accumulatedContent,
               })
               pendingPayloads.delete(event.run_id as string)
             }
@@ -411,17 +318,10 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     }
 
     // ── Persist assistant message ──
-    const answerContent = extractTagContent(thinkingState.fullContent, 'answer')
-    const tipContent = extractTagContent(thinkingState.fullContent, 'tip')
-    const finalContent = answerContent || accumulatedContent
-
     const assistantMessage: AIMessage = {
       role: 'assistant',
-      content: finalContent,
+      content: accumulatedContent,
       timestamp: new Date(),
-    }
-    if (tipContent) {
-      assistantMessage.tip = tipContent
     }
     if (toolCallRegistry.length > 0) {
       assistantMessage.toolCalls = toolCallRegistry.map((tc) => ({

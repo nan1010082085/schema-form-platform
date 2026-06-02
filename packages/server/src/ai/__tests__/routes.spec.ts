@@ -127,23 +127,17 @@ describe('POST /api/ai/chat', () => {
     expect(res.status).toBe(404)
   })
 
-  it('creates conversation and returns SSE with thinking, text, tip, and done events', async () => {
+  it('creates conversation and returns SSE with text and done events', async () => {
     const mockConvo = { _id: 'conv-1', messages: [] }
     vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
     vi.mocked(convoService.appendMessage).mockResolvedValue(null)
 
-    // Content must be split across two chunks: first opens <think>, second closes it
-    // so processStructuredDelta transitions through both phases
     vi.mocked(graph.streamEvents).mockReturnValue(
       mockStreamEvents([
         { event: 'on_chain_start', name: 'editor' },
         {
           event: 'on_chat_model_stream',
-          data: { chunk: { content: '<think>\n思考中...' } },
-        },
-        {
-          event: 'on_chat_model_stream',
-          data: { chunk: { content: '\n</think>\n<answer>已生成表单</answer>\n<tip>建议添加验证</tip>' } },
+          data: { chunk: { content: '已为您生成表单' } },
         },
         { event: 'on_chain_end', name: '__end__', data: {} },
       ]),
@@ -157,9 +151,7 @@ describe('POST /api/ai/chat', () => {
     expect(res.status).toBe(200)
     expect(res.sse).toBe(true)
     expect(res.text).toContain('data: ')
-    expect(res.text).toContain('"type":"thinking"')
     expect(res.text).toContain('"type":"text"')
-    expect(res.text).toContain('"type":"tip"')
     expect(res.text).toContain('"type":"done"')
   })
 
@@ -168,17 +160,12 @@ describe('POST /api/ai/chat', () => {
     vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
     vi.mocked(convoService.appendMessage).mockResolvedValue(null)
 
-    // Split think content across two chunks so the parser closes the tag
     vi.mocked(graph.streamEvents).mockReturnValue(
       mockStreamEvents([
         { event: 'on_chain_start', name: 'flow' },
         {
           event: 'on_chat_model_stream',
-          data: { chunk: { content: '<think>\n分析流程...' } },
-        },
-        {
-          event: 'on_chat_model_stream',
-          data: { chunk: { content: '\n</think>\n<answer>已生成审批流程</answer>' } },
+          data: { chunk: { content: '已生成审批流程' } },
         },
         {
           event: 'on_tool_start',
@@ -203,7 +190,6 @@ describe('POST /api/ai/chat', () => {
 
     expect(res.status).toBe(200)
     expect(res.sse).toBe(true)
-    expect(res.text).toContain('"type":"thinking"')
     expect(res.text).toContain('"type":"flow"')
     expect(res.text).toContain('"type":"done"')
   })

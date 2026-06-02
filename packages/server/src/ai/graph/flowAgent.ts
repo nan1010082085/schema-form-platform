@@ -120,6 +120,7 @@ export async function flowAgentNode(
     temperature: 0.7,
     maxTokens: 8192,
     streaming: true,
+    modelKwargs: { response_format: { type: 'json_object' } },
   }).bindTools(flowTools)
 
   // Build message list: system prompt + conversation history (truncated) + current user message
