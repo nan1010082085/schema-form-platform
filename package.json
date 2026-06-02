@@ -21,10 +21,11 @@
     "build:flow": "pnpm --filter @schema-form/flow-web build",
     "build:portal": "pnpm --filter @schema-form/portal build",
     "build:ai": "pnpm --filter @schema-form/ai-app build",
-    "vercel-build": "pnpm build:server && pnpm build:editor && pnpm build:flow && pnpm build:ai && pnpm build:portal && mkdir -p packages/server/node_modules/@schema-form && rm -rf packages/server/node_modules/@schema-form/flow-shared packages/server/node_modules/@schema-form/shared-ai && cp -rL packages/flow/shared packages/server/node_modules/@schema-form/flow-shared && cp -rL packages/shared packages/server/node_modules/@schema-form/shared-ai && mkdir -p packages/portal/dist/editor && cp -r packages/editor/web/dist/* packages/portal/dist/editor/ && mkdir -p packages/portal/dist/flow && cp -r packages/flow/web/dist/* packages/portal/dist/flow/ && mkdir -p packages/portal/dist/ai && cp -r packages/ai-app/dist/* packages/portal/dist/ai/",
     "db:up": "pnpm --filter @schema-form/server db:up",
     "db:down": "pnpm --filter @schema-form/server db:down",
     "db:seed": "pnpm --filter @schema-form/server db:seed",
+    "deploy:pack": "bash deploy/pack.sh",
+    "deploy:pack:version": "bash deploy/pack.sh",
     "format": "pnpm -r format",
     "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo"
   },

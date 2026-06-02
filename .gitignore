@@ -15,7 +15,13 @@ packages/portal/flow/
 # Env
 .env
 .env.local
+.env.production
 .env.*.local
+packages/*/.env
+packages/*/.env.*
+packages/**/.env
+packages/**/.env.*
+deploy/.env*
 
 # IDE
 .idea/
