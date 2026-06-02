@@ -30,6 +30,7 @@ export interface IAIConversation {
   schemaId?: string
   flowId?: string
   nodeId?: string
+  version?: string
   messages: AIConversationMessage[]
   activeAgent: ActiveAgent
   createdAt: Date
@@ -61,6 +62,7 @@ const aiConversationSchema = new mongoose.Schema<IAIConversation>(
     schemaId: { type: String },
     flowId: { type: String },
     nodeId: { type: String },
+    version: { type: String },
     messages: { type: [messageSchema], default: [] },
     activeAgent: { type: String, enum: ['router', 'editor', 'flow'], default: 'router' },
   },
@@ -94,6 +96,7 @@ export async function createConversation(params: {
   schemaId?: string
   flowId?: string
   nodeId?: string
+  version?: string
 }): Promise<IAIConversation> {
   return AIConversationModel.create({
     _id: uuidv4(),
@@ -101,6 +104,7 @@ export async function createConversation(params: {
     schemaId: params.schemaId,
     flowId: params.flowId,
     nodeId: params.nodeId,
+    version: params.version,
     messages: [],
     activeAgent: 'router',
   })

@@ -97,6 +97,7 @@ export interface ChatContext {
   schemaId?: string
   flowId?: string
   nodeId?: string
+  version?: string
 }
 
 // ---- SSE 事件 ----
@@ -143,10 +144,11 @@ export interface Conversation {
   title: string
   source: 'editor' | 'flow' | 'standalone'
   activeAgent: 'router' | 'editor' | 'flow'
+  version?: string
   createdAt: string
   updatedAt: string
 }
 
 // ---- Agent ----
 
-export type AgentType = 'editor' | 'flow'
+export type AgentType = 'editor' | 'flow' | 'auto'

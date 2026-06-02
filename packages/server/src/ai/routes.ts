@@ -38,7 +38,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const { conversationId, message, context } = ctx.request.body as {
     conversationId?: string
     message: string
-    context: { source: string; schemaId?: string; flowId?: string; nodeId?: string }
+    context: { source: string; schemaId?: string; flowId?: string; nodeId?: string; version?: string }
   }
 
   // Resolve or create conversation
@@ -67,6 +67,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       schemaId: context.schemaId,
       flowId: context.flowId,
       nodeId: context.nodeId,
+      version: context.version,
     })
   }
 
@@ -74,8 +75,20 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   let currentSchema: Record<string, unknown>[] | undefined
   if (context.schemaId) {
     const schema = await FormSchemaModel.findById(context.schemaId)
-    if (schema && Array.isArray(schema.json)) {
-      currentSchema = schema.json as Record<string, unknown>[]
+    if (schema) {
+      if (context.version && schema.version !== context.version) {
+        // Requested a historical version — look in versions array
+        const snapshot = schema.versions.find((v: { version: string }) => v.version === context.version)
+        if (snapshot) {
+          currentSchema = Array.isArray(snapshot.json)
+            ? snapshot.json as Record<string, unknown>[]
+            : undefined
+        }
+      }
+      // Fallback to current version if snapshot not found or no version requested
+      if (!currentSchema && Array.isArray(schema.json)) {
+        currentSchema = schema.json as Record<string, unknown>[]
+      }
     }
   }
 
@@ -372,6 +385,7 @@ router.get('/conversations', async (ctx) => {
         : 'New conversation',
       source: c.source,
       activeAgent: c.activeAgent,
+      version: c.version,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     })),
@@ -399,6 +413,7 @@ router.get('/conversations/:id', async (ctx) => {
         : 'New conversation',
       source: convo.source,
       activeAgent: convo.activeAgent,
+      version: convo.version,
       messages: convo.messages.map((m) => ({
         role: m.role,
         content: m.content,

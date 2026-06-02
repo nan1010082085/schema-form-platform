@@ -193,6 +193,9 @@ function handleHostData(data: Record<string, unknown>) {
   if (data.nodeId) {
     store.setContext({ nodeId: data.nodeId as string })
   }
+  if (data.version) {
+    store.setContext({ version: data.version as string })
+  }
 }
 </script>
 

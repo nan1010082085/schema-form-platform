@@ -66,6 +66,7 @@ const aiBaseUrl = import.meta.env.VITE_AI_URL || 'http://localhost:5300/ai/index
 const aiDrawerData = computed(() => ({
   source: 'editor',
   currentSchema: widgetStore.widgets,
+  version: currentVersion.value || undefined,
 }))
 
 function handleAiDataChange(data: Record<string, unknown>) {
