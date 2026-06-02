@@ -11,6 +11,7 @@ import {
   Warning,
 } from '@element-plus/icons-vue'
 import { useHomeData } from '@/composables/useHomeData'
+import StatsChart from '@/components/StatsChart.vue'
 import type { DashboardStats, RecentConversation } from '@/types/home'
 
 const router = useRouter()
@@ -19,7 +20,6 @@ const {
   conversations,
   loading,
   error,
-  hasStats,
   isConversationsEmpty,
   fetchAll,
   refreshStats,
@@ -195,19 +195,30 @@ function goToConversation(conv: RecentConversation) {
           </div>
         </template>
 
-        <!-- 数据 -->
-        <template v-else-if="hasStats && stats">
+        <!-- 数据（包括 0 值） -->
+        <template v-else>
           <div v-for="def in statCards" :key="def.key" :class="$style.statCard">
             <div :class="$style.statIcon" :style="{ background: def.gradient }">
               <el-icon :size="20" color="#fff"><component :is="def.icon" /></el-icon>
             </div>
             <div :class="$style.statBody">
               <span :class="$style.statTitle">{{ def.title }}</span>
-              <span :class="$style.statValue">{{ def.getValue(stats) }}</span>
-              <span :class="$style.statSub">{{ def.getSub(stats) }}</span>
+              <span :class="$style.statValue">{{ stats ? def.getValue(stats) : '0' }}</span>
+              <span :class="$style.statSub">{{ stats ? def.getSub(stats) : '暂无数据' }}</span>
             </div>
           </div>
         </template>
+      </section>
+
+      <!-- 统计图表 -->
+      <section :class="$style.chartSection">
+        <h2 :class="$style.sectionTitle">数据概览</h2>
+        <div :class="$style.chartCard">
+          <StatsChart v-if="stats" :stats="stats" />
+          <div v-else :class="$style.chartPlaceholder">
+            <p :class="$style.placeholderText">图表加载中...</p>
+          </div>
+        </div>
       </section>
 
       <!-- 功能导航 -->
@@ -588,6 +599,36 @@ function goToConversation(conv: RecentConversation) {
 
 .convEmptyHint {
   font-size: 13px;
+  color: var(--text-color-placeholder);
+  margin: 0;
+}
+
+/* ---- Chart ---- */
+
+.chartSection {
+  margin-bottom: 40px;
+}
+
+.chartCard {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.placeholderText {
+  font-size: 14px;
   color: var(--text-color-placeholder);
   margin: 0;
 }

@@ -232,6 +232,9 @@ importers:
       '@schema-form/micro-app':
         specifier: workspace:*
         version: link:../shared/micro-app
+      echarts:
+        specifier: ^6.1.0
+        version: 6.1.0
       element-plus:
         specifier: ^2.9.7
         version: 2.14.0(vue@3.5.34(typescript@5.7.3))
