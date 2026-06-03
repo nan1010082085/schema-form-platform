@@ -181,18 +181,19 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         // ── Node execution start ──
         case 'on_chain_start': {
           const nodeName = event.name as string
-          if (nodeName === 'editor' || nodeName === 'flow') {
+          if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'general' || nodeName === 'summarizer') {
             currentAgent = nodeName
-            send({ type: 'agent_switch', agent: nodeName })
+            send({ type: 'agent_switch', agent: nodeName === 'summarizer' ? 'general' : nodeName })
           }
           break
         }
 
-        // ── Router node finished — extract task chain ──
+        // ── Node finished ──
         case 'on_chain_end': {
           const nodeName = event.name as string
 
-          if (nodeName === 'router') {
+          // Thinker 节点完成 — 提取任务链
+          if (nodeName === 'thinker') {
             const output = event.data?.output as Record<string, unknown> | undefined
             if (output?.taskChain && Array.isArray(output.taskChain) && output.taskChain.length > 0) {
               const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
@@ -208,20 +209,48 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             }
           }
 
+          // Editor/Flow 节点完成 — 更新任务链状态
+          if (nodeName === 'editor' || nodeName === 'flow') {
+            const output = event.data?.output as Record<string, unknown> | undefined
+            if (output?.taskChain && Array.isArray(output.taskChain)) {
+              const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
+              send({
+                type: 'task_chain',
+                steps: steps.map((s) => ({
+                  agent: s.agent,
+                  description: s.description,
+                  status: s.status,
+                })),
+                currentIndex: (output.currentStepIndex as number) ?? 0,
+              })
+            }
+          }
+
           // Graph finished
           if (nodeName === '__end__') {
-            // No post-processing needed — thinking and content
-            // are already streamed via reasoning_content / content fields
+            // No post-processing needed
           }
           break
         }
 
         // ── LLM token streaming ──
         case 'on_chat_model_stream': {
-          const chunk = event.data?.chunk as { content?: unknown } | undefined
+          const chunk = event.data?.chunk as {
+            content?: unknown
+            additional_kwargs?: { reasoning_content?: string }
+          } | undefined
+
+          // 捕获 thinking 内容（DeepSeek reasoning_content）
+          const reasoningContent = chunk?.additional_kwargs?.reasoning_content
+          if (reasoningContent && typeof reasoningContent === 'string') {
+            send({ type: 'thinking', content: reasoningContent })
+            break
+          }
+
           if (!chunk?.content || typeof chunk.content !== 'string') break
 
-          // Router output is internal JSON — don't stream to client
+          // Router 输出是内部 JSON，不流式传输给客户端
+          // 但 Router 的 thinking 需要传输
           if (currentAgent === 'router') break
 
           // Stream content tokens

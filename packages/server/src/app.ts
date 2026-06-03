@@ -31,7 +31,7 @@ app.use(bodyParser())
 
 app.use(cors({
   origin: (ctx) => {
-    const origins = process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:4173,http://127.0.0.1:5173,https://schema-form-platform.vercel.app'
+    const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:4173,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
     if (origins === '*') return ctx.get('Origin')
     const allowed = origins.split(',').map((s) => s.trim())
     const requestOrigin = ctx.get('Origin')

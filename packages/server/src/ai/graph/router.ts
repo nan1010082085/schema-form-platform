@@ -81,6 +81,7 @@ export async function routerNode(
       configuration: { baseURL: 'https://api.deepseek.com' },
       temperature: 0,
       maxTokens: 8192,
+      streaming: true,
       modelKwargs: { response_format: { type: 'json_object' } },
     })
 

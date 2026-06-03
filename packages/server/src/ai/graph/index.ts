@@ -6,7 +6,7 @@
  */
 
 // Compiled graph (primary entry point)
-export { graph, routeAfterRouter, shouldCallTools } from './graph.js'
+export { graph, routeAfterThinker, afterAgent, afterTools } from './graph.js'
 
 // Checkpointer (for thread-based conversation persistence)
 export { checkpointer } from './checkpointer.js'
@@ -16,7 +16,6 @@ export { AgentStateAnnotation } from './state.js'
 export type { AIConversationState, AgentStateUpdate, ActiveAgent, TaskStep, AIContext } from './state.js'
 
 // Nodes
-export { routerNode } from './router.js'
 export { editorAgentNode } from './editorAgent.js'
 export { flowAgentNode } from './flowAgent.js'
 

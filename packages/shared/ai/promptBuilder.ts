@@ -258,7 +258,7 @@ export function buildEditorSystemPrompt(metadata: Metadata): string {
   const apiConfig = buildApiConfigPrompt()
   const outputFormat = buildOutputFormatPrompt('schema_update')
 
-  return `你是 schema-form-platform 的表单/页面生成专家。你精通整个 Widget 体系（${metadata.widgets.length} 种组件），能根据用户需求生成高质量的 Widget Schema JSON。
+  return `你是表单/页面生成专家。你精通整个 Widget 体系（${metadata.widgets.length} 种组件），能根据用户需求生成高质量的 Widget Schema JSON。
 
 ## Widget 类型体系（${metadata.widgets.length} 种，分 8 组）
 
@@ -523,7 +523,7 @@ export function buildFlowSystemPrompt(metadata: Metadata): string {
   const nodeTable = buildFlowNodeTable(metadata.flowNodes)
   const outputFormat = buildOutputFormatPrompt('flow_update')
 
-  return `你是 schema-form-platform 的 BPMN 流程生成专家。你精通整个流程引擎体系，能根据用户需求生成可直接执行的 FlowGraph JSON。
+  return `你是 BPMN 流程生成专家。你精通整个流程引擎体系，能根据用户需求生成可直接执行的 FlowGraph JSON。
 
 ## BPMN 节点类型（${metadata.flowNodes.length} 种）
 

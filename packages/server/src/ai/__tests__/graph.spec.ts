@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { END } from '@langchain/langgraph'
-import { graph, routeAfterRouter, shouldCallTools } from '../graph/graph.js'
+import { graph, routeAfterThinker, afterAgent, afterTools } from '../graph/graph.js'
 import type { AgentStateAnnotation } from '../graph/state.js'
 
 type State = typeof AgentStateAnnotation.State
@@ -39,36 +39,35 @@ describe('graph assembly', () => {
   })
 
   it('graph has streamEvents method for SSE streaming', () => {
-    // Verify the graph supports the v2 streamEvents API used by routes
     expect(graph.streamEvents).toBeDefined()
     expect(graph.streamEvents.length).toBeGreaterThanOrEqual(2)
   })
 })
 
-describe('routeAfterRouter', () => {
+describe('routeAfterThinker', () => {
   it('routes to editor when currentAgent is editor', () => {
     const state = makeState({ currentAgent: 'editor' })
-    expect(routeAfterRouter(state)).toBe('editor')
+    expect(routeAfterThinker(state)).toBe('editor')
   })
 
   it('routes to flow when currentAgent is flow', () => {
     const state = makeState({ currentAgent: 'flow' })
-    expect(routeAfterRouter(state)).toBe('flow')
+    expect(routeAfterThinker(state)).toBe('flow')
   })
 
-  it('routes to END when currentAgent is router', () => {
-    const state = makeState({ currentAgent: 'router' })
-    expect(routeAfterRouter(state)).toBe(END)
+  it('routes to general when currentAgent is general', () => {
+    const state = makeState({ currentAgent: 'general' })
+    expect(routeAfterThinker(state)).toBe('general')
   })
 
   it('routes to END for unknown agent', () => {
     const state = makeState({ currentAgent: 'unknown' as any })
-    expect(routeAfterRouter(state)).toBe(END)
+    expect(routeAfterThinker(state)).toBe(END)
   })
 })
 
-describe('shouldCallTools', () => {
-  it('returns editorTools when editor agent has tool_calls', () => {
+describe('afterAgent', () => {
+  it('returns allTools when agent has tool_calls', () => {
     const aiMessage = new AIMessage({
       content: '',
       tool_calls: [{ id: 'tc-1', name: 'search_schemas', args: { keyword: 'test' } }],
@@ -77,47 +76,82 @@ describe('shouldCallTools', () => {
       messages: [new HumanMessage('test'), aiMessage],
       currentAgent: 'editor',
     })
-    expect(shouldCallTools(state)).toBe('editorTools')
+    expect(afterAgent(state)).toBe('allTools')
   })
 
-  it('returns flowTools when flow agent has tool_calls', () => {
-    const aiMessage = new AIMessage({
-      content: '',
-      tool_calls: [{ id: 'tc-1', name: 'search_flows', args: { keyword: 'test' } }],
-    })
-    const state = makeState({
-      messages: [new HumanMessage('test'), aiMessage],
-      currentAgent: 'flow',
-    })
-    expect(shouldCallTools(state)).toBe('flowTools')
-  })
-
-  it('returns END when last message has no tool_calls', () => {
+  it('returns END when no tool_calls and no task chain', () => {
     const aiMessage = new AIMessage({ content: 'Here is your form.' })
     const state = makeState({
       messages: [new HumanMessage('test'), aiMessage],
       currentAgent: 'editor',
+      context: { source: 'editor', turnCount: 1 },
     })
-    expect(shouldCallTools(state)).toBe(END)
+    expect(afterAgent(state)).toBe(END)
   })
 
-  it('returns END when last message has empty tool_calls', () => {
-    const aiMessage = new AIMessage({
-      content: 'Done.',
-      tool_calls: [],
-    })
+  it('returns thinker when task chain has more steps', () => {
+    const aiMessage = new AIMessage({ content: 'Form generated.' })
     const state = makeState({
       messages: [new HumanMessage('test'), aiMessage],
       currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'done' },
+        { agent: 'flow', description: 'Generate flow', status: 'pending' },
+      ],
+      currentStepIndex: 0,
     })
-    expect(shouldCallTools(state)).toBe(END)
+    expect(afterAgent(state)).toBe('thinker')
   })
 
-  it('returns END when last message is a HumanMessage', () => {
+  it('returns summarizer when all task chain steps complete', () => {
+    const aiMessage = new AIMessage({ content: 'Flow generated.' })
     const state = makeState({
-      messages: [new HumanMessage('generate a form')],
-      currentAgent: 'editor',
+      messages: [new HumanMessage('test'), aiMessage],
+      currentAgent: 'flow',
+      context: { source: 'standalone', turnCount: 1 },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'done' },
+        { agent: 'flow', description: 'Generate flow', status: 'done' },
+      ],
+      currentStepIndex: 1,
     })
-    expect(shouldCallTools(state)).toBe(END)
+    expect(afterAgent(state)).toBe('summarizer')
+  })
+})
+
+describe('afterTools', () => {
+  it('returns thinker when task chain has more steps', () => {
+    const state = makeState({
+      currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'running' },
+        { agent: 'flow', description: 'Generate flow', status: 'pending' },
+      ],
+      currentStepIndex: 0,
+    })
+    expect(afterTools(state)).toBe('thinker')
+  })
+
+  it('returns summarizer when all task chain steps complete', () => {
+    const state = makeState({
+      currentAgent: 'flow',
+      context: { source: 'standalone', turnCount: 1 },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'done' },
+        { agent: 'flow', description: 'Generate flow', status: 'running' },
+      ],
+      currentStepIndex: 1,
+    })
+    expect(afterTools(state)).toBe('summarizer')
+  })
+
+  it('returns thinker for explicit mode', () => {
+    const state = makeState({
+      currentAgent: 'editor',
+      context: { source: 'editor', turnCount: 1 },
+    })
+    expect(afterTools(state)).toBe('thinker')
   })
 })
