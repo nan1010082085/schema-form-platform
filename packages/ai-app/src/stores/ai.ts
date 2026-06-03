@@ -97,6 +97,12 @@ export const useAiStore = defineStore('ai', () => {
     const msg = messages.value[assistantIndex]
 
     switch (event.type) {
+      case 'agent_switch':
+        if (event.agent) {
+          msg.agent = event.agent as AgentType
+        }
+        break
+
       case 'thinking':
         if (event.content) {
           msg.thinking = (msg.thinking ?? '') + event.content

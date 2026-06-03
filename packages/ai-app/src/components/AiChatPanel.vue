@@ -68,6 +68,9 @@ function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
 
 function getLabel(msg: AIMessage): string {
   if (msg.role === 'user') return 'You'
+  if (msg.agent) {
+    return msg.agent === 'editor' ? 'Editor' : msg.agent === 'flow' ? 'Flow' : 'AI'
+  }
   if (props.agent === 'auto') return 'AI'
   return props.agent === 'editor' ? 'Editor' : 'Flow'
 }

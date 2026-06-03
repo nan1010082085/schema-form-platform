@@ -44,7 +44,7 @@ describe('useAiStore', () => {
     expect(store.error).toBeNull()
     expect(store.currentSchema).toBeNull()
     expect(store.currentFlow).toBeNull()
-    expect(store.activeAgent).toBe('editor')
+    expect(store.activeAgent).toBe('auto')
   })
 
   describe('sendMessage', () => {

@@ -74,6 +74,7 @@ export interface ToolCallInfo {
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  agent?: 'editor' | 'flow' | 'general'
   thinking?: string
   thinkingExpanded?: boolean
   tip?: string

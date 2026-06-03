@@ -4,6 +4,11 @@
  * Uses DeepSeek LLM to classify user intent and route to the correct
  * expert agent (editor or flow). Supports multi-step task chains for
  * complex requests that involve both form and flow generation.
+ *
+ * Key behavior:
+ * - Respects user's explicit agent choice (context.source)
+ * - Supports 'general' target for universal responses
+ * - Falls back to keyword matching on LLM error
  */
 
 import { ChatOpenAI } from '@langchain/openai'
@@ -24,7 +29,7 @@ function fallbackRoute(message: string): 'editor' | 'flow' {
 }
 
 interface RouterResult {
-  target: 'editor' | 'flow' | 'chain'
+  target: 'editor' | 'flow' | 'chain' | 'general'
   steps?: Array<{ agent: 'editor' | 'flow'; description: string }>
 }
 
@@ -32,7 +37,7 @@ interface RouterResult {
  * Router node classifies user intent and sets activeAgent + taskChain.
  *
  * Returns partial state update:
- * - currentAgent: 'editor' | 'flow'
+ * - currentAgent: 'editor' | 'flow' | 'general'
  * - taskType: classified task type string
  * - needsTool: whether the routed agent should use tools
  * - taskChain + currentStepIndex for multi-step requests
@@ -55,6 +60,15 @@ export async function routerNode(
     ? lastUserMessage.content
     : JSON.stringify(lastUserMessage.content)
 
+  // Respect user's explicit agent choice
+  if (state.context.source === 'editor') {
+    return { currentAgent: 'editor', taskType: 'generate_simple', needsTool: true }
+  }
+  if (state.context.source === 'flow') {
+    return { currentAgent: 'flow', taskType: 'generate_simple', needsTool: true }
+  }
+
+  // Auto mode: use LLM to classify intent
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY
     if (!apiKey) {
@@ -66,7 +80,7 @@ export async function routerNode(
       apiKey,
       configuration: { baseURL: 'https://api.deepseek.com' },
       temperature: 0,
-      maxTokens: 200,
+      maxTokens: 8192,
       modelKwargs: { response_format: { type: 'json_object' } },
     })
 
@@ -93,6 +107,15 @@ export async function routerNode(
           currentStepIndex: 0,
           taskType: 'chain',
           needsTool: true,
+        }
+      }
+
+      // General response
+      if (parsed.target === 'general') {
+        return {
+          currentAgent: 'general',
+          taskType: 'general',
+          needsTool: false,
         }
       }
 
