@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
 import FlowCard from './FlowCard.vue'
@@ -57,10 +58,11 @@ const emit = defineEmits<{
 const thinkingExpanded = ref(false)
 const toolCallsExpanded = ref(false)
 
-/** 将 Markdown 内容转为 HTML */
+/** 将 Markdown 内容转为 HTML（经 DOMPurify 消毒） */
 const renderedContent = computed(() => {
   if (!props.content) return ''
-  return marked.parse(props.content, { breaks: true }) as string
+  const rawHtml = marked.parse(props.content, { breaks: true }) as string
+  return DOMPurify.sanitize(rawHtml)
 })
 
 function formatToolName(name: string): string {
