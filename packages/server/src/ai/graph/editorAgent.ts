@@ -112,7 +112,6 @@ export async function editorAgentNode(
     temperature: 0.7,
     maxTokens: 8192,
     streaming: true,
-    modelKwargs: { response_format: { type: 'json_object' } },
   }).bindTools(editorTools)
 
   // Build message list: system prompt + conversation history (truncated) + current user message
