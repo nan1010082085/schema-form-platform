@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { marked } from 'marked'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
 import FlowCard from './FlowCard.vue'
@@ -46,7 +47,7 @@ export interface AiMessageProps {
   cards?: MessageEmbeddedCard[]
 }
 
-defineProps<AiMessageProps>()
+const props = defineProps<AiMessageProps>()
 
 const emit = defineEmits<{
   'card-primary-action': [cardIndex: number]
@@ -55,6 +56,12 @@ const emit = defineEmits<{
 
 const thinkingExpanded = ref(false)
 const toolCallsExpanded = ref(false)
+
+/** 将 Markdown 内容转为 HTML */
+const renderedContent = computed(() => {
+  if (!props.content) return ''
+  return marked.parse(props.content, { breaks: true }) as string
+})
 
 function formatToolName(name: string): string {
   const nameMap: Record<string, string> = {
@@ -122,7 +129,7 @@ function formatToolName(name: string): string {
       <AiLoadingDots />
     </div>
     <div v-else :class="$style.body">
-      <span v-if="content" v-text="content" />
+      <div v-if="content" :class="$style.markdown" v-html="renderedContent" />
     </div>
 
     <!-- Tip 提示 -->

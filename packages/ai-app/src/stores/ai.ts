@@ -165,6 +165,8 @@ export const useAiStore = defineStore('ai', () => {
       case 'done':
         if (event.conversationId) {
           currentConversationId.value = event.conversationId
+          // 新对话创建后刷新左侧列表
+          loadConversations()
         }
         break
 
