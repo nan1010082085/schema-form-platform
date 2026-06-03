@@ -103,6 +103,10 @@ async function handleSend() {
   inputText.value = ''
 }
 
+function handleStop(): void {
+  store.stopGeneration()
+}
+
 function handleCardAction(type: 'primary' | 'secondary') {
   if (type === 'primary') {
     handleApply()
@@ -265,11 +269,33 @@ function handleHostData(data: Record<string, unknown>) {
         />
         <div :class="$style.inputFooter">
           <div :class="$style.inputHint">
-            <kbd>Enter</kbd>&nbsp;发送&nbsp;&middot;&nbsp;<kbd>Shift+Enter</kbd>&nbsp;换行
+            <template v-if="store.loading">
+              <span :class="$style.runningIndicator">
+                <span :class="$style.runningDot"></span>
+                <span :class="$style.runningDot"></span>
+                <span :class="$style.runningDot"></span>
+                运行中...
+              </span>
+            </template>
+            <template v-else>
+              <kbd>Enter</kbd>&nbsp;发送&nbsp;&middot;&nbsp;<kbd>Shift+Enter</kbd>&nbsp;换行
+            </template>
           </div>
-          <select :class="$style.agentSelect" disabled>
-            <option :value="fixedAgent" selected>{{ fixedAgent === 'editor' ? 'Editor' : 'Flow' }}</option>
-          </select>
+          <div :class="$style.inputActions">
+            <select :class="$style.agentSelect" disabled>
+              <option :value="fixedAgent" selected>{{ fixedAgent === 'editor' ? 'Editor' : 'Flow' }}</option>
+            </select>
+            <button
+              v-if="store.loading"
+              :class="$style.stopBtn"
+              title="停止生成"
+              @click="handleStop"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

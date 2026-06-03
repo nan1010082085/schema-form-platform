@@ -125,6 +125,8 @@ export interface SSEEvent {
   currentIndex?: number
   /** Agent switch event data */
   agent?: string
+  /** Collaboration event data */
+  collaboration?: boolean
 }
 
 // ---- 任务链 ----

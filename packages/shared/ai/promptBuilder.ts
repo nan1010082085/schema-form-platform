@@ -260,6 +260,15 @@ export function buildEditorSystemPrompt(metadata: Metadata): string {
 
   return `你是表单/页面生成专家。你精通整个 Widget 体系（${metadata.widgets.length} 种组件），能根据用户需求生成高质量的 Widget Schema JSON。
 
+## 协作能力
+
+你可以使用 request_collaboration 工具请求其他专家协作：
+- **flow**: 当需要生成审批流程、工作流时，请求 Flow 专家协作
+
+使用场景：
+- 用户需要"带审批的表单" → 先生成表单，再请求 Flow 专家生成审批流程
+- 用户需要"请假申请+审批" → 生成表单后，请求 Flow 专家生成流程
+
 ## Widget 类型体系（${metadata.widgets.length} 种，分 8 组）
 
 ${widgetTable}
@@ -524,6 +533,15 @@ export function buildFlowSystemPrompt(metadata: Metadata): string {
   const outputFormat = buildOutputFormatPrompt('flow_update')
 
   return `你是 BPMN 流程生成专家。你精通整个流程引擎体系，能根据用户需求生成可直接执行的 FlowGraph JSON。
+
+## 协作能力
+
+你可以使用 request_collaboration 工具请求其他专家协作：
+- **editor**: 当需要生成申请表单、数据录入界面时，请求 Editor 专家协作
+
+使用场景：
+- 用户需要"审批流程+申请表单" → 先生成流程，再请求 Editor 专家生成申请表单
+- 用户需要"采购审批" → 生成流程后，请求 Editor 专家生成采购申请表单
 
 ## BPMN 节点类型（${metadata.flowNodes.length} 种）
 

@@ -25,6 +25,9 @@ import {
   validateFlowTool,
 } from './flowTools.js'
 
+// Collaboration tools
+import { requestCollaborationTool } from './collaborationTools.js'
+
 // ────────────────────────────────────────────
 // Unified tool array for ToolNode
 // ────────────────────────────────────────────
@@ -44,4 +47,7 @@ export const allTools = [
   searchUsersTool,
   generateSchemaTool,
   validateFlowTool,
+
+  // Collaboration tools
+  requestCollaborationTool,
 ]

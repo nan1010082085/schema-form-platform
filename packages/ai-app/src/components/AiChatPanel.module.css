@@ -227,3 +227,70 @@
   color: var(--ai-color-primary, #0060A2);
   font-weight: 600;
 }
+
+/* Input actions container */
+.inputActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Running indicator */
+.runningIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ai-color-primary, #0060A2);
+  font-size: 11px;
+}
+
+.runningDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ai-color-primary, #0060A2);
+  animation: runningPulse 1.4s ease-in-out infinite;
+}
+
+.runningDot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.runningDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.runningDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes runningPulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stop button */
+.stopBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ai-radius-md, 4px);
+  border: 1px solid var(--ai-color-danger, #E63535);
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ai-color-danger, #E63535);
+  transition: all 0.2s;
+}
+
+.stopBtn:hover {
+  background: var(--ai-color-danger, #E63535);
+  color: white;
+}

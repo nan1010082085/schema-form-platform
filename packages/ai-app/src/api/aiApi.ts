@@ -58,8 +58,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
  * 发送对话消息，返回可订阅的 SSE 事件流。
  *
  * 使用 fetch + ReadableStream 实现，支持流式文本和结构化事件。
+ * 支持通过 AbortSignal 取消请求。
  */
-export function chat(request: ChatRequest): ReadableStream<SSEEvent> {
+export function chat(request: ChatRequest, signal?: AbortSignal): ReadableStream<SSEEvent> {
   const body = JSON.stringify(request)
 
   const stream = new ReadableStream<SSEEvent>({
@@ -68,6 +69,7 @@ export function chat(request: ChatRequest): ReadableStream<SSEEvent> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
+        signal,
       })
 
       if (!response.ok) {
@@ -86,6 +88,13 @@ export function chat(request: ChatRequest): ReadableStream<SSEEvent> {
 
       try {
         while (true) {
+          // 检查是否已取消
+          if (signal?.aborted) {
+            reader.cancel()
+            controller.close()
+            return
+          }
+
           const { done, value } = await reader.read()
           if (done) break
 

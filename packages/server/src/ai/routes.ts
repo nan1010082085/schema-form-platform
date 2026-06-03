@@ -276,6 +276,19 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             tools: [{ id: event.run_id, name: toolName, arguments: toolArgs }],
           })
 
+          // 协作请求：通知前端智能体切换
+          if (toolName === 'request_collaboration') {
+            const targetAgent = toolArgs.targetAgent as string
+            if (targetAgent === 'editor' || targetAgent === 'flow') {
+              send({
+                type: 'agent_switch',
+                agent: targetAgent,
+                collaboration: true,
+                description: toolArgs.description as string,
+              })
+            }
+          }
+
           // Capture schema/flow payloads from validation tool arguments
           if (SCHEMA_TOOLS.has(toolName) && toolArgs.widgets) {
             pendingPayloads.set(event.run_id as string, toolArgs.widgets as Record<string, unknown>[])

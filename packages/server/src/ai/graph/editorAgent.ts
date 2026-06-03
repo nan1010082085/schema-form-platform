@@ -12,6 +12,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages'
 import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { editorTools } from '../tools/editorTools.js'
+import { collaborationTools } from '../tools/collaborationTools.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -112,7 +113,7 @@ export async function editorAgentNode(
     temperature: 0.7,
     maxTokens: 8192,
     streaming: true,
-  }).bindTools(editorTools)
+  }).bindTools([...editorTools, ...collaborationTools])
 
   // Build message list: system prompt + conversation history (truncated) + current user message
   const MAX_HISTORY = 10

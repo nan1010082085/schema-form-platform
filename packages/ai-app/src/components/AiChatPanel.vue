@@ -26,6 +26,7 @@ const props = withDefaults(defineProps<AiChatPanelProps>(), {
 
 const emit = defineEmits<{
   send: [message: string, agent: AgentType]
+  stop: []
   'clear-messages': []
   'card-primary-action': [messageIndex: number, cardIndex: number]
   'card-secondary-action': [messageIndex: number, cardIndex: number]
@@ -177,28 +178,50 @@ function handleCardAction(
           v-model="inputText"
           :class="$style.inputField"
           :placeholder="messages.length === 0 ? '描述你想要生成的内容...' : '继续描述...'"
-          :disabled="disabled"
+          :disabled="disabled || loading"
           rows="1"
           @keydown="handleKeydown"
         />
         <div :class="$style.inputFooter">
           <div :class="$style.inputHint">
-            <kbd>Enter</kbd>&nbsp;发送&nbsp;&middot;&nbsp;<kbd>Shift+Enter</kbd>&nbsp;换行
+            <template v-if="loading">
+              <span :class="$style.runningIndicator">
+                <span :class="$style.runningDot"></span>
+                <span :class="$style.runningDot"></span>
+                <span :class="$style.runningDot"></span>
+                运行中...
+              </span>
+            </template>
+            <template v-else>
+              <kbd>Enter</kbd>&nbsp;发送&nbsp;&middot;&nbsp;<kbd>Shift+Enter</kbd>&nbsp;换行
+            </template>
           </div>
-          <el-select
-            v-model="selectedAgent"
-            :class="$style.agentSelect"
-            :disabled="disabled"
-            size="small"
-            teleport="disabled"
-          >
-            <el-option
-              v-for="opt in agentOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
+          <div :class="$style.inputActions">
+            <el-select
+              v-model="selectedAgent"
+              :class="$style.agentSelect"
+              :disabled="disabled || loading"
+              size="small"
+              teleport="disabled"
+            >
+              <el-option
+                v-for="opt in agentOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+            <button
+              v-if="loading"
+              :class="$style.stopBtn"
+              title="停止生成"
+              @click="emit('stop')"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

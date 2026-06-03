@@ -67,6 +67,10 @@ async function handleSend(message: string, agent: AgentType): Promise<void> {
   await store.sendMessage(message)
 }
 
+function handleStop(): void {
+  store.stopGeneration()
+}
+
 function handleSelectConversation(id: string): void {
   store.loadConversation(id)
 }
@@ -166,6 +170,7 @@ onMounted(() => {
         :task-chain="taskChain"
         :task-chain-index="taskChainIndex"
         @send="handleSend"
+        @stop="handleStop"
         @clear-messages="handleClearMessages"
         @card-primary-action="handlePrimaryAction"
         @card-secondary-action="handleSecondaryAction"

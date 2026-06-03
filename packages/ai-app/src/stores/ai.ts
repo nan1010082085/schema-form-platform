@@ -33,6 +33,7 @@ export const useAiStore = defineStore('ai', () => {
   const error = ref<string | null>(null)
   const taskChain = ref<TaskChainStep[]>([])
   const taskChainIndex = ref(0)
+  const abortController = ref<AbortController | null>(null)
 
   // ---- Getters ----
 
@@ -50,6 +51,8 @@ export const useAiStore = defineStore('ai', () => {
    * 发送用户消息，订阅 SSE 流，逐步更新 messages 和生成物。
    */
   async function sendMessage(content: string): Promise<void> {
+    // 创建新的 AbortController
+    abortController.value = new AbortController()
     loading.value = true
     error.value = null
 
@@ -73,11 +76,17 @@ export const useAiStore = defineStore('ai', () => {
         conversationId: currentConversationId.value ?? undefined,
         message: content,
         context: context.value,
-      })
+      }, abortController.value?.signal)
 
       const reader = stream.getReader()
 
       while (true) {
+        // 检查是否已取消
+        if (abortController.value?.signal.aborted) {
+          reader.cancel()
+          break
+        }
+
         const { done, value } = await reader.read()
         if (done) break
 
@@ -85,11 +94,26 @@ export const useAiStore = defineStore('ai', () => {
         handleSSEEvent(event, assistantIndex)
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      error.value = msg
-      messages.value[assistantIndex].content = `Error: ${msg}`
+      // 如果是取消操作，不显示错误
+      if (abortController.value?.signal.aborted) {
+        messages.value[assistantIndex].content += '\n\n[已停止]'
+      } else {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        error.value = msg
+        messages.value[assistantIndex].content = `Error: ${msg}`
+      }
     } finally {
       loading.value = false
+      abortController.value = null
+    }
+  }
+
+  /**
+   * 停止当前请求
+   */
+  function stopGeneration(): void {
+    if (abortController.value) {
+      abortController.value.abort()
     }
   }
 
@@ -100,6 +124,13 @@ export const useAiStore = defineStore('ai', () => {
       case 'agent_switch':
         if (event.agent) {
           msg.agent = event.agent as 'editor' | 'flow' | 'general'
+
+          // 协作事件：显示协作提示
+          if (event.collaboration && event.description) {
+            // 在 thinking 中添加协作说明
+            const collaborationNote = `\n\n[协作] 请求 ${event.agent === 'editor' ? 'Editor' : 'Flow'} 专家协助：${event.description}`
+            msg.thinking = (msg.thinking ?? '') + collaborationNote
+          }
         }
         break
 
@@ -282,6 +313,7 @@ export const useAiStore = defineStore('ai', () => {
 
     // actions
     sendMessage,
+    stopGeneration,
     switchAgent,
     clearConversation,
     loadConversations,

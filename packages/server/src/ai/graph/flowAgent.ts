@@ -13,6 +13,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { flowTools } from '../tools/flowTools.js'
+import { collaborationTools } from '../tools/collaborationTools.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -120,7 +121,7 @@ export async function flowAgentNode(
     temperature: 0.7,
     maxTokens: 8192,
     streaming: true,
-  }).bindTools(flowTools)
+  }).bindTools([...flowTools, ...collaborationTools])
 
   // Build message list: system prompt + conversation history (truncated) + current user message
   const MAX_HISTORY = 10
