@@ -311,8 +311,13 @@ const saving = ref(false)
 const publishing = ref(false)
 const COOLDOWN_MS = 2000
 
+// 同步互斥锁，防止快速点击穿透 Vue 响应式批量更新
+let _savingLock = false
+let _publishingLock = false
+
 async function handleSave() {
-  if (saving.value) return
+  if (_savingLock) return
+  _savingLock = true
   saving.value = true
   try {
     const canvasEl = editorCanvasRef.value?.canvasRef
@@ -338,12 +343,15 @@ async function handleSave() {
       ElMessage.error(apiStore.error || '保存失败')
     }
   } finally {
-    setTimeout(() => { saving.value = false }, COOLDOWN_MS)
+    setTimeout(() => {
+      _savingLock = false
+      saving.value = false
+    }, COOLDOWN_MS)
   }
 }
 
 async function handlePublish() {
-  if (!boardStore.id || publishing.value) return
+  if (!boardStore.id || _publishingLock) return
 
   try {
     await ElMessageBox.confirm(
@@ -353,6 +361,7 @@ async function handlePublish() {
     )
   } catch { return }
 
+  _publishingLock = true
   publishing.value = true
   try {
     await handleSave()
@@ -366,7 +375,10 @@ async function handlePublish() {
       ElMessage.error(apiStore.error || '发布失败')
     }
   } finally {
-    setTimeout(() => { publishing.value = false }, COOLDOWN_MS)
+    setTimeout(() => {
+      _publishingLock = false
+      publishing.value = false
+    }, COOLDOWN_MS)
   }
 }
 

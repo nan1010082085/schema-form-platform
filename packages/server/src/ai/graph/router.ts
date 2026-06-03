@@ -62,7 +62,7 @@ export async function routerNode(
     }
 
     const model = new ChatOpenAI({
-      model: 'deepseek-chat',
+      model: 'deepseek-v4-pro',
       apiKey,
       configuration: { baseURL: 'https://api.deepseek.com' },
       temperature: 0,

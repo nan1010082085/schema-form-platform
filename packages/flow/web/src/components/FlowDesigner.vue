@@ -407,7 +407,12 @@ function onValidate() {
 
 /* --- Save / Publish --- */
 
+const COOLDOWN_MS = 2000
+let _savingLock = false
+
 async function onSave() {
+  if (_savingLock) return
+
   const errors = runValidation()
   if (hasErrors(errors)) {
     validationErrors.value = errors
@@ -415,6 +420,7 @@ async function onSave() {
     return
   }
 
+  _savingLock = true
   saving.value = true
   try {
     // Create definition if new
@@ -450,11 +456,16 @@ async function onSave() {
   } catch (e) {
     ElMessage.error('保存失败')
   } finally {
-    saving.value = false
+    setTimeout(() => {
+      _savingLock = false
+      saving.value = false
+    }, COOLDOWN_MS)
   }
 }
 
 async function onPublish() {
+  if (_savingLock) return
+
   try {
     await ElMessageBox.confirm('确定发布此流程？发布后将创建新版本。', '确认发布', {
       confirmButtonText: '发布',
@@ -478,6 +489,7 @@ async function onPublish() {
     if (!definitionId.value) return
   }
 
+  _savingLock = true
   saving.value = true
   try {
     await flowApi.publishFlow(definitionId.value)
@@ -486,7 +498,10 @@ async function onPublish() {
   } catch (e) {
     ElMessage.error('发布失败')
   } finally {
-    saving.value = false
+    setTimeout(() => {
+      _savingLock = false
+      saving.value = false
+    }, COOLDOWN_MS)
   }
 }
 

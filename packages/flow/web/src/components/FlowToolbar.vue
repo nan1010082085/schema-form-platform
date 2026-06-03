@@ -117,7 +117,7 @@
           </button>
         </el-tooltip>
         <button :class="[styles.btn, styles.btnOutline]" title="设置" @click="$emit('settings')">设置</button>
-        <button :class="[styles.btn, styles.btnOutline]" title="保存" @click="$emit('save')">保存</button>
+        <button :class="[styles.btn, styles.btnOutline]" title="保存" :disabled="saving" @click="$emit('save')">{{ saving ? '保存中...' : '保存' }}</button>
         <button :class="[styles.btn, styles.btnPrimary]" title="发布" :disabled="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</button>
       </template>
       <template v-else>
