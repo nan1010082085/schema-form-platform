@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./index.ts",
-    "./promptBuilder": "./promptBuilder.ts",
+    ".": "./dist/index.js",
+    "./promptBuilder": "./dist/promptBuilder.js",
     "./widgetCatalogue": "./widgetCatalogue.json",
-    "./flowNodeCatalogue": "./flowNodeCatalogue.ts",
-    "./systemKnowledge": "./systemKnowledge.ts"
+    "./flowNodeCatalogue": "./dist/flowNodeCatalogue.js",
+    "./systemKnowledge": "./dist/systemKnowledge.js"
   },
   "dependencies": {
     "@schema-form/flow-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.3"
   }
 }

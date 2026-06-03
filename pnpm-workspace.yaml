@@ -3,6 +3,9 @@ packages:
   - 'packages/editor/*'
   - 'packages/flow/*'
   - 'packages/shared/*'
+allowBuilds:
+  '@parcel/watcher': set this to true or false
+  esbuild: set this to true or false
 onlyBuiltDependencies:
   - esbuild
   - vue-demi

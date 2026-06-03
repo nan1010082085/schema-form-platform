@@ -6,7 +6,8 @@
     "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "./src",
-    "noEmit": true,
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true

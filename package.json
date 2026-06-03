@@ -25,7 +25,7 @@
     "db:down": "pnpm --filter @schema-form/server db:down",
     "db:seed": "pnpm --filter @schema-form/server db:seed",
     "deploy:pack": "bash deploy/pack.sh",
-    "deploy:pack:version": "bash deploy/pack.sh",
+    "deploy:run": "bash deploy/deploy.sh",
     "format": "pnpm -r format",
     "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo"
   },

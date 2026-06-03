@@ -369,6 +369,10 @@ importers:
       '@schema-form/flow-shared':
         specifier: workspace:*
         version: link:../../flow/shared
+    devDependencies:
+      typescript:
+        specifier: ~5.7.3
+        version: 5.7.3
 
   packages/shared/config:
     dependencies:

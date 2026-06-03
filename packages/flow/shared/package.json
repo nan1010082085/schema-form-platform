@@ -6,9 +6,9 @@
   "author": "yangdongnan",
   "description": "流程引擎共享层 — BPMN 类型定义、图数据结构、执行模型、表达式求值",
   "exports": {
-    ".": "./src/index.js",
-    "./types": "./src/types/index.js",
-    "./engine": "./src/engine/index.js"
+    ".": "./dist/index.js",
+    "./types": "./dist/types/index.js",
+    "./engine": "./dist/engine/index.js"
   },
   "scripts": {
     "test": "vitest run"

@@ -21,7 +21,7 @@ packages/*/.env
 packages/*/.env.*
 packages/**/.env
 packages/**/.env.*
-deploy/.env*
+deploy/
 
 # IDE
 .idea/
