@@ -33,7 +33,7 @@ export interface AIMessage {
 // Context
 // ────────────────────────────────────────────
 export type AgentSource = 'editor' | 'flow' | 'standalone'
-export type ActiveAgent = 'router' | 'editor' | 'flow'
+export type ActiveAgent = 'router' | 'editor' | 'flow' | 'general'
 
 /** 任务链步骤 */
 export interface TaskStep {

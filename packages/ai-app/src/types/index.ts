@@ -109,7 +109,7 @@ export interface ChatRequest {
 
 // ---- SSE 事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'task_chain' | 'done' | 'error'
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'task_chain' | 'agent_switch' | 'done' | 'error'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -123,6 +123,8 @@ export interface SSEEvent {
   /** Task chain event data */
   steps?: TaskChainStep[]
   currentIndex?: number
+  /** Agent switch event data */
+  agent?: string
 }
 
 // ---- 任务链 ----
