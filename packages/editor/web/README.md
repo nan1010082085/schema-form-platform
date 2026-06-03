@@ -1,21 +1,29 @@
-# @schema-form/web
+# @schema-form/editor-web
 
 Schema 驱动的可视化表单编辑器和渲染引擎。
 
 ## 技术栈
 
-- Vue 3 Composition API + `<script setup>` + TypeScript
+- Vue 3.5 Composition API + `<script setup>` + TypeScript 5.7
 - Element Plus 2.9
-- Pinia 状态管理
-- Vue Router 4（支持 qiankun 微前端）
-- Vite 构建
+- Pinia 状态管理（7 个 Store）
+- Vue Router 4（支持 qiankun 微前端 + micro-app）
+- Vite 6 构建
+- ECharts 6.1（图表组件）
 
 ## 核心模块
 
-### 状态管理
+### 状态管理（Pinia）
 
-- `useSchemaStore` — Schema CRUD、发布、版本管理
-- `useEditorStore` — 编辑器画布状态、撤销/重做、选中态
+| Store | 路径 | 说明 |
+|---|---|---|
+| `useWidgetStore` | `stores/widget.ts` | Widget 集合 CRUD、树结构遍历、位置/容器操作 |
+| `useEditorStore` | `stores/editor.ts` | 编辑器交互状态：选中、模式切换、撤销/重做、剪贴板 |
+| `useSchemaStore` | `stores/api.ts` | Schema 后端 CRUD（列表、保存、发布） |
+| `useDragStore` | `stores/drag.ts` | 拖拽状态 |
+| `useBoardStore` | `stores/board.ts` | 画布视口状态 |
+| `useAppStore` | `stores/app.ts` | 全局应用状态 |
+| `useRequestStore` | `stores/request.ts` | HTTP 请求状态 |
 
 ### 编辑器
 
@@ -26,79 +34,44 @@ Schema 驱动的可视化表单编辑器和渲染引擎。
 | 属性面板 | `Editor/PropertyPanel.vue` | 右侧属性配置 |
 | Schema 树 | `Editor/SchemaTree.vue` | 树形结构视图 |
 
-### 四大配置弹框
+### Widget 体系（49 个组件）
 
-| 弹框 | 说明 |
+8 个分组，覆盖表单、布局、展示、数据、图表等场景：
+
+| 分组 | Widget |
 |---|---|
-| `EventConfigDialog.vue` | 事件/动作配置 |
-| `LinkageConfigDialog.vue` | 联动规则配置 |
-| `VariableConfigDialog.vue` | 变量/暴露配置 |
-| `OptionsApiConfigDialog.vue` | 远程选项 API 配置 |
-
-### 属性面板编辑器
-
-| 编辑器 | 说明 |
-|---|---|
-| `BorderEditor.vue` | 边框样式 |
-| `BorderRadiusEditor.vue` | 圆角 |
-| `SpacingEditor.vue` | 间距 (margin/padding) |
-| `ConditionBuilder.vue` | 条件构建器 |
-| `OptionsEditor.vue` | 选项列表 |
-| `RulesEditor.vue` | 校验规则 |
-| `ColumnsEditor.vue` | 列配置 |
-| `TableColumnsEditor.vue` | 表格列配置 |
-| `SearchFieldsEditor.vue` | 搜索字段配置 |
-| `ActionListEditor.vue` | 动作列表 |
-
-### Widget 体系
-
-27 个 Widget，覆盖表单、布局、展示、数据四大类：
-
-**表单类**: input, number, select, radio, checkbox, date, date-time-slot, textarea, richtext, transfer, upload, file-list, editable-table
-
-**布局类**: form, row-col, tabs, card, dialog, divider, spacer, tree-layout, banner, toolbar-buttons, search-list
-
-**展示类**: title, base, button, table
-
-**数据类**: entries
+| **layout** | form, row-col, tabs, card, dialog, divider, spacer, tree-layout, banner, toolbar-buttons |
+| **container** | search-list, tab-pane |
+| **form** | input, number, select, radio, checkbox, date, date-time-slot, textarea, richtext, transfer, upload, file-list, editable-table, user-picker |
+| **table** | table, table-column |
+| **action** | button, submit, reset |
+| **static** | title, text, image, html |
+| **business** | entries, signature, rating, slider, color-picker, cascader, tree-select, mention |
+| **chart** | chart-bar, chart-line, chart-pie, chart-radar |
 
 每个 Widget 包含：
 - 组件实现（`.vue`）
-- 属性配置面板
+- 属性配置面板（Schema 驱动）
 - Schema 默认值
-- 事件/暴露系统接入
+- 事件/暴露/联动/变量系统接入
 
-### 事件目标系统 (eventTargets)
+### 事件引擎
 
-Widget 可声明内部可交互元素，允许为每个元素独立配置事件：
+`engine/eventEngine.ts` — 纯逻辑层，14 种事件动作类型：
 
-```ts
-// config.ts — 静态声明
-eventTargets: [
-  { id: 'confirm', label: '确认按钮', description: '点击确认时触发' },
-  { id: 'cancel', label: '取消按钮', description: '点击取消时触发' },
-]
+show, hide, set-value, open-dialog, close-dialog, navigate, reload, validate, reset, custom-js, emit-event, http-request, set-options, message
 
-// config.ts — 动态声明（根据 widget 数据生成）
-eventTargets: (widget) => {
-  const btns = widget.props?.buttons || []
-  return btns.map((btn, idx) => ({ id: `btn-${idx}`, label: btn.text }))
-}
-```
+### Composables（32 个组合式函数）
 
-已声明 eventTargets 的 Widget：
+覆盖拖拽、联动、历史、数据、选项、生命周期等：
 
-| Widget | 事件目标 | 触发方式 |
-|---|---|---|
-| `toolbar-buttons` | `btn-0`, `btn-1`, ... (动态) | 每个按钮独立 click |
-| `dialog` | `confirm`, `cancel` | 确认/取消按钮 click |
-| `search-list` | `search`, `reset` | 搜索/重置按钮 click |
-
-事件匹配规则：`WidgetEvent.eventTarget` 为空时匹配所有目标，指定了则只匹配对应目标。
+`composables/` — useDrag, useHistory, useLinkage, useVariable, useOptions, useLifecycle, useRightPanelConfig 等
 
 ### 渲染引擎
 
-`src/components/FormGrid/` — Schema 驱动的表单渲染：
+`components/WidgetRenderer/` — Schema 驱动，通过 `getComponentMap()` 动态渲染
+
+`components/FormGrid/` — 自由布局渲染：
 - 拖拽排序（vuedraggable）
 - 条件渲染（visible/disabled schema 属性）
 - 布局网格系统
@@ -125,7 +98,7 @@ eventTargets: (widget) => {
 ## 开发
 
 ```bash
-pnpm dev:web          # 启动开发服务器 (localhost:5173)
-pnpm build:web        # 构建
-pnpm test             # 运行测试
+pnpm dev:editor          # 启动开发服务器 (localhost:5173)
+pnpm build:editor        # 构建
+pnpm test                # 运行测试
 ```
