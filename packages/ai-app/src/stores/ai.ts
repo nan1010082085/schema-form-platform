@@ -99,7 +99,7 @@ export const useAiStore = defineStore('ai', () => {
     switch (event.type) {
       case 'agent_switch':
         if (event.agent) {
-          msg.agent = event.agent as AgentType
+          msg.agent = event.agent as 'editor' | 'flow' | 'general'
         }
         break
 

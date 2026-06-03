@@ -163,7 +163,7 @@ export interface Conversation {
   id: string
   title: string
   source: 'editor' | 'flow' | 'standalone'
-  activeAgent: 'router' | 'editor' | 'flow'
+  activeAgent: 'router' | 'editor' | 'flow' | 'general'
   version?: string
   createdAt: string
   updatedAt: string
@@ -171,4 +171,4 @@ export interface Conversation {
 
 // ---- Agent ----
 
-export type AgentType = 'editor' | 'flow' | 'auto'
+export type AgentType = 'editor' | 'flow' | 'auto' | 'general'
