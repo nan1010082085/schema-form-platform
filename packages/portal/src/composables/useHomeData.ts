@@ -12,12 +12,14 @@
  * - apiClient（HTTP 通信）
  */
 import { onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useHomeStore } from '@/stores/home'
 import { apiClient } from '@/utils/apiClient'
 import type { DashboardStats, RecentConversation } from '@/types/home'
 
 export function useHomeData() {
   const store = useHomeStore()
+  const { stats, conversations, loading, error, isLoading, hasError, hasStats, isConversationsEmpty } = storeToRefs(store)
 
   /**
    * 获取仪表盘统计数据
@@ -77,15 +79,15 @@ export function useHomeData() {
   })
 
   return {
-    // 从 store 透传的响应式状态
-    stats: store.stats,
-    conversations: store.conversations,
-    loading: store.loading,
-    error: store.error,
-    isLoading: store.isLoading,
-    hasError: store.hasError,
-    hasStats: store.hasStats,
-    isConversationsEmpty: store.isConversationsEmpty,
+    // 从 store 透传的响应式状态（storeToRefs 保持 ref 响应性）
+    stats,
+    conversations,
+    loading,
+    error,
+    isLoading,
+    hasError,
+    hasStats,
+    isConversationsEmpty,
     // 方法
     fetchAll,
     fetchStats,
