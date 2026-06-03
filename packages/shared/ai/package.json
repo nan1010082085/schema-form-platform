@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
+    "./package.json": "./package.json",
     "./promptBuilder": "./dist/promptBuilder.js",
     "./widgetCatalogue": "./widgetCatalogue.json",
     "./flowNodeCatalogue": "./dist/flowNodeCatalogue.js",
