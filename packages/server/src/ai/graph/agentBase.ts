@@ -52,12 +52,12 @@ export type TaskType = 'router' | 'generate_simple' | 'generate_complex' | 'anal
  */
 export function getModelForTask(taskType: TaskType): string {
   const modelMap: Record<TaskType, string> = {
-    router: 'deepseek-chat',
-    generate_simple: 'deepseek-chat',
-    generate_complex: 'deepseek-reasoner',
-    analyze: 'deepseek-chat',
+    router: 'deepseek-v4-pro',
+    generate_simple: 'deepseek-v4-pro',
+    generate_complex: 'deepseek-v4-pro',
+    analyze: 'deepseek-v4-pro',
   }
-  return modelMap[taskType] ?? 'deepseek-chat'
+  return modelMap[taskType] ?? 'deepseek-v4-pro'
 }
 
 /**
