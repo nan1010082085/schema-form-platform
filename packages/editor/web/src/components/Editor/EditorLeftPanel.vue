@@ -9,6 +9,7 @@ import ComponentPanel from './ComponentPanel.vue'
 import WidgetTree from './WidgetTree.vue'
 import WidgetTemplatePanel from '@/components/WidgetTemplatePanel.vue'
 import { useWidgetStore } from '@/stores/widget'
+import { useEditorStore } from '@/stores/editor'
 import type { Widget } from '@/widgets/base/types'
 
 defineProps<{
@@ -18,6 +19,7 @@ defineProps<{
 }>()
 
 const widgetStore = useWidgetStore()
+const editorStore = useEditorStore()
 
 const activeTab = ref<'components' | 'structure' | 'templates'>('components')
 
@@ -26,6 +28,8 @@ function handleApplyTemplate(widgets: Record<string, unknown>[]) {
   for (const w of widgets) {
     widgetStore.addWidget(w as unknown as Widget)
   }
+  // Push a single history snapshot for the entire template application
+  editorStore.pushHistory(widgetStore.widgets)
 }
 </script>
 

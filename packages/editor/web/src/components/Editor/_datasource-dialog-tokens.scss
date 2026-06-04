@@ -1,0 +1,127 @@
+// 数据源对话框统一样式令牌
+// 所有数据源相关的 dialog 组件必须使用这些令牌确保一致性
+
+// ---- 表单布局 ----
+$datasource-label-width: 60px !default;
+$datasource-row-gap: 8px !default;
+$datasource-section-gap: 12px !default;
+$datasource-body-max-height: 60vh !default;
+
+// ---- 表单控件 ----
+$datasource-control-height: 32px !default;
+$datasource-input-height: 32px !default;
+$datasource-button-height: 32px !default;
+
+// ---- 卡片样式 ----
+$datasource-card-border: 1px solid var(--border-color-light) !default;
+$datasource-card-radius: 6px !default;
+$datasource-card-padding: 12px !default;
+$datasource-card-bg: var(--bg-color-surface) !default;
+$datasource-card-header-bg: var(--bg-color-gray-light) !default;
+
+// ---- 文字样式 ----
+$datasource-label-font-size: 12px !default;
+$datasource-label-color: var(--text-color-regular) !default;
+$datasource-title-font-size: 13px !default;
+$datasource-title-color: var(--text-color-title) !default;
+$datasource-title-font-weight: 600 !default;
+
+// ---- 间距 ----
+$datasource-card-header-margin-bottom: 10px !default;
+$datasource-row-margin-bottom: 8px !default;
+$datasource-error-margin-top: 3px !default;
+
+// ---- mixin: 统一表单控件高度 ----
+@mixin datasource-unified-controls {
+  // Input
+  :global(.el-input__wrapper) {
+    height: $datasource-input-height !important;
+    min-height: $datasource-input-height !important;
+  }
+
+  // Select
+  :global(.el-select .el-input__wrapper) {
+    height: $datasource-input-height !important;
+    min-height: $datasource-input-height !important;
+  }
+
+  // InputNumber
+  :global(.el-input-number) {
+    height: $datasource-control-height !important;
+    min-height: $datasource-control-height !important;
+  }
+
+  :global(.el-input-number .el-input__wrapper) {
+    height: auto !important;
+    min-height: auto !important;
+  }
+
+  // Button (excluding text/link buttons)
+  :global(.el-button:not(.is-text):not(.is-link)) {
+    height: $datasource-button-height !important;
+    min-height: $datasource-button-height !important;
+  }
+
+  // Textarea
+  :global(.el-textarea__inner) {
+    min-height: $datasource-control-height;
+  }
+}
+
+// ---- mixin: 统一卡片样式 ----
+@mixin datasource-card {
+  border: $datasource-card-border;
+  border-radius: $datasource-card-radius;
+  padding: $datasource-card-padding;
+  background: $datasource-card-bg;
+}
+
+// ---- mixin: 统一卡片标题 ----
+@mixin datasource-card-title {
+  font-size: $datasource-title-font-size;
+  font-weight: $datasource-title-font-weight;
+  color: $datasource-title-color;
+}
+
+// ---- mixin: 统一行布局 ----
+@mixin datasource-row {
+  display: flex;
+  align-items: flex-start;
+  gap: $datasource-row-gap;
+  margin-bottom: $datasource-row-margin-bottom;
+}
+
+// ---- mixin: 统一标签 ----
+@mixin datasource-label {
+  width: $datasource-label-width;
+  flex-shrink: 0;
+  font-size: $datasource-label-font-size;
+  color: $datasource-label-color;
+  line-height: $datasource-control-height;
+}
+
+// ---- mixin: 统一错误提示 ----
+@mixin datasource-error {
+  font-size: 11px;
+  color: var(--color-danger);
+  margin-top: $datasource-error-margin-top;
+}
+
+// ---- mixin: 统一对话框 body ----
+@mixin datasource-dialog-body {
+  max-height: $datasource-body-max-height;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $datasource-section-gap;
+
+  @include datasource-unified-controls;
+}
+
+// ---- mixin: 统一空状态 ----
+@mixin datasource-empty {
+  text-align: center;
+  color: var(--text-color-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}

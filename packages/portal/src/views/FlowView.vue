@@ -1,16 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { getAppUrl } from '@schema-form/micro-app/config'
+import MicroAppLoader from '@/components/MicroAppLoader.vue'
 
-const url = getAppUrl('flow', import.meta.env.DEV)
+const config = computed(() => ({
+  name: 'flow',
+  url: getAppUrl('flow', import.meta.env.DEV),
+}))
 </script>
 
 <template>
-  <micro-app
-    name="flow"
-    :url="url"
-    :data="{}"
-    destroy
-    iframe
-    style="width: 100%; height: 100%; border: none; display: block"
-  />
+  <MicroAppLoader :config="config" />
 </template>

@@ -126,4 +126,34 @@ router.get('/trend', requireAuth, async (ctx) => {
   ctx.body = { success: true, data: result }
 })
 
+// GET /api/flow-monitor/top-flows — 按实例数排名的热门流程 Top N
+router.get('/top-flows', requireAuth, async (ctx) => {
+  const { limit: limitStr = '5' } = ctx.query
+  const limit = Math.min(20, Math.max(1, parseInt(limitStr as string, 10) || 5))
+
+  const topFlows = await FlowInstanceModel.aggregate([
+    { $group: { _id: '$definitionId', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'flowdefinitions',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'definition',
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        definitionId: '$_id',
+        flowName: { $ifNull: [{ $arrayElemAt: ['$definition.name', 0] }, '$_id'] },
+        count: 1,
+      },
+    },
+  ])
+
+  ctx.body = { success: true, data: topFlows }
+})
+
 export default router

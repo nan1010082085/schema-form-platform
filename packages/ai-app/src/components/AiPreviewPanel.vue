@@ -8,14 +8,16 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
-import type { Widget, FlowGraph } from '@/types'
+import type { Widget, FlowGraph, FlowNodeData } from '@/types'
 import { useFlowPreview } from '@/composables/useFlowPreview'
+import { usePreviewInteraction } from '@/composables/usePreviewInteraction'
 import {
   PreviewStartEvent,
   PreviewEndEvent,
   PreviewTask,
   PreviewGateway,
 } from './flow-preview'
+import AiFieldEditor from './AiFieldEditor.vue'
 
 export interface PreviewSchemaData {
   title: string
@@ -55,18 +57,28 @@ export interface AiPreviewPanelProps {
   currentBuildStep?: SchemaBuildStep | null
   /** 流式 Schema 生成的步骤列表 */
   buildSteps?: SchemaBuildStep[]
+  /** 高亮的字段 ID 列表（AI 修改的字段） */
+  highlightedFieldIds?: string[]
+  /** 是否显示对比按钮 */
+  showCompareButton?: boolean
 }
 
 const props = withDefaults(defineProps<AiPreviewPanelProps>(), {
   tabs: () => ['schema', 'json'],
   primaryAction: '确认发布',
   secondaryAction: '在编辑器中打开',
+  highlightedFieldIds: () => [],
+  showCompareButton: false,
 })
 
 const emit = defineEmits<{
   'primary-action': []
   'secondary-action': []
   'node-click': [nodeId: string, nodeData: Record<string, unknown>]
+  'field-click': [fieldId: string, fieldData: Record<string, unknown>]
+  'field-edit': [fieldId: string, data: Record<string, unknown>]
+  'apply-to-editor': [widgetIds?: string[]]
+  'compare': []
 }>()
 
 const activeTab = ref<PreviewTab>(props.tabs[0])
@@ -76,6 +88,19 @@ const tabLabels: Record<PreviewTab, string> = {
   json: 'JSON',
   flow: 'Flow',
 }
+
+// ---- 交互状态管理 ----
+
+const interaction = usePreviewInteraction()
+
+// 同步高亮字段
+watch(
+  () => props.highlightedFieldIds,
+  (ids) => {
+    interaction.setHighlightedFields(ids)
+  },
+  { immediate: true },
+)
 
 // ---- F4: Form preview rendering ----
 
@@ -95,6 +120,49 @@ function getWidgetOptions(w: Widget): Array<{ label: string; value: string }> {
   const p = w.props as Record<string, unknown> | undefined
   const opts = p?.options as Array<{ label: string; value: string }> | undefined
   return opts ?? []
+}
+
+// ---- 字段交互 ----
+
+function handleFieldClick(widget: Widget) {
+  interaction.selectField(widget)
+  emit('field-click', widget.id, {
+    type: widget.type,
+    label: widget.label,
+    field: widget.field,
+    ...widget.props,
+  })
+}
+
+function handleFieldEdit(widget: Widget) {
+  interaction.openFieldEdit(widget)
+}
+
+function handleFieldSave(id: string, data: Record<string, unknown>) {
+  emit('field-edit', id, data)
+  interaction.closeEditDialog()
+}
+
+function isFieldHighlighted(widgetId: string): boolean {
+  return interaction.isFieldHighlighted.value(widgetId)
+}
+
+// ---- 部分应用 ----
+
+function handleApplyToEditor() {
+  if (interaction.hasSelection.value) {
+    emit('apply-to-editor', Array.from(interaction.selectedWidgetIds.value))
+  } else {
+    emit('apply-to-editor')
+  }
+}
+
+function handleToggleSelection(widgetId: string) {
+  interaction.toggleWidgetSelection(widgetId)
+}
+
+function handleSelectAll() {
+  interaction.selectAllWidgets(formWidgets.value)
 }
 
 // ---- 流式 Schema 生成步骤 ----
@@ -132,13 +200,8 @@ const { onNodeClick, fitView } = useVueFlow({
   id: 'ai-flow-preview',
 })
 
-/** Selected node detail for tooltip */
-const selectedNodeId = ref<string | null>(null)
-const selectedNodeData = ref<Record<string, unknown> | null>(null)
-
 onNodeClick(({ node }) => {
-  selectedNodeId.value = node.id
-  selectedNodeData.value = node.data as Record<string, unknown>
+  interaction.selectNode(node.id, node.data as FlowNodeData)
   emit('node-click', node.id, node.data as Record<string, unknown>)
 })
 
@@ -161,12 +224,21 @@ watch(activeTab, async (tab) => {
     setTimeout(() => fitView({ padding: 0.2 }), 100)
   }
   // Clear selection when switching tabs
-  selectedNodeId.value = null
-  selectedNodeData.value = null
+  interaction.clearFieldSelection()
+  interaction.clearNodeSelection()
 })
 
 function handleFitView() {
   fitView({ padding: 0.2 })
+}
+
+function handleNodeEdit() {
+  if (interaction.selectedNodeDetail.value) {
+    interaction.openNodeEdit(
+      interaction.selectedNodeDetail.value.id,
+      interaction.selectedNodeDetail.value.data,
+    )
+  }
 }
 
 function getNodeTypeLabel(bpmnType: string): string {
@@ -184,6 +256,11 @@ function getNodeTypeLabel(bpmnType: string): string {
   }
   return labels[bpmnType] ?? bpmnType
 }
+
+function getNodeStatusColor(nodeId: string): string | undefined {
+  const status = interaction.getNodeStatus(nodeId)
+  return status ? interaction.getNodeStatusColor(status) : undefined
+}
 </script>
 
 <template>
@@ -200,6 +277,16 @@ function getNodeTypeLabel(bpmnType: string): string {
         >
           {{ tabLabels[tab] }}
         </span>
+      </div>
+      <div :class="$style.headerActions">
+        <button
+          v-if="showCompareButton"
+          :class="$style.headerBtn"
+          title="对比模式"
+          @click="emit('compare')"
+        >
+          &#x2194;
+        </button>
       </div>
     </div>
 
@@ -245,117 +332,157 @@ function getNodeTypeLabel(bpmnType: string): string {
         <div :class="$style.previewCard">
           <div :class="$style.previewCardHead">
             <span :class="$style.previewCardTitle">{{ schemaData.title }}</span>
-            <span :class="$style.badge">{{ schemaData.fields.length }} fields</span>
+            <div :class="$style.previewCardActions">
+              <span :class="$style.badge">{{ schemaData.fields.length }} fields</span>
+              <button
+                v-if="formWidgets.length > 0"
+                :class="$style.selectAllBtn"
+                @click="handleSelectAll"
+              >
+                全选
+              </button>
+            </div>
           </div>
           <div :class="$style.formPreview">
             <el-form label-position="top" size="default">
               <template v-for="(w, idx) in formWidgets" :key="w.id ?? idx">
-                <!-- Input / Number / Date / Textarea -->
-                <el-form-item
-                  v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
-                  :label="w.label ?? w.field ?? w.type"
+                <div
+                  :class="[
+                    $style.fieldWrapper,
+                    {
+                      [$style.fieldHighlighted]: isFieldHighlighted(w.id),
+                      [$style.fieldSelected]: interaction.selectedWidgetIds.value.has(w.id),
+                    },
+                  ]"
+                  @click="handleFieldClick(w)"
                 >
-                  <el-input
-                    :type="w.type === 'textarea' ? 'textarea' : 'text'"
-                    :placeholder="getWidgetPlaceholder(w)"
-                    :rows="w.type === 'textarea' ? 3 : undefined"
-                    disabled
+                  <!-- 选择框 -->
+                  <el-checkbox
+                    :model-value="interaction.selectedWidgetIds.value.has(w.id)"
+                    :class="$style.fieldCheckbox"
+                    @click.stop
+                    @change="handleToggleSelection(w.id)"
                   />
-                </el-form-item>
 
-                <!-- Select -->
-                <el-form-item
-                  v-else-if="w.type === 'select'"
-                  :label="w.label ?? w.field ?? 'select'"
-                >
-                  <el-select placeholder="请选择" disabled style="width: 100%">
-                    <el-option
-                      v-for="opt in getWidgetOptions(w)"
-                      :key="opt.value"
-                      :label="opt.label"
-                      :value="opt.value"
-                    />
-                  </el-select>
-                </el-form-item>
-
-                <!-- Radio -->
-                <el-form-item
-                  v-else-if="w.type === 'radio'"
-                  :label="w.label ?? w.field ?? 'radio'"
-                >
-                  <el-radio-group disabled>
-                    <el-radio
-                      v-for="opt in getWidgetOptions(w)"
-                      :key="opt.value"
-                      :value="opt.value"
+                  <!-- 字段内容 -->
+                  <div :class="$style.fieldContent">
+                    <!-- Input / Number / Date / Textarea -->
+                    <el-form-item
+                      v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
+                      :label="w.label ?? w.field ?? w.type"
                     >
-                      {{ opt.label }}
-                    </el-radio>
-                  </el-radio-group>
-                </el-form-item>
+                      <el-input
+                        :type="w.type === 'textarea' ? 'textarea' : 'text'"
+                        :placeholder="getWidgetPlaceholder(w)"
+                        :rows="w.type === 'textarea' ? 3 : undefined"
+                        disabled
+                      />
+                    </el-form-item>
 
-                <!-- Checkbox -->
-                <el-form-item
-                  v-else-if="w.type === 'checkbox'"
-                  :label="w.label ?? w.field ?? 'checkbox'"
-                >
-                  <el-checkbox-group disabled>
-                    <el-checkbox
-                      v-for="opt in getWidgetOptions(w)"
-                      :key="opt.value"
-                      :value="opt.value"
+                    <!-- Select -->
+                    <el-form-item
+                      v-else-if="w.type === 'select'"
+                      :label="w.label ?? w.field ?? 'select'"
                     >
-                      {{ opt.label }}
-                    </el-checkbox>
-                  </el-checkbox-group>
-                </el-form-item>
+                      <el-select placeholder="请选择" disabled style="width: 100%">
+                        <el-option
+                          v-for="opt in getWidgetOptions(w)"
+                          :key="opt.value"
+                          :label="opt.label"
+                          :value="opt.value"
+                        />
+                      </el-select>
+                    </el-form-item>
 
-                <!-- Switch -->
-                <el-form-item
-                  v-else-if="w.type === 'switch'"
-                  :label="w.label ?? w.field ?? 'switch'"
-                >
-                  <el-switch disabled />
-                </el-form-item>
+                    <!-- Radio -->
+                    <el-form-item
+                      v-else-if="w.type === 'radio'"
+                      :label="w.label ?? w.field ?? 'radio'"
+                    >
+                      <el-radio-group disabled>
+                        <el-radio
+                          v-for="opt in getWidgetOptions(w)"
+                          :key="opt.value"
+                          :value="opt.value"
+                        >
+                          {{ opt.label }}
+                        </el-radio>
+                      </el-radio-group>
+                    </el-form-item>
 
-                <!-- Slider -->
-                <el-form-item
-                  v-else-if="w.type === 'slider'"
-                  :label="w.label ?? w.field ?? 'slider'"
-                >
-                  <el-slider disabled />
-                </el-form-item>
+                    <!-- Checkbox -->
+                    <el-form-item
+                      v-else-if="w.type === 'checkbox'"
+                      :label="w.label ?? w.field ?? 'checkbox'"
+                    >
+                      <el-checkbox-group disabled>
+                        <el-checkbox
+                          v-for="opt in getWidgetOptions(w)"
+                          :key="opt.value"
+                          :value="opt.value"
+                        >
+                          {{ opt.label }}
+                        </el-checkbox>
+                      </el-checkbox-group>
+                    </el-form-item>
 
-                <!-- Rate -->
-                <el-form-item
-                  v-else-if="w.type === 'rate'"
-                  :label="w.label ?? w.field ?? 'rate'"
-                >
-                  <el-rate disabled />
-                </el-form-item>
+                    <!-- Switch -->
+                    <el-form-item
+                      v-else-if="w.type === 'switch'"
+                      :label="w.label ?? w.field ?? 'switch'"
+                    >
+                      <el-switch disabled />
+                    </el-form-item>
 
-                <!-- Upload -->
-                <el-form-item
-                  v-else-if="w.type === 'upload'"
-                  :label="w.label ?? w.field ?? 'upload'"
-                >
-                  <el-button disabled>选择文件</el-button>
-                </el-form-item>
+                    <!-- Slider -->
+                    <el-form-item
+                      v-else-if="w.type === 'slider'"
+                      :label="w.label ?? w.field ?? 'slider'"
+                    >
+                      <el-slider disabled />
+                    </el-form-item>
 
-                <!-- Button -->
-                <el-form-item v-else-if="w.type === 'button'">
-                  <el-button type="primary" disabled>
-                    {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
-                  </el-button>
-                </el-form-item>
+                    <!-- Rate -->
+                    <el-form-item
+                      v-else-if="w.type === 'rate'"
+                      :label="w.label ?? w.field ?? 'rate'"
+                    >
+                      <el-rate disabled />
+                    </el-form-item>
 
-                <!-- Fallback: show as text field -->
-                <el-form-item
-                  v-else
-                  :label="w.label ?? w.field ?? w.type"
-                >
-                  <el-input placeholder="[不支持的组件类型]" disabled />
-                </el-form-item>
+                    <!-- Upload -->
+                    <el-form-item
+                      v-else-if="w.type === 'upload'"
+                      :label="w.label ?? w.field ?? 'upload'"
+                    >
+                      <el-button disabled>选择文件</el-button>
+                    </el-form-item>
+
+                    <!-- Button -->
+                    <el-form-item v-else-if="w.type === 'button'">
+                      <el-button type="primary" disabled>
+                        {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
+                      </el-button>
+                    </el-form-item>
+
+                    <!-- Fallback: show as text field -->
+                    <el-form-item
+                      v-else
+                      :label="w.label ?? w.field ?? w.type"
+                    >
+                      <el-input placeholder="[不支持的组件类型]" disabled />
+                    </el-form-item>
+                  </div>
+
+                  <!-- 编辑按钮 -->
+                  <button
+                    :class="$style.fieldEditBtn"
+                    title="编辑属性"
+                    @click.stop="handleFieldEdit(w)"
+                  >
+                    &#x270E;
+                  </button>
+                </div>
               </template>
             </el-form>
           </div>
@@ -403,22 +530,38 @@ function getNodeTypeLabel(bpmnType: string): string {
             </VueFlow>
           </div>
 
-          <!-- Node detail tooltip -->
-          <div v-if="selectedNodeData" :class="$style.nodeDetail">
+          <!-- Node detail panel -->
+          <div v-if="interaction.selectedNodeDetail.value" :class="$style.nodeDetail">
             <div :class="$style.nodeDetailHeader">
-              <span :class="$style.nodeDetailTitle">{{ selectedNodeData.label }}</span>
-              <button :class="$style.nodeDetailClose" @click="selectedNodeId = null; selectedNodeData = null">
-                &times;
-              </button>
+              <span :class="$style.nodeDetailTitle">{{ interaction.selectedNodeDetail.value.data.label }}</span>
+              <div :class="$style.nodeDetailActions">
+                <button :class="$style.nodeEditBtn" title="编辑节点" @click="handleNodeEdit">
+                  &#x270E;
+                </button>
+                <button :class="$style.nodeDetailClose" @click="interaction.clearNodeSelection()">
+                  &times;
+                </button>
+              </div>
             </div>
             <div :class="$style.nodeDetailBody">
               <div :class="$style.nodeDetailRow">
                 <span :class="$style.nodeDetailLabel">类型</span>
-                <span :class="$style.nodeDetailValue">{{ getNodeTypeLabel(selectedNodeData.bpmnType as string) }}</span>
+                <span :class="$style.nodeDetailValue">
+                  <span
+                    v-if="getNodeStatusColor(interaction.selectedNodeDetail.value.id)"
+                    :class="$style.statusDot"
+                    :style="{ background: getNodeStatusColor(interaction.selectedNodeDetail.value.id) }"
+                  />
+                  {{ getNodeTypeLabel(interaction.selectedNodeDetail.value.data.bpmnType) }}
+                </span>
               </div>
               <div :class="$style.nodeDetailRow">
                 <span :class="$style.nodeDetailLabel">ID</span>
-                <span :class="$style.nodeDetailValue">{{ selectedNodeId }}</span>
+                <span :class="$style.nodeDetailValue">{{ interaction.selectedNodeDetail.value.id }}</span>
+              </div>
+              <div v-if="interaction.selectedNodeDetail.value.data.description" :class="$style.nodeDetailRow">
+                <span :class="$style.nodeDetailLabel">描述</span>
+                <span :class="$style.nodeDetailValue">{{ interaction.selectedNodeDetail.value.data.description }}</span>
               </div>
             </div>
           </div>
@@ -482,10 +625,22 @@ function getNodeTypeLabel(bpmnType: string): string {
       <button :class="$style.btnPrimary" @click="emit('primary-action')">
         {{ primaryAction }}
       </button>
+      <button :class="$style.btnApply" @click="handleApplyToEditor">
+        {{ interaction.hasSelection.value ? `应用选中 (${interaction.selectedCount.value})` : '应用到编辑器' }}
+      </button>
       <button :class="$style.btnGhost" @click="emit('secondary-action')">
         {{ secondaryAction }}
       </button>
     </div>
+
+    <!-- 字段编辑弹窗 -->
+    <AiFieldEditor
+      :visible="interaction.isEditDialogVisible.value"
+      :context="interaction.editContext.value"
+      @update:visible="interaction.closeEditDialog()"
+      @save="handleFieldSave"
+      @cancel="interaction.closeEditDialog()"
+    />
   </div>
 </template>
 

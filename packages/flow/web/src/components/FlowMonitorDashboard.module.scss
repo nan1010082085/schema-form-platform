@@ -1,0 +1,69 @@
+.dashboard {
+  padding: var(--spacing-lg, 24px);
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-20px, 20px);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-20, 20px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--text-color-primary, #303133);
+}
+
+.statsRow {
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.statCard {
+  text-align: center;
+}
+
+.statItem {
+  padding: var(--spacing-sm, 12px) 0;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.statTotal {
+  color: var(--el-color-primary, #409eff);
+}
+
+.statRunning {
+  color: var(--el-color-info, #909399);
+}
+
+.statToday {
+  color: var(--el-color-warning, #e6a23c);
+}
+
+.statDuration {
+  font-size: 20px;
+  color: var(--el-color-success, #67c23a);
+}
+
+.statLabel {
+  margin-top: var(--spacing-xs, 4px);
+  font-size: var(--el-font-size-base, 14px);
+  color: var(--el-text-color-secondary, #909399);
+}
+
+.chartRow {
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.chart {
+  height: 320px;
+  width: 100%;
+}

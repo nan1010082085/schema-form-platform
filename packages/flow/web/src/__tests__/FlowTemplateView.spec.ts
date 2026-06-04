@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import FlowTemplateView from '../views/FlowTemplateView.vue'
@@ -43,29 +43,34 @@ describe('FlowTemplateView', () => {
     })
   }
 
-  it('mounts without errors', () => {
+  it('mounts without errors', async () => {
     const wrapper = createWrapper()
+    await flushPromises()
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('displays template view title', () => {
+  it('displays template view title', async () => {
     const wrapper = createWrapper()
+    await flushPromises()
     expect(wrapper.find('h2').text()).toContain('流程模板库')
   })
 
-  it('calls seedBuiltinTemplates and fetchTemplates on mount', () => {
+  it('calls seedBuiltinTemplates and fetchTemplates on mount', async () => {
     createWrapper()
+    await flushPromises()
     expect(mockedApi.seedBuiltinTemplates).toHaveBeenCalled()
     expect(mockedApi.listTemplates).toHaveBeenCalled()
   })
 
-  it('has search input', () => {
+  it('has search input', async () => {
     const wrapper = createWrapper()
+    await flushPromises()
     expect(wrapper.find('.el-input').exists()).toBe(true)
   })
 
-  it('has category filter select', () => {
+  it('has category filter select', async () => {
     const wrapper = createWrapper()
+    await flushPromises()
     expect(wrapper.find('.el-select').exists()).toBe(true)
   })
 })

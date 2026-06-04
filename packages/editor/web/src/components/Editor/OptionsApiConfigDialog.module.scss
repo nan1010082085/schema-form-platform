@@ -1,4 +1,6 @@
+@use 'datasource-dialog-tokens' as *;
+
 .body {
-  height: 60vh;
+  height: $datasource-body-max-height;
   overflow: hidden;
 }

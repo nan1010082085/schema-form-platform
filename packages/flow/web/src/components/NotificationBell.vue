@@ -1,69 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { Bell } from '@element-plus/icons-vue'
 import { ElBadge, ElPopover, ElButton, ElEmpty, ElTag, ElIcon } from 'element-plus'
-import { flowApi } from '../api/flowApi.js'
+import { useNotificationStore } from '../stores/notification.js'
 import styles from './NotificationBell.module.scss'
 
-interface Notification {
-  id: string
-  userId: string
-  type: string
-  title: string
-  content?: string
-  relatedId?: string
-  relatedType?: string
-  isRead: boolean
-  createdAt: string
-}
-
-const unreadCount = ref(0)
-const notifications = ref<Notification[]>([])
-const loading = ref(false)
-const popoverVisible = ref(false)
+const store = useNotificationStore()
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
-
-async function fetchUnreadCount() {
-  try {
-    const data = await flowApi.getUnreadCount()
-    unreadCount.value = data.count
-  } catch {
-    // Silent fail for polling
-  }
-}
-
-async function fetchNotifications() {
-  loading.value = true
-  try {
-    const data = await flowApi.getNotifications(1, 10, false)
-    notifications.value = data.items
-  } finally {
-    loading.value = false
-  }
-}
-
-async function handleMarkAsRead(id: string) {
-  await flowApi.markNotificationAsRead(id)
-  const item = notifications.value.find((n) => n.id === id)
-  if (item) item.isRead = true
-  unreadCount.value = Math.max(0, unreadCount.value - 1)
-}
-
-async function handleMarkAllAsRead() {
-  await flowApi.markAllNotificationsAsRead()
-  notifications.value.forEach((n) => { n.isRead = true })
-  unreadCount.value = 0
-}
-
-function handleOpen() {
-  popoverVisible.value = true
-  fetchNotifications()
-}
-
-function handleClose() {
-  popoverVisible.value = false
-}
 
 function notificationTypeTag(type: string) {
   const map: Record<string, { label: string; type: string }> = {
@@ -90,9 +34,13 @@ function formatTime(dateStr: string) {
   return date.toLocaleDateString('zh-CN')
 }
 
+function handleOpen() {
+  store.fetchNotifications()
+}
+
 onMounted(() => {
-  fetchUnreadCount()
-  pollTimer = setInterval(fetchUnreadCount, 30000)
+  store.fetchUnreadCount()
+  pollTimer = setInterval(() => store.fetchUnreadCount(), 30000)
 })
 
 onUnmounted(() => {
@@ -102,16 +50,14 @@ onUnmounted(() => {
 
 <template>
   <el-popover
-    :visible="popoverVisible"
     placement="bottom-end"
     :width="360"
     trigger="click"
     @show="handleOpen"
-    @hide="handleClose"
   >
     <template #reference>
-      <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
-        <el-icon :size="20" :class="styles.bellIcon" @click="popoverVisible = !popoverVisible">
+      <el-badge :value="store.unreadCount" :hidden="store.unreadCount === 0" :max="99">
+        <el-icon :size="20" :class="styles.bellIcon">
           <Bell />
         </el-icon>
       </el-badge>
@@ -120,20 +66,20 @@ onUnmounted(() => {
     <div :class="styles.header">
       <span :class="styles.title">通知</span>
       <el-button
-        v-if="unreadCount > 0"
+        v-if="store.unreadCount > 0"
         type="primary"
         link
         size="small"
-        @click="handleMarkAllAsRead"
+        @click="store.markAllAsRead()"
       >
         全部已读
       </el-button>
     </div>
 
-    <div :class="styles.list" v-loading="loading">
-      <template v-if="notifications.length > 0">
+    <div :class="styles.list" v-loading="store.loading">
+      <template v-if="store.notifications.length > 0">
         <div
-          v-for="item in notifications"
+          v-for="item in store.notifications"
           :key="item.id"
           :class="[styles.item, { [styles.itemUnread]: !item.isRead }]"
         >
@@ -146,7 +92,7 @@ onUnmounted(() => {
           <div :class="styles.itemTitle">{{ item.title }}</div>
           <div v-if="item.content" :class="styles.itemContent">{{ item.content }}</div>
           <div v-if="!item.isRead" :class="styles.itemActions">
-            <el-button type="primary" link size="small" @click="handleMarkAsRead(item.id)">
+            <el-button type="primary" link size="small" @click="store.markAsRead(item.id)">
               标为已读
             </el-button>
           </div>

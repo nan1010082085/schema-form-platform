@@ -292,6 +292,128 @@ describe('useAiStore', () => {
       expect(store.context.source).toBe('editor')
       expect(store.context.flowId).toBe('f1')
     })
+
+    it('sets preferences', () => {
+      const store = useAiStore()
+      const prefs = { layoutStyle: 'grid', labelWidth: 120, theme: 'dark' }
+      store.setContext({ preferences: prefs })
+      expect(store.context.preferences).toEqual(prefs)
+    })
+
+    it('sets historySummary', () => {
+      const store = useAiStore()
+      store.setContext({ historySummary: '用户之前讨论了表单布局和字段配置' })
+      expect(store.context.historySummary).toBe('用户之前讨论了表单布局和字段配置')
+    })
+
+    it('preserves preferences and historySummary when merging other fields', () => {
+      const store = useAiStore()
+      store.setContext({
+        source: 'editor',
+        preferences: { labelWidth: 100 },
+        historySummary: '之前的对话摘要',
+      })
+      store.setContext({ schemaId: 's1' })
+      expect(store.context.preferences).toEqual({ labelWidth: 100 })
+      expect(store.context.historySummary).toBe('之前的对话摘要')
+      expect(store.context.schemaId).toBe('s1')
+    })
+  })
+
+  describe('S8-10: preferences and historySummary in sendMessage', () => {
+    it('passes preferences and historySummary to chat API', async () => {
+      const store = useAiStore()
+      store.setContext({
+        source: 'editor',
+        preferences: { layoutStyle: 'grid', labelWidth: 120 },
+        historySummary: '用户讨论了注册表单设计',
+      })
+
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'ok' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('继续修改')
+
+      expect(chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            source: 'editor',
+            preferences: expect.objectContaining({
+              layoutStyle: 'grid',
+              labelWidth: 120,
+              replyLanguage: 'zh-CN',
+              replyStyle: 'detailed',
+              codeComment: 'yes',
+            }),
+            historySummary: '用户讨论了注册表单设计',
+          }),
+        }),
+        expect.any(AbortSignal),
+      )
+    })
+  })
+
+  describe('chatSettings', () => {
+    it('initializes with default settings', () => {
+      const store = useAiStore()
+      expect(store.chatSettings).toEqual({
+        preferences: {
+          replyLanguage: 'zh-CN',
+          replyStyle: 'detailed',
+          codeComment: 'yes',
+        },
+        historySummary: { mode: 'auto' },
+      })
+    })
+
+    it('updateChatSettings merges preferences', () => {
+      const store = useAiStore()
+      store.updateChatSettings({
+        preferences: { replyLanguage: 'en-US', replyStyle: 'concise' },
+      })
+      expect(store.chatSettings.preferences.replyLanguage).toBe('en-US')
+      expect(store.chatSettings.preferences.replyStyle).toBe('concise')
+      // codeComment should remain unchanged
+      expect(store.chatSettings.preferences.codeComment).toBe('yes')
+    })
+
+    it('updateChatSettings merges historySummary', () => {
+      const store = useAiStore()
+      store.updateChatSettings({
+        historySummary: { mode: 'manual', manualSummary: 'test' },
+      })
+      expect(store.chatSettings.historySummary.mode).toBe('manual')
+      expect(store.chatSettings.historySummary.manualSummary).toBe('test')
+    })
+
+    it('passes chatSettings preferences to chat API', async () => {
+      const store = useAiStore()
+      store.updateChatSettings({
+        preferences: { replyLanguage: 'en-US' as const, replyStyle: 'concise' as const, codeComment: 'no' as const },
+      })
+
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'ok' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      expect(chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            preferences: expect.objectContaining({
+              replyLanguage: 'en-US',
+              replyStyle: 'concise',
+              codeComment: 'no',
+            }),
+          }),
+        }),
+        expect.any(AbortSignal),
+      )
+    })
   })
 
   describe('hasPreview', () => {

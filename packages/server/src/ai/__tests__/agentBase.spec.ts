@@ -14,6 +14,8 @@ import {
   buildMessages,
   parseStructuredOutput,
   escapeRegex,
+  validateApiKey,
+  truncateMessages,
 } from '../graph/agentBase.js'
 import type { AIConversationState } from '../graph/state.js'
 
@@ -159,5 +161,80 @@ describe('escapeRegex', () => {
 
   it('escapes all special chars in a complex string', () => {
     expect(escapeRegex('user@example.com (test)')).toBe('user@example\\.com \\(test\\)')
+  })
+})
+
+describe('validateApiKey', () => {
+  it('returns the key when it is valid', () => {
+    process.env.DEEPSEEK_API_KEY = 'sk-valid-key-1234567890'
+    expect(validateApiKey()).toBe('sk-valid-key-1234567890')
+  })
+
+  it('throws when key is missing', () => {
+    delete process.env.DEEPSEEK_API_KEY
+    expect(() => validateApiKey()).toThrow('DEEPSEEK_API_KEY')
+  })
+
+  it('throws when key is too short', () => {
+    process.env.DEEPSEEK_API_KEY = 'short'
+    expect(() => validateApiKey()).toThrow('too short')
+  })
+})
+
+describe('truncateMessages', () => {
+  function msg(name: string) {
+    return { constructor: { name } }
+  }
+
+  it('returns empty array when only the current user message exists', () => {
+    const messages = [msg('HumanMessage')]
+    expect(truncateMessages(messages)).toEqual([])
+  })
+
+  it('returns all history when within turn limit', () => {
+    // 1 complete turn: Human -> Assistant
+    const messages = [msg('HumanMessage'), msg('AIMessage'), msg('HumanMessage')]
+    const result = truncateMessages(messages)
+    expect(result).toHaveLength(2) // excludes last HumanMessage
+    expect(result[0].constructor.name).toBe('HumanMessage')
+    expect(result[1].constructor.name).toBe('AIMessage')
+  })
+
+  it('preserves complete turns when truncating', () => {
+    // 3 turns, limit to 2
+    const messages = [
+      msg('HumanMessage'), msg('AIMessage'),  // turn 1
+      msg('HumanMessage'), msg('AIMessage'),  // turn 2
+      msg('HumanMessage'), msg('AIMessage'),  // turn 3
+      msg('HumanMessage'),                    // current message (excluded)
+    ]
+    const result = truncateMessages(messages, 2)
+    // Should keep turns 2 and 3 (4 messages), not the incomplete turn 1
+    expect(result).toHaveLength(4)
+    expect(result[0].constructor.name).toBe('HumanMessage') // turn 2 start
+    expect(result[3].constructor.name).toBe('AIMessage')    // turn 3 end
+  })
+
+  it('handles tool messages within a turn', () => {
+    // Turn with tool calls: Human -> AI -> Tool -> AI
+    const messages = [
+      msg('HumanMessage'), msg('AIMessage'), msg('ToolMessage'), msg('AIMessage'),  // turn 1
+      msg('HumanMessage'), msg('AIMessage'),  // turn 2
+      msg('HumanMessage'),                    // current
+    ]
+    const result = truncateMessages(messages, 1)
+    // Keep only the last complete turn (turn 2)
+    expect(result).toHaveLength(2)
+    expect(result[0].constructor.name).toBe('HumanMessage')
+    expect(result[1].constructor.name).toBe('AIMessage')
+  })
+
+  it('returns all messages when fewer turns than limit', () => {
+    const messages = [
+      msg('HumanMessage'), msg('AIMessage'),
+      msg('HumanMessage'),
+    ]
+    const result = truncateMessages(messages, 5)
+    expect(result).toHaveLength(2)
   })
 })

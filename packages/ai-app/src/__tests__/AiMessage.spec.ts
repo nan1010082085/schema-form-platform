@@ -51,7 +51,7 @@ describe('AiMessage', () => {
     cafSpy?.mockRestore()
   })
 
-  it('renders user message content after rAF flush', async () => {
+  it('renders user message content directly', async () => {
     setupRAFMock()
 
     const wrapper = mount(AiMessage, {
@@ -62,14 +62,11 @@ describe('AiMessage', () => {
       },
     })
 
-    // Content is buffered by rAF, need to flush
-    flushAllRAF()
     await nextTick()
-
     expect(wrapper.text()).toContain('Hello')
   })
 
-  it('renders loading dots when loading is true', () => {
+  it('renders loading dots when loading is true and no steps', () => {
     setupRAFMock()
 
     const wrapper = mount(AiMessage, {
@@ -79,10 +76,11 @@ describe('AiMessage', () => {
         loading: true,
       },
     })
+    // Loading placeholder contains AiLoadingDots
     expect(wrapper.findComponent({ name: 'AiLoadingDots' }).exists()).toBe(true)
   })
 
-  describe('F2: rAF-batched content rendering', () => {
+  describe('F2: rAF-batched content rendering for assistant text step', () => {
     it('buffers rapid content updates and renders only on animation frame', async () => {
       setupRAFMock()
 
@@ -104,12 +102,8 @@ describe('AiMessage', () => {
       await wrapper.setProps({ content: 'Hell' })
       await wrapper.setProps({ content: 'Hello' })
 
-      // Only one additional rAF should have been scheduled (for the first update)
-      // Subsequent updates reuse the pending rAF
+      // Only one additional rAF should have been scheduled
       expect(rafSpy.mock.calls.length).toBeLessThanOrEqual(initialCallCount + 1)
-
-      // Before flushing rAF, the DOM should NOT contain the final content
-      // (it still has the previous value or empty)
 
       // Flush the animation frame
       flushAllRAF()
@@ -130,12 +124,10 @@ describe('AiMessage', () => {
         },
       })
 
-      // There should be a pending rAF from the initial mount
       expect(rafCallbacks.size).toBeGreaterThan(0)
 
       wrapper.unmount()
 
-      // All pending rAFs should be cancelled
       expect(cafSpy).toHaveBeenCalled()
     })
 
@@ -156,16 +148,14 @@ describe('AiMessage', () => {
 
       await wrapper.setProps({ content: 'Second' })
 
-      // Before rAF flush, still shows old content
-      // After flush, shows new content
       flushAllRAF()
       await nextTick()
       expect(wrapper.text()).toContain('Second')
     })
   })
 
-  describe('thinking section', () => {
-    it('shows thinking header when thinking is provided', () => {
+  describe('step card: thinking', () => {
+    it('shows thinking step when thinking is provided', () => {
       setupRAFMock()
 
       const wrapper = mount(AiMessage, {
@@ -175,10 +165,11 @@ describe('AiMessage', () => {
           thinking: 'Let me think...',
         },
       })
+      // Step card title is always visible
       expect(wrapper.text()).toContain('思考过程')
     })
 
-    it('toggles thinking body on header click', async () => {
+    it('thinking step is collapsed by default and expands on click', async () => {
       setupRAFMock()
 
       const wrapper = mount(AiMessage, {
@@ -189,21 +180,23 @@ describe('AiMessage', () => {
         },
       })
 
-      // Initially collapsed
+      // Initially collapsed — thinking content not visible
       expect(wrapper.text()).not.toContain('Let me think...')
 
-      // Click to expand
-      await wrapper.find('[class*="thinkingHeader"]').trigger('click')
+      // Click header to expand
+      await wrapper.find('[class*="header"]').trigger('click')
+      await nextTick()
       expect(wrapper.text()).toContain('Let me think...')
 
-      // Click to collapse
-      await wrapper.find('[class*="thinkingHeader"]').trigger('click')
+      // Click again to collapse
+      await wrapper.find('[class*="header"]').trigger('click')
+      await nextTick()
       expect(wrapper.text()).not.toContain('Let me think...')
     })
   })
 
-  describe('tool calls section', () => {
-    it('shows tool calls count', () => {
+  describe('step card: tool calls', () => {
+    it('shows tool call step with display name', () => {
       setupRAFMock()
 
       const wrapper = mount(AiMessage, {
@@ -215,7 +208,118 @@ describe('AiMessage', () => {
           ],
         },
       })
-      expect(wrapper.text()).toContain('调用了 1 个工具')
+      // Tool display name is shown as step title
+      expect(wrapper.text()).toContain('搜索表单')
+    })
+
+    it('renders error card for failed tool call (expanded by default)', () => {
+      setupRAFMock()
+
+      const wrapper = mount(AiMessage, {
+        props: {
+          role: 'assistant',
+          label: 'AI',
+          toolCalls: [
+            {
+              name: 'generate_schema',
+              arguments: { prompt: 'test' },
+              error: 'Schema validation failed: missing required field "type"',
+            },
+          ],
+        },
+      })
+
+      // tool_error is NOT collapsed by default — no need to click header
+
+      // Error badge should be rendered
+      const badge = wrapper.find('[class*="toolBadgeError"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toBe('生成表单')
+
+      // Error card should be visible
+      const errorCard = wrapper.find('[class*="errorCard"]')
+      expect(errorCard.exists()).toBe(true)
+      expect(errorCard.text()).toContain('Schema validation failed: missing required field "type"')
+    })
+
+    it('renders normal result when no error', async () => {
+      setupRAFMock()
+
+      const wrapper = mount(AiMessage, {
+        props: {
+          role: 'assistant',
+          label: 'AI',
+          toolCalls: [
+            {
+              name: 'search_schemas',
+              arguments: { query: 'user' },
+              result: { count: 3 },
+            },
+          ],
+        },
+      })
+
+      // Expand tool call step
+      await wrapper.find('[class*="header"]').trigger('click')
+
+      // No error card
+      expect(wrapper.find('[class*="errorCard"]').exists()).toBe(false)
+
+      // Arguments and result should be shown
+      expect(wrapper.find('[class*="toolSection"]').exists()).toBe(true)
+    })
+
+    it('renders mixed successful and failed tool calls as separate steps', async () => {
+      setupRAFMock()
+
+      const wrapper = mount(AiMessage, {
+        props: {
+          role: 'assistant',
+          label: 'AI',
+          toolCalls: [
+            { name: 'search_schemas', arguments: { query: 'test' }, result: { count: 1 } },
+            { name: 'validate_schema', arguments: {}, error: 'Validation timeout' },
+          ],
+        },
+      })
+
+      // Each tool call is a separate step card
+      // First step (tool_call): collapsed by default, expand it
+      // Second step (tool_error): already expanded, don't click
+      const headers = wrapper.findAll('[class*="header"]')
+      if (headers.length > 0) {
+        await headers[0].trigger('click')
+      }
+
+      // Error card exists in the DOM (from the second step, already expanded)
+      expect(wrapper.find('[class*="errorCard"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Validation timeout')
+    })
+  })
+
+  describe('step card: result', () => {
+    it('renders schema card inside result step', () => {
+      setupRAFMock()
+
+      const wrapper = mount(AiMessage, {
+        props: {
+          role: 'assistant',
+          label: 'AI',
+          content: 'Done',
+          cards: [{
+            type: 'schema',
+            title: 'Form Preview',
+            fields: [
+              { icon: 'T', name: 'username', type: 'input' },
+            ],
+            primaryAction: 'Publish',
+            secondaryAction: 'Edit',
+          }],
+        },
+      })
+
+      expect(wrapper.text()).toContain('Form Preview')
+      expect(wrapper.text()).toContain('username')
     })
   })
 })

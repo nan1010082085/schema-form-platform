@@ -29,10 +29,18 @@ export function initSocket(httpServer: HttpServer): Server {
   io.on('connection', (socket) => {
     console.log(`[socket] client connected: ${socket.id}`)
 
-    // 加入房间（editor:{schemaId} 或 flow:{flowId}）
+    // 加入房间（editor:{schemaId} 或 flow:{flowId} 或 user:{userId}）
     socket.on('join', (room: string) => {
       socket.join(room)
       console.log(`[socket] ${socket.id} joined room: ${room}`)
+    })
+
+    // 用户身份注册（加入个人房间以接收通知）
+    socket.on('identify', (userId: string) => {
+      if (userId) {
+        socket.join(`user:${userId}`)
+        console.log(`[socket] ${socket.id} identified as user: ${userId}`)
+      }
     })
 
     // 离开房间

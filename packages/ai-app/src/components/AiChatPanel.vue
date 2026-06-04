@@ -3,8 +3,10 @@ import { ref, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AiMessage from './AiMessage.vue'
 import TaskChainBar from './TaskChainBar.vue'
+import AiRagSearch from './AiRagSearch.vue'
+import AiMentionInput from './AiMentionInput.vue'
 import { uploadFile } from '@/api/aiApi'
-import type { AIMessage, AgentType, Attachment, TaskChainStep, SSEConnectionStatus } from '@/types'
+import type { AIMessage, AgentType, Attachment, TaskChainStep, SSEConnectionStatus, MentionReference, RagSearchResult } from '@/types'
 import type { MessageEmbeddedCard } from './AiMessage.vue'
 
 export interface AiChatPanelProps {
@@ -22,6 +24,12 @@ export interface AiChatPanelProps {
   retryCount?: number
   /** 最大自动重试次数 */
   maxRetries?: number
+  /** RAG 搜索结果 */
+  ragSearchResults?: RagSearchResult[]
+  /** RAG 搜索中 */
+  ragSearching?: boolean
+  /** 已选中的 RAG context */
+  ragContext?: RagSearchResult[]
 }
 
 const props = withDefaults(defineProps<AiChatPanelProps>(), {
@@ -33,20 +41,27 @@ const props = withDefaults(defineProps<AiChatPanelProps>(), {
   sseStatus: 'idle',
   retryCount: 0,
   maxRetries: 3,
+  ragSearchResults: () => [],
+  ragSearching: false,
+  ragContext: () => [],
 })
 
 const emit = defineEmits<{
-  send: [message: string, agent: AgentType]
+  send: [message: string, agent: AgentType, mentions?: MentionReference[]]
   stop: []
   retry: []
   'clear-messages': []
   'card-primary-action': [messageIndex: number, cardIndex: number]
   'card-secondary-action': [messageIndex: number, cardIndex: number]
+  'open-settings': []
+  'rag-search': [query: string]
+  'rag-select': [item: RagSearchResult]
+  'rag-remove': [id: string]
 }>()
 
-const inputText = ref('')
 const selectedAgent = ref<AgentType>('auto')
 const messagesRef = ref<HTMLElement>()
+const ragVisible = ref(false)
 
 // ---- 多模态输入 ----
 const fileInputRef = ref<HTMLInputElement>()
@@ -192,15 +207,7 @@ function scrollToBottom() {
 
 watch(() => props.messages.length, scrollToBottom)
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSend()
-  }
-}
-
-function handleSend() {
-  const text = inputText.value.trim()
+function handleMentionSend(text: string, mentions?: MentionReference[]): void {
   // 允许只发送附件（无文本）
   if ((!text && pendingAttachments.value.length === 0) || props.disabled) return
 
@@ -218,10 +225,7 @@ function handleSend() {
     }
   }
 
-  emit('send', messageContent, selectedAgent.value)
-
-  // 清空状态
-  inputText.value = ''
+  emit('send', messageContent, selectedAgent.value, mentions)
   pendingAttachments.value = []
 }
 
@@ -271,6 +275,16 @@ function handleCardAction(
         </span>
       </div>
       <div :class="$style.headerActions">
+        <button
+          :class="$style.actionBtn"
+          title="对话设置"
+          @click="emit('open-settings')"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
         <button
           :class="$style.actionBtn"
           title="清空对话"
@@ -343,6 +357,17 @@ function handleCardAction(
 
     <!-- Floating Input Panel -->
     <div :class="$style.inputArea">
+      <!-- RAG Search Panel -->
+      <AiRagSearch
+        v-if="ragVisible"
+        :search-results="ragSearchResults"
+        :selected-context="ragContext"
+        :loading="ragSearching"
+        @search="(q) => emit('rag-search', q)"
+        @select="(item) => emit('rag-select', item)"
+        @remove="(id) => emit('rag-remove', id)"
+        @close="ragVisible = false"
+      />
       <div :class="[$style.inputBox, { [$style.inputDisabled]: disabled }]">
         <!-- 附件预览 -->
         <div v-if="pendingAttachments.length > 0" :class="$style.attachmentList">
@@ -370,13 +395,11 @@ function handleCardAction(
           </div>
         </div>
 
-        <textarea
-          v-model="inputText"
-          :class="$style.inputField"
+        <AiMentionInput
+          :disabled="disabled"
+          :loading="loading"
           :placeholder="messages.length === 0 ? '描述你想要生成的内容...' : '继续描述...'"
-          :disabled="disabled || loading"
-          rows="1"
-          @keydown="handleKeydown"
+          @send="handleMentionSend"
         />
         <div :class="$style.inputFooter">
           <div :class="$style.inputHint">
@@ -393,6 +416,30 @@ function handleCardAction(
             </template>
           </div>
           <div :class="$style.inputActions">
+            <!-- RAG context indicator -->
+            <span
+              v-if="ragContext.length > 0"
+              :class="$style.ragIndicator"
+              :title="`已引用 ${ragContext.length} 个 Schema`"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+              </svg>
+              <span :class="$style.ragCount">{{ ragContext.length }}</span>
+            </span>
+            <!-- RAG search toggle button -->
+            <button
+              :class="[$style.ragBtn, { [$style.ragBtnActive]: ragVisible }]"
+              :disabled="disabled || loading"
+              title="引用 Schema（语义搜索）"
+              @click="ragVisible = !ragVisible"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </button>
             <!-- Hidden file input -->
             <input
               ref="fileInputRef"

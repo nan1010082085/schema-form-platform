@@ -282,8 +282,8 @@ export const searchWidgetsByKeywordTool = tool(
     }
   },
   {
-    name: 'search_widgets_by_keyword',
-    description: '基于关键词匹配搜索已有 Schema。使用 Jaccard 相似度匹配 Schema 名称和组件结构中的关键词，不支持语义理解。当用户描述模糊、需要按组件类型或功能特征查找时使用。',
+    name: 'fuzzy_search_schemas',
+    description: '基于关键词模糊搜索已有 Schema（非语义搜索，使用 Jaccard 相似度匹配名称和组件结构中的关键词）。当用户描述模糊、需要按组件类型或功能特征查找时使用。',
     schema: z.object({
       query: z.string().describe('关键词描述，如"请假申请表单"、"用户管理列表页"'),
       limit: z.number().optional().default(5).describe('返回数量上限，默认 5'),

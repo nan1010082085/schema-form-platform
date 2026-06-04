@@ -1,3 +1,5 @@
+@use 'datasource-dialog-tokens' as *;
+
 .root {
   height: 100%;
 }
@@ -22,7 +24,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: $datasource-section-gap;
 }
 
 /* ---- Test panel (right side) ---- */
@@ -32,14 +34,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-color-light);
-  border-radius: 6px;
-  background: var(--bg-color-gray-light);
+  border: $datasource-card-border;
+  border-radius: $datasource-card-radius;
+  background: $datasource-card-header-bg;
 }
 
 .testTitle {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: $datasource-title-font-size;
+  font-weight: $datasource-title-font-weight;
   color: var(--text-color-primary);
   padding: 10px 12px;
   border-bottom: 1px solid var(--border-color-light);
@@ -183,16 +185,12 @@
 
 /* ---- Group card ---- */
 .card {
-  border: 1px solid var(--border-color-light);
-  border-radius: 6px;
-  padding: 12px;
-  background: var(--bg-color-gray-light);
+  @include datasource-card;
+  background: $datasource-card-header-bg;
 }
 
 .cardTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color-primary);
+  @include datasource-card-title;
 }
 
 /* ---- Form fields ---- */
@@ -205,11 +203,7 @@
 }
 
 .label {
-  width: 50px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--text-color-secondary);
-  line-height: 32px;
+  @include datasource-label;
 }
 
 .required {
@@ -217,16 +211,11 @@
 }
 
 .row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
+  @include datasource-row;
 }
 
 .error {
-  font-size: 11px;
-  color: var(--color-danger);
-  margin-top: 3px;
+  @include datasource-error;
 }
 
 /* ---- KV editor ---- */
@@ -247,27 +236,6 @@
 }
 
 /* ---- Global control height override ---- */
-.root :global(.el-input__wrapper),
-.root :global(.el-select .el-input__wrapper) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-.root :global(.el-input-number) {
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
-.root :global(.el-input-number .el-input__wrapper) {
-  height: auto !important;
-  min-height: auto !important;
-}
-
-.root :global(.el-textarea__inner) {
-  min-height: 32px;
-}
-
-.root :global(.el-button:not(.is-text):not(.is-link)) {
-  height: 32px !important;
-  min-height: 32px !important;
+.root {
+  @include datasource-unified-controls;
 }

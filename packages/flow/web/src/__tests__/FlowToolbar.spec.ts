@@ -1,6 +1,23 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { setActivePinia, createPinia } from 'pinia'
 import FlowToolbar from '../components/FlowToolbar.vue'
+
+vi.mock('../api/flowApi', () => ({
+  flowApi: {
+    getNotifications: vi.fn().mockResolvedValue({ items: [], total: 0, unreadCount: 0 }),
+    getUnreadCount: vi.fn().mockResolvedValue({ count: 0 }),
+    markNotificationAsRead: vi.fn().mockResolvedValue(null),
+    markAllNotificationsAsRead: vi.fn().mockResolvedValue(null),
+    markNotificationsBatchRead: vi.fn().mockResolvedValue({ modifiedCount: 0 }),
+  },
+}))
+
+vi.mock('@schema-form/socket', () => ({
+  connect: vi.fn(),
+  identify: vi.fn(),
+  onFlowNotification: vi.fn().mockReturnValue(() => {}),
+}))
 
 const elTooltipStub = {
   template: '<span><slot /></span>',
@@ -14,6 +31,10 @@ function mountToolbar(props: Record<string, unknown> = {}) {
 }
 
 describe('FlowToolbar', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('renders default title when no title prop provided', () => {
     const wrapper = mountToolbar()
     expect(wrapper.text()).toContain('流程设计器')

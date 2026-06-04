@@ -19,10 +19,29 @@ export interface ApiResponse<T> {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+/** Token 提供者，由 useAuth 注入，避免 apiClient 直接耦合 store */
+let tokenProvider: (() => string | null) | null = null
+
+/** 401 回调，由 useAuth 注入，用于清除认证状态 */
+let onUnauthorized: (() => void) | null = null
+
+export function setTokenProvider(provider: () => string | null): void {
+  tokenProvider = provider
+}
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  onUnauthorized = handler
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {}
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
+  }
+
+  const token = tokenProvider?.()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -30,6 +49,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
+
+  // 401 清除认证状态并跳转登录页
+  if (response.status === 401 && path !== '/auth/login') {
+    onUnauthorized?.()
+    window.location.href = '/login'
+    throw new ApiError('Authentication required', 401)
+  }
 
   const json = (await response.json()) as ApiResponse<T>
 

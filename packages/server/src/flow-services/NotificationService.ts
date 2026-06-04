@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import mongoose from 'mongoose'
 import { type NotificationType, type INotification } from '../flow-models/Notification.js'
+import { getIO } from '../socket.js'
 
 interface TaskNotificationData {
   taskId: string
@@ -55,7 +56,27 @@ export class NotificationService {
       relatedId: data.taskId,
       relatedType: 'task',
     })
-    return doc.toObject() as INotification
+
+    const notification = doc.toObject() as INotification
+    this.pushToClient(userId, notification)
+    return notification
+  }
+
+  private pushToClient(userId: string, notification: INotification): void {
+    const io = getIO()
+    if (!io) return
+    // Emit to the user's personal room
+    io.to(`user:${userId}`).emit('flow:notification', {
+      id: notification._id,
+      userId: notification.userId,
+      type: notification.type,
+      title: notification.title,
+      content: notification.content,
+      relatedId: notification.relatedId,
+      relatedType: notification.relatedType,
+      isRead: notification.isRead,
+      createdAt: notification.createdAt,
+    })
   }
 
   async sendBatchNotifications(userIds: string[], type: NotificationType, data: TaskNotificationData): Promise<void> {
@@ -108,6 +129,14 @@ export class NotificationService {
   async markAllAsRead(userId: string): Promise<number> {
     const result = await this.model.updateMany(
       { userId, isRead: false },
+      { isRead: true },
+    )
+    return result.modifiedCount
+  }
+
+  async markBatchAsRead(ids: string[], userId: string): Promise<number> {
+    const result = await this.model.updateMany(
+      { _id: { $in: ids }, userId, isRead: false },
       { isRead: true },
     )
     return result.modifiedCount

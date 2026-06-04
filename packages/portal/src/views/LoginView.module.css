@@ -1,0 +1,50 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e8f0fe 0%, #f5f6fa 100%);
+}
+
+.card {
+  width: 420px;
+  padding: 48px 40px 36px;
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.5px;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: var(--font-size-14);
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rememberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.errorAlert {
+  margin-bottom: 8px;
+}

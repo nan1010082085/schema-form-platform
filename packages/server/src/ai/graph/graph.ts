@@ -268,8 +268,10 @@ ${userContent}
       taskChain: [{ agent: 'editor', description: '生成表单', status: 'pending' }],
       currentStepIndex: 0,
     }
-  } catch {
+  } catch (err) {
     // 降级：关键词匹配
+    const errMsg = err instanceof Error ? err.message : String(err)
+    console.warn(`[thinker] LLM 调用失败，降级到关键词匹配路由: ${errMsg}`)
     const lower = userContent.toLowerCase()
     const isFlow = ['流程', '审批', '节点', 'BPMN', 'workflow'].some(kw => lower.includes(kw.toLowerCase()))
     const agent = isFlow ? 'flow' : 'editor'

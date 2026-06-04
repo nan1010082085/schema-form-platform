@@ -11,6 +11,7 @@ import type {
   AIMessage,
   AgentType,
   ChatContext,
+  ChatSettings,
   Conversation,
   Widget,
   FlowGraph,
@@ -21,6 +22,7 @@ import type {
   SchemaDiff,
   FlowDiff,
   VersionEntry,
+  RagSearchResult,
 } from '@/types'
 import {
   chat,
@@ -35,8 +37,14 @@ import {
   getLLMUsage,
   getLLMStrategies,
   switchLLMStrategy,
+  searchRag,
+  searchConversations,
+  mentionSearch,
   type LLMProviderInfo,
   type LLMAggregatedUsage,
+  type MentionSearchResult,
+  type MentionType,
+  type SearchResult,
 } from '@/api/aiApi'
 
 export const useAiStore = defineStore('ai', () => {
@@ -87,6 +95,28 @@ export const useAiStore = defineStore('ai', () => {
   const llmStrategies = ref<string[]>([])
   const llmUsage = ref<LLMAggregatedUsage | null>(null)
   const llmLoading = ref(false)
+
+  // ---- RAG 状态 ----
+  const ragSearchResults = ref<RagSearchResult[]>([])
+  const ragSearching = ref(false)
+  /** 用户选中的 RAG context，发送消息时携带 */
+  const ragContext = ref<RagSearchResult[]>([])
+
+  // ---- Chat Settings ----
+  const CHAT_SETTINGS_KEY = 'ai-chat-settings'
+
+  const DEFAULT_CHAT_SETTINGS: ChatSettings = {
+    preferences: {
+      replyLanguage: 'zh-CN',
+      replyStyle: 'detailed',
+      codeComment: 'yes',
+    },
+    historySummary: {
+      mode: 'auto',
+    },
+  }
+
+  const chatSettings = ref<ChatSettings>(loadChatSettings())
 
   // ---- Getters ----
 
@@ -144,7 +174,18 @@ export const useAiStore = defineStore('ai', () => {
         const stream = chat({
           conversationId: currentConversationId.value ?? undefined,
           message: content,
-          context: context.value,
+          context: {
+            ...context.value,
+            preferences: {
+              ...context.value.preferences,
+              replyLanguage: chatSettings.value.preferences.replyLanguage,
+              replyStyle: chatSettings.value.preferences.replyStyle,
+              codeComment: chatSettings.value.preferences.codeComment,
+            },
+            historySummary: chatSettings.value.historySummary.mode === 'manual'
+              ? chatSettings.value.historySummary.manualSummary
+              : context.value.historySummary,
+          },
           mentions: mentions && mentions.length > 0 ? mentions : undefined,
         }, signal)
 
@@ -247,10 +288,21 @@ export const useAiStore = defineStore('ai', () => {
     loading.value = true
     error.value = null
 
+    // 将 RAG context 注入消息内容
+    let enrichedContent = content
+    if (ragContext.value.length > 0) {
+      const ragBlock = ragContext.value
+        .map((r) => `[引用 Schema: ${r.name}] (相似度 ${r.score}%, 组件: ${r.widgetTypes.join(', ')})`)
+        .join('\n')
+      enrichedContent = `[RAG 上下文]\n${ragBlock}\n\n${content}`
+      // 发送后清除 RAG context
+      ragContext.value = []
+    }
+
     // 追加用户消息
     messages.value.push({
       role: 'user',
-      content,
+      content: enrichedContent,
       timestamp: new Date(),
       status: 'sent',
     })
@@ -264,7 +316,7 @@ export const useAiStore = defineStore('ai', () => {
       status: 'streaming',
     })
 
-    await _executeStream(content, mentions, assistantIndex)
+    await _executeStream(enrichedContent, mentions, assistantIndex)
   }
 
   /**
@@ -495,6 +547,64 @@ export const useAiStore = defineStore('ai', () => {
     context.value.source = agent === 'auto' ? 'standalone' : (agent as 'editor' | 'flow')
   }
 
+  // ---- RAG Actions ----
+
+  async function searchRagAction(query: string, limit?: number): Promise<void> {
+    if (!query.trim()) {
+      ragSearchResults.value = []
+      return
+    }
+    ragSearching.value = true
+    try {
+      const result = await searchRag({ query: query.trim(), limit: limit ?? 5 })
+      ragSearchResults.value = result.schemas
+    } finally {
+      ragSearching.value = false
+    }
+  }
+
+  function addRagContext(item: RagSearchResult): void {
+    if (!ragContext.value.find((c) => c.id === item.id)) {
+      ragContext.value.push(item)
+    }
+  }
+
+  function removeRagContext(id: string): void {
+    ragContext.value = ragContext.value.filter((c) => c.id !== id)
+  }
+
+  function clearRagContext(): void {
+    ragContext.value = []
+    ragSearchResults.value = []
+  }
+
+  function loadChatSettings(): ChatSettings {
+    try {
+      const stored = localStorage.getItem(CHAT_SETTINGS_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored) as ChatSettings
+        return {
+          preferences: { ...DEFAULT_CHAT_SETTINGS.preferences, ...parsed.preferences },
+          historySummary: { ...DEFAULT_CHAT_SETTINGS.historySummary, ...parsed.historySummary },
+        }
+      }
+    } catch {
+      // localStorage 不可用或数据损坏，使用默认值
+    }
+    return { ...DEFAULT_CHAT_SETTINGS }
+  }
+
+  function updateChatSettings(settings: {
+    preferences?: Partial<ChatSettings['preferences']>
+    historySummary?: Partial<ChatSettings['historySummary']>
+  }): void {
+    chatSettings.value = {
+      preferences: { ...chatSettings.value.preferences, ...settings.preferences },
+      historySummary: { ...chatSettings.value.historySummary, ...settings.historySummary },
+    }
+    localStorage.setItem(CHAT_SETTINGS_KEY, JSON.stringify(chatSettings.value))
+  }
+
   function clearConversation(): void {
     // 取消正在进行的请求
     if (abortController.value) {
@@ -514,6 +624,10 @@ export const useAiStore = defineStore('ai', () => {
     schemaUpdateDescription.value = null
     versionHistory.value = []
     currentVersionIndex.value = -1
+
+    // 重置 RAG 状态
+    ragSearchResults.value = []
+    ragContext.value = []
 
     // 重置 SSE 状态
     sseStatus.value = 'idle'
@@ -649,6 +763,24 @@ export const useAiStore = defineStore('ai', () => {
     await loadVersionHistory()
   }
 
+  // ---- 对话搜索 ----
+
+  /** 搜索对话列表 */
+  async function searchConversationsAction(query: string): Promise<SearchResult> {
+    return searchConversations({ keyword: query })
+  }
+
+  // ---- Mention 搜索 ----
+
+  /** 搜索可引用的 Schema/Flow/Widget */
+  async function mentionSearchAction(
+    query: string,
+    type: MentionType,
+    limit = 10,
+  ): Promise<MentionSearchResult[]> {
+    return mentionSearch(query, type, limit)
+  }
+
   // ---- LLM Provider 管理 ----
 
   async function loadLLMProviders(): Promise<void> {
@@ -716,6 +848,10 @@ export const useAiStore = defineStore('ai', () => {
     llmStrategies,
     llmUsage,
     llmLoading,
+    chatSettings,
+    ragSearchResults,
+    ragSearching,
+    ragContext,
 
     // getters
     currentConversation,
@@ -747,5 +883,13 @@ export const useAiStore = defineStore('ai', () => {
     loadLLMUsage,
     switchProvider,
     switchStrategy,
+    updateChatSettings,
+    loadChatSettings,
+    searchRagAction,
+    addRagContext,
+    removeRagContext,
+    clearRagContext,
+    searchConversationsAction,
+    mentionSearchAction,
   }
 })

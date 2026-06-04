@@ -1,0 +1,35 @@
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ai-text-primary, #333333);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ai-text-secondary, #666666);
+}
+
+.radioGroup {
+  width: 100%;
+}

@@ -29,10 +29,18 @@ export interface FlowMonitorTrendPoint {
   count: number
 }
 
+/** 热门流程 Top N */
+export interface FlowMonitorTopFlow {
+  definitionId: string
+  flowName: string
+  count: number
+}
+
 /** 监控仪表盘完整数据 */
 export interface FlowMonitorDashboard {
   stats: FlowMonitorStats
   avgDuration: number
   nodeStats: FlowMonitorNodeStat[]
   trend: FlowMonitorTrendPoint[]
+  topFlows: FlowMonitorTopFlow[]
 }

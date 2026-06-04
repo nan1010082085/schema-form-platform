@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
+import AiStepCard from './AiStepCard.vue'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
 import FlowCard from './FlowCard.vue'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
+import type { StepData } from '@/types'
 
 export type MessageRole = 'user' | 'assistant'
 
@@ -32,6 +32,7 @@ export interface ToolCallDisplay {
   name: string
   arguments: Record<string, unknown>
   result?: unknown
+  error?: string
 }
 
 export interface AiMessageProps {
@@ -54,9 +55,6 @@ const emit = defineEmits<{
   'card-primary-action': [cardIndex: number]
   'card-secondary-action': [cardIndex: number]
 }>()
-
-const thinkingExpanded = ref(false)
-const toolCallsExpanded = ref(false)
 
 // ---- F2: rAF-batched content for streaming ----
 
@@ -81,30 +79,89 @@ onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)
 })
 
-/** 将 Markdown 内容转为 HTML（经 DOMPurify 消毒）——基于防抖后的值 */
-const renderedContent = computed(() => {
-  if (!renderedContentRef.value) return ''
-  const rawHtml = marked.parse(renderedContentRef.value, { breaks: true }) as string
-  return DOMPurify.sanitize(rawHtml)
-})
+// ---- Tool name display map ----
+
+const TOOL_NAME_MAP: Record<string, string> = {
+  search_schemas: '搜索表单',
+  get_schema_detail: '获取表单详情',
+  search_published_schemas: '搜索已发布表单',
+  get_widget_catalogue: '查询组件目录',
+  search_widgets_by_keyword: '关键词匹配搜索',
+  validate_schema: '校验 Schema',
+  rag_search: '向量语义搜索',
+  generate_schema: '生成表单',
+  search_flows: '搜索流程',
+  get_flow_detail: '获取流程详情',
+  search_users: '搜索用户',
+  validate_flow: '校验流程',
+}
 
 function formatToolName(name: string): string {
-  const nameMap: Record<string, string> = {
-    search_schemas: '搜索表单',
-    get_schema_detail: '获取表单详情',
-    search_published_schemas: '搜索已发布表单',
-    get_widget_catalogue: '查询组件目录',
-    search_widgets_by_keyword: '关键词匹配搜索',
-    validate_schema: '校验 Schema',
-    rag_search: '向量语义搜索',
-    generate_schema: '生成表单',
-    search_flows: '搜索流程',
-    get_flow_detail: '获取流程详情',
-    search_users: '搜索用户',
-    validate_flow: '校验流程',
-  }
-  return nameMap[name] ?? name
+  return TOOL_NAME_MAP[name] ?? name
 }
+
+// ---- Derive step list from flat message data ----
+
+const steps = computed<StepData[]>(() => {
+  const result: StepData[] = []
+
+  // Step: thinking
+  if (props.thinking) {
+    result.push({
+      type: 'thinking',
+      title: '思考过程',
+      content: props.thinking,
+      status: 'done',
+    })
+  }
+
+  // Steps: tool calls
+  if (props.toolCalls && props.toolCalls.length > 0) {
+    for (const tc of props.toolCalls) {
+      const hasError = !!tc.error
+      const hasResult = tc.result !== undefined
+      const status = hasError ? 'error' : hasResult ? 'done' : 'running'
+
+      result.push({
+        type: hasError ? 'tool_error' : 'tool_call',
+        title: formatToolName(tc.name),
+        status,
+        toolName: tc.name,
+        toolDisplayName: formatToolName(tc.name),
+        toolResult: tc.result,
+        toolArguments: tc.arguments,
+        error: tc.error,
+      })
+    }
+  }
+
+  // Steps: embedded result cards
+  if (props.cards && props.cards.length > 0) {
+    for (const card of props.cards) {
+      result.push({
+        type: 'result',
+        title: card.title,
+        status: 'done',
+        cardType: card.type,
+        cardTitle: card.title,
+        primaryAction: card.primaryAction,
+        secondaryAction: card.secondaryAction,
+      })
+    }
+  }
+
+  // Step: text reply
+  if (renderedContentRef.value) {
+    result.push({
+      type: 'text',
+      title: '回复',
+      content: renderedContentRef.value,
+      status: 'done',
+    })
+  }
+
+  return result
+})
 </script>
 
 <template>
@@ -113,80 +170,76 @@ function formatToolName(name: string): string {
       {{ label }}
     </span>
 
-    <!-- Thinking 折叠区 -->
-    <div v-if="thinking" :class="$style.thinking">
-      <div :class="$style.thinkingHeader" @click="thinkingExpanded = !thinkingExpanded">
-        <span :class="$style.thinkingIcon">{{ thinkingExpanded ? '▾' : '▸' }}</span>
-        <span :class="$style.thinkingLabel">思考过程</span>
+    <!-- User message: plain content -->
+    <template v-if="role === 'user'">
+      <div :class="$style.body">
+        <div v-if="content" :class="$style.plainText">{{ content }}</div>
       </div>
-      <div v-if="thinkingExpanded" :class="$style.thinkingBody">
-        {{ thinking }}
+    </template>
+
+    <!-- Assistant message: step cards -->
+    <template v-else>
+      <!-- Loading placeholder when no steps yet -->
+      <div v-if="loading && steps.length === 0" :class="$style.loadingPlaceholder">
+        <AiLoadingDots />
       </div>
-    </div>
 
-    <!-- Tool Calls 折叠区 -->
-    <div v-if="toolCalls && toolCalls.length > 0" :class="$style.toolCalls">
-      <div :class="$style.toolCallsHeader" @click="toolCallsExpanded = !toolCallsExpanded">
-        <span :class="$style.toolCallsIcon">{{ toolCallsExpanded ? '▾' : '▸' }}</span>
-        <span :class="$style.toolCallsLabel">调用了 {{ toolCalls.length }} 个工具</span>
+      <!-- Step card list -->
+      <div v-if="steps.length > 0" :class="$style.stepList">
+        <AiStepCard
+          v-for="(step, idx) in steps"
+          :key="idx"
+          :index="idx + 1"
+          :type="step.type"
+          :title="step.title"
+          :content="step.content"
+          :status="step.status"
+          :tool-name="step.toolName"
+          :tool-display-name="step.toolDisplayName"
+          :tool-result="step.toolResult"
+          :tool-arguments="step.toolArguments"
+          :error="step.error"
+          :card-type="step.cardType"
+          :card-title="step.cardTitle"
+          :primary-action="step.primaryAction"
+          :secondary-action="step.secondaryAction"
+          :is-last="idx === steps.length - 1"
+          @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
+          @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
+        >
+          <!-- Result card slot -->
+          <template v-if="step.type === 'result' && cards">
+            <SchemaCard
+              v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
+              :key="'s' + cIdx"
+              :title="card.title"
+              :fields="card.fields"
+              :primary-action="card.primaryAction"
+              :secondary-action="card.secondaryAction"
+              compact
+              @primary-action="emit('card-primary-action', cIdx)"
+              @secondary-action="emit('card-secondary-action', cIdx)"
+            />
+            <FlowCard
+              v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
+              :key="'f' + cIdx"
+              :title="card.title"
+              :nodes="card.nodes"
+              :primary-action="card.primaryAction"
+              :secondary-action="card.secondaryAction"
+              compact
+              @primary-action="emit('card-primary-action', cIdx)"
+              @secondary-action="emit('card-secondary-action', cIdx)"
+            />
+          </template>
+        </AiStepCard>
       </div>
-      <div v-if="toolCallsExpanded" :class="$style.toolCallsBody">
-        <div v-for="(tc, idx) in toolCalls" :key="idx" :class="$style.toolCallItem">
-          <div :class="$style.toolCallName">
-            <span :class="$style.toolCallBadge">{{ formatToolName(tc.name) }}</span>
-            <span :class="$style.toolCallRaw">{{ tc.name }}</span>
-          </div>
-          <div v-if="tc.arguments && Object.keys(tc.arguments).length > 0" :class="$style.toolCallArgs">
-            <div :class="$style.toolCallArgsLabel">参数</div>
-            <pre :class="$style.toolCallArgsPre">{{ JSON.stringify(tc.arguments, null, 2) }}</pre>
-          </div>
-          <div v-if="tc.result !== undefined" :class="$style.toolCallResult">
-            <div :class="$style.toolCallResultLabel">结果</div>
-            <div v-if="(tc.result as Record<string, unknown>)?.summary" :class="$style.toolCallSummary">
-              {{ (tc.result as Record<string, unknown>).summary }}
-            </div>
-            <pre :class="$style.toolCallResultPre">{{ JSON.stringify(tc.result, null, 2) }}</pre>
-          </div>
-        </div>
+
+      <!-- Tip -->
+      <div v-if="tip" :class="$style.tip">
+        <span :class="$style.tipIcon">&#x1F4A1;</span>
+        <span>{{ tip }}</span>
       </div>
-    </div>
-
-    <div v-if="loading" :class="$style.body">
-      <AiLoadingDots />
-    </div>
-    <div v-else :class="$style.body">
-      <div v-if="content" :class="$style.markdown" v-html="renderedContent" />
-    </div>
-
-    <!-- Tip 提示 -->
-    <div v-if="tip" :class="$style.tip">
-      <span :class="$style.tipIcon">💡</span>
-      <span>{{ tip }}</span>
-    </div>
-
-    <template v-if="cards">
-      <template v-for="(card, idx) in cards" :key="idx">
-        <SchemaCard
-          v-if="card.type === 'schema'"
-          :title="card.title"
-          :fields="card.fields"
-          :primary-action="card.primaryAction"
-          :secondary-action="card.secondaryAction"
-          compact
-          @primary-action="emit('card-primary-action', idx)"
-          @secondary-action="emit('card-secondary-action', idx)"
-        />
-        <FlowCard
-          v-if="card.type === 'flow'"
-          :title="card.title"
-          :nodes="card.nodes"
-          :primary-action="card.primaryAction"
-          :secondary-action="card.secondaryAction"
-          compact
-          @primary-action="emit('card-primary-action', idx)"
-          @secondary-action="emit('card-secondary-action', idx)"
-        />
-      </template>
     </template>
   </div>
 </template>

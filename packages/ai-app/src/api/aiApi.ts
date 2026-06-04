@@ -12,6 +12,7 @@ import type {
   PublishRequest,
   PublishResponse,
   Conversation,
+  RagSearchResponse,
 } from '@/types'
 
 // ---- 错误类型 ----
@@ -144,28 +145,31 @@ export function chat(request: ChatRequest, signal?: AbortSignal): ReadableStream
             buffer += decoder.decode(value, { stream: true })
           }
 
-          buffer = processBuffer(buffer)
-          if (streamClosed) return
-
           if (done) {
-            // Flush TextDecoder internal buffer (partial multi-byte characters)
+            // Flush TextDecoder internal buffer (partial multi-byte characters).
+            // Must happen BEFORE parsing — otherwise incomplete multi-byte
+            // sequences produce replacement chars that break JSON parsing.
             buffer += decoder.decode()
-            // Process remaining buffer. The trailing line (no \n) is also
+
+            // Process all remaining lines. The trailing line (no \n) is also
             // a complete SSE line — the stream has ended so there is nothing
             // more to wait for.
-            if (buffer.length > 0) {
-              for (const line of buffer.split('\n')) {
-                const trimmed = line.trim()
-                if (!trimmed || trimmed.startsWith(':')) continue
-                const data = extractData(trimmed)
-                if (data === null) continue
-                handleData(data)
-                if (streamClosed) return
-              }
+            for (const line of buffer.split('\n')) {
+              const trimmed = line.trim()
+              if (!trimmed || trimmed.startsWith(':')) continue
+              const data = extractData(trimmed)
+              if (data === null) continue
+              handleData(data)
+              if (streamClosed) return
             }
+
             if (!streamClosed) controller.close()
             return
           }
+
+          // Stream not done — process complete lines, keep remainder
+          buffer = processBuffer(buffer)
+          if (streamClosed) return
         }
       } catch (err) {
         controller.error(err)
@@ -356,6 +360,47 @@ export async function searchConversations(params: SearchConversationsParams): Pr
 
   const qs = query.toString()
   return request<SearchResult>(`/ai/conversations/search${qs ? `?${qs}` : ''}`)
+}
+
+// ---- RAG Semantic Search ----
+
+export interface RagSearchParams {
+  query: string
+  limit?: number
+  type?: 'form' | 'search_list'
+}
+
+export async function searchRag(params: RagSearchParams): Promise<RagSearchResponse> {
+  const query = new URLSearchParams()
+  query.set('query', params.query)
+  if (params.limit !== undefined) query.set('limit', String(params.limit))
+  if (params.type) query.set('type', params.type)
+
+  return request<RagSearchResponse>(`/ai/rag/search?${query.toString()}`)
+}
+
+// ---- Mention Search ----
+
+export type MentionType = 'schema' | 'flow' | 'widget'
+
+export interface MentionSearchResult {
+  id: string
+  type: MentionType
+  name: string
+  description?: string
+  updatedAt?: string
+}
+
+/**
+ * Search schemas, flows, or widgets for @mention autocomplete.
+ */
+export async function mentionSearch(
+  query: string,
+  type: MentionType,
+  limit = 10,
+): Promise<MentionSearchResult[]> {
+  const params = new URLSearchParams({ q: query, limit: String(limit) })
+  return request<MentionSearchResult[]>(`/ai/mention/search/${type}?${params}`)
 }
 
 // ---- LLM Provider Management ----

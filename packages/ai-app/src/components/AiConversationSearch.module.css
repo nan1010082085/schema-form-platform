@@ -1,0 +1,198 @@
+.wrapper {
+  position: relative;
+}
+
+/* Search input bar */
+.searchBar {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  border-radius: var(--ai-radius-sm, 4px);
+  padding: 6px 8px 6px 28px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ai-text-primary, #333333);
+  outline: none;
+  background: var(--ai-bg-gray, #F5F7FA);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-bg-white, #FFFFFF);
+}
+
+.searchInput::placeholder {
+  color: var(--ai-text-disabled, #C0C4CC);
+}
+
+/* Search icon inside input */
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  color: var(--ai-text-hint, #999999);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* Search results dropdown */
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 360px;
+  background: var(--ai-bg-white, #FFFFFF);
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  border-radius: 0 0 var(--ai-radius-md, 8px) var(--ai-radius-md, 8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.results::-webkit-scrollbar {
+  width: 4px;
+}
+
+.results::-webkit-scrollbar-thumb {
+  background: var(--ai-border-base, #D5DDE3);
+  border-radius: 2px;
+}
+
+/* Single result item */
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  transition: background 0.1s;
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItem:hover {
+  background: var(--ai-color-primary-bg, #EEF5FF);
+}
+
+/* Result header: title + source tag */
+.resultHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resultTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ai-text-primary, #333333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.sourceTag {
+  padding: 1px 6px;
+  border-radius: var(--ai-radius-sm, 3px);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.sourceTag.editor {
+  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
+  color: var(--ai-color-success, #26A036);
+}
+
+.sourceTag.flow {
+  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
+  color: var(--ai-color-info, #4581E9);
+}
+
+.sourceTag.standalone {
+  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
+  color: var(--ai-color-warning, #D48806);
+}
+
+/* Result content preview */
+.resultContent {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* Result time */
+.resultTime {
+  font-size: 10px;
+  color: var(--ai-text-disabled, #C0C4CC);
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  letter-spacing: 0.3px;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 24px 0;
+  font-size: 12px;
+  color: var(--ai-text-disabled, #C0C4CC);
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 12px;
+  color: var(--ai-text-hint, #999999);
+}
+
+/* Result count header */
+.resultCount {
+  padding: 6px 12px;
+  font-size: 10px;
+  color: var(--ai-text-hint, #999999);
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  background: var(--ai-bg-gray, #F5F7FA);
+}
+
+/* Clear button */
+.clearBtn {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ai-border-base, #D5DDE3);
+  color: var(--ai-bg-white, #FFFFFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.clearBtn:hover {
+  background: var(--ai-text-hint, #999999);
+}

@@ -13,6 +13,7 @@ import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages
 import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { editorTools } from '../tools/editorTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
+import { truncateMessages } from './agentBase.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -120,11 +121,7 @@ export async function editorAgentNode(
   }).bindTools([...editorTools, ...collaborationTools])
 
   // Build message list: system prompt + conversation history (truncated) + current user message
-  const MAX_HISTORY = 10
-  const historyMessages = state.messages.slice(0, -1)
-  const truncatedHistory = historyMessages.length > MAX_HISTORY
-    ? historyMessages.slice(-MAX_HISTORY)
-    : historyMessages
+  const truncatedHistory = truncateMessages(state.messages)
 
   const messages = [
     new SystemMessage(systemPrompt),

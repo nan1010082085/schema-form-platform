@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Form Platform — 可视化低代码平台</title>
+<style>
+  :root {
+    --primary: #409eff;
+    --primary-dark: #337ecc;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #303133;
+    --text-secondary: #606266;
+    --border: #e4e7ed;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --green: #67c23a;
+    --orange: #e6a23c;
+    --red: #f56c6c;
+    --purple: #9b59b6;
+    --cyan: #00bcd4;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Navigation */
+  .nav {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .nav-brand { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none !important; transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f0f2f5; color: var(--text); }
+  .nav-link.active { background: var(--primary); color: #fff; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff; padding: 80px 24px 60px; text-align: center;
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 12px; }
+  .hero .subtitle { font-size: 1.2rem; color: #8ec5fc; margin-bottom: 20px; }
+  .hero p { font-size: 1.1rem; color: #b0c4de; max-width: 700px; margin: 0 auto; }
+  .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+    border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+  }
+  .badge-vue { background: #42b883; color: #fff; }
+  .badge-ts { background: #3178c6; color: #fff; }
+  .badge-koa { background: #333; color: #fff; }
+  .badge-mongo { background: #47a248; color: #fff; }
+  .badge-ai { background: #ff6b6b; color: #fff; }
+
+  /* Container */
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Section */
+  .section-title {
+    font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; color: var(--text);
+  }
+  .section-desc { color: var(--text-secondary); margin-bottom: 28px; }
+
+  /* Grid */
+  .grid { display: grid; gap: 20px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  /* Card */
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 28px;
+    border: 1px solid var(--border); transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 1.15rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .card p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 16px; }
+  .card .icon { font-size: 1.6rem; }
+  .card .link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.88rem; font-weight: 500; color: var(--primary);
+  }
+  .card .link:hover { text-decoration: underline; }
+
+  .card-editor { border-left: 4px solid var(--primary); }
+  .card-flow { border-left: 4px solid var(--green); }
+  .card-ai { border-left: 4px solid var(--red); }
+  .card-server { border-left: 4px solid var(--orange); }
+
+  /* Stats */
+  .stat-row { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; margin: 40px 0; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
+  .stat .label { font-size: 0.88rem; color: var(--text-secondary); }
+
+  /* Flow Diagram */
+  .flow-diagram {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 40px; margin: 30px 0;
+  }
+  .flow-title {
+    text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 30px;
+    color: var(--text);
+  }
+  .flow-container {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    padding: 16px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+    text-align: center; min-width: 140px;
+  }
+  .flow-node-user { background: #e3f2fd; color: #1565c0; border: 2px solid #90caf9; }
+  .flow-node-editor { background: #e8f5e9; color: #2e7d32; border: 2px solid #a5d6a7; }
+  .flow-node-server { background: #fff3e0; color: #e65100; border: 2px solid #ffcc80; }
+  .flow-node-db { background: #f3e5f5; color: #7b1fa2; border: 2px solid #ce93d8; }
+  .flow-node-ai { background: #fce4ec; color: #c62828; border: 2px solid #ef9a9a; }
+  .flow-arrow {
+    font-size: 1.5rem; color: var(--text-secondary); padding: 0 12px;
+  }
+  .flow-label {
+    font-size: 0.75rem; color: var(--text-secondary); text-align: center;
+    margin-top: 4px;
+  }
+
+  /* Architecture */
+  .arch-diagram {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px; margin: 20px 0;
+  }
+  .arch-layer {
+    display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+    border-radius: 6px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500;
+  }
+  .arch-layer .layer-label {
+    min-width: 120px; font-weight: 700; text-align: right; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .arch-items { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .arch-item {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.82rem;
+    background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1);
+  }
+  .layer-frontend { background: #e8f4fd; }
+  .layer-frontend .layer-label { color: #1976d2; }
+  .layer-backend { background: #fff3e0; }
+  .layer-backend .layer-label { color: #e65100; }
+  .layer-data { background: #f3e5f5; }
+  .layer-data .layer-label { color: #7b1fa2; }
+  .layer-infra { background: #e8f5e9; }
+  .layer-infra .layer-label { color: #2e7d32; }
+
+  /* Tags */
+  .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 500; margin: 2px;
+  }
+  .tag-blue { background: #ecf5ff; color: var(--primary); }
+  .tag-green { background: #f0f9eb; color: var(--green); }
+  .tag-orange { background: #fdf6ec; color: var(--orange); }
+  .tag-red { background: #fef0f0; color: var(--red); }
+
+  /* Access Bar */
+  .access-bar {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; margin: 30px 0;
+  }
+  .access-bar .access-label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+  .access-link {
+    display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px;
+    border-radius: 6px; font-size: 0.9rem; font-weight: 500; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .access-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .access-link-primary { background: var(--primary); color: #fff; }
+  .access-link-primary:hover { background: var(--primary-dark); text-decoration: none; }
+  .access-link-green { background: var(--green); color: #fff; }
+  .access-link-green:hover { background: #5daf34; text-decoration: none; }
+  .access-link-red { background: var(--red); color: #fff; }
+  .access-link-red:hover { background: #e04848; text-decoration: none; }
+  .access-link-orange { background: var(--orange); color: #fff; }
+  .access-link-orange:hover { background: #cf9236; text-decoration: none; }
+  .access-link-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .access-link-outline:hover { background: #ecf5ff; text-decoration: none; }
+
+  /* Features */
+  .feature-list { list-style: none; padding: 0; }
+  .feature-list li {
+    padding: 8px 0; font-size: 0.9rem; color: var(--text-secondary);
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .feature-list li::before {
+    content: ""; display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--primary); margin-top: 8px; flex-shrink: 0;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 40px 24px; color: var(--text-secondary);
+    font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 40px;
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .stat-row { justify-content: center; }
+    .flow-container { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+    .arch-layer { flex-direction: column; align-items: flex-start; }
+    .arch-layer .layer-label { text-align: left; min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">Schema Form Platform</div>
+  <div class="nav-links">
+    <a href="/docs/index.html" class="nav-link active">总览</a>
+    <a href="/docs/web.html" class="nav-link">前端</a>
+    <a href="/docs/flow.html" class="nav-link">流程</a>
+    <a href="/docs/ai.html" class="nav-link">AI</a>
+    <a href="/docs/server.html" class="nav-link">后端</a>
+    <a href="/docs/database.html" class="nav-link">数据库</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Schema Form Platform</h1>
+  <div class="subtitle">可视化低代码表单与流程设计平台</div>
+  <p>基于 Schema 驱动的可视化设计器，支持表单编排、BPMN 流程设计、AI 智能生成，通过 JSON Schema 描述业务结构，实现设计态与运行态分离。</p>
+  <div class="badges">
+    <span class="badge badge-vue">Vue 3.5</span>
+    <span class="badge badge-ts">TypeScript 5.7</span>
+    <span class="badge badge-koa">Koa.js</span>
+    <span class="badge badge-mongo">MongoDB</span>
+    <span class="badge badge-ai">AI Agent</span>
+  </div>
+</div>
+
+<!-- Quick Access -->
+<div class="container">
+  <div class="access-bar">
+    <span class="access-label">快速访问：</span>
+    <a href="/editor/" class="access-link access-link-primary">表单编辑器</a>
+    <a href="/flow/" class="access-link access-link-green">流程设计器</a>
+    <a href="/ai/" class="access-link access-link-red">AI 助手</a>
+    <a href="/api/health" class="access-link access-link-outline">API 健康检查</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-row">
+  <div class="stat"><div class="num">49</div><div class="label">表单组件</div></div>
+  <div class="stat"><div class="num">25</div><div class="label">流程节点</div></div>
+  <div class="stat"><div class="num">3</div><div class="label">AI Agent</div></div>
+  <div class="stat"><div class="num">14</div><div class="label">事件动作</div></div>
+  <div class="stat"><div class="num">6</div><div class="label">联动类型</div></div>
+  <div class="stat"><div class="num">9</div><div class="label">图表组件</div></div>
+</div>
+
+<!-- Sub Projects -->
+<div class="container">
+  <h2 class="section-title">子项目</h2>
+  <p class="section-desc">平台由四个核心模块组成，各司其职，通过 Schema 和 API 协作。</p>
+
+  <div class="grid grid-2">
+    <!-- Editor -->
+    <div class="card card-editor">
+      <h3><span class="icon"></span> 表单编辑器 (Editor)</h3>
+      <p>Schema 驱动的可视化自由布局表单设计器与运行时渲染引擎。支持拖拽编排、属性配置、事件联动、图表集成。</p>
+      <ul class="feature-list">
+        <li>49 个 Widget 组件，8 大分组</li>
+        <li>三栏布局：部件库 + 画布 + 属性面板</li>
+        <li>14 种事件动作，6 种联动类型</li>
+        <li>自由布局：绝对定位 + 拖拽手柄</li>
+        <li>9 种 ECharts 图表组件</li>
+        <li>qiankun / micro-app 微前端集成</li>
+      </ul>
+      <div style="margin-top: 16px;">
+        <span class="tag tag-blue">Vue 3.5</span>
+        <span class="tag tag-blue">Element Plus</span>
+        <span class="tag tag-blue">Pinia</span>
+        <span class="tag tag-blue">ECharts</span>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="/docs/web.html" class="link">查看文档 →</a>
+      </div>
+    </div>
+
+    <!-- Flow -->
+    <div class="card card-flow">
+      <h3><span class="icon"></span> 流程设计器 (Flow)</h3>
+      <p>BPMN 2.0 流程设计器与引擎，支持可视化流程编排、BPMN XML 导入导出、流程监控。</p>
+      <ul class="feature-list">
+        <li>25 种 BPMN 节点类型</li>
+        <li>事件 / 任务 / 网关 / 子流程 四大分类</li>
+        <li>BPMN 2.0 XML 导入导出</li>
+        <li>dagre 自动布局算法</li>
+        <li>流程监控面板</li>
+        <li>表单节点嵌入预览</li>
+      </ul>
+      <div style="margin-top: 16px;">
+        <span class="tag tag-green">Vue Flow</span>
+        <span class="tag tag-green">BPMN 2.0</span>
+        <span class="tag tag-green">dagre</span>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="/docs/flow.html" class="link">查看文档 →</a>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="card card-ai">
+      <h3><span class="icon"></span> AI 助手 (AI App)</h3>
+      <p>AI 智能助手应用，通过自然语言对话驱动表单 Schema 和流程图的生成，支持多 Agent 协作。</p>
+      <ul class="feature-list">
+        <li>3 种 Agent：Auto / Editor / Flow</li>
+        <li>SSE 流式响应</li>
+        <li>多模态输入（图片、PDF、Word）</li>
+        <li>RAG 语义检索</li>
+        <li>版本管理与对比</li>
+        <li>Micro-app 嵌入 Editor/Flow</li>
+      </ul>
+      <div style="margin-top: 16px;">
+        <span class="tag tag-red">LangGraph</span>
+        <span class="tag tag-red">SSE</span>
+        <span class="tag tag-red">RAG</span>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="/docs/ai.html" class="link">查看文档 →</a>
+      </div>
+    </div>
+
+    <!-- Server -->
+    <div class="card card-server">
+      <h3><span class="icon"></span> 后端服务 (Server)</h3>
+      <p>Koa.js + MongoDB 后端 API 服务，提供 Schema CRUD、认证、AI Agent 图编排、健康检查。</p>
+      <ul class="feature-list">
+        <li>Schema 管理：CRUD / 发布 / 版本</li>
+        <li>JWT + bcryptjs 认证</li>
+        <li>AI Agent：LangGraph 图编排</li>
+        <li>数据源 / 字典 / Mock 数据</li>
+        <li>Zod 请求校验</li>
+        <li>健康检查：API + DB ping</li>
+      </ul>
+      <div style="margin-top: 16px;">
+        <span class="tag tag-orange">Koa.js</span>
+        <span class="tag tag-orange">Mongoose</span>
+        <span class="tag tag-orange">JWT</span>
+        <span class="tag tag-orange">Zod</span>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="/docs/server.html" class="link">查看文档 →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Flow -->
+<div class="container">
+  <h2 class="section-title">数据流转</h2>
+  <p class="section-desc">用户操作驱动 Schema 生成，Schema 驱动表单渲染，实现设计态与运行态分离。</p>
+
+  <div class="flow-diagram">
+    <div class="flow-title">表单 Schema 数据流</div>
+    <div class="flow-container">
+      <div>
+        <div class="flow-node flow-node-user">用户</div>
+        <div class="flow-label">拖拽 / 配置</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-editor">Editor 编辑器</div>
+        <div class="flow-label">Widget Store</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-server">Server API</div>
+        <div class="flow-label">/api/schemas</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-db">MongoDB</div>
+        <div class="flow-label">FormSchema</div>
+      </div>
+    </div>
+
+    <div style="height: 40px;"></div>
+
+    <div class="flow-title">AI Schema 生成流</div>
+    <div class="flow-container">
+      <div>
+        <div class="flow-node flow-node-user">用户</div>
+        <div class="flow-label">自然语言</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-ai">AI App</div>
+        <div class="flow-label">对话输入</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-server">Server Agent</div>
+        <div class="flow-label">LangGraph</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-editor">Editor 渲染</div>
+        <div class="flow-label">Schema 预览</div>
+      </div>
+    </div>
+
+    <div style="height: 40px;"></div>
+
+    <div class="flow-title">流程设计数据流</div>
+    <div class="flow-container">
+      <div>
+        <div class="flow-node flow-node-user">用户</div>
+        <div class="flow-label">拖拽节点</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-flow">Flow 设计器</div>
+        <div class="flow-label">Vue Flow</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-server">Server API</div>
+        <div class="flow-label">BPMN XML</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-node flow-node-db">MongoDB</div>
+        <div class="flow-label">FlowSchema</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Architecture -->
+<div class="container">
+  <h2 class="section-title">技术架构</h2>
+  <p class="section-desc">前后端分离，Schema 驱动，微前端集成。</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer layer-frontend">
+      <div class="layer-label">Frontend</div>
+      <div class="arch-items">
+        <span class="arch-item">Editor (Vue 3 + Element Plus)</span>
+        <span class="arch-item">Flow (Vue Flow)</span>
+        <span class="arch-item">AI App (SSE + Micro-app)</span>
+        <span class="arch-item">Portal (qiankun 主应用)</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-backend">
+      <div class="layer-label">Backend</div>
+      <div class="arch-items">
+        <span class="arch-item">Koa.js API Server</span>
+        <span class="arch-item">LangGraph AI Agent</span>
+        <span class="arch-item">JWT Auth</span>
+        <span class="arch-item">Zod Validation</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-data">
+      <div class="layer-label">Data</div>
+      <div class="arch-items">
+        <span class="arch-item">MongoDB (FormSchema)</span>
+        <span class="arch-item">MongoDB (FlowSchema)</span>
+        <span class="arch-item">MongoDB (Conversations)</span>
+        <span class="arch-item">Vector Store (RAG)</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-infra">
+      <div class="layer-label">Infra</div>
+      <div class="arch-items">
+        <span class="arch-item">Vercel (Serverless)</span>
+        <span class="arch-item">Docker MongoDB</span>
+        <span class="arch-item">nginx (Production)</span>
+        <span class="arch-item">pm2 (Process Manager)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shared Packages -->
+<div class="container">
+  <h2 class="section-title">共享包</h2>
+  <p class="section-desc">跨模块复用的核心能力。</p>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <h3>@schema-form/shared-ai</h3>
+      <p>AI 元数据与 prompt 构建。从 Widget/Flow 节点定义提取，保证 AI 知识单一数据源。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/ai-sdk</h3>
+      <p>独立可复用的 Agent SDK，与 LangGraph 解耦，支持 BaseAgent、ToolRegistry、PromptBuilder。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/flow-shared</h3>
+      <p>流程引擎共享层，BPMN 2.0 类型系统、XML 导入导出引擎。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/socket</h3>
+      <p>WebSocket 实时通信，AI 协作同步。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>Schema Form Platform — 可视化低代码表单与流程设计平台</p>
+  <p style="margin-top: 8px;">技术栈：Vue 3.5 + TypeScript 5.7 + Koa.js + MongoDB + LangGraph</p>
+</div>
+
+</body>
+</html>

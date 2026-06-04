@@ -14,6 +14,7 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
+import { truncateMessages } from './agentBase.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -128,11 +129,7 @@ export async function flowAgentNode(
   }).bindTools([...flowTools, ...collaborationTools])
 
   // Build message list: system prompt + conversation history (truncated) + current user message
-  const MAX_HISTORY = 10
-  const historyMessages = state.messages.slice(0, -1)
-  const truncatedHistory = historyMessages.length > MAX_HISTORY
-    ? historyMessages.slice(-MAX_HISTORY)
-    : historyMessages
+  const truncatedHistory = truncateMessages(state.messages)
 
   const messages = [
     new SystemMessage(systemPrompt),

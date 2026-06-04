@@ -298,6 +298,164 @@ describe('chat', () => {
     expect(events).toHaveLength(1)
     expect(events[0]).toEqual({ type: 'text', content: 'fragmented' })
   })
+
+  it('handles data line split at "data: " prefix boundary', async () => {
+    // Chunk boundary falls right after "data: " — the value arrives in the next chunk
+    mockSSERawChunks([
+      'data: ',
+      '{"type":"text","content":"split-prefix"}\n\n',
+    ])
+
+    const stream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(stream)
+
+    expect(events).toHaveLength(1)
+    expect(events[0]).toEqual({ type: 'text', content: 'split-prefix' })
+  })
+
+  it('handles interleaved heartbeat comments and data events', async () => {
+    mockSSERawChunks([
+      ':heartbeat\n\n',
+      ':ping\n\n',
+      'data: {"type":"text","content":"A"}\n\n',
+      ':heartbeat\n\n',
+      'data: {"type":"text","content":"B"}\n\n',
+      ':heartbeat\n\n',
+      'data: [DONE]\n\n',
+    ])
+
+    const stream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(stream)
+
+    expect(events).toHaveLength(2)
+    expect(events[0]).toEqual({ type: 'text', content: 'A' })
+    expect(events[1]).toEqual({ type: 'text', content: 'B' })
+  })
+
+  it('handles empty data lines (no content between events)', async () => {
+    mockSSERawChunks([
+      'data: {"type":"text","content":"first"}\n\n',
+      '\n\n',
+      'data: {"type":"text","content":"second"}\n\n',
+    ])
+
+    const stream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(stream)
+
+    expect(events).toHaveLength(2)
+    expect(events[0]).toEqual({ type: 'text', content: 'first' })
+    expect(events[1]).toEqual({ type: 'text', content: 'second' })
+  })
+
+  it('flushes TextDecoder multi-byte chars before parsing final buffer', async () => {
+    // Encode a Chinese character payload manually to split a 3-byte UTF-8 char
+    const encoder = new TextEncoder()
+    const fullLine = 'data: {"type":"text","content":"你好"}\n\n'
+    const fullBytes = encoder.encode(fullLine)
+
+    // Split at the boundary of the first Chinese character (你 = 3 bytes in UTF-8)
+    // "你" starts at byte offset 22 (after 'data: {"type":"text","content":"')
+    const splitPoint = fullBytes.indexOf(encoder.encode('你')[0])
+    const firstChunk = fullBytes.slice(0, splitPoint)
+    const remainingBytes = fullBytes.slice(splitPoint)
+
+    // Further split the remaining bytes mid-character: take only first byte of "你"
+    const charYou = encoder.encode('你') // 3 bytes: 0xE4, 0xBD, 0xA0
+    const partialChar = charYou.slice(0, 2) // 2 of 3 bytes — TextDecoder will hold these
+
+    let pullCount = 0
+    const stream = new ReadableStream({
+      pull(controller) {
+        if (pullCount === 0) {
+          controller.enqueue(firstChunk)
+          pullCount++
+        } else if (pullCount === 1) {
+          // Send partial multi-byte char — TextDecoder holds the incomplete bytes
+          controller.enqueue(partialChar)
+          pullCount++
+        } else if (pullCount === 2) {
+          // Send the rest (remaining byte of "你" + rest of line)
+          controller.enqueue(remainingBytes.slice(2)) // skip the 2 bytes already sent
+          pullCount++
+        } else {
+          controller.close()
+        }
+      },
+    })
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: stream,
+    })
+
+    const resultStream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(resultStream)
+
+    expect(events).toHaveLength(1)
+    expect(events[0]).toEqual({ type: 'text', content: '你好' })
+  })
+
+  it('flushes TextDecoder held bytes when stream ends mid-character', async () => {
+    // Edge case: stream ends with partial multi-byte bytes still inside TextDecoder.
+    // The flushed bytes become replacement chars, but the preceding complete event
+    // must still be parsed correctly.
+    const encoder = new TextEncoder()
+    const event1 = 'data: {"type":"text","content":"ok"}\n\n'
+    // Second event is intentionally truncated mid-character
+    const event2Prefix = 'data: {"type":"text","content":"'
+    const charYou = encoder.encode('你') // 3 UTF-8 bytes
+    const partialByte = charYou.slice(0, 2) // incomplete — TextDecoder will hold
+
+    let pullCount = 0
+    const stream = new ReadableStream({
+      pull(controller) {
+        if (pullCount === 0) {
+          controller.enqueue(encoder.encode(event1))
+          pullCount++
+        } else if (pullCount === 1) {
+          controller.enqueue(encoder.encode(event2Prefix))
+          pullCount++
+        } else if (pullCount === 2) {
+          // Send partial bytes then close — TextDecoder holds incomplete char
+          controller.enqueue(partialByte)
+          pullCount++
+        } else {
+          controller.close()
+        }
+      },
+    })
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: stream,
+    })
+
+    const resultStream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(resultStream)
+
+    // The first complete event must be preserved
+    expect(events).toHaveLength(1)
+    expect(events[0]).toEqual({ type: 'text', content: 'ok' })
+    // The second event is corrupted (incomplete bytes + replacement char) and correctly skipped
+  })
+
+  it('flushes last SSE event without [DONE] marker', async () => {
+    // Server closes the stream without sending [DONE] — last event must not be lost
+    mockSSERawChunks([
+      'data: {"type":"text","content":"first"}\n\n',
+      'data: {"type":"text","content":"last"}\n\n',
+    ])
+    // Note: no 'data: [DONE]' — stream just ends
+
+    const stream = chat({ message: 'test', context: { source: 'standalone' } })
+    const events = await collectEvents(stream)
+
+    expect(events).toHaveLength(2)
+    expect(events[0]).toEqual({ type: 'text', content: 'first' })
+    expect(events[1]).toEqual({ type: 'text', content: 'last' })
+  })
 })
 
 describe('getConversations', () => {

@@ -12,6 +12,9 @@ import {
 } from '@element-plus/icons-vue'
 import { useHomeData } from '@/composables/useHomeData'
 import StatsChart from '@/components/StatsChart.vue'
+import TrendChart from '@/components/TrendChart.vue'
+import QuickActions from '@/components/QuickActions.vue'
+import AnnouncementPanel from '@/components/AnnouncementPanel.vue'
 import type { DashboardStats, RecentConversation } from '@/types/home'
 
 const router = useRouter()
@@ -163,18 +166,16 @@ function goToConversation(conv: RecentConversation) {
 
 <template>
   <div :class="$style.page">
-    <!-- Header -->
-    <header :class="$style.header">
-      <div :class="$style.headerInner">
-        <span :class="$style.logo">Schema Form Platform</span>
-      </div>
-    </header>
-
     <main :class="$style.main">
       <!-- Hero -->
       <section :class="$style.hero">
-        <h1 :class="$style.heroTitle">Schema Form Platform</h1>
+        <h1 :class="$style.heroTitle">PyFlow</h1>
         <p :class="$style.heroDesc">Schema 驱动的可视化表单设计器与流程引擎</p>
+      </section>
+
+      <!-- 快捷操作区 -->
+      <section :class="$style.quickActionsSection">
+        <QuickActions />
       </section>
 
       <!-- 统计卡片 -->
@@ -210,6 +211,13 @@ function goToConversation(conv: RecentConversation) {
         </template>
       </section>
 
+      <!-- 趋势图表 -->
+      <section :class="$style.trendSection">
+        <div :class="$style.trendCard">
+          <TrendChart :stats="stats" />
+        </div>
+      </section>
+
       <!-- 统计图表 -->
       <section :class="$style.chartSection">
         <h2 :class="$style.sectionTitle">数据概览</h2>
@@ -221,25 +229,33 @@ function goToConversation(conv: RecentConversation) {
         </div>
       </section>
 
-      <!-- 功能导航 -->
-      <section :class="$style.navSection">
-        <h2 :class="$style.sectionTitle">功能导航</h2>
-        <div :class="$style.grid">
-          <component
-            v-for="card in cards"
-            :key="card.route || card.href"
-            :is="card.href ? 'a' : 'router-link'"
-            v-bind="card.href ? { href: card.href, target: '_blank' } : { to: card.route }"
-            :class="$style.card"
-          >
-            <div :class="$style.cardIcon" :style="{ background: card.gradient }">
-              <el-icon :size="22" color="#fff"><component :is="card.icon" /></el-icon>
-            </div>
-            <div :class="$style.cardBody">
-              <h3 :class="$style.cardTitle">{{ card.title }}</h3>
-              <p :class="$style.cardDesc">{{ card.desc }}</p>
-            </div>
-          </component>
+      <!-- 功能导航与系统公告并排 -->
+      <section :class="$style.contentGrid">
+        <!-- 功能导航 -->
+        <div :class="$style.navSection">
+          <h2 :class="$style.sectionTitle">功能导航</h2>
+          <div :class="$style.grid">
+            <component
+              v-for="card in cards"
+              :key="card.route || card.href"
+              :is="card.href ? 'a' : 'router-link'"
+              v-bind="card.href ? { href: card.href, target: '_blank' } : { to: card.route }"
+              :class="$style.card"
+            >
+              <div :class="$style.cardIcon" :style="{ background: card.gradient }">
+                <el-icon :size="22" color="#fff"><component :is="card.icon" /></el-icon>
+              </div>
+              <div :class="$style.cardBody">
+                <h3 :class="$style.cardTitle">{{ card.title }}</h3>
+                <p :class="$style.cardDesc">{{ card.desc }}</p>
+              </div>
+            </component>
+          </div>
+        </div>
+
+        <!-- 系统公告 -->
+        <div :class="$style.announcementSection">
+          <AnnouncementPanel />
         </div>
       </section>
 
@@ -303,34 +319,8 @@ function goToConversation(conv: RecentConversation) {
 
 <style module>
 .page {
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--bg-color-page);
-}
-
-/* ---- Header ---- */
-
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--bg-color-white);
-  border-bottom: 1px solid var(--border-color-light);
-}
-
-.headerInner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 32px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-color-primary);
-  letter-spacing: -0.01em;
 }
 
 /* ---- Main ---- */
@@ -361,6 +351,12 @@ function goToConversation(conv: RecentConversation) {
   line-height: 1.6;
 }
 
+/* ---- Quick Actions ---- */
+
+.quickActionsSection {
+  margin-bottom: 32px;
+}
+
 /* ---- Section ---- */
 
 .sectionTitle {
@@ -376,7 +372,7 @@ function goToConversation(conv: RecentConversation) {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .statCard {
@@ -436,26 +432,80 @@ function goToConversation(conv: RecentConversation) {
   color: var(--text-color-placeholder);
 }
 
-/* ---- Nav Cards ---- */
+/* ---- Trend Chart ---- */
+
+.trendSection {
+  margin-bottom: 32px;
+}
+
+.trendCard {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* ---- Chart ---- */
+
+.chartSection {
+  margin-bottom: 32px;
+}
+
+.chartCard {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.placeholderText {
+  font-size: 14px;
+  color: var(--text-color-placeholder);
+  margin: 0;
+}
+
+/* ---- Content Grid (Nav + Announcement) ---- */
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  margin-bottom: 40px;
+}
 
 .navSection {
-  margin-bottom: 40px;
+  min-width: 0;
+}
+
+.announcementSection {
+  min-width: 0;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
 }
 
 .card {
   background: var(--bg-color-white);
   border: 1px solid var(--border-color-light);
   border-radius: 8px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 14px;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
   text-decoration: none;
@@ -468,8 +518,8 @@ function goToConversation(conv: RecentConversation) {
 }
 
 .cardIcon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -483,14 +533,14 @@ function goToConversation(conv: RecentConversation) {
 }
 
 .cardTitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-color-primary);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 
 .cardDesc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-color-secondary);
   line-height: 1.5;
   margin: 0;
@@ -603,37 +653,13 @@ function goToConversation(conv: RecentConversation) {
   margin: 0;
 }
 
-/* ---- Chart ---- */
-
-.chartSection {
-  margin-bottom: 40px;
-}
-
-.chartCard {
-  background: var(--bg-color-white);
-  border: 1px solid var(--border-color-light);
-  border-radius: 8px;
-  padding: 20px;
-  min-height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chartPlaceholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-}
-
-.placeholderText {
-  font-size: 14px;
-  color: var(--text-color-placeholder);
-  margin: 0;
-}
-
 /* ---- Responsive ---- */
+
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 900px) {
   .statsSection {
@@ -646,6 +672,10 @@ function goToConversation(conv: RecentConversation) {
   .main {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .searchWrap {
+    display: none;
   }
 
   .statsSection {

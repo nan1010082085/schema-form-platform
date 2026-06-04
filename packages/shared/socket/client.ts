@@ -72,6 +72,13 @@ export function leaveRoom(room: string): void {
   socket?.emit('leave', room)
 }
 
+/**
+ * 注册用户身份（加入个人房间以接收通知推送）
+ */
+export function identify(userId: string): void {
+  socket?.emit('identify', userId)
+}
+
 // ---- AI 端：发送事件 ----
 
 /**
@@ -204,4 +211,27 @@ export function sendCollabMessage(conversationId: string, userId: string, conten
 export function onCollabNewMessage(handler: EventHandler<CollabMessageEvent>): () => void {
   socket?.on(SOCKET_EVENTS.COLLAB_NEW_MESSAGE, handler)
   return () => { socket?.off(SOCKET_EVENTS.COLLAB_NEW_MESSAGE, handler) }
+}
+
+// ---- 通知事件 ----
+
+/** 通知推送数据 */
+export interface FlowNotificationEvent {
+  id: string
+  userId: string
+  type: string
+  title: string
+  content?: string
+  relatedId?: string
+  relatedType?: string
+  isRead: boolean
+  createdAt: string
+}
+
+/**
+ * 监听新流程通知
+ */
+export function onFlowNotification(handler: EventHandler<FlowNotificationEvent>): () => void {
+  socket?.on(SOCKET_EVENTS.FLOW_NOTIFICATION, handler)
+  return () => { socket?.off(SOCKET_EVENTS.FLOW_NOTIFICATION, handler) }
 }

@@ -97,6 +97,10 @@ export const SOCKET_EVENTS = {
   /** 断开连接 */
   DISCONNECT: 'disconnect',
 
+  // ---- 通知事件 ----
+  /** 服务端 → 客户端：新通知 */
+  FLOW_NOTIFICATION: 'flow:notification',
+
   // ---- 协作事件 ----
   /** 加入协作会话 */
   COLLAB_JOIN: 'collab:join',

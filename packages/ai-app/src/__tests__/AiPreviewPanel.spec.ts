@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
 import type { Widget } from '@/types'
@@ -15,11 +15,12 @@ const ElOptionStub = { template: '<option />', props: ['label', 'value'] }
 const ElRadioGroupStub = { template: '<div><slot /></div>', props: ['disabled'] }
 const ElRadioStub = { template: '<label><slot /></label>', props: ['value'] }
 const ElCheckboxGroupStub = { template: '<div><slot /></div>', props: ['disabled'] }
-const ElCheckboxStub = { template: '<label><slot /></label>', props: ['value'] }
+const ElCheckboxStub = { template: '<label><input type="checkbox" /><slot /></label>', props: ['modelValue', 'value'] }
 const ElSwitchStub = { template: '<input type="checkbox" />', props: ['disabled'] }
 const ElSliderStub = { template: '<input type="range" />', props: ['disabled'] }
 const ElRateStub = { template: '<div />', props: ['disabled'] }
 const ElButtonStub = { template: '<button><slot /></button>', props: ['type', 'disabled'] }
+const ElDialogStub = { template: '<div><slot /><slot name="footer" /></div>', props: ['modelValue', 'title', 'width', 'closeOnClickModal'] }
 
 const globalStubs = {
   ElForm: ElFormStub,
@@ -35,6 +36,7 @@ const globalStubs = {
   ElSlider: ElSliderStub,
   ElRate: ElRateStub,
   ElButton: ElButtonStub,
+  ElDialog: ElDialogStub,
 }
 
 describe('AiPreviewPanel', () => {
@@ -181,6 +183,168 @@ describe('AiPreviewPanel', () => {
       await primaryBtn.trigger('click')
 
       expect(wrapper.emitted('primary-action')).toBeTruthy()
+    })
+  })
+
+  describe('Field interaction', () => {
+    const mockSchema: Widget[] = [
+      { id: 'w1', type: 'input', field: 'username', label: '用户名' },
+      { id: 'w2', type: 'input', field: 'email', label: '邮箱' },
+    ]
+
+    const schemaData = {
+      title: '测试表单',
+      fields: mockSchema.map((w) => ({
+        icon: 'T',
+        name: w.label ?? w.field ?? w.type,
+        type: w.type,
+      })),
+    }
+
+    it('emits field-click when field is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const fieldWrapper = wrapper.find('[class*="fieldWrapper"]')
+      await fieldWrapper.trigger('click')
+
+      expect(wrapper.emitted('field-click')).toBeTruthy()
+      expect(wrapper.emitted('field-click')![0][0]).toBe('w1')
+    })
+
+    it('highlights fields when highlightedFieldIds is provided', () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+          highlightedFieldIds: ['w1'],
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // CSS Module transforms class names, so we check for attribute selector
+      const fieldWrappers = wrapper.findAll('[class*="fieldWrapper"]')
+      // First field should have highlighted class (contains 'fieldHighlighted' in class string)
+      expect(fieldWrappers[0].attributes('class')).toContain('fieldHighlighted')
+      // Second field should not have highlighted class
+      expect(fieldWrappers[1].attributes('class')).not.toContain('fieldHighlighted')
+    })
+
+    it('shows apply to editor button', () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      expect(wrapper.text()).toContain('应用到编辑器')
+    })
+
+    it('emits apply-to-editor when apply button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const applyBtn = wrapper.find('[class*="btnApply"]')
+      await applyBtn.trigger('click')
+
+      expect(wrapper.emitted('apply-to-editor')).toBeTruthy()
+    })
+
+    it('shows compare button when showCompareButton is true', () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+          showCompareButton: true,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const compareBtn = wrapper.find('[class*="headerBtn"]')
+      expect(compareBtn.exists()).toBe(true)
+    })
+
+    it('emits compare when compare button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+          showCompareButton: true,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const compareBtn = wrapper.find('[class*="headerBtn"]')
+      await compareBtn.trigger('click')
+
+      expect(wrapper.emitted('compare')).toBeTruthy()
+    })
+  })
+
+  describe('Field selection', () => {
+    const mockSchema: Widget[] = [
+      { id: 'w1', type: 'input', field: 'username', label: '用户名' },
+      { id: 'w2', type: 'input', field: 'email', label: '邮箱' },
+    ]
+
+    const schemaData = {
+      title: '测试表单',
+      fields: mockSchema.map((w) => ({
+        icon: 'T',
+        name: w.label ?? w.field ?? w.type,
+        type: w.type,
+      })),
+    }
+
+    it('toggles field selection on checkbox change', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const checkboxes = wrapper.findAll('[class*="fieldCheckbox"] input[type="checkbox"]')
+      await checkboxes[0].trigger('change')
+
+      // After selection, apply button should show count
+      expect(wrapper.text()).toContain('应用选中 (1)')
+    })
+
+    it('selects all fields when select all button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const selectAllBtn = wrapper.find('[class*="selectAllBtn"]')
+      await selectAllBtn.trigger('click')
+
+      expect(wrapper.text()).toContain('应用选中 (2)')
     })
   })
 })

@@ -34,6 +34,7 @@ export interface Widget {
 export interface FlowNodeData {
   bpmnType: string
   label?: string
+  description?: string
   [key: string]: unknown
 }
 
@@ -106,6 +107,25 @@ export interface ChatContext {
   preferences?: Record<string, unknown>
   /** 前文摘要（长对话时压缩早期消息） */
   historySummary?: string
+}
+
+// ---- Chat Settings ----
+
+export type ReplyLanguage = 'zh-CN' | 'en-US'
+export type ReplyStyle = 'concise' | 'detailed'
+export type CodeCommentMode = 'yes' | 'no'
+export type HistorySummaryMode = 'auto' | 'manual'
+
+export interface ChatSettings {
+  preferences: {
+    replyLanguage: ReplyLanguage
+    replyStyle: ReplyStyle
+    codeComment: CodeCommentMode
+  }
+  historySummary: {
+    mode: HistorySummaryMode
+    manualSummary?: string
+  }
 }
 
 // ---- SSE 连接状态 ----
@@ -256,6 +276,58 @@ export interface Conversation {
   version?: string
   createdAt: string
   updatedAt: string
+}
+
+// ---- Step Card ----
+
+/** 步骤类型 */
+export type StepType = 'thinking' | 'tool_call' | 'tool_error' | 'result' | 'text'
+
+/** 步骤状态 */
+export type StepStatus = 'pending' | 'running' | 'done' | 'error'
+
+/** 单个步骤卡片数据 */
+export interface StepData {
+  type: StepType
+  title: string
+  content?: string
+  status: StepStatus
+  /** 工具名称（tool_call / tool_error 类型） */
+  toolName?: string
+  /** 工具显示名称（中文） */
+  toolDisplayName?: string
+  /** 工具调用结果 */
+  toolResult?: unknown
+  /** 工具调用参数 */
+  toolArguments?: Record<string, unknown>
+  /** 错误信息 */
+  error?: string
+  /** 嵌入的卡片类型：schema 或 flow */
+  cardType?: 'schema' | 'flow'
+  /** 卡片标题 */
+  cardTitle?: string
+  /** 卡片操作标签 */
+  primaryAction?: string
+  secondaryAction?: string
+}
+
+// ---- RAG ----
+
+export interface RagSearchResult {
+  id: string
+  editId: string
+  name: string
+  type: string
+  score: number
+  widgetTypes: string[]
+  fieldNames: string[]
+  labels: string[]
+  description: string
+}
+
+export interface RagSearchResponse {
+  total: number
+  schemas: RagSearchResult[]
 }
 
 // ---- Agent ----

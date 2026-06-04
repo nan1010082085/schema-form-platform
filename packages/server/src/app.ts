@@ -22,8 +22,13 @@ import flowTaskRouter from './flow-routes/flowTask.js'
 import flowTimerRouter from './flow-routes/flowTimer.js'
 import flowApprovalRouter from './flow-routes/flowApproval.js'
 import flowBatchRouter from './flow-routes/flowBatch.js'
+import flowNotificationRouter from './flow-routes/flowNotification.js'
 import { aiRouter, monitorRouter } from './ai/index.js'
 import aiPluginRouter from './ai/pluginRoutes.js'
+import { validateApiKey } from './ai/graph/agentBase.js'
+
+// ── Startup validation ──
+validateApiKey()
 
 const app = new Koa()
 
@@ -82,6 +87,8 @@ app.use(flowTimerRouter.routes())
 app.use(flowTimerRouter.allowedMethods())
 app.use(flowApprovalRouter.routes())
 app.use(flowApprovalRouter.allowedMethods())
+app.use(flowNotificationRouter.routes())
+app.use(flowNotificationRouter.allowedMethods())
 app.use(aiRouter.routes())
 app.use(aiRouter.allowedMethods())
 app.use(monitorRouter.routes())

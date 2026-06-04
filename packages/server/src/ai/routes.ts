@@ -42,6 +42,7 @@ import { ROUTER_SYSTEM_PROMPT } from './prompts/router.js'
 import type { AIMessage } from './graph/state.js'
 import { recordBehavior, analyzeUserPreferences, getBehaviorStats } from './services/behaviorService.js'
 import { getAvailableIndustries, getIndustryTemplates, type IndustryType } from './config/industryAgents.js'
+import { semanticSearch } from './services/ragService.js'
 
 const router = new Router({ prefix: '/api/ai' })
 
@@ -831,6 +832,110 @@ router.get("/conversations/search", async (ctx) => {
 })
 
 // ────────────────────────────────────────────
+// GET /api/ai/mention/search/:type
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/mention/search/:type — Search resources for @mention autocomplete
+ *
+ * Params:
+ * - type: 'schema' | 'flow' | 'widget'
+ * Query:
+ * - q: search keyword
+ * - limit: max results (default 10)
+ */
+router.get('/mention/search/:type', async (ctx) => {
+  const { type } = ctx.params
+  const { q, limit: limitStr } = ctx.query as { q?: string; limit?: string }
+  const limit = Math.min(Math.max(parseInt(limitStr ?? '10', 10) || 10, 1), 50)
+  const keyword = (q ?? '').trim()
+
+  if (!['schema', 'flow', 'widget'].includes(type)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'type must be schema, flow, or widget' } }
+    return
+  }
+
+  const regex = keyword ? { $regex: keyword, $options: 'i' } : undefined
+
+  if (type === 'schema') {
+    const filter: Record<string, unknown> = {}
+    if (regex) filter.name = regex
+    const docs = await FormSchemaModel.find(filter)
+      .select('_id name type updatedAt')
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean() as Record<string, unknown>[]
+    ctx.body = {
+      success: true,
+      data: docs.map((d) => ({
+        id: d._id,
+        type: 'schema',
+        name: d.name,
+        description: d.type,
+        updatedAt: d.updatedAt,
+      })),
+    }
+    return
+  }
+
+  if (type === 'flow') {
+    const filter: Record<string, unknown> = {}
+    if (regex) filter.name = regex
+    const docs = await FlowDefinitionModel.find(filter)
+      .select('_id name description updatedAt')
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean() as Record<string, unknown>[]
+    ctx.body = {
+      success: true,
+      data: docs.map((d) => ({
+        id: d._id,
+        type: 'flow',
+        name: d.name,
+        description: d.description,
+        updatedAt: d.updatedAt,
+      })),
+    }
+    return
+  }
+
+  // type === 'widget' — search schemas and extract widget labels
+  const schemas = await FormSchemaModel.find({})
+    .select('json name')
+    .lean() as Record<string, unknown>[]
+
+  const widgets: Array<{ id: string; type: string; name: string; description?: string }> = []
+  const seen = new Set<string>()
+
+  for (const schema of schemas) {
+    const json = schema.json as Record<string, unknown>[] | undefined
+    if (!Array.isArray(json)) continue
+    for (const widget of json) {
+      const wId = widget.id as string
+      const wLabel = (widget.label as string) ?? (widget.field as string) ?? (widget.type as string) ?? ''
+      const wType = (widget.type as string) ?? 'unknown'
+      if (seen.has(wId)) continue
+      if (keyword && !wLabel.toLowerCase().includes(keyword.toLowerCase()) && !wType.toLowerCase().includes(keyword.toLowerCase())) continue
+      seen.add(wId)
+      widgets.push({
+        id: wId,
+        type: 'widget',
+        name: wLabel || wType,
+        description: `类型: ${wType}`,
+      })
+      if (widgets.length >= limit) break
+    }
+    if (widgets.length >= limit) break
+  }
+
+  ctx.body = {
+    success: true,
+    data: widgets,
+  }
+})
+
+// ────────────────────────────────────────────
 // GET /api/ai/conversations/:id
 // ────────────────────────────────────────────
 
@@ -990,6 +1095,55 @@ router.post('/conversations/:id/rollback', async (ctx) => {
   }
 })
 
+
+// ────────────────────────────────────────────
+// RAG Semantic Search API
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/rag/search — Semantic search for schemas via vector embeddings
+ *
+ * Query params:
+ * - query: Natural language search query (required)
+ * - limit: Max results (default 5)
+ * - type: Filter by schema type (form | search_list)
+ */
+router.get('/rag/search', async (ctx) => {
+  const { query, limit: limitStr, type } = ctx.query as {
+    query?: string
+    limit?: string
+    type?: string
+  }
+
+  if (!query || query.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'query parameter is required' } }
+    return
+  }
+
+  const limit = Math.min(Math.max(parseInt(limitStr ?? '5', 10) || 5, 1), 20)
+  const schemaType = type === 'form' || type === 'search_list' ? type : undefined
+
+  const results = await semanticSearch(query.trim(), { limit, type: schemaType, minScore: 5 })
+
+  ctx.body = {
+    success: true,
+    data: {
+      total: results.length,
+      schemas: results.map((r) => ({
+        id: r.schemaId,
+        editId: r.editId,
+        name: r.name,
+        type: r.type,
+        score: r.score,
+        widgetTypes: r.metadata.widgetTypes,
+        fieldNames: r.metadata.fieldNames,
+        labels: r.metadata.labels,
+        description: r.metadata.description,
+      })),
+    },
+  }
+})
 
 // ────────────────────────────────────────────
 // Industry Agent API

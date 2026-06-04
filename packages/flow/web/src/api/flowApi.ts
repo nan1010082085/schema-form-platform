@@ -26,6 +26,7 @@ import type {
   FlowMonitorAvgDuration,
   FlowMonitorNodeStat,
   FlowMonitorTrendPoint,
+  FlowMonitorTopFlow,
 } from '@schema-form/flow-shared'
 
 const API_BASE = '/api'
@@ -230,21 +231,33 @@ export const flowApi = {
     return request<FlowMonitorTrendPoint[]>(`/flow-monitor/trend?${params}`)
   },
 
+  getMonitorTopFlows: (limit?: number) => {
+    const params = new URLSearchParams()
+    if (limit) params.set('limit', String(limit))
+    return request<FlowMonitorTopFlow[]>(`/flow-monitor/top-flows?${params}`)
+  },
+
   // Notifications
   getUnreadCount: () =>
-    request<{ count: number }>('/notifications/unread-count'),
+    request<{ count: number }>('/flow/notifications/unread-count'),
 
-  getNotifications: (page?: number, pageSize?: number, isRead?: boolean) => {
+  getNotifications: (page?: number, pageSize?: number, unreadOnly?: boolean) => {
     const params = new URLSearchParams()
     if (page) params.set('page', String(page))
     if (pageSize) params.set('pageSize', String(pageSize))
-    if (isRead !== undefined) params.set('isRead', String(isRead))
-    return request<{ items: Array<{ id: string; userId: string; type: string; title: string; content?: string; relatedId?: string; relatedType?: string; isRead: boolean; createdAt: string }>; total: number }>(`/notifications?${params}`)
+    if (unreadOnly !== undefined) params.set('unreadOnly', String(unreadOnly))
+    return request<{ items: Array<{ id: string; userId: string; type: string; title: string; content?: string; relatedId?: string; relatedType?: string; isRead: boolean; createdAt: string }>; total: number; unreadCount: number }>(`/flow/notifications?${params}`)
   },
 
   markNotificationAsRead: (id: string) =>
-    request<null>(`/notifications/${id}/read`, { method: 'POST' }),
+    request<null>(`/flow/notifications/${id}/read`, { method: 'PUT' }),
+
+  markNotificationsBatchRead: (ids: string[]) =>
+    request<{ modifiedCount: number }>('/flow/notifications/batch-read', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
 
   markAllNotificationsAsRead: () =>
-    request<null>('/notifications/read-all', { method: 'POST' }),
+    request<null>('/flow/notifications/read-all', { method: 'PUT' }),
 }

@@ -246,6 +246,8 @@
     <!-- Right -->
     <div :class="styles.right">
       <template v-if="!isPreview">
+        <NotificationBell />
+        <div :class="styles.divider" />
         <el-tooltip content="版本历史" placement="bottom">
           <button :class="styles.iconBtn" title="版本历史" @click="$emit('version-history')">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -285,6 +287,7 @@ import { View, EditPen } from '@element-plus/icons-vue'
 import type { SimulationSpeed } from '../composables/useSimulation.js'
 import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
+import NotificationBell from './NotificationBell.vue'
 import styles from './FlowToolbar.module.scss'
 
 const props = defineProps<{

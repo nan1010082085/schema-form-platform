@@ -31,6 +31,12 @@ const routes = [
         component: () => import('@/views/FlowInstanceDetailView.vue'),
         props: true,
       },
+      {
+        path: 'monitor',
+        name: 'flow-monitor',
+        component: () => import('@/components/FlowMonitorDashboard.vue'),
+        meta: { title: '流程监控' },
+      },
     ],
   },
   {

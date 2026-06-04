@@ -340,6 +340,56 @@
   display: none;
 }
 
+/* RAG search button */
+.ragBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ai-radius-md, 4px);
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  background: var(--ai-bg-white, #FFFFFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ai-text-hint, #999999);
+  transition: all 0.2s;
+}
+
+.ragBtn:hover:not(:disabled) {
+  border-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.ragBtnActive {
+  border-color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.ragBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* RAG context indicator */
+.ragIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: var(--ai-radius-sm, 2px);
+  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #0060A2);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ragCount {
+  min-width: 12px;
+  text-align: center;
+}
+
 /* File upload button */
 .fileBtn {
   width: 28px;

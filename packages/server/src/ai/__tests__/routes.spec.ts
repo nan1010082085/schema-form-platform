@@ -394,7 +394,8 @@ describe('POST /api/ai/chat', () => {
     expect(res.sse).toBe(true)
     expect(res.text).toContain('"type":"error"')
     expect(res.text).toContain('Graph compilation failed')
-    // done event is in the try block — error handler does NOT emit it
+    // done event is guaranteed by the finally block even on error
+    expect(res.text).toContain('"type":"done"')
   })
 })
 

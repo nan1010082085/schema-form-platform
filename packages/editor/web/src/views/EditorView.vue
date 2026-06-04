@@ -39,6 +39,8 @@ import {
 } from '@element-plus/icons-vue'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
+import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
+import { useSchemaVersionStore } from '@/stores/schemaVersion'
 
 // Register all widgets on first mount
 registerAllWidgets()
@@ -49,6 +51,7 @@ const boardStore = useBoardStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
 const apiStore = useApiStore()
+const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
@@ -61,6 +64,7 @@ const rightPanelVisible = ref(true)
 const showLogPanel = ref(false)
 const showCodePanel = ref(false)
 const showAiDrawer = ref(false)
+const showVersionCompare = ref(false)
 const aiBaseUrl = import.meta.env.VITE_AI_URL || 'http://localhost:5300/ai/index-sidebar.html'
 
 const aiDrawerData = computed(() => ({
@@ -444,6 +448,19 @@ async function handleLoadVersion(entry: VersionEntry) {
   }
 }
 
+async function handleOpenVersionCompare() {
+  if (!currentEditId.value) {
+    ElMessage.warning('请先保存 Schema 后才能查看版本历史')
+    return
+  }
+  await schemaVersionStore.init(currentEditId.value, currentVersion.value)
+  showVersionCompare.value = true
+}
+
+function handleVersionLoaded(version: string) {
+  currentVersion.value = version
+}
+
 // ================================================================
 // Clear canvas
 // ================================================================
@@ -648,6 +665,23 @@ function handleClearCanvas() {
               </div>
             </div>
           </el-popover>
+          <!-- Version compare -->
+          <el-tooltip content="版本对比" placement="bottom">
+            <button
+              class="editor-view__icon-btn"
+              :disabled="!currentEditId"
+              title="版本对比"
+              @click="handleOpenVersionCompare"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="2" width="5" height="12" rx="1" />
+                <rect x="10" y="2" width="5" height="12" rx="1" />
+                <line x1="6" y1="8" x2="10" y2="8" />
+                <polyline points="7.5 6 6 8 7.5 10" />
+                <polyline points="8.5 6 10 8 8.5 10" />
+              </svg>
+            </button>
+          </el-tooltip>
           <button class="editor-view__btn editor-view__btn--outline" @click="handleClearCanvas">清空</button>
           <button class="editor-view__btn editor-view__btn--outline" :disabled="saving" @click="handleSave">
             <el-icon v-if="saving" class="is-loading" :size="14"><Refresh /></el-icon>
@@ -761,6 +795,20 @@ function handleClearCanvas() {
         </div>
       </div>
     </div>
+
+    <!-- 版本对比面板 -->
+    <el-drawer
+      v-model="showVersionCompare"
+      title="版本对比"
+      direction="rtl"
+      size="560px"
+      :destroy-on-close="true"
+    >
+      <SchemaVersionCompare
+        @close="showVersionCompare = false"
+        @version-loaded="handleVersionLoaded"
+      />
+    </el-drawer>
   </div>
 </template>
 

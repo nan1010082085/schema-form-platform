@@ -6,20 +6,36 @@
  * 使用 AiConversationList / AiChatPanel / AiPreviewPanel 组件。
  */
 
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
-import type { AgentType, MentionReference } from '@/types'
+import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
+import AiChatSettings from '@/components/AiChatSettings.vue'
 import SchemaDiffPanel from '@/components/SchemaDiffPanel.vue'
 import type { PreviewSchemaData, PreviewFlowData, PreviewTab } from '@/components/AiPreviewPanel.vue'
 
 const store = useAiStore()
-const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex, currentDiff, schemaUpdateDescription, sseStatus, retryCount, MAX_AUTO_RETRIES } =
+const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex, currentDiff, schemaUpdateDescription, sseStatus, retryCount, MAX_AUTO_RETRIES, chatSettings, ragSearchResults, ragSearching, ragContext } =
   storeToRefs(store)
+
+// ---- Settings dialog ----
+const settingsVisible = ref(false)
+
+function handleOpenSettings(): void {
+  settingsVisible.value = true
+}
+
+function handleUpdateSettingsVisible(val: boolean): void {
+  settingsVisible.value = val
+}
+
+function handleSaveSettings(settings: ChatSettings): void {
+  store.updateChatSettings(settings)
+}
 
 // ---- Preview data ----
 
@@ -122,6 +138,20 @@ async function handlePublish(): Promise<void> {
   }
 }
 
+// ---- RAG ----
+
+function handleRagSearch(query: string): void {
+  store.searchRagAction(query)
+}
+
+function handleRagSelect(item: RagSearchResult): void {
+  store.addRagContext(item)
+}
+
+function handleRagRemove(id: string): void {
+  store.removeRagContext(id)
+}
+
 // ---- Bridge ----
 
 onMounted(() => {
@@ -185,12 +215,19 @@ onMounted(() => {
         :sse-status="sseStatus"
         :retry-count="retryCount"
         :max-retries="MAX_AUTO_RETRIES"
+        :rag-search-results="ragSearchResults"
+        :rag-searching="ragSearching"
+        :rag-context="ragContext"
         @send="handleSend"
         @stop="handleStop"
         @retry="handleRetry"
         @clear-messages="handleClearMessages"
         @card-primary-action="handlePrimaryAction"
         @card-secondary-action="handleSecondaryAction"
+        @open-settings="handleOpenSettings"
+        @rag-search="handleRagSearch"
+        @rag-select="handleRagSelect"
+        @rag-remove="handleRagRemove"
       />
 
       <!-- 右侧：预览面板 -->
@@ -217,6 +254,14 @@ onMounted(() => {
       />
       </div>
     </div>
+
+    <!-- Settings Dialog -->
+    <AiChatSettings
+      :visible="settingsVisible"
+      :settings="chatSettings"
+      @update:visible="handleUpdateSettingsVisible"
+      @update:settings="handleSaveSettings"
+    />
   </div>
 </template>
 

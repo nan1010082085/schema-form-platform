@@ -8,6 +8,7 @@ vi.mock('../api/flowApi', () => ({
     getMonitorAvgDuration: vi.fn(),
     getMonitorNodeStats: vi.fn(),
     getMonitorTrend: vi.fn(),
+    getMonitorTopFlows: vi.fn(),
   },
 }))
 
@@ -29,7 +30,27 @@ describe('useFlowMonitorStore', () => {
     expect(store.avgDuration).toBe(0)
     expect(store.nodeStats).toEqual([])
     expect(store.trend).toEqual([])
+    expect(store.topFlows).toEqual([])
+    expect(store.todayNew).toBe(0)
     expect(store.loading).toBe(false)
+  })
+
+  describe('todayNew', () => {
+    it('returns count for today from trend data', () => {
+      const store = useFlowMonitorStore()
+      const today = new Date().toISOString().slice(0, 10)
+      store.trend = [
+        { date: '2026-01-01', count: 5 },
+        { date: today, count: 12 },
+      ]
+      expect(store.todayNew).toBe(12)
+    })
+
+    it('returns 0 when today has no entry', () => {
+      const store = useFlowMonitorStore()
+      store.trend = [{ date: '2026-01-01', count: 5 }]
+      expect(store.todayNew).toBe(0)
+    })
   })
 
   describe('fetchDashboard', () => {
@@ -50,11 +71,16 @@ describe('useFlowMonitorStore', () => {
         { date: '2026-05-01', count: 5 },
         { date: '2026-05-02', count: 8 },
       ]
+      const mockTopFlows = [
+        { definitionId: 'flow-1', flowName: '请假审批', count: 20 },
+        { definitionId: 'flow-2', flowName: '报销审批', count: 15 },
+      ]
 
       mockFlowApi.getMonitorStats.mockResolvedValue(mockStats)
       mockFlowApi.getMonitorAvgDuration.mockResolvedValue(mockDuration)
       mockFlowApi.getMonitorNodeStats.mockResolvedValue(mockNodeStats)
       mockFlowApi.getMonitorTrend.mockResolvedValue(mockTrend)
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue(mockTopFlows)
 
       const store = useFlowMonitorStore()
       await store.fetchDashboard()
@@ -63,6 +89,7 @@ describe('useFlowMonitorStore', () => {
       expect(store.avgDuration).toBe(7200000)
       expect(store.nodeStats).toEqual(mockNodeStats)
       expect(store.trend).toEqual(mockTrend)
+      expect(store.topFlows).toEqual(mockTopFlows)
       expect(store.loading).toBe(false)
     })
 
@@ -71,6 +98,7 @@ describe('useFlowMonitorStore', () => {
       mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
       mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
       mockFlowApi.getMonitorTrend.mockResolvedValue([])
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
 
       const store = useFlowMonitorStore()
       await store.fetchDashboard(14)
@@ -78,12 +106,25 @@ describe('useFlowMonitorStore', () => {
       expect(mockFlowApi.getMonitorTrend).toHaveBeenCalledWith(14)
     })
 
+    it('passes limit=5 to topFlows API', async () => {
+      mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
+      mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
+      mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
+      mockFlowApi.getMonitorTrend.mockResolvedValue([])
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
+
+      const store = useFlowMonitorStore()
+      await store.fetchDashboard()
+
+      expect(mockFlowApi.getMonitorTopFlows).toHaveBeenCalledWith(5)
+    })
+
     it('sets loading during fetch', async () => {
-      // Create resolvers for each API call
       let resolveStats: (v: unknown) => void
       let resolveDuration: (v: unknown) => void
       let resolveNodes: (v: unknown) => void
       let resolveTrend: (v: unknown) => void
+      let resolveTopFlows: (v: unknown) => void
 
       mockFlowApi.getMonitorStats.mockImplementation(
         () => new Promise((r) => { resolveStats = r }),
@@ -97,18 +138,20 @@ describe('useFlowMonitorStore', () => {
       mockFlowApi.getMonitorTrend.mockImplementation(
         () => new Promise((r) => { resolveTrend = r }),
       )
+      mockFlowApi.getMonitorTopFlows.mockImplementation(
+        () => new Promise((r) => { resolveTopFlows = r }),
+      )
 
       const store = useFlowMonitorStore()
       const fetchPromise = store.fetchDashboard()
 
-      // Loading should be true while requests are pending
       expect(store.loading).toBe(true)
 
-      // Resolve all requests with valid data
       resolveStats!({ total: 0, running: 0, completed: 0, terminated: 0, suspended: 0, failed: 0 })
       resolveDuration!({ avgDuration: 0 })
       resolveNodes!([])
       resolveTrend!([])
+      resolveTopFlows!([])
       await fetchPromise
 
       expect(store.loading).toBe(false)

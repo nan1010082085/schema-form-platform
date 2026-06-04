@@ -37,6 +37,34 @@ export function getClient(): OpenAI {
 }
 
 // ────────────────────────────────────────────
+// API Key validation (startup check)
+// ────────────────────────────────────────────
+
+/**
+ * Validate that the DEEPSEEK_API_KEY environment variable is set and
+ * has a reasonable format. Call this at module initialization or server
+ * startup to fail fast rather than discovering the missing key at request time.
+ *
+ * Returns the key if valid. Throws with a descriptive error otherwise.
+ */
+export function validateApiKey(): string {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    throw new Error(
+      'DEEPSEEK_API_KEY environment variable is required. '
+      + 'Set it in your .env file or export it before starting the server.',
+    )
+  }
+  if (apiKey.length < 10) {
+    throw new Error(
+      'DEEPSEEK_API_KEY appears invalid (too short). '
+      + 'Check that the key is complete and correctly set.',
+    )
+  }
+  return apiKey
+}
+
+// ────────────────────────────────────────────
 // Model configuration per task type
 // ────────────────────────────────────────────
 
@@ -82,7 +110,42 @@ export function classifyTaskComplexity(message: string): TaskType {
 // Message history builder (with truncation)
 // ────────────────────────────────────────────
 
-const MAX_HISTORY_MESSAGES = 10
+const MAX_HISTORY_TURNS = 5
+
+/**
+ * Truncate conversation history by conversation turns, preserving
+ * complete user-assistant pairs. A "turn" is a user message followed
+ * by the subsequent assistant response.
+ *
+ * Keeps the most recent N turns to maintain coherent multi-turn context.
+ * The last message (current user message) is always excluded from history.
+ *
+ * Used by editor/flow agent nodes to keep the LLM context window manageable.
+ */
+export function truncateMessages<T extends { constructor: { name: string } }>(
+  messages: readonly T[],
+  maxTurns = MAX_HISTORY_TURNS,
+): T[] {
+  const historyMessages = messages.slice(0, -1)
+
+  // Scan backwards to find turn boundaries.
+  // A turn starts with a HumanMessage and includes all subsequent messages
+  // up to (but not including) the next HumanMessage.
+  const turnStarts: number[] = []
+  for (let i = historyMessages.length - 1; i >= 0; i--) {
+    if (historyMessages[i].constructor.name === 'HumanMessage') {
+      turnStarts.unshift(i)
+    }
+  }
+
+  // Keep the last N complete turns
+  if (turnStarts.length > maxTurns) {
+    const cutoffIndex = turnStarts[turnStarts.length - maxTurns]
+    return historyMessages.slice(cutoffIndex)
+  }
+
+  return historyMessages
+}
 
 /**
  * Build LLM message array from conversation state.
@@ -102,8 +165,17 @@ export function buildMessages(
   ]
 
   const historyMessages = state.messages.slice(0, -1)
-  const truncatedHistory = historyMessages.length > MAX_HISTORY_MESSAGES
-    ? historyMessages.slice(-MAX_HISTORY_MESSAGES)
+
+  // Turn-based truncation for buildMessages: keep last N user+assistant pairs
+  const MAX_BUILDMessages_TURNS = 5
+  const turnStarts: number[] = []
+  for (let i = historyMessages.length - 1; i >= 0; i--) {
+    if (historyMessages[i].role === 'user') {
+      turnStarts.unshift(i)
+    }
+  }
+  const truncatedHistory = turnStarts.length > MAX_BUILDMessages_TURNS
+    ? historyMessages.slice(turnStarts[turnStarts.length - MAX_BUILDMessages_TURNS])
     : historyMessages
 
   for (const msg of truncatedHistory) {

@@ -7,17 +7,14 @@
  * - 模板搜索和筛选（分类、关键词）
  * - 模板应用（点击应用到画布）
  * - 模板保存（从画布保存为模板）
+ *
+ * 状态由 useTemplateStore 管理，本组件只做渲染和交互。
  */
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
-import {
-  fetchTemplates,
-  applyTemplate,
-  createTemplate,
-  deleteTemplate,
-} from '@/utils/apiClient'
-import type { TemplateItem, TemplateCategory } from '@/utils/apiClient'
+import { useTemplateStore } from '@/stores/template'
+import type { TemplateCategory } from '@/utils/apiClient'
 import type { Widget } from '@/widgets/base/types'
 import styles from './WidgetTemplatePanel.module.css'
 
@@ -28,6 +25,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   currentWidgets?: Widget[]
 }>()
+
+const templateStore = useTemplateStore()
 
 // ---- Category options ----
 
@@ -54,65 +53,34 @@ const categoryLabelMap: Record<string, string> = {
   other: '其他',
 }
 
-// ---- List state ----
-
-const loading = ref(false)
-const templates = ref<TemplateItem[]>([])
-const total = ref(0)
-const page = ref(1)
-const pageSize = 20
-
-const searchKeyword = ref('')
-const selectedCategory = ref('')
-
-// ---- Load templates ----
-
-async function loadTemplates() {
-  loading.value = true
-  try {
-    const res = await fetchTemplates({
-      search: searchKeyword.value || undefined,
-      category: selectedCategory.value || undefined,
-      page: page.value,
-      pageSize,
-    })
-    templates.value = res.items
-    total.value = res.total
-  } catch (err) {
-    ElMessage.error('加载模板失败')
-    templates.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
+// ---- Search debounce ----
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-function handleSearchChange() {
+function handleSearchChange(value: string) {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
-    page.value = 1
-    loadTemplates()
+    templateStore.setSearch(value)
+    templateStore.loadTemplates()
   }, 300)
 }
 
-function handleCategoryChange() {
-  page.value = 1
-  loadTemplates()
+function handleCategoryChange(category: string) {
+  templateStore.setCategory(category)
+  templateStore.loadTemplates()
 }
 
 function handlePageChange(newPage: number) {
-  page.value = newPage
-  loadTemplates()
+  templateStore.setPage(newPage)
+  templateStore.loadTemplates()
 }
 
 // ---- Apply template ----
 
-async function handleApply(template: TemplateItem) {
+async function handleApply(templateId: string, templateName: string) {
   try {
     await ElMessageBox.confirm(
-      `确认应用模板「${template.name}」？模板内容将添加到画布。`,
+      `确认应用模板「${templateName}」？模板内容将添加到画布。`,
       '应用模板',
       { confirmButtonText: '应用', cancelButtonText: '取消', type: 'info' },
     )
@@ -121,10 +89,9 @@ async function handleApply(template: TemplateItem) {
   }
 
   try {
-    const result = await applyTemplate(template.id)
-    emit('apply-template', result.widgets)
-    ElMessage.success(`已应用模板「${template.name}」`)
-    loadTemplates()
+    const widgets = await templateStore.applyTemplateById(templateId)
+    emit('apply-template', widgets)
+    ElMessage.success(`已应用模板「${templateName}」`)
   } catch {
     ElMessage.error('应用模板失败')
   }
@@ -132,10 +99,10 @@ async function handleApply(template: TemplateItem) {
 
 // ---- Delete template ----
 
-async function handleDelete(template: TemplateItem) {
+async function handleDelete(templateId: string, templateName: string) {
   try {
     await ElMessageBox.confirm(
-      `确认删除模板「${template.name}」？此操作不可撤销。`,
+      `确认删除模板「${templateName}」？此操作不可撤销。`,
       '删除模板',
       { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
     )
@@ -144,9 +111,8 @@ async function handleDelete(template: TemplateItem) {
   }
 
   try {
-    await deleteTemplate(template.id)
+    await templateStore.removeTemplate(templateId)
     ElMessage.success('已删除模板')
-    loadTemplates()
   } catch {
     ElMessage.error('删除模板失败')
   }
@@ -197,7 +163,7 @@ async function handleSaveTemplate() {
   }
 
   try {
-    await createTemplate({
+    await templateStore.saveTemplate({
       name: saveForm.value.name.trim(),
       description: saveForm.value.description,
       category: saveForm.value.category,
@@ -206,7 +172,6 @@ async function handleSaveTemplate() {
     })
     ElMessage.success('模板已保存')
     showSaveDialog.value = false
-    loadTemplates()
   } catch {
     ElMessage.error('保存模板失败')
   }
@@ -215,7 +180,7 @@ async function handleSaveTemplate() {
 // ---- Init ----
 
 onMounted(() => {
-  loadTemplates()
+  templateStore.loadTemplates()
 })
 </script>
 
@@ -225,7 +190,7 @@ onMounted(() => {
     <div :class="styles.header">
       <div :class="styles['header-row']">
         <el-input
-          v-model="searchKeyword"
+          :model-value="templateStore.searchKeyword"
           :class="styles['search-input']"
           placeholder="搜索模板..."
           clearable
@@ -245,7 +210,7 @@ onMounted(() => {
       </div>
       <div :class="styles['filter-row']">
         <el-select
-          v-model="selectedCategory"
+          :model-value="templateStore.selectedCategory"
           :class="styles['filter-select']"
           placeholder="分类"
           size="small"
@@ -264,16 +229,19 @@ onMounted(() => {
 
     <!-- List -->
     <div :class="styles.list">
-      <div v-if="loading" :class="styles.loading">加载中...</div>
-      <div v-else-if="templates.length === 0" :class="styles.empty">
-        {{ searchKeyword || selectedCategory ? '未找到匹配的模板' : '暂无模板' }}
+      <div v-if="templateStore.loading" :class="styles.loading">加载中...</div>
+      <div v-else-if="templateStore.error" :class="styles.empty">
+        {{ templateStore.error }}
+      </div>
+      <div v-else-if="templateStore.templates.length === 0" :class="styles.empty">
+        {{ templateStore.searchKeyword || templateStore.selectedCategory ? '未找到匹配的模板' : '暂无模板' }}
       </div>
       <div v-else :class="styles['card-grid']">
         <div
-          v-for="tpl in templates"
+          v-for="tpl in templateStore.templates"
           :key="tpl.id"
           :class="styles.card"
-          @click="handleApply(tpl)"
+          @click="handleApply(tpl.id, tpl.name)"
         >
           <div :class="styles['card-header']">
             <img
@@ -305,7 +273,7 @@ onMounted(() => {
               type="primary"
               size="small"
               text
-              @click="handleApply(tpl)"
+              @click="handleApply(tpl.id, tpl.name)"
             >
               应用
             </el-button>
@@ -315,7 +283,7 @@ onMounted(() => {
               size="small"
               text
               :icon="Delete"
-              @click="handleDelete(tpl)"
+              @click="handleDelete(tpl.id, tpl.name)"
             />
           </div>
         </div>
@@ -323,11 +291,11 @@ onMounted(() => {
     </div>
 
     <!-- Pagination -->
-    <div v-if="total > pageSize" :class="styles.pagination">
+    <div v-if="templateStore.total > templateStore.pageSize" :class="styles.pagination">
       <el-pagination
-        v-model:current-page="page"
-        :page-size="pageSize"
-        :total="total"
+        :current-page="templateStore.page"
+        :page-size="templateStore.pageSize"
+        :total="templateStore.total"
         layout="prev, pager, next"
         small
         @current-change="handlePageChange"

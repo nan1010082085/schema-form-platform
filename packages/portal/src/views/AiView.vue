@@ -1,16 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { getAppUrl } from '@schema-form/micro-app/config'
+import MicroAppLoader from '@/components/MicroAppLoader.vue'
 
-const url = getAppUrl('ai', import.meta.env.DEV)
+const route = useRoute()
+
+const config = computed(() => {
+  const conversationId = route.query.conversationId as string | undefined
+  return {
+    name: 'ai',
+    url: getAppUrl('ai', import.meta.env.DEV),
+    data: conversationId ? { conversationId } : {},
+  }
+})
 </script>
 
 <template>
-  <micro-app
-    name="ai"
-    :url="url"
-    :data="{}"
-    destroy
-    iframe
-    style="width: 100%; height: 100%; border: none; display: block"
-  />
+  <MicroAppLoader :config="config" />
 </template>

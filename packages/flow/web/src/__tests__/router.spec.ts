@@ -29,6 +29,11 @@ describe('router', () => {
     expect(route).toBeDefined()
   })
 
+  it('has monitor route', () => {
+    const route = router.getRoutes().find((r) => r.path === '/monitor')
+    expect(route).toBeDefined()
+  })
+
   it('has catch-all 404 route', () => {
     const route = router.getRoutes().find((r) => r.path === '/:pathMatch(.*)*')
     expect(route).toBeDefined()

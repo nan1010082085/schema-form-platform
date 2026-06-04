@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { downloadConversation } from '@/api/aiApi'
+import AiConversationSearch from './AiConversationSearch.vue'
 import type { Conversation } from '@/types'
 import type { ExportFormat } from '@/api/aiApi'
 
@@ -47,6 +48,7 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
       <span :class="$style.title">对话列表</span>
       <button :class="$style.newBtn" @click="emit('new-conversation')">+</button>
     </div>
+    <AiConversationSearch @select="(id) => emit('select', id)" />
     <div :class="$style.list">
       <div
         v-for="conv in conversations"
