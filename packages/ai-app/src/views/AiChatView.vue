@@ -181,6 +181,7 @@ onMounted(() => {
         :tabs="previewTabs"
         :schema-data="schemaData"
         :flow-data="flowData"
+        :schema-widgets="currentSchema ?? undefined"
         :json-string="jsonString"
         primary-action="确认发布"
         secondary-action="在编辑器中打开"

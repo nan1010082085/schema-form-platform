@@ -122,6 +122,21 @@
   padding: 12px 14px;
 }
 
+/* F4: Form preview area */
+.formPreview {
+  padding: 16px 14px;
+}
+
+.formPreview :deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+
+.formPreview :deep(.el-form-item__label) {
+  font-size: 12px;
+  color: var(--ai-text-secondary, #666666);
+  padding-bottom: 4px;
+}
+
 .previewField {
   display: flex;
   align-items: center;

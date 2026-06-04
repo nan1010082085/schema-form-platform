@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
+import type { Widget } from '@/types'
 
 export interface PreviewSchemaData {
   title: string
@@ -25,6 +26,8 @@ export interface AiPreviewPanelProps {
   tabs: PreviewTab[]
   schemaData?: PreviewSchemaData
   flowData?: PreviewFlowData
+  /** raw Widget schema for form preview rendering */
+  schemaWidgets?: Widget[]
   /** raw JSON string for the JSON tab */
   jsonString?: string
   /** primary action label */
@@ -50,6 +53,26 @@ const tabLabels: Record<PreviewTab, string> = {
   schema: 'Schema',
   json: 'JSON',
   flow: 'Flow',
+}
+
+// ---- F4: Form preview rendering ----
+
+/** Only render non-container, non-layout widgets as form fields */
+const formWidgets = computed(() =>
+  (props.schemaWidgets ?? []).filter((w) =>
+    !['form', 'card', 'tabs', 'dialog', 'single-col', 'double-col', 'triple-col', 'quad-col', 'toolbar-buttons', 'divider', 'spacer', 'title'].includes(w.type),
+  ),
+)
+
+function getWidgetPlaceholder(w: Widget): string {
+  const p = w.props as Record<string, unknown> | undefined
+  return (p?.placeholder as string) ?? `请输入${w.label ?? w.field ?? ''}`
+}
+
+function getWidgetOptions(w: Widget): Array<{ label: string; value: string }> {
+  const p = w.props as Record<string, unknown> | undefined
+  const opts = p?.options as Array<{ label: string; value: string }> | undefined
+  return opts ?? []
 }
 </script>
 
@@ -88,27 +111,124 @@ const tabLabels: Record<PreviewTab, string> = {
         <div :class="$style.emptyText">生成内容将在此预览</div>
       </div>
 
-      <!-- Schema tab -->
+      <!-- Schema tab — actual form preview -->
       <template v-if="activeTab === 'schema' && schemaData">
         <div :class="$style.previewCard">
           <div :class="$style.previewCardHead">
             <span :class="$style.previewCardTitle">{{ schemaData.title }}</span>
             <span :class="$style.badge">{{ schemaData.fields.length }} fields</span>
           </div>
-          <div :class="$style.previewCardBody">
-            <div
-              v-for="(field, idx) in schemaData.fields"
-              :key="idx"
-              :class="$style.previewField"
-            >
-              <div :class="$style.previewFieldIcon">{{ field.icon }}</div>
-              <div :class="$style.previewFieldInfo">
-                <div :class="$style.previewFieldName">{{ field.name }}</div>
-                <div :class="$style.previewFieldMeta">
-                  {{ field.type }}<template v-if="field.meta"> &middot; {{ field.meta }}</template>
-                </div>
-              </div>
-            </div>
+          <div :class="$style.formPreview">
+            <el-form label-position="top" size="default">
+              <template v-for="(w, idx) in formWidgets" :key="w.id ?? idx">
+                <!-- Input / Number / Date / Textarea -->
+                <el-form-item
+                  v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
+                  :label="w.label ?? w.field ?? w.type"
+                >
+                  <el-input
+                    :type="w.type === 'textarea' ? 'textarea' : 'text'"
+                    :placeholder="getWidgetPlaceholder(w)"
+                    :rows="w.type === 'textarea' ? 3 : undefined"
+                    disabled
+                  />
+                </el-form-item>
+
+                <!-- Select -->
+                <el-form-item
+                  v-else-if="w.type === 'select'"
+                  :label="w.label ?? w.field ?? 'select'"
+                >
+                  <el-select placeholder="请选择" disabled style="width: 100%">
+                    <el-option
+                      v-for="opt in getWidgetOptions(w)"
+                      :key="opt.value"
+                      :label="opt.label"
+                      :value="opt.value"
+                    />
+                  </el-select>
+                </el-form-item>
+
+                <!-- Radio -->
+                <el-form-item
+                  v-else-if="w.type === 'radio'"
+                  :label="w.label ?? w.field ?? 'radio'"
+                >
+                  <el-radio-group disabled>
+                    <el-radio
+                      v-for="opt in getWidgetOptions(w)"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
+
+                <!-- Checkbox -->
+                <el-form-item
+                  v-else-if="w.type === 'checkbox'"
+                  :label="w.label ?? w.field ?? 'checkbox'"
+                >
+                  <el-checkbox-group disabled>
+                    <el-checkbox
+                      v-for="opt in getWidgetOptions(w)"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-checkbox>
+                  </el-checkbox-group>
+                </el-form-item>
+
+                <!-- Switch -->
+                <el-form-item
+                  v-else-if="w.type === 'switch'"
+                  :label="w.label ?? w.field ?? 'switch'"
+                >
+                  <el-switch disabled />
+                </el-form-item>
+
+                <!-- Slider -->
+                <el-form-item
+                  v-else-if="w.type === 'slider'"
+                  :label="w.label ?? w.field ?? 'slider'"
+                >
+                  <el-slider disabled />
+                </el-form-item>
+
+                <!-- Rate -->
+                <el-form-item
+                  v-else-if="w.type === 'rate'"
+                  :label="w.label ?? w.field ?? 'rate'"
+                >
+                  <el-rate disabled />
+                </el-form-item>
+
+                <!-- Upload -->
+                <el-form-item
+                  v-else-if="w.type === 'upload'"
+                  :label="w.label ?? w.field ?? 'upload'"
+                >
+                  <el-button disabled>选择文件</el-button>
+                </el-form-item>
+
+                <!-- Button -->
+                <el-form-item v-else-if="w.type === 'button'">
+                  <el-button type="primary" disabled>
+                    {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
+                  </el-button>
+                </el-form-item>
+
+                <!-- Fallback: show as text field -->
+                <el-form-item
+                  v-else
+                  :label="w.label ?? w.field ?? w.type"
+                >
+                  <el-input placeholder="[不支持的组件类型]" disabled />
+                </el-form-item>
+              </template>
+            </el-form>
           </div>
         </div>
       </template>
