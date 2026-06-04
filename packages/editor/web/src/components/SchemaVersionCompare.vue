@@ -13,7 +13,7 @@
  * - useSchemaVersionStore — 版本状态管理
  * - schemaDiff — Widget 树差异算法
  */
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Download, RefreshLeft, Refresh, Close } from '@element-plus/icons-vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
@@ -43,22 +43,7 @@ function formatVersion(v: string): string {
   return `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)} ${v.slice(8, 10)}:${v.slice(10, 12)}:${v.slice(12, 14)}`
 }
 
-function formatTime(iso: string): string {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    return d.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  } catch {
-    return iso
-  }
-}
+
 
 // ---- 版本选择 ----
 

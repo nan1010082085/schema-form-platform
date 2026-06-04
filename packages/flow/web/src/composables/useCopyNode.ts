@@ -10,8 +10,6 @@ export interface UseCopyNodeOptions {
   enabled?: () => boolean
 }
 
-const OFFSET_STEP = 30
-
 export function useCopyNode(options: UseCopyNodeOptions) {
   const graphStore = useFlowGraphStore()
   const { copy, paste, hasClipboardContent } = useClipboard()
@@ -37,15 +35,6 @@ export function useCopyNode(options: UseCopyNodeOptions) {
 
       const newNodes = paste()
       if (newNodes.length === 0) return
-
-      // Build old-id -> new-id map for edge remapping
-      const idMap = new Map<string, string>()
-
-      // The paste() from useClipboard already generates new IDs and offsets positions.
-      // We need to capture the mapping before adding to store.
-      // Re-read clipboard to build the mapping by matching positions.
-      const clipboardNodes = options.getSelectedNodes() // not available here
-      // Instead, use the returned nodes which have new IDs already
 
       for (const node of newNodes) {
         graphStore.addNode(node)

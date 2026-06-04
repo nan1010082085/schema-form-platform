@@ -20,12 +20,15 @@ export {
   getSocket,
   joinRoom,
   leaveRoom,
+  identify,
   emitAiApply,
   emitAiPublished,
   onAiApply,
   onAiPublished,
   onConnect,
   onDisconnect,
+  // Notification
+  onFlowNotification,
   // Collaboration
   joinCollaboration,
   leaveCollaboration,
@@ -38,3 +41,5 @@ export {
   onCollabUserLeft,
   onCollabParticipants,
 } from './client.js'
+
+export type { FlowNotificationEvent } from './client.js'

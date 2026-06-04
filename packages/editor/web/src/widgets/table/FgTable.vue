@@ -21,7 +21,6 @@ const stripe = computed(() => (widgetData.value.props?.stripe as boolean) ?? tru
 const border = computed(() => (widgetData.value.props?.border as boolean) ?? true)
 const tableHeight = computed(() => (widgetData.value.props?.height as number) ?? 280)
 const globalSortable = computed(() => (widgetData.value.props?.sortable as boolean) ?? false)
-const globalFilterable = computed(() => (widgetData.value.props?.filterable as boolean) ?? false)
 
 const paginationConfig = computed<PaginationConfig>(() =>
   (widgetData.value.props?.pagination as PaginationConfig) ?? { enabled: true, pageSize: 20, pageSizes: [10, 20, 50, 100] },

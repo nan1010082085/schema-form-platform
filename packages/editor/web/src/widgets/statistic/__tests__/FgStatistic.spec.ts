@@ -16,11 +16,10 @@ vi.mock('@/composables/useApiRequest', () => ({
   }),
 }))
 
-// Mock useExposeWidget — capture exposed state
-let exposedState: Record<string, unknown> = {}
+// Mock useExposeWidget
 vi.mock('@/composables/useExposeWidget', () => ({
   useExposeWidget: (getter: () => Record<string, unknown>) => {
-    exposedState = getter()
+    getter()
   },
 }))
 
@@ -31,7 +30,6 @@ describe('FgStatistic', () => {
     setActivePinia(createPinia())
     registerAllWidgets()
     store = useWidgetStore()
-    exposedState = {}
   })
 
   function mountStatistic(overrides: Record<string, unknown> = {}) {
@@ -193,13 +191,13 @@ describe('FgStatistic', () => {
   describe('Exposed Values', () => {
     it('exposedValues 包含 loading', () => {
       const item = getWidget('statistic')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('loading')
     })
 
     it('exposedValues 包含 currentValue', () => {
       const item = getWidget('statistic')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('currentValue')
     })
   })

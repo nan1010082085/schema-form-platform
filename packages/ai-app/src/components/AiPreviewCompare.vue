@@ -174,8 +174,8 @@ const flowDiffs = computed<FlowDiffItem[]>(() => {
       label: id,
       type: 'edge',
       status: !before ? 'added' : JSON.stringify(edge) !== JSON.stringify(before) ? 'changed' : 'unchanged',
-      beforeData: before,
-      afterData: edge,
+      beforeData: before as unknown as Record<string, unknown>,
+      afterData: edge as unknown as Record<string, unknown>,
     })
   }
 
@@ -186,7 +186,7 @@ const flowDiffs = computed<FlowDiffItem[]>(() => {
         label: id,
         type: 'edge',
         status: 'removed',
-        beforeData: edge,
+        beforeData: edge as unknown as Record<string, unknown>,
       })
     }
   }

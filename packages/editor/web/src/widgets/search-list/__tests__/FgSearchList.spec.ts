@@ -23,6 +23,7 @@ vi.mock('@/utils/apiClient', () => {
       isMockEnabled: vi.fn(() => false),
     },
     ApiError: class ApiError extends Error {
+      status?: number
       constructor(msg: string, status?: number) {
         super(msg)
         this.status = status
@@ -386,7 +387,7 @@ describe('FgSearchList', () => {
   describe('事件目标', () => {
     it('eventTargets 包含 selection-change 和 sort-change', () => {
       const item = getWidget('search-list')
-      const ids = item?.config.eventTargets?.map(t => t.id)
+      const ids = (Array.isArray(item?.config.eventTargets) ? item.config.eventTargets : [])?.map((t: { id: string }) => t.id)
       expect(ids).toContain('selection-change')
       expect(ids).toContain('sort-change')
     })

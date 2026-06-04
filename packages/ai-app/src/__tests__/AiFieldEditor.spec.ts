@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AiFieldEditor from '@/components/AiFieldEditor.vue'
 import type { EditContext } from '@/composables/usePreviewInteraction'

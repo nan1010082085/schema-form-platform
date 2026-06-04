@@ -15,8 +15,10 @@ function getStepIcon(status: TaskChainStep['status']): string {
   }
 }
 
-function getAgentLabel(agent: 'editor' | 'flow'): string {
-  return agent === 'editor' ? '表单' : '流程'
+function getAgentLabel(agent: 'editor' | 'flow' | 'page'): string {
+  if (agent === 'editor') return '表单'
+  if (agent === 'flow') return '流程'
+  return '页面'
 }
 </script>
 

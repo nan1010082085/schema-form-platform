@@ -43,7 +43,7 @@ const props = withDefaults(defineProps<AiStepCardProps>(), {
   isLast: false,
 })
 
-const emit = defineEmits<{
+defineEmits<{
   'primary-action': []
   'secondary-action': []
 }>()

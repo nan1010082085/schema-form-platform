@@ -81,7 +81,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   function initSocket(userId?: string) {
-    const socket = connect()
+    connect()
     if (userId) {
       identify(userId)
     }

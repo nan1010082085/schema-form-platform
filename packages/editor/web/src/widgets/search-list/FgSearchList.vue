@@ -62,7 +62,6 @@ const {
   loading,
   currentPage,
   pageSize,
-  searchParams,
   setSearchParams,
   fetchData,
   handleSearch: listHandleSearch,

@@ -13,11 +13,10 @@ import FgDescriptions from '../FgDescriptions.vue'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-// Mock useExposeWidget — capture exposed state
-let exposedState: Record<string, unknown> = {}
+// Mock useExposeWidget
 vi.mock('@/composables/useExposeWidget', () => ({
   useExposeWidget: (getter: () => Record<string, unknown>) => {
-    exposedState = getter()
+    getter()
   },
 }))
 
@@ -28,7 +27,6 @@ describe('FgDescriptions', () => {
     setActivePinia(createPinia())
     registerAllWidgets()
     store = useWidgetStore()
-    exposedState = {}
     mockFetch.mockReset()
   })
 
@@ -254,13 +252,13 @@ describe('FgDescriptions', () => {
   describe('Exposed Values', () => {
     it('exposedValues 包含 data', () => {
       const item = getWidget('descriptions')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('data')
     })
 
     it('exposedValues 声明 data 类型为 object', () => {
       const item = getWidget('descriptions')
-      const dataEv = item?.config.exposedValues.find(v => v.key === 'data')
+      const dataEv = item?.config.exposedValues?.find(v => v.key === 'data')
       expect(dataEv?.type).toBe('object')
     })
   })

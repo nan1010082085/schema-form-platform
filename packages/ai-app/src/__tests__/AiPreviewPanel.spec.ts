@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
 import type { Widget } from '@/types'

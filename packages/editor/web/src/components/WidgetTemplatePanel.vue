@@ -10,7 +10,7 @@
  *
  * 状态由 useTemplateStore 管理，本组件只做渲染和交互。
  */
-import { ref, watch, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import { useTemplateStore } from '@/stores/template'

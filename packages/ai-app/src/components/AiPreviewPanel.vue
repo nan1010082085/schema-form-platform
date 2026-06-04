@@ -345,7 +345,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
           </div>
           <div :class="$style.formPreview">
             <el-form label-position="top" size="default">
-              <template v-for="(w, idx) in formWidgets" :key="w.id ?? idx">
+              <template v-for="w in formWidgets" :key="w.id">
                 <div
                   :class="[
                     $style.fieldWrapper,

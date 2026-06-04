@@ -6,7 +6,7 @@
  * 选中后插入引用标记，引用列表通过 chips 展示。
  */
 
-import { ref, watch, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import type { MentionReference } from '@/types'
 import type { MentionSearchResult, MentionType } from '@/api/aiApi'
@@ -195,11 +195,6 @@ function typeIcon(type: string): string {
   return 'W'
 }
 
-function typeLabel(type: string): string {
-  if (type === 'schema') return 'Schema'
-  if (type === 'flow') return 'Flow'
-  return 'Widget'
-}
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 {
   "version": "2026-06-04",
-  "generatedAt": "2026-06-04T15:37:07.255Z",
+  "generatedAt": "2026-06-04T22:23:58.590Z",
   "widgets": [
     {
       "type": "dialog",
@@ -554,6 +554,51 @@
       ]
     },
     {
+      "type": "descriptions",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "描述列表",
+      "description": "以 key-value 形式展示数据，支持多列布局和多种值类型",
+      "defaultProps": {
+        "title": "详情",
+        "column": 2,
+        "border": true,
+        "items": [
+          {
+            "label": "字段1",
+            "field": "field1",
+            "type": "text"
+          },
+          {
+            "label": "字段2",
+            "field": "field2",
+            "type": "text"
+          }
+        ]
+      },
+      "keyProps": [
+        "title",
+        "column",
+        "border",
+        "items"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "data",
+          "type": "object",
+          "description": "描述列表数据对象"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
       "type": "input",
       "group": "form",
       "canHaveChildren": false,
@@ -828,6 +873,70 @@
       "configPanels": [
         "events",
         "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "statistic",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "统计卡片",
+      "description": "KPI 统计卡片，展示数值与趋势",
+      "defaultProps": {
+        "title": "总用户数",
+        "value": 12345,
+        "prefix": "",
+        "suffix": "",
+        "precision": 0,
+        "trend": "up",
+        "trendValue": "",
+        "icon": "",
+        "color": "#409EFF",
+        "valueFontSize": "28px",
+        "titleFontSize": "14px"
+      },
+      "keyProps": [
+        "title",
+        "value",
+        "prefix",
+        "suffix",
+        "precision",
+        "trend",
+        "trendValue",
+        "icon",
+        "color",
+        "valueFontSize",
+        "titleFontSize"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "currentValue",
+          "type": "number",
+          "description": "当前显示的数值"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-value",
+          "description": "设置数值",
+          "params": {
+            "value": "数值"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
         "variables"
       ]
     },
@@ -1195,7 +1304,7 @@
       "group": "table",
       "canHaveChildren": false,
       "displayName": "搜索列表",
-      "description": "搜索列表复合组件，包含搜索表单、数据表格、分页",
+      "description": "搜索列表复合组件，包含搜索表单、数据表格、分页、行选择、批量操作",
       "defaultProps": {
         "title": "列表",
         "pageSize": 10,
@@ -1203,16 +1312,24 @@
         "stripe": true,
         "border": true,
         "searchFields": [],
-        "columns": []
+        "columns": [],
+        "sortable": false,
+        "selection": {
+          "enabled": false
+        },
+        "batchActions": []
       },
       "keyProps": [
         "title",
         "searchFields",
         "columns",
+        "sortable",
         "pageSize",
         "showPagination",
         "stripe",
-        "border"
+        "border",
+        "selection.enabled",
+        "batchActions"
       ],
       "defaultSize": {
         "w": 600,
@@ -1228,6 +1345,16 @@
           "key": "tableData",
           "type": "array",
           "description": "列表数据"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "已选行数据"
+        },
+        {
+          "key": "selectedCount",
+          "type": "number",
+          "description": "已选行数"
         }
       ],
       "receivableEvents": [
@@ -1238,6 +1365,10 @@
         {
           "name": "reset-search",
           "description": "重置搜索条件并刷新"
+        },
+        {
+          "name": "clear-selection",
+          "description": "清空行选择"
         }
       ],
       "eventTargets": [
@@ -1250,6 +1381,16 @@
           "id": "reset",
           "label": "重置按钮",
           "description": "点击重置时触发"
+        },
+        {
+          "id": "selection-change",
+          "label": "行选择变化",
+          "description": "行选择状态变化时触发"
+        },
+        {
+          "id": "sort-change",
+          "label": "排序变化",
+          "description": "点击排序时触发"
         }
       ],
       "configPanels": [
@@ -1263,7 +1404,7 @@
       "group": "table",
       "canHaveChildren": false,
       "displayName": "表格",
-      "description": "数据表格组件，支持列配置和操作按钮",
+      "description": "数据表格组件，支持列配置、分页、排序、筛选、行选择",
       "defaultProps": {
         "columns": [
           {
@@ -1280,16 +1421,32 @@
         "stripe": true,
         "border": true,
         "height": 280,
-        "apiUrl": "",
-        "apiMethod": "get",
-        "apiHeaders": {},
-        "responseDataPath": ""
+        "sortable": false,
+        "filterable": false,
+        "pagination": {
+          "enabled": true,
+          "pageSize": 20,
+          "pageSizes": [
+            10,
+            20,
+            50,
+            100
+          ]
+        },
+        "selection": {
+          "enabled": false
+        }
       },
       "keyProps": [
         "columns",
         "stripe",
         "border",
-        "height"
+        "height",
+        "sortable",
+        "filterable",
+        "selection.enabled",
+        "pagination.enabled",
+        "pagination.pageSize"
       ],
       "defaultSize": {
         "w": 600,
@@ -1305,6 +1462,11 @@
           "key": "tableData",
           "type": "array",
           "description": "表格数据"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "当前选中的行数据"
         }
       ],
       "receivableEvents": [
@@ -1317,6 +1479,13 @@
           "description": "设置表格数据",
           "params": {
             "data": "数据数组"
+          }
+        },
+        {
+          "name": "set-search-params",
+          "description": "设置搜索参数",
+          "params": {
+            "params": "参数对象"
           }
         }
       ],

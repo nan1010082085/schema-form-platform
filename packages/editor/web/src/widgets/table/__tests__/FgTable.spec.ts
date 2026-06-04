@@ -347,19 +347,19 @@ describe('FgTable', () => {
   describe('Exposed Values', () => {
     it('exposedValues 包含 loading', () => {
       const item = getWidget('table')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('loading')
     })
 
     it('exposedValues 包含 tableData', () => {
       const item = getWidget('table')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('tableData')
     })
 
     it('exposedValues 包含 selectedRows', () => {
       const item = getWidget('table')
-      const keys = item?.config.exposedValues.map(v => v.key)
+      const keys = item?.config.exposedValues?.map(v => v.key)
       expect(keys).toContain('selectedRows')
     })
   })

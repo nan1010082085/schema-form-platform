@@ -6,7 +6,7 @@ import ElementPlus from 'element-plus'
 import AppLayout from '@/layouts/AppLayout.vue'
 
 /** 创建测试用路由器 */
-function createTestRouter(initialPath = '/') {
+function createTestRouter(_initialPath = '/') {
   return createRouter({
     history: createMemoryHistory(),
     routes: [

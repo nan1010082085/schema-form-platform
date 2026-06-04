@@ -21,8 +21,9 @@ const AiMentionInputStub = {
     onKey(e: KeyboardEvent) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
-        const val = (this.$refs.ta as HTMLTextAreaElement).value.trim()
-        if (val) this.$emit('send', val, [])
+        const ta = (this as any).$refs.ta as HTMLTextAreaElement
+        const val = ta.value.trim()
+        if (val) (this as any).$emit('send', val, [])
       }
     },
   },
