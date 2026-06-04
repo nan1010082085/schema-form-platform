@@ -182,6 +182,18 @@ export const AgentStateAnnotation = Annotation.Root({
     reducer: (_, next) => next,
     default: () => '',
   }),
+
+  // Collaboration request — set by afterToolsNode when request_collaboration
+  // tool_call is detected, consumed by thinkerNode to inject a new task step.
+  collaborationRequest: Annotation<{
+    targetAgent: 'editor' | 'flow'
+    description: string
+    context?: Record<string, unknown>
+    conversationId?: string
+  } | null>({
+    reducer: (_, next) => next,
+    default: () => null,
+  }),
 })
 
 // ────────────────────────────────────────────

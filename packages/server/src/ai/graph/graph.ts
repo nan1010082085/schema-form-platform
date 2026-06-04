@@ -12,7 +12,7 @@
 
 import { StateGraph, END, START } from '@langchain/langgraph'
 import { ToolNode } from '@langchain/langgraph/prebuilt'
-import { AIMessage, SystemMessage, HumanMessage } from '@langchain/core/messages'
+import { AIMessage, SystemMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import { ChatOpenAI } from '@langchain/openai'
 import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
 import { AgentStateAnnotation } from './state.js'
@@ -146,41 +146,34 @@ ${userContent}
   if (state.taskChain.length > 0) {
     const currentIndex = state.currentStepIndex
 
-    // 检查是否有协作请求（来自上一个智能体的工具调用）
-    const lastMessage = state.messages[state.messages.length - 1]
-    if (lastMessage instanceof AIMessage && lastMessage.tool_calls) {
-      const collaborationCall = lastMessage.tool_calls.find(
-        (tc) => tc.name === 'request_collaboration'
-      )
+    // 检查是否有协作请求（由 afterToolsNode 从 AIMessage.tool_calls 中提取并写入 state）
+    if (state.collaborationRequest) {
+      const { targetAgent, description } = state.collaborationRequest
 
-      if (collaborationCall) {
-        const targetAgent = collaborationCall.args.targetAgent as string
-        const description = collaborationCall.args.description as string
+      // 将协作请求插入到任务链的下一个位置
+      const newStep = {
+        agent: targetAgent as 'editor' | 'flow',
+        description: `协作：${description}`,
+        status: 'pending' as const,
+      }
 
-        // 将协作请求插入到任务链的下一个位置
-        const newStep = {
-          agent: targetAgent as 'editor' | 'flow',
-          description: `协作：${description}`,
-          status: 'pending' as const,
-        }
+      // 在当前位置插入新步骤
+      const updatedChain = [
+        ...state.taskChain.slice(0, currentIndex + 1),
+        newStep,
+        ...state.taskChain.slice(currentIndex + 1),
+      ]
 
-        // 在当前位置插入新步骤
-        const updatedChain = [
-          ...state.taskChain.slice(0, currentIndex + 1),
-          newStep,
-          ...state.taskChain.slice(currentIndex + 1),
-        ]
+      // 标记当前步骤为 done
+      updatedChain[currentIndex] = { ...updatedChain[currentIndex], status: 'done' as const }
 
-        // 标记当前步骤为 done
-        updatedChain[currentIndex] = { ...updatedChain[currentIndex], status: 'done' as const }
-
-        return {
-          currentAgent: targetAgent as 'editor' | 'flow',
-          taskType: 'generate_simple',
-          needsTool: true,
-          taskChain: updatedChain,
-          currentStepIndex: currentIndex + 1,
-        }
+      return {
+        currentAgent: targetAgent as 'editor' | 'flow',
+        taskType: 'generate_simple',
+        needsTool: true,
+        taskChain: updatedChain,
+        currentStepIndex: currentIndex + 1,
+        collaborationRequest: null, // 清除协作请求
       }
     }
 
@@ -483,37 +476,60 @@ export function afterAgent(
 }
 
 /**
+ * Post-tool node — scans messages for collaboration request tool_calls
+ * and writes `collaborationRequest` into state.
+ *
+ * This runs as an actual graph node (not a conditional edge function)
+ * because conditional edges cannot modify state. After ToolNode executes
+ * request_collaboration, the AIMessage with tool_calls is no longer the
+ * last message — it sits behind the ToolMessages. This node iterates
+ * all messages backwards to find it.
+ */
+async function afterToolsNode(
+  state: typeof AgentStateAnnotation.State,
+): Promise<Partial<typeof AgentStateAnnotation.State>> {
+  // Scan messages backwards for the most recent AIMessage with tool_calls
+  // that includes request_collaboration
+  for (let i = state.messages.length - 1; i >= 0; i--) {
+    const msg = state.messages[i]
+    if (msg instanceof AIMessage && msg.tool_calls && msg.tool_calls.length > 0) {
+      const collaborationCall = msg.tool_calls.find(
+        (tc) => tc.name === 'request_collaboration'
+      )
+
+      if (collaborationCall) {
+        const targetAgent = collaborationCall.args.targetAgent as string
+        if (targetAgent === 'editor' || targetAgent === 'flow') {
+          return {
+            collaborationRequest: {
+              targetAgent: targetAgent as 'editor' | 'flow',
+              description: collaborationCall.args.description as string,
+              context: collaborationCall.args.context as Record<string, unknown> | undefined,
+              conversationId: state.conversationId,
+            },
+          }
+        }
+      }
+      // Found the most recent AIMessage — stop searching
+      break
+    }
+  }
+
+  return {}
+}
+
+/**
  * After tool execution, decide next step:
- * - If collaboration request → route to target agent
+ * - If collaboration request → thinker (to inject target agent step)
  * - If task chain has more steps → thinker (continue chain)
  * - Otherwise → thinker (let agent process tool results)
  */
-export function afterTools(
+export function afterToolsRoute(
   state: typeof AgentStateAnnotation.State,
 ): string {
-  // 检查是否有协作请求
-  const lastMessage = state.messages[state.messages.length - 1]
-  if (lastMessage instanceof AIMessage && lastMessage.tool_calls) {
-    const collaborationCall = lastMessage.tool_calls.find(
-      (tc) => tc.name === 'request_collaboration'
-    )
-
-    if (collaborationCall) {
-      const targetAgent = collaborationCall.args.targetAgent as string
-      // 更新 state，将协作目标设为当前智能体
-      // 注意：这里返回的是路由决策，实际的状态更新由 thinker 节点处理
-      if (targetAgent === 'editor' || targetAgent === 'flow') {
-        // 将协作请求添加到任务链
-        const newStep = {
-          agent: targetAgent as 'editor' | 'flow',
-          description: collaborationCall.args.description as string,
-          status: 'pending' as const,
-        }
-
-        // 返回到 thinker 节点处理协作请求
-        return 'thinker'
-      }
-    }
+  // Collaboration request detected → thinker will inject the target agent step
+  if (state.collaborationRequest) {
+    return 'thinker'
   }
 
   // Auto 模式下，检查任务链
@@ -544,6 +560,7 @@ const builder = new StateGraph(AgentStateAnnotation)
   .addNode('flow', flowAgentNode)
   .addNode('general', generalAgentNode)
   .addNode('allTools', allToolNode)
+  .addNode('afterTools', afterToolsNode)
   .addNode('summarizer', summarizerNode)
 
   // Entry point
@@ -561,8 +578,11 @@ const builder = new StateGraph(AgentStateAnnotation)
   // General agent → end (no tools)
   .addEdge('general', END)
 
-  // After tool execution → thinker or summarizer
-  .addConditionalEdges('allTools', afterTools)
+  // After tool execution → extract collaboration from messages into state
+  .addEdge('allTools', 'afterTools')
+
+  // After extracting collaboration → route to thinker or summarizer
+  .addConditionalEdges('afterTools', afterToolsRoute)
 
   // Summarizer → end
   .addEdge('summarizer', END)

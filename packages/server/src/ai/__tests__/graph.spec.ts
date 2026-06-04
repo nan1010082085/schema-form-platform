@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { END } from '@langchain/langgraph'
-import { graph, routeAfterThinker, afterAgent, afterTools } from '../graph/graph.js'
+import { graph, routeAfterThinker, afterAgent, afterToolsRoute } from '../graph/graph.js'
 import type { AgentStateAnnotation } from '../graph/state.js'
 
 type State = typeof AgentStateAnnotation.State
@@ -27,6 +27,7 @@ function makeState(overrides: Partial<State> = {}): State {
     intermediateResults: [],
     preferences: {},
     historySummary: '',
+    collaborationRequest: null,
     ...overrides,
   }
 }
@@ -120,7 +121,77 @@ describe('afterAgent', () => {
   })
 })
 
-describe('afterTools', () => {
+describe('afterToolsRoute + collaboration detection', () => {
+  it('afterToolsNode extracts collaboration from AIMessage with tool_calls before ToolMessages', () => {
+    // This simulates the state after ToolNode runs:
+    // AIMessage with tool_calls is NOT the last message — ToolMessages are.
+    // The bug was that old code only checked lastMessage.
+    const aiMsg = new AIMessage({
+      content: '',
+      tool_calls: [
+        { id: 'tc-1', name: 'validate_schema', args: { widgets: [] } },
+        {
+          id: 'tc-2',
+          name: 'request_collaboration',
+          args: { targetAgent: 'flow', description: '生成审批流程' },
+        },
+      ],
+    })
+
+    const state = makeState({
+      messages: [
+        new HumanMessage('做一个请假审批'),
+        aiMsg,
+        // ToolMessages (tool results) — these are added by ToolNode AFTER the AIMessage
+        { constructor: { name: 'ToolMessage' }, content: 'schema validated', name: 'validate_schema' } as any,
+        { constructor: { name: 'ToolMessage' }, content: 'collaboration requested', name: 'request_collaboration' } as any,
+      ],
+      currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'running' },
+      ],
+      currentStepIndex: 0,
+      // collaborationRequest would be set by afterToolsNode (tested via routing)
+      collaborationRequest: {
+        targetAgent: 'flow',
+        description: '生成审批流程',
+        conversationId: 'conv-1',
+      },
+    })
+
+    // afterToolsRoute should detect collaboration and route to thinker
+    expect(afterToolsRoute(state)).toBe('thinker')
+  })
+
+  it('afterToolsRoute returns thinker when no collaboration and task chain has more steps', () => {
+    const state = makeState({
+      currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      collaborationRequest: null,
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'running' },
+        { agent: 'flow', description: 'Generate flow', status: 'pending' },
+      ],
+      currentStepIndex: 0,
+    })
+    expect(afterToolsRoute(state)).toBe('thinker')
+  })
+})
+
+describe('afterToolsRoute', () => {
+  it('returns thinker when collaboration request is set', () => {
+    const state = makeState({
+      currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      collaborationRequest: {
+        targetAgent: 'flow',
+        description: '生成审批流程',
+      },
+    })
+    expect(afterToolsRoute(state)).toBe('thinker')
+  })
+
   it('returns thinker when task chain has more steps', () => {
     const state = makeState({
       currentAgent: 'editor',
@@ -131,7 +202,7 @@ describe('afterTools', () => {
       ],
       currentStepIndex: 0,
     })
-    expect(afterTools(state)).toBe('thinker')
+    expect(afterToolsRoute(state)).toBe('thinker')
   })
 
   it('returns summarizer when all task chain steps complete', () => {
@@ -144,7 +215,7 @@ describe('afterTools', () => {
       ],
       currentStepIndex: 1,
     })
-    expect(afterTools(state)).toBe('summarizer')
+    expect(afterToolsRoute(state)).toBe('summarizer')
   })
 
   it('returns thinker for explicit mode', () => {
@@ -152,6 +223,23 @@ describe('afterTools', () => {
       currentAgent: 'editor',
       context: { source: 'editor', turnCount: 1 },
     })
-    expect(afterTools(state)).toBe('thinker')
+    expect(afterToolsRoute(state)).toBe('thinker')
+  })
+
+  it('prefers collaboration request over task chain routing', () => {
+    const state = makeState({
+      currentAgent: 'editor',
+      context: { source: 'standalone', turnCount: 1 },
+      collaborationRequest: {
+        targetAgent: 'flow',
+        description: '需要流程支持',
+      },
+      taskChain: [
+        { agent: 'editor', description: 'Generate form', status: 'running' },
+        { agent: 'flow', description: 'Generate flow', status: 'pending' },
+      ],
+      currentStepIndex: 0,
+    })
+    expect(afterToolsRoute(state)).toBe('thinker')
   })
 })
