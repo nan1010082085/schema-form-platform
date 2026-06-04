@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.table {
+  flex: 1;
+  min-height: 0;
+}
+
+.pagination {
+  padding: 12px;
+  display: flex;
+  justify-content: flex-end;
+}

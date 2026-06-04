@@ -27,6 +27,7 @@ import { FgColorPicker, createColorPickerWidget, colorPickerConfig } from './col
 import { FgTagInput, createTagInputWidget, tagInputConfig } from './tag-input'
 import { FgAutocomplete, createAutocompleteWidget, autocompleteConfig } from './autocomplete'
 import { FgFileList, createFileListWidget, fileListConfig } from './file-list'
+import { FgDescriptions, createDescriptionsWidget, descriptionsConfig } from './descriptions'
 import { FgTransfer, createTransferWidget, transferConfig } from './transfer'
 import { FgSearchList, createSearchListWidget, searchListConfig } from './search-list'
 import { FgSwitch, createSwitchWidget, switchConfig } from './switch'
@@ -42,6 +43,7 @@ import { FgGauge, createGaugeWidget, gaugeConfig } from './gauge'
 import { FgHeatmap, createHeatmapWidget, heatmapConfig } from './heatmap'
 import { FgFunnel, createFunnelWidget, funnelConfig } from './funnel'
 import { FgCandlestick, createCandlestickWidget, candlestickConfig } from './candlestick'
+import { FgStatistic, createStatisticWidget, statisticConfig } from './statistic'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
 import { FgTripleCol, createTripleColWidget, tripleColConfig } from './triple-col'
@@ -294,6 +296,16 @@ export function registerAllWidgets() {
     config: bannerConfig,
   })
 
+  registerWidget({
+    name: statisticConfig.name,
+    displayName: statisticConfig.displayName,
+    type: 'statistic',
+    group: 'static',
+    component: FgStatistic,
+    create: createStatisticWidget,
+    config: statisticConfig,
+  })
+
   // Action widgets (操作按钮)
   registerWidget({
     name: toolbarButtonsConfig.name,
@@ -319,6 +331,7 @@ export function registerAllWidgets() {
   registerWidget({ name: treeLayoutConfig.name, displayName: treeLayoutConfig.displayName, type: 'tree-layout', group: 'business', component: FgTreeLayout, create: createTreeLayoutWidget, config: treeLayoutConfig })
   registerWidget({ name: fileListConfig.name, displayName: fileListConfig.displayName, type: 'file-list', group: 'business', component: FgFileList, create: createFileListWidget, config: fileListConfig })
   registerWidget({ name: transferConfig.name, displayName: transferConfig.displayName, type: 'transfer', group: 'business', component: FgTransfer, create: createTransferWidget, config: transferConfig })
+  registerWidget({ name: descriptionsConfig.name, displayName: descriptionsConfig.displayName, type: 'descriptions', group: 'business', component: FgDescriptions, create: createDescriptionsWidget, config: descriptionsConfig })
 
   // Table widgets (表格)
   registerWidget({ name: tableConfig.name, displayName: tableConfig.displayName, type: 'table', group: 'table', component: FgTable, create: createTableWidget, config: tableConfig })

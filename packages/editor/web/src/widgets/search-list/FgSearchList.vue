@@ -4,131 +4,171 @@
  *
  * 职责：
  * - 根据 searchFields 配置渲染搜索表单
- * - 使用 useWorkerRequest 调用 API 加载数据
- * - 渲染 el-table + el-pagination
+ * - 使用 useListData composable 管理数据加载、分页、排序、行选择
+ * - 渲染 el-table + el-pagination + 批量操作栏
  * - 支持 events/api configPanels
  */
-import { inject, ref, reactive, computed, watch, onMounted } from 'vue'
+import { inject, ref, computed, watch } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import type { SearchFieldConfig } from '../base/types'
-import { useWorkerRequest } from '@/composables/useWorkerRequest'
-import { useLogger } from '@/composables/useLogger'
+import { useListData } from '@/composables/useListData'
 import { useExposeWidget } from '@/composables/useExposeWidget'
+import type { ListApiConfig } from '@/components/WidgetRenderer/types'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const eventCtx = inject(EVENT_CONTEXT_KEY, null)
-useExposeWidget(() => ({
-  get loading() { return loading.value },
-  get tableData() { return tableData.value },
-}))
-const logger = useLogger('FgSearchList')
-const { request } = useWorkerRequest()
 
-// ---- 搜索表单 ----
-const searchModel = reactive<Record<string, unknown>>({})
-
+// ---- Schema 配置 ----
 const searchFields = computed<SearchFieldConfig[]>(() =>
   (widgetData.value.props?.searchFields as SearchFieldConfig[]) ?? []
 )
 
 const columns = computed(() =>
-  (widgetData.value.props?.columns as Array<{ field: string; label: string; width?: string }>) ?? []
+  (widgetData.value.props?.columns as Array<{ field: string; label: string; width?: string; sortable?: boolean }>) ?? []
 )
 
-// ---- 表格数据 ----
-const tableData = ref<unknown[]>([])
-const total = ref(0)
-const currentPage = ref(1)
-const loading = ref(false)
+const selectionEnabled = computed(() => {
+  const sel = widgetData.value.props?.selection as { enabled?: boolean } | undefined
+  return sel?.enabled === true
+})
 
-const pageSize = computed(() =>
-  (widgetData.value.props?.pageSize as number) || 10
+const sortable = computed(() => widgetData.value.props?.sortable === true)
+
+const batchActions = computed(() =>
+  (widgetData.value.props?.batchActions as Array<{ label: string; action: string }>) ?? []
 )
 
-// ---- 初始化搜索字段默认值 ----
+// ---- 构建 ListApiConfig ----
+const listApi = computed<ListApiConfig>(() => {
+  const api = widgetData.value.api
+  return {
+    url: api?.url ?? '',
+    method: api?.method ?? 'get',
+    extraParams: api?.params as Record<string, unknown>,
+    dataPath: api?.dataPath,
+    totalPath: 'total',
+    immediate: api?.immediate,
+    resetOnSearch: true,
+  }
+})
+
+// ---- useListData composable ----
+const {
+  tableData,
+  total,
+  loading,
+  currentPage,
+  pageSize,
+  searchParams,
+  setSearchParams,
+  fetchData,
+  handleSearch: listHandleSearch,
+  handleReset: listHandleReset,
+  handlePageChange,
+  handleSizeChange,
+  handleSortChange,
+  selectedRows,
+  handleSelectionChange,
+  clearSelection,
+} = useListData({
+  listApi: listApi.value,
+  pageSize: (widgetData.value.props?.pageSize as number) || 10,
+  autoLoad: false,
+})
+
+// 当 api 配置变化时重新加载
+watch(() => widgetData.value.api, (api) => {
+  if (api?.url && api?.immediate !== false) {
+    fetchData()
+  }
+}, { deep: true })
+
+// ---- 暴露到 exposed 系统 ----
+useExposeWidget(() => ({
+  get loading() { return loading.value },
+  get tableData() { return tableData.value },
+  get selectedRows() { return selectedRows.value },
+  get selectedCount() { return selectedRows.value.length },
+}))
+
+// ---- 搜索表单 ----
+const searchModel = ref<Record<string, unknown>>({})
+
+// 初始化搜索字段默认值
 watch(searchFields, (fields) => {
   for (const f of fields) {
-    if (searchModel[f.field] === undefined) {
-      searchModel[f.field] = f.defaultValue ?? undefined
+    if (searchModel.value[f.field] === undefined) {
+      searchModel.value[f.field] = f.defaultValue ?? undefined
     }
   }
 }, { immediate: true })
 
-// ---- API 加载 ----
-async function loadData() {
-  const api = widgetData.value.api
-  if (!api?.url) return
+// 同步搜索模型到 searchParams
+watch(searchModel, (model) => {
+  setSearchParams({ ...model })
+}, { deep: true })
 
-  loading.value = true
-  try {
-    const params: Record<string, unknown> = {
-      ...api.params,
-      ...searchModel,
-      page: currentPage.value,
-      pageSize: pageSize.value,
-    }
-    const result = await request({ url: api.url, method: api.method ?? 'get', params })
-    const dataPath = api.dataPath
-    const root = dataPath ? (result as Record<string, unknown>)?.[dataPath] : result
-    if (Array.isArray(root)) {
-      tableData.value = root
-      total.value = ((result as Record<string, unknown>)?.total as number) ?? root.length
-    } else if (root && typeof root === 'object') {
-      tableData.value = (root as Record<string, unknown>).list as unknown[] ?? (root as Record<string, unknown>).records as unknown[] ?? []
-      total.value = ((root as Record<string, unknown>).total as number) ?? tableData.value.length
-    }
-  } catch (e) {
-    logger.error('search list load error:', e)
-    tableData.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
+// ---- 搜索/重置 ----
 async function handleSearch() {
-  currentPage.value = 1
-  loadData()
+  listHandleSearch()
   if (eventCtx) {
     await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'search')
   }
 }
 
 async function handleReset() {
-  for (const key of Object.keys(searchModel)) {
-    searchModel[key] = undefined
+  for (const key of Object.keys(searchModel.value)) {
+    searchModel.value[key] = undefined
   }
-  currentPage.value = 1
-  loadData()
+  listHandleReset()
   if (eventCtx) {
     await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'reset')
   }
 }
 
-function handlePageChange(page: number) {
-  currentPage.value = page
-  loadData()
+// ---- 排序 ----
+function onSortChange({ prop, order }: { prop: string; order: string | null }) {
+  handleSortChange({ prop, order: order ?? '' })
+  if (eventCtx) {
+    triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'sort-change')
+  }
 }
 
-onMounted(() => {
-  const api = widgetData.value.api
-  if (api?.immediate !== false && api?.url) {
-    loadData()
+// ---- 行选择 ----
+function onSelectionChange(rows: Record<string, unknown>[]) {
+  handleSelectionChange(rows)
+  if (eventCtx) {
+    triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'selection-change')
   }
-})
+}
+
+// ---- 批量操作 ----
+async function handleBatchAction(action: string) {
+  if (eventCtx) {
+    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, `batch-${action}`)
+  }
+}
+
+// ---- 初始加载 ----
+const api = widgetData.value.api
+if (api?.immediate !== false && api?.url) {
+  fetchData()
+}
 
 // ---- 暴露方法 ----
 defineExpose({
   search: handleSearch,
   reset: handleReset,
-  reload: loadData,
-  getSearchParams: () => ({ ...searchModel }),
+  reload: fetchData,
+  getSearchParams: () => ({ ...searchModel.value }),
   setSearchParams: (params: Record<string, unknown>) => {
-    Object.assign(searchModel, params)
+    Object.assign(searchModel.value, params)
   },
+  getSelectedRows: () => selectedRows.value,
+  clearSelection,
 })
 </script>
 
@@ -152,6 +192,16 @@ defineExpose({
             size="default"
             @keyup.enter="handleSearch"
           />
+          <el-input-number
+            v-else-if="field.type === 'number'"
+            v-model="searchModel[field.field]"
+            :placeholder="field.placeholder || '请输入'"
+            :min="field.min"
+            :max="field.max"
+            :step="field.step ?? 1"
+            controls-position="right"
+            size="default"
+          />
           <el-select
             v-else-if="field.type === 'select'"
             v-model="searchModel[field.field]"
@@ -166,6 +216,33 @@ defineExpose({
               :value="opt.value"
             />
           </el-select>
+          <el-cascader
+            v-else-if="field.type === 'cascader'"
+            v-model="searchModel[field.field]"
+            :placeholder="field.placeholder || '请选择'"
+            :options="(field.cascaderOptions as any) || []"
+            clearable
+            size="default"
+          />
+          <el-time-picker
+            v-else-if="field.type === 'time-picker'"
+            v-model="searchModel[field.field]"
+            :placeholder="field.placeholder || '选择时间'"
+            clearable
+            size="default"
+          />
+          <el-checkbox-group
+            v-else-if="field.type === 'checkbox'"
+            v-model="searchModel[field.field]"
+            size="default"
+          >
+            <el-checkbox
+              v-for="opt in (field.options || [])"
+              :key="String(opt.value)"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-checkbox-group>
           <el-date-picker
             v-else-if="field.type === 'date'"
             v-model="searchModel[field.field]"
@@ -194,6 +271,20 @@ defineExpose({
       </div>
     </div>
 
+    <!-- 批量操作栏 -->
+    <div v-if="selectionEnabled && selectedRows.length > 0" :class="styles.batchBar">
+      <span :class="styles.batchInfo">已选 {{ selectedRows.length }} 项</span>
+      <el-button
+        v-for="action in batchActions"
+        :key="action.action"
+        size="small"
+        @click="handleBatchAction(action.action)"
+      >
+        {{ action.label }}
+      </el-button>
+      <el-button size="small" @click="clearSelection">取消选择</el-button>
+    </div>
+
     <!-- 数据表格 -->
     <el-table
       v-loading="loading"
@@ -201,25 +292,36 @@ defineExpose({
       :stripe="widgetData.props?.stripe !== false"
       :border="widgetData.props?.border !== false"
       :class="styles.table"
+      @selection-change="onSelectionChange"
+      @sort-change="onSortChange"
     >
+      <el-table-column
+        v-if="selectionEnabled"
+        type="selection"
+        width="50"
+        fixed="left"
+      />
       <el-table-column
         v-for="col in columns"
         :key="col.field"
         :prop="col.field"
         :label="col.label"
         :width="col.width"
+        :sortable="(sortable || col.sortable) ? 'custom' : false"
       />
     </el-table>
 
     <!-- 分页 -->
     <el-pagination
       v-if="widgetData.props?.showPagination !== false"
-      layout="total, prev, pager, next"
+      layout="total, sizes, prev, pager, next"
       :total="total"
       :page-size="pageSize"
+      :page-sizes="[10, 20, 50, 100]"
       :current-page="currentPage"
       :class="styles.pagination"
       @current-change="handlePageChange"
+      @size-change="handleSizeChange"
     />
   </div>
 </template>

@@ -1,91 +1,190 @@
 <script setup lang="ts">
-import { inject, computed, ref, onMounted, watch } from 'vue'
+import { inject, computed, reactive, watch, onMounted } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
-import { useApiRequest } from '../../composables/useApiRequest'
+import { useListData } from '../../composables/useListData'
 import { useExposeWidget } from '../../composables/useExposeWidget'
-import type { TableColumn } from './config'
+import type { ListApiConfig } from '../../components/WidgetRenderer/types'
+import type { TableColumn, PaginationConfig, SelectionConfig } from './config'
+import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
-useExposeWidget(() => ({
-  get loading() { return loading.value },
-  get tableData() { return tableData.value },
-}))
 const { isDisabled } = useWidgetRenderState()
-const { fetchApi } = useApiRequest()
 
-const columns = computed<TableColumn[]>(() => {
-  return (widgetData.value.props?.columns as TableColumn[]) ?? []
-})
+// ---- Schema config ----
+
+const columns = computed<TableColumn[]>(() =>
+  (widgetData.value.props?.columns as TableColumn[]) ?? [],
+)
 
 const stripe = computed(() => (widgetData.value.props?.stripe as boolean) ?? true)
 const border = computed(() => (widgetData.value.props?.border as boolean) ?? true)
 const tableHeight = computed(() => (widgetData.value.props?.height as number) ?? 280)
+const globalSortable = computed(() => (widgetData.value.props?.sortable as boolean) ?? false)
+const globalFilterable = computed(() => (widgetData.value.props?.filterable as boolean) ?? false)
 
-const apiUrl = computed(() => widgetData.value.props?.apiUrl as string)
-const apiMethod = computed(() => (widgetData.value.props?.apiMethod as string) ?? 'get')
-const apiHeaders = computed(() => (widgetData.value.props?.apiHeaders as Record<string, string>) ?? {})
-const responseDataPath = computed(() => widgetData.value.props?.responseDataPath as string)
+const paginationConfig = computed<PaginationConfig>(() =>
+  (widgetData.value.props?.pagination as PaginationConfig) ?? { enabled: true, pageSize: 20, pageSizes: [10, 20, 50, 100] },
+)
 
-const tableData = ref<Record<string, unknown>[]>([])
-const loading = ref(false)
+const selectionConfig = computed<SelectionConfig>(() =>
+  (widgetData.value.props?.selection as SelectionConfig) ?? { enabled: false },
+)
 
-function resolveDataPath(data: unknown, path: string): unknown {
-  if (!path) return data
-  return path.split('.').reduce<unknown>((obj, key) => {
-    if (obj && typeof obj === 'object' && key in (obj as Record<string, unknown>)) {
-      return (obj as Record<string, unknown>)[key]
+// ---- Build ListApiConfig from widget api or props ----
+
+function buildListApiConfig(): ListApiConfig {
+  const api = widgetData.value.api
+  if (api?.url) {
+    return {
+      url: api.url,
+      method: api.method ?? 'post',
+      dataPath: api.dataPath,
+      immediate: false,
     }
-    return undefined
-  }, data)
+  }
+  const props = widgetData.value.props
+  const apiUrl = props?.apiUrl as string
+  if (apiUrl) {
+    return {
+      url: apiUrl,
+      method: ((props?.apiMethod as string) ?? 'get') as 'get' | 'post',
+      dataPath: props?.responseDataPath as string,
+      immediate: false,
+    }
+  }
+  return { url: '', immediate: false }
 }
 
-async function loadData() {
-  if (!apiUrl.value) return
-  loading.value = true
-  try {
-    const result = await fetchApi(apiUrl.value, apiMethod.value, apiHeaders.value)
-    const extracted = resolveDataPath(result, responseDataPath.value)
-    tableData.value = Array.isArray(extracted) ? extracted as Record<string, unknown>[] : []
-  } catch {
-    tableData.value = []
-  } finally {
-    loading.value = false
-  }
+const listApiConfig = reactive<ListApiConfig>(buildListApiConfig())
+
+watch(
+  () => [widgetData.value.api?.url, widgetData.value.props?.apiUrl],
+  () => Object.assign(listApiConfig, buildListApiConfig()),
+)
+
+// ---- useListData composable ----
+
+const {
+  tableData,
+  total,
+  loading,
+  currentPage,
+  pageSize,
+  selectedRows,
+  setSearchParams,
+  fetchData,
+  handlePageChange,
+  handleSizeChange,
+  handleSortChange,
+  handleSelectionChange,
+  clearSelection,
+} = useListData({
+  listApi: listApiConfig,
+  pageSize: paginationConfig.value.pageSize,
+  autoLoad: false,
+})
+
+// Sync pageSize when pagination config changes
+watch(
+  () => paginationConfig.value.pageSize,
+  (newSize) => { pageSize.value = newSize },
+)
+
+// ---- Expose widget state ----
+
+useExposeWidget(() => ({
+  get loading() { return loading.value },
+  get tableData() { return tableData.value },
+  get selectedRows() { return selectedRows.value },
+}))
+
+// ---- Sort change wrapper (el-table order can be null) ----
+
+function onSortChange({ prop, order }: { prop: string; order: 'ascending' | 'descending' | null }) {
+  handleSortChange({ prop, order: order ?? '' })
 }
+
+// ---- Default client-side filter method ----
+
+function defaultFilterMethod(prop: string) {
+  return (value: unknown, row: Record<string, unknown>) => row[prop] === value
+}
+
+// ---- Auto-load on mount ----
 
 onMounted(() => {
-  if (apiUrl.value) {
-    loadData()
+  if (listApiConfig.url) {
+    fetchData()
   }
 })
 
-watch(apiUrl, () => {
-  if (apiUrl.value) {
-    loadData()
-  } else {
-    tableData.value = []
-  }
+// ---- Watch API URL changes ----
+
+watch(
+  () => listApiConfig.url,
+  (url) => {
+    if (url) fetchData()
+    else tableData.value = []
+  },
+)
+
+// ---- defineExpose for programmatic access ----
+
+defineExpose({
+  refresh: fetchData,
+  setSearchParams,
+  clearSelection,
 })
 </script>
 
 <template>
-  <el-table
-    :data="tableData"
-    :stripe="stripe"
-    :border="border"
-    :height="tableHeight"
-    :loading="loading"
-    :disabled="isDisabled"
-    size="default"
-  >
-    <el-table-column
-      v-for="col in columns"
-      :key="col.prop"
-      :prop="col.prop"
-      :label="col.label"
-      :width="col.width"
-      :fixed="col.fixed"
+  <div :class="styles.container">
+    <el-table
+      v-loading="loading"
+      :data="tableData"
+      :stripe="stripe"
+      :border="border"
+      :height="tableHeight"
+      :disabled="isDisabled"
+      size="default"
+      :class="styles.table"
+      @sort-change="onSortChange"
+      @selection-change="handleSelectionChange"
+    >
+      <!-- Selection column -->
+      <el-table-column
+        v-if="selectionConfig.enabled"
+        type="selection"
+        width="50"
+        fixed="left"
+      />
+
+      <!-- Data columns -->
+      <el-table-column
+        v-for="col in columns"
+        :key="col.prop"
+        :prop="col.prop"
+        :label="col.label"
+        :width="col.width"
+        :fixed="col.fixed"
+        :sortable="col.sortable !== undefined ? col.sortable : (globalSortable ? 'custom' : false)"
+        :filters="col.filters"
+        :filter-method="col.filters ? (col.filterMethod ?? defaultFilterMethod(col.prop)) : undefined"
+      />
+    </el-table>
+
+    <!-- Pagination -->
+    <el-pagination
+      v-if="paginationConfig.enabled && listApiConfig.url"
+      :class="styles.pagination"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :page-sizes="paginationConfig.pageSizes"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
     />
-  </el-table>
+  </div>
 </template>

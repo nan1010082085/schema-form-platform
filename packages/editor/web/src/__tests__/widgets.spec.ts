@@ -63,6 +63,7 @@ import { gaugeConfig } from '@/widgets/gauge/config'
 import { heatmapConfig } from '@/widgets/heatmap/config'
 import { funnelConfig } from '@/widgets/funnel/config'
 import { candlestickConfig } from '@/widgets/candlestick/config'
+import { statisticConfig } from '@/widgets/statistic/config'
 
 // --- createDefaultSchema ---
 import { createDefaultSchema } from '@/utils/schemaDefaults'
@@ -92,6 +93,7 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
   'slider', 'rate', 'color-picker',
   'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
   'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',
+  'statistic',
 ]
 
 const ALL_CONFIGS = [
@@ -140,6 +142,7 @@ const ALL_CONFIGS = [
   { name: 'heatmap', config: heatmapConfig },
   { name: 'funnel', config: funnelConfig },
   { name: 'candlestick', config: candlestickConfig },
+  { name: 'statistic', config: statisticConfig },
 ]
 
 // =====================================================================
@@ -152,9 +155,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 47 widget types', () => {
+  it('registers exactly 49 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(47)
+    expect(all).toHaveLength(49)
   })
 
   it('getComponentMap returns a component for every registered type', () => {

@@ -40,8 +40,10 @@ export type BasicType =
   | 'color-picker'
   | 'tag-input'
   | 'autocomplete'
+  | 'descriptions'
   | 'bar-chart' | 'line-chart' | 'pie-chart' | 'scatter-chart'
   | 'radar' | 'gauge' | 'heatmap' | 'funnel' | 'candlestick'
+  | 'statistic'
 
 /** 所有组件类型 */
 export type SchemaType = ContainerType | BasicType
@@ -224,13 +226,21 @@ export interface SearchFieldConfig {
   /** 显示标签 */
   label: string
   /** 搜索控件类型 */
-  type: 'input' | 'select' | 'date' | 'date-range'
+  type: 'input' | 'select' | 'date' | 'date-range' | 'cascader' | 'time-picker' | 'number' | 'checkbox'
   /** 占位文字 */
   placeholder?: string
-  /** 下拉选项（type=select 时使用） */
+  /** 下拉选项（type=select/checkbox 时使用） */
   options?: { label: string; value: string | number | boolean }[]
+  /** 级联选项（type=cascader 时使用） */
+  cascaderOptions?: { label: string; value: string | number; children?: unknown[] }[]
   /** 默认值 */
   defaultValue?: unknown
+  /** number 类型最小值 */
+  min?: number
+  /** number 类型最大值 */
+  max?: number
+  /** number 类型步长 */
+  step?: number
 }
 
 // ============================================================
@@ -555,6 +565,7 @@ export const FULL_WIDTH_TYPES = [
   'file-list',
   'search-list',
   'editable-table',
+  'descriptions',
   'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
   'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',
 ] as const
