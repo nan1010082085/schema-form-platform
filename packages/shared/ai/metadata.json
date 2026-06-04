@@ -1,6 +1,6 @@
 {
-  "version": "2026-06-03",
-  "generatedAt": "2026-06-03T09:53:11.084Z",
+  "version": "2026-06-04",
+  "generatedAt": "2026-06-04T09:46:59.459Z",
   "widgets": [
     {
       "type": "dialog",
@@ -1465,6 +1465,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "xField",
         "yField",
         "title",
@@ -1569,6 +1570,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "dateField",
         "openField",
         "closeField",
@@ -1656,6 +1658,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "nameField",
         "valueField",
         "title",
@@ -1725,6 +1728,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "valueField",
         "min",
         "max",
@@ -1836,6 +1840,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "xField",
         "yField",
         "valueField",
@@ -1923,6 +1928,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "xField",
         "yField",
         "title",
@@ -2012,6 +2018,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "nameField",
         "valueField",
         "title",
@@ -2129,6 +2136,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "categoryField",
         "valueField",
         "indicators",
@@ -2239,6 +2247,7 @@
         "rawOption": null
       },
       "keyProps": [
+        "staticData",
         "xField",
         "yField",
         "title",
@@ -2483,6 +2492,149 @@
         "height": 200
       },
       "category": "container",
+      "configFields": []
+    },
+    {
+      "type": "messageEvent",
+      "label": "消息事件",
+      "description": "messageEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "signalEvent",
+      "label": "信号事件",
+      "description": "signalEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "conditionalEvent",
+      "label": "条件事件",
+      "description": "conditionalEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "errorEvent",
+      "label": "错误事件",
+      "description": "errorEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "escalationEvent",
+      "label": "升级事件",
+      "description": "escalationEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "compensationEvent",
+      "label": "补偿事件",
+      "description": "compensationEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "callActivity",
+      "label": "调用活动",
+      "description": "callActivity",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "businessRuleTask",
+      "label": "业务规则任务",
+      "description": "businessRuleTask",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "manualTask",
+      "label": "手动任务",
+      "description": "manualTask",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "eventBasedGateway",
+      "label": "事件网关",
+      "description": "eventBasedGateway",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "complexGateway",
+      "label": "复杂网关",
+      "description": "complexGateway",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "adHocSubProcess",
+      "label": "临时子流程",
+      "description": "adHocSubProcess",
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "transaction",
+      "label": "事务",
+      "description": "transaction",
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "category": "task",
       "configFields": []
     }
   ],

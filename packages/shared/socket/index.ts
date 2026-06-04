@@ -5,6 +5,13 @@ export {
   type AiApplyEvent,
   type AiPublishedEvent,
   type HostContextEvent,
+  type CollabAiSyncEvent,
+  type CollabMessageStatusEvent,
+  type CollabGenerationStartEvent,
+  type CollabGenerationEndEvent,
+  type CollabParticipantEvent,
+  type CollabMessageEvent,
+  type MessageStatus,
 } from './events.js'
 
 export {
@@ -19,4 +26,15 @@ export {
   onAiPublished,
   onConnect,
   onDisconnect,
+  // Collaboration
+  joinCollaboration,
+  leaveCollaboration,
+  sendCollabMessage,
+  onCollabAiSync,
+  onCollabMessageStatus,
+  onCollabGenerationStart,
+  onCollabGenerationEnd,
+  onCollabUserJoined,
+  onCollabUserLeft,
+  onCollabParticipants,
 } from './client.js'

@@ -98,7 +98,7 @@ export function createViteConfig(
           // SSE 流式传输：手动处理响应以避免 http-proxy 缓冲
           selfHandleResponse: true,
           configure: (proxy) => {
-            proxy.on('proxyRes', (proxyRes, req, res) => {
+            proxy.on('proxyRes', (proxyRes, _, res) => {
               const contentType = proxyRes.headers['content-type'] ?? ''
               const isSSE = contentType.includes('text/event-stream')
 
