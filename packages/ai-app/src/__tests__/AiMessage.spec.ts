@@ -28,14 +28,14 @@ describe('AiMessage', () => {
   function setupRAFMock() {
     rafCallbacks = new Map()
     rafIdCounter = 1
-    rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+    rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
       const id = rafIdCounter++
       rafCallbacks.set(id, cb)
       return id
-    })
-    cafSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+    }) as ReturnType<typeof vi.spyOn>
+    cafSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id: number) => {
       rafCallbacks.delete(id)
-    })
+    }) as ReturnType<typeof vi.spyOn>
   }
 
   function flushAllRAF() {
@@ -110,7 +110,6 @@ describe('AiMessage', () => {
 
       // Before flushing rAF, the DOM should NOT contain the final content
       // (it still has the previous value or empty)
-      const htmlBefore = wrapper.html()
 
       // Flush the animation frame
       flushAllRAF()

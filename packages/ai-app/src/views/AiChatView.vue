@@ -9,15 +9,16 @@
 import { onMounted, computed } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
-import type { AgentType } from '@/types'
+import type { AgentType, MentionReference } from '@/types'
 import { storeToRefs } from 'pinia'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
+import SchemaDiffPanel from '@/components/SchemaDiffPanel.vue'
 import type { PreviewSchemaData, PreviewFlowData, PreviewTab } from '@/components/AiPreviewPanel.vue'
 
 const store = useAiStore()
-const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex } =
+const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex, currentDiff, schemaUpdateDescription, sseStatus, retryCount, MAX_AUTO_RETRIES } =
   storeToRefs(store)
 
 // ---- Preview data ----
@@ -60,15 +61,19 @@ const jsonString = computed(() => {
 
 // ---- Event handlers ----
 
-async function handleSend(message: string, agent: AgentType): Promise<void> {
+async function handleSend(message: string, agent: AgentType, mentions?: MentionReference[]): Promise<void> {
   if (agent !== activeAgent.value) {
     store.switchAgent(agent)
   }
-  await store.sendMessage(message)
+  await store.sendMessage(message, mentions)
 }
 
 function handleStop(): void {
   store.stopGeneration()
+}
+
+function handleRetry(): void {
+  store.retryLastMessage()
 }
 
 function handleSelectConversation(id: string): void {
@@ -85,6 +90,14 @@ function handleDeleteConversation(id: string): void {
 
 function handleClearMessages(): void {
   store.clearConversation()
+}
+
+function handleUndoSchema(): void {
+  store.undoLastSchemaUpdate()
+}
+
+function handleDismissDiff(): void {
+  store.clearDiff()
 }
 
 function handlePrimaryAction(): void {
@@ -169,15 +182,29 @@ onMounted(() => {
         :loading="loading"
         :task-chain="taskChain"
         :task-chain-index="taskChainIndex"
+        :sse-status="sseStatus"
+        :retry-count="retryCount"
+        :max-retries="MAX_AUTO_RETRIES"
         @send="handleSend"
         @stop="handleStop"
+        @retry="handleRetry"
         @clear-messages="handleClearMessages"
         @card-primary-action="handlePrimaryAction"
         @card-secondary-action="handleSecondaryAction"
       />
 
       <!-- 右侧：预览面板 -->
-      <AiPreviewPanel
+      <div :class="$style.rightPanel">
+        <!-- Diff 面板（增量更新时显示） -->
+        <SchemaDiffPanel
+          v-if="currentDiff"
+          :diff="currentDiff"
+          :description="schemaUpdateDescription"
+          @undo="handleUndoSchema"
+          @dismiss="handleDismissDiff"
+        />
+
+        <AiPreviewPanel
         :tabs="previewTabs"
         :schema-data="schemaData"
         :flow-data="flowData"
@@ -188,6 +215,7 @@ onMounted(() => {
         @primary-action="handlePrimaryAction"
         @secondary-action="handleSecondaryAction"
       />
+      </div>
     </div>
   </div>
 </template>

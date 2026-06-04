@@ -334,3 +334,218 @@
   background: var(--ai-color-danger, #E63535);
   color: white;
 }
+
+/* Hidden file input */
+.hiddenInput {
+  display: none;
+}
+
+/* File upload button */
+.fileBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ai-radius-md, 4px);
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  background: var(--ai-bg-white, #FFFFFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ai-text-hint, #999999);
+  transition: all 0.2s;
+}
+
+.fileBtn:hover:not(:disabled) {
+  border-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+.fileBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Attachment list */
+.attachmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+}
+
+.attachmentItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--ai-bg-gray, #F5F7FA);
+  border-radius: var(--ai-radius-md, 6px);
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+}
+
+.attachmentItem.attachmentError {
+  border-color: var(--ai-color-danger, #E63535);
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.05));
+}
+
+.attachmentIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.attachmentInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachmentName {
+  font-size: 12px;
+  color: var(--ai-text-primary, #333333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachmentSize {
+  font-size: 10px;
+  color: var(--ai-text-hint, #999999);
+}
+
+.attachmentLoading {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ai-border-base, #D5DDE3);
+  border-top-color: var(--ai-color-primary, #0060A2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.attachmentErrorText {
+  font-size: 10px;
+  color: var(--ai-color-danger, #E63535);
+}
+
+.attachmentRemove {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ai-text-hint, #999999);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.attachmentRemove:hover {
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.1));
+  color: var(--ai-color-danger, #E63535);
+}
+
+/* ---- SSE 连接状态指示器 ---- */
+
+.connStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--ai-radius-sm, 2px);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.connDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.connConnecting {
+  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
+  color: var(--ai-color-warning, #D48806);
+}
+
+.connConnecting .connDot {
+  background: var(--ai-color-warning, #D48806);
+  animation: connPulse 1.2s ease-in-out infinite;
+}
+
+.connReconnecting {
+  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
+  color: var(--ai-color-warning, #D48806);
+}
+
+.connReconnecting .connDot {
+  background: var(--ai-color-warning, #D48806);
+  animation: connPulse 1.2s ease-in-out infinite;
+}
+
+.connDisconnected {
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.1));
+  color: var(--ai-color-danger, #E63535);
+}
+
+.connDisconnected .connDot {
+  background: var(--ai-color-danger, #E63535);
+}
+
+@keyframes connPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- 重试 Banner ---- */
+
+.retryBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.05));
+  border-top: 1px solid var(--ai-border-light, #EBEDF3);
+  flex-shrink: 0;
+}
+
+.retryBannerText {
+  font-size: 12px;
+  color: var(--ai-text-hint, #999999);
+}
+
+.retryBannerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: var(--ai-radius-md, 4px);
+  border: 1px solid var(--ai-color-primary, #0060A2);
+  background: var(--ai-bg-white, #FFFFFF);
+  color: var(--ai-color-primary, #0060A2);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retryBannerBtn:hover {
+  background: var(--ai-color-primary-bg, #EEF5FF);
+}

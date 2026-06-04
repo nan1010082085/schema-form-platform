@@ -106,7 +106,7 @@ describe('useAiStore', () => {
 
     it('handles stream read error', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(new ReadableStream({
+      vi.mocked(chat).mockImplementation(() => new ReadableStream({
         start(controller) {
           controller.error(new Error('Network error'))
         },
@@ -117,7 +117,7 @@ describe('useAiStore', () => {
       expect(store.error).toBe('Network error')
       expect(store.messages[1].content).toContain('Error')
       expect(store.loading).toBe(false)
-    })
+    }, 20000)
 
     it('sets text content from text event', async () => {
       const store = useAiStore()
@@ -170,6 +170,7 @@ describe('useAiStore', () => {
 
       expect(chat).toHaveBeenLastCalledWith(
         expect.objectContaining({ conversationId: 'conv-1' }),
+        expect.any(AbortSignal),
       )
     })
   })

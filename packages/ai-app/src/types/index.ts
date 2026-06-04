@@ -66,9 +66,13 @@ export interface FlowGraph {
 // ---- 对话消息 ----
 
 export interface ToolCallInfo {
+  /** Unique run ID for matching calling/result phases (S4) */
+  id?: string
   name: string
   arguments: Record<string, unknown>
   result?: unknown
+  /** Whether the tool execution failed (S5) */
+  error?: string
 }
 
 export interface AIMessage {
@@ -83,7 +87,12 @@ export interface AIMessage {
   schema?: Widget[]
   flow?: FlowGraph
   timestamp: Date
+  /** 消息状态（用于实时同步） */
+  status?: MessageStatus
 }
+
+/** 消息状态 */
+export type MessageStatus = 'sending' | 'sent' | 'streaming' | 'received' | 'error'
 
 // ---- 上下文 ----
 
@@ -99,17 +108,28 @@ export interface ChatContext {
   historySummary?: string
 }
 
+// ---- SSE 连接状态 ----
+
+export type SSEConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+
 // ---- 对话请求 ----
+
+export interface MentionReference {
+  id: string
+  type: string
+  label: string
+}
 
 export interface ChatRequest {
   conversationId?: string
   message: string
   context: ChatContext
+  mentions?: MentionReference[]
 }
 
 // ---- SSE 事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error'
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error' | 'schema_diff' | 'flow_diff' | 'version_created' | 'schema_update' | 'schema_complete'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -127,8 +147,17 @@ export interface SSEEvent {
   agent?: string
   /** Collaboration event data */
   collaboration?: boolean
-  /** Tool error event data */
+  /** Tool error event data (S4/S5) */
   toolName?: string
+  runId?: string
+  /** Diff event data */
+  diff?: SchemaDiff | FlowDiff
+  /** Version created event data */
+  versionId?: string
+  version?: number
+  /** Schema update event data (streaming generation) */
+  step?: string
+  schema?: Widget[]
 }
 
 // ---- 任务链 ----
@@ -137,6 +166,62 @@ export interface TaskChainStep {
   agent: 'editor' | 'flow'
   description: string
   status: 'pending' | 'running' | 'done' | 'skipped'
+}
+
+// ---- Diff ----
+
+export interface SchemaDiffEntry {
+  type: 'add' | 'remove' | 'modify'
+  widgetId: string
+  widgetType: string
+  path: string
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+  summary: string
+}
+
+export interface SchemaDiffItem {
+  id: string
+  type: string
+  label?: string
+  changes?: string[]
+}
+
+export interface SchemaDiff {
+  changes: SchemaDiffEntry[]
+  added: SchemaDiffItem[]
+  removed: SchemaDiffItem[]
+  modified: SchemaDiffItem[]
+  unchanged?: number
+}
+
+export interface FlowDiffEntry {
+  type: 'add_node' | 'remove_node' | 'modify_node' | 'add_edge' | 'remove_edge' | 'modify_edge'
+  elementId: string
+  elementType: 'node' | 'edge'
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+  summary: string
+}
+
+export interface FlowDiff {
+  changes: FlowDiffEntry[]
+  nodesAdded: number
+  nodesRemoved: number
+  nodesModified: number
+  edgesAdded: number
+  edgesRemoved: number
+  edgesModified: number
+}
+
+// ---- 版本历史 ----
+
+export interface VersionEntry {
+  id: string
+  version: number
+  type: 'schema' | 'flow'
+  description?: string
+  createdAt: string
 }
 
 // ---- 发布 ----
@@ -176,3 +261,69 @@ export interface Conversation {
 // ---- Agent ----
 
 export type AgentType = 'editor' | 'flow' | 'auto' | 'general'
+
+// ---- AI 版本 ----
+
+export interface AIVersion {
+  id: string
+  version: number
+  type: 'schema' | 'flow'
+  description?: string
+  messageId: string
+  createdAt: string
+}
+
+// ---- 附件 ----
+
+export interface Attachment {
+  filename: string
+  mimetype: string
+  size: number
+  text: string
+  status: 'uploading' | 'done' | 'error'
+  error?: string
+}
+
+// ---- 监控 ----
+
+export interface MonitorSummary {
+  totalCalls: number
+  successRate: number
+  avgDuration: number
+  maxDuration: number
+  totalTokens: number
+  slowCalls: number
+}
+
+export interface AgentMetricStats {
+  agentName: string
+  operation: string
+  totalCalls: number
+  successRate: number
+  avgDuration: number
+  p95Duration: number
+  maxDuration: number
+  totalTokens: number
+}
+
+export interface AgentMetric {
+  id: string
+  agentName: string
+  operation: string
+  duration: number
+  success: boolean
+  error?: string
+  tokenUsage?: { total?: number }
+  createdAt: string
+}
+
+export interface AgentAlert {
+  id: string
+  agentName: string
+  alertType: 'failure' | 'slow' | 'high_token'
+  operation: string
+  duration: number
+  tokenUsage?: { total?: number }
+  error?: string
+  createdAt: string
+}

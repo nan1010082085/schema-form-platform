@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 
@@ -16,6 +16,10 @@ describe('AiChatPanel', () => {
     messages: [],
     loading: false,
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('renders header with title and agent badge', () => {
     const wrapper = mount(AiChatPanel, {

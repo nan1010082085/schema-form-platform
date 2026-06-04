@@ -59,6 +59,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
  *
  * 使用 fetch + ReadableStream 实现，支持流式文本和结构化事件。
  * 支持通过 AbortSignal 取消请求。
+ *
+ * SSE 解析要点：
+ * - 行分隔符为 `\n`，事件分隔符为 `\n\n`
+ * - `data:` 和 `data: ` 均为合法格式（空格可选）
+ * - 以 `:` 开头的行为注释（如心跳），跳过
+ * - 流结束时必须刷新 TextDecoder 和 buffer，否则末尾事件丢失
  */
 export function chat(request: ChatRequest, signal?: AbortSignal): ReadableStream<SSEEvent> {
   const body = JSON.stringify(request)
@@ -85,44 +91,82 @@ export function chat(request: ChatRequest, signal?: AbortSignal): ReadableStream
 
       const decoder = new TextDecoder()
       let buffer = ''
+      let streamClosed = false
+
+      /** Extract data value from an SSE line. Returns null if not a data line. */
+      function extractData(line: string): string | null {
+        if (line.startsWith('data: ')) return line.slice(6)
+        if (line.startsWith('data:')) return line.slice(5)
+        return null
+      }
+
+      /** Parse SSE data value: enqueue as event or close on [DONE]. */
+      function handleData(data: string): void {
+        if (data === '[DONE]') {
+          controller.close()
+          streamClosed = true
+          return
+        }
+        try {
+          const event = JSON.parse(data) as SSEEvent
+          controller.enqueue(event)
+        } catch {
+          // Skip unparseable JSON
+        }
+      }
+
+      /** Process all complete lines in buffer. Returns remaining incomplete line. */
+      function processBuffer(buf: string): string {
+        const lines = buf.split('\n')
+        const remainder = lines.pop() ?? ''
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed || trimmed.startsWith(':')) continue
+          const data = extractData(trimmed)
+          if (data === null) continue
+          handleData(data)
+          if (streamClosed) return ''
+        }
+        return remainder
+      }
 
       try {
         while (true) {
-          // 检查是否已取消
           if (signal?.aborted) {
             reader.cancel()
-            controller.close()
+            if (!streamClosed) controller.close()
             return
           }
 
           const { done, value } = await reader.read()
-          if (done) break
 
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() ?? ''
+          if (value) {
+            buffer += decoder.decode(value, { stream: true })
+          }
 
-          for (const line of lines) {
-            const trimmed = line.trim()
-            if (!trimmed || !trimmed.startsWith('data: ')) continue
+          buffer = processBuffer(buffer)
+          if (streamClosed) return
 
-            const data = trimmed.slice(6)
-            if (data === '[DONE]') {
-              controller.close()
-              return
+          if (done) {
+            // Flush TextDecoder internal buffer (partial multi-byte characters)
+            buffer += decoder.decode()
+            // Process remaining buffer. The trailing line (no \n) is also
+            // a complete SSE line — the stream has ended so there is nothing
+            // more to wait for.
+            if (buffer.length > 0) {
+              for (const line of buffer.split('\n')) {
+                const trimmed = line.trim()
+                if (!trimmed || trimmed.startsWith(':')) continue
+                const data = extractData(trimmed)
+                if (data === null) continue
+                handleData(data)
+                if (streamClosed) return
+              }
             }
-
-            try {
-              const event = JSON.parse(data) as SSEEvent
-              controller.enqueue(event)
-            } catch {
-              // 跳过无法解析的行
-            }
+            if (!streamClosed) controller.close()
+            return
           }
         }
-
-        // 流结束但未收到 [DONE] 标记
-        controller.close()
       } catch (err) {
         controller.error(err)
       }
@@ -155,5 +199,276 @@ export async function publish(payload: PublishRequest): Promise<PublishResponse>
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  })
+}
+
+// ---- 文件上传 ----
+
+export interface UploadResult {
+  filename: string
+  mimetype: string
+  size: number
+  text: string
+}
+
+export async function uploadFile(file: File): Promise<UploadResult> {
+  const form = new FormData()
+  form.append('file', file)
+  const response = await fetch(`${BASE_URL}/ai/upload`, {
+    method: 'POST',
+    body: form,
+  })
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const msg = body?.error?.message ?? `${response.status} ${response.statusText}`
+    throw new AiApiError(msg, response.status)
+  }
+  const body = (await response.json()) as ApiResponse<UploadResult>
+  if (!body.success) {
+    throw new AiApiError(body.error?.message ?? 'Upload failed', response.status)
+  }
+  return body.data
+}
+
+// ---- 图片分析 ----
+
+export interface AnalyzeImageResult {
+  description: string
+}
+
+export async function analyzeImage(base64Image: string): Promise<AnalyzeImageResult> {
+  return request<AnalyzeImageResult>('/ai/analyze-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: base64Image }),
+  })
+}
+
+// ---- 对话导出 ----
+
+export type ExportFormat = 'json' | 'markdown' | 'html'
+
+export async function downloadConversation(id: string, format: ExportFormat): Promise<void> {
+  const response = await fetch(`${BASE_URL}/ai/conversations/${encodeURIComponent(id)}/export?format=${format}`)
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const msg = body?.error?.message ?? `${response.status} ${response.statusText}`
+    throw new AiApiError(msg, response.status)
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `conversation-${id}.${format === 'markdown' ? 'md' : format}`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ---- 监控 ----
+
+export interface MonitorSummary {
+  totalCalls: number
+  successRate: number
+  avgDuration: number
+  maxDuration: number
+  totalTokens: number
+  slowCalls: number
+}
+
+export interface AgentMetricStats {
+  agentName: string
+  operation: string
+  totalCalls: number
+  successRate: number
+  avgDuration: number
+  p95Duration: number
+  maxDuration: number
+  totalTokens: number
+}
+
+export interface AgentMetric {
+  id: string
+  agentName: string
+  operation: string
+  duration: number
+  success: boolean
+  error?: string
+  tokenUsage?: { total?: number }
+  createdAt: string
+}
+
+export interface AgentAlert {
+  id: string
+  agentName: string
+  alertType: 'failure' | 'slow' | 'high_token'
+  operation: string
+  duration: number
+  tokenUsage?: { total?: number }
+  error?: string
+  createdAt: string
+}
+
+export async function getMonitorSummary(hours?: number): Promise<MonitorSummary> {
+  const query = hours ? `?hours=${hours}` : ''
+  return request<MonitorSummary>(`/ai/monitor/summary${query}`)
+}
+
+export async function getMonitorStats(): Promise<AgentMetricStats[]> {
+  return request<AgentMetricStats[]>('/ai/monitor/stats')
+}
+
+export async function getMonitorRecent(params?: { limit?: number }): Promise<AgentMetric[]> {
+  const query = params?.limit ? `?limit=${params.limit}` : ''
+  return request<AgentMetric[]>(`/ai/monitor/recent${query}`)
+}
+
+export async function getMonitorAlerts(params?: { limit?: number }): Promise<AgentAlert[]> {
+  const query = params?.limit ? `?limit=${params.limit}` : ''
+  return request<AgentAlert[]>(`/ai/monitor/alerts${query}`)
+}
+
+// ---- 搜索对话 ----
+
+export interface SearchConversationsParams {
+  keyword?: string
+  startDate?: string
+  endDate?: string
+  source?: string
+  page?: number
+  pageSize?: number
+}
+
+export interface SearchResult {
+  conversations: Conversation[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export async function searchConversations(params: SearchConversationsParams): Promise<SearchResult> {
+  const query = new URLSearchParams()
+  if (params.keyword) query.set('keyword', params.keyword)
+  if (params.startDate) query.set('startDate', params.startDate)
+  if (params.endDate) query.set('endDate', params.endDate)
+  if (params.source) query.set('source', params.source)
+  if (params.page !== undefined) query.set('page', String(params.page))
+  if (params.pageSize !== undefined) query.set('pageSize', String(params.pageSize))
+
+  const qs = query.toString()
+  return request<SearchResult>(`/ai/conversations/search${qs ? `?${qs}` : ''}`)
+}
+
+// ---- LLM Provider Management ----
+
+export interface LLMProviderInfo {
+  name: string
+  models: string[]
+  defaultModel: string
+  isDefault: boolean
+  qualityScore: number
+  speedScore: number
+  costPer1kPromptTokens: number
+  costPer1kCompletionTokens: number
+}
+
+export interface LLMProvidersResponse {
+  providers: LLMProviderInfo[]
+  default: string
+  defaultStrategy: string | null
+}
+
+export async function getLLMProviders(): Promise<LLMProvidersResponse> {
+  return request<LLMProvidersResponse>('/ai/llm-providers')
+}
+
+export async function switchLLMProvider(provider: string): Promise<{ provider: string; message: string }> {
+  return request<{ provider: string; message: string }>('/ai/llm-provider', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider }),
+  })
+}
+
+export interface UsageStats {
+  totalTokens: number
+  totalCost: number
+  requestCount: number
+  promptTokens: number
+  completionTokens: number
+}
+
+export interface LLMAggregatedUsage {
+  total: UsageStats
+  byProvider: Array<{ name: string; usage: UsageStats }>
+}
+
+export async function getLLMUsage(provider?: string): Promise<LLMAggregatedUsage | { provider: string; usage: UsageStats }> {
+  const query = provider ? `?provider=${encodeURIComponent(provider)}` : ''
+  return request(`/ai/llm-usage${query}`)
+}
+
+export interface LLMStrategiesResponse {
+  strategies: string[]
+  default: string | null
+}
+
+export async function getLLMStrategies(): Promise<LLMStrategiesResponse> {
+  return request<LLMStrategiesResponse>('/ai/llm-strategies')
+}
+
+export async function switchLLMStrategy(strategy: string | null): Promise<{ strategy: string | null; message: string }> {
+  return request<{ strategy: string | null; message: string }>('/ai/llm-strategy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ strategy }),
+  })
+}
+
+// ---- 版本历史 ----
+
+export interface VersionEntry {
+  id: string
+  version: number
+  type: 'schema' | 'flow'
+  description?: string
+  createdAt: string
+}
+
+export interface VersionDetail extends VersionEntry {
+  conversationId: string
+  content: Record<string, unknown>[] | Record<string, unknown>
+}
+
+export interface RollbackResult {
+  id: string
+  version: number
+  type: 'schema' | 'flow'
+  content: Record<string, unknown>[] | Record<string, unknown>
+  description?: string
+  rollbackFrom: string
+}
+
+/**
+ * 获取对话的版本历史列表。
+ */
+export async function getVersions(conversationId: string): Promise<VersionEntry[]> {
+  return request<VersionEntry[]>(`/ai/conversations/${encodeURIComponent(conversationId)}/versions`)
+}
+
+/**
+ * 获取指定版本的详细内容。
+ */
+export async function getVersion(versionId: string): Promise<VersionDetail> {
+  return request<VersionDetail>(`/ai/versions/${encodeURIComponent(versionId)}`)
+}
+
+/**
+ * 回滚到指定版本。
+ */
+export async function rollbackVersion(conversationId: string, versionId: string): Promise<RollbackResult> {
+  return request<RollbackResult>(`/ai/conversations/${encodeURIComponent(conversationId)}/rollback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ versionId }),
   })
 }

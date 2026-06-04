@@ -130,8 +130,34 @@
   color: var(--ai-color-info, #4581E9);
 }
 
-.deleteBtn {
+.iconBtn {
+  border: none;
+  background: transparent;
+  color: var(--ai-text-disabled, #C0C4CC);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ai-radius-sm, 3px);
+  transition: all 0.15s;
+  opacity: 0;
+}
+
+.item:hover .iconBtn {
+  opacity: 1;
+}
+
+.iconBtn:hover {
+  color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-color-primary-bg, #EEF5FF);
+}
+
+.exportBtn {
   margin-left: auto;
+}
+
+.deleteBtn {
   border: none;
   background: transparent;
   color: var(--ai-text-disabled, #C0C4CC);

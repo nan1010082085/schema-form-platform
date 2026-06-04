@@ -1,0 +1,135 @@
+.panel {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--el-color-primary-light-9);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.count {
+  font-size: 12px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-8);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.undoBtn,
+.dismissBtn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+.undoBtn {
+  background: var(--el-color-warning-light-9);
+  border-color: var(--el-color-warning-light-5);
+  color: var(--el-color-warning-dark-2);
+}
+
+.undoBtn:hover {
+  background: var(--el-color-warning-light-8);
+}
+
+.dismissBtn {
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  color: #fff;
+}
+
+.dismissBtn:hover {
+  background: var(--el-color-primary-dark-2);
+}
+
+.description {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-lighter);
+}
+
+.diffList {
+  padding: 8px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.diffItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 42px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.added .badge {
+  background: var(--el-color-success-light-8);
+  color: var(--el-color-success-dark-2);
+}
+
+.modified .badge {
+  background: var(--el-color-warning-light-8);
+  color: var(--el-color-warning-dark-2);
+}
+
+.removed .badge {
+  background: var(--el-color-danger-light-8);
+  color: var(--el-color-danger-dark-2);
+}
+
+.unchanged .badge {
+  background: var(--el-fill-color);
+  color: var(--el-text-color-placeholder);
+}
+
+.itemType {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  font-family: var(--el-font-family-mono, monospace);
+  font-size: 12px;
+}
+
+.itemLabel {
+  color: var(--el-text-color-regular);
+}
+
+.changes {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+}

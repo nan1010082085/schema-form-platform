@@ -1,8 +1,21 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
-import type { Widget } from '@/types'
+import type { Widget, FlowGraph } from '@/types'
+import { useFlowPreview } from '@/composables/useFlowPreview'
+import {
+  PreviewStartEvent,
+  PreviewEndEvent,
+  PreviewTask,
+  PreviewGateway,
+} from './flow-preview'
 
 export interface PreviewSchemaData {
   title: string
@@ -12,6 +25,8 @@ export interface PreviewSchemaData {
 export interface PreviewFlowData {
   title: string
   nodes: FlowNode[]
+  /** Full FlowGraph for Vue Flow rendering */
+  graph?: FlowGraph
   /** optional node form schemas bound to flow nodes */
   nodeForms?: Array<{
     title: string
@@ -20,6 +35,8 @@ export interface PreviewFlowData {
 }
 
 export type PreviewTab = 'schema' | 'json' | 'flow'
+
+export type SchemaBuildStep = 'layout' | 'components' | 'validation' | 'styling'
 
 export interface AiPreviewPanelProps {
   /** which tabs to show */
@@ -34,6 +51,10 @@ export interface AiPreviewPanelProps {
   primaryAction?: string
   /** secondary action label */
   secondaryAction?: string
+  /** 流式 Schema 生成的当前步骤 */
+  currentBuildStep?: SchemaBuildStep | null
+  /** 流式 Schema 生成的步骤列表 */
+  buildSteps?: SchemaBuildStep[]
 }
 
 const props = withDefaults(defineProps<AiPreviewPanelProps>(), {
@@ -45,6 +66,7 @@ const props = withDefaults(defineProps<AiPreviewPanelProps>(), {
 const emit = defineEmits<{
   'primary-action': []
   'secondary-action': []
+  'node-click': [nodeId: string, nodeData: Record<string, unknown>]
 }>()
 
 const activeTab = ref<PreviewTab>(props.tabs[0])
@@ -74,6 +96,94 @@ function getWidgetOptions(w: Widget): Array<{ label: string; value: string }> {
   const opts = p?.options as Array<{ label: string; value: string }> | undefined
   return opts ?? []
 }
+
+// ---- 流式 Schema 生成步骤 ----
+
+const defaultBuildSteps: SchemaBuildStep[] = ['layout', 'components', 'validation', 'styling']
+
+const stepLabels: Record<SchemaBuildStep, string> = {
+  layout: '布局结构',
+  components: '表单组件',
+  validation: '验证规则',
+  styling: '样式配置',
+}
+
+const stepIcons: Record<SchemaBuildStep, string> = {
+  layout: '&#x1F9E9;',
+  components: '&#x1F4E6;',
+  validation: '&#x2705;',
+  styling: '&#x1F3A8;',
+}
+
+const activeBuildSteps = computed(() => props.buildSteps ?? defaultBuildSteps)
+
+const currentStepIndex = computed(() => {
+  if (!props.currentBuildStep) return -1
+  return activeBuildSteps.value.indexOf(props.currentBuildStep)
+})
+
+// ---- Vue Flow Preview ----
+
+const flowGraphRef = computed(() => props.flowData?.graph)
+
+const { nodes, edges, nodeCount, edgeCount } = useFlowPreview(flowGraphRef)
+
+const { onNodeClick, fitView } = useVueFlow({
+  id: 'ai-flow-preview',
+})
+
+/** Selected node detail for tooltip */
+const selectedNodeId = ref<string | null>(null)
+const selectedNodeData = ref<Record<string, unknown> | null>(null)
+
+onNodeClick(({ node }) => {
+  selectedNodeId.value = node.id
+  selectedNodeData.value = node.data as Record<string, unknown>
+  emit('node-click', node.id, node.data as Record<string, unknown>)
+})
+
+/** Auto fitView when flow data changes */
+watch(
+  () => props.flowData?.graph,
+  async (graph) => {
+    if (graph && activeTab.value === 'flow') {
+      await nextTick()
+      setTimeout(() => fitView({ padding: 0.2 }), 100)
+    }
+  },
+  { deep: true },
+)
+
+/** fitView when switching to flow tab */
+watch(activeTab, async (tab) => {
+  if (tab === 'flow' && props.flowData?.graph) {
+    await nextTick()
+    setTimeout(() => fitView({ padding: 0.2 }), 100)
+  }
+  // Clear selection when switching tabs
+  selectedNodeId.value = null
+  selectedNodeData.value = null
+})
+
+function handleFitView() {
+  fitView({ padding: 0.2 })
+}
+
+function getNodeTypeLabel(bpmnType: string): string {
+  const labels: Record<string, string> = {
+    startEvent: '开始事件',
+    endEvent: '结束事件',
+    userTask: '用户任务',
+    serviceTask: '服务任务',
+    scriptTask: '脚本任务',
+    sendTask: '发送任务',
+    receiveTask: '接收任务',
+    exclusiveGateway: '排他网关',
+    parallelGateway: '并行网关',
+    inclusiveGateway: '包含网关',
+  }
+  return labels[bpmnType] ?? bpmnType
+}
 </script>
 
 <template>
@@ -90,6 +200,25 @@ function getWidgetOptions(w: Widget): Array<{ label: string; value: string }> {
         >
           {{ tabLabels[tab] }}
         </span>
+      </div>
+    </div>
+
+    <!-- Build Steps Progress -->
+    <div v-if="currentBuildStep" :class="$style.buildSteps">
+      <div
+        v-for="(step, idx) in activeBuildSteps"
+        :key="step"
+        :class="[
+          $style.buildStep,
+          {
+            [$style.buildStepDone]: idx < currentStepIndex,
+            [$style.buildStepActive]: idx === currentStepIndex,
+            [$style.buildStepPending]: idx > currentStepIndex,
+          },
+        ]"
+      >
+        <span :class="$style.buildStepIcon" v-html="stepIcons[step]" />
+        <span :class="$style.buildStepLabel">{{ stepLabels[step] }}</span>
       </div>
     </div>
 
@@ -233,9 +362,70 @@ function getWidgetOptions(w: Widget): Array<{ label: string; value: string }> {
         </div>
       </template>
 
-      <!-- Flow tab -->
+      <!-- Flow tab — Vue Flow visualization -->
       <template v-if="activeTab === 'flow' && flowData">
-        <div :class="$style.previewCard">
+        <!-- Vue Flow canvas -->
+        <div v-if="flowData.graph" :class="$style.flowCanvasWrapper">
+          <div :class="$style.flowToolbar">
+            <span :class="$style.flowStats">{{ nodeCount }} 节点 / {{ edgeCount }} 连线</span>
+            <button :class="$style.fitBtn" title="适配画布" @click="handleFitView">
+              &#x26F6;
+            </button>
+          </div>
+          <div :class="$style.flowCanvas">
+            <VueFlow
+              :nodes="nodes"
+              :edges="edges"
+              :nodes-draggable="true"
+              :nodes-connectable="false"
+              :edges-updatable="false"
+              :elements-selectable="true"
+              :default-viewport="{ zoom: 0.8, x: 0, y: 0 }"
+              :min-zoom="0.2"
+              :max-zoom="2"
+              fit-view-on-init
+            >
+              <template #node-start-event="nodeProps">
+                <PreviewStartEvent v-bind="nodeProps" />
+              </template>
+              <template #node-end-event="nodeProps">
+                <PreviewEndEvent v-bind="nodeProps" />
+              </template>
+              <template #node-task="nodeProps">
+                <PreviewTask v-bind="nodeProps" />
+              </template>
+              <template #node-gateway="nodeProps">
+                <PreviewGateway v-bind="nodeProps" />
+              </template>
+
+              <Background :gap="16" :size="0.6" color="#e0e5ec" />
+              <Controls :show-interactive="false" />
+            </VueFlow>
+          </div>
+
+          <!-- Node detail tooltip -->
+          <div v-if="selectedNodeData" :class="$style.nodeDetail">
+            <div :class="$style.nodeDetailHeader">
+              <span :class="$style.nodeDetailTitle">{{ selectedNodeData.label }}</span>
+              <button :class="$style.nodeDetailClose" @click="selectedNodeId = null; selectedNodeData = null">
+                &times;
+              </button>
+            </div>
+            <div :class="$style.nodeDetailBody">
+              <div :class="$style.nodeDetailRow">
+                <span :class="$style.nodeDetailLabel">类型</span>
+                <span :class="$style.nodeDetailValue">{{ getNodeTypeLabel(selectedNodeData.bpmnType as string) }}</span>
+              </div>
+              <div :class="$style.nodeDetailRow">
+                <span :class="$style.nodeDetailLabel">ID</span>
+                <span :class="$style.nodeDetailValue">{{ selectedNodeId }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fallback: simple linear view when no graph data -->
+        <div v-else :class="$style.previewCard">
           <div :class="$style.previewCardHead">
             <span :class="$style.previewCardTitle">{{ flowData.title }}</span>
             <span :class="$style.badge">{{ flowData.nodes.length }} nodes</span>

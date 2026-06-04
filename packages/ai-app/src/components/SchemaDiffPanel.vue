@@ -1,0 +1,98 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { SchemaDiff } from '@/types'
+
+export interface SchemaDiffPanelProps {
+  diff: SchemaDiff
+  description?: string | null
+}
+
+const props = defineProps<SchemaDiffPanelProps>()
+
+const emit = defineEmits<{
+  undo: []
+  dismiss: []
+}>()
+
+const hasChanges = computed(() =>
+  props.diff.added.length > 0 ||
+  props.diff.removed.length > 0 ||
+  props.diff.modified.length > 0,
+)
+
+const changeCount = computed(() =>
+  props.diff.added.length + props.diff.removed.length + props.diff.modified.length,
+)
+
+const unchangedCount = computed(() => props.diff.unchanged ?? 0)
+</script>
+
+<template>
+  <div v-if="hasChanges" :class="$style.panel">
+    <!-- Header -->
+    <div :class="$style.header">
+      <span :class="$style.title">Schema 已更新</span>
+      <span :class="$style.count">{{ changeCount }} 处变更</span>
+      <div :class="$style.actions">
+        <button :class="$style.undoBtn" @click="emit('undo')">
+          撤销
+        </button>
+        <button :class="$style.dismissBtn" @click="emit('dismiss')">
+          确认
+        </button>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div v-if="description" :class="$style.description">
+      {{ description }}
+    </div>
+
+    <!-- Diff details -->
+    <div :class="$style.diffList">
+      <!-- Added -->
+      <div
+        v-for="item in diff.added"
+        :key="'add-' + item.id"
+        :class="[$style.diffItem, $style.added]"
+      >
+        <span :class="$style.badge">+ 新增</span>
+        <span :class="$style.itemType">{{ item.type }}</span>
+        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
+      </div>
+
+      <!-- Modified -->
+      <div
+        v-for="item in diff.modified"
+        :key="'mod-' + item.id"
+        :class="[$style.diffItem, $style.modified]"
+      >
+        <span :class="$style.badge">~ 修改</span>
+        <span :class="$style.itemType">{{ item.type }}</span>
+        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
+        <span v-if="item.changes" :class="$style.changes">
+          ({{ item.changes.join(', ') }})
+        </span>
+      </div>
+
+      <!-- Removed -->
+      <div
+        v-for="item in diff.removed"
+        :key="'rem-' + item.id"
+        :class="[$style.diffItem, $style.removed]"
+      >
+        <span :class="$style.badge">- 删除</span>
+        <span :class="$style.itemType">{{ item.type }}</span>
+        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
+      </div>
+
+      <!-- Unchanged summary -->
+      <div v-if="unchangedCount > 0" :class="[$style.diffItem, $style.unchanged]">
+        <span :class="$style.badge">=</span>
+        <span>{{ unchangedCount }} 个组件未变更</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style module src="./SchemaDiffPanel.module.css" />

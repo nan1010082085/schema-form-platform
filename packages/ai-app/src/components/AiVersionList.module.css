@@ -1,0 +1,135 @@
+.versionList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-color, #fff);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color-lighter, #e4e7ed);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary, #303133);
+}
+
+.count {
+  font-size: 12px;
+  color: var(--text-color-secondary, #909399);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--text-color-secondary, #909399);
+  font-size: 14px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--text-color-primary, #303133);
+  margin-bottom: 4px;
+}
+
+.emptyHint {
+  font-size: 12px;
+  color: var(--text-color-secondary, #909399);
+}
+
+.scrollbar {
+  flex: 1;
+  overflow: hidden;
+}
+
+.items {
+  padding: 8px;
+}
+
+.item {
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color-lighter, #e4e7ed);
+  transition: all 0.2s ease;
+}
+
+.item:hover {
+  border-color: var(--border-color, #dcdfe6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.itemActive {
+  border-color: var(--color-primary, #409eff);
+  background: var(--color-primary-light-9, #ecf5ff);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.versionNumber {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary, #303133);
+}
+
+.typeTag {
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  padding: 0 6px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.time {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-color-secondary, #909399);
+}
+
+.description {
+  font-size: 13px;
+  color: var(--text-color-regular, #606266);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btnRestore {
+  font-size: 12px;
+}
+
+.btnCompare {
+  font-size: 12px;
+}

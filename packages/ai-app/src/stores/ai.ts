@@ -16,8 +16,28 @@ import type {
   FlowGraph,
   SSEEvent,
   TaskChainStep,
+  MentionReference,
+  SSEConnectionStatus,
+  SchemaDiff,
+  FlowDiff,
+  VersionEntry,
 } from '@/types'
-import { chat, getConversations, getConversationDetail, deleteConversation, publish } from '@/api/aiApi'
+import {
+  chat,
+  getConversations,
+  getConversationDetail,
+  deleteConversation,
+  publish,
+  getVersions,
+  rollbackVersion,
+  getLLMProviders,
+  switchLLMProvider,
+  getLLMUsage,
+  getLLMStrategies,
+  switchLLMStrategy,
+  type LLMProviderInfo,
+  type LLMAggregatedUsage,
+} from '@/api/aiApi'
 
 export const useAiStore = defineStore('ai', () => {
   // ---- State ----
@@ -35,6 +55,39 @@ export const useAiStore = defineStore('ai', () => {
   const taskChainIndex = ref(0)
   const abortController = ref<AbortController | null>(null)
 
+  // ---- SSE 连接状态与重试 ----
+  const sseStatus = ref<SSEConnectionStatus>('idle')
+  const retryCount = ref(0)
+  const lastMessagePayload = ref<{ content: string; mentions?: MentionReference[] } | null>(null)
+  const MAX_AUTO_RETRIES = 3
+  const RETRY_BASE_DELAY_MS = 2000
+
+  // ---- Schema 增量编辑状态 ----
+  /** Schema 历史栈，用于撤销操作 */
+  const schemaHistory = ref<Widget[][]>([])
+  /** 最近一次增量更新的 diff */
+  const currentDiff = ref<SchemaDiff | null>(null)
+  /** 最近一次增量更新的 diff (flow) */
+  const currentFlowDiff = ref<FlowDiff | null>(null)
+  /** 最近一次增量更新的描述 */
+  const schemaUpdateDescription = ref<string | null>(null)
+
+  // ---- 版本历史状态 ----
+  const versionHistory = ref<VersionEntry[]>([])
+  const currentVersionIndex = ref<number>(-1)
+
+  // ---- 流式 Schema 生成状态 ----
+  /** 当前构建步骤 */
+  const currentBuildStep = ref<string | null>(null)
+
+  // ---- LLM Provider 状态 ----
+  const llmProviders = ref<LLMProviderInfo[]>([])
+  const llmDefaultProvider = ref<string>('deepseek')
+  const llmDefaultStrategy = ref<string | null>(null)
+  const llmStrategies = ref<string[]>([])
+  const llmUsage = ref<LLMAggregatedUsage | null>(null)
+  const llmLoading = ref(false)
+
   // ---- Getters ----
 
   const currentConversation = computed(() =>
@@ -45,14 +98,152 @@ export const useAiStore = defineStore('ai', () => {
     currentSchema.value !== null || currentFlow.value !== null,
   )
 
+  const canUndoSchema = computed(() => schemaHistory.value.length > 0)
+
   // ---- Actions ----
+
+  /**
+   * 可取消的延迟，abort 时立即 resolve。
+   */
+  function cancellableDelay(ms: number, signal: AbortSignal): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (signal.aborted) { resolve(); return }
+      const timer = setTimeout(() => {
+        signal.removeEventListener('abort', onAbort)
+        resolve()
+      }, ms)
+      function onAbort() {
+        clearTimeout(timer)
+        resolve()
+      }
+      signal.addEventListener('abort', onAbort, { once: true })
+    })
+  }
+
+  /**
+   * 核心 SSE 流执行逻辑，支持自动重试。
+   * 在指定的 assistantIndex 上写入内容，不创建新消息占位。
+   */
+  async function _executeStream(
+    content: string,
+    mentions: MentionReference[] | undefined,
+    assistantIndex: number,
+  ): Promise<void> {
+    let attempts = 0
+
+    while (attempts <= MAX_AUTO_RETRIES) {
+      // 每次尝试创建独立的 AbortController
+      const localController = new AbortController()
+      abortController.value = localController
+      const { signal } = localController
+
+      sseStatus.value = attempts === 0 ? 'connecting' : 'reconnecting'
+      retryCount.value = attempts
+
+      try {
+        const stream = chat({
+          conversationId: currentConversationId.value ?? undefined,
+          message: content,
+          context: context.value,
+          mentions: mentions && mentions.length > 0 ? mentions : undefined,
+        }, signal)
+
+        const reader = stream.getReader()
+        let doneEventReceived = false
+        let firstChunkReceived = false
+
+        while (true) {
+          if (signal.aborted) {
+            reader.cancel()
+            break
+          }
+
+          const { done, value } = await reader.read()
+          if (done) break
+
+          if (!firstChunkReceived) {
+            firstChunkReceived = true
+            sseStatus.value = 'connected'
+          }
+
+          const event = value as SSEEvent
+          if (event.type === 'done') {
+            doneEventReceived = true
+          }
+          handleSSEEvent(event, assistantIndex)
+        }
+
+        sseStatus.value = 'idle'
+
+        if (!doneEventReceived && !signal.aborted) {
+          if (currentConversationId.value) {
+            loadConversations()
+          }
+        }
+
+        // 成功，跳出重试循环
+        break
+      } catch (err) {
+        if (signal.aborted) {
+          // 用户主动取消（stop 或新消息覆盖）
+          messages.value[assistantIndex].content += '\n\n[已停止]'
+          messages.value[assistantIndex].status = 'received'
+          sseStatus.value = 'idle'
+          break
+        }
+
+        attempts++
+
+        if (attempts <= MAX_AUTO_RETRIES) {
+          // 自动重试
+          sseStatus.value = 'reconnecting'
+          retryCount.value = attempts
+          messages.value[assistantIndex].content = `连接中断，正在重连 (${attempts}/${MAX_AUTO_RETRIES})...`
+          messages.value[assistantIndex].status = 'streaming'
+
+          await cancellableDelay(RETRY_BASE_DELAY_MS * attempts, signal)
+
+          // 延迟后再次检查是否被取消
+          if (signal.aborted) {
+            messages.value[assistantIndex].content += '\n\n[已停止]'
+            messages.value[assistantIndex].status = 'received'
+            sseStatus.value = 'idle'
+            break
+          }
+
+          // 重置 assistant 消息内容，准备下一次尝试
+          messages.value[assistantIndex].content = ''
+          error.value = null
+        } else {
+          // 超过最大重试次数
+          const msg = err instanceof Error ? err.message : 'Unknown error'
+          sseStatus.value = 'disconnected'
+          error.value = msg
+          messages.value[assistantIndex].content = `Error: ${msg}`
+          messages.value[assistantIndex].status = 'error'
+        }
+      }
+    }
+
+    // 最终清理
+    loading.value = false
+    if (messages.value[assistantIndex].status === 'streaming') {
+      messages.value[assistantIndex].status = 'received'
+    }
+    abortController.value = null
+  }
 
   /**
    * 发送用户消息，订阅 SSE 流，逐步更新 messages 和生成物。
    */
-  async function sendMessage(content: string): Promise<void> {
-    // 创建新的 AbortController
-    abortController.value = new AbortController()
+  async function sendMessage(content: string, mentions?: MentionReference[]): Promise<void> {
+    // 取消正在进行的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
+
+    lastMessagePayload.value = { content, mentions }
+    retryCount.value = 0
     loading.value = true
     error.value = null
 
@@ -61,6 +252,7 @@ export const useAiStore = defineStore('ai', () => {
       role: 'user',
       content,
       timestamp: new Date(),
+      status: 'sent',
     })
 
     // 准备 assistant 消息占位
@@ -69,53 +261,34 @@ export const useAiStore = defineStore('ai', () => {
       role: 'assistant',
       content: '',
       timestamp: new Date(),
+      status: 'streaming',
     })
 
-    try {
-      const stream = chat({
-        conversationId: currentConversationId.value ?? undefined,
-        message: content,
-        context: context.value,
-      }, abortController.value?.signal)
+    await _executeStream(content, mentions, assistantIndex)
+  }
 
-      const reader = stream.getReader()
-      let doneEventReceived = false
+  /**
+   * 重试最近一次失败的消息。
+   * 复用最后一条 assistant 消息的位置。
+   */
+  async function retryLastMessage(): Promise<void> {
+    if (!lastMessagePayload.value) return
 
-      while (true) {
-        // 检查是否已取消
-        if (abortController.value?.signal.aborted) {
-          reader.cancel()
-          break
-        }
+    // 取消正在进行的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
 
-        const { done, value } = await reader.read()
-        if (done) break
+    retryCount.value = 0
+    loading.value = true
+    error.value = null
 
-        const event = value as SSEEvent
-        if (event.type === 'done') {
-          doneEventReceived = true
-        }
-        handleSSEEvent(event, assistantIndex)
-      }
-
-      // 流结束但未收到 done 事件：手动触发完成逻辑
-      if (!doneEventReceived && !abortController.value?.signal.aborted) {
-        if (currentConversationId.value) {
-          loadConversations()
-        }
-      }
-    } catch (err) {
-      // 如果是取消操作，不显示错误
-      if (abortController.value?.signal.aborted) {
-        messages.value[assistantIndex].content += '\n\n[已停止]'
-      } else {
-        const msg = err instanceof Error ? err.message : 'Unknown error'
-        error.value = msg
-        messages.value[assistantIndex].content = `Error: ${msg}`
-      }
-    } finally {
-      loading.value = false
-      abortController.value = null
+    // 找到最后一条 assistant 消息并重置
+    const lastIdx = messages.value.length - 1
+    if (lastIdx >= 0 && messages.value[lastIdx].role === 'assistant') {
+      messages.value[lastIdx].content = ''
+      messages.value[lastIdx].status = 'streaming'
+      await _executeStream(lastMessagePayload.value.content, lastMessagePayload.value.mentions, lastIdx)
     }
   }
 
@@ -126,6 +299,8 @@ export const useAiStore = defineStore('ai', () => {
     if (abortController.value) {
       abortController.value.abort()
     }
+    retryCount.value = 0
+    lastMessagePayload.value = null
   }
 
   function handleSSEEvent(event: SSEEvent, assistantIndex: number): void {
@@ -165,11 +340,75 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'schema':
         if (event.payload) {
+          // Push current schema to history before overwriting (for undo)
+          if (currentSchema.value) {
+            schemaHistory.value.push(JSON.parse(JSON.stringify(currentSchema.value)))
+          }
           currentSchema.value = event.payload as Widget[]
           msg.schema = event.payload as Widget[]
         }
         if (event.description) {
           msg.content = event.description
+        }
+        break
+
+      case 'schema_diff':
+        if (event.diff) {
+          currentDiff.value = event.diff as SchemaDiff
+          schemaUpdateDescription.value = event.description ?? null
+        }
+        break
+
+      case 'flow_diff':
+        if (event.diff) {
+          currentFlowDiff.value = event.diff as FlowDiff
+        }
+        break
+
+      case 'version_created':
+        if (event.versionId && event.version) {
+          versionHistory.value.unshift({
+            id: event.versionId,
+            version: event.version,
+            type: currentSchema.value ? 'schema' : 'flow',
+            description: event.description,
+            createdAt: new Date().toISOString(),
+          })
+          currentVersionIndex.value = 0
+        }
+        break
+
+      case 'schema_update':
+        // 流式 Schema 更新：设置当前构建步骤
+        if (event.step) {
+          currentBuildStep.value = event.step
+        }
+        if (event.schema) {
+          currentSchema.value = event.schema as Widget[]
+        }
+        // 在 thinking 中显示进度
+        if (event.step && event.description) {
+          const stepLabels: Record<string, string> = {
+            layout: '布局结构',
+            components: '表单组件',
+            validation: '验证规则',
+            styling: '样式配置',
+          }
+          const stepLabel = stepLabels[event.step] ?? event.step
+          const progressNote = `\n\n[生成进度] ${stepLabel}: ${event.description}`
+          msg.thinking = (msg.thinking ?? '') + progressNote
+        }
+        break
+
+      case 'schema_complete':
+        // Schema 生成完成
+        currentBuildStep.value = null
+        if (event.schema) {
+          currentSchema.value = event.schema as Widget[]
+          msg.schema = event.schema as Widget[]
+        }
+        if (event.description) {
+          msg.content = (msg.content ?? '') + event.description
         }
         break
 
@@ -188,14 +427,18 @@ export const useAiStore = defineStore('ai', () => {
         if (event.phase === 'calling' && event.tools) {
           for (const tool of event.tools) {
             msg.toolCalls.push({
+              id: tool.id,
               name: tool.name,
               arguments: tool.arguments ?? {},
             })
           }
         }
+        // S4: Match by ID instead of name for precise result association
         if (event.phase === 'result' && event.tools) {
           for (const tool of event.tools) {
-            const existing = msg.toolCalls.find((t) => t.name === tool.name && !t.result)
+            const existing = tool.id
+              ? msg.toolCalls.find((t) => t.id === tool.id && !t.result)
+              : msg.toolCalls.find((t) => t.name === tool.name && !t.result)
             if (existing) {
               existing.result = tool.result
             }
@@ -203,14 +446,27 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
-      case 'tool_error':
+      // S5: Update existing tool call entry with error info instead of creating a new one
+      case 'tool_error': {
         if (!msg.toolCalls) msg.toolCalls = []
-        msg.toolCalls.push({
-          name: event.toolName ?? 'unknown',
-          arguments: {},
-          result: { error: event.content ?? '工具执行失败' },
-        })
+        const errorMsg = event.content ?? '工具执行失败'
+        // Find existing entry by runId (S4) or by name as fallback
+        const existing = event.runId
+          ? msg.toolCalls.find((t) => t.id === event.runId)
+          : msg.toolCalls.find((t) => t.name === (event.toolName ?? 'unknown') && !t.result)
+        if (existing) {
+          existing.error = errorMsg
+          existing.result = { error: errorMsg }
+        } else {
+          msg.toolCalls.push({
+            name: event.toolName ?? 'unknown',
+            arguments: {},
+            result: { error: errorMsg },
+            error: errorMsg,
+          })
+        }
         break
+      }
 
       case 'task_chain':
         if (event.steps) {
@@ -240,6 +496,11 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   function clearConversation(): void {
+    // 取消正在进行的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
+
     currentConversationId.value = null
     messages.value = []
     currentSchema.value = null
@@ -247,6 +508,40 @@ export const useAiStore = defineStore('ai', () => {
     error.value = null
     taskChain.value = []
     taskChainIndex.value = 0
+    schemaHistory.value = []
+    currentDiff.value = null
+    currentFlowDiff.value = null
+    schemaUpdateDescription.value = null
+    versionHistory.value = []
+    currentVersionIndex.value = -1
+
+    // 重置 SSE 状态
+    sseStatus.value = 'idle'
+    retryCount.value = 0
+    lastMessagePayload.value = null
+  }
+
+  /**
+   * 撤销最近一次 Schema 增量更新。
+   * 从历史栈中弹出上一个 Schema 状态。
+   */
+  function undoLastSchemaUpdate(): void {
+    if (schemaHistory.value.length === 0) return
+    const previousSchema = schemaHistory.value.pop()
+    if (previousSchema) {
+      currentSchema.value = previousSchema
+      currentDiff.value = null
+      schemaUpdateDescription.value = null
+    }
+  }
+
+  /**
+   * 清除当前 diff 显示状态。
+   */
+  function clearDiff(): void {
+    currentDiff.value = null
+    currentFlowDiff.value = null
+    schemaUpdateDescription.value = null
   }
 
   async function loadConversations(): Promise<void> {
@@ -313,6 +608,87 @@ export const useAiStore = defineStore('ai', () => {
     currentFlow.value = flow
   }
 
+  // ---- 版本管理 ----
+
+  /**
+   * 加载当前对话的版本历史列表。
+   */
+  async function loadVersionHistory(): Promise<void> {
+    if (!currentConversationId.value) return
+    const data = await getVersions(currentConversationId.value)
+    versionHistory.value = data.map((v: { id: string; version: number; type: string; description?: string; createdAt: string }) => ({
+      id: v.id,
+      version: v.version,
+      type: v.type as 'schema' | 'flow',
+      description: v.description,
+      createdAt: v.createdAt,
+    }))
+    if (versionHistory.value.length > 0) {
+      currentVersionIndex.value = 0
+    }
+  }
+
+  /**
+   * 回滚到指定版本。
+   */
+  async function rollbackToVersion(versionId: string): Promise<void> {
+    if (!currentConversationId.value) return
+    const result = await rollbackVersion(currentConversationId.value, versionId)
+    if (result.type === 'schema' && result.content) {
+      // Push current to history before rollback
+      if (currentSchema.value) {
+        schemaHistory.value.push(JSON.parse(JSON.stringify(currentSchema.value)))
+      }
+      currentSchema.value = result.content as unknown as Widget[]
+      currentDiff.value = null
+    } else if (result.type === 'flow' && result.content) {
+      currentFlow.value = result.content as unknown as FlowGraph
+      currentFlowDiff.value = null
+    }
+    // Reload version history
+    await loadVersionHistory()
+  }
+
+  // ---- LLM Provider 管理 ----
+
+  async function loadLLMProviders(): Promise<void> {
+    llmLoading.value = true
+    try {
+      const data = await getLLMProviders()
+      llmProviders.value = data.providers
+      llmDefaultProvider.value = data.default
+      llmDefaultStrategy.value = data.defaultStrategy
+    } finally {
+      llmLoading.value = false
+    }
+  }
+
+  async function loadLLMStrategies(): Promise<void> {
+    const data = await getLLMStrategies()
+    llmStrategies.value = data.strategies
+    llmDefaultStrategy.value = data.default
+  }
+
+  async function loadLLMUsage(): Promise<void> {
+    const data = await getLLMUsage()
+    llmUsage.value = data as LLMAggregatedUsage
+  }
+
+  async function switchProvider(provider: string): Promise<void> {
+    await switchLLMProvider(provider)
+    llmDefaultProvider.value = provider
+    // 更新 providers 列表中的 isDefault 标记
+    llmProviders.value = llmProviders.value.map((p) => ({
+      ...p,
+      isDefault: p.name === provider,
+    }))
+  }
+
+  async function switchStrategy(strategy: string | null): Promise<void> {
+    await switchLLMStrategy(strategy)
+    llmDefaultStrategy.value = strategy
+  }
+
   return {
     // state
     conversations,
@@ -326,13 +702,32 @@ export const useAiStore = defineStore('ai', () => {
     error,
     taskChain,
     taskChainIndex,
+    schemaHistory,
+    currentDiff,
+    currentFlowDiff,
+    schemaUpdateDescription,
+    versionHistory,
+    currentVersionIndex,
+    sseStatus,
+    retryCount,
+    llmProviders,
+    llmDefaultProvider,
+    llmDefaultStrategy,
+    llmStrategies,
+    llmUsage,
+    llmLoading,
 
     // getters
     currentConversation,
     hasPreview,
+    canUndoSchema,
+
+    // constants
+    MAX_AUTO_RETRIES: computed(() => MAX_AUTO_RETRIES),
 
     // actions
     sendMessage,
+    retryLastMessage,
     stopGeneration,
     switchAgent,
     clearConversation,
@@ -343,5 +738,14 @@ export const useAiStore = defineStore('ai', () => {
     setContext,
     setCurrentSchema,
     setCurrentFlow,
+    undoLastSchemaUpdate,
+    clearDiff,
+    loadVersionHistory,
+    rollbackToVersion,
+    loadLLMProviders,
+    loadLLMStrategies,
+    loadLLMUsage,
+    switchProvider,
+    switchStrategy,
   }
 })
