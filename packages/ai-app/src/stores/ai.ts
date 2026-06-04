@@ -79,6 +79,7 @@ export const useAiStore = defineStore('ai', () => {
       }, abortController.value?.signal)
 
       const reader = stream.getReader()
+      let doneEventReceived = false
 
       while (true) {
         // 检查是否已取消
@@ -91,7 +92,17 @@ export const useAiStore = defineStore('ai', () => {
         if (done) break
 
         const event = value as SSEEvent
+        if (event.type === 'done') {
+          doneEventReceived = true
+        }
         handleSSEEvent(event, assistantIndex)
+      }
+
+      // 流结束但未收到 done 事件：手动触发完成逻辑
+      if (!doneEventReceived && !abortController.value?.signal.aborted) {
+        if (currentConversationId.value) {
+          loadConversations()
+        }
       }
     } catch (err) {
       // 如果是取消操作，不显示错误
@@ -190,6 +201,15 @@ export const useAiStore = defineStore('ai', () => {
             }
           }
         }
+        break
+
+      case 'tool_error':
+        if (!msg.toolCalls) msg.toolCalls = []
+        msg.toolCalls.push({
+          name: event.toolName ?? 'unknown',
+          arguments: {},
+          result: { error: event.content ?? '工具执行失败' },
+        })
         break
 
       case 'task_chain':

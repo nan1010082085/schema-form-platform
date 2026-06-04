@@ -311,4 +311,142 @@ describe('useAiStore', () => {
       expect(store.hasPreview).toBe(true)
     })
   })
+
+  // ---- F5: 流结束处理优化 ----
+
+  describe('F5: stream end without done event', () => {
+    it('refreshes conversation list when stream ends without done event', async () => {
+      const store = useAiStore()
+      // 先设置一个已存在的 conversationId（模拟已有对话）
+      store.currentConversationId = 'conv-existing'
+
+      const convos = [
+        { id: 'conv-existing', title: 'test', source: 'standalone', activeAgent: 'editor', createdAt: '', updatedAt: '' },
+      ]
+      vi.mocked(getConversations).mockResolvedValue(convos as any)
+
+      // 流只包含 text 事件，没有 done 事件
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: '回复内容' },
+      ]))
+
+      await store.sendMessage('hello')
+
+      expect(store.messages[1].content).toBe('回复内容')
+      expect(store.loading).toBe(false)
+      // 关键验证：loadConversations 被调用
+      expect(getConversations).toHaveBeenCalled()
+      expect(store.conversations).toEqual(convos)
+    })
+
+    it('skips conversation refresh when stream was aborted', async () => {
+      const store = useAiStore()
+      store.currentConversationId = 'conv-1'
+
+      let resolveStream: () => void
+      const blockingStream = new ReadableStream({
+        start(controller) {
+          resolveStream = () => {
+            controller.enqueue({ type: 'text', content: 'partial' })
+            controller.close()
+          }
+        },
+      })
+      vi.mocked(chat).mockReturnValue(blockingStream)
+
+      const promise = store.sendMessage('test')
+      // 在流结束前取消
+      store.stopGeneration()
+      resolveStream!()
+      await promise
+
+      // 取消后不应刷新列表
+      expect(getConversations).not.toHaveBeenCalled()
+    })
+
+    it('skips conversation refresh for new conversation without done event', async () => {
+      const store = useAiStore()
+      // currentConversationId 为 null（新对话）
+      expect(store.currentConversationId).toBeNull()
+
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'hi' },
+      ]))
+
+      await store.sendMessage('hello')
+
+      // 新对话没有 conversationId，不应调用 loadConversations
+      expect(getConversations).not.toHaveBeenCalled()
+      expect(store.loading).toBe(false)
+    })
+  })
+
+  // ---- F6: tool_error 事件处理 ----
+
+  describe('F6: tool_error event', () => {
+    it('creates tool call entry with error info', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', content: '数据库连接超时', toolName: 'save_widget' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('保存组件')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(1)
+      expect(assistant.toolCalls![0]).toMatchObject({
+        name: 'save_widget',
+        arguments: {},
+        result: { error: '数据库连接超时' },
+      })
+    })
+
+    it('uses default tool name when not provided', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', content: '执行失败' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(1)
+      expect(assistant.toolCalls![0].name).toBe('unknown')
+      expect(assistant.toolCalls![0].result).toEqual({ error: '执行失败' })
+    })
+
+    it('uses default error message when content is missing', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', toolName: 'gen_schema' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls![0].result).toEqual({ error: '工具执行失败' })
+    })
+
+    it('appends to existing tool calls', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'get_widgets', arguments: {} }] },
+        { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'get_widgets', result: { data: [] } }] },
+        { type: 'tool_error', content: '保存失败', toolName: 'save_widget' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(2)
+      expect(assistant.toolCalls![0].name).toBe('get_widgets')
+      expect(assistant.toolCalls![0].result).toEqual({ data: [] })
+      expect(assistant.toolCalls![1].name).toBe('save_widget')
+      expect(assistant.toolCalls![1].result).toEqual({ error: '保存失败' })
+    })
+  })
 })

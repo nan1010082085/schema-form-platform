@@ -109,7 +109,7 @@ export interface ChatRequest {
 
 // ---- SSE 事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'task_chain' | 'agent_switch' | 'done' | 'error'
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -127,6 +127,8 @@ export interface SSEEvent {
   agent?: string
   /** Collaboration event data */
   collaboration?: boolean
+  /** Tool error event data */
+  toolName?: string
 }
 
 // ---- 任务链 ----
