@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import AiLoadingDots from './AiLoadingDots.vue'
@@ -58,10 +58,33 @@ const emit = defineEmits<{
 const thinkingExpanded = ref(false)
 const toolCallsExpanded = ref(false)
 
-/** 将 Markdown 内容转为 HTML（经 DOMPurify 消毒） */
+// ---- F2: rAF-batched content for streaming ----
+
+/** Buffered content that only updates at animation frame cadence */
+const renderedContentRef = ref('')
+let rafId = 0
+let latestContent = ''
+
+function flushContent() {
+  rafId = 0
+  renderedContentRef.value = latestContent
+}
+
+watch(() => props.content, (newContent) => {
+  latestContent = newContent ?? ''
+  if (!rafId) {
+    rafId = requestAnimationFrame(flushContent)
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (rafId) cancelAnimationFrame(rafId)
+})
+
+/** 将 Markdown 内容转为 HTML（经 DOMPurify 消毒）——基于防抖后的值 */
 const renderedContent = computed(() => {
-  if (!props.content) return ''
-  const rawHtml = marked.parse(props.content, { breaks: true }) as string
+  if (!renderedContentRef.value) return ''
+  const rawHtml = marked.parse(renderedContentRef.value, { breaks: true }) as string
   return DOMPurify.sanitize(rawHtml)
 })
 
