@@ -508,7 +508,7 @@ ${apiConfig}
 - get_schema_detail: 获取表单详情
 - search_published_schemas: 搜索已发布表单
 - get_widget_catalogue: 查询组件目录
-- semantic_search_schemas: 语义搜索表单
+- search_widgets_by_keyword: 关键词匹配搜索表单
 - validate_schema: 校验 Schema
 
 **流程相关工具**（你也可以调用）：
@@ -781,7 +781,7 @@ interface FlowGraph {
 - get_schema_detail: 获取表单详情
 - search_published_schemas: 搜索已发布表单
 - get_widget_catalogue: 查询组件目录
-- semantic_search_schemas: 语义搜索表单
+- search_widgets_by_keyword: 关键词匹配搜索表单
 - validate_schema: 校验 Schema
 - generate_schema: 生成表单
 

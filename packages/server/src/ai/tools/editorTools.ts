@@ -232,7 +232,7 @@ export const getWidgetCatalogueTool = tool(
   },
 )
 
-export const semanticSearchSchemasTool = tool(
+export const searchWidgetsByKeywordTool = tool(
   async ({ query, limit }): Promise<ToolResult> => {
     // 提取查询关键词（中文分词 + 英文分词）
     const queryTokens = extractTokens(query)
@@ -244,7 +244,7 @@ export const semanticSearchSchemasTool = tool(
       .limit(100)
       .lean()
 
-    // 计算每个 Schema 的相似度分数
+    // 计算每个 Schema 的相似度分数（基于 Jaccard 关键词匹配）
     const scored = schemas.map((schema: Record<string, unknown>) => {
       const nameTokens = extractTokens(String(schema.name ?? ''))
       // 从 json 中提取组件类型和字段名作为特征
@@ -272,8 +272,8 @@ export const semanticSearchSchemasTool = tool(
     }))
 
     const summary = mapped.length === 0
-      ? `没有找到与"${query}"语义相似的 Schema`
-      : `找到 ${mapped.length} 个相似 Schema：${mapped.slice(0, 3).map((s) => `${String(s.name)}（相似度 ${s.score}%）`).join('、')}`
+      ? `没有找到与"${query}"相关的 Schema`
+      : `找到 ${mapped.length} 个相关 Schema：${mapped.slice(0, 3).map((s) => `${String(s.name)}（匹配度 ${s.score}%）`).join('、')}`
 
     return {
       success: true,
@@ -282,10 +282,10 @@ export const semanticSearchSchemasTool = tool(
     }
   },
   {
-    name: 'semantic_search_schemas',
-    description: '语义搜索已有 Schema。当用户说"类似那个请假表单"、"像上次做的用户管理页面"时使用。基于语义相似度匹配，而非关键词。',
+    name: 'search_widgets_by_keyword',
+    description: '基于关键词匹配搜索已有 Schema。使用 Jaccard 相似度匹配 Schema 名称和组件结构中的关键词，不支持语义理解。当用户描述模糊、需要按组件类型或功能特征查找时使用。',
     schema: z.object({
-      query: z.string().describe('自然语言描述，如"请假申请表单"、"用户管理列表页"'),
+      query: z.string().describe('关键词描述，如"请假申请表单"、"用户管理列表页"'),
       limit: z.number().optional().default(5).describe('返回数量上限，默认 5'),
     }),
   },
@@ -371,7 +371,7 @@ export const editorTools = [
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,
-  semanticSearchSchemasTool,
+  searchWidgetsByKeywordTool,
   validateSchemaTool,
 ]
 

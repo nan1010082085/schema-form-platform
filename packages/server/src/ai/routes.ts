@@ -165,10 +165,11 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   }, 15_000)
 
   // ── Streaming state ──
-  let currentAgent: 'router' | 'editor' | 'flow' = 'router'
+  let currentAgent: 'router' | 'editor' | 'flow' | 'general' = 'router'
   let accumulatedContent = ''
   const toolCallRegistry: Array<{ id?: string; name: string; arguments: Record<string, unknown>; result?: unknown }> = []
   const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
+  let doneSent = false
 
   try {
     const eventStream = graph.streamEvents(graphInput, {
@@ -182,7 +183,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         case 'on_chain_start': {
           const nodeName = event.name as string
           if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'general' || nodeName === 'summarizer') {
-            currentAgent = nodeName
+            currentAgent = nodeName === 'summarizer' ? 'general' : nodeName
             send({ type: 'agent_switch', agent: nodeName === 'summarizer' ? 'general' : nodeName })
           }
           break
@@ -240,14 +241,32 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             additional_kwargs?: { reasoning_content?: string }
           } | undefined
 
-          // 捕获 thinking 内容（DeepSeek reasoning_content）
-          const reasoningContent = chunk?.additional_kwargs?.reasoning_content
-          if (reasoningContent && typeof reasoningContent === 'string') {
+          // 捕获 thinking 内容（三级 fallback）
+          // 1. DeepSeek 私有字段 additional_kwargs.reasoning_content
+          // 2. 标准 reasoning_content 字段（其他模型兼容）
+          // 3. 从 content 中提取 <think>...</think> 标签
+          const reasoningContent =
+            chunk?.additional_kwargs?.reasoning_content ??
+            (chunk as Record<string, unknown> | undefined)?.reasoning_content as string | undefined
+
+          if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.length > 0) {
             send({ type: 'thinking', content: reasoningContent })
             break
           }
 
           if (!chunk?.content || typeof chunk.content !== 'string') break
+
+          // Fallback: 从 content 中提取 <think> 标签
+          const thinkMatch = chunk.content.match(/<think>([\s\S]*?)<\/think>/)
+          if (thinkMatch) {
+            send({ type: 'thinking', content: thinkMatch[1] })
+            const remaining = chunk.content.replace(/<think>[\s\S]*?<\/think>/, '').trim()
+            if (remaining && currentAgent !== 'router') {
+              accumulatedContent += remaining
+              send({ type: 'text', content: remaining })
+            }
+            break
+          }
 
           // Router 输出是内部 JSON，不流式传输给客户端
           // 但 Router 的 thinking 需要传输
@@ -303,42 +322,60 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         case 'on_tool_end': {
           const toolName = event.name as string
           const toolResult = event.data?.output
+          const toolRunId = event.run_id as string
 
-          // Update registry
-          const entry = toolCallRegistry.find((t) => t.name === toolName && !t.result)
+          // Update registry — use run_id for precise matching (not name)
+          const entry = toolCallRegistry.find((t) => t.id === toolRunId)
           if (entry) {
             entry.result = toolResult
+          }
+
+          // Check for tool execution errors
+          const isError = event.data?.error != null
+            || (toolResult && typeof toolResult === 'object' && 'error' in (toolResult as Record<string, unknown>))
+
+          if (isError) {
+            const errorMessage = event.data?.error != null
+              ? String(event.data.error)
+              : String((toolResult as Record<string, unknown>)?.error ?? 'Tool execution failed')
+
+            send({
+              type: 'tool_error',
+              tool: toolName,
+              runId: toolRunId,
+              error: errorMessage,
+            })
           }
 
           send({
             type: 'tool_call',
             phase: 'result',
-            tools: [{ id: event.run_id, name: toolName, result: toolResult }],
+            tools: [{ id: toolRunId, name: toolName, result: toolResult }],
           })
 
           // Emit schema event from pending payload
           if (SCHEMA_TOOLS.has(toolName)) {
-            const payload = pendingPayloads.get(event.run_id as string)
+            const payload = pendingPayloads.get(toolRunId)
             if (payload) {
               send({
                 type: 'schema',
                 payload,
                 description: accumulatedContent,
               })
-              pendingPayloads.delete(event.run_id as string)
+              pendingPayloads.delete(toolRunId)
             }
           }
 
           // Emit flow event from pending payload
           if (FLOW_TOOLS.has(toolName)) {
-            const payload = pendingPayloads.get(event.run_id as string)
+            const payload = pendingPayloads.get(toolRunId)
             if (payload) {
               send({
                 type: 'flow',
                 payload,
                 description: accumulatedContent,
               })
-              pendingPayloads.delete(event.run_id as string)
+              pendingPayloads.delete(toolRunId)
             }
           }
 
@@ -377,10 +414,15 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
 
     // Done event
     send({ type: 'done', conversationId: convo._id })
+    doneSent = true
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
     send({ type: 'error', content: errorMsg })
   } finally {
+    // Guarantee done event is sent even when stream errors out
+    if (!doneSent) {
+      send({ type: 'done', conversationId: convo._id })
+    }
     clearInterval(heartbeat)
     stream.end()
   }

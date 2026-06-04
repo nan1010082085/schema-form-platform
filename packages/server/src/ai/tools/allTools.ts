@@ -12,7 +12,7 @@ import {
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,
-  semanticSearchSchemasTool,
+  searchWidgetsByKeywordTool,
   validateSchemaTool,
 } from './editorTools.js'
 
@@ -38,7 +38,7 @@ export const allTools = [
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,
-  semanticSearchSchemasTool,
+  searchWidgetsByKeywordTool,
   validateSchemaTool,
 
   // Flow tools
