@@ -18,6 +18,7 @@ import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
 import { AgentStateAnnotation } from './state.js'
 import { editorAgentNode } from './editorAgent.js'
 import { flowAgentNode } from './flowAgent.js'
+import { pageAgentNode } from './pageAgent.js'
 import { allTools } from '../tools/allTools.js'
 import { checkpointer } from './checkpointer.js'
 import { getIndustryConfig, type IndustryType } from '../config/industryAgents.js'
@@ -41,11 +42,17 @@ const THINKER_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基�
 
 ## 可用的专家
 
-### Editor 专家 — 表单/页面/UI 生成
+### Editor 专家 — 表单/UI 生成
 - 表单设计（输入框、选择器、日期、上传等 18 种表单组件）
 - 页面布局（卡片、标签页、多列布局等 8 种容器）
-- 数据表格（数据表格、可编辑表格、搜索列表）
 - 图表可视化（柱状图、折线图、饼图等 9 种图表）
+
+### Page 专家 — 业务页面配置
+- 统计卡片页面（FgStatistic 展示关键指标）
+- 详情页面（FgDescriptions 展示数据详情）
+- 数据列表页面（FgTable 展示表格数据）
+- 搜索列表页面（FgSearchList 实现搜索+列表）
+- 仪表盘页面（组合多种组件构建数据看板）
 
 ### Flow 专家 — 流程/BPMN 生成
 - 审批流程设计（单人审批、会签、或签）
@@ -64,21 +71,24 @@ const THINKER_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基�
 
 \`\`\`json
 {
-  "target": "editor" | "flow" | "general" | "chain",
+  "target": "editor" | "page" | "flow" | "general" | "chain",
   "steps": [
-    { "agent": "editor" | "flow", "description": "这一步做什么" }
+    { "agent": "editor" | "page" | "flow", "description": "这一步做什么" }
   ]
 }
 \`\`\`
 
 ## 决策规则
 
-1. **单一任务**：涉及表单/UI → "editor"，涉及流程/BPMN → "flow"
-2. **通用问题**：介绍、能力询问、与平台无关的问题 → "general"
-3. **联动任务**：同时涉及表单和流程 → "chain"，拆分为多步
+1. **表单/UI 任务**：涉及表单输入、表单布局 → "editor"
+2. **业务页面任务**：涉及列表、统计、详情、仪表盘、搜索列表 → "page"
+3. **流程任务**：涉及流程/BPMN/审批 → "flow"
+4. **通用问题**：介绍、能力询问、与平台无关的问题 → "general"
+5. **联动任务**：同时涉及多个领域 → "chain"，拆分为多步
+   - 先生成页面（page），再生成流程（flow）
    - 先生成表单（editor），再生成流程（flow）
    - 每步的 description 要清晰说明该步要做什么
-4. **能力介绍**：用户问"你有什么能力"时 → "general"，介绍所有能力
+6. **能力介绍**：用户问"你有什么能力"时 → "general"，介绍所有能力
 
 ## 示例
 
@@ -89,6 +99,26 @@ const THINKER_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基�
   "steps": [
     { "agent": "editor", "description": "生成请假申请表单" },
     { "agent": "flow", "description": "生成请假审批流程，关联表单" }
+  ]
+}
+\`\`\`
+
+用户："做一个用户管理列表页，支持搜索和分页"
+\`\`\`json
+{
+  "target": "page",
+  "steps": [
+    { "agent": "page", "description": "生成用户管理搜索列表页" }
+  ]
+}
+\`\`\`
+
+用户："做一个销售仪表盘，展示统计卡片和图表"
+\`\`\`json
+{
+  "target": "page",
+  "steps": [
+    { "agent": "page", "description": "生成销售仪表盘页面" }
   ]
 }
 \`\`\`
@@ -115,9 +145,14 @@ async function thinkerNode(
     : '你好'
 
   // 显式模式：使用简化的 prompt 思考任务
-  if (state.context.source === 'editor' || state.context.source === 'flow') {
+  if (state.context.source === 'editor' || state.context.source === 'flow' || state.context.source === 'page') {
     const agent = state.context.source
-    const agentName = agent === 'editor' ? '表单/页面生成' : '流程/BPMN 生成'
+    const agentNameMap: Record<string, string> = {
+      editor: '表单/UI 生成',
+      flow: '流程/BPMN 生成',
+      page: '业务页面配置',
+    }
+    const agentName = agentNameMap[agent] ?? '未知'
 
     const model = new ChatOpenAI({
       model: 'deepseek-v4-pro',
@@ -153,7 +188,7 @@ ${userContent}
 
       // 将协作请求插入到任务链的下一个位置
       const newStep = {
-        agent: targetAgent as 'editor' | 'flow',
+        agent: targetAgent as 'editor' | 'flow' | 'page',
         description: `协作：${description}`,
         status: 'pending' as const,
         context: state.collaborationRequest.context,
@@ -170,7 +205,7 @@ ${userContent}
       updatedChain[currentIndex] = { ...updatedChain[currentIndex], status: 'done' as const }
 
       return {
-        currentAgent: targetAgent as 'editor' | 'flow',
+        currentAgent: targetAgent as 'editor' | 'flow' | 'page',
         taskType: 'generate_simple',
         needsTool: true,
         taskChain: updatedChain,
@@ -195,7 +230,7 @@ ${userContent}
 
     // 执行下一步
     return {
-      currentAgent: currentStep.agent as 'editor' | 'flow',
+      currentAgent: currentStep.agent as 'editor' | 'flow' | 'page',
       taskType: 'generate_simple',
       needsTool: true,
       taskChain: updatedChain,
@@ -232,7 +267,7 @@ ${userContent}
       // 任务链：需要连续调用多个智能体
       if (parsed.target === 'chain' && Array.isArray(parsed.steps) && parsed.steps.length > 0) {
         const taskChain = parsed.steps.map((step) => ({
-          agent: step.agent as 'editor' | 'flow',
+          agent: step.agent as 'editor' | 'flow' | 'page',
           description: step.description,
           status: 'pending' as const,
         }))
@@ -256,6 +291,15 @@ ${userContent}
           currentStepIndex: 0,
         }
       }
+      if (parsed.target === 'page') {
+        return {
+          currentAgent: 'page',
+          taskType: 'generate_simple',
+          needsTool: true,
+          taskChain: [{ agent: 'page', description: '生成业务页面', status: 'pending' }],
+          currentStepIndex: 0,
+        }
+      }
       if (parsed.target === 'general') {
         return { currentAgent: 'general', taskType: 'general', needsTool: false }
       }
@@ -274,13 +318,29 @@ ${userContent}
     const errMsg = err instanceof Error ? err.message : String(err)
     console.warn(`[thinker] LLM 调用失败，降级到关键词匹配路由: ${errMsg}`)
     const lower = userContent.toLowerCase()
+
     const isFlow = ['流程', '审批', '节点', 'BPMN', 'workflow'].some(kw => lower.includes(kw.toLowerCase()))
-    const agent = isFlow ? 'flow' : 'editor'
+    const isPage = ['列表', '统计', '详情', '仪表盘', 'dashboard', '搜索列表', '数据表格'].some(kw => lower.includes(kw.toLowerCase()))
+
+    let agent: 'editor' | 'flow' | 'page'
+    let description: string
+
+    if (isFlow) {
+      agent = 'flow'
+      description = '生成流程'
+    } else if (isPage) {
+      agent = 'page'
+      description = '生成业务页面'
+    } else {
+      agent = 'editor'
+      description = '生成表单'
+    }
+
     return {
       currentAgent: agent,
       taskType: 'generate_simple',
       needsTool: true,
-      taskChain: [{ agent, description: `生成${isFlow ? '流程' : '表单'}`, status: 'pending' }],
+      taskChain: [{ agent, description, status: 'pending' }],
       currentStepIndex: 0,
     }
   }
@@ -434,6 +494,7 @@ export function routeAfterThinker(
 ): string {
   if (state.currentAgent === 'editor') return 'editor'
   if (state.currentAgent === 'flow') return 'flow'
+  if (state.currentAgent === 'page') return 'page'
   if (state.currentAgent === 'general') return 'general'
   return END
 }
@@ -503,10 +564,10 @@ async function afterToolsNode(
 
       if (collaborationCall) {
         const targetAgent = collaborationCall.args.targetAgent as string
-        if (targetAgent === 'editor' || targetAgent === 'flow') {
+        if (targetAgent === 'editor' || targetAgent === 'flow' || targetAgent === 'page') {
           return {
             collaborationRequest: {
-              targetAgent: targetAgent as 'editor' | 'flow',
+              targetAgent: targetAgent as 'editor' | 'flow' | 'page',
               description: collaborationCall.args.description as string,
               context: collaborationCall.args.context as Record<string, unknown> | undefined,
               conversationId: state.conversationId,
@@ -562,6 +623,7 @@ const builder = new StateGraph(AgentStateAnnotation)
   .addNode('thinker', thinkerNode)
   .addNode('editor', editorAgentNode)
   .addNode('flow', flowAgentNode)
+  .addNode('page', pageAgentNode)
   .addNode('general', generalAgentNode)
   .addNode('allTools', allToolNode)
   .addNode('afterTools', afterToolsNode)
@@ -578,6 +640,9 @@ const builder = new StateGraph(AgentStateAnnotation)
 
   // Flow agent → tools, next step, summarizer, or end
   .addConditionalEdges('flow', afterAgent)
+
+  // Page agent → tools, next step, summarizer, or end
+  .addConditionalEdges('page', afterAgent)
 
   // General agent → end (no tools)
   .addEdge('general', END)

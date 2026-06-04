@@ -242,7 +242,7 @@ export function escapeRegex(str: string): string {
 // Agent metrics
 // ────────────────────────────────────────────
 
-type AgentName = 'thinker' | 'editor' | 'flow' | 'general' | 'summarizer' | 'router'
+type AgentName = 'thinker' | 'editor' | 'flow' | 'page' | 'general' | 'summarizer' | 'router'
 type Operation = 'invoke' | 'tool_call' | 'think' | 'stream'
 
 /**

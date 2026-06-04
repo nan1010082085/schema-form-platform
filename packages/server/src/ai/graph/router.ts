@@ -23,21 +23,33 @@ const FLOW_KEYWORDS = [
   '加签', '减签', '会签', '或签', '串行', '并行',
 ]
 
-function fallbackRoute(message: string): 'editor' | 'flow' {
+const PAGE_KEYWORDS = [
+  '列表', '统计', '详情', '仪表盘', 'dashboard', '搜索列表',
+  '数据表格', '统计卡片', '描述列表', '看板',
+]
+
+function fallbackRoute(message: string): 'editor' | 'flow' | 'page' {
   const lower = message.toLowerCase()
-  return FLOW_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase())) ? 'flow' : 'editor'
+
+  if (FLOW_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))) {
+    return 'flow'
+  }
+  if (PAGE_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))) {
+    return 'page'
+  }
+  return 'editor'
 }
 
 interface RouterResult {
-  target: 'editor' | 'flow' | 'chain' | 'general'
-  steps?: Array<{ agent: 'editor' | 'flow'; description: string }>
+  target: 'editor' | 'flow' | 'page' | 'chain' | 'general'
+  steps?: Array<{ agent: 'editor' | 'flow' | 'page'; description: string }>
 }
 
 /**
  * Router node classifies user intent and sets activeAgent + taskChain.
  *
  * Returns partial state update:
- * - currentAgent: 'editor' | 'flow' | 'general'
+ * - currentAgent: 'editor' | 'flow' | 'page' | 'general'
  * - taskType: classified task type string
  * - needsTool: whether the routed agent should use tools
  * - taskChain + currentStepIndex for multi-step requests
@@ -66,6 +78,9 @@ export async function routerNode(
   }
   if (state.context.source === 'flow') {
     return { currentAgent: 'flow', taskType: 'generate_simple', needsTool: true }
+  }
+  if (state.context.source === 'page') {
+    return { currentAgent: 'page', taskType: 'generate_simple', needsTool: true }
   }
 
   // Auto mode: use LLM to classify intent
@@ -124,6 +139,13 @@ export async function routerNode(
       if (parsed.target === 'flow') {
         return {
           currentAgent: 'flow',
+          taskType: 'generate_simple',
+          needsTool: true,
+        }
+      }
+      if (parsed.target === 'page') {
+        return {
+          currentAgent: 'page',
           taskType: 'generate_simple',
           needsTool: true,
         }

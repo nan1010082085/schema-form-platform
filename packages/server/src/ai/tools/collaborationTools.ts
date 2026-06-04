@@ -12,7 +12,7 @@ import { z } from 'zod'
 // ────────────────────────────────────────────
 
 export interface CollaborationRequest {
-  targetAgent: 'editor' | 'flow'
+  targetAgent: 'editor' | 'flow' | 'page'
   description: string
   context?: Record<string, unknown>
 }
@@ -40,15 +40,18 @@ export const requestCollaborationTool = tool(
     description: `请求其他专家智能体协作。当你发现自己无法独立完成任务，需要其他专家的帮助时使用。
 
 可用的专家：
-- editor: 表单/页面/UI 生成专家
+- editor: 表单/UI 生成专家
 - flow: 流程/BPMN 生成专家
+- page: 业务页面配置专家
 
 使用场景：
 - Editor 需要 Flow 生成审批流程
 - Flow 需要 Editor 生成申请表单
+- Page 需要 Flow 生成审批流程
+- Page 需要 Editor 生成表单录入界面
 - 需要其他专家的专业知识`,
     schema: z.object({
-      targetAgent: z.enum(['editor', 'flow']).describe('要请求协作的专家智能体'),
+      targetAgent: z.enum(['editor', 'flow', 'page']).describe('要请求协作的专家智能体'),
       description: z.string().describe('需要协作的具体任务描述'),
       context: z.record(z.unknown()).optional().describe('传递给协作智能体的上下文信息'),
     }),

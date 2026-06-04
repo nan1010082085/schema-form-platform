@@ -93,7 +93,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     turnCount = convo.messages.filter((m) => m.role === 'user').length + 1
   } else {
     convo = await createConversation({
-      source: context.source as 'editor' | 'flow' | 'standalone',
+      source: context.source as 'editor' | 'flow' | 'page' | 'standalone',
       schemaId: context.schemaId,
       flowId: context.flowId,
       nodeId: context.nodeId,
@@ -148,7 +148,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const graphInput = {
     messages: [new HumanMessage(message)],
     context: {
-      source: context.source as 'editor' | 'flow' | 'standalone',
+      source: context.source as 'editor' | 'flow' | 'page' | 'standalone',
       schemaId: context.schemaId,
       flowId: context.flowId,
       nodeId: context.nodeId,
@@ -185,7 +185,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   }, 15_000)
 
   // ── Streaming state ──
-  let currentAgent: 'router' | 'editor' | 'flow' | 'general' = 'router'
+  let currentAgent: 'router' | 'editor' | 'flow' | 'page' | 'general' = 'router'
   let accumulatedContent = ''
   const toolCallRegistry: Array<{ id?: string; name: string; arguments: Record<string, unknown>; result?: unknown }> = []
   const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
@@ -211,7 +211,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             // even when the LLM doesn't support reasoning_content
             send({ type: 'thinking', content: '正在分析需求...\n' })
           }
-          if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'general' || nodeName === 'summarizer') {
+          if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'page' || nodeName === 'general' || nodeName === 'summarizer') {
             currentAgent = nodeName === 'summarizer' ? 'general' : nodeName
             send({ type: 'agent_switch', agent: nodeName === 'summarizer' ? 'general' : nodeName })
           }
@@ -239,8 +239,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             }
           }
 
-          // Editor/Flow 节点完成 — 更新任务链状态
-          if (nodeName === 'editor' || nodeName === 'flow') {
+          // Editor/Flow/Page 节点完成 — 更新任务链状态
+          if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'page') {
             const output = event.data?.output as Record<string, unknown> | undefined
             if (output?.taskChain && Array.isArray(output.taskChain)) {
               const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
@@ -368,7 +368,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           // 协作请求：通知前端智能体切换
           if (toolName === 'request_collaboration') {
             const targetAgent = toolArgs.targetAgent as string
-            if (targetAgent === 'editor' || targetAgent === 'flow') {
+            if (targetAgent === 'editor' || targetAgent === 'flow' || targetAgent === 'page') {
               send({
                 type: 'agent_switch',
                 agent: targetAgent,

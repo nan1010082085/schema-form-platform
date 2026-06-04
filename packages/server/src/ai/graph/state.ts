@@ -32,12 +32,12 @@ export interface AIMessage {
 // ────────────────────────────────────────────
 // Context
 // ────────────────────────────────────────────
-export type AgentSource = 'editor' | 'flow' | 'standalone'
-export type ActiveAgent = 'router' | 'editor' | 'flow' | 'general'
+export type AgentSource = 'editor' | 'flow' | 'page' | 'standalone'
+export type ActiveAgent = 'router' | 'editor' | 'flow' | 'page' | 'general'
 
 /** 任务链步骤 */
 export interface TaskStep {
-  agent: 'editor' | 'flow'
+  agent: 'editor' | 'flow' | 'page'
   description: string
   status: 'pending' | 'running' | 'done' | 'skipped'
   result?: Record<string, unknown>
@@ -196,7 +196,7 @@ export const AgentStateAnnotation = Annotation.Root({
   // Collaboration request — set by afterToolsNode when request_collaboration
   // tool_call is detected, consumed by thinkerNode to inject a new task step.
   collaborationRequest: Annotation<{
-    targetAgent: 'editor' | 'flow'
+    targetAgent: 'editor' | 'flow' | 'page'
     description: string
     context?: Record<string, unknown>
     conversationId?: string

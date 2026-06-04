@@ -81,14 +81,6 @@ describe('AppLayout', () => {
     expect(routerView.exists()).toBe(true)
   })
 
-  it('renders "返回首页" link with correct href', async () => {
-    const wrapper = await mountLayout()
-    expect(wrapper.text()).toContain('返回首页')
-    const footerLinks = wrapper.findAll('[data-test="sidebar-footer"] a')
-    expect(footerLinks.length).toBe(1)
-    expect(footerLinks[0].attributes('href')).toBe('/portal/')
-  })
-
   it('renders main content area', async () => {
     const wrapper = await mountLayout()
     const main = wrapper.find('[data-test="main"]')

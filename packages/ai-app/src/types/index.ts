@@ -79,7 +79,7 @@ export interface ToolCallInfo {
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
-  agent?: 'editor' | 'flow' | 'general'
+  agent?: 'editor' | 'flow' | 'page' | 'general'
   thinking?: string
   thinkingExpanded?: boolean
   tip?: string
@@ -98,7 +98,7 @@ export type MessageStatus = 'sending' | 'sent' | 'streaming' | 'received' | 'err
 // ---- 上下文 ----
 
 export interface ChatContext {
-  source: 'editor' | 'flow' | 'standalone'
+  source: 'editor' | 'flow' | 'page' | 'standalone'
   schemaId?: string
   flowId?: string
   nodeId?: string
@@ -183,7 +183,7 @@ export interface SSEEvent {
 // ---- 任务链 ----
 
 export interface TaskChainStep {
-  agent: 'editor' | 'flow'
+  agent: 'editor' | 'flow' | 'page'
   description: string
   status: 'pending' | 'running' | 'done' | 'skipped'
 }
@@ -271,8 +271,8 @@ export interface PublishResponse {
 export interface Conversation {
   id: string
   title: string
-  source: 'editor' | 'flow' | 'standalone'
-  activeAgent: 'router' | 'editor' | 'flow' | 'general'
+  source: 'editor' | 'flow' | 'page' | 'standalone'
+  activeAgent: 'router' | 'editor' | 'flow' | 'page' | 'general'
   version?: string
   createdAt: string
   updatedAt: string
@@ -332,7 +332,7 @@ export interface RagSearchResponse {
 
 // ---- Agent ----
 
-export type AgentType = 'editor' | 'flow' | 'auto' | 'general'
+export type AgentType = 'editor' | 'flow' | 'page' | 'auto' | 'general'
 
 // ---- AI 版本 ----
 
