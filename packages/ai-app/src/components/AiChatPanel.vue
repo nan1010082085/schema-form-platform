@@ -36,6 +36,14 @@ const inputText = ref('')
 const selectedAgent = ref<AgentType>('auto')
 const messagesRef = ref<HTMLElement>()
 
+/** F3: 空状态引导 prompt 列表 */
+const starterPrompts = [
+  { icon: '&#x1F4DD;', text: '帮我生成一个用户注册表单', agent: 'editor' as AgentType },
+  { icon: '&#x1F4CB;', text: '创建一个订单审批流程', agent: 'flow' as AgentType },
+  { icon: '&#x1F50D;', text: '搜索已有的表单模板', agent: 'auto' as AgentType },
+  { icon: '&#x2699;', text: '设计一个系统配置页面', agent: 'editor' as AgentType },
+]
+
 /** Transform store AIMessage into display-oriented props for AiMessage component */
 function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
   if (msg.schema) {
@@ -146,11 +154,22 @@ function handleCardAction(
 
     <!-- Messages -->
     <div ref="messagesRef" :class="$style.messages">
-      <!-- Empty state -->
+      <!-- Empty state with starter prompts -->
       <div v-if="messages.length === 0 && !loading" :class="$style.emptyState">
         <div :class="$style.emptyIcon">&#x2726;</div>
         <div :class="$style.emptyTitle">开始一段新对话</div>
         <div :class="$style.emptySub">描述你想生成的表单、页面或流程</div>
+        <div :class="$style.promptGrid">
+          <button
+            v-for="(prompt, idx) in starterPrompts"
+            :key="idx"
+            :class="$style.promptCard"
+            @click="emit('send', prompt.text, prompt.agent)"
+          >
+            <span :class="$style.promptIcon" v-html="prompt.icon" />
+            <span :class="$style.promptText">{{ prompt.text }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Message list -->
