@@ -405,6 +405,73 @@ export async function fetchMockData(schemaId: string): Promise<Record<string, un
   return apiClient.get<Record<string, unknown>>(`/mock/${encodeURIComponent(schemaId)}`)
 }
 
+// ---- 模板 ----
+
+export type TemplateCategory = 'form' | 'layout' | 'table' | 'search' | 'chart' | 'business' | 'report' | 'other'
+
+export interface TemplateItem {
+  id: string
+  name: string
+  description: string
+  category: TemplateCategory
+  widgetType: string
+  thumbnail: string
+  widgets: Record<string, unknown>[]
+  tags: string[]
+  isBuiltin: boolean
+  createdBy: string
+  usageCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TemplateApplyResult {
+  name: string
+  widgets: Record<string, unknown>[]
+}
+
+export async function fetchTemplates(params?: {
+  search?: string
+  category?: string
+  tag?: string
+  widgetType?: string
+  isBuiltin?: boolean
+  page?: number
+  pageSize?: number
+}): Promise<PaginatedResponse<TemplateItem>> {
+  const query: Record<string, string> = {
+    page: String(params?.page ?? 1),
+    pageSize: String(params?.pageSize ?? 20),
+  }
+  if (params?.search) query.search = params.search
+  if (params?.category) query.category = params.category
+  if (params?.tag) query.tag = params.tag
+  if (params?.widgetType) query.widgetType = params.widgetType
+  if (params?.isBuiltin !== undefined) query.isBuiltin = String(params.isBuiltin)
+  return apiClient.get<PaginatedResponse<TemplateItem>>('/templates', query)
+}
+
+export async function applyTemplate(id: string): Promise<TemplateApplyResult> {
+  return apiClient.post<TemplateApplyResult>(`/templates/${encodeURIComponent(id)}/apply`)
+}
+
+export async function createTemplate(payload: {
+  name: string
+  description?: string
+  category?: string
+  widgetType?: string
+  thumbnail?: string
+  widgets: Record<string, unknown>[]
+  tags?: string[]
+  isBuiltin?: boolean
+}): Promise<TemplateItem> {
+  return apiClient.post<TemplateItem>('/templates', payload)
+}
+
+export async function deleteTemplate(id: string): Promise<null> {
+  return apiClient.delete<null>(`/templates/${encodeURIComponent(id)}`)
+}
+
 // ---- 认证 ----
 
 export interface LoginPayload {

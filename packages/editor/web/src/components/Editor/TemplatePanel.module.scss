@@ -1,0 +1,163 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+.search {
+  flex: 1;
+}
+
+.categorySelect {
+  width: 80px;
+}
+
+.scroll {
+  flex: 1;
+  height: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+.card {
+  border: 1px solid var(--bg-color-gray-dark);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: grab;
+  transition: all 0.15s;
+  background: var(--bg-color-surface);
+
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active {
+    cursor: grabbing;
+    opacity: 0.7;
+  }
+}
+
+.thumbnail {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-color-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.placeholder {
+  color: var(--text-color-disabled);
+  font-size: 11px;
+}
+
+.info {
+  padding: 6px 8px;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.category {
+  font-size: 10px;
+  color: var(--text-color-muted);
+  background: var(--bg-color-page);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.builtin {
+  font-size: 10px;
+  color: var(--color-primary);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--bg-color-page);
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  .card:hover & {
+    opacity: 1;
+  }
+}
+
+.actionBtn {
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &--apply {
+    background: var(--color-primary);
+    color: white;
+
+    &:hover {
+      background: var(--color-primary-dark-1);
+    }
+  }
+
+  &--delete {
+    background: transparent;
+    color: var(--text-color-muted);
+
+    &:hover {
+      color: var(--color-danger);
+      background: var(--color-danger-light-9);
+    }
+  }
+}
+
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-color-disabled);
+  font-size: 12px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}

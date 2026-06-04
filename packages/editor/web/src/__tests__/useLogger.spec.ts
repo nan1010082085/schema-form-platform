@@ -62,7 +62,7 @@ describe('useLogger', () => {
     logger.event('triggered')
     expect(consoleSpy.log).toHaveBeenCalledWith(
       expect.stringContaining('%c[EventEngine]'),
-      expect.stringContaining('color: #409eff'),
+      expect.stringContaining('color: #0060A2'),
       'triggered'
     )
   })
@@ -82,7 +82,7 @@ describe('useLogger', () => {
     logger.api('fetched')
     expect(consoleSpy.log).toHaveBeenCalledWith(
       expect.stringContaining('%c[DataSource]'),
-      expect.stringContaining('color: #67c23a'),
+      expect.stringContaining('color: #26A036'),
       'fetched'
     )
   })

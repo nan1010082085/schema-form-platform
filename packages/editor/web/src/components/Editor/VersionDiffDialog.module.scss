@@ -1,0 +1,242 @@
+.diff-dialog {
+  :global(.el-dialog__body) {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+}
+
+// ---- 顶部版本选择器 ----
+.version-selectors {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+
+  &__label {
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+    flex-shrink: 0;
+  }
+
+  &__arrow {
+    font-size: 16px;
+    color: var(--el-text-color-placeholder);
+    flex-shrink: 0;
+  }
+}
+
+// ---- 差异统计摘要 ----
+.diff-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--el-fill-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+
+  &__text {
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+  }
+
+  &__count {
+    font-weight: 600;
+  }
+
+  &__added {
+    color: var(--el-color-success);
+  }
+
+  &__removed {
+    color: var(--el-color-danger);
+  }
+
+  &__modified {
+    color: var(--el-color-warning);
+  }
+
+  &__moved {
+    color: var(--el-color-info);
+  }
+}
+
+// ---- 左右分栏对比 ----
+.diff-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.diff-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+
+  & + & {
+    border-left: 1px solid var(--el-border-color-lighter);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--el-fill-color-light);
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  &__empty {
+    padding: 24px 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--el-text-color-placeholder);
+  }
+}
+
+// ---- 差异节点 ----
+.diff-node {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--el-border-radius-small);
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--el-fill-color-light);
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+
+    &--added {
+      background: var(--el-color-success-light-9);
+      color: var(--el-color-success);
+    }
+
+    &--removed {
+      background: var(--el-color-danger-light-9);
+      color: var(--el-color-danger);
+    }
+
+    &--modified {
+      background: var(--el-color-warning-light-9);
+      color: var(--el-color-warning);
+    }
+
+    &--moved {
+      background: var(--el-color-info-light-9);
+      color: var(--el-color-info);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__path {
+    font-size: 11px;
+    color: var(--el-text-color-placeholder);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__changes {
+    margin-top: 4px;
+    padding-left: 26px;
+  }
+
+  &__change-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--el-text-color-regular);
+    margin-bottom: 2px;
+    line-height: 1.4;
+
+    &-field {
+      font-weight: 500;
+      color: var(--el-text-color-secondary);
+      flex-shrink: 0;
+    }
+
+    &-arrow {
+      color: var(--el-text-color-placeholder);
+      flex-shrink: 0;
+    }
+
+    &-old {
+      color: var(--el-color-danger);
+      text-decoration: line-through;
+      word-break: break-all;
+    }
+
+    &-new {
+      color: var(--el-color-success);
+      word-break: break-all;
+    }
+  }
+}
+
+// ---- 变化节点背景色 ----
+.diff-node--added {
+  background: var(--el-color-success-light-9);
+}
+
+.diff-node--removed {
+  background: var(--el-color-danger-light-9);
+}
+
+.diff-node--modified {
+  background: var(--el-color-warning-light-9);
+}
+
+.diff-node--moved {
+  background: var(--el-color-info-light-9);
+}

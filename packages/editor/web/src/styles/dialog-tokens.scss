@@ -1,0 +1,84 @@
+// ============================================================
+// Dialog 统一样式 Token（Mixin 库）
+// 所有弹窗组件共享的卡片、标签、控件高度等样式
+// ============================================================
+
+// 弹窗 body：左右分栏布局
+@mixin dialog-body {
+  height: 60vh;
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+}
+
+// 弹窗 body：单栏布局（自适应高度）
+@mixin dialog-body-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// 卡片容器
+@mixin dialog-card {
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg-color-surface);
+}
+
+// 卡片标题
+@mixin dialog-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-title);
+}
+
+// 表单标签
+@mixin dialog-label($width: 50px) {
+  width: $width;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-color-regular);
+  line-height: 32px;
+}
+
+// 表单行
+@mixin dialog-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+// 右侧预览/测试面板
+@mixin dialog-side-panel {
+  width: 280px;
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  background: var(--bg-color-surface);
+}
+
+// 预览面板标题
+@mixin dialog-side-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-title);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+// 统一表单控件高度 32px
+@mixin unified-control-height {
+  :global(.el-input__wrapper),
+  :global(.el-select .el-input__wrapper),
+  :global(.el-button:not(.is-text):not(.is-link)) {
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+}

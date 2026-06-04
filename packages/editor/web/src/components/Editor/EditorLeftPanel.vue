@@ -2,11 +2,14 @@
 /**
  * EditorLeftPanel — 编辑器左侧面板
  *
- * 部件库标签页 + 结构树标签页
+ * 部件库标签页 + 结构树标签页 + 模板标签页
  */
 import { ref } from 'vue'
 import ComponentPanel from './ComponentPanel.vue'
 import WidgetTree from './WidgetTree.vue'
+import WidgetTemplatePanel from '@/components/WidgetTemplatePanel.vue'
+import { useWidgetStore } from '@/stores/widget'
+import type { Widget } from '@/widgets/base/types'
 
 defineProps<{
   schemaStatus: 'draft' | 'published'
@@ -14,7 +17,16 @@ defineProps<{
   schemaId: string | null
 }>()
 
-const activeTab = ref<'components' | 'structure'>('components')
+const widgetStore = useWidgetStore()
+
+const activeTab = ref<'components' | 'structure' | 'templates'>('components')
+
+function handleApplyTemplate(widgets: Record<string, unknown>[]) {
+  // Append template widgets to existing canvas
+  for (const w of widgets) {
+    widgetStore.addWidget(w as unknown as Widget)
+  }
+}
 </script>
 
 <template>
@@ -49,12 +61,29 @@ const activeTab = ref<'components' | 'structure'>('components')
         </svg>
         <span>结构</span>
       </button>
+      <button
+        class="left-panel__tab"
+        :class="{ 'left-panel__tab--active': activeTab === 'templates' }"
+        @click="activeTab = 'templates'"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="12" height="12" rx="2"/>
+          <line x1="2" y1="6" x2="14" y2="6"/>
+          <line x1="6" y1="6" x2="6" y2="14"/>
+        </svg>
+        <span>模板</span>
+      </button>
     </div>
 
     <!-- Content -->
     <div class="left-panel__content">
       <ComponentPanel v-show="activeTab === 'components'" />
       <WidgetTree v-show="activeTab === 'structure'" />
+      <WidgetTemplatePanel
+        v-show="activeTab === 'templates'"
+        :current-widgets="widgetStore.widgets"
+        @apply-template="handleApplyTemplate"
+      />
     </div>
 
     <!-- Status bar -->

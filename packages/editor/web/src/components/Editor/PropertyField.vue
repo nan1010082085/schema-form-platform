@@ -5,6 +5,7 @@
  * 根据 type prop 渲染不同的 Element Plus 输入组件。
  * 所有输入事件统一通过 'update' emit 向上传递。
  */
+import { ref, watch } from 'vue'
 import { ElInput, ElInputNumber, ElSwitch, ElSelect, ElOption, ElColorPicker, ElTooltip } from 'element-plus'
 import styles from './PropertyField.module.scss'
 
@@ -27,6 +28,44 @@ const emit = defineEmits<{
 
 function handleUpdate(val: unknown) {
   emit('update', val)
+}
+
+// ---- JSON 编辑器状态 ----
+
+const jsonText = ref('')
+const jsonError = ref('')
+
+function formatJsonValue(val: unknown): string {
+  if (val === null || val === undefined) return ''
+  return JSON.stringify(val, null, 2)
+}
+
+// 初始化 & 同步外部值变化
+watch(() => props.value, (val) => {
+  if (props.type === 'json') {
+    jsonText.value = formatJsonValue(val)
+    jsonError.value = ''
+  }
+}, { immediate: true })
+
+function onJsonFocus() {
+  jsonError.value = ''
+}
+
+function onJsonBlur() {
+  const text = jsonText.value.trim()
+  if (!text) {
+    emit('update', null)
+    jsonError.value = ''
+    return
+  }
+  try {
+    const parsed = JSON.parse(text)
+    emit('update', parsed)
+    jsonError.value = ''
+  } catch {
+    jsonError.value = 'JSON 格式不正确'
+  }
 }
 </script>
 
@@ -84,6 +123,21 @@ function handleUpdate(val: unknown) {
           :value="opt.value"
         />
       </ElSelect>
+
+      <!-- JSON 编辑器 -->
+      <div v-else-if="type === 'json'" :class="styles.jsonWrap">
+        <ElInput
+          v-model="jsonText"
+          type="textarea"
+          :rows="6"
+          size="small"
+          placeholder="输入 JSON 数据"
+          :class="[styles.jsonInput, jsonError ? styles.jsonInputError : '']"
+          @focus="onJsonFocus"
+          @blur="onJsonBlur"
+        />
+        <span v-if="jsonError" :class="styles.jsonError">{{ jsonError }}</span>
+      </div>
 
       <!-- 兜底：文本输入 -->
       <ElInput

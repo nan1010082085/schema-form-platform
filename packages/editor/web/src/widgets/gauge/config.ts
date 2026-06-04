@@ -36,6 +36,9 @@ export const gaugeConfig: WidgetConfig = {
     basic: ['label'],
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
+      { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
+        { key: 'value', label: '值', type: 'number' },
+      ]},
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },
       { key: 'min', label: '最小值', type: 'number', default: 0 },
       { key: 'max', label: '最大值', type: 'number', default: 100 },

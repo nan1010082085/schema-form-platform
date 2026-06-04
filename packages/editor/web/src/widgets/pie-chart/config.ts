@@ -41,6 +41,10 @@ export const pieChartConfig: WidgetConfig = {
     basic: ['label'],
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
+      { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
+        { key: 'name', label: '名称', type: 'text' },
+        { key: 'value', label: '值', type: 'number' },
+      ]},
       { key: 'nameField', label: '名称字段', type: 'input', placeholder: '如: name' },
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },
       { key: 'title', label: '图表标题', type: 'input' },

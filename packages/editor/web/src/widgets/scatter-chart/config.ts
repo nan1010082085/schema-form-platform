@@ -38,6 +38,10 @@ export const scatterChartConfig: WidgetConfig = {
     basic: ['label'],
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
+      { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
+        { key: 'x', label: 'X 值', type: 'number' },
+        { key: 'y', label: 'Y 值', type: 'number' },
+      ]},
       { key: 'xField', label: 'X 轴字段', type: 'input', placeholder: '如: x' },
       { key: 'yField', label: 'Y 轴字段', type: 'input', placeholder: '如: y' },
       { key: 'title', label: '图表标题', type: 'input' },

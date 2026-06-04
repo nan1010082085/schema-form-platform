@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h, defineComponent, nextTick } from 'vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
+import ebStyles from '@/components/ErrorBoundary.module.scss'
 
 const HealthyComponent = defineComponent({
   template: '<div class="healthy">正常运行</div>',
@@ -14,7 +15,7 @@ describe('ErrorBoundary', () => {
       slots: { default: () => h(HealthyComponent) },
     })
 
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(false)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(false)
     expect(wrapper.find('.healthy').exists()).toBe(true)
   })
 
@@ -43,14 +44,14 @@ describe('ErrorBoundary', () => {
     (wrapper.vm as any).error = new Error('测试错误');
     await nextTick()
 
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(true)
-    expect(wrapper.find('.fg-error-boundary__message').text()).toContain('测试错误')
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(true)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary__message']}`).text()).toContain('测试错误')
 
     // 点击重试
     await wrapper.find('.el-button').trigger('click')
     await nextTick()
 
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(false)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(false)
     expect(wrapper.find('.healthy').exists()).toBe(true)
   })
 
@@ -67,9 +68,10 @@ describe('ErrorBoundary', () => {
     await nextTick()
 
     // 验证错误 UI 显示了节点信息
-    expect(wrapper.find('.fg-error-boundary__info').text()).toContain('input')
-    expect(wrapper.find('.fg-error-boundary__info').text()).toContain('name')
-    expect(wrapper.find('.fg-error-boundary__info').text()).toContain('3,0')
+    const infoEl = wrapper.find(`.${ebStyles['fg-error-boundary__info']}`)
+    expect(infoEl.text()).toContain('input')
+    expect(infoEl.text()).toContain('name')
+    expect(infoEl.text()).toContain('3,0')
 
     consoleSpy.mockRestore()
   })

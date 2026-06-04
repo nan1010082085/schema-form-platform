@@ -41,6 +41,13 @@ export const candlestickConfig: WidgetConfig = {
     basic: ['label'],
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
+      { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
+        { key: 'date', label: '日期', type: 'text' },
+        { key: 'open', label: '开盘', type: 'number' },
+        { key: 'close', label: '收盘', type: 'number' },
+        { key: 'low', label: '最低', type: 'number' },
+        { key: 'high', label: '最高', type: 'number' },
+      ]},
       { key: 'dateField', label: '日期字段', type: 'input', placeholder: '如: date' },
       { key: 'openField', label: '开盘字段', type: 'input', placeholder: '如: open' },
       { key: 'closeField', label: '收盘字段', type: 'input', placeholder: '如: close' },

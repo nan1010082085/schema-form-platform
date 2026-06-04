@@ -42,6 +42,10 @@ export const radarConfig: WidgetConfig = {
     basic: ['label'],
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
+      { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
+        { key: 'category', label: '分类', type: 'text' },
+        { key: 'value', label: '值', type: 'number' },
+      ]},
       { key: 'categoryField', label: '分类字段', type: 'input', placeholder: '如: category' },
       { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },
       { key: 'indicators', label: '指标配置 (JSON)', type: 'json' },

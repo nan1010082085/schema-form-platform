@@ -11,6 +11,8 @@ import ElementPlus from 'element-plus'
 import { h, nextTick } from 'vue'
 import FormGrid from '@/components/WidgetRenderer/index.vue'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
+import ebStyles from '@/components/ErrorBoundary.module.scss'
+import fgStyles from '@/components/WidgetRenderer/style.module.scss'
 import type { PartialWidget } from '@/widgets/base/types'
 
 /** Stub window.matchMedia for jsdom (used by useBreakpoint -> SchemaRender) */
@@ -65,7 +67,7 @@ describe('E2E Smoke', () => {
     const wrapper = createWrapper(schema)
 
     // Verify FormGrid root element
-    expect(wrapper.find('.fg').exists()).toBe(true)
+    expect(wrapper.find(`.${fgStyles.fg}`).exists()).toBe(true)
 
     // Verify exposed API is available
     expect(typeof wrapper.vm.getFormData).toBe('function')
@@ -103,7 +105,7 @@ describe('E2E Smoke', () => {
     // FormGrid's submit() validates before emitting, and validation may fail
     // in jsdom without real Element Plus validation setup.
     // The key assertion: the submit method runs without crashing.
-    expect(wrapper.find('.fg').exists()).toBe(true)
+    expect(wrapper.find(`.${fgStyles.fg}`).exists()).toBe(true)
 
     wrapper.unmount()
   })
@@ -140,7 +142,7 @@ describe('E2E Smoke', () => {
       },
     })
 
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(false)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(false)
     expect(wrapper.find('.healthy-child').exists()).toBe(true)
     wrapper.unmount()
   })
@@ -158,13 +160,13 @@ describe('E2E Smoke', () => {
     await nextTick()
 
     // Verify error boundary UI is shown
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(true)
-    expect(wrapper.find('.fg-error-boundary__message').text()).toContain('Simulated render crash')
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(true)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary__message']}`).text()).toContain('Simulated render crash')
 
     // Verify retry clears the error
     await wrapper.find('.el-button').trigger('click')
     await nextTick()
-    expect(wrapper.find('.fg-error-boundary').exists()).toBe(false)
+    expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(false)
     expect(wrapper.find('.will-throw').exists()).toBe(true)
 
     wrapper.unmount()
@@ -186,7 +188,7 @@ describe('E2E Smoke', () => {
     (wrapper.vm as any).error = new Error('Test error');
     await nextTick()
 
-    const info = wrapper.find('.fg-error-boundary__info').text()
+    const info = wrapper.find(`.${ebStyles['fg-error-boundary__info']}`).text()
     expect(info).toContain('input')
     expect(info).toContain('myField')
     expect(info).toContain('0,1,3')
