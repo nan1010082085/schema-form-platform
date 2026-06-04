@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, List, Finished, Monitor, DataAnalysis } from '@element-plus/icons-vue'
+import { Document, List, Monitor, DataAnalysis } from '@element-plus/icons-vue'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
@@ -40,12 +40,6 @@ const activeNav = computed(() => {
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
-      <div :class="styles.sidebarFooter" data-test="sidebar-footer">
-        <a :class="styles.navItem" href="/portal/">
-          <el-icon :size="18"><Finished /></el-icon>
-          <span>返回首页</span>
-        </a>
-      </div>
     </aside>
     <main :class="styles.main" data-test="main">
       <router-view />

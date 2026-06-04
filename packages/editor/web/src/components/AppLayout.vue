@@ -6,7 +6,7 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, HomeFilled, DataBoard } from '@element-plus/icons-vue'
+import { Document, DataBoard } from '@element-plus/icons-vue'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
@@ -42,16 +42,6 @@ const activeNav = computed(() => {
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
-
-      <div :class="styles.sidebarFooter">
-        <router-link
-          to="/"
-          :class="[styles.navItem, route.path === '/' && styles.navItemActive]"
-        >
-          <el-icon :size="18"><HomeFilled /></el-icon>
-          <span>首页</span>
-        </router-link>
-      </div>
     </aside>
 
     <!-- 主内容区 -->
