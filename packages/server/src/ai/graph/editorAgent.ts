@@ -86,6 +86,13 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
     }
   }
 
+  // Inject collaboration context from the requesting agent
+  const currentStep = state.taskChain[state.currentStepIndex]
+  if (currentStep?.context && Object.keys(currentStep.context).length > 0) {
+    prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
+    prompt += JSON.stringify(currentStep.context, null, 2)
+  }
+
   return prompt
 }
 

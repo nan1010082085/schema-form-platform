@@ -41,6 +41,8 @@ export interface TaskStep {
   description: string
   status: 'pending' | 'running' | 'done' | 'skipped'
   result?: Record<string, unknown>
+  /** Collaboration context passed from the requesting agent. */
+  context?: Record<string, unknown>
 }
 
 export interface AIContext {

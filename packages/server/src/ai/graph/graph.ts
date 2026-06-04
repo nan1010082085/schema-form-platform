@@ -156,6 +156,7 @@ ${userContent}
         agent: targetAgent as 'editor' | 'flow',
         description: `协作：${description}`,
         status: 'pending' as const,
+        context: state.collaborationRequest.context,
       }
 
       // 在当前位置插入新步骤
