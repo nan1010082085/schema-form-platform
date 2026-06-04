@@ -20,6 +20,7 @@
     "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.1.48",
     "@langchain/langgraph": "^0.2.60",
+    "@langchain/langgraph-checkpoint": "^1.0.4",
     "@langchain/openai": "^1.4.7",
     "@schema-form/flow-shared": "workspace:*",
     "@schema-form/shared-ai": "workspace:*",
