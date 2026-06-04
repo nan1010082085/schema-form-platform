@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Schema Form Platform — 可视化低代码平台</title>
+<title>Schema Form Platform — AI 驱动的低代码平台</title>
 <style>
   :root {
     --primary: #409eff;
@@ -44,12 +44,12 @@
 
   /* Hero */
   .hero {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 40%, #0f3460 70%, #16213e 100%);
     color: #fff; padding: 80px 24px 60px; text-align: center;
   }
   .hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 12px; }
   .hero .subtitle { font-size: 1.2rem; color: #8ec5fc; margin-bottom: 20px; }
-  .hero p { font-size: 1.1rem; color: #b0c4de; max-width: 700px; margin: 0 auto; }
+  .hero p { font-size: 1.1rem; color: #b0c4de; max-width: 780px; margin: 0 auto; }
   .hero .badges { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .badge {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
@@ -59,7 +59,9 @@
   .badge-ts { background: #3178c6; color: #fff; }
   .badge-koa { background: #333; color: #fff; }
   .badge-mongo { background: #47a248; color: #fff; }
-  .badge-ai { background: #ff6b6b; color: #fff; }
+  .badge-ai { background: linear-gradient(135deg, #6c5ce7, #0984e3); color: #fff; }
+  .badge-langgraph { background: #1a1a2e; color: #fff; border: 1px solid #6c5ce7; }
+  .badge-deepseek { background: #0984e3; color: #fff; }
 
   /* Container */
   .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
@@ -73,6 +75,7 @@
   /* Grid */
   .grid { display: grid; gap: 20px; }
   .grid-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
   .grid-4 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 
   /* Card */
@@ -92,7 +95,7 @@
 
   .card-editor { border-left: 4px solid var(--primary); }
   .card-flow { border-left: 4px solid var(--green); }
-  .card-ai { border-left: 4px solid var(--red); }
+  .card-ai { border-left: 4px solid var(--red); border-top: 3px solid linear-gradient(90deg, var(--red), var(--purple)); }
   .card-server { border-left: 4px solid var(--orange); }
 
   /* Stats */
@@ -100,6 +103,7 @@
   .stat { text-align: center; }
   .stat .num { font-size: 2.5rem; font-weight: 700; color: var(--primary); }
   .stat .label { font-size: 0.88rem; color: var(--text-secondary); }
+  .stat .num-ai { color: var(--purple); }
 
   /* Flow Diagram */
   .flow-diagram {
@@ -122,7 +126,8 @@
   .flow-node-editor { background: #e8f5e9; color: #2e7d32; border: 2px solid #a5d6a7; }
   .flow-node-server { background: #fff3e0; color: #e65100; border: 2px solid #ffcc80; }
   .flow-node-db { background: #f3e5f5; color: #7b1fa2; border: 2px solid #ce93d8; }
-  .flow-node-ai { background: #fce4ec; color: #c62828; border: 2px solid #ef9a9a; }
+  .flow-node-ai { background: linear-gradient(135deg, #fce4ec, #f3e5f5); color: #c62828; border: 2px solid #ef9a9a; }
+  .flow-node-rag { background: #e0f7fa; color: #00695c; border: 2px solid #80cbc4; }
   .flow-arrow {
     font-size: 1.5rem; color: var(--text-secondary); padding: 0 12px;
   }
@@ -157,6 +162,8 @@
   .layer-data .layer-label { color: #7b1fa2; }
   .layer-infra { background: #e8f5e9; }
   .layer-infra .layer-label { color: #2e7d32; }
+  .layer-agent { background: linear-gradient(135deg, #fce4ec, #f3e5f5); }
+  .layer-agent .layer-label { color: #c62828; }
 
   /* Tags */
   .tag {
@@ -167,6 +174,8 @@
   .tag-green { background: #f0f9eb; color: var(--green); }
   .tag-orange { background: #fdf6ec; color: var(--orange); }
   .tag-red { background: #fef0f0; color: var(--red); }
+  .tag-purple { background: #f4ecf7; color: #7b1fa2; }
+  .tag-cyan { background: #e0f7fa; color: #00838f; }
 
   /* Access Bar */
   .access-bar {
@@ -185,8 +194,8 @@
   .access-link-primary:hover { background: var(--primary-dark); text-decoration: none; }
   .access-link-green { background: var(--green); color: #fff; }
   .access-link-green:hover { background: #5daf34; text-decoration: none; }
-  .access-link-red { background: var(--red); color: #fff; }
-  .access-link-red:hover { background: #e04848; text-decoration: none; }
+  .access-link-red { background: linear-gradient(135deg, var(--red), var(--purple)); color: #fff; }
+  .access-link-red:hover { background: linear-gradient(135deg, #e04848, #8e44ad); text-decoration: none; }
   .access-link-orange { background: var(--orange); color: #fff; }
   .access-link-orange:hover { background: #cf9236; text-decoration: none; }
   .access-link-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
@@ -202,6 +211,58 @@
     content: ""; display: inline-block; width: 6px; height: 6px;
     border-radius: 50%; background: var(--primary); margin-top: 8px; flex-shrink: 0;
   }
+  .feature-list li.green::before { background: var(--green); }
+  .feature-list li.red::before { background: var(--red); }
+  .feature-list li.orange::before { background: var(--orange); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  th { background: #f5f7fa; text-align: left; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fbfc; }
+
+  /* AI Capability Cards */
+  .capability-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px; margin: 24px 0;
+  }
+  .capability-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .capability-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .capability-card .cap-icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .capability-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
+  .capability-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; }
+  .capability-card .cap-value {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .cap-value-high { background: #f0f9eb; color: var(--green); }
+  .cap-value-medium { background: #fdf6ec; color: var(--orange); }
+  .cap-value-coming { background: #ecf5ff; color: var(--primary); }
+
+  /* Comparison Table */
+  .compare-table th { font-size: 0.82rem; white-space: nowrap; }
+  .compare-table td { font-size: 0.82rem; vertical-align: top; }
+  .compare-table .highlight { background: #f0f9eb; font-weight: 600; }
+  .compare-check { color: var(--green); font-weight: 700; }
+  .compare-partial { color: var(--orange); }
+  .compare-cross { color: var(--red); }
+
+  /* Phase timeline */
+  .phase-timeline { position: relative; padding-left: 32px; margin: 20px 0; }
+  .phase-timeline::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .phase-item { position: relative; margin-bottom: 24px; }
+  .phase-item::before { content: ''; position: absolute; left: -27px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--primary); background: #fff; }
+  .phase-item.done::before { background: var(--green); border-color: var(--green); }
+  .phase-item.active::before { background: var(--primary); border-color: var(--primary); }
+  .phase-item.pending::before { background: #fff; border-color: var(--border); }
+  .phase-label { font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .phase-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .phase-desc { font-size: 0.88rem; color: var(--text-secondary); }
 
   /* Footer */
   .footer {
@@ -235,13 +296,15 @@
 
 <div class="hero">
   <h1>Schema Form Platform</h1>
-  <div class="subtitle">可视化低代码表单与流程设计平台</div>
-  <p>基于 Schema 驱动的可视化设计器，支持表单编排、BPMN 流程设计、AI 智能生成，通过 JSON Schema 描述业务结构，实现设计态与运行态分离。</p>
+  <div class="subtitle">AI 驱动的低代码表单与流程设计平台</div>
+  <p>基于 Schema 驱动的可视化设计器，深度融合 LangGraph 多智能体架构，支持通过自然语言生成表单 Schema、BPMN 流程图和业务页面，实现从需求到交付的端到端自动化。</p>
   <div class="badges">
     <span class="badge badge-vue">Vue 3.5</span>
     <span class="badge badge-ts">TypeScript 5.7</span>
     <span class="badge badge-koa">Koa.js</span>
     <span class="badge badge-mongo">MongoDB</span>
+    <span class="badge badge-langgraph">LangGraph</span>
+    <span class="badge badge-deepseek">DeepSeek</span>
     <span class="badge badge-ai">AI Agent</span>
   </div>
 </div>
@@ -261,16 +324,16 @@
 <div class="stat-row">
   <div class="stat"><div class="num">49</div><div class="label">表单组件</div></div>
   <div class="stat"><div class="num">25</div><div class="label">流程节点</div></div>
-  <div class="stat"><div class="num">3</div><div class="label">AI Agent</div></div>
+  <div class="stat"><div class="num"><span class="num-ai">4</span></div><div class="label">AI Agent</div></div>
+  <div class="stat"><div class="num"><span class="num-ai">16</span></div><div class="label">SSE 事件类型</div></div>
   <div class="stat"><div class="num">14</div><div class="label">事件动作</div></div>
-  <div class="stat"><div class="num">6</div><div class="label">联动类型</div></div>
   <div class="stat"><div class="num">9</div><div class="label">图表组件</div></div>
 </div>
 
-<!-- Sub Projects -->
+<!-- ==================== Sub Projects ==================== -->
 <div class="container">
   <h2 class="section-title">子项目</h2>
-  <p class="section-desc">平台由四个核心模块组成，各司其职，通过 Schema 和 API 协作。</p>
+  <p class="section-desc">平台由四个核心模块组成，通过 Schema 和 API 协作，AI 贯穿全链路。</p>
 
   <div class="grid grid-2">
     <!-- Editor -->
@@ -283,7 +346,7 @@
         <li>14 种事件动作，6 种联动类型</li>
         <li>自由布局：绝对定位 + 拖拽手柄</li>
         <li>9 种 ECharts 图表组件</li>
-        <li>qiankun / micro-app 微前端集成</li>
+        <li class="green">AI 生成 Schema 一键应用到画布</li>
       </ul>
       <div style="margin-top: 16px;">
         <span class="tag tag-blue">Vue 3.5</span>
@@ -292,7 +355,7 @@
         <span class="tag tag-blue">ECharts</span>
       </div>
       <div style="margin-top: 16px;">
-        <a href="/docs/web.html" class="link">查看文档 →</a>
+        <a href="/docs/web.html" class="link">查看文档 &rarr;</a>
       </div>
     </div>
 
@@ -306,7 +369,7 @@
         <li>BPMN 2.0 XML 导入导出</li>
         <li>dagre 自动布局算法</li>
         <li>流程监控面板</li>
-        <li>表单节点嵌入预览</li>
+        <li class="green">AI 生成流程图自动渲染到设计器</li>
       </ul>
       <div style="margin-top: 16px;">
         <span class="tag tag-green">Vue Flow</span>
@@ -314,142 +377,515 @@
         <span class="tag tag-green">dagre</span>
       </div>
       <div style="margin-top: 16px;">
-        <a href="/docs/flow.html" class="link">查看文档 →</a>
+        <a href="/docs/flow.html" class="link">查看文档 &rarr;</a>
       </div>
     </div>
 
     <!-- AI -->
     <div class="card card-ai">
       <h3><span class="icon"></span> AI 助手 (AI App)</h3>
-      <p>AI 智能助手应用，通过自然语言对话驱动表单 Schema 和流程图的生成，支持多 Agent 协作。</p>
+      <p>基于 LangGraph StateGraph 的多智能体对话式生成引擎。通过 4 种专家 Agent（Editor / Flow / Page / General），配合多工具协作，实现表单、流程、页面的自然语言驱动生成与迭代修改。</p>
       <ul class="feature-list">
-        <li>3 种 Agent：Auto / Editor / Flow</li>
-        <li>SSE 流式响应</li>
-        <li>多模态输入（图片、PDF、Word）</li>
-        <li>RAG 语义检索</li>
-        <li>版本管理与对比</li>
-        <li>Micro-app 嵌入 Editor/Flow</li>
+        <li class="red">4 种 Agent：Editor / Flow / Page / General</li>
+        <li class="red">LangGraph StateGraph 图编排 + 任务链</li>
+        <li class="red">16 种 SSE 流式事件类型</li>
+        <li class="red">MongoDB Checkpointer 对话持久化</li>
+        <li class="red">多步卡片展示（thinking &rarr; tool_call &rarr; result）</li>
+        <li class="red">RAG 语义检索 + @引用系统</li>
+        <li class="red">版本管理（创建 / Diff 对比 / 回滚）</li>
+        <li class="red">双向同步（AI &harr; Editor / Flow）</li>
+        <li class="red">图片识别 &rarr; 自动生成表单</li>
+        <li class="red">对话搜索 + 历史管理</li>
       </ul>
       <div style="margin-top: 16px;">
-        <span class="tag tag-red">LangGraph</span>
-        <span class="tag tag-red">SSE</span>
-        <span class="tag tag-red">RAG</span>
+        <span class="tag tag-purple">LangGraph</span>
+        <span class="tag tag-purple">DeepSeek</span>
+        <span class="tag tag-purple">SSE</span>
+        <span class="tag tag-purple">RAG</span>
+        <span class="tag tag-purple">Micro-app</span>
       </div>
       <div style="margin-top: 16px;">
-        <a href="/docs/ai.html" class="link">查看文档 →</a>
+        <a href="/docs/ai.html" class="link">查看文档 &rarr;</a>
       </div>
     </div>
 
     <!-- Server -->
     <div class="card card-server">
       <h3><span class="icon"></span> 后端服务 (Server)</h3>
-      <p>Koa.js + MongoDB 后端 API 服务，提供 Schema CRUD、认证、AI Agent 图编排、健康检查。</p>
+      <p>Koa.js + MongoDB 后端 API 服务，提供 Schema CRUD、认证、LangGraph Agent 图编排、健康检查。</p>
       <ul class="feature-list">
         <li>Schema 管理：CRUD / 发布 / 版本</li>
         <li>JWT + bcryptjs 认证</li>
-        <li>AI Agent：LangGraph 图编排</li>
+        <li class="orange">AI Agent：LangGraph StateGraph 图编排</li>
+        <li class="orange">MongoDB Checkpointer 对话持久化</li>
         <li>数据源 / 字典 / Mock 数据</li>
         <li>Zod 请求校验</li>
-        <li>健康检查：API + DB ping</li>
       </ul>
       <div style="margin-top: 16px;">
         <span class="tag tag-orange">Koa.js</span>
         <span class="tag tag-orange">Mongoose</span>
         <span class="tag tag-orange">JWT</span>
-        <span class="tag tag-orange">Zod</span>
+        <span class="tag tag-orange">LangGraph</span>
       </div>
       <div style="margin-top: 16px;">
-        <a href="/docs/server.html" class="link">查看文档 →</a>
+        <a href="/docs/server.html" class="link">查看文档 &rarr;</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Data Flow -->
+<!-- ==================== AI Capabilities ==================== -->
+<div class="container" style="background: linear-gradient(180deg, #f8f0ff 0%, var(--bg) 100%); padding-top: 60px; padding-bottom: 60px; margin-top: 20px;">
+  <h2 class="section-title" style="text-align:center; font-size: 2rem;">AI 功能预期</h2>
+  <p class="section-desc" style="text-align:center; max-width: 680px; margin: 0 auto 40px;">从自然语言到可运行产物，AI 贯穿表单设计、流程编排、页面搭建全链路，实现端到端的低代码自动化。</p>
+
+  <!-- Core Capabilities -->
+  <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; text-align: center;">核心能力矩阵</h3>
+  <div class="capability-grid">
+    <div class="capability-card">
+      <div class="cap-icon">&#9997;</div>
+      <h4>自然语言生成表单</h4>
+      <p>"创建一个订单表单，包含客户名称、商品列表、金额、备注" &rarr; 完整 Widget Schema，49 种组件自动选型。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#9881;</div>
+      <h4>自然语言生成流程</h4>
+      <p>"创建请假审批流程，需要部门经理和 HR 双签" &rarr; BPMN 流程图，含网关、用户任务、多实例。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#128202;</div>
+      <h4>自然语言生成页面</h4>
+      <p>"创建用户管理列表页，支持搜索和分页" &rarr; 业务页面配置，FgSearchList + FgTable 组合。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#128279;</div>
+      <h4>联动生成</h4>
+      <p>"创建采购审批系统" &rarr; Thinker 自动拆分任务链：先生成表单，再生成流程，最后总结交付。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#9998;</div>
+      <h4>增量修改</h4>
+      <p>"加一个手机号字段" &rarr; AI 精准定位需要修改的部分，仅更新目标 Widget，不破坏已有结构。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#128256;</div>
+      <h4>多轮迭代</h4>
+      <p>持续对话优化，每次修改生成 Diff 对比，支持撤销回滚。版本历史完整记录，一键恢复任意版本。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#128269;</div>
+      <h4>知识检索 (RAG)</h4>
+      <p>语义搜索已有 Schema，Jaccard 相似度排序。@引用系统可在对话中直接引用 Schema/Flow/Widget。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+    <div class="capability-card">
+      <div class="cap-icon">&#128248;</div>
+      <h4>图片识别生成</h4>
+      <p>上传表单截图或手绘草图，AI 识别 UI 元素并自动生成对应的 Widget Schema，所见即所得。</p>
+      <span class="cap-value cap-value-high">已实现</span>
+    </div>
+  </div>
+
+  <!-- Technical Advantages -->
+  <h3 style="font-size: 1.3rem; font-weight: 700; margin: 48px 0 20px; text-align: center;">技术优势</h3>
+  <div class="grid grid-3" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card" style="text-align:center;">
+      <h3 style="justify-content:center;"><span style="color:var(--green);">&#10003;</span> 结构确定性 100%</h3>
+      <p>生成物是 Schema JSON 而非源代码。通过 Zod 校验 + Widget 类型约束，确保输出结构 100% 正确，不存在语法错误或运行时异常。</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <h3 style="justify-content:center;"><span style="color:var(--green);">&#10003;</span> 领域深度</h3>
+      <p>49 种 Widget 组件 + 25 种 BPMN 节点，metadata.json 单一数据源保证 AI 知识与编辑器/流程引擎完全同步。</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <h3 style="justify-content:center;"><span style="color:var(--green);">&#10003;</span> 端到端闭环</h3>
+      <p>生成 &rarr; 预览 &rarr; Diff &rarr; 确认 &rarr; 发布，全链路在同一个平台内完成，无需切换工具。</p>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <h3 style="font-size: 1.3rem; font-weight: 700; margin: 48px 0 20px; text-align: center;">竞品对比</h3>
+  <div class="table-wrap" style="max-width: 900px; margin: 0 auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th style="background: linear-gradient(135deg, #f8f0ff, #f0e6ff);">Schema Form AI</th>
+          <th>Cursor</th>
+          <th>v0.dev</th>
+          <th>Bolt.new</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>生成物</strong></td>
+          <td class="highlight">Schema JSON（结构化）</td>
+          <td>源代码（通用）</td>
+          <td>React 组件</td>
+          <td>全栈应用</td>
+        </tr>
+        <tr>
+          <td><strong>领域深度</strong></td>
+          <td class="highlight">49 种组件 + 25 种 BPMN 节点</td>
+          <td>通用编程</td>
+          <td>UI 组件</td>
+          <td>通用全栈</td>
+        </tr>
+        <tr>
+          <td><strong>结构确定性</strong></td>
+          <td class="highlight"><span class="compare-check">&#10003; 100% 校验通过</span></td>
+          <td><span class="compare-partial">&#9679; 可能有 bug</span></td>
+          <td><span class="compare-partial">&#9679; 可能有 bug</span></td>
+          <td><span class="compare-partial">&#9679; 可能有 bug</span></td>
+        </tr>
+        <tr>
+          <td><strong>闭环能力</strong></td>
+          <td class="highlight">生成 &rarr; 预览 &rarr; 发布</td>
+          <td>生成 &rarr; 调试 &rarr; 部署</td>
+          <td>生成 &rarr; 调试</td>
+          <td>生成 &rarr; 调试 &rarr; 部署</td>
+        </tr>
+        <tr>
+          <td><strong>增量编辑</strong></td>
+          <td class="highlight"><span class="compare-check">&#10003; Diff + 撤销</span></td>
+          <td><span class="compare-check">&#10003; 有</span></td>
+          <td><span class="compare-cross">&#10007; 无</span></td>
+          <td><span class="compare-cross">&#10007; 无</span></td>
+        </tr>
+        <tr>
+          <td><strong>多智能体</strong></td>
+          <td class="highlight"><span class="compare-check">&#10003; 4 Agent + 任务链</span></td>
+          <td><span class="compare-cross">&#10007; 单一</span></td>
+          <td><span class="compare-cross">&#10007; 单一</span></td>
+          <td><span class="compare-cross">&#10007; 单一</span></td>
+        </tr>
+        <tr>
+          <td><strong>联动生成</strong></td>
+          <td class="highlight"><span class="compare-check">&#10003; 表单 + 流程 + 页面</span></td>
+          <td><span class="compare-cross">&#10007; 无</span></td>
+          <td><span class="compare-cross">&#10007; 无</span></td>
+          <td><span class="compare-partial">&#9679; 有限</span></td>
+        </tr>
+        <tr>
+          <td><strong>版本管理</strong></td>
+          <td class="highlight"><span class="compare-check">&#10003; Diff + 回滚</span></td>
+          <td><span class="compare-partial">&#9679; Git 依赖</span></td>
+          <td><span class="compare-cross">&#10007; 无</span></td>
+          <td><span class="compare-partial">&#9679; 有限</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== Data Flow ==================== -->
 <div class="container">
   <h2 class="section-title">数据流转</h2>
-  <p class="section-desc">用户操作驱动 Schema 生成，Schema 驱动表单渲染，实现设计态与运行态分离。</p>
+  <p class="section-desc">AI 驱动的 Schema 生成流：用户输入经 Thinker 路由到专家 Agent，Agent 通过工具调用生成产物，预览确认后发布。</p>
 
   <div class="flow-diagram">
-    <div class="flow-title">表单 Schema 数据流</div>
+    <!-- Traditional Flow -->
+    <div class="flow-title">传统表单 Schema 数据流</div>
     <div class="flow-container">
       <div>
         <div class="flow-node flow-node-user">用户</div>
         <div class="flow-label">拖拽 / 配置</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
         <div class="flow-node flow-node-editor">Editor 编辑器</div>
         <div class="flow-label">Widget Store</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
         <div class="flow-node flow-node-server">Server API</div>
         <div class="flow-label">/api/schemas</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
         <div class="flow-node flow-node-db">MongoDB</div>
         <div class="flow-label">FormSchema</div>
       </div>
     </div>
 
-    <div style="height: 40px;"></div>
+    <div style="height: 50px;"></div>
 
-    <div class="flow-title">AI Schema 生成流</div>
+    <!-- AI Flow -->
+    <div class="flow-title">AI Schema 生成流（核心）</div>
     <div class="flow-container">
       <div>
         <div class="flow-node flow-node-user">用户</div>
-        <div class="flow-label">自然语言</div>
+        <div class="flow-label">自然语言输入</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
-        <div class="flow-node flow-node-ai">AI App</div>
-        <div class="flow-label">对话输入</div>
+        <div class="flow-node flow-node-ai">Thinker</div>
+        <div class="flow-label">意图分析 + 路由</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
-        <div class="flow-node flow-node-server">Server Agent</div>
-        <div class="flow-label">LangGraph</div>
+        <div class="flow-node flow-node-ai">Expert Agent</div>
+        <div class="flow-label">Editor/Flow/Page</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&harr;</div>
       <div>
-        <div class="flow-node flow-node-editor">Editor 渲染</div>
-        <div class="flow-label">Schema 预览</div>
+        <div class="flow-node flow-node-server">ToolNode</div>
+        <div class="flow-label">工具执行</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div>
+        <div class="flow-node flow-node-editor">预览渲染</div>
+        <div class="flow-label">Schema/Flow</div>
       </div>
     </div>
 
-    <div style="height: 40px;"></div>
+    <div style="height: 50px;"></div>
 
-    <div class="flow-title">流程设计数据流</div>
+    <!-- RAG Flow -->
+    <div class="flow-title">RAG 知识检索流</div>
     <div class="flow-container">
       <div>
         <div class="flow-node flow-node-user">用户</div>
-        <div class="flow-label">拖拽节点</div>
+        <div class="flow-label">@引用 或 RAG</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
-        <div class="flow-node flow-node-flow">Flow 设计器</div>
-        <div class="flow-label">Vue Flow</div>
+        <div class="flow-node flow-node-rag">RAG 检索</div>
+        <div class="flow-label">Jaccard 相似度</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
-        <div class="flow-node flow-node-server">Server API</div>
-        <div class="flow-label">BPMN XML</div>
+        <div class="flow-node flow-node-ai">上下文注入</div>
+        <div class="flow-label">enrichedContent</div>
       </div>
-      <div class="flow-arrow">→</div>
+      <div class="flow-arrow">&rarr;</div>
       <div>
-        <div class="flow-node flow-node-db">MongoDB</div>
-        <div class="flow-label">FlowSchema</div>
+        <div class="flow-node flow-node-ai">Agent</div>
+        <div class="flow-label">增强生成质量</div>
+      </div>
+    </div>
+
+    <div style="height: 50px;"></div>
+
+    <!-- Version Flow -->
+    <div class="flow-title">版本管理与协作流</div>
+    <div class="flow-container">
+      <div>
+        <div class="flow-node flow-node-ai">AI 生成</div>
+        <div class="flow-label">Schema/Flow</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div>
+        <div class="flow-node flow-node-server">版本创建</div>
+        <div class="flow-label">version_created</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div>
+        <div class="flow-node flow-node-editor">Diff 对比</div>
+        <div class="flow-label">schema_diff</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div>
+        <div class="flow-node flow-node-user">确认/回滚</div>
+        <div class="flow-label">发布到编辑器</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Architecture -->
+<!-- ==================== Agent Architecture ==================== -->
+<div class="container" style="background: linear-gradient(180deg, var(--bg) 0%, #f0f9ff 100%); padding-top: 60px; padding-bottom: 60px;">
+  <h2 class="section-title" style="text-align:center;">LangGraph 多智能体架构</h2>
+  <p class="section-desc" style="text-align:center; max-width: 680px; margin: 0 auto 32px;">StateGraph 声式图编排：8 个节点 + 条件边路由，任务链自动编排，工具调用循环自动管理。</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer layer-frontend">
+      <div class="layer-label">Frontend</div>
+      <div class="arch-items">
+        <span class="arch-item">Editor（可视化编辑器）</span>
+        <span class="arch-item">Flow（流程设计器）</span>
+        <span class="arch-item"><strong>ai-app（AI 微应用）</strong></span>
+        <span class="arch-item">Portal（qiankun 主应用）</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-backend">
+      <div class="layer-label">API</div>
+      <div class="arch-items">
+        <span class="arch-item">POST /api/ai/chat (SSE)</span>
+        <span class="arch-item">POST /api/ai/publish</span>
+        <span class="arch-item">GET /api/ai/conversations</span>
+        <span class="arch-item">RAG 搜索</span>
+        <span class="arch-item">@引用搜索</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-agent">
+      <div class="layer-label">LangGraph</div>
+      <div class="arch-items">
+        <span class="arch-item"><strong>thinker</strong> 意图分析 + 任务链编排</span>
+        <span class="arch-item"><strong>editor</strong> Widget Schema 生成</span>
+        <span class="arch-item"><strong>flow</strong> FlowGraph 生成</span>
+        <span class="arch-item"><strong>page</strong> 业务页面配置</span>
+        <span class="arch-item"><strong>general</strong> 通用回答</span>
+        <span class="arch-item"><strong>allTools</strong> 工具执行</span>
+        <span class="arch-item"><strong>afterTools</strong> 协作检测</span>
+        <span class="arch-item"><strong>summarizer</strong> 结果总结</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-data">
+      <div class="layer-label">Runtime</div>
+      <div class="arch-items">
+        <span class="arch-item">DeepSeek V4 Pro</span>
+        <span class="arch-item">JSON Mode</span>
+        <span class="arch-item">14 StructuredTool</span>
+        <span class="arch-item">MongoDB Checkpointer</span>
+        <span class="arch-item">@schema-form/shared-ai</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-infra">
+      <div class="layer-label">Infra</div>
+      <div class="arch-items">
+        <span class="arch-item">Vercel (Serverless)</span>
+        <span class="arch-item">Docker MongoDB</span>
+        <span class="arch-item">nginx (Production)</span>
+        <span class="arch-item">pm2 (Process Manager)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph flow -->
+  <div class="grid grid-2" style="margin-top:24px; max-width: 900px; margin-left: auto; margin-right: auto;">
+    <div class="card">
+      <h3>图流转路径</h3>
+      <div style="margin-top:12px; font-size: 0.9rem; line-height: 2;">
+        <code>START</code> &rarr; <code>thinker</code> &rarr; <code>editor | flow | page | general</code><br>
+        <code>editor/flow/page</code> &harr; <code>allTools</code> &rarr; <code>afterTools</code><br>
+        <code>afterTools</code> &rarr; <code>thinker</code>（继续链）或 <code>summarizer</code>（结束）
+      </div>
+      <p style="margin-top:12px; font-size:0.85rem; color:var(--text-secondary);">
+        任务链自动编排：联动生成时 Thinker 将复杂需求拆分为多步，依次调度不同专家 Agent，最后由 Summarizer 整合结果。
+      </p>
+    </div>
+    <div class="card">
+      <h3>Agent 协作机制</h3>
+      <p style="margin-top:8px;"><code>request_collaboration</code> 工具</p>
+      <p>Agent 可主动请求其他专家协助。例如 Flow Agent 在生成流程时发现缺少表单，可请求 Editor Agent 生成。</p>
+      <p style="margin-top:8px;"><code>afterTools</code> 节点</p>
+      <p>扫描消息中的协作请求，写入 state.collaborationRequest，由 Thinker 将协作步骤插入任务链。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== AI Implementation Status ==================== -->
+<div class="container">
+  <h2 class="section-title">AI 实现状态</h2>
+  <p class="section-desc">已实现能力与未来规划的时间线。</p>
+
+  <div class="phase-timeline">
+    <div class="phase-item done">
+      <div class="phase-label">Phase 1 &mdash; 核心架构</div>
+      <div class="phase-title">LangGraph 多智能体基础架构</div>
+      <div class="phase-desc">
+        StateGraph 图编排（thinker &rarr; router &rarr; agent &rarr; tools &rarr; summarizer）、4 种 Agent、14 StructuredTool、SSE 流式响应、MongoDB Checkpointer 对话持久化。
+      </div>
+    </div>
+    <div class="phase-item done">
+      <div class="phase-label">Phase 2 &mdash; 前端体验</div>
+      <div class="phase-title">AI 对话界面与交互优化</div>
+      <div class="phase-desc">
+        三栏布局（对话列表 + 聊天面板 + 预览面板）、多步卡片展示（thinking &rarr; tool_call &rarr; result &rarr; text）、流式渲染防抖、空状态引导 prompt、Schema 简易渲染预览。
+      </div>
+    </div>
+    <div class="phase-item done">
+      <div class="phase-label">Phase 3 &mdash; 智能增强</div>
+      <div class="phase-title">RAG / 版本管理 / 双向同步</div>
+      <div class="phase-desc">
+        RAG 语义检索已有 Schema、@引用系统、版本管理（创建/Diff 对比/回滚）、双向同步（AI 与 Editor/Flow 实时通信）、对话搜索。
+      </div>
+    </div>
+    <div class="phase-item active">
+      <div class="phase-label">Phase 4 &mdash; 能力扩展</div>
+      <div class="phase-title">Page Agent / 图片识别 / 联动生成</div>
+      <div class="phase-desc">
+        Page Agent 业务页面生成（FgStatistic/FgDescriptions/FgTable/FgSearchList）、图片识别生成表单、任务链联动生成（表单+流程+页面端到端交付）。
+      </div>
+    </div>
+    <div class="phase-item pending">
+      <div class="phase-label">Phase 5 &mdash; 生态完善</div>
+      <div class="phase-title">Agent 监控 / LLM 多供应商 / 性能优化</div>
+      <div class="phase-desc">
+        Agent 执行监控与告警、LLM 多供应商切换（DeepSeek/OpenAI/通义千问）、Token 用量统计、生成质量评估指标、A/B 测试框架。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SSE Events ==================== -->
+<div class="container">
+  <h2 class="section-title">SSE 事件流（16 种）</h2>
+  <p class="section-desc">通过 graph.streamEvents() 获取 LangGraph v2 事件流，映射为 16 种 SSE 事件类型，覆盖全流程。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>type</th><th>含义</th><th>数据结构</th><th>阶段</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>text</code></td><td>LLM 内容 token 流式输出</td><td><code>{ content: string }</code></td><td>生成</td></tr>
+        <tr><td><code>thinking</code></td><td>Agent 思考过程</td><td><code>{ content: string }</code></td><td>生成</td></tr>
+        <tr><td><code>tip</code></td><td>提示信息</td><td><code>{ content: string }</code></td><td>生成</td></tr>
+        <tr><td><code>tool_call</code></td><td>工具调用（calling / result 两阶段）</td><td><code>{ phase, tools: [...] }</code></td><td>工具</td></tr>
+        <tr><td><code>tool_error</code></td><td>工具执行失败</td><td><code>{ toolName, error }</code></td><td>工具</td></tr>
+        <tr><td><code>schema</code></td><td>生成的 Widget Schema</td><td><code>{ payload: Widget[], description }</code></td><td>产物</td></tr>
+        <tr><td><code>flow</code></td><td>生成的 FlowGraph</td><td><code>{ payload: FlowGraph, description }</code></td><td>产物</td></tr>
+        <tr><td><code>schema_diff</code></td><td>Schema 增量 Diff</td><td><code>{ diff: SchemaDiff }</code></td><td>对比</td></tr>
+        <tr><td><code>flow_diff</code></td><td>Flow 增量 Diff</td><td><code>{ diff: FlowDiff }</code></td><td>对比</td></tr>
+        <tr><td><code>schema_update</code></td><td>流式 Schema 构建步骤</td><td><code>{ step, schema, description }</code></td><td>生成</td></tr>
+        <tr><td><code>schema_complete</code></td><td>Schema 生成完成</td><td><code>{ schema, description }</code></td><td>生成</td></tr>
+        <tr><td><code>version_created</code></td><td>版本创建通知</td><td><code>{ versionId, version, description }</code></td><td>版本</td></tr>
+        <tr><td><code>task_chain</code></td><td>多步任务链步骤</td><td><code>{ steps, currentIndex }</code></td><td>编排</td></tr>
+        <tr><td><code>agent_switch</code></td><td>Agent 切换通知</td><td><code>{ agent, collaboration?, description? }</code></td><td>编排</td></tr>
+        <tr><td><code>done</code></td><td>流结束</td><td><code>{ conversationId }</code></td><td>结束</td></tr>
+        <tr><td><code>error</code></td><td>错误信息</td><td><code>{ content: string }</code></td><td>错误</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== Shared Packages ==================== -->
+<div class="container">
+  <h2 class="section-title">共享包</h2>
+  <p class="section-desc">跨模块复用的核心能力，AI 贯穿其中。</p>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <h3>@schema-form/shared-ai</h3>
+      <p>AI 元数据与 prompt 构建。从 Widget/Flow 节点定义提取 metadata.json，promptBuilder 动态生成 system prompt，保证 AI 知识单一数据源。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/ai-sdk</h3>
+      <p>独立可复用的 Agent SDK，与 LangGraph 解耦，支持 BaseAgent、ToolRegistry、PromptBuilder。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/flow-shared</h3>
+      <p>流程引擎共享层，BPMN 2.0 类型系统、XML 导入导出引擎。</p>
+    </div>
+    <div class="card">
+      <h3>@schema-form/socket</h3>
+      <p>WebSocket 实时通信，AI 双向同步（Editor/Flow 协作）。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Tech Stack ==================== -->
 <div class="container">
   <h2 class="section-title">技术架构</h2>
-  <p class="section-desc">前后端分离，Schema 驱动，微前端集成。</p>
+  <p class="section-desc">前后端分离，Schema 驱动，AI 全链路融合，微前端集成。</p>
 
   <div class="arch-diagram">
     <div class="arch-layer layer-frontend">
@@ -468,6 +904,16 @@
         <span class="arch-item">LangGraph AI Agent</span>
         <span class="arch-item">JWT Auth</span>
         <span class="arch-item">Zod Validation</span>
+      </div>
+    </div>
+    <div class="arch-layer layer-agent">
+      <div class="layer-label">AI</div>
+      <div class="arch-items">
+        <span class="arch-item">DeepSeek V4 Pro</span>
+        <span class="arch-item">LangGraph StateGraph</span>
+        <span class="arch-item">14 StructuredTool</span>
+        <span class="arch-item">MongoDB Checkpointer</span>
+        <span class="arch-item">@schema-form/shared-ai</span>
       </div>
     </div>
     <div class="arch-layer layer-data">
@@ -491,35 +937,11 @@
   </div>
 </div>
 
-<!-- Shared Packages -->
-<div class="container">
-  <h2 class="section-title">共享包</h2>
-  <p class="section-desc">跨模块复用的核心能力。</p>
-
-  <div class="grid grid-4">
-    <div class="card">
-      <h3>@schema-form/shared-ai</h3>
-      <p>AI 元数据与 prompt 构建。从 Widget/Flow 节点定义提取，保证 AI 知识单一数据源。</p>
-    </div>
-    <div class="card">
-      <h3>@schema-form/ai-sdk</h3>
-      <p>独立可复用的 Agent SDK，与 LangGraph 解耦，支持 BaseAgent、ToolRegistry、PromptBuilder。</p>
-    </div>
-    <div class="card">
-      <h3>@schema-form/flow-shared</h3>
-      <p>流程引擎共享层，BPMN 2.0 类型系统、XML 导入导出引擎。</p>
-    </div>
-    <div class="card">
-      <h3>@schema-form/socket</h3>
-      <p>WebSocket 实时通信，AI 协作同步。</p>
-    </div>
-  </div>
-</div>
-
 <!-- Footer -->
 <div class="footer">
-  <p>Schema Form Platform — 可视化低代码表单与流程设计平台</p>
-  <p style="margin-top: 8px;">技术栈：Vue 3.5 + TypeScript 5.7 + Koa.js + MongoDB + LangGraph</p>
+  <p>Schema Form Platform &mdash; AI 驱动的低代码表单与流程设计平台</p>
+  <p style="margin-top: 8px;">技术栈：Vue 3.5 + TypeScript 5.7 + Koa.js + MongoDB + LangGraph + DeepSeek</p>
+  <p style="margin-top: 4px; font-size: 0.8rem; color: #999;">最后更新：2026-06-04</p>
 </div>
 
 </body>
