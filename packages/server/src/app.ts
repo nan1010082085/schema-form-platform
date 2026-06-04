@@ -14,13 +14,16 @@ import docsRouter from './routes/docs.js'
 import usersRouter from './routes/users.js'
 import rolesRouter from './routes/roles.js'
 import statsRouter from './routes/stats.js'
+import templateRouter from './routes/template.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
 import flowInstanceRouter from './flow-routes/flowInstance.js'
 import flowTaskRouter from './flow-routes/flowTask.js'
 import flowTimerRouter from './flow-routes/flowTimer.js'
 import flowApprovalRouter from './flow-routes/flowApproval.js'
-import { aiRouter } from './ai/index.js'
+import flowBatchRouter from './flow-routes/flowBatch.js'
+import { aiRouter, monitorRouter } from './ai/index.js'
+import aiPluginRouter from './ai/pluginRoutes.js'
 
 const app = new Koa()
 
@@ -63,12 +66,16 @@ app.use(optionsRouter.routes())
 app.use(optionsRouter.allowedMethods())
 app.use(dataRouter.routes())
 app.use(dataRouter.allowedMethods())
+app.use(templateRouter.routes())
+app.use(templateRouter.allowedMethods())
 app.use(flowRouter.routes())
 app.use(flowRouter.allowedMethods())
 app.use(flowVersionRouter.routes())
 app.use(flowVersionRouter.allowedMethods())
 app.use(flowInstanceRouter.routes())
 app.use(flowInstanceRouter.allowedMethods())
+app.use(flowBatchRouter.routes())
+app.use(flowBatchRouter.allowedMethods())
 app.use(flowTaskRouter.routes())
 app.use(flowTaskRouter.allowedMethods())
 app.use(flowTimerRouter.routes())
@@ -77,5 +84,9 @@ app.use(flowApprovalRouter.routes())
 app.use(flowApprovalRouter.allowedMethods())
 app.use(aiRouter.routes())
 app.use(aiRouter.allowedMethods())
+app.use(monitorRouter.routes())
+app.use(monitorRouter.allowedMethods())
+app.use(aiPluginRouter.routes())
+app.use(aiPluginRouter.allowedMethods())
 
 export default app

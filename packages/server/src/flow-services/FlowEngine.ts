@@ -33,6 +33,8 @@ import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { TimerJobModel } from '../flow-models/TimerJob.js'
 import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 import { parseTimerValue } from './TimerService.js'
+import { messageQueue } from './MessageQueue.js'
+import type { RejectTargetNode } from '@schema-form/flow-shared'
 
 export class FlowEngine {
   private async getRejectPolicy(instance: { versionId: string }, nodeId: string): Promise<RejectPolicy> {
@@ -61,6 +63,153 @@ export class FlowEngine {
       _id: uuidv4(),
       ...params,
     })
+  }
+
+  /**
+   * Find all upstream UserTask nodes reachable by traversing incoming edges backwards.
+   * Used to determine valid reject-to-node targets.
+   */
+  getUpstreamUserTasks(
+    model: ReturnType<typeof parseBpmnGraph>,
+    fromNodeId: string,
+  ): RejectTargetNode[] {
+    const visited = new Set<string>()
+    const queue = [fromNodeId]
+    const results: RejectTargetNode[] = []
+
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!
+      if (visited.has(nodeId)) continue
+      visited.add(nodeId)
+
+      const inEdges = model.getIncoming(nodeId)
+      for (const edge of inEdges) {
+        const sourceNode = model.getNode(edge.sourceNodeId)
+        if (!sourceNode) continue
+
+        if (sourceNode.bpmnType === BpmnElementType.UserTask) {
+          results.push({
+            nodeId: sourceNode.id,
+            nodeName: sourceNode.config.label ?? sourceNode.id,
+            nodeType: sourceNode.bpmnType,
+          })
+        }
+        // Always traverse backwards through any node type
+        queue.push(edge.sourceNodeId)
+      }
+    }
+
+    return results
+  }
+
+  /**
+   * Get valid reject-to-node targets for a given task.
+   * Returns upstream UserTask nodes that the task could be rejected back to.
+   */
+  async getRejectTargets(taskId: string): Promise<RejectTargetNode[]> {
+    const task = await TaskInstanceModel.findById(taskId)
+    if (!task) throw new Error('Task not found')
+
+    const instance = await FlowInstanceModel.findById(task.instanceId)
+    if (!instance) throw new Error('Instance not found')
+
+    const flowVersion = await FlowVersionModel.findById(instance.versionId)
+    if (!flowVersion) throw new Error('Flow version not found')
+
+    const model = parseBpmnGraph(flowVersion.graph)
+    return this.getUpstreamUserTasks(model, task.nodeId)
+  }
+
+  /**
+   * Reject a task back to a specific upstream UserTask node.
+   * Cancels all pending tasks at the current node, moves the token to the target node,
+   * and creates a new task there.
+   */
+  async rejectToNode(
+    taskId: string,
+    targetNodeId: string,
+    comment?: string,
+    userId?: string,
+  ): Promise<void> {
+    const task = await TaskInstanceModel.findById(taskId)
+    if (!task) throw new Error('Task not found')
+    if (task.status !== 'pending' && task.status !== 'claimed') {
+      throw new Error('Task is not in a rejectable state')
+    }
+
+    // Authorization: verify user is eligible to reject
+    if (userId) {
+      const isAssignee = task.assignee === userId
+      const inCandidateUsers = task.candidateUsers && task.candidateUsers.includes(userId)
+      if (!isAssignee && !inCandidateUsers) {
+        throw new Error('You are not authorized to reject this task')
+      }
+    }
+
+    const instance = await FlowInstanceModel.findById(task.instanceId)
+    if (!instance) throw new Error('Instance not found')
+    if (instance.status !== 'running') throw new Error('Instance is not running')
+
+    const flowVersion = await FlowVersionModel.findById(instance.versionId)
+    if (!flowVersion) throw new Error('Flow version not found')
+
+    const model = parseBpmnGraph(flowVersion.graph)
+
+    // Validate target node exists and is a UserTask
+    const targetNode = model.getNode(targetNodeId)
+    if (!targetNode) throw new Error('Target node not found')
+    if (targetNode.bpmnType !== BpmnElementType.UserTask) {
+      throw new Error('Target node must be a UserTask')
+    }
+
+    // Validate target is upstream of current node
+    const upstreamTargets = this.getUpstreamUserTasks(model, task.nodeId)
+    const isValidTarget = upstreamTargets.some(t => t.nodeId === targetNodeId)
+    if (!isValidTarget) {
+      throw new Error('Target node is not reachable upstream from the current task')
+    }
+
+    // Mark current task as completed with rejected outcome
+    task.status = 'completed'
+    task.outcome = 'rejected'
+    await task.save()
+
+    // Cancel all remaining pending/claimed tasks at the current node
+    await TaskInstanceModel.updateMany(
+      {
+        instanceId: instance._id,
+        nodeId: task.nodeId,
+        _id: { $ne: task._id },
+        status: { $in: ['pending', 'claimed'] },
+      },
+      { status: 'cancelled' },
+    )
+
+    // Find the token at the current node and move it to the target node
+    const token = instance.tokens.find(
+      (t: FlowToken) => t.nodeId === task.nodeId && (t.state === 'waiting' || t.state === 'active'),
+    )
+    if (!token) throw new Error('No active token found at the current node')
+
+    token.nodeId = targetNodeId
+    token.state = 'active'
+    await instance.save()
+
+    // Log the rejection
+    const operator = task.assignee ?? task.candidateUsers?.[0] ?? 'unknown'
+    await this.logApproval({
+      instanceId: instance._id,
+      nodeId: task.nodeId,
+      nodeName: task.nodeName,
+      taskId: task._id,
+      action: 'reject-to-node',
+      operator: userId ?? operator,
+      comment,
+      outcome: `rejected to ${targetNode.config.label} (${targetNodeId})`,
+    })
+
+    // Advance the instance to create a new task at the target node
+    await this.advance(instance._id)
   }
   async startFlow(
     definitionId: string,
@@ -102,6 +251,27 @@ export class FlowEngine {
     return FlowInstanceModel.findById(instance._id)
   }
 
+  /**
+   * Check if any waiting token at a ParallelGateway join has exceeded its timeout.
+   * Returns true if the instance was failed, false otherwise.
+   */
+  private checkJoinTimeouts(instance: { tokens: FlowToken[]; status: string; completedAt?: Date; save: () => Promise<unknown> }, model: ReturnType<typeof parseBpmnGraph>): boolean {
+    for (const token of instance.tokens) {
+      if (token.state !== 'waiting' || !token.waitingSince) continue
+      const node = model.getNode(token.nodeId)
+      if (!node || node.bpmnType !== BpmnElementType.ParallelGateway) continue
+      const joinTimeout: number | undefined = node.config.joinTimeout
+      if (!joinTimeout || joinTimeout <= 0) continue
+      const elapsedMinutes = (Date.now() - new Date(token.waitingSince).getTime()) / 60_000
+      if (elapsedMinutes >= joinTimeout) {
+        instance.status = 'failed'
+        instance.completedAt = new Date()
+        return true
+      }
+    }
+    return false
+  }
+
   async advance(instanceId: string) {
     const instance = await FlowInstanceModel.findById(instanceId)
     if (!instance || instance.status !== 'running') return
@@ -110,6 +280,13 @@ export class FlowEngine {
     if (!flowVersion) throw new Error('Flow version not found')
 
     const model = parseBpmnGraph(flowVersion.graph)
+
+    // Pre-scan: fail instance if any parallel gateway join has timed out
+    if (this.checkJoinTimeouts(instance, model)) {
+      await instance.save()
+      return
+    }
+
     let changed = true
     const maxIterations = 100
     let iterations = 0
@@ -366,6 +543,34 @@ export class FlowEngine {
           }
 
           case BpmnElementType.SendTask: {
+            // Message channel mode: send via MessageQueue
+            const messageRef = node.config.messageRef as string | undefined
+            if (messageRef) {
+              await messageQueue.send({
+                channel: messageRef,
+                payload: {
+                  instanceId: instance._id,
+                  nodeId: token.nodeId,
+                  variables: { ...instance.variables },
+                },
+                senderInstanceId: instance._id,
+                senderNodeId: token.nodeId,
+              })
+
+              token.state = 'completed'
+              const outEdges = model.getOutgoing(token.nodeId)
+              if (outEdges.length > 0) {
+                instance.tokens.push({
+                  tokenId: uuidv4(),
+                  nodeId: outEdges[0].targetNodeId,
+                  state: 'active',
+                  createdAt: new Date(),
+                })
+              }
+              changed = true
+              break
+            }
+
             const apiConfig = node.config.apiConfig as FlowApiConfig | undefined
 
             if (!apiConfig?.url) {
@@ -456,6 +661,49 @@ export class FlowEngine {
           }
 
           case BpmnElementType.ReceiveTask: {
+            // Message channel mode: try to consume from MessageQueue
+            const messageRef = node.config.messageRef as string | undefined
+            if (messageRef) {
+              const existingMessage = await messageQueue.tryConsume({
+                channel: messageRef,
+                receiverInstanceId: instance._id,
+                receiverNodeId: token.nodeId,
+              })
+
+              if (existingMessage) {
+                // Message already available — consume and advance past ReceiveTask
+                instance.variables[`${node.config.label}_message`] = existingMessage.payload
+                token.state = 'completed'
+                const outEdges = model.getOutgoing(token.nodeId)
+                if (outEdges.length > 0) {
+                  instance.tokens.push({
+                    tokenId: uuidv4(),
+                    nodeId: outEdges[0].targetNodeId,
+                    state: 'active',
+                    createdAt: new Date(),
+                  })
+                }
+                changed = true
+              } else {
+                // No message yet — create pending task and subscribe for real-time delivery
+                token.state = 'waiting'
+                await TaskInstanceModel.create({
+                  _id: uuidv4(),
+                  instanceId: instance._id,
+                  nodeId: token.nodeId,
+                  nodeName: node.config.label,
+                  status: 'pending',
+                  priority: 1,
+                })
+                messageQueue.subscribe(messageRef, async () => {
+                  await this.advance(instance._id)
+                })
+                changed = true
+              }
+              break
+            }
+
+            // Task-based waiting (no messageRef)
             const existingTask = await TaskInstanceModel.findOne({
               instanceId: instance._id,
               nodeId: token.nodeId,
@@ -558,6 +806,9 @@ export class FlowEngine {
               )
               if (waitingTokens.length < inEdges.length - 1) {
                 token.state = 'waiting'
+                if (!token.waitingSince) {
+                  token.waitingSince = new Date()
+                }
                 changed = true
                 break
               }
@@ -838,6 +1089,28 @@ export class FlowEngine {
     }
 
     return { checked: pendingJobs.length, fired }
+  }
+
+  async checkParallelGatewayTimeouts(): Promise<{ checked: number; timedOut: number }> {
+    // Find all running instances that have waiting tokens at parallel gateways
+    const runningInstances = await FlowInstanceModel.find({
+      status: 'running',
+      'tokens.state': 'waiting',
+    }).limit(100)
+
+    let timedOut = 0
+    for (const instance of runningInstances) {
+      const flowVersion = await FlowVersionModel.findById(instance.versionId)
+      if (!flowVersion) continue
+
+      const model = parseBpmnGraph(flowVersion.graph)
+      if (this.checkJoinTimeouts(instance, model)) {
+        await instance.save()
+        timedOut++
+      }
+    }
+
+    return { checked: runningInstances.length, timedOut }
   }
 }
 

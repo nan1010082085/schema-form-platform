@@ -20,6 +20,7 @@ import { editorAgentNode } from './editorAgent.js'
 import { flowAgentNode } from './flowAgent.js'
 import { allTools } from '../tools/allTools.js'
 import { checkpointer } from './checkpointer.js'
+import { getIndustryConfig, type IndustryType } from '../config/industryAgents.js'
 
 // ────────────────────────────────────────────
 // Tool nodes
@@ -587,6 +588,7 @@ const builder = new StateGraph(AgentStateAnnotation)
   // Summarizer → end
   .addEdge('summarizer', END)
 
-const graph = builder.compile({ checkpointer })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- version mismatch between @langchain/langgraph-checkpoint types
+const graph = builder.compile({ checkpointer: checkpointer as any })
 
 export { graph }

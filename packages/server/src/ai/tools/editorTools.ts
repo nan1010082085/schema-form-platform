@@ -366,6 +366,358 @@ export const validateSchemaTool = tool(
 // Exported tool array for ToolNode
 // ────────────────────────────────────────────
 
+export const findFlowReferencesTool = tool(
+  async ({ schemaId }): Promise<ToolResult> => {
+    // 动态导入避免循环依赖
+    const { FlowVersionModel } = await import('../../flow-models/FlowVersion.js')
+    const { FlowDefinitionModel } = await import('../../flow-models/FlowDefinition.js')
+
+    // 在所有 FlowVersion 的 graph.nodes 中查找引用了该 schemaId 的节点
+    const versions = await FlowVersionModel.find({
+      'graph.nodes.data.formSchemaId': schemaId,
+    })
+      .select('_id definitionId version graph.nodes')
+      .lean()
+
+    const refs: Array<{
+      flowId: string
+      flowName: string
+      versionId: string
+      version: string
+      nodeId: string
+      nodeLabel: string
+      bpmnType: string
+    }> = []
+
+    for (const ver of versions) {
+      const verData = ver as unknown as Record<string, unknown>
+      const graph = verData.graph as Record<string, unknown> | undefined
+      const definitionId = verData.definitionId as string
+
+      const def = await FlowDefinitionModel.findById(definitionId)
+        .select('_id name')
+        .lean() as Record<string, unknown> | null
+
+      const nodes = (graph?.nodes ?? []) as Array<Record<string, unknown>>
+      for (const node of nodes) {
+        const data = node.data as Record<string, unknown> | undefined
+        if (data?.formSchemaId === schemaId) {
+          refs.push({
+            flowId: definitionId,
+            flowName: (def?.name as string) ?? 'Unknown',
+            versionId: verData._id as string,
+            version: verData.version as string,
+            nodeId: node.id as string,
+            nodeLabel: (data.label as string) ?? (node.id as string),
+            bpmnType: (data.bpmnType as string) ?? 'unknown',
+          })
+        }
+      }
+    }
+
+    const summary = refs.length === 0
+      ? '没有流程节点引用此 Schema'
+      : `找到 ${refs.length} 个流程节点引用此 Schema：${refs.slice(0, 3).map(r => `${r.flowName}/${r.nodeLabel}`).join('、')}${refs.length > 3 ? '等' : ''}`
+
+    return {
+      success: true,
+      data: { total: refs.length, references: refs },
+      summary,
+    }
+  },
+  {
+    name: 'find_flow_references',
+    description: '查找引用了指定 Schema 的所有流程节点。用于了解一个 Schema 被哪些流程的哪些节点使用，实现 Schema → Flow 的反向关联查询。',
+    schema: z.object({
+      schemaId: z.string().describe('Schema 的 _id'),
+    }),
+  },
+)
+
+// ────────────────────────────────────────────
+// Schema Diff Computation
+// ────────────────────────────────────────────
+
+interface SchemaDiffEntry {
+  type: 'add' | 'remove' | 'modify'
+  widgetId: string
+  widgetType: string
+  path: string
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+  summary: string
+}
+
+interface SchemaDiff {
+  changes: SchemaDiffEntry[]
+  added: number
+  removed: number
+  modified: number
+}
+
+/**
+ * Build a map of widgetId → { widget, path } from a widget tree.
+ */
+function indexWidgets(
+  widgets: Record<string, unknown>[],
+  parentPath = '',
+): Map<string, { widget: Record<string, unknown>; path: string }> {
+  const map = new Map<string, { widget: Record<string, unknown>; path: string }>()
+  for (let i = 0; i < widgets.length; i++) {
+    const w = widgets[i]
+    const id = w.id as string
+    const path = parentPath ? `${parentPath}[${i}]` : `[${i}]`
+    if (id) {
+      map.set(id, { widget: w, path })
+    }
+    if (Array.isArray(w.children)) {
+      for (const [childId, entry] of indexWidgets(
+        w.children as Record<string, unknown>[],
+        path,
+      )) {
+        map.set(childId, entry)
+      }
+    }
+  }
+  return map
+}
+
+/**
+ * Compute a structural diff between two Widget[] schemas.
+ *
+ * Compares by widget id: detects added, removed, and modified widgets.
+ * For modified widgets, reports which top-level props changed.
+ */
+export function computeSchemaDiff(
+  oldWidgets: Record<string, unknown>[],
+  newWidgets: Record<string, unknown>[],
+): SchemaDiff {
+  const oldMap = indexWidgets(oldWidgets)
+  const newMap = indexWidgets(newWidgets)
+
+  const changes: SchemaDiffEntry[] = []
+  let added = 0
+  let removed = 0
+  let modified = 0
+
+  // Detect removed widgets
+  for (const [id, { widget, path }] of oldMap) {
+    if (!newMap.has(id)) {
+      removed++
+      changes.push({
+        type: 'remove',
+        widgetId: id,
+        widgetType: (widget.type as string) ?? 'unknown',
+        path,
+        before: widget,
+        summary: `删除了 ${widget.type ?? '未知'} 组件（${widget.label ?? id}）`,
+      })
+    }
+  }
+
+  // Detect added and modified widgets
+  for (const [id, { widget, path }] of newMap) {
+    const oldEntry = oldMap.get(id)
+    if (!oldEntry) {
+      added++
+      changes.push({
+        type: 'add',
+        widgetId: id,
+        widgetType: (widget.type as string) ?? 'unknown',
+        path,
+        after: widget,
+        summary: `新增了 ${widget.type ?? '未知'} 组件（${widget.label ?? id}）`,
+      })
+    } else {
+      // Compare top-level props (skip children, position which are structural)
+      const changedProps: string[] = []
+      const SKIP_KEYS = new Set(['children', 'position', 'events', 'linkages', 'variables', 'lifecycle'])
+      const allKeys = new Set([...Object.keys(oldEntry.widget), ...Object.keys(widget)])
+      for (const key of allKeys) {
+        if (SKIP_KEYS.has(key)) continue
+        const oldVal = JSON.stringify(oldEntry.widget[key])
+        const newVal = JSON.stringify(widget[key])
+        if (oldVal !== newVal) {
+          changedProps.push(key)
+        }
+      }
+
+      if (changedProps.length > 0) {
+        modified++
+        changes.push({
+          type: 'modify',
+          widgetId: id,
+          widgetType: (widget.type as string) ?? 'unknown',
+          path,
+          before: oldEntry.widget,
+          after: widget,
+          summary: `修改了 ${widget.type ?? '未知'} 组件的 ${changedProps.join('、')} 属性`,
+        })
+      }
+    }
+  }
+
+  return { changes, added, removed, modified }
+}
+
+// ────────────────────────────────────────────
+// Update Schema Tool
+// ────────────────────────────────────────────
+
+export const updateSchemaTool = tool(
+  async ({ widgets, schemaId, description }): Promise<ToolResult> => {
+    // 1. Validate the new schema
+    const meta = await getMetadata()
+    const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
+    const CONTAINER_TYPES = new Set(
+      meta.widgets.filter((w) => w.canHaveChildren).map((w) => w.type),
+    )
+
+    interface ValidationError {
+      path: string
+      message: string
+    }
+
+    const errors: ValidationError[] = []
+
+    function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        const path = prefix ? `${prefix}[${i}]` : `[${i}]`
+
+        const type = node.type as string | undefined
+        if (!type) {
+          errors.push({ path: `${path}.type`, message: '缺少 type 字段' })
+          continue
+        }
+        if (!VALID_TYPES.has(type)) {
+          errors.push({ path: `${path}.type`, message: `无效的组件类型 "${type}"` })
+          continue
+        }
+
+        const id = node.id as string | undefined
+        if (!id) {
+          errors.push({ path: `${path}.id`, message: '缺少 id 字段' })
+        }
+
+        const isContainer = CONTAINER_TYPES.has(type)
+        const children = node.children as Record<string, unknown>[] | undefined
+
+        if (isContainer) {
+          if (!Array.isArray(children)) {
+            errors.push({ path: `${path}.children`, message: `容器组件 "${type}" 必须有 children 数组` })
+          } else {
+            walk(children, path, depth + 1)
+          }
+        } else if (depth === 0 && !isContainer) {
+          errors.push({ path, message: `基础组件 "${type}" 必须嵌套在布局容器内` })
+        }
+      }
+    }
+
+    walk(widgets as Record<string, unknown>[], '', 0)
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        error: `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}`,
+      }
+    }
+
+    // 2. Compute diff against existing schema
+    let diff: SchemaDiff | null = null
+    if (schemaId) {
+      const existing = await FormSchemaModel.findById(schemaId)
+        .select('json')
+        .lean() as Record<string, unknown> | null
+
+      if (existing && Array.isArray(existing.json)) {
+        diff = computeSchemaDiff(
+          existing.json as Record<string, unknown>[],
+          widgets as Record<string, unknown>[],
+        )
+      }
+    }
+
+    // 3. Save version (version creation is handled by route handler)
+    if (schemaId) {
+      // Update existing schema
+      const { v4: uuidv4 } = await import('uuid')
+      const now = new Date()
+      const version = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0'),
+        String(now.getHours()).padStart(2, '0'),
+        String(now.getMinutes()).padStart(2, '0'),
+        String(now.getSeconds()).padStart(2, '0'),
+      ].join('')
+
+      await FormSchemaModel.findByIdAndUpdate(schemaId, {
+        json: widgets,
+        version,
+        updatedAt: now,
+      })
+
+      // Also update PublishedSchema
+      const schema = await FormSchemaModel.findById(schemaId)
+        .select('editId name type')
+        .lean() as Record<string, unknown> | null
+      if (schema) {
+        const { PublishedSchemaModel } = await import('../../models/PublishedSchema.js')
+        const publishId = uuidv4()
+        await PublishedSchemaModel.create({
+          _id: uuidv4(),
+          sourceId: schema.editId,
+          publishId,
+          name: schema.name,
+          type: schema.type,
+          json: widgets,
+          version,
+          publishedAt: now,
+        })
+      }
+    }
+
+    const diffSummary = diff
+      ? `变更：新增 ${diff.added} 个组件，删除 ${diff.removed} 个，修改 ${diff.modified} 个`
+      : `Schema 包含 ${(widgets as unknown[]).length} 个组件`
+
+    return {
+      success: true,
+      data: {
+        widgets,
+        schemaId,
+        diff,
+        description,
+      },
+      summary: diffSummary,
+    }
+  },
+  {
+    name: 'update_schema',
+    description: `增量更新已有的 Schema。基于用户的反馈修改当前 Schema，只变更需要修改的部分。
+
+使用场景：
+- 用户说"把标题改成xxx"、"加一个输入框"、"删除那个按钮"
+- 用户对已生成的 Schema 提出修改意见
+- 多轮迭代优化 Schema
+
+工作流程：
+1. 在上下文中获取当前 Schema
+2. 理解用户的修改需求
+3. 生成修改后的完整 Schema（保持未修改部分不变）
+4. 调用此工具提交更新
+
+工具会自动计算 diff 并保存版本历史。`,
+    schema: z.object({
+      widgets: z.array(z.record(z.unknown())).describe('修改后的完整 Widget Schema JSON 数组'),
+      schemaId: z.string().optional().describe('要更新的 Schema ID。如果不提供则创建新 Schema'),
+      description: z.string().describe('本次修改的自然语言描述，如"添加了手机号输入框"'),
+    }),
+  },
+)
+
 export const editorTools = [
   searchSchemasTool,
   getSchemaDetailTool,
@@ -373,6 +725,8 @@ export const editorTools = [
   getWidgetCatalogueTool,
   searchWidgetsByKeywordTool,
   validateSchemaTool,
+  findFlowReferencesTool,
+  updateSchemaTool,
 ]
 
 // ────────────────────────────────────────────

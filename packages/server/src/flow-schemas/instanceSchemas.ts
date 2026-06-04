@@ -13,3 +13,8 @@ export const completeTaskSchema = z.object({
 export const delegateTaskSchema = z.object({
   targetUserId: z.string().min(1, 'Target user ID is required'),
 })
+
+export const rejectToNodeSchema = z.object({
+  targetNodeId: z.string().min(1, 'Target node ID is required'),
+  comment: z.string().max(1000).optional(),
+})

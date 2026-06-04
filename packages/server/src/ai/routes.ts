@@ -13,7 +13,8 @@ import { PassThrough } from 'node:stream'
 import { v4 as uuidv4 } from 'uuid'
 import { HumanMessage } from '@langchain/core/messages'
 import { validate } from '../middleware/validate.js'
-import { chatRequestSchema, publishRequestSchema } from './schemas/aiSchemas.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { chatRequestSchema, publishRequestSchema, behaviorRequestSchema } from './schemas/aiSchemas.js'
 import { graph } from './graph/graph.js'
 import {
   createConversation,
@@ -21,12 +22,26 @@ import {
   appendMessage,
   listConversations,
   deleteConversation,
+  maybeGenerateSummary,
+  searchConversations,
 } from './services/conversationService.js'
+import {
+  createVersion,
+  getVersions,
+  getVersion,
+} from './services/versionService.js'
 import { FormSchemaModel } from '../models/FormSchema.js'
 import { PublishedSchemaModel } from '../models/PublishedSchema.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../flow-models/FlowVersion.js'
+import { PromptVersionModel } from './models/promptVersion.js'
+import { promptOptimizer } from './services/promptOptimizer.js'
+import { EDITOR_SYSTEM_PROMPT } from './prompts/editor.js'
+import { FLOW_SYSTEM_PROMPT } from './prompts/flow.js'
+import { ROUTER_SYSTEM_PROMPT } from './prompts/router.js'
 import type { AIMessage } from './graph/state.js'
+import { recordBehavior, analyzeUserPreferences, getBehaviorStats } from './services/behaviorService.js'
+import { getAvailableIndustries, getIndustryTemplates, type IndustryType } from './config/industryAgents.js'
 
 const router = new Router({ prefix: '/api/ai' })
 
@@ -39,7 +54,10 @@ const router = new Router({ prefix: '/api/ai' })
 
 const SCHEMA_TOOLS = new Set(['validate_schema'])
 const FLOW_TOOLS = new Set(['validate_flow'])
+const UPDATE_SCHEMA_TOOL = 'update_schema'
+const UPDATE_FLOW_TOOL = 'update_flow'
 const GENERATE_SCHEMA_TOOL = 'generate_schema'
+const BIND_TOOLS = new Set(['save_and_bind_schema', 'bind_schema_to_flow_node'])
 
 // ────────────────────────────────────────────
 // POST /api/ai/chat  (SSE via LangGraph streamEvents)
@@ -137,7 +155,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       currentFlow,
       turnCount,
       preferences: context.preferences,
-      historySummary: context.historySummary,
+      // Prefer server-generated summary from DB; fall back to frontend-provided
+      historySummary: convo.historySummary ?? context.historySummary,
     },
     sessionId: threadId,
     currentAgent: 'router' as const,
@@ -171,6 +190,10 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
   let doneSent = false
 
+  // S3: Track <think> tag state across chunks for streaming fallback
+  let thinkBuffer = ''
+  let insideThinkTag = false
+
   try {
     const eventStream = graph.streamEvents(graphInput, {
       version: 'v2',
@@ -182,6 +205,11 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         // ── Node execution start ──
         case 'on_chain_start': {
           const nodeName = event.name as string
+          if (nodeName === 'thinker') {
+            // S3: Emit initial thinking indicator so the UI shows feedback
+            // even when the LLM doesn't support reasoning_content
+            send({ type: 'thinking', content: '正在分析需求...\n' })
+          }
           if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'general' || nodeName === 'summarizer') {
             currentAgent = nodeName === 'summarizer' ? 'general' : nodeName
             send({ type: 'agent_switch', agent: nodeName === 'summarizer' ? 'general' : nodeName })
@@ -241,29 +269,70 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             additional_kwargs?: { reasoning_content?: string }
           } | undefined
 
-          // 捕获 thinking 内容（三级 fallback）
+          // S3: 捕获 thinking 内容（三级 fallback）
           // 1. DeepSeek 私有字段 additional_kwargs.reasoning_content
           // 2. 标准 reasoning_content 字段（其他模型兼容）
-          // 3. 从 content 中提取 <think>...</think> 标签
+          // 3. 从 content 中提取 <think>...</think> 标签（支持跨 chunk）
           const reasoningContent =
             chunk?.additional_kwargs?.reasoning_content ??
             (chunk as Record<string, unknown> | undefined)?.reasoning_content as string | undefined
 
-          if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.length > 0) {
+          if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.trim().length > 0) {
             send({ type: 'thinking', content: reasoningContent })
             break
           }
 
           if (!chunk?.content || typeof chunk.content !== 'string') break
 
-          // Fallback: 从 content 中提取 <think> 标签
-          const thinkMatch = chunk.content.match(/<think>([\s\S]*?)<\/think>/)
-          if (thinkMatch) {
-            send({ type: 'thinking', content: thinkMatch[1] })
-            const remaining = chunk.content.replace(/<think>[\s\S]*?<\/think>/, '').trim()
-            if (remaining && currentAgent !== 'router') {
-              accumulatedContent += remaining
-              send({ type: 'text', content: remaining })
+          const content = chunk.content
+
+          // S3: Fallback — 跨 chunk 跟踪 <think> 标签状态
+          if (insideThinkTag) {
+            // 已在 <think> 标签内部，累积直到遇到 </think>
+            const closeIdx = content.indexOf('</think>')
+            if (closeIdx >= 0) {
+              thinkBuffer += content.slice(0, closeIdx)
+              if (thinkBuffer.trim().length > 0) {
+                send({ type: 'thinking', content: thinkBuffer })
+              }
+              thinkBuffer = ''
+              insideThinkTag = false
+              const remaining = content.slice(closeIdx + 7).trim()
+              if (remaining && currentAgent !== 'router') {
+                accumulatedContent += remaining
+                send({ type: 'text', content: remaining })
+              }
+            } else {
+              thinkBuffer += content
+            }
+            break
+          }
+
+          // 检查是否进入 <think> 标签
+          const thinkOpenIdx = content.indexOf('<think>')
+          if (thinkOpenIdx >= 0) {
+            const afterOpen = content.slice(thinkOpenIdx + 7)
+            const closeIdx = afterOpen.indexOf('</think>')
+            if (closeIdx >= 0) {
+              // 开闭标签在同一 chunk 内
+              const thinkContent = afterOpen.slice(0, closeIdx)
+              if (thinkContent.trim().length > 0) {
+                send({ type: 'thinking', content: thinkContent })
+              }
+              const remaining = afterOpen.slice(closeIdx + 7).trim()
+              if (remaining && currentAgent !== 'router') {
+                accumulatedContent += remaining
+                send({ type: 'text', content: remaining })
+              }
+            } else {
+              // 开始跨 chunk 的 <think> 标签
+              insideThinkTag = true
+              thinkBuffer = afterOpen
+              const beforeThink = content.slice(0, thinkOpenIdx).trim()
+              if (beforeThink && currentAgent !== 'router') {
+                accumulatedContent += beforeThink
+                send({ type: 'text', content: beforeThink })
+              }
             }
             break
           }
@@ -273,8 +342,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           if (currentAgent === 'router') break
 
           // Stream content tokens
-          accumulatedContent += chunk.content
-          send({ type: 'text', content: chunk.content })
+          accumulatedContent += content
+          send({ type: 'text', content })
           break
         }
 
@@ -315,6 +384,23 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           if (FLOW_TOOLS.has(toolName) && toolArgs.flow) {
             pendingPayloads.set(event.run_id as string, toolArgs.flow as Record<string, unknown>)
           }
+          // Capture payloads from update tools
+          if (toolName === UPDATE_SCHEMA_TOOL && toolArgs.widgets) {
+            pendingPayloads.set(event.run_id as string, {
+              type: 'update_schema',
+              widgets: toolArgs.widgets,
+              schemaId: toolArgs.schemaId,
+              description: toolArgs.description,
+            })
+          }
+          if (toolName === UPDATE_FLOW_TOOL && toolArgs.flow) {
+            pendingPayloads.set(event.run_id as string, {
+              type: 'update_flow',
+              flow: toolArgs.flow,
+              flowId: toolArgs.flowId,
+              description: toolArgs.description,
+            })
+          }
           break
         }
 
@@ -324,34 +410,41 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           const toolResult = event.data?.output
           const toolRunId = event.run_id as string
 
-          // Update registry — use run_id for precise matching (not name)
+          // Update registry — use run_id for precise matching (S4)
           const entry = toolCallRegistry.find((t) => t.id === toolRunId)
           if (entry) {
             entry.result = toolResult
           }
 
-          // Check for tool execution errors
+          // S5: Check for tool execution errors
           const isError = event.data?.error != null
             || (toolResult && typeof toolResult === 'object' && 'error' in (toolResult as Record<string, unknown>))
 
           if (isError) {
             const errorMessage = event.data?.error != null
               ? String(event.data.error)
-              : String((toolResult as Record<string, unknown>)?.error ?? 'Tool execution failed')
+              : String((toolResult as Record<string, unknown>)?.error ?? '工具执行失败')
 
+            // Update registry entry with error info for persistence
+            if (entry) {
+              entry.result = { error: errorMessage }
+            }
+
+            // S5: Send structured tool_error with fields aligned to frontend expectations
             send({
               type: 'tool_error',
-              tool: toolName,
+              toolName,
               runId: toolRunId,
-              error: errorMessage,
+              content: errorMessage,
+            })
+          } else {
+            // S5: Only send regular result event when there's no error
+            send({
+              type: 'tool_call',
+              phase: 'result',
+              tools: [{ id: toolRunId, name: toolName, result: toolResult }],
             })
           }
-
-          send({
-            type: 'tool_call',
-            phase: 'result',
-            tools: [{ id: toolRunId, name: toolName, result: toolResult }],
-          })
 
           // Emit schema event from pending payload
           if (SCHEMA_TOOLS.has(toolName)) {
@@ -362,6 +455,15 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                 payload,
                 description: accumulatedContent,
               })
+              // Save version
+              const v = await createVersion({
+                conversationId: convo._id,
+                messageId: toolRunId,
+                type: 'schema',
+                content: payload as Record<string, unknown>[],
+                description: '生成 Schema',
+              })
+              send({ type: 'version_created', versionId: v._id, version: v.version })
               pendingPayloads.delete(toolRunId)
             }
           }
@@ -375,6 +477,15 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                 payload,
                 description: accumulatedContent,
               })
+              // Save version
+              const v = await createVersion({
+                conversationId: convo._id,
+                messageId: toolRunId,
+                type: 'flow',
+                content: payload as Record<string, unknown>,
+                description: '生成流程',
+              })
+              send({ type: 'version_created', versionId: v._id, version: v.version })
               pendingPayloads.delete(toolRunId)
             }
           }
@@ -388,6 +499,95 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                 type: 'schema',
                 payload: resultData.widgets,
                 description: (resultData.summary as string) ?? '',
+              })
+              // Save version
+              const v = await createVersion({
+                conversationId: convo._id,
+                messageId: toolRunId,
+                type: 'schema',
+                content: resultData.widgets as Record<string, unknown>[],
+                description: (resultData.summary as string) ?? '生成 Schema',
+              })
+              send({ type: 'version_created', versionId: v._id, version: v.version })
+            }
+          }
+
+          // Emit schema + diff from update_schema tool result
+          if (toolName === UPDATE_SCHEMA_TOOL) {
+            const result = toolResult as Record<string, unknown> | undefined
+            const resultData = result?.data as Record<string, unknown> | undefined
+            if (resultData?.widgets) {
+              // Send schema update event
+              send({
+                type: 'schema',
+                payload: resultData.widgets,
+                description: (resultData.description as string) ?? (resultData.summary as string) ?? '',
+              })
+              // Send diff event if available
+              if (resultData.diff) {
+                send({
+                  type: 'schema_diff',
+                  diff: resultData.diff,
+                  description: (resultData.description as string) ?? '',
+                })
+              }
+              // Save version via version service
+              const v = await createVersion({
+                conversationId: convo._id,
+                messageId: toolRunId,
+                type: 'schema',
+                content: resultData.widgets as Record<string, unknown>[],
+                description: (resultData.description as string) ?? '更新 Schema',
+              })
+              send({ type: 'version_created', versionId: v._id, version: v.version })
+              pendingPayloads.delete(toolRunId)
+            }
+          }
+
+          // Emit flow + diff from update_flow tool result
+          if (toolName === UPDATE_FLOW_TOOL) {
+            const result = toolResult as Record<string, unknown> | undefined
+            const resultData = result?.data as Record<string, unknown> | undefined
+            if (resultData?.flow) {
+              // Send flow update event
+              send({
+                type: 'flow',
+                payload: resultData.flow,
+                description: (resultData.description as string) ?? (resultData.summary as string) ?? '',
+              })
+              // Send diff event if available
+              if (resultData.diff) {
+                send({
+                  type: 'flow_diff',
+                  diff: resultData.diff,
+                  description: (resultData.description as string) ?? '',
+                })
+              }
+              // Save version via version service
+              const v = await createVersion({
+                conversationId: convo._id,
+                messageId: toolRunId,
+                type: 'flow',
+                content: resultData.flow as Record<string, unknown>,
+                description: (resultData.description as string) ?? '更新流程',
+              })
+              send({ type: 'version_created', versionId: v._id, version: v.version })
+              pendingPayloads.delete(toolRunId)
+            }
+          }
+
+          // Emit binding event when schema is saved and bound to flow node
+          if (BIND_TOOLS.has(toolName)) {
+            const result = toolResult as Record<string, unknown> | undefined
+            const resultData = result?.data as Record<string, unknown> | undefined
+            if (resultData?.schemaId) {
+              send({
+                type: 'schema_bound',
+                schemaId: resultData.schemaId,
+                publishId: resultData.publishId,
+                flowId: resultData.flowId,
+                nodeId: resultData.nodeId,
+                flowVersionId: resultData.flowVersionId,
               })
             }
           }
@@ -411,6 +611,11 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     }
 
     await appendMessage(convo._id, assistantMessage)
+
+    // ── Auto-generate history summary if conversation is long ──
+    maybeGenerateSummary(convo._id).catch(() => {
+      // Summary generation is fire-and-forget; failures are non-fatal
+    })
 
     // Done event
     send({ type: 'done', conversationId: convo._id })
@@ -568,6 +773,64 @@ router.get('/conversations', async (ctx) => {
 })
 
 // ────────────────────────────────────────────
+// GET /api/ai/conversations/search
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/conversations/search — Search and filter conversations
+ *
+ * Query params:
+ * - keyword: Search keyword (matches message content, case-insensitive regex)
+ * - startDate: Filter by created date >= startDate (ISO 8601)
+ * - endDate: Filter by created date <= endDate (ISO 8601)
+ * - source: Filter by conversation source (editor | flow | standalone)
+ * - page: Page number (default 1)
+ * - pageSize: Items per page (default 20, max 50)
+ */
+router.get("/conversations/search", async (ctx) => {
+  const { keyword, startDate, endDate, source, page: pageStr, pageSize: pageSizeStr } = ctx.query as {
+    keyword?: string
+    startDate?: string
+    endDate?: string
+    source?: string
+    page?: string
+    pageSize?: string
+  }
+
+  const page = Math.max(parseInt(pageStr ?? "1", 10) || 1, 1)
+  const pageSize = Math.min(Math.max(parseInt(pageSizeStr ?? "20", 10) || 20, 1), 50)
+
+  const result = await searchConversations({
+    keyword,
+    startDate,
+    endDate,
+    source,
+    page,
+    pageSize,
+  })
+
+  ctx.body = {
+    success: true,
+    data: {
+      conversations: result.conversations.map((c) => ({
+        id: c._id,
+        title: c.messages.length > 0
+          ? c.messages[0].content.slice(0, 50)
+          : "New conversation",
+        source: c.source,
+        activeAgent: c.activeAgent,
+        version: c.version,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      })),
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+    },
+  }
+})
+
+// ────────────────────────────────────────────
 // GET /api/ai/conversations/:id
 // ────────────────────────────────────────────
 
@@ -618,6 +881,612 @@ router.delete('/conversations/:id', async (ctx) => {
     return
   }
   ctx.body = { success: true }
+})
+
+
+// ────────────────────────────────────────────
+// Version History API
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/conversations/:id/versions
+ *
+ * List all versions for a conversation (for version history panel).
+ */
+router.get('/conversations/:id/versions', async (ctx) => {
+  const { id } = ctx.params
+  const versions = await getVersions(id)
+
+  ctx.body = {
+    success: true,
+    data: versions.map((v) => ({
+      id: v._id,
+      version: v.version,
+      type: v.type,
+      description: v.description,
+      createdAt: v.createdAt,
+    })),
+  }
+})
+
+/**
+ * GET /api/ai/versions/:versionId
+ *
+ * Get a specific version's content.
+ */
+router.get('/versions/:versionId', async (ctx) => {
+  const { versionId } = ctx.params
+  const version = await getVersion(versionId)
+
+  if (!version) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Version not found.' } }
+    return
+  }
+
+  ctx.body = {
+    success: true,
+    data: {
+      id: version._id,
+      conversationId: version.conversationId,
+      version: version.version,
+      type: version.type,
+      content: version.content,
+      description: version.description,
+      createdAt: version.createdAt,
+    },
+  }
+})
+
+/**
+ * POST /api/ai/conversations/:id/rollback
+ *
+ * Rollback to a specific version. Restores the version content
+ * as the current schema/flow and sends it back.
+ */
+router.post('/conversations/:id/rollback', async (ctx) => {
+  const { id } = ctx.params
+  const { versionId } = ctx.request.body as { versionId: string }
+
+  if (!versionId) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'versionId is required' } }
+    return
+  }
+
+  const convo = await getConversation(id)
+  if (!convo) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Conversation not found.' } }
+    return
+  }
+
+  const version = await getVersion(versionId)
+  if (!version || version.conversationId !== id) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Version not found in this conversation.' } }
+    return
+  }
+
+  // Create a new version from the rollback target
+  const newVersion = await createVersion({
+    conversationId: id,
+    messageId: 'rollback',
+    type: version.type,
+    content: version.content,
+    description: `回滚到版本 v${version.version}`,
+  })
+
+  ctx.body = {
+    success: true,
+    data: {
+      id: newVersion._id,
+      version: newVersion.version,
+      type: newVersion.type,
+      content: newVersion.content,
+      description: newVersion.description,
+      rollbackFrom: versionId,
+    },
+  }
+})
+
+
+// ────────────────────────────────────────────
+// Industry Agent API
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/industries
+ * List available industry agent configurations.
+ */
+router.get('/industries', async (ctx) => {
+  const industries = getAvailableIndustries()
+  ctx.body = {
+    success: true,
+    data: industries,
+  }
+})
+
+/**
+ * GET /api/ai/industries/:industry/templates
+ * Get templates for a specific industry.
+ */
+router.get('/industries/:industry/templates', async (ctx) => {
+  const { industry } = ctx.params
+  const { type } = ctx.query as { type?: string }
+
+  const validIndustries = ['medical', 'finance', 'education']
+  if (!validIndustries.includes(industry)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: `Invalid industry: ${industry}. Must be one of: ${validIndustries.join(', ')}` } }
+    return
+  }
+
+  const templates = getIndustryTemplates(
+    industry as IndustryType,
+    type === 'form' || type === 'flow' ? type : undefined,
+  )
+
+  ctx.body = {
+    success: true,
+    data: {
+      industry,
+      total: templates.length,
+      templates: templates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        type: t.type,
+      })),
+    },
+  }
+})
+
+
+// ────────────────────────────────────────────
+// User Behavior Learning
+// ────────────────────────────────────────────
+
+/**
+ * POST /api/ai/behavior — Record user behavior
+ *
+ * Track user actions for preference learning.
+ */
+router.post('/behavior', authMiddleware(), validate(behaviorRequestSchema), async (ctx) => {
+  const { action, target, data } = ctx.request.body as {
+    action: 'use_component' | 'set_property' | 'create_schema' | 'generate_ai'
+    target?: string
+    data?: Record<string, unknown>
+  }
+
+  const userId = ctx.state.user.id
+
+  await recordBehavior({ userId, action, target, data })
+
+  ctx.body = { success: true }
+})
+
+/**
+ * POST /api/ai/behavior/batch — Record multiple behaviors
+ *
+ * Efficiently record multiple user actions at once.
+ */
+router.post('/behavior/batch', authMiddleware(), async (ctx) => {
+  const { behaviors } = ctx.request.body as {
+    behaviors: Array<{
+      action: 'use_component' | 'set_property' | 'create_schema' | 'generate_ai'
+      target?: string
+      data?: Record<string, unknown>
+    }>
+  }
+
+  if (!Array.isArray(behaviors) || behaviors.length === 0) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'behaviors array is required' } }
+    return
+  }
+
+  if (behaviors.length > 50) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Maximum 50 behaviors per batch' } }
+    return
+  }
+
+  const userId = ctx.state.user.id
+
+  for (const behavior of behaviors) {
+    await recordBehavior({
+      userId,
+      action: behavior.action,
+      target: behavior.target,
+      data: behavior.data,
+    })
+  }
+
+  ctx.body = { success: true, data: { recorded: behaviors.length } }
+})
+
+/**
+ * GET /api/ai/behavior/preferences — Get user preferences
+ *
+ * Analyze and return user behavior preferences.
+ */
+router.get('/behavior/preferences', authMiddleware(), async (ctx) => {
+  const userId = ctx.state.user.id
+
+  const preferences = await analyzeUserPreferences(userId)
+
+  ctx.body = {
+    success: true,
+    data: preferences,
+  }
+})
+
+/**
+ * GET /api/ai/behavior/stats — Get user behavior statistics
+ *
+ * Returns activity statistics for the current user.
+ */
+router.get('/behavior/stats', authMiddleware(), async (ctx) => {
+  const userId = ctx.state.user.id
+
+  const stats = await getBehaviorStats(userId)
+
+  ctx.body = {
+    success: true,
+    data: stats,
+  }
+})
+
+// ────────────────────────────────────────────
+// Editor/Flow 双向同步 API
+// ────────────────────────────────────────────
+
+/**
+ * GET /api/ai/sync/schema/:schemaId/flows
+ *
+ * 查找引用了指定 Schema 的所有流程节点（Schema → Flow 反向查询）
+ */
+router.get('/sync/schema/:schemaId/flows', async (ctx) => {
+  const { schemaId } = ctx.params
+
+  const schema = await FormSchemaModel.findById(schemaId)
+    .select('_id name type version')
+    .lean() as Record<string, unknown> | null
+
+  if (!schema) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Schema not found' } }
+    return
+  }
+
+  const versions = await FlowVersionModel.find({
+    'graph.nodes.data.formSchemaId': schemaId,
+  })
+    .select('_id definitionId version graph.nodes')
+    .lean() as unknown as Array<Record<string, unknown>>
+
+  const refs: Array<{
+    flowId: string
+    flowName: string
+    versionId: string
+    flowVersion: string
+    nodeId: string
+    nodeLabel: string
+    bpmnType: string
+    formMode: string
+  }> = []
+
+  for (const ver of versions) {
+    const graph = ver.graph as Record<string, unknown> | undefined
+    const def = await FlowDefinitionModel.findById(ver.definitionId)
+      .select('_id name')
+      .lean() as Record<string, unknown> | null
+
+    const nodes = (graph?.nodes ?? []) as Array<Record<string, unknown>>
+    for (const node of nodes) {
+      const data = node.data as Record<string, unknown> | undefined
+      if (data?.formSchemaId === schemaId) {
+        refs.push({
+          flowId: ver.definitionId as string,
+          flowName: (def?.name as string) ?? 'Unknown',
+          versionId: ver._id as string,
+          flowVersion: ver.version as string,
+          nodeId: node.id as string,
+          nodeLabel: (data.label as string) ?? (node.id as string),
+          bpmnType: (data.bpmnType as string) ?? 'unknown',
+          formMode: (data.formMode as string) ?? 'edit',
+        })
+      }
+    }
+  }
+
+  ctx.body = {
+    success: true,
+    data: {
+      schema: { id: schema._id, name: schema.name, type: schema.type, version: schema.version },
+      references: refs,
+      total: refs.length,
+    },
+  }
+})
+
+/**
+ * GET /api/ai/sync/flow/:flowId/node/:nodeId/schema
+ *
+ * 获取流程节点绑定的表单 Schema 详情（Flow → Schema 正向查询）
+ */
+router.get('/sync/flow/:flowId/node/:nodeId/schema', async (ctx) => {
+  const { flowId, nodeId } = ctx.params
+
+  const version = await FlowVersionModel.findOne({ definitionId: flowId })
+    .sort({ version: -1 })
+    .lean() as Record<string, unknown> | null
+
+  if (!version?.graph) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Flow has no version' } }
+    return
+  }
+
+  const graph = version.graph as Record<string, unknown>
+  const nodes = (graph.nodes ?? []) as Array<Record<string, unknown>>
+  const node = nodes.find((n) => n.id === nodeId)
+
+  if (!node) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Node not found' } }
+    return
+  }
+
+  const data = node.data as Record<string, unknown> | undefined
+  const formSchemaId = data?.formSchemaId as string | undefined
+
+  if (!formSchemaId) {
+    ctx.body = {
+      success: true,
+      data: { nodeId, hasSchema: false },
+    }
+    return
+  }
+
+  const schema = await FormSchemaModel.findById(formSchemaId)
+    .select('_id name type version json')
+    .lean() as Record<string, unknown> | null
+
+  ctx.body = {
+    success: true,
+    data: {
+      nodeId,
+      hasSchema: true,
+      formSchemaId,
+      formPublishId: data?.formPublishId,
+      formVersion: data?.formVersion,
+      formMode: data?.formMode,
+      schema: schema
+        ? { id: schema._id, name: schema.name, type: schema.type, version: schema.version, json: schema.json }
+        : null,
+    },
+  }
+})
+
+/**
+ * POST /api/ai/sync/schema/:schemaId/update-flows
+ *
+ * 当 Schema 更新时，同步更新所有引用该 Schema 的流程节点的 formVersion。
+ * 可选地传入 targetFlowId 只更新指定流程。
+ */
+router.post('/sync/schema/:schemaId/update-flows', async (ctx) => {
+  const { schemaId } = ctx.params
+  const { targetFlowId } = ctx.request.body as { targetFlowId?: string }
+
+  const schema = await FormSchemaModel.findById(schemaId)
+    .select('_id editId name version')
+    .lean() as Record<string, unknown> | null
+
+  if (!schema) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Schema not found' } }
+    return
+  }
+
+  const { PublishedSchemaModel } = await import('../models/PublishedSchema.js')
+  const published = await PublishedSchemaModel.findOne({ sourceId: schema.editId })
+    .sort({ publishedAt: -1 })
+    .select('publishId version')
+    .lean() as Record<string, unknown> | null
+
+  const publishId = (published?.publishId as string) ?? ''
+
+  // 查找引用该 Schema 的 FlowVersion
+  const filter: Record<string, unknown> = {
+    'graph.nodes.data.formSchemaId': schemaId,
+  }
+  if (targetFlowId) {
+    filter.definitionId = targetFlowId
+  }
+
+  const versions = await FlowVersionModel.find(filter).lean() as unknown as Array<Record<string, unknown>>
+  const updated: Array<{ flowId: string; nodeId: string; newVersion: string }> = []
+
+  for (const ver of versions) {
+    const graph = ver.graph as Record<string, unknown> | undefined
+    const nodes = (graph?.nodes ?? []) as Array<Record<string, unknown>>
+    let changed = false
+
+    const updatedNodes = nodes.map((node) => {
+      const data = node.data as Record<string, unknown> | undefined
+      if (data?.formSchemaId === schemaId) {
+        changed = true
+        return {
+          ...node,
+          data: {
+            ...data,
+            formPublishId: publishId,
+            formVersion: schema.version,
+          },
+        }
+      }
+      return node
+    })
+
+    if (changed) {
+      const { FlowDefinitionModel } = await import('../flow-models/FlowDefinition.js')
+      const { v4: uuidv4 } = await import('uuid')
+
+      const now = new Date()
+      const pad = (n: number, len: number) => String(n).padStart(len, '0')
+      const nextVersion = `v${now.getFullYear()}${pad(now.getMonth() + 1, 2)}${pad(now.getDate(), 2)}${pad(now.getHours(), 2)}${pad(now.getMinutes(), 2)}${pad(now.getSeconds(), 2)}`
+
+      const newVersion = await FlowVersionModel.create({
+        _id: uuidv4(),
+        definitionId: ver.definitionId,
+        version: nextVersion,
+        graph: {
+          nodes: updatedNodes,
+          edges: (graph?.edges as unknown[]) ?? [],
+        },
+      })
+
+      await FlowDefinitionModel.findByIdAndUpdate(ver.definitionId, {
+        currentVersionId: newVersion._id,
+      })
+
+      // 收集更新信息
+      for (const node of updatedNodes) {
+        const data = node.data as Record<string, unknown> | undefined
+        if (data?.formSchemaId === schemaId) {
+          updated.push({
+            flowId: ver.definitionId as string,
+            nodeId: node.id as string,
+            newVersion: nextVersion,
+          })
+        }
+      }
+    }
+  }
+
+  ctx.body = {
+    success: true,
+    data: {
+      schemaId,
+      schemaVersion: schema.version,
+      publishId,
+      updatedFlows: updated,
+      total: updated.length,
+    },
+  }
+})
+
+/**
+ * POST /api/ai/sync/bind
+ *
+ * 将 Schema 绑定到 Flow 节点的通用 API（前端直接调用）
+ */
+router.post('/sync/bind', async (ctx) => {
+  const { schemaId, flowId, nodeId, formMode } = ctx.request.body as {
+    schemaId: string
+    flowId: string
+    nodeId: string
+    formMode?: 'edit' | 'view'
+  }
+
+  if (!schemaId || !flowId || !nodeId) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'schemaId, flowId, nodeId are required' } }
+    return
+  }
+
+  const schema = await FormSchemaModel.findById(schemaId)
+    .select('_id editId name version')
+    .lean() as Record<string, unknown> | null
+
+  if (!schema) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Schema not found' } }
+    return
+  }
+
+  const { PublishedSchemaModel } = await import('../models/PublishedSchema.js')
+  const published = await PublishedSchemaModel.findOne({ sourceId: schema.editId })
+    .sort({ publishedAt: -1 })
+    .select('publishId version')
+    .lean() as Record<string, unknown> | null
+
+  const publishId = (published?.publishId as string) ?? ''
+  const version = (published?.version as string) ?? (schema.version as string) ?? ''
+
+  const flowVersion = await FlowVersionModel.findOne({ definitionId: flowId })
+    .sort({ version: -1 })
+    .lean() as Record<string, unknown> | null
+
+  if (!flowVersion?.graph) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Flow has no version' } }
+    return
+  }
+
+  const flowGraph = flowVersion.graph as Record<string, unknown>
+  const nodes = (flowGraph.nodes ?? []) as Array<Record<string, unknown>>
+  const nodeIndex = nodes.findIndex((n) => n.id === nodeId)
+
+  if (nodeIndex === -1) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Node not found' } }
+    return
+  }
+
+  const nodeData = nodes[nodeIndex].data as Record<string, unknown>
+  if (nodeData.bpmnType !== 'userTask') {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Only userTask nodes can bind schemas' } }
+    return
+  }
+
+  const updatedNodes = [...nodes]
+  updatedNodes[nodeIndex] = {
+    ...updatedNodes[nodeIndex],
+    data: {
+      ...nodeData,
+      formSchemaId: schemaId,
+      formPublishId: publishId,
+      formVersion: version,
+      formMode: formMode ?? (nodeData.formMode as string) ?? 'edit',
+    },
+  }
+
+  const { v4: uuidv4 } = await import('uuid')
+  const now = new Date()
+  const pad = (n: number, len: number) => String(n).padStart(len, '0')
+  const nextVersion = `v${now.getFullYear()}${pad(now.getMonth() + 1, 2)}${pad(now.getDate(), 2)}${pad(now.getHours(), 2)}${pad(now.getMinutes(), 2)}${pad(now.getSeconds(), 2)}`
+
+  const newVersion = await FlowVersionModel.create({
+    _id: uuidv4(),
+    definitionId: flowId,
+    version: nextVersion,
+    graph: {
+      nodes: updatedNodes,
+      edges: (flowGraph.edges as unknown[]) ?? [],
+    },
+  })
+
+  await FlowDefinitionModel.findByIdAndUpdate(flowId, {
+    currentVersionId: newVersion._id,
+  })
+
+  ctx.status = 201
+  ctx.body = {
+    success: true,
+    data: {
+      flowId,
+      nodeId,
+      schemaId,
+      publishId,
+      formVersion: version,
+      flowVersionId: newVersion._id,
+      flowVersion: nextVersion,
+    },
+  }
 })
 
 export default router

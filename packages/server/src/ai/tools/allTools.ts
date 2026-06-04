@@ -14,6 +14,8 @@ import {
   getWidgetCatalogueTool,
   searchWidgetsByKeywordTool,
   validateSchemaTool,
+  findFlowReferencesTool,
+  updateSchemaTool,
 } from './editorTools.js'
 
 // Flow tools
@@ -23,10 +25,17 @@ import {
   searchUsersTool,
   generateSchemaTool,
   validateFlowTool,
+  saveAndBindSchemaTool,
+  bindSchemaToFlowNodeTool,
+  getFlowNodeSchemaTool,
+  updateFlowTool,
 } from './flowTools.js'
 
 // Collaboration tools
 import { requestCollaborationTool } from './collaborationTools.js'
+
+// Industry tools
+import { industryTools } from './industryTools.js'
 
 // ────────────────────────────────────────────
 // Unified tool array for ToolNode
@@ -40,6 +49,8 @@ export const allTools = [
   getWidgetCatalogueTool,
   searchWidgetsByKeywordTool,
   validateSchemaTool,
+  findFlowReferencesTool,
+  updateSchemaTool,
 
   // Flow tools
   searchFlowsTool,
@@ -47,6 +58,13 @@ export const allTools = [
   searchUsersTool,
   generateSchemaTool,
   validateFlowTool,
+  saveAndBindSchemaTool,
+  bindSchemaToFlowNodeTool,
+  getFlowNodeSchemaTool,
+  updateFlowTool,
+
+  // Industry tools
+  ...industryTools,
 
   // Collaboration tools
   requestCollaborationTool,

@@ -52,6 +52,8 @@ export interface AIContext {
   currentSchema?: Record<string, unknown>[]
   /** Current flow graph, provided for flow conversations. */
   currentFlow?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
+  /** @ 引用的资源内容 */
+  mentionedResources?: Array<{ type: 'schema' | 'flow'; name: string; content: Record<string, unknown> | Record<string, unknown>[] }>
   /** Running count of user turns in this conversation. */
   turnCount: number
 }
@@ -181,6 +183,12 @@ export const AgentStateAnnotation = Annotation.Root({
   historySummary: Annotation<string>({
     reducer: (_, next) => next,
     default: () => '',
+  }),
+
+  // Version tracking — incremented on each schema/flow update
+  currentVersion: Annotation<number>({
+    reducer: (_, next) => next,
+    default: () => 0,
   }),
 
   // Collaboration request — set by afterToolsNode when request_collaboration

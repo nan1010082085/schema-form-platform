@@ -7,7 +7,30 @@
 
 import mongoose from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
+import { ChatOpenAI } from '@langchain/openai'
+import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import type { AIMessage, ActiveAgent, AgentSource, TaskStep } from '../graph/state.js'
+
+// ────────────────────────────────────────────
+// Summary generation config
+// ────────────────────────────────────────────
+
+/** Generate summary when conversation exceeds this many messages. */
+const SUMMARY_THRESHOLD = 20
+
+/** Keep this many recent messages in full when generating summary. */
+const KEEP_RECENT_COUNT = 6
+
+const SUMMARY_SYSTEM_PROMPT = `你是一个对话摘要助手。请将以下多轮对话压缩为一段简洁的摘要。
+
+摘要要求：
+1. 保留用户的原始意图和核心需求
+2. 记录关键决策（选择了什么组件、布局方式、流程结构）
+3. 记录已生成的 Schema/Flow 的关键信息（类型、主要结构）
+4. 记录用户明确的偏好或约束
+5. 不要丢失任何对后续对话有影响的重要上下文
+
+输出一段连贯的中文摘要文本，不超过 500 字。不要输出格式化的列表，用流畅的段落描述。`
 
 // ────────────────────────────────────────────
 // Mongoose model
@@ -39,6 +62,8 @@ export interface IAIConversation {
   currentStepIndex?: number
   /** 中间产物缓存（schema/flow 生成结果） */
   intermediateResults?: Record<string, unknown>
+  /** 对话历史摘要（当消息数超过阈值时自动生成） */
+  historySummary?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -79,6 +104,7 @@ const aiConversationSchema = new mongoose.Schema<IAIConversation>(
     }],
     currentStepIndex: { type: Number, default: 0 },
     intermediateResults: { type: mongoose.Schema.Types.Mixed, default: {} },
+    historySummary: { type: String },
   },
   {
     timestamps: true,
@@ -256,4 +282,158 @@ export async function getIntermediateResult(
   const convo = await AIConversationModel.findById(conversationId).select('intermediateResults')
   if (!convo?.intermediateResults) return null
   return (convo.intermediateResults as Record<string, unknown>)[key] ?? null
+}
+
+/**
+ * Search and filter conversations with pagination.
+ */
+export async function searchConversations(params: {
+  keyword?: string
+  startDate?: string
+  endDate?: string
+  source?: string
+  page: number
+  pageSize: number
+}): Promise<{ conversations: IAIConversation[]; total: number; page: number; pageSize: number }> {
+  const filter: Record<string, unknown> = {}
+
+  if (params.keyword) {
+    filter['messages.content'] = { $regex: params.keyword, $options: 'i' }
+  }
+  if (params.source) {
+    filter.source = params.source
+  }
+  if (params.startDate || params.endDate) {
+    const createdAt: Record<string, Date> = {}
+    if (params.startDate) createdAt.$gte = new Date(params.startDate)
+    if (params.endDate) createdAt.$lte = new Date(params.endDate)
+    filter.createdAt = createdAt
+  }
+
+  const skip = (params.page - 1) * params.pageSize
+
+  const [conversations, total] = await Promise.all([
+    AIConversationModel.find(filter)
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(params.pageSize),
+    AIConversationModel.countDocuments(filter),
+  ])
+
+  return { conversations, total, page: params.page, pageSize: params.pageSize }
+}
+
+// ────────────────────────────────────────────
+// History summary management
+// ────────────────────────────────────────────
+
+/**
+ * Save a generated history summary to the conversation.
+ */
+export async function saveHistorySummary(
+  conversationId: string,
+  summary: string,
+): Promise<void> {
+  await AIConversationModel.findByIdAndUpdate(conversationId, {
+    $set: { historySummary: summary },
+  })
+}
+
+/**
+ * Format messages into a transcript for the summarization LLM call.
+ */
+function formatMessagesForSummary(messages: AIConversationMessage[]): string {
+  return messages
+    .map((m) => {
+      const role = m.role === 'user' ? '用户' : '助手'
+      let line = `[${role}] ${m.content}`
+      if (m.toolCalls && m.toolCalls.length > 0) {
+        const toolNames = m.toolCalls.map((tc) => tc.name).join(', ')
+        line += ` (调用了工具: ${toolNames})`
+      }
+      if (m.schema) {
+        line += ` (生成了 Schema)`
+      }
+      if (m.flow) {
+        line += ` (生成了 Flow)`
+      }
+      return line
+    })
+    .join('\n')
+}
+
+/**
+ * Generate a history summary using LLM for the given messages.
+ *
+ * Returns the summary string, or null if the LLM call fails.
+ */
+async function generateSummaryFromMessages(
+  messages: AIConversationMessage[],
+): Promise<string | null> {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) return null
+
+  const transcript = formatMessagesForSummary(messages)
+
+  try {
+    const model = new ChatOpenAI({
+      model: 'deepseek-v4-pro',
+      apiKey,
+      configuration: { baseURL: 'https://api.deepseek.com' },
+      temperature: 0.3,
+      maxTokens: 1024,
+    })
+
+    const response = await model.invoke([
+      new SystemMessage(SUMMARY_SYSTEM_PROMPT),
+      new HumanMessage(transcript),
+    ])
+
+    const content = typeof response.content === 'string'
+      ? response.content
+      : JSON.stringify(response.content)
+
+    return content.trim() || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if a conversation needs summarization and generate it.
+ *
+ * Called after each assistant message is persisted. When the message count
+ * exceeds `SUMMARY_THRESHOLD`, the older messages (everything except the
+ * last `KEEP_RECENT_COUNT`) are summarized via LLM and stored on the
+ * conversation document.
+ *
+ * This is non-destructive: the full messages array remains in MongoDB
+ * for display purposes. The summary only provides compressed context
+ * for the LLM graph.
+ */
+export async function maybeGenerateSummary(
+  conversationId: string,
+): Promise<string | undefined> {
+  const convo = await AIConversationModel.findById(conversationId).select('messages historySummary')
+  if (!convo) return undefined
+
+  const { messages } = convo
+  if (messages.length < SUMMARY_THRESHOLD) return convo.historySummary ?? undefined
+
+  // Only re-generate if we don't already have a summary or if messages
+  // have grown significantly since the last summary (threshold * 1.5)
+  if (convo.historySummary && messages.length < SUMMARY_THRESHOLD * 1.5) {
+    return convo.historySummary
+  }
+
+  // Summarize all messages except the most recent KEEP_RECENT_COUNT
+  const messagesToSummarize = messages.slice(0, messages.length - KEEP_RECENT_COUNT)
+  const summary = await generateSummaryFromMessages(messagesToSummarize)
+
+  if (summary) {
+    await saveHistorySummary(conversationId, summary)
+    return summary
+  }
+
+  return convo.historySummary ?? undefined
 }

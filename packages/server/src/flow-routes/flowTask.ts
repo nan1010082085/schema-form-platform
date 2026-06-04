@@ -3,7 +3,7 @@ import { validate as uuidValidate } from 'uuid'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
-import { completeTaskSchema, delegateTaskSchema } from '../flow-schemas/instanceSchemas.js'
+import { completeTaskSchema, delegateTaskSchema, rejectToNodeSchema } from '../flow-schemas/instanceSchemas.js'
 import { flowEngine } from '../flow-services/FlowEngine.js'
 import { taskService } from '../flow-services/TaskService.js'
 
@@ -87,6 +87,39 @@ router.post('/:id/delegate', requireAuth, validate(delegateTaskSchema), async (c
   }
 
   const task = await taskService.delegateTask(id, targetUserId)
+  ctx.body = { success: true, data: task }
+})
+
+// GET /api/flow-tasks/:id/reject-targets
+router.get('/:id/reject-targets', requireAuth, async (ctx) => {
+  const { id } = ctx.params
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const targets = await flowEngine.getRejectTargets(id)
+  ctx.body = { success: true, data: targets }
+})
+
+// POST /api/flow-tasks/:id/reject-to-node
+router.post('/:id/reject-to-node', requireAuth, validate(rejectToNodeSchema), async (ctx) => {
+  const { id } = ctx.params
+  const { targetNodeId, comment } = ctx.request.body as {
+    targetNodeId: string
+    comment?: string
+  }
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const userId = (ctx.state.user as { id: string }).id
+  await flowEngine.rejectToNode(id, targetNodeId, comment, userId)
+  const task = await TaskInstanceModel.findById(id)
   ctx.body = { success: true, data: task }
 })
 

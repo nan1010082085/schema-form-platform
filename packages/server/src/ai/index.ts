@@ -5,3 +5,4 @@
  */
 
 export { default as aiRouter } from './routes.js'
+export { default as monitorRouter } from './monitorRoutes.js'

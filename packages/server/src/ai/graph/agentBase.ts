@@ -167,6 +167,92 @@ export function escapeRegex(str: string): string {
 }
 
 // ────────────────────────────────────────────
+// Agent metrics
+// ────────────────────────────────────────────
+
+type AgentName = 'thinker' | 'editor' | 'flow' | 'general' | 'summarizer' | 'router'
+type Operation = 'invoke' | 'tool_call' | 'think' | 'stream'
+
+/**
+ * Execute a function with performance metrics recording.
+ *
+ * Records duration, success/failure, and optional token usage
+ * to the AgentMetric collection.
+ */
+export async function executeWithMetrics<T>(
+  agentName: AgentName,
+  operation: Operation,
+  fn: () => Promise<T>,
+  metadata?: Record<string, unknown>,
+): Promise<T> {
+  const start = Date.now()
+  try {
+    const result = await fn()
+    const duration = Date.now() - start
+
+    // Extract token usage from LLM response if present
+    const tokenUsage = extractTokenUsage(result)
+
+    const { AgentMetricModel } = await import('../models/monitor.js')
+    await AgentMetricModel.create({
+      _id: (await import('uuid')).v4(),
+      agentName,
+      operation,
+      duration,
+      success: true,
+      tokenUsage,
+      metadata,
+    })
+
+    return result
+  } catch (err) {
+    const duration = Date.now() - start
+    const error = err instanceof Error ? err.message : String(err)
+
+    const { AgentMetricModel } = await import('../models/monitor.js')
+    await AgentMetricModel.create({
+      _id: (await import('uuid')).v4(),
+      agentName,
+      operation,
+      duration,
+      success: false,
+      error,
+      metadata,
+    })
+
+    throw err
+  }
+}
+
+/**
+ * Wrap an agent node function with metrics recording.
+ *
+ * Returns a new function with the same signature that records
+ * execution metrics on every invocation.
+ */
+export function withAgentMetrics<TState, TResult>(
+  agentName: AgentName,
+  operation: Operation,
+  nodeFn: (state: TState) => Promise<TResult>,
+): (state: TState) => Promise<TResult> {
+  return async (state: TState): Promise<TResult> => {
+    return executeWithMetrics(agentName, operation, () => nodeFn(state))
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTokenUsage(result: any): { prompt?: number; completion?: number; total?: number } | undefined {
+  if (!result || typeof result !== 'object') return undefined
+  const usage = result.usage
+  if (!usage || typeof usage !== 'object') return undefined
+  return {
+    prompt: typeof usage.prompt_tokens === 'number' ? usage.prompt_tokens : undefined,
+    completion: typeof usage.completion_tokens === 'number' ? usage.completion_tokens : undefined,
+    total: typeof usage.total_tokens === 'number' ? usage.total_tokens : undefined,
+  }
+}
+
+// ────────────────────────────────────────────
 // Retry with exponential backoff
 // ────────────────────────────────────────────
 

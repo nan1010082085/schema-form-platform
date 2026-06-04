@@ -48,8 +48,8 @@ beforeEach(() => {
 })
 
 describe('flowTools', () => {
-  it('defines 6 tools', () => {
-    expect(flowTools).toHaveLength(6)
+  it('defines 10 tools', () => {
+    expect(flowTools).toHaveLength(10)
   })
 
   it('has correct tool names', () => {
@@ -61,6 +61,10 @@ describe('flowTools', () => {
       'search_schemas',
       'generate_schema',
       'validate_flow',
+      'save_and_bind_schema',
+      'bind_schema_to_flow_node',
+      'get_flow_node_schema',
+      'update_flow',
     ])
   })
 })

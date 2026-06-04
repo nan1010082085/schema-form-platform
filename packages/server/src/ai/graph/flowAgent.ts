@@ -84,9 +84,13 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
     prompt += `\n\n--- 用户偏好 ---\n${prefs}`
   }
 
-  // Multi-turn hint
+  // Multi-turn hint with iteration guidance
   if (state.context.turnCount > 1) {
     prompt += `\n\n这是第 ${state.context.turnCount} 轮对话，请基于之前的对话上下文理解和修改。`
+    if (state.context.currentFlow && state.context.currentFlow.nodes.length > 0) {
+      prompt += `\n\n【重要】当前已有流程，用户可能要求修改。请使用 update_flow 工具提交修改结果，而不是 validate_flow。`
+      prompt += `\n修改时请保持未变更部分不变，只修改用户要求变更的部分。在 description 字段中简要说明本次修改内容。`
+    }
   }
 
   return prompt

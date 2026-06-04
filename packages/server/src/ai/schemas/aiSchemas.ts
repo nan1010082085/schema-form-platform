@@ -18,6 +18,11 @@ export const chatRequestSchema = z.object({
     preferences: z.record(z.string(), z.unknown()).optional(),
     historySummary: z.string().optional(),
   }),
+  mentions: z.array(z.object({
+    id: z.string().min(1),
+    type: z.enum(['schema', 'flow']),
+    name: z.string().min(1),
+  })).optional(),
 }).strict()
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>
@@ -40,3 +45,104 @@ export const publishRequestSchema = z.object({
 }).strict()
 
 export type PublishRequest = z.infer<typeof publishRequestSchema>
+
+// ────────────────────────────────────────────
+// Prompt Template schemas
+// ────────────────────────────────────────────
+
+export const promptTemplateCreateSchema = z.object({
+  name: z.string().min(1, 'name is required').max(200),
+  description: z.string().max(1000).optional().default(''),
+  category: z.enum(['schema', 'flow', 'general', 'custom']).optional().default('custom'),
+  template: z.string().min(1, 'template is required').max(50000),
+  variables: z.array(z.string()).optional().default([]),
+  tags: z.array(z.string()).optional().default([]),
+}).strict()
+
+export type PromptTemplateCreateRequest = z.infer<typeof promptTemplateCreateSchema>
+
+export const promptTemplateUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+  category: z.enum(['schema', 'flow', 'general', 'custom']).optional(),
+  template: z.string().min(1).max(50000).optional(),
+  variables: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+}).strict()
+
+export type PromptTemplateUpdateRequest = z.infer<typeof promptTemplateUpdateSchema>
+
+export const promptOptimizeSchema = z.object({
+  feedback: z.array(z.object({
+    rating: z.union([z.literal(1), z.literal(-1)]),
+    comment: z.string().max(1000).optional(),
+  })).min(1, 'At least one feedback entry is required').max(100),
+}).strict()
+
+export type PromptOptimizeRequest = z.infer<typeof promptOptimizeSchema>
+
+export const promptTestSchema = z.object({
+  testCases: z.array(z.object({
+    input: z.string().min(1, 'input is required'),
+    expected: z.string().optional(),
+  })).min(1, 'At least one test case is required').max(20),
+}).strict()
+
+export type PromptTestRequest = z.infer<typeof promptTestSchema>
+
+// ────────────────────────────────────────────
+// POST /api/ai/behavior request schema
+// ────────────────────────────────────────────
+export const behaviorRequestSchema = z.object({
+  action: z.enum(['use_component', 'set_property', 'create_schema', 'generate_ai']),
+  target: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+}).strict()
+
+export type BehaviorRequest = z.infer<typeof behaviorRequestSchema>
+
+// ────────────────────────────────────────────
+// Plugin marketplace schemas
+// ────────────────────────────────────────────
+
+export const pluginCreateSchema = z.object({
+  name: z.string().min(1, 'name is required').max(200),
+  description: z.string().max(2000).optional().default(''),
+  author: z.string().max(100).optional(),
+  version: z.string().max(50).optional().default('1.0.0'),
+  category: z.enum(['productivity', 'development', 'business', 'other']).optional().default('other'),
+  icon: z.string().max(500).optional().default(''),
+  config: z.record(z.string(), z.unknown()).optional().default({}),
+  tools: z.array(z.object({
+    name: z.string().min(1),
+    description: z.string().min(1),
+    parameters: z.record(z.string(), z.unknown()).optional(),
+  })).optional().default([]),
+  prompt: z.string().max(50000).optional().default(''),
+}).strict()
+
+export type PluginCreateRequest = z.infer<typeof pluginCreateSchema>
+
+export const pluginUpdateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).optional(),
+  version: z.string().max(50).optional(),
+  category: z.enum(['productivity', 'development', 'business', 'other']).optional(),
+  icon: z.string().max(500).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
+  tools: z.array(z.object({
+    name: z.string().min(1),
+    description: z.string().min(1),
+    parameters: z.record(z.string(), z.unknown()).optional(),
+  })).optional(),
+  prompt: z.string().max(50000).optional(),
+  enabled: z.boolean().optional(),
+}).strict()
+
+export type PluginUpdateRequest = z.infer<typeof pluginUpdateSchema>
+
+export const pluginInstallSchema = z.object({
+  config: z.record(z.string(), z.unknown()).optional(),
+}).strict()
+
+export type PluginInstallRequest = z.infer<typeof pluginInstallSchema>

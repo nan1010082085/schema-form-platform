@@ -16,6 +16,14 @@ vi.mock('../services/conversationService.js', () => ({
   appendMessage: vi.fn(),
   listConversations: vi.fn(),
   deleteConversation: vi.fn(),
+  maybeGenerateSummary: vi.fn(),
+  searchConversations: vi.fn(),
+}))
+
+vi.mock('../services/versionService.js', () => ({
+  createVersion: vi.fn().mockResolvedValue({ _id: 'ver-1', version: 1 }),
+  getVersions: vi.fn(),
+  getVersion: vi.fn(),
 }))
 
 vi.mock('../../models/FormSchema.js', () => ({
