@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, List, Finished, Monitor } from '@element-plus/icons-vue'
+import { Document, List, Finished, Monitor, DataAnalysis } from '@element-plus/icons-vue'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
@@ -11,11 +11,13 @@ const navItems = [
   { path: '/list', label: '流程列表', icon: Document },
   { path: '/instances', label: '流程实例', icon: Monitor },
   { path: '/tasks', label: '我的任务', icon: List },
+  { path: '/monitor', label: '流程监控', icon: DataAnalysis },
 ]
 
 const activeNav = computed(() => {
   if (route.path.startsWith('/tasks')) return '/tasks'
   if (route.path.startsWith('/instances')) return '/instances'
+  if (route.path.startsWith('/monitor')) return '/monitor'
   if (route.path.startsWith('/list')) return '/list'
   return route.path
 })

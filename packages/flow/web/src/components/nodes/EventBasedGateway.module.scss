@@ -1,0 +1,50 @@
+.wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.diamond {
+  width: 40px;
+  height: 40px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-color-primary);
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  box-shadow: var(--shadow-node);
+  transition: box-shadow 0.2s ease;
+}
+
+.wrapper:hover .diamond {
+  box-shadow: var(--shadow-node-hover);
+}
+
+.wrapper.selected .diamond {
+  box-shadow: var(--shadow-node-selected);
+  border-color: var(--el-color-primary);
+}
+
+.symbol {
+  transform: rotate(-45deg);
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--el-color-primary);
+  pointer-events: none;
+  user-select: none;
+}
+
+.handle {
+  width: 10px;
+  height: 10px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-color-primary);
+  transition: all 0.15s ease;
+}
+
+.handle:hover {
+  width: 12px;
+  height: 12px;
+}

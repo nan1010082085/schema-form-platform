@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
 import type { TaskInstance } from '../stores/flowInstance.js'
+import type { RejectTargetNode } from '@schema-form/flow-shared'
 import { flowApi } from '../api/flowApi.js'
 import MicroFormEmbed from '../components/MicroFormEmbed.vue'
 import UserPicker from '../components/UserPicker.vue'
@@ -16,6 +17,14 @@ const activeTab = ref('pending')
 const delegateVisible = ref(false)
 const delegateTarget = ref<string[]>([])
 const delegateTaskId = ref('')
+
+// Reject-to-node state
+const rejectVisible = ref(false)
+const rejectTaskId = ref('')
+const rejectTargets = ref<RejectTargetNode[]>([])
+const rejectTargetNodeId = ref('')
+const rejectComment = ref('')
+const rejectLoading = ref(false)
 
 // Form integration state
 const activeTask = ref<TaskInstance | null>(null)
@@ -103,6 +112,44 @@ async function confirmDelegate() {
   delegateVisible.value = false
   await store.fetchMyTasks()
   ElMessage.success('委派成功')
+}
+
+async function openReject(taskId: string) {
+  rejectTaskId.value = taskId
+  rejectTargetNodeId.value = ''
+  rejectComment.value = ''
+  rejectLoading.value = true
+  rejectVisible.value = true
+  try {
+    rejectTargets.value = await store.getRejectTargets(taskId)
+    if (rejectTargets.value.length === 0) {
+      ElMessage.warning('没有可驳回的目标节点')
+      rejectVisible.value = false
+    }
+  } catch {
+    ElMessage.error('获取驳回目标失败')
+    rejectVisible.value = false
+  } finally {
+    rejectLoading.value = false
+  }
+}
+
+async function confirmReject() {
+  if (!rejectTargetNodeId.value) {
+    ElMessage.warning('请选择驳回目标节点')
+    return
+  }
+  rejectLoading.value = true
+  try {
+    await store.rejectToNode(rejectTaskId.value, rejectTargetNodeId.value, rejectComment.value || undefined)
+    rejectVisible.value = false
+    await store.fetchMyTasks()
+    ElMessage.success('已驳回到指定节点')
+  } catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '驳回失败')
+  } finally {
+    rejectLoading.value = false
+  }
 }
 
 function viewInstance(instanceId: string) {
@@ -195,7 +242,7 @@ async function handleFormValidate() {
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button
             v-if="row.status === 'pending'"
@@ -212,6 +259,14 @@ async function handleFormValidate() {
             @click="row.formPublishId ? selectTask(row) : handleComplete(row.id)"
           >
             完成
+          </el-button>
+          <el-button
+            v-if="row.status === 'claimed'"
+            size="small"
+            type="danger"
+            @click="openReject(row.id)"
+          >
+            驳回
           </el-button>
           <el-button
             v-if="row.status === 'claimed'"
@@ -248,6 +303,42 @@ async function handleFormValidate() {
       <template #footer>
         <el-button @click="delegateVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmDelegate">确认委派</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="rejectVisible" title="驳回到指定节点" width="480px" :close-on-click-modal="false">
+      <div v-loading="rejectLoading">
+        <el-form label-position="top">
+          <el-form-item label="选择驳回目标节点">
+            <el-select
+              v-model="rejectTargetNodeId"
+              placeholder="请选择要驳回到的节点"
+              style="width: 100%"
+              :disabled="rejectTargets.length === 0"
+            >
+              <el-option
+                v-for="target in rejectTargets"
+                :key="target.nodeId"
+                :label="target.nodeName"
+                :value="target.nodeId"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="驳回原因（可选）">
+            <el-input
+              v-model="rejectComment"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入驳回原因"
+              maxlength="1000"
+              show-word-limit
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="rejectVisible = false">取消</el-button>
+        <el-button type="danger" :loading="rejectLoading" @click="confirmReject">确认驳回</el-button>
       </template>
     </el-dialog>
   </div>

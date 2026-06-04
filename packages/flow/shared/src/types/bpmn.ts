@@ -13,6 +13,23 @@ export enum BpmnElementType {
   ParallelGateway = 'parallelGateway',
   InclusiveGateway = 'inclusiveGateway',
   SubProcess = 'subProcess',
+  // BPMN 2.0 Events
+  MessageEvent = 'messageEvent',
+  SignalEvent = 'signalEvent',
+  ConditionalEvent = 'conditionalEvent',
+  ErrorEvent = 'errorEvent',
+  EscalationEvent = 'escalationEvent',
+  CompensationEvent = 'compensationEvent',
+  // BPMN 2.0 Tasks
+  CallActivity = 'callActivity',
+  BusinessRuleTask = 'businessRuleTask',
+  ManualTask = 'manualTask',
+  // BPMN 2.0 Gateways
+  EventBasedGateway = 'eventBasedGateway',
+  ComplexGateway = 'complexGateway',
+  // BPMN 2.0 SubProcess variants
+  AdHocSubProcess = 'adHocSubProcess',
+  Transaction = 'transaction',
 }
 
 export type AssigneeType = 'user' | 'role' | 'expression'
@@ -59,7 +76,17 @@ export interface BpmnNodeConfig {
   scriptLanguage?: string
   scriptContent?: string
   messageRef?: string
+  signalRef?: string
+  conditionExpression?: string
+  errorCode?: string
+  escalationCode?: string
+  attachedToRef?: string
+  callActivityDefinitionId?: string
+  ruleRef?: string
+  resultVariable?: string
   documentation?: string
   rejectPolicy?: RejectPolicy | 'follow-global'
   multiInstance?: MultiInstanceConfig
+  /** Timeout in minutes for ParallelGateway join waiting tokens */
+  joinTimeout?: number
 }

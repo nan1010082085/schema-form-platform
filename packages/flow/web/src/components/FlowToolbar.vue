@@ -55,6 +55,74 @@
           </svg>
         </button>
       </el-tooltip>
+      <el-popover
+        v-model:visible="layoutPopoverVisible"
+        placement="bottom"
+        :width="240"
+        trigger="click"
+      >
+        <template #reference>
+          <el-tooltip content="自动布局" placement="bottom" :disabled="layoutPopoverVisible">
+            <button :class="styles.iconBtn" title="自动布局" @click="layoutPopoverVisible = !layoutPopoverVisible">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="1" width="5" height="5" rx="1" />
+                <rect x="10" y="1" width="5" height="5" rx="1" />
+                <rect x="5.5" y="10" width="5" height="5" rx="1" />
+                <line x1="3.5" y1="6" x2="3.5" y2="10" stroke-dasharray="2 1" />
+                <line x1="12.5" y1="6" x2="12.5" y2="10" stroke-dasharray="2 1" />
+                <line x1="3.5" y1="10" x2="5.5" y2="10" stroke-dasharray="2 1" />
+                <line x1="12.5" y1="10" x2="10.5" y2="10" stroke-dasharray="2 1" />
+              </svg>
+            </button>
+          </el-tooltip>
+        </template>
+        <div :class="styles.layoutPopover">
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">方向</span>
+            <el-segmented
+              :model-value="layoutDirection ?? 'TB'"
+              :options="[
+                { label: '垂直', value: 'TB' },
+                { label: '水平', value: 'LR' },
+              ]"
+              size="small"
+              @update:model-value="$emit('update:layoutDirection', $event as LayoutDirection)"
+            />
+          </div>
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">节点间距</span>
+            <el-slider
+              :model-value="layoutNodeSep ?? 60"
+              :min="20"
+              :max="200"
+              :step="10"
+              :show-tooltip="false"
+              size="small"
+              @update:model-value="$emit('update:layoutNodeSep', $event as number)"
+            />
+          </div>
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">层级间距</span>
+            <el-slider
+              :model-value="layoutRankSep ?? 80"
+              :min="30"
+              :max="300"
+              :step="10"
+              :show-tooltip="false"
+              size="small"
+              @update:model-value="$emit('update:layoutRankSep', $event as number)"
+            />
+          </div>
+          <el-button
+            type="primary"
+            size="small"
+            :class="styles.layoutApplyBtn"
+            @click="$emit('auto-layout'); layoutPopoverVisible = false"
+          >
+            应用布局
+          </el-button>
+        </div>
+      </el-popover>
       <div :class="styles.btnGroup">
         <el-tooltip content="导出 BPMN" placement="bottom">
           <button :class="styles.iconBtn" title="导出 BPMN" @click="$emit('export-bpmn')">
@@ -92,9 +160,87 @@
       </el-tooltip>
     </div>
 
-    <!-- Center: preview label -->
+    <!-- Center: preview label + simulation controls -->
     <div v-else :class="styles.center">
       <span :class="styles.previewLabel">预览模式</span>
+
+      <template v-if="!isSimulating">
+        <el-tooltip content="启动流程模拟" placement="bottom">
+          <button :class="[styles.simBtn, styles.simBtnPrimary]" title="开始模拟" @click="$emit('toggle-simulation')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="4 2 14 8 4 14 4 2" fill="currentColor" stroke="none" />
+            </svg>
+            <span>开始模拟</span>
+          </button>
+        </el-tooltip>
+      </template>
+
+      <template v-else>
+        <div :class="styles.simDivider" />
+
+        <el-tooltip content="执行下一步" placement="bottom">
+          <button
+            :class="styles.simIconBtn"
+            title="下一步"
+            :disabled="autoPlayActive"
+            @click="$emit('step-forward')"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 2 11 8 3 14 3 2" fill="currentColor" stroke="none" />
+              <line x1="13" y1="2" x2="13" y2="14" />
+            </svg>
+          </button>
+        </el-tooltip>
+
+        <el-tooltip :content="autoPlayActive ? '暂停自动播放' : '自动播放'" placement="bottom">
+          <button
+            :class="styles.simIconBtn"
+            :title="autoPlayActive ? '暂停' : '自动播放'"
+            @click="$emit('toggle-auto-play')"
+          >
+            <svg v-if="!autoPlayActive" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 2 13 8 3 14 3 2" fill="currentColor" stroke="none" />
+            </svg>
+            <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="2" width="4" height="12" rx="0.5" fill="currentColor" stroke="none" />
+              <rect x="9" y="2" width="4" height="12" rx="0.5" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        </el-tooltip>
+
+        <el-tooltip content="切换播放速度" placement="bottom">
+          <button :class="styles.simSpeedBtn" title="播放速度" @click="$emit('cycle-speed')">
+            {{ speedLabel }}
+          </button>
+        </el-tooltip>
+
+        <el-tooltip content="重置到开始节点" placement="bottom">
+          <button :class="styles.simIconBtn" title="重置" @click="$emit('reset-simulation')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 8a6 6 0 0 1 10.472-4M14 8a6 6 0 0 1-10.472 4" />
+              <polyline points="2 3 2 7 6 7" />
+              <polyline points="14 13 14 9 10 9" />
+            </svg>
+          </button>
+        </el-tooltip>
+
+        <div :class="styles.simDivider" />
+
+        <span v-if="statusMessage" :class="styles.simStatus">
+          {{ statusMessage }}
+        </span>
+
+        <span :class="styles.simStep">步骤 {{ currentStep }}</span>
+
+        <el-tooltip content="停止模拟并退出" placement="bottom">
+          <button :class="[styles.simBtn, styles.simBtnStop]" title="停止模拟" @click="$emit('toggle-simulation')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none" />
+            </svg>
+            <span>停止</span>
+          </button>
+        </el-tooltip>
+      </template>
     </div>
 
     <!-- Right -->
@@ -134,17 +280,35 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { View, EditPen } from '@element-plus/icons-vue'
+import type { SimulationSpeed } from '../composables/useSimulation.js'
+import { SPEED_LABELS } from '../composables/useSimulation.js'
+import type { LayoutDirection } from '../composables/useAutoLayout.js'
 import styles from './FlowToolbar.module.scss'
 
-defineProps<{
+const props = defineProps<{
   title?: string
   isPreview?: boolean
   showLeftPanel?: boolean
   showRightPanel?: boolean
   showAiDrawer?: boolean
   saving?: boolean
+  // Simulation props
+  isSimulating?: boolean
+  currentStep?: number
+  statusMessage?: string
+  autoPlayActive?: boolean
+  speed?: SimulationSpeed
+  // Auto-layout props
+  layoutDirection?: LayoutDirection
+  layoutNodeSep?: number
+  layoutRankSep?: number
 }>()
+
+const layoutPopoverVisible = ref(false)
+
+const speedLabel = computed(() => SPEED_LABELS[props.speed ?? 'normal'])
 
 defineEmits<{
   back: []
@@ -161,5 +325,16 @@ defineEmits<{
   'toggle-left-panel': []
   'toggle-right-panel': []
   'toggle-ai': []
+  // Simulation events
+  'toggle-simulation': []
+  'step-forward': []
+  'reset-simulation': []
+  'toggle-auto-play': []
+  'cycle-speed': []
+  // Auto-layout events
+  'auto-layout': []
+  'update:layoutDirection': [direction: LayoutDirection]
+  'update:layoutNodeSep': [value: number]
+  'update:layoutRankSep': [value: number]
 }>()
 </script>

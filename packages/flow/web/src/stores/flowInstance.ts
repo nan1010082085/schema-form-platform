@@ -4,6 +4,7 @@ import type {
   FlowInstanceQuery,
   FlowInstanceData,
   TaskInstanceData,
+  RejectTargetNode,
 } from '@schema-form/flow-shared'
 import { flowApi } from '../api/flowApi.js'
 
@@ -88,6 +89,17 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
     return task
   }
 
+  async function getRejectTargets(taskId: string): Promise<RejectTargetNode[]> {
+    return flowApi.getRejectTargets(taskId)
+  }
+
+  async function rejectToNode(taskId: string, targetNodeId: string, comment?: string) {
+    const task = await flowApi.rejectToNode(taskId, { targetNodeId, comment })
+    const idx = tasks.value.findIndex((t) => t.id === taskId)
+    if (idx !== -1) tasks.value[idx] = task
+    return task
+  }
+
   return {
     instances,
     total,
@@ -103,5 +115,7 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
     fetchMyTasks,
     claimTask,
     completeTask,
+    getRejectTargets,
+    rejectToNode,
   }
 })

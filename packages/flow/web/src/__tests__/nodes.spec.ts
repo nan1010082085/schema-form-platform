@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, type ComponentMountingOptions } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import StartEvent from '../components/nodes/StartEvent.vue'
 import EndEvent from '../components/nodes/EndEvent.vue'
 import TimerEvent from '../components/nodes/TimerEvent.vue'
@@ -15,6 +16,10 @@ import InclusiveGateway from '../components/nodes/InclusiveGateway.vue'
 const stubs = {
   Handle: { template: '<div />', props: ['type', 'position', 'id'] },
 }
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
 
 interface NodeTestConfig {
   name: string

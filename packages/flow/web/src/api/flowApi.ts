@@ -5,6 +5,8 @@ import type {
   StartFlowInstanceDto,
   CompleteTaskDto,
   DelegateTaskDto,
+  RejectToNodeDto,
+  RejectTargetNode,
   FlowListQuery,
   FlowInstanceQuery,
   FlowDefinitionData,
@@ -17,6 +19,13 @@ import type {
   FlowInstanceListData,
   TaskInstanceListData,
   ApprovalLogListData,
+  FlowTemplateData,
+  FlowTemplateQuery,
+  ApplyFlowTemplateDto,
+  FlowMonitorStats,
+  FlowMonitorAvgDuration,
+  FlowMonitorNodeStat,
+  FlowMonitorTrendPoint,
 } from '@schema-form/flow-shared'
 
 const API_BASE = '/api'
@@ -138,6 +147,15 @@ export const flowApi = {
       body: JSON.stringify(data),
     }),
 
+  getRejectTargets: (id: string) =>
+    request<RejectTargetNode[]>(`/flow-tasks/${id}/reject-targets`),
+
+  rejectToNode: (id: string, data: RejectToNodeDto) =>
+    request<TaskInstanceData>(`/flow-tasks/${id}/reject-to-node`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Users - 支持分页
   searchUsers: (q: string, page?: number, pageSize?: number) => {
     const params = new URLSearchParams({ q })
@@ -163,4 +181,70 @@ export const flowApi = {
   // Published forms (editor-server)
   getPublishedForms: () =>
     request<Array<{ id: string; publishId: string; name: string }>>('/schemas/published'),
+
+  // Templates
+  listTemplates: (query?: FlowTemplateQuery) => {
+    const params = new URLSearchParams()
+    if (query?.search) params.set('search', query.search)
+    if (query?.category) params.set('category', query.category)
+    if (query?.isBuiltin !== undefined) params.set('isBuiltin', String(query.isBuiltin))
+    if (query?.page) params.set('page', String(query.page))
+    if (query?.pageSize) params.set('pageSize', String(query.pageSize))
+    return request<{ items: FlowTemplateData[]; total: number }>(`/flow-templates?${params}`)
+  },
+
+  getTemplate: (id: string) =>
+    request<FlowTemplateData>(`/flow-templates/${id}`),
+
+  deleteTemplate: (id: string) =>
+    request<null>(`/flow-templates/${id}`, { method: 'DELETE' }),
+
+  applyTemplate: (id: string, data?: ApplyFlowTemplateDto) =>
+    request<FlowDefinitionData>(`/flow-templates/${id}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(data ?? {}),
+    }),
+
+  seedBuiltinTemplates: () =>
+    request<{ seeded: number }>('/flow-templates/seed', { method: 'POST' }),
+
+  saveAsTemplate: (definitionId: string, data?: { name?: string; description?: string; category?: string; tags?: string[] }) =>
+    request<FlowTemplateData>(`/flows/${definitionId}/save-as-template`, {
+      method: 'POST',
+      body: JSON.stringify(data ?? {}),
+    }),
+
+  // Monitor
+  getMonitorStats: () =>
+    request<FlowMonitorStats>('/flow-monitor/stats'),
+
+  getMonitorAvgDuration: () =>
+    request<FlowMonitorAvgDuration>('/flow-monitor/avg-duration'),
+
+  getMonitorNodeStats: () =>
+    request<FlowMonitorNodeStat[]>('/flow-monitor/node-stats'),
+
+  getMonitorTrend: (days?: number) => {
+    const params = new URLSearchParams()
+    if (days) params.set('days', String(days))
+    return request<FlowMonitorTrendPoint[]>(`/flow-monitor/trend?${params}`)
+  },
+
+  // Notifications
+  getUnreadCount: () =>
+    request<{ count: number }>('/notifications/unread-count'),
+
+  getNotifications: (page?: number, pageSize?: number, isRead?: boolean) => {
+    const params = new URLSearchParams()
+    if (page) params.set('page', String(page))
+    if (pageSize) params.set('pageSize', String(pageSize))
+    if (isRead !== undefined) params.set('isRead', String(isRead))
+    return request<{ items: Array<{ id: string; userId: string; type: string; title: string; content?: string; relatedId?: string; relatedType?: string; isRead: boolean; createdAt: string }>; total: number }>(`/notifications?${params}`)
+  },
+
+  markNotificationAsRead: (id: string) =>
+    request<null>(`/notifications/${id}/read`, { method: 'POST' }),
+
+  markAllNotificationsAsRead: () =>
+    request<null>('/notifications/read-all', { method: 'POST' }),
 }

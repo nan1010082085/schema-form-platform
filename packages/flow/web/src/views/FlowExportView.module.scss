@@ -1,0 +1,19 @@
+.exportView {
+  padding: var(--spacing-lg);
+}
+.header {
+  margin-bottom: var(--spacing-20px);
+}
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+.formCard {
+  max-width: 600px;
+  padding: var(--spacing-lg);
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color-base);
+}

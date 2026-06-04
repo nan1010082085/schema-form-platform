@@ -199,7 +199,7 @@ describe('importFromBpmnXml', () => {
   id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
   <bpmn:process id="Process_1" isExecutable="true">
     <bpmn:startEvent id="start1" />
-    <bpmn:callActivity id="call1" name="External" />
+    <bpmn:dataObject id="do1" name="Data" />
     <bpmn:endEvent id="end1" />
   </bpmn:process>
 </bpmn:definitions>`
@@ -223,7 +223,7 @@ describe('importFromBpmnXml', () => {
     expect(graph.nodes[0].height).toBe(80)
   })
 
-  it('parses all 12 supported BPMN element types', () => {
+  it('parses all supported BPMN element types', () => {
     const elements = [
       { tag: 'bpmn:startEvent', type: BpmnElementType.StartEvent },
       { tag: 'bpmn:endEvent', type: BpmnElementType.EndEvent },
@@ -237,6 +237,13 @@ describe('importFromBpmnXml', () => {
       { tag: 'bpmn:inclusiveGateway', type: BpmnElementType.InclusiveGateway },
       { tag: 'bpmn:intermediateCatchEvent', type: BpmnElementType.TimerEvent },
       { tag: 'bpmn:subProcess', type: BpmnElementType.SubProcess },
+      { tag: 'bpmn:callActivity', type: BpmnElementType.CallActivity },
+      { tag: 'bpmn:businessRuleTask', type: BpmnElementType.BusinessRuleTask },
+      { tag: 'bpmn:manualTask', type: BpmnElementType.ManualTask },
+      { tag: 'bpmn:eventBasedGateway', type: BpmnElementType.EventBasedGateway },
+      { tag: 'bpmn:complexGateway', type: BpmnElementType.ComplexGateway },
+      { tag: 'bpmn:adHocSubProcess', type: BpmnElementType.AdHocSubProcess },
+      { tag: 'bpmn:transaction', type: BpmnElementType.Transaction },
     ]
 
     const xmlElements = elements
@@ -252,8 +259,8 @@ ${xmlElements}
 </bpmn:definitions>`
 
     const graph = importFromBpmnXml(xml)
-    expect(graph.nodes).toHaveLength(12)
-    for (let i = 0; i < 12; i++) {
+    expect(graph.nodes).toHaveLength(elements.length)
+    for (let i = 0; i < elements.length; i++) {
       expect(graph.nodes[i].data.bpmnType).toBe(elements[i].type)
     }
   })

@@ -5,6 +5,7 @@ import { nextTick } from 'vue'
 vi.mock('../api/flowApi', () => ({
   flowApi: {
     searchUsers: vi.fn(),
+    searchRoles: vi.fn(),
   },
 }))
 
@@ -57,7 +58,8 @@ describe('UserPicker', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.clearAllMocks()
-    mockedApi.searchUsers.mockResolvedValue({ items: [] } as any)
+    mockedApi.searchUsers.mockResolvedValue({ items: [], total: 0 } as any)
+    mockedApi.searchRoles.mockResolvedValue({ items: [], total: 0 } as any)
   })
 
   afterEach(() => {
@@ -67,7 +69,7 @@ describe('UserPicker', () => {
   it('renders with default placeholder', () => {
     const wrapper = mountPicker()
     const input = wrapper.find('.el-select-stub__input')
-    expect(input.attributes('placeholder')).toBe('搜索用户...')
+    expect(input.attributes('placeholder')).toBe('搜索用户或角色...')
   })
 
   it('renders with custom placeholder', () => {
@@ -91,25 +93,33 @@ describe('UserPicker', () => {
     await vi.advanceTimersByTime(300)
     await flushPromises()
 
-    expect(mockedApi.searchUsers).toHaveBeenCalledWith('test')
+    expect(mockedApi.searchUsers).toHaveBeenCalledWith('test', 1, 20)
   })
 
-  it('does not call flowApi.searchUsers when search query is empty', async () => {
+  it('calls both searchUsers and searchRoles on search', async () => {
     const wrapper = mountPicker()
     const vm = wrapper.vm as any
-    vm.onSearch('')
+    vm.onSearch('test')
     await vi.advanceTimersByTime(300)
     await flushPromises()
 
-    expect(mockedApi.searchUsers).not.toHaveBeenCalled()
+    expect(mockedApi.searchUsers).toHaveBeenCalledWith('test', 1, 20)
+    expect(mockedApi.searchRoles).toHaveBeenCalledWith('test', 1, 20)
   })
 
-  it('populates options from flowApi response', async () => {
+  it('populates options from flowApi response with correct structure', async () => {
     mockedApi.searchUsers.mockResolvedValue({
       items: [
-        { id: 'u1', username: 'alice', displayName: 'Alice', role: 'admin' },
-        { id: 'u2', username: 'bob', displayName: 'Bob', role: 'user' },
+        { id: 'u1', username: 'alice', displayName: 'Alice', roles: ['admin'] },
+        { id: 'u2', username: 'bob', displayName: 'Bob', roles: ['user'] },
       ],
+      total: 2,
+    } as any)
+    mockedApi.searchRoles.mockResolvedValue({
+      items: [
+        { id: 'r1', name: '管理员', description: '系统管理员' },
+      ],
+      total: 1,
     } as any)
 
     const wrapper = mountPicker()
@@ -118,9 +128,15 @@ describe('UserPicker', () => {
     await vi.advanceTimersByTime(300)
     await flushPromises()
 
-    expect(vm.options).toHaveLength(2)
-    expect(vm.options[0].id).toBe('u1')
-    expect(vm.options[1].id).toBe('u2')
+    expect(vm.options).toHaveLength(3)
+    expect(vm.options[0].value).toBe('user:u1')
+    expect(vm.options[0].label).toBe('Alice (alice)')
+    expect(vm.options[0].type).toBe('user')
+    expect(vm.options[1].value).toBe('user:u2')
+    expect(vm.options[1].type).toBe('user')
+    expect(vm.options[2].value).toBe('role:r1')
+    expect(vm.options[2].label).toBe('管理员 - 系统管理员')
+    expect(vm.options[2].type).toBe('role')
   })
 
   it('clears options when search fails', async () => {
@@ -146,13 +162,15 @@ describe('UserPicker', () => {
     await flushPromises()
 
     expect(mockedApi.searchUsers).toHaveBeenCalledTimes(1)
-    expect(mockedApi.searchUsers).toHaveBeenCalledWith('abc')
+    expect(mockedApi.searchUsers).toHaveBeenCalledWith('abc', 1, 20)
   })
 
-  it('clears options when search query becomes empty after having results', async () => {
+  it('resets options and reloads when search query changes', async () => {
     mockedApi.searchUsers.mockResolvedValue({
-      items: [{ id: 'u1', username: 'alice', displayName: 'Alice', role: 'admin' }],
+      items: [{ id: 'u1', username: 'alice', displayName: 'Alice', roles: ['admin'] }],
+      total: 1,
     } as any)
+    mockedApi.searchRoles.mockResolvedValue({ items: [], total: 0 } as any)
 
     const wrapper = mountPicker()
     const vm = wrapper.vm as any
@@ -162,10 +180,17 @@ describe('UserPicker', () => {
     await flushPromises()
     expect(vm.options).toHaveLength(1)
 
-    vm.onSearch('')
+    // New search resets options
+    mockedApi.searchUsers.mockResolvedValue({
+      items: [{ id: 'u2', username: 'bob', displayName: 'Bob', roles: ['user'] }],
+      total: 1,
+    } as any)
+
+    vm.onSearch('b')
     await vi.advanceTimersByTime(300)
     await flushPromises()
-    expect(vm.options).toEqual([])
+    expect(vm.options).toHaveLength(1)
+    expect(vm.options[0].value).toBe('user:u2')
   })
 
   it('passes props to el-select via stub', () => {
@@ -173,7 +198,7 @@ describe('UserPicker', () => {
     const selectDiv = wrapper.find('.el-select-stub')
     expect(selectDiv.exists()).toBe(true)
     const input = selectDiv.find('input')
-    expect(input.attributes('placeholder')).toBe('搜索用户...')
+    expect(input.attributes('placeholder')).toBe('搜索用户或角色...')
   })
 
   it('defaults modelValue to empty array', () => {
@@ -207,8 +232,9 @@ describe('UserPicker', () => {
   it('renders el-option for each fetched user', async () => {
     mockedApi.searchUsers.mockResolvedValue({
       items: [
-        { id: 'u1', username: 'alice', displayName: 'Alice', role: 'admin' },
+        { id: 'u1', username: 'alice', displayName: 'Alice', roles: ['admin'] },
       ],
+      total: 1,
     } as any)
 
     const wrapper = mountPicker()

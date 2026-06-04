@@ -217,19 +217,19 @@ describe('FlowSettingsDialog', () => {
   it('passes correct placeholder to editors UserPicker', () => {
     const wrapper = mountDialogRaw()
     const pickers = wrapper.findAll('.user-picker-stub')
-    expect(pickers[0].attributes('data-placeholder')).toBe('选择可编辑的用户')
+    expect(pickers[0].attributes('data-placeholder')).toBe('选择可编辑的用户或角色')
   })
 
   it('passes correct placeholder to launchers UserPicker', () => {
     const wrapper = mountDialogRaw()
     const pickers = wrapper.findAll('.user-picker-stub')
-    expect(pickers[1].attributes('data-placeholder')).toBe('选择可发起的用户')
+    expect(pickers[1].attributes('data-placeholder')).toBe('选择可发起的用户或角色')
   })
 
   it('passes correct placeholder to viewers UserPicker', () => {
     const wrapper = mountDialogRaw()
     const pickers = wrapper.findAll('.user-picker-stub')
-    expect(pickers[2].attributes('data-placeholder')).toBe('选择可查看的用户')
+    expect(pickers[2].attributes('data-placeholder')).toBe('选择可查看的用户或角色')
   })
 
   it('shows hint for launchers field', () => {

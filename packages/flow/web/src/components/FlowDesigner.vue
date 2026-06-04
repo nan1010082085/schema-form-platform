@@ -6,6 +6,9 @@
       :show-right-panel="showRightPanel"
       :show-ai-drawer="showAiDrawer"
       :saving="saving"
+      :layout-direction="layoutDirection"
+      :layout-node-sep="layoutNodeSep"
+      :layout-rank-sep="layoutRankSep"
       @back="goBack"
       @save="onSave"
       @undo="onUndo"
@@ -20,6 +23,10 @@
       @toggle-left-panel="showLeftPanel = !showLeftPanel"
       @toggle-right-panel="showRightPanel = !showRightPanel"
       @toggle-ai="showAiDrawer = !showAiDrawer"
+      @auto-layout="onAutoLayout"
+      @update:layout-direction="layoutDirection = $event"
+      @update:layout-node-sep="layoutNodeSep = $event"
+      @update:layout-rank-sep="layoutRankSep = $event"
     />
     <div :class="styles.body">
       <div
@@ -176,6 +183,7 @@ import MicroFormEmbed from './MicroFormEmbed.vue'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { useFlowGraphStore } from '../stores/flowGraph.js'
 import { useFlowDefinitionStore } from '../stores/flowDefinition.js'
+import { useAutoLayout } from '../composables/useAutoLayout.js'
 import { flowApi } from '../api/flowApi.js'
 import styles from './FlowDesigner.module.scss'
 
@@ -183,6 +191,12 @@ const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()
 const graphStore = useFlowGraphStore()
 const definitionStore = useFlowDefinitionStore()
+const {
+  direction: layoutDirection,
+  nodeSep: layoutNodeSep,
+  rankSep: layoutRankSep,
+  applyLayout: runAutoLayout,
+} = useAutoLayout()
 const router = useRouter()
 const route = useRoute()
 
@@ -518,6 +532,11 @@ function onRedo() {
 }
 
 /* --- Export / Import --- */
+
+function onAutoLayout() {
+  runAutoLayout()
+  setTimeout(() => canvasRef.value?.fitView(), 50)
+}
 
 function onExportBpmn() {
   const flowGraph = graphStore.toFlowGraph()

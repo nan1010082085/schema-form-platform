@@ -7,6 +7,7 @@ import SendTaskPanel from '@/components/nodePanels/SendTaskPanel.vue'
 import ReceiveTaskPanel from '@/components/nodePanels/ReceiveTaskPanel.vue'
 import TimerEventPanel from '@/components/nodePanels/TimerEventPanel.vue'
 import GatewayPanel from '@/components/nodePanels/GatewayPanel.vue'
+import GatewayConditionPanel from '@/components/panels/GatewayConditionPanel.vue'
 import SubProcessPanel from '@/components/nodePanels/SubProcessPanel.vue'
 
 const registry = new Map<string, Component>([
@@ -18,9 +19,9 @@ const registry = new Map<string, Component>([
   ['send-task', markRaw(SendTaskPanel)],
   ['receive-task', markRaw(ReceiveTaskPanel)],
   ['timer-event', markRaw(TimerEventPanel)],
-  ['exclusive-gateway', markRaw(GatewayPanel)],
+  ['exclusive-gateway', markRaw(GatewayConditionPanel)],
   ['parallel-gateway', markRaw(GatewayPanel)],
-  ['inclusive-gateway', markRaw(GatewayPanel)],
+  ['inclusive-gateway', markRaw(GatewayConditionPanel)],
   ['sub-process', markRaw(SubProcessPanel)],
 ])
 

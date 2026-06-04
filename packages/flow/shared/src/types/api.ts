@@ -36,6 +36,17 @@ export interface DelegateTaskDto {
   targetUserId: string
 }
 
+export interface RejectToNodeDto {
+  targetNodeId: string
+  comment?: string
+}
+
+export interface RejectTargetNode {
+  nodeId: string
+  nodeName: string
+  nodeType: string
+}
+
 export interface FlowListQuery {
   search?: string
   status?: string

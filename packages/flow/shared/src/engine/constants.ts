@@ -14,6 +14,23 @@ export const DEFAULT_NODE_SIZES: Record<BpmnElementType, { width: number; height
   [BpmnElementType.ParallelGateway]: { width: 40, height: 40 },
   [BpmnElementType.InclusiveGateway]: { width: 40, height: 40 },
   [BpmnElementType.SubProcess]: { width: 300, height: 200 },
+  // BPMN 2.0 Events
+  [BpmnElementType.MessageEvent]: { width: 200, height: 36 },
+  [BpmnElementType.SignalEvent]: { width: 200, height: 36 },
+  [BpmnElementType.ConditionalEvent]: { width: 200, height: 36 },
+  [BpmnElementType.ErrorEvent]: { width: 200, height: 36 },
+  [BpmnElementType.EscalationEvent]: { width: 200, height: 36 },
+  [BpmnElementType.CompensationEvent]: { width: 200, height: 36 },
+  // BPMN 2.0 Tasks
+  [BpmnElementType.CallActivity]: { width: 160, height: 80 },
+  [BpmnElementType.BusinessRuleTask]: { width: 160, height: 80 },
+  [BpmnElementType.ManualTask]: { width: 160, height: 80 },
+  // BPMN 2.0 Gateways
+  [BpmnElementType.EventBasedGateway]: { width: 40, height: 40 },
+  [BpmnElementType.ComplexGateway]: { width: 40, height: 40 },
+  // BPMN 2.0 SubProcess variants
+  [BpmnElementType.AdHocSubProcess]: { width: 300, height: 200 },
+  [BpmnElementType.Transaction]: { width: 300, height: 200 },
 }
 
 export const DEFAULT_NODE_CONFIGS: Record<BpmnElementType, Partial<BpmnNodeConfig>> = {
@@ -29,4 +46,21 @@ export const DEFAULT_NODE_CONFIGS: Record<BpmnElementType, Partial<BpmnNodeConfi
   [BpmnElementType.ParallelGateway]: { label: '并行网关', gatewayDirection: 'diverging' },
   [BpmnElementType.InclusiveGateway]: { label: '包含网关', gatewayDirection: 'diverging' },
   [BpmnElementType.SubProcess]: { label: '子流程' },
+  // BPMN 2.0 Events
+  [BpmnElementType.MessageEvent]: { label: '消息事件' },
+  [BpmnElementType.SignalEvent]: { label: '信号事件' },
+  [BpmnElementType.ConditionalEvent]: { label: '条件事件' },
+  [BpmnElementType.ErrorEvent]: { label: '错误事件' },
+  [BpmnElementType.EscalationEvent]: { label: '升级事件' },
+  [BpmnElementType.CompensationEvent]: { label: '补偿事件' },
+  // BPMN 2.0 Tasks
+  [BpmnElementType.CallActivity]: { label: '调用活动' },
+  [BpmnElementType.BusinessRuleTask]: { label: '业务规则任务' },
+  [BpmnElementType.ManualTask]: { label: '手动任务' },
+  // BPMN 2.0 Gateways
+  [BpmnElementType.EventBasedGateway]: { label: '事件网关', gatewayDirection: 'diverging' },
+  [BpmnElementType.ComplexGateway]: { label: '复杂网关', gatewayDirection: 'diverging' },
+  // BPMN 2.0 SubProcess variants
+  [BpmnElementType.AdHocSubProcess]: { label: '临时子流程' },
+  [BpmnElementType.Transaction]: { label: '事务' },
 }

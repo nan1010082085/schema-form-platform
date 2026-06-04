@@ -9,6 +9,7 @@ export interface FlowToken {
   multiInstanceGroupId?: string
   state: FlowTokenState
   createdAt: Date
+  waitingSince?: Date
 }
 
 export interface FlowInstanceData {
@@ -50,7 +51,7 @@ export interface TaskInstanceData {
   updatedAt: Date
 }
 
-export type ApprovalAction = 'claim' | 'approve' | 'reject' | 'delegate' | 'comment'
+export type ApprovalAction = 'claim' | 'approve' | 'reject' | 'reject-to-node' | 'delegate' | 'comment'
 
 export interface ApprovalLogEntry {
   id: string

@@ -16,6 +16,16 @@ const TAG_TO_BPMN_TYPE: Record<string, BpmnElementType> = {
   'bpmn:inclusivegateway': BpmnElementType.InclusiveGateway,
   'bpmn:intermediatecatchevent': BpmnElementType.TimerEvent,
   'bpmn:subprocess': BpmnElementType.SubProcess,
+  // BPMN 2.0 Tasks
+  'bpmn:callactivity': BpmnElementType.CallActivity,
+  'bpmn:businessruletask': BpmnElementType.BusinessRuleTask,
+  'bpmn:manualtask': BpmnElementType.ManualTask,
+  // BPMN 2.0 Gateways
+  'bpmn:eventbasedgateway': BpmnElementType.EventBasedGateway,
+  'bpmn:complexgateway': BpmnElementType.ComplexGateway,
+  // BPMN 2.0 SubProcess variants
+  'bpmn:adhocsubprocess': BpmnElementType.AdHocSubProcess,
+  'bpmn:transaction': BpmnElementType.Transaction,
 }
 
 function parseNodeConfig(element: Element): Record<string, unknown> {
@@ -46,6 +56,90 @@ function parseTimerConfig(element: Element): { timerType?: TimerType; timerValue
   if (cycle?.textContent) return { timerType: 'cycle', timerValue: cycle.textContent }
 
   return {}
+}
+
+/**
+ * Detect the actual BpmnElementType for an intermediateCatchEvent or boundaryEvent
+ * by inspecting which event definition child element is present.
+ */
+function resolveEventSubtype(element: Element, fallbackType: BpmnElementType): BpmnElementType {
+  if (element.querySelector('bpmn\\:timerEventDefinition, timerEventDefinition')) {
+    return BpmnElementType.TimerEvent
+  }
+  if (element.querySelector('bpmn\\:messageEventDefinition, messageEventDefinition')) {
+    return BpmnElementType.MessageEvent
+  }
+  if (element.querySelector('bpmn\\:signalEventDefinition, signalEventDefinition')) {
+    return BpmnElementType.SignalEvent
+  }
+  if (element.querySelector('bpmn\\:conditionalEventDefinition, conditionalEventDefinition')) {
+    return BpmnElementType.ConditionalEvent
+  }
+  if (element.querySelector('bpmn\\:errorEventDefinition, errorEventDefinition')) {
+    return BpmnElementType.ErrorEvent
+  }
+  if (element.querySelector('bpmn\\:escalationEventDefinition, escalationEventDefinition')) {
+    return BpmnElementType.EscalationEvent
+  }
+  if (element.querySelector('bpmn\\:compensationEventDefinition, compensationEventDefinition')) {
+    return BpmnElementType.CompensationEvent
+  }
+  return fallbackType
+}
+
+function parseMessageEventConfig(element: Element): { messageRef?: string } {
+  const msgDef = element.querySelector('bpmn\\:messageEventDefinition, messageEventDefinition')
+  if (!msgDef) return {}
+  const ref = msgDef.getAttribute('messageRef')
+  return ref ? { messageRef: ref } : {}
+}
+
+function parseSignalEventConfig(element: Element): { signalRef?: string } {
+  const sigDef = element.querySelector('bpmn\\:signalEventDefinition, signalEventDefinition')
+  if (!sigDef) return {}
+  const ref = sigDef.getAttribute('signalRef')
+  return ref ? { signalRef: ref } : {}
+}
+
+function parseConditionalEventConfig(element: Element): { conditionExpression?: string } {
+  const condDef = element.querySelector('bpmn\\:conditionalEventDefinition, conditionalEventDefinition')
+  if (!condDef) return {}
+  const condition = condDef.querySelector('bpmn\\:condition, condition')
+  return condition?.textContent ? { conditionExpression: condition.textContent } : {}
+}
+
+function parseErrorEventConfig(element: Element): { errorCode?: string } {
+  const errDef = element.querySelector('bpmn\\:errorEventDefinition, errorEventDefinition')
+  if (!errDef) return {}
+  const code = errDef.getAttribute('errorCode')
+  return code ? { errorCode: code } : {}
+}
+
+function parseEscalationEventConfig(element: Element): { escalationCode?: string } {
+  const escDef = element.querySelector('bpmn\\:escalationEventDefinition, escalationEventDefinition')
+  if (!escDef) return {}
+  const code = escDef.getAttribute('escalationCode')
+  return code ? { escalationCode: code } : {}
+}
+
+/** Extract event-specific config based on the resolved event subtype. */
+function extractEventConfig(bpmnType: BpmnElementType, element: Element): Record<string, unknown> {
+  switch (bpmnType) {
+    case BpmnElementType.TimerEvent:
+      return parseTimerConfig(element)
+    case BpmnElementType.MessageEvent:
+      return parseMessageEventConfig(element)
+    case BpmnElementType.SignalEvent:
+      return parseSignalEventConfig(element)
+    case BpmnElementType.ConditionalEvent:
+      return parseConditionalEventConfig(element)
+    case BpmnElementType.ErrorEvent:
+      return parseErrorEventConfig(element)
+    case BpmnElementType.EscalationEvent:
+      return parseEscalationEventConfig(element)
+    default:
+      return {}
+  }
 }
 
 export function importFromBpmnXml(xml: string): FlowGraph {
@@ -82,21 +176,60 @@ export function importFromBpmnXml(xml: string): FlowGraph {
   // Parse elements
   for (const child of Array.from(process.children)) {
     const tagName = child.tagName.toLowerCase()
-    const bpmnType = TAG_TO_BPMN_TYPE[tagName]
-    if (!bpmnType) continue
+    const mappedType = TAG_TO_BPMN_TYPE[tagName]
 
-    const id = child.getAttribute('id') ?? `node-${Date.now()}`
-    const name = child.getAttribute('name') ?? ''
+    // Handle boundary events (not in the main map)
+    if (tagName === 'bpmn:boundaryevent' || tagName === 'boundaryevent') {
+      const element = child as Element
+      const id = element.getAttribute('id') ?? `node-${Date.now()}`
+      const name = element.getAttribute('name') ?? ''
+      const pos = shapeMap.get(id)
+
+      const bpmnType = resolveEventSubtype(element, BpmnElementType.ErrorEvent)
+      const defaultSize = DEFAULT_NODE_SIZES[bpmnType]
+
+      const eventConfig = extractEventConfig(bpmnType, element)
+      const extensionConfig = parseNodeConfig(element)
+      const attachedToRef = element.getAttribute('attachedToRef')
+
+      nodes.push({
+        id,
+        shape: `bpmn-${bpmnType}`,
+        x: pos?.x ?? 0,
+        y: pos?.y ?? 0,
+        width: pos?.width || defaultSize.width,
+        height: pos?.height || defaultSize.height,
+        data: {
+          bpmnType,
+          label: name,
+          ...extensionConfig,
+          ...eventConfig,
+          ...(attachedToRef ? { attachedToRef } : {}),
+        },
+      })
+      continue
+    }
+
+    if (!mappedType) continue
+
+    const element = child as Element
+    const id = element.getAttribute('id') ?? `node-${Date.now()}`
+    const name = element.getAttribute('name') ?? ''
     const pos = shapeMap.get(id)
+
+    // Resolve event subtypes for intermediateCatchEvent
+    let bpmnType = mappedType
+    if (mappedType === BpmnElementType.TimerEvent) {
+      bpmnType = resolveEventSubtype(element, BpmnElementType.TimerEvent)
+    }
+
     const defaultSize = DEFAULT_NODE_SIZES[bpmnType]
 
-    const timerConfig = bpmnType === BpmnElementType.TimerEvent
-      ? parseTimerConfig(child as Element)
-      : {}
+    const eventConfig = extractEventConfig(bpmnType, element)
 
-    const extensionConfig = parseNodeConfig(child as Element)
+    const extensionConfig = parseNodeConfig(element)
 
-    const nodeData: FlowNodeData = {
+    nodes.push({
       id,
       shape: `bpmn-${bpmnType}`,
       x: pos?.x ?? 0,
@@ -107,11 +240,9 @@ export function importFromBpmnXml(xml: string): FlowGraph {
         bpmnType,
         label: name,
         ...extensionConfig,
-        ...timerConfig,
+        ...eventConfig,
       },
-    }
-
-    nodes.push(nodeData)
+    })
   }
 
   // Parse sequence flows

@@ -1,0 +1,82 @@
+.bellIcon {
+  cursor: pointer;
+  color: var(--el-text-color-regular);
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.item {
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--el-fill-color-light);
+  }
+
+  & + & {
+    margin-top: 8px;
+  }
+}
+
+.itemUnread {
+  background-color: var(--el-color-primary-light-9);
+
+  &:hover {
+    background-color: var(--el-color-primary-light-8);
+  }
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.itemTime {
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
+}
+
+.itemTitle {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.itemContent {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.itemActions {
+  display: flex;
+  justify-content: flex-end;
+}

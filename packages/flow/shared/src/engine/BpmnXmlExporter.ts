@@ -15,6 +15,23 @@ const BPMN_TYPE_MAP: Record<string, string> = {
   [BpmnElementType.InclusiveGateway]: 'bpmn:inclusiveGateway',
   [BpmnElementType.TimerEvent]: 'bpmn:intermediateCatchEvent',
   [BpmnElementType.SubProcess]: 'bpmn:subProcess',
+  // BPMN 2.0 Events
+  [BpmnElementType.MessageEvent]: 'bpmn:intermediateCatchEvent',
+  [BpmnElementType.SignalEvent]: 'bpmn:intermediateCatchEvent',
+  [BpmnElementType.ConditionalEvent]: 'bpmn:intermediateCatchEvent',
+  [BpmnElementType.ErrorEvent]: 'bpmn:boundaryEvent',
+  [BpmnElementType.EscalationEvent]: 'bpmn:boundaryEvent',
+  [BpmnElementType.CompensationEvent]: 'bpmn:boundaryEvent',
+  // BPMN 2.0 Tasks
+  [BpmnElementType.CallActivity]: 'bpmn:callActivity',
+  [BpmnElementType.BusinessRuleTask]: 'bpmn:businessRuleTask',
+  [BpmnElementType.ManualTask]: 'bpmn:manualTask',
+  // BPMN 2.0 Gateways
+  [BpmnElementType.EventBasedGateway]: 'bpmn:eventBasedGateway',
+  [BpmnElementType.ComplexGateway]: 'bpmn:complexGateway',
+  // BPMN 2.0 SubProcess variants
+  [BpmnElementType.AdHocSubProcess]: 'bpmn:adHocSubProcess',
+  [BpmnElementType.Transaction]: 'bpmn:transaction',
 }
 
 function escapeXml(s: string): string {
@@ -26,7 +43,11 @@ function escapeXml(s: string): string {
 }
 
 /** Fields already represented as XML attributes or child elements — skip in extension blob. */
-const SKIP_KEYS = new Set<string>(['bpmnType', 'label', 'timerType', 'timerValue'])
+const SKIP_KEYS = new Set<string>([
+  'bpmnType', 'label', 'timerType', 'timerValue',
+  'messageRef', 'signalRef', 'conditionExpression',
+  'errorCode', 'escalationCode', 'attachedToRef',
+])
 
 function buildNodeConfigJson(node: FlowNodeData): string {
   const config: Record<string, unknown> = {}
@@ -72,13 +93,29 @@ export function exportToBpmnXml(
     if (!tag) continue
 
     const indent = '    '
-    const attrs = `id="${node.id}" name="${escapeXml(node.data.label)}"`
+    let attrs = `id="${node.id}" name="${escapeXml(node.data.label)}"`
+    // Boundary events need attachedToRef
+    if (node.data.attachedToRef) {
+      attrs += ` attachedToRef="${escapeXml(node.data.attachedToRef)}"`
+    }
 
     const childIndent = `${indent}  `
     const extensions = renderExtensionElements(node, childIndent)
-    const hasChildren = node.data.bpmnType === BpmnElementType.TimerEvent
-      || node.data.bpmnType === BpmnElementType.SubProcess
-      || extensions.length > 0
+    const needsEventDef = [
+      BpmnElementType.TimerEvent,
+      BpmnElementType.MessageEvent,
+      BpmnElementType.SignalEvent,
+      BpmnElementType.ConditionalEvent,
+      BpmnElementType.ErrorEvent,
+      BpmnElementType.EscalationEvent,
+      BpmnElementType.CompensationEvent,
+    ].includes(node.data.bpmnType)
+    const isContainer = [
+      BpmnElementType.SubProcess,
+      BpmnElementType.AdHocSubProcess,
+      BpmnElementType.Transaction,
+    ].includes(node.data.bpmnType)
+    const hasChildren = needsEventDef || isContainer || extensions.length > 0
 
     if (!hasChildren) {
       lines.push(`${indent}<${tag} ${attrs} />`)
@@ -97,6 +134,32 @@ export function exportToBpmnXml(
         lines.push(`${childIndent}  <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.timerValue ?? '')}</bpmn:timeCycle>`)
       }
       lines.push(`${childIndent}</bpmn:timerEventDefinition>`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.MessageEvent && node.data.messageRef) {
+      lines.push(`${childIndent}<bpmn:messageEventDefinition id="MsgDef_${node.id}" messageRef="${escapeXml(node.data.messageRef)}" />`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.SignalEvent && node.data.signalRef) {
+      lines.push(`${childIndent}<bpmn:signalEventDefinition id="SigDef_${node.id}" signalRef="${escapeXml(node.data.signalRef)}" />`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.ConditionalEvent && node.data.conditionExpression) {
+      lines.push(`${childIndent}<bpmn:conditionalEventDefinition id="CondDef_${node.id}">`)
+      lines.push(`${childIndent}  <bpmn:condition xsi:type="bpmn:tFormalExpression">${escapeXml(node.data.conditionExpression)}</bpmn:condition>`)
+      lines.push(`${childIndent}</bpmn:conditionalEventDefinition>`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.ErrorEvent && node.data.errorCode) {
+      lines.push(`${childIndent}<bpmn:errorEventDefinition id="ErrDef_${node.id}" errorCode="${escapeXml(node.data.errorCode)}" />`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.EscalationEvent && node.data.escalationCode) {
+      lines.push(`${childIndent}<bpmn:escalationEventDefinition id="EscDef_${node.id}" escalationCode="${escapeXml(node.data.escalationCode)}" />`)
+    }
+
+    if (node.data.bpmnType === BpmnElementType.CompensationEvent) {
+      lines.push(`${childIndent}<bpmn:compensationEventDefinition id="CompDef_${node.id}" />`)
     }
 
     for (const extLine of extensions) {

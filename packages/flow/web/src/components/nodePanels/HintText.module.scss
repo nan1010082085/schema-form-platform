@@ -3,6 +3,14 @@
   color: var(--el-text-color-placeholder);
   line-height: 1.5;
   margin-bottom: var(--spacing-sm);
+
+  code {
+    font-family: var(--el-font-family-monospace, monospace);
+    font-size: 11px;
+    background: var(--el-fill-color-light);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
 }
 
 .indented {

@@ -23,6 +23,8 @@ function createTestRouter(initialRoute = '/list') {
     routes: [
       { path: '/list', component: { template: '<div>List</div>' } },
       { path: '/tasks', component: { template: '<div>Tasks</div>' } },
+      { path: '/instances', component: { template: '<div>Instances</div>' } },
+      { path: '/monitor', component: { template: '<div>Monitor</div>' } },
       { path: '/', component: { template: '<div>Root</div>' } },
     ],
     initialHistoryState: { back: '', current: initialRoute, forward: '' },
@@ -59,16 +61,18 @@ describe('AppLayout', () => {
     expect(wrapper.text()).toContain('流程列表')
     expect(wrapper.text()).toContain('我的任务')
     expect(wrapper.text()).toContain('流程实例')
+    expect(wrapper.text()).toContain('流程监控')
   })
 
-  it('renders three router-link stubs for nav items', async () => {
+  it('renders router-link stubs for all nav items', async () => {
     const wrapper = await mountLayout()
     const navLinks = wrapper.find('[data-test="nav"]').findAll('.router-link-stub')
-    expect(navLinks.length).toBe(3)
+    expect(navLinks.length).toBe(4)
     const hrefs = navLinks.map(l => l.attributes('href'))
     expect(hrefs).toContain('/list')
     expect(hrefs).toContain('/tasks')
     expect(hrefs).toContain('/instances')
+    expect(hrefs).toContain('/monitor')
   })
 
   it('contains router-view for main content', async () => {
@@ -97,10 +101,10 @@ describe('AppLayout', () => {
     expect(logo.exists()).toBe(true)
   })
 
-  it('has exactly three navigation links in nav section', async () => {
+  it('has exactly four navigation links in nav section', async () => {
     const wrapper = await mountLayout()
     const navLinks = wrapper.find('[data-test="nav"]').findAll('.router-link-stub')
-    expect(navLinks.length).toBe(3)
+    expect(navLinks.length).toBe(4)
   })
 
   it('renders nav items with correct text', async () => {
@@ -109,5 +113,6 @@ describe('AppLayout', () => {
     const texts = navLinks.map(l => l.text())
     expect(texts).toContain('流程列表')
     expect(texts).toContain('我的任务')
+    expect(texts).toContain('流程监控')
   })
 })

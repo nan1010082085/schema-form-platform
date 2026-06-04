@@ -1,0 +1,31 @@
+.edgeCard {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+  padding: 8px;
+  margin-bottom: 8px;
+
+  &:last-of-type {
+    margin-bottom: 4px;
+  }
+}
+
+.edgeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.edgeTarget {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  font-family: var(--el-font-family-monospace, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.defaultCheck {
+  flex-shrink: 0;
+}
