@@ -116,14 +116,14 @@ export function useMicroApp(config: MicroAppConfig) {
 
   function handleCreated(e: Event) {
     const ev = e as CustomEvent<MicroAppLifecycleEvent>
-    if (ev.detail?.appName === config.name) {
+    if (ev.detail?.name === config.name) {
       status.value = 'loading'
     }
   }
 
   function handleMounted(e: Event) {
     const ev = e as CustomEvent<MicroAppLifecycleEvent>
-    if (ev.detail?.appName === config.name) {
+    if (ev.detail?.name === config.name) {
       status.value = 'mounted'
       error.value = null
     }
@@ -131,31 +131,40 @@ export function useMicroApp(config: MicroAppConfig) {
 
   function handleUnmount(e: Event) {
     const ev = e as CustomEvent<MicroAppLifecycleEvent>
-    if (ev.detail?.appName === config.name) {
+    if (ev.detail?.name === config.name) {
       status.value = 'unmounted'
     }
   }
 
   function handleError(e: Event) {
     const ev = e as CustomEvent<MicroAppErrorEvent>
-    if (ev.detail?.appName === config.name) {
+    if (ev.detail?.name === config.name) {
       status.value = 'error'
       error.value = ev.detail.error
     }
   }
 
   onMounted(() => {
-    window.addEventListener('micro-app:created', handleCreated as EventListener)
-    window.addEventListener('micro-app:mounted', handleMounted as EventListener)
-    window.addEventListener('micro-app:unmount', handleUnmount as EventListener)
-    window.addEventListener('micro-app:error', handleError as EventListener)
+    // micro-app 事件分发到 micro-app 元素上，需要在 nextTick 后监听
+    setTimeout(() => {
+      const microAppEl = document.querySelector(`micro-app[name="${config.name}"]`)
+      if (microAppEl) {
+        microAppEl.addEventListener('created', handleCreated as EventListener)
+        microAppEl.addEventListener('mounted', handleMounted as EventListener)
+        microAppEl.addEventListener('unmount', handleUnmount as EventListener)
+        microAppEl.addEventListener('error', handleError as EventListener)
+      }
+    }, 0)
   })
 
   onUnmounted(() => {
-    window.removeEventListener('micro-app:created', handleCreated as EventListener)
-    window.removeEventListener('micro-app:mounted', handleMounted as EventListener)
-    window.removeEventListener('micro-app:unmount', handleUnmount as EventListener)
-    window.removeEventListener('micro-app:error', handleError as EventListener)
+    const microAppEl = document.querySelector(`micro-app[name="${config.name}"]`)
+    if (microAppEl) {
+      microAppEl.removeEventListener('created', handleCreated as EventListener)
+      microAppEl.removeEventListener('mounted', handleMounted as EventListener)
+      microAppEl.removeEventListener('unmount', handleUnmount as EventListener)
+      microAppEl.removeEventListener('error', handleError as EventListener)
+    }
   })
 
   return {

@@ -270,7 +270,7 @@ function typeIcon(type: string): string {
     <textarea
       ref="textareaRef"
       v-model="inputText"
-      :class="$style.panelInput"
+      :class="$style.textarea"
       :placeholder="placeholder"
       :disabled="disabled || loading"
       rows="1"

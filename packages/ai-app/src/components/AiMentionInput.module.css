@@ -68,6 +68,30 @@
   color: var(--ai-text-disabled, #C0C4CC);
 }
 
+/* Textarea — matches design: no border, transparent bg */
+.textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--ai-text-primary, #333333);
+  font-family: inherit;
+  line-height: 1.5;
+  min-height: 36px;
+  max-height: 120px;
+  resize: none;
+  background: transparent;
+  padding: 0;
+}
+
+.textarea::placeholder {
+  color: var(--ai-text-disabled, #C0C4CC);
+}
+
+.textarea:disabled {
+  cursor: not-allowed;
+}
+
 /* Category tabs */
 .tabs {
   display: flex;
