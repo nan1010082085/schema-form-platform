@@ -5,6 +5,9 @@
  * 宿主和子应用都应从这里读取配置，避免散落在各自的 .env 和 vite.config.ts 中。
  */
 
+// 浏览器环境声明（构建时 window 可能不存在）
+declare const window: { location: { hostname: string; port: string } } | undefined
+
 /** 应用名称（含宿主） */
 export type AppName = 'editor' | 'flow' | 'ai' | 'portal'
 
@@ -37,16 +40,22 @@ export const API_PORT = 3001
  * 生成子应用的完整 URL
  *
  * - 开发环境：http://localhost:{devPort}{basePath}
- * - 生产环境：直接返回 basePath（同域部署）
+ * - 生产环境：http://{hostname}:{port}{basePath}
  *
  * @param name 子应用名称
  * @param isDev 是否为开发环境（调用方从 import.meta.env.DEV 传入）
  */
 export function getAppUrl(name: AppName, isDev: boolean): string {
   const config = APP_CONFIGS[name]
-  return isDev
-    ? `http://localhost:${config.devPort}${config.basePath}`
-    : config.basePath
+  if (isDev) {
+    return `http://localhost:${config.devPort}${config.basePath}`
+  }
+  // 生产环境使用完整 URL（仅在浏览器环境中）
+  if (typeof window !== 'undefined' && window.location) {
+    return `http://${window.location.hostname}:${window.location.port}${config.basePath}`
+  }
+  // 服务端渲染或构建时返回相对路径
+  return config.basePath
 }
 
 /**
