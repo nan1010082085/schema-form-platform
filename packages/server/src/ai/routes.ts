@@ -12,6 +12,8 @@ import Router from '@koa/router'
 import { PassThrough } from 'node:stream'
 import { v4 as uuidv4 } from 'uuid'
 import { HumanMessage } from '@langchain/core/messages'
+import { Command } from '@langchain/langgraph'
+import { isGraphInterrupt } from '@langchain/langgraph'
 import { validate } from '../middleware/validate.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { chatRequestSchema, publishRequestSchema, behaviorRequestSchema } from './schemas/aiSchemas.js'
@@ -45,6 +47,20 @@ import { getAvailableIndustries, getIndustryTemplates, type IndustryType } from 
 import { semanticSearch } from './services/ragService.js'
 
 const router = new Router({ prefix: '/api/ai' })
+
+// ────────────────────────────────────────────
+// Interrupted thread tracking for HITL resume
+// ────────────────────────────────────────────
+
+interface InterruptedThread {
+  conversationId: string
+  threadId: string
+  interruptValue: unknown
+  timestamp: Date
+}
+
+/** Map of threadId -> interrupted state, used to resume after user confirmation */
+const interruptedThreads = new Map<string, InterruptedThread>()
 
 // No parser utilities needed — deepseek-chat returns content
 // as structured fields with JSON Mode enabled.
@@ -155,12 +171,19 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       currentSchema,
       currentFlow,
       turnCount,
-      preferences: context.preferences,
-      // Prefer server-generated summary from DB; fall back to frontend-provided
-      historySummary: convo.historySummary ?? context.historySummary,
     },
-    sessionId: threadId,
-    currentAgent: 'router' as const,
+    session: {
+      id: threadId,
+      conversationId: convo._id,
+      currentAgent: 'router' as const,
+    },
+    interaction: {
+      clarificationRequest: null as string | null,
+      clarificationOptions: [] as string[],
+      preferences: (context.preferences ?? {}) as Record<string, unknown>,
+      historySummary: (convo.historySummary ?? context.historySummary ?? '') as string,
+      collaborationRequest: null as null,
+    },
   }
 
   // ── SSE response setup ──
@@ -206,6 +229,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         // ── Node execution start ──
         case 'on_chain_start': {
           const nodeName = event.name as string
+          console.log(`[stream] on_chain_start: ${nodeName}`)
           if (nodeName === 'thinker') {
             // S3: Emit initial thinking indicator so the UI shows feedback
             // even when the LLM doesn't support reasoning_content
@@ -221,12 +245,14 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         // ── Node finished ──
         case 'on_chain_end': {
           const nodeName = event.name as string
+          console.log(`[stream] on_chain_end: ${nodeName}`)
 
-          // Thinker 节点完成 — 提取任务链
+          // Thinker node completed — extract task chain
           if (nodeName === 'thinker') {
             const output = event.data?.output as Record<string, unknown> | undefined
-            if (output?.taskChain && Array.isArray(output.taskChain) && output.taskChain.length > 0) {
-              const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
+            const taskGroup = output?.task as Record<string, unknown> | undefined
+            if (taskGroup?.chain && Array.isArray(taskGroup.chain) && taskGroup.chain.length > 0) {
+              const steps = taskGroup.chain as Array<{ agent: string; description: string; status: string }>
               send({
                 type: 'task_chain',
                 steps: steps.map((s) => ({
@@ -234,16 +260,17 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                   description: s.description,
                   status: s.status,
                 })),
-                currentIndex: (output.currentStepIndex as number) ?? 0,
+                currentIndex: (taskGroup.currentStepIndex as number) ?? 0,
               })
             }
           }
 
-          // Editor/Flow/Page 节点完成 — 更新任务链状态
+          // Editor/Flow/Page node completed — update task chain status
           if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'page') {
             const output = event.data?.output as Record<string, unknown> | undefined
-            if (output?.taskChain && Array.isArray(output.taskChain)) {
-              const steps = output.taskChain as Array<{ agent: string; description: string; status: string }>
+            const taskGroup = output?.task as Record<string, unknown> | undefined
+            if (taskGroup?.chain && Array.isArray(taskGroup.chain)) {
+              const steps = taskGroup.chain as Array<{ agent: string; description: string; status: string }>
               send({
                 type: 'task_chain',
                 steps: steps.map((s) => ({
@@ -251,7 +278,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                   description: s.description,
                   status: s.status,
                 })),
-                currentIndex: (output.currentStepIndex as number) ?? 0,
+                currentIndex: (taskGroup.currentStepIndex as number) ?? 0,
               })
             }
           }
@@ -622,12 +649,195 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     send({ type: 'done', conversationId: convo._id })
     doneSent = true
   } catch (err) {
+    // ── Detect Human-in-the-Loop interrupt ──
+    if (isGraphInterrupt(err)) {
+      const interruptValue = err.interrupts?.[0]?.value as Record<string, unknown> | undefined
+      console.log(`[AI Chat] Interrupt detected (thread=${threadId}):`, interruptValue)
+
+      // Store interrupted thread for later resume
+      interruptedThreads.set(threadId, {
+        conversationId: convo._id,
+        threadId,
+        interruptValue,
+        timestamp: new Date(),
+      })
+
+      // Send interrupt event to frontend
+      send({
+        type: 'interrupt',
+        threadId,
+        interruptType: interruptValue?.type ?? 'unknown',
+        message: interruptValue?.message ?? '操作需要确认',
+        data: interruptValue?.data,
+      })
+
+      doneSent = true
+      return
+    }
+
     const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    send({ type: 'error', content: errorMsg })
+    console.error(`[AI Chat] Stream error (thread=${threadId}, agent=${currentAgent}):`, err)
+    const phaseLabel = accumulatedContent ? '生成阶段' : '思考阶段'
+    send({
+      type: 'error',
+      content: `[${phaseLabel}] ${errorMsg}`,
+      agent: currentAgent,
+    })
+    // 如果已有部分内容，追加错误提示到消息中
+    if (accumulatedContent) {
+      send({ type: 'text', content: `\n\n⚠️ 生成中断：${errorMsg}` })
+    }
   } finally {
     // Guarantee done event is sent even when stream errors out
     if (!doneSent) {
       send({ type: 'done', conversationId: convo._id })
+    }
+    clearInterval(heartbeat)
+    stream.end()
+  }
+})
+
+// ────────────────────────────────────────────
+// GET /api/ai/chat/interrupt/:threadId  (check interrupt status)
+// ────────────────────────────────────────────
+
+router.get('/chat/interrupt/:threadId', async (ctx) => {
+  const { threadId } = ctx.params
+  const interrupted = interruptedThreads.get(threadId)
+
+  if (!interrupted) {
+    ctx.body = { success: true, data: { hasInterrupt: false } }
+    return
+  }
+
+  ctx.body = {
+    success: true,
+    data: {
+      hasInterrupt: true,
+      interruptType: (interrupted.interruptValue as Record<string, unknown>)?.type ?? 'unknown',
+      message: (interrupted.interruptValue as Record<string, unknown>)?.message ?? '操作需要确认',
+      data: (interrupted.interruptValue as Record<string, unknown>)?.data,
+      timestamp: interrupted.timestamp,
+    },
+  }
+})
+
+// ────────────────────────────────────────────
+// POST /api/ai/chat/resume  (resume after HITL interrupt)
+// ────────────────────────────────────────────
+
+router.post('/chat/resume', async (ctx) => {
+  const { threadId, confirmed } = ctx.request.body as {
+    threadId: string
+    confirmed: boolean
+  }
+
+  if (!threadId) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'threadId is required' } }
+    return
+  }
+
+  const interrupted = interruptedThreads.get(threadId)
+  if (!interrupted) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'No interrupted thread found for this threadId' } }
+    return
+  }
+
+  // Remove from interrupted threads
+  interruptedThreads.delete(threadId)
+
+  // Set up SSE response
+  ctx.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  })
+  ctx.status = 200
+
+  const stream = new PassThrough()
+  ctx.body = stream
+
+  const send = (event: Record<string, unknown>) => {
+    stream.write(`data: ${JSON.stringify(event)}\n\n`)
+  }
+
+  const heartbeat = setInterval(() => {
+    stream.write(':heartbeat\n\n')
+  }, 15_000)
+
+  let doneSent = false
+
+  try {
+    // Resume graph with Command
+    const config = { configurable: { thread_id: threadId } }
+    const command = new Command({ resume: confirmed })
+
+    const eventStream = graph.streamEvents(command, {
+      version: 'v2',
+      configurable: { thread_id: threadId },
+    })
+
+    for await (const event of eventStream) {
+      // Forward relevant events to frontend
+      if (event.event === 'on_chat_model_stream') {
+        const chunk = event.data?.chunk as { content?: unknown } | undefined
+        if (chunk?.content && typeof chunk.content === 'string') {
+          send({ type: 'text', content: chunk.content })
+        }
+      }
+
+      if (event.event === 'on_tool_start') {
+        send({
+          type: 'tool_call',
+          phase: 'calling',
+          tools: [{ id: event.run_id, name: event.name, arguments: event.data?.input }],
+        })
+      }
+
+      if (event.event === 'on_tool_end') {
+        send({
+          type: 'tool_call',
+          phase: 'result',
+          tools: [{ id: event.run_id, name: event.name, result: event.data?.output }],
+        })
+      }
+    }
+
+    send({ type: 'done', conversationId: interrupted.conversationId })
+    doneSent = true
+  } catch (err) {
+    // Check for nested interrupt (multiple interrupts in sequence)
+    if (isGraphInterrupt(err)) {
+      const interruptValue = err.interrupts?.[0]?.value as Record<string, unknown> | undefined
+      console.log(`[AI Chat Resume] Nested interrupt detected (thread=${threadId}):`, interruptValue)
+
+      interruptedThreads.set(threadId, {
+        conversationId: interrupted.conversationId,
+        threadId,
+        interruptValue,
+        timestamp: new Date(),
+      })
+
+      send({
+        type: 'interrupt',
+        threadId,
+        interruptType: interruptValue?.type ?? 'unknown',
+        message: interruptValue?.message ?? '操作需要确认',
+        data: interruptValue?.data,
+      })
+      doneSent = true
+      return
+    }
+
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+    console.error(`[AI Chat Resume] Error (thread=${threadId}):`, err)
+    send({ type: 'error', content: errorMsg })
+  } finally {
+    if (!doneSent) {
+      send({ type: 'done', conversationId: interrupted.conversationId })
     }
     clearInterval(heartbeat)
     stream.end()

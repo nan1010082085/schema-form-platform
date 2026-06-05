@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--ai-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04));
 }
 
 /* ---- Header ---- */
@@ -68,31 +68,42 @@
   background: var(--ai-color-success, #26A036);
 }
 
-.agentBadge {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: var(--ai-radius-sm, 2px);
-  background: var(--ai-bg-gray, #F5F7FA);
+/* Agent select in header */
+.agentSelect {
+  padding: 4px 24px 4px 10px;
   border: 1px solid var(--ai-border-light, #EBEDF3);
-  font-size: 11px;
-  color: var(--ai-text-secondary, #666666);
+  border-radius: var(--ai-radius-md, 4px);
+  font-size: 12px;
   font-weight: 500;
+  color: var(--ai-text-primary, #333333);
+  font-family: inherit;
+  background: var(--ai-bg-white, #FFFFFF);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23999' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color 0.15s;
 }
 
-.agentDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.agentSelect:hover:not(:disabled) {
+  border-color: var(--ai-color-primary, #0060A2);
 }
 
-.agentDot.editor {
-  background: var(--ai-color-success, #26A036);
+.agentSelect:focus {
+  border-color: var(--ai-color-primary, #0060A2);
+  box-shadow: 0 0 0 2px var(--ai-color-primary-bg, #EEF5FF);
 }
 
-.agentDot.flow {
-  background: var(--ai-color-info, #4581E9);
+.agentSelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agentSelect option {
+  font-size: 12px;
+  padding: 4px 8px;
 }
 
 /* ---- Context Bar ---- */
@@ -175,11 +186,13 @@
 }
 
 .inputBox {
-  background: var(--ai-bg-white, #FFFFFF);
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: 10px;
+  background: var(--ai-glass-bg, rgba(255, 255, 255, 0.72));
+  backdrop-filter: var(--ai-glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--ai-glass-blur, blur(16px));
+  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
+  border-radius: var(--ai-radius-xl, 16px);
   padding: 10px 12px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--ai-shadow-float, 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06));
 }
 
 .inputDisabled {
@@ -232,8 +245,9 @@
   font-family: inherit;
 }
 
-.agentSelect {
-  padding: 2px 6px;
+/* Agent select in input footer */
+.inputActions .agentSelect {
+  padding: 2px 20px 2px 8px;
   border: 1px solid var(--ai-border-light, #EBEDF3);
   border-radius: var(--ai-radius-sm, 2px);
   font-size: 10px;
@@ -241,12 +255,20 @@
   font-family: inherit;
   background: var(--ai-bg-gray, #F5F7FA);
   outline: none;
-  cursor: default;
+  cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='7' height='4' viewBox='0 0 7 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L3.5 3.5L6 1' stroke='%23999' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 5px center;
-  padding-right: 16px;
+  transition: border-color 0.15s;
+}
+
+.inputActions .agentSelect:hover:not(:disabled) {
+  border-color: var(--ai-color-primary, #0060A2);
+}
+
+.inputActions .agentSelect:focus {
+  border-color: var(--ai-color-primary, #0060A2);
 }
 
 /* Input actions container */

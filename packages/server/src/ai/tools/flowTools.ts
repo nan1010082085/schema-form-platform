@@ -6,6 +6,7 @@
  */
 
 import { tool } from '@langchain/core/tools'
+import { interrupt } from '@langchain/langgraph'
 import { FlowDefinitionModel } from '../../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../../flow-models/FlowVersion.js'
 import { FormSchemaModel } from '../../models/FormSchema.js'
@@ -13,24 +14,14 @@ import { UserModel } from '../../models/User.js'
 import { escapeRegex } from '../graph/agentBase.js'
 import { generateSchemaFromPrompt } from './schemaGenerator.js'
 import { z } from 'zod'
-
-// ────────────────────────────────────────────
-// Tool result type
-// ────────────────────────────────────────────
-
-interface ToolResult {
-  success: boolean
-  data?: unknown
-  error?: string
-  summary?: string
-}
+import type { ToolResult } from './types.js'
 
 // ────────────────────────────────────────────
 // LangGraph tools
 // ────────────────────────────────────────────
 
 export const searchFlowsTool = tool(
-  async ({ keyword, status, category, limit }): Promise<ToolResult> => {
+  async ({ keyword, status, category, limit }): Promise<string> => {
     const filter: Record<string, unknown> = {}
     if (keyword) {
       filter.$or = [
@@ -63,15 +54,19 @@ export const searchFlowsTool = tool(
       ? `没有找到${keyword ? `包含"${keyword}"的` : ''}流程`
       : `找到 ${flows.length} 个流程：${mapped.slice(0, 3).map((f: Record<string, unknown>) => `${f.name}（${f.status}）`).join('、')}${flows.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: flows.length, flows: mapped },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'search_flows',
-    description: '搜索已有的流程定义。可查找现有流程作为参考或查找需要修改的流程。',
+    description: `搜索已有的流程定义。可查找现有流程作为参考或查找需要修改的流程。
+
+参数：keyword — 按名称/描述模糊搜索；status — 按状态筛选（draft/published/archived）；category — 按分类筛选；limit — 返回数量上限，默认 10。
+返回 JSON 包含 total 数量和 flows 数组（含 id、name、description、category、status 等）。`,
     schema: z.object({
       keyword: z.string().optional().describe('按名称/描述模糊搜索'),
       status: z.enum(['draft', 'published', 'archived']).optional().describe('按状态筛选'),
@@ -82,10 +77,10 @@ export const searchFlowsTool = tool(
 )
 
 export const getFlowDetailTool = tool(
-  async ({ flowId }): Promise<ToolResult> => {
+  async ({ flowId }): Promise<string> => {
     const definition = await FlowDefinitionModel.findById(flowId).lean() as Record<string, unknown> | null
     if (!definition) {
-      return { success: false, error: `Flow definition ${flowId} not found` }
+      return JSON.stringify({ success: false, error: `Flow definition ${flowId} not found` } satisfies ToolResult)
     }
 
     let graph: Record<string, unknown> | null = null
@@ -99,7 +94,7 @@ export const getFlowDetailTool = tool(
     const nodeCount = graph ? ((graph as Record<string, unknown>).nodes as unknown[])?.length ?? 0 : 0
     const edgeCount = graph ? ((graph as Record<string, unknown>).edges as unknown[])?.length ?? 0 : 0
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         id: definition._id,
@@ -114,10 +109,14 @@ export const getFlowDetailTool = tool(
       },
       summary: `流程 "${definition.name}"（${definition.status}）包含 ${nodeCount} 个节点、${edgeCount} 条边`,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'get_flow_detail',
-    description: '获取流程定义详情，包括当前版本的完整 FlowGraph（节点和边）。用于深入了解现有流程结构。',
+    description: `获取流程定义详情，包括当前版本的完整 FlowGraph（节点和边）。用于深入了解现有流程结构。
+
+参数：flowId — 流程定义的 _id。
+返回 JSON 包含流程完整信息：id、name、description、category、status、graph（含 nodes 和 edges 数组）。`,
     schema: z.object({
       flowId: z.string().describe('流程定义的 _id'),
     }),
@@ -125,7 +124,7 @@ export const getFlowDetailTool = tool(
 )
 
 export const searchUsersTool = tool(
-  async ({ keyword, role, limit }): Promise<ToolResult> => {
+  async ({ keyword, role, limit }): Promise<string> => {
     const filter: Record<string, unknown> = {}
     if (keyword) {
       filter.$or = [
@@ -154,15 +153,19 @@ export const searchUsersTool = tool(
       ? `没有找到${keyword ? `包含"${keyword}"的` : ''}用户`
       : `找到 ${users.length} 个用户：${mapped.slice(0, 5).map((u: Record<string, unknown>) => `${u.displayName || u.username}`).join('、')}${users.length > 5 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: users.length, users: mapped },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'search_users',
-    description: '搜索用户列表，用于设置审批节点的指派人（assignee/candidateUsers）。返回用户的 ID、姓名和角色。',
+    description: `搜索用户列表，用于设置审批节点的指派人（assignee/candidateUsers）。返回用户的 ID、姓名和角色。
+
+参数：keyword — 按用户名/显示名模糊搜索；role — 按角色 ID 筛选；limit — 返回数量上限，默认 20。
+返回 JSON 包含 users 数组，每项含 id、username、displayName、roles。`,
     schema: z.object({
       keyword: z.string().optional().describe('按用户名/显示名模糊搜索'),
       role: z.string().optional().describe('按角色 ID 筛选'),
@@ -171,71 +174,30 @@ export const searchUsersTool = tool(
   },
 )
 
-export const searchSchemasForFlowTool = tool(
-  async ({ keyword, type, limit }): Promise<ToolResult> => {
-    const filter: Record<string, unknown> = {}
-    if (keyword) {
-      filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
-    }
-    if (type) {
-      filter.type = type
-    }
-
-    const schemas = await FormSchemaModel.find(filter)
-      .select('_id name type status version')
-      .sort({ updatedAt: -1 })
-      .limit(limit)
-      .lean()
-
-    const mapped = schemas.map((s: Record<string, unknown>) => ({
-      id: s._id,
-      name: s.name,
-      type: s.type,
-      status: s.status,
-      version: s.version,
-    }))
-
-    const summary = schemas.length === 0
-      ? `没有找到${keyword ? `包含"${keyword}"的` : ''}表单`
-      : `找到 ${schemas.length} 个表单：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（${s.status}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
-
-    return {
-      success: true,
-      data: { total: schemas.length, schemas: mapped },
-      summary,
-    }
-  },
-  {
-    name: 'search_schemas',
-    description: '搜索表单 Schema，用于为 userTask 配置 formSchemaId 绑定表单。返回 Schema 的 ID、名称和类型。',
-    schema: z.object({
-      keyword: z.string().optional().describe('按名称模糊搜索'),
-      type: z.enum(['form', 'search_list']).optional().describe('按类型筛选'),
-      limit: z.number().optional().default(10).describe('返回数量上限，默认 10'),
-    }),
-  },
-)
-
 export const generateSchemaTool = tool(
-  async ({ description }): Promise<ToolResult> => {
+  async ({ description }): Promise<string> => {
     try {
-      const result = await generateSchemaFromPrompt(description)
-      return {
+      const generated = await generateSchemaFromPrompt(description)
+      const result: ToolResult = {
         success: true,
         data: {
-          schemaId: result.tempId,
-          widgets: result.widgets,
-          summary: result.summary,
+          schemaId: generated.tempId,
+          widgets: generated.widgets,
+          summary: generated.summary,
         },
       }
+      return JSON.stringify(result)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      return { success: false, error: `Schema 生成失败: ${message}` }
+      return JSON.stringify({ success: false, error: `Schema 生成失败: ${message}` } satisfies ToolResult)
     }
   },
   {
     name: 'generate_schema',
-    description: '调用 Editor Agent 生成一个表单 Schema。用于为 userTask 创建关联的表单。返回生成的 Schema JSON 和临时 ID，可在 formSchemaId 中引用。',
+    description: `调用 Editor Agent 生成一个表单 Schema。用于为 userTask 创建关联的表单。
+
+参数：description — 表单的自然语言描述，如"采购申请表单，包含物品名称、数量、金额、申请人"。
+返回 JSON 包含 schemaId（临时 ID）、widgets（Widget 数组）、summary（生成摘要）。`,
     schema: z.object({
       description: z.string().describe('表单的自然语言描述，如"采购申请表单，包含物品名称、数量、金额、申请人"'),
     }),
@@ -243,22 +205,26 @@ export const generateSchemaTool = tool(
 )
 
 export const validateFlowTool = tool(
-  async ({ flow }): Promise<ToolResult> => {
+  async ({ flow }): Promise<string> => {
     const errors = validateFlowGraph(flow as FlowGraphInput)
 
     const summary = errors.length === 0
       ? `流程校验通过，${flow.nodes.length} 个节点、${flow.edges.length} 条边`
       : `流程校验失败，${errors.length} 个错误：${errors.slice(0, 3).join('；')}${errors.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { valid: errors.length === 0, errors },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'validate_flow',
-    description: '校验 FlowGraph 的结构正确性。在生成流程后调用此工具确认无误再返回给用户。',
+    description: `校验 FlowGraph 的结构正确性。检查 startEvent/endEvent 存在性、边引用合法性、userTask 指派人配置、排他网关条件等。在生成流程后调用此工具确认无误再返回给用户。
+
+参数：flow — 包含 nodes 和 edges 数组的 FlowGraph 对象。
+返回 JSON 包含 valid 布尔值和 errors 错误列表。`,
     schema: z.object({
       flow: z.object({
         nodes: z.array(z.record(z.unknown())).describe('流程节点数组'),
@@ -273,7 +239,7 @@ export const validateFlowTool = tool(
 // ────────────────────────────────────────────
 
 export const saveAndBindSchemaTool = tool(
-  async ({ widgets, schemaName, flowId, nodeId }): Promise<ToolResult> => {
+  async ({ widgets, schemaName, flowId, nodeId }): Promise<string> => {
     const { v4: uuidv4 } = await import('uuid')
 
     const editId = uuidv4()
@@ -326,7 +292,7 @@ export const saveAndBindSchemaTool = tool(
       ? `已创建并持久化 Schema "${name}"（${schemaId}），并绑定到流程节点 ${nodeId}`
       : `已创建并持久化 Schema "${name}"（${schemaId}）`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         schemaId,
@@ -338,6 +304,7 @@ export const saveAndBindSchemaTool = tool(
       },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'save_and_bind_schema',
@@ -359,14 +326,14 @@ export const saveAndBindSchemaTool = tool(
 )
 
 export const bindSchemaToFlowNodeTool = tool(
-  async ({ flowId, nodeId, schemaId }): Promise<ToolResult> => {
+  async ({ flowId, nodeId, schemaId }): Promise<string> => {
     // 查找 Schema 获取 publishId 和 version
     const schema = await FormSchemaModel.findById(schemaId)
       .select('_id editId name version')
       .lean() as Record<string, unknown> | null
 
     if (!schema) {
-      return { success: false, error: `Schema ${schemaId} not found` }
+      return JSON.stringify({ success: false, error: `Schema ${schemaId} not found` } satisfies ToolResult)
     }
 
     const { PublishedSchemaModel } = await import('../../models/PublishedSchema.js')
@@ -380,7 +347,7 @@ export const bindSchemaToFlowNodeTool = tool(
 
     const binding = await bindSchemaToFlowNode(flowId, nodeId, schemaId, publishId, version)
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         ...binding,
@@ -388,12 +355,14 @@ export const bindSchemaToFlowNodeTool = tool(
       },
       summary: `已将 Schema "${schema.name}" 绑定到流程节点 ${nodeId}`,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'bind_schema_to_flow_node',
     description: `将已有 Schema 绑定到流程的 userTask 节点。更新 FlowVersion 中该节点的 formSchemaId、formPublishId、formVersion 字段。
 
-用于在生成流程后手动关联表单，或更新已有节点的表单引用。`,
+参数：flowId — 流程定义 ID；nodeId — 要绑定的节点 ID；schemaId — Schema ID。
+返回 JSON 包含绑定结果：flowId、nodeId、schemaId、publishId、flowVersionId、schemaName。`,
     schema: z.object({
       flowId: z.string().describe('流程定义 ID（FlowDefinition._id）'),
       nodeId: z.string().describe('要绑定的节点 ID'),
@@ -403,31 +372,31 @@ export const bindSchemaToFlowNodeTool = tool(
 )
 
 export const getFlowNodeSchemaTool = tool(
-  async ({ flowId, nodeId }): Promise<ToolResult> => {
+  async ({ flowId, nodeId }): Promise<string> => {
     const version = await FlowVersionModel.findOne({ definitionId: flowId })
       .sort({ version: -1 })
       .lean() as Record<string, unknown> | null
 
     if (!version?.graph) {
-      return { success: false, error: `Flow ${flowId} has no version` }
+      return JSON.stringify({ success: false, error: `Flow ${flowId} has no version` } satisfies ToolResult)
     }
 
     const nodes = ((version.graph as Record<string, unknown>).nodes ?? []) as Array<Record<string, unknown>>
     const node = nodes.find((n) => n.id === nodeId)
 
     if (!node) {
-      return { success: false, error: `Node ${nodeId} not found in flow ${flowId}` }
+      return JSON.stringify({ success: false, error: `Node ${nodeId} not found in flow ${flowId}` } satisfies ToolResult)
     }
 
     const data = node.data as Record<string, unknown> | undefined
     const formSchemaId = data?.formSchemaId as string | undefined
 
     if (!formSchemaId) {
-      return {
+      return JSON.stringify({
         success: true,
         data: { nodeId, hasSchema: false },
         summary: `节点 ${nodeId} 未绑定表单`,
-      }
+      } satisfies ToolResult)
     }
 
     // 获取绑定的 Schema 详情
@@ -435,7 +404,7 @@ export const getFlowNodeSchemaTool = tool(
       .select('_id name type version json')
       .lean() as Record<string, unknown> | null
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         nodeId,
@@ -452,10 +421,14 @@ export const getFlowNodeSchemaTool = tool(
         ? `节点 ${nodeId} 绑定了表单 "${schema.name}"（${formSchemaId}）`
         : `节点 ${nodeId} 引用了 Schema ${formSchemaId}，但该 Schema 已不存在`,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'get_flow_node_schema',
-    description: '获取流程节点绑定的表单 Schema 信息。用于查看某个 userTask 节点当前引用了哪个表单。',
+    description: `获取流程节点绑定的表单 Schema 信息。用于查看某个 userTask 节点当前引用了哪个表单。
+
+参数：flowId — 流程定义 ID；nodeId — 节点 ID。
+返回 JSON 包含 hasSchema、formSchemaId、formPublishId、formVersion、schemaName、widgetCount 等。`,
     schema: z.object({
       flowId: z.string().describe('流程定义 ID'),
       nodeId: z.string().describe('节点 ID'),
@@ -612,16 +585,16 @@ export function computeFlowDiff(
 // ────────────────────────────────────────────
 
 export const updateFlowTool = tool(
-  async ({ flow, flowId, description }): Promise<ToolResult> => {
+  async ({ flow, flowId, description }): Promise<string> => {
     const flowGraph = flow as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
 
     // 1. Validate
     const errors = validateFlowGraph(flowGraph)
     if (errors.length > 0) {
-      return {
+      return JSON.stringify({
         success: false,
         error: `流程校验失败，${errors.length} 个错误：${errors.slice(0, 3).join('；')}`,
-      }
+      } satisfies ToolResult)
     }
 
     // 2. Compute diff against existing flow
@@ -643,7 +616,39 @@ export const updateFlowTool = tool(
       }
     }
 
-    // 3. Save as new version
+    // 3. Human-in-the-Loop: confirm before write operation
+    const diffSummary = diff
+      ? `变更：节点 +${diff.nodesAdded} -${diff.nodesRemoved} ~${diff.nodesModified}，连线 +${diff.edgesAdded} -${diff.edgesRemoved} ~${diff.edgesModified}`
+      : `流程包含 ${flowGraph.nodes.length} 个节点、${flowGraph.edges.length} 条边`
+
+    const confirmed = interrupt({
+      type: 'flow_update',
+      message: `确认更新流程？${diffSummary}`,
+      data: {
+        flowId,
+        description,
+        diff: diff ? {
+          nodesAdded: diff.nodesAdded,
+          nodesRemoved: diff.nodesRemoved,
+          nodesModified: diff.nodesModified,
+          edgesAdded: diff.edgesAdded,
+          edgesRemoved: diff.edgesRemoved,
+          edgesModified: diff.edgesModified,
+          changes: diff.changes.slice(0, 10),
+        } : null,
+        nodeCount: flowGraph.nodes.length,
+        edgeCount: flowGraph.edges.length,
+      },
+    })
+
+    if (!confirmed) {
+      return JSON.stringify({
+        success: false,
+        error: '用户取消操作',
+      } satisfies ToolResult)
+    }
+
+    // 4. Save as new version
     if (flowId) {
       const { v4: uuidv4 } = await import('uuid')
       const now = new Date()
@@ -662,11 +667,7 @@ export const updateFlowTool = tool(
       })
     }
 
-    const diffSummary = diff
-      ? `变更：节点 +${diff.nodesAdded} -${diff.nodesRemoved} ~${diff.nodesModified}，连线 +${diff.edgesAdded} -${diff.edgesRemoved} ~${diff.edgesModified}`
-      : `流程包含 ${flowGraph.nodes.length} 个节点、${flowGraph.edges.length} 条边`
-
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         flow: flowGraph,
@@ -676,6 +677,7 @@ export const updateFlowTool = tool(
       },
       summary: diffSummary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'update_flow',
@@ -708,7 +710,6 @@ export const flowTools = [
   searchFlowsTool,
   getFlowDetailTool,
   searchUsersTool,
-  searchSchemasForFlowTool,
   generateSchemaTool,
   validateFlowTool,
   saveAndBindSchemaTool,

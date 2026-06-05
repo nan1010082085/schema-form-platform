@@ -1,74 +1,94 @@
+/* ---- Message container ---- */
 .msg {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+.msgUser {
+  flex-direction: row-reverse;
 }
 
-.label.user {
-  color: var(--ai-color-primary, #0060A2);
+.msgAssistant {
+  flex-direction: row;
 }
 
-.label.ai {
-  color: var(--ai-color-success, #26A036);
+/* ---- Avatar ---- */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #FFFFFF;
 }
 
-.body {
-  font-size: 13.5px;
-  line-height: 1.65;
-  color: var(--ai-text-primary, #333333);
+.avatarUser {
+  background: var(--ai-gradient-user, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
 }
 
-.body code {
-  background: var(--ai-bg-page, #F5F6FA);
-  padding: 1px 5px;
-  border-radius: var(--ai-radius-sm, 2px);
-  font-family: Consolas, Monaco, monospace;
-  font-size: 12px;
-  color: var(--ai-color-danger, #E50113);
+.avatarAssistant {
+  background: var(--ai-gradient-primary, linear-gradient(135deg, #0060A2 0%, #0078D4 100%));
 }
 
-.plainText {
-  font-size: 13.5px;
-  line-height: 1.65;
-  color: var(--ai-text-primary, #333333);
+/* ---- Content area ---- */
+.content {
+  flex: 1;
+  min-width: 0;
+  width: fit-content;
+  max-width: 80%;
+}
+
+/* ---- User bubble ---- */
+.userBubble {
+  background: var(--ai-gradient-primary, linear-gradient(135deg, #0060A2 0%, #0078D4 100%));
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: var(--ai-radius-lg, 12px);
+  font-size: 14px;
+  line-height: 1.6;
+  width: fit-content;
+  max-width: 50%;
   white-space: pre-wrap;
   word-break: break-word;
+  margin-left: auto;
+  box-shadow: var(--ai-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06));
 }
 
 /* ---- Step list ---- */
 .stepList {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 /* ---- Loading placeholder ---- */
 .loadingPlaceholder {
-  padding: 12px 0;
+  padding: 16px 0;
 }
 
 /* ---- Tip section ---- */
 .tip {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: var(--ai-radius-md, 6px);
-  background: var(--ai-bg-tip, #FFF8E6);
-  border: 1px solid var(--ai-border-tip, #FFE58F);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ai-text-secondary, #606266);
-  margin-top: 4px;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--ai-radius-lg, 12px);
+  background: var(--ai-color-primary-light, rgba(0, 96, 162, 0.08));
+  margin-top: 12px;
+  box-shadow: var(--ai-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06));
 }
 
 .tipIcon {
   flex-shrink: 0;
-  font-size: 13px;
+  color: var(--ai-color-primary, #0060A2);
+  margin-top: 1px;
+}
+
+.tipText {
+  font-size: 12px;
+  color: var(--ai-text-secondary, #666666);
+  line-height: 1.6;
 }

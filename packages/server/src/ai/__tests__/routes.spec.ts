@@ -264,8 +264,10 @@ describe('POST /api/ai/chat', () => {
           source: 'flow',
           turnCount: 1,
         }),
-        sessionId: 'conv-4',
-        currentAgent: 'router',
+        session: expect.objectContaining({
+          id: 'conv-4',
+          currentAgent: 'router',
+        }),
       }),
       expect.objectContaining({
         version: 'v2',

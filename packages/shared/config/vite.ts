@@ -171,8 +171,8 @@ function mergeConfig(base: UserConfig, overrides: UserConfig): UserConfig {
     }
   }
 
-  if (overrides.build && base.build) {
-    result.build = { ...base.build, ...overrides.build }
+  if (overrides.build) {
+    result.build = base.build ? { ...base.build, ...overrides.build } : { ...overrides.build }
   }
 
   for (const key of Object.keys(overrides)) {

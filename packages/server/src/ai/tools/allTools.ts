@@ -1,14 +1,16 @@
 /**
  * Unified tool set — all agents can access all tools.
  *
- * Merges editorTools and flowTools into a single array,
+ * Merges editorTools, flowTools, and schemaTools into a single array,
  * removing duplicates and ensuring all tools are available
  * to every agent.
  */
 
+// Unified schema search (replaces duplicate search_schemas in editorTools + flowTools)
+import { searchSchemasTool } from './schemaTools.js'
+
 // Editor tools
 import {
-  searchSchemasTool,
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,
@@ -42,8 +44,10 @@ import { industryTools } from './industryTools.js'
 // ────────────────────────────────────────────
 
 export const allTools = [
-  // Editor tools
+  // Unified schema search
   searchSchemasTool,
+
+  // Editor tools
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,

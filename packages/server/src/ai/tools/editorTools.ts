@@ -6,10 +6,12 @@
  */
 
 import { tool } from '@langchain/core/tools'
+import { interrupt } from '@langchain/langgraph'
 import { FormSchemaModel } from '../../models/FormSchema.js'
 import { PublishedSchemaModel } from '../../models/PublishedSchema.js'
 import { escapeRegex } from '../graph/agentBase.js'
 import { z } from 'zod'
+import type { ToolResult } from './types.js'
 
 // ────────────────────────────────────────────
 // AI 元数据类型（与 @schema-form/shared-ai 对齐）
@@ -64,79 +66,19 @@ export async function getWidgetCatalogueFromMetadata(): Promise<WidgetAIMetadata
 }
 
 // ────────────────────────────────────────────
-// Tool result type
-// ────────────────────────────────────────────
-
-interface ToolResult {
-  success: boolean
-  data?: unknown
-  error?: string
-  /** 自然语言摘要，LLM 可直接引用 */
-  summary?: string
-}
-
-// ────────────────────────────────────────────
 // LangGraph tools
 // ────────────────────────────────────────────
 
-export const searchSchemasTool = tool(
-  async ({ keyword, type, limit }): Promise<ToolResult> => {
-    const filter: Record<string, unknown> = {}
-    if (keyword) {
-      filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
-    }
-    if (type) {
-      filter.type = type
-    }
-
-    const schemas = await FormSchemaModel.find(filter)
-      .select('_id editId name type status version createdAt updatedAt')
-      .sort({ updatedAt: -1 })
-      .limit(limit)
-      .lean()
-
-    const mapped = schemas.map((s: Record<string, unknown>) => ({
-      id: s._id,
-      editId: s.editId,
-      name: s.name,
-      type: s.type,
-      status: s.status,
-      version: s.version,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-    }))
-
-    const summary = schemas.length === 0
-      ? `没有找到${keyword ? `包含"${keyword}"的` : ''}Schema`
-      : `找到 ${schemas.length} 个 Schema：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（${s.type}，${s.status}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
-
-    return {
-      success: true,
-      data: { total: schemas.length, schemas: mapped },
-      summary,
-    }
-  },
-  {
-    name: 'search_schemas',
-    description: '搜索已有的表单 Schema 列表。可用于查找现有 Schema 作为参考、查找用户想修改的 Schema、或检查是否已存在同名 Schema。',
-    schema: z.object({
-      keyword: z.string().optional().describe('按名称模糊搜索的关键词'),
-      type: z.enum(['form', 'search_list']).optional().describe('按类型筛选'),
-      limit: z.number().optional().default(10).describe('返回数量上限，默认 10'),
-    }),
-  },
-)
-
 export const getSchemaDetailTool = tool(
-  async ({ schemaId }): Promise<ToolResult> => {
+  async ({ schemaId }): Promise<string> => {
     const schema = await FormSchemaModel.findById(schemaId).lean() as Record<string, unknown> | null
     if (!schema) {
-      return { success: false, error: `Schema ${schemaId} not found` }
+      return JSON.stringify({ success: false, error: `Schema ${schemaId} not found` } satisfies ToolResult)
     }
 
     const widgetCount = Array.isArray(schema.json) ? (schema.json as unknown[]).length : 0
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         id: schema._id,
@@ -151,10 +93,14 @@ export const getSchemaDetailTool = tool(
       },
       summary: `Schema "${schema.name}"（${schema.type}，${schema.status}）包含 ${widgetCount} 个组件`,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'get_schema_detail',
-    description: '获取指定 Schema 的完整 JSON 内容，包括所有 Widget 配置。用于深入了解现有 Schema 结构以便修改。',
+    description: `获取指定 Schema 的完整 JSON 内容，包括所有 Widget 配置。用于深入了解现有 Schema 结构以便修改。
+
+参数：schemaId — Schema 的 _id（UUID 字符串）。
+返回 JSON 包含 Schema 完整信息：id、name、type、status、version、json（Widget 树）、时间戳。`,
     schema: z.object({
       schemaId: z.string().describe('Schema 的 _id'),
     }),
@@ -162,7 +108,7 @@ export const getSchemaDetailTool = tool(
 )
 
 export const searchPublishedSchemasTool = tool(
-  async ({ keyword, limit }): Promise<ToolResult> => {
+  async ({ keyword, limit }): Promise<string> => {
     const filter: Record<string, unknown> = {}
     if (keyword) {
       filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
@@ -188,15 +134,19 @@ export const searchPublishedSchemasTool = tool(
       ? '没有找到已发布的 Schema'
       : `找到 ${schemas.length} 个已发布 Schema：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（v${s.version}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: schemas.length, schemas: mapped },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'search_published_schemas',
-    description: '搜索已发布的 Schema 版本。可用于查找可复用的已发布模板。',
+    description: `搜索已发布的 Schema 版本。可用于查找可复用的已发布模板。
+
+参数：keyword — 按名称模糊搜索；limit — 返回数量上限，默认 10。
+返回 JSON 包含 total 数量和 schemas 数组（含 sourceId、publishId、version、publishedAt）。`,
     schema: z.object({
       keyword: z.string().optional().describe('按名称模糊搜索'),
       limit: z.number().optional().default(10).describe('返回数量上限，默认 10'),
@@ -205,7 +155,7 @@ export const searchPublishedSchemasTool = tool(
 )
 
 export const getWidgetCatalogueTool = tool(
-  async ({ category }): Promise<ToolResult> => {
+  async ({ category }): Promise<string> => {
     const widgets = await getWidgetCatalogueFromMetadata()
 
     const filtered = category
@@ -215,15 +165,19 @@ export const getWidgetCatalogueTool = tool(
     const groupLabel = category ? `${category} 分组` : '全部'
     const summary = `${groupLabel}共 ${filtered.length} 个组件：${filtered.slice(0, 5).map(w => w.displayName).join('、')}${filtered.length > 5 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: filtered.length, widgets: filtered },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'get_widget_catalogue',
-    description: '获取 Widget 组件目录，包含所有可用组件类型及其关键属性。可按分类筛选。',
+    description: `获取 Widget 组件目录，包含所有可用组件类型及其关键属性（defaultProps、keyProps、exposedValues、receivableEvents 等）。可按分类筛选。
+
+参数：category — 组件分类（container/layout/form/static/action/table/business/chart），不传返回全部。
+返回 JSON 包含 total 数量和 widgets 数组，每个 widget 含 type、group、displayName、description、defaultProps、keyProps 等完整元数据。`,
     schema: z.object({
       category: z.enum(['container', 'layout', 'form', 'static', 'action', 'table', 'business', 'chart'])
         .optional()
@@ -233,7 +187,7 @@ export const getWidgetCatalogueTool = tool(
 )
 
 export const searchWidgetsByKeywordTool = tool(
-  async ({ query, limit }): Promise<ToolResult> => {
+  async ({ query, limit }): Promise<string> => {
     // 提取查询关键词（中文分词 + 英文分词）
     const queryTokens = extractTokens(query)
 
@@ -275,15 +229,19 @@ export const searchWidgetsByKeywordTool = tool(
       ? `没有找到与"${query}"相关的 Schema`
       : `找到 ${mapped.length} 个相关 Schema：${mapped.slice(0, 3).map((s) => `${String(s.name)}（匹配度 ${s.score}%）`).join('、')}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: mapped.length, schemas: mapped },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'fuzzy_search_schemas',
-    description: '基于关键词模糊搜索已有 Schema（非语义搜索，使用 Jaccard 相似度匹配名称和组件结构中的关键词）。当用户描述模糊、需要按组件类型或功能特征查找时使用。',
+    description: `基于关键词模糊搜索已有 Schema（非语义搜索，使用 Jaccard 相似度匹配名称和组件结构中的关键词）。当用户描述模糊、需要按组件类型或功能特征查找时使用。
+
+参数：query — 关键词描述（如"请假申请表单"）；limit — 返回数量上限，默认 5。
+返回 JSON 包含 schemas 数组，每个元素含匹配度 score（百分比）。`,
     schema: z.object({
       query: z.string().describe('关键词描述，如"请假申请表单"、"用户管理列表页"'),
       limit: z.number().optional().default(5).describe('返回数量上限，默认 5'),
@@ -292,7 +250,7 @@ export const searchWidgetsByKeywordTool = tool(
 )
 
 export const validateSchemaTool = tool(
-  async ({ widgets }): Promise<ToolResult> => {
+  async ({ widgets }): Promise<string> => {
     const meta = await getMetadata()
     const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
     const CONTAINER_TYPES = new Set(
@@ -347,15 +305,19 @@ export const validateSchemaTool = tool(
       ? `Schema 校验通过，共 ${(widgets as unknown[]).length} 个组件`
       : `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}${errors.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { valid: errors.length === 0, errors },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'validate_schema',
-    description: '校验 Widget Schema JSON 的结构正确性。在生成 Schema 后调用此工具确认无误再返回给用户。',
+    description: `校验 Widget Schema JSON 的结构正确性。检查组件类型合法性、ID 存在性、容器嵌套规则。在生成 Schema 后调用此工具确认无误再返回给用户。
+
+参数：widgets — 要校验的 Widget 数组。
+返回 JSON 包含 valid 布尔值和 errors 错误列表（每项含 path 和 message）。`,
     schema: z.object({
       widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
     }),
@@ -367,7 +329,7 @@ export const validateSchemaTool = tool(
 // ────────────────────────────────────────────
 
 export const findFlowReferencesTool = tool(
-  async ({ schemaId }): Promise<ToolResult> => {
+  async ({ schemaId }): Promise<string> => {
     // 动态导入避免循环依赖
     const { FlowVersionModel } = await import('../../flow-models/FlowVersion.js')
     const { FlowDefinitionModel } = await import('../../flow-models/FlowDefinition.js')
@@ -419,15 +381,19 @@ export const findFlowReferencesTool = tool(
       ? '没有流程节点引用此 Schema'
       : `找到 ${refs.length} 个流程节点引用此 Schema：${refs.slice(0, 3).map(r => `${r.flowName}/${r.nodeLabel}`).join('、')}${refs.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: { total: refs.length, references: refs },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'find_flow_references',
-    description: '查找引用了指定 Schema 的所有流程节点。用于了解一个 Schema 被哪些流程的哪些节点使用，实现 Schema → Flow 的反向关联查询。',
+    description: `查找引用了指定 Schema 的所有流程节点。用于了解一个 Schema 被哪些流程的哪些节点使用，实现 Schema → Flow 的反向关联查询。
+
+参数：schemaId — Schema 的 _id。
+返回 JSON 包含 references 数组，每项含 flowId、flowName、nodeId、nodeLabel、bpmnType。`,
     schema: z.object({
       schemaId: z.string().describe('Schema 的 _id'),
     }),
@@ -565,7 +531,7 @@ export function computeSchemaDiff(
 // ────────────────────────────────────────────
 
 export const updateSchemaTool = tool(
-  async ({ widgets, schemaId, description }): Promise<ToolResult> => {
+  async ({ widgets, schemaId, description }): Promise<string> => {
     // 1. Validate the new schema
     const meta = await getMetadata()
     const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
@@ -618,10 +584,10 @@ export const updateSchemaTool = tool(
     walk(widgets as Record<string, unknown>[], '', 0)
 
     if (errors.length > 0) {
-      return {
+      return JSON.stringify({
         success: false,
         error: `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}`,
-      }
+      } satisfies ToolResult)
     }
 
     // 2. Compute diff against existing schema
@@ -639,7 +605,35 @@ export const updateSchemaTool = tool(
       }
     }
 
-    // 3. Save version (version creation is handled by route handler)
+    // 3. Human-in-the-Loop: confirm before write operation
+    const diffSummary = diff
+      ? `变更：新增 ${diff.added} 个组件，删除 ${diff.removed} 个，修改 ${diff.modified} 个`
+      : `Schema 包含 ${(widgets as unknown[]).length} 个组件`
+
+    const confirmed = interrupt({
+      type: 'schema_update',
+      message: `确认更新 Schema？${diffSummary}`,
+      data: {
+        schemaId,
+        description,
+        diff: diff ? {
+          added: diff.added,
+          removed: diff.removed,
+          modified: diff.modified,
+          changes: diff.changes.slice(0, 10),
+        } : null,
+        widgetCount: (widgets as unknown[]).length,
+      },
+    })
+
+    if (!confirmed) {
+      return JSON.stringify({
+        success: false,
+        error: '用户取消操作',
+      } satisfies ToolResult)
+    }
+
+    // 4. Save version (version creation is handled by route handler)
     if (schemaId) {
       // Update existing schema
       const { v4: uuidv4 } = await import('uuid')
@@ -679,11 +673,7 @@ export const updateSchemaTool = tool(
       }
     }
 
-    const diffSummary = diff
-      ? `变更：新增 ${diff.added} 个组件，删除 ${diff.removed} 个，修改 ${diff.modified} 个`
-      : `Schema 包含 ${(widgets as unknown[]).length} 个组件`
-
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         widgets,
@@ -693,6 +683,7 @@ export const updateSchemaTool = tool(
       },
       summary: diffSummary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'update_schema',
@@ -719,7 +710,6 @@ export const updateSchemaTool = tool(
 )
 
 export const editorTools = [
-  searchSchemasTool,
   getSchemaDetailTool,
   searchPublishedSchemasTool,
   getWidgetCatalogueTool,

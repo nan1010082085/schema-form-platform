@@ -9,7 +9,7 @@
  * invokes the LLM and returns its response.
  */
 
-import { ChatOpenAI } from '@langchain/openai'
+import { getLLM } from '../services/llmCache.js'
 import { HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { flowTools } from '../tools/flowTools.js'
@@ -73,13 +73,13 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
   }
 
   // Inject conversation history summary
-  if (state.historySummary) {
-    prompt += `\n\n--- 前文摘要 ---\n${state.historySummary}`
+  if (state.interaction.historySummary) {
+    prompt += `\n\n--- 前文摘要 ---\n${state.interaction.historySummary}`
   }
 
   // Inject user preferences
-  if (state.preferences && Object.keys(state.preferences).length > 0) {
-    const prefs = Object.entries(state.preferences)
+  if (state.interaction.preferences && Object.keys(state.interaction.preferences).length > 0) {
+    const prefs = Object.entries(state.interaction.preferences)
       .map(([k, v]) => `- ${k}: ${v}`)
       .join('\n')
     prompt += `\n\n--- 用户偏好 ---\n${prefs}`
@@ -95,7 +95,7 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
   }
 
   // Inject collaboration context from the requesting agent
-  const currentStep = state.taskChain[state.currentStepIndex]
+  const currentStep = state.task.chain[state.task.currentStepIndex]
   if (currentStep?.context && Object.keys(currentStep.context).length > 0) {
     prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
     prompt += JSON.stringify(currentStep.context, null, 2)
@@ -118,22 +118,10 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
 export async function flowAgentNode(
   state: typeof AgentStateAnnotation.State,
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
-  const apiKey = process.env.DEEPSEEK_API_KEY
-  if (!apiKey) {
-    throw new Error('DEEPSEEK_API_KEY environment variable is required.')
-  }
-
   const systemPrompt = await getFlowSystemPrompt()
   const userContent = buildContextMessage(state)
 
-  const model = new ChatOpenAI({
-    model: 'deepseek-v4-pro',
-    apiKey,
-    configuration: { baseURL: 'https://api.deepseek.com' },
-    temperature: 0.7,
-    maxTokens: 8192,
-    streaming: true,
-  }).bindTools([...flowTools, ...collaborationTools])
+  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools])
 
   // Build message list: system prompt + conversation history (truncated) + current user message
   const truncatedHistory = truncateMessages(state.messages)
@@ -144,7 +132,15 @@ export async function flowAgentNode(
     new HumanMessage(userContent),
   ]
 
-  const response = await model.invoke(messages)
+  console.log(`[flowAgent] 开始执行, messages=${state.messages.length}`)
 
-  return { messages: [response] }
+  try {
+    const response = await model.invoke(messages)
+    const hasToolCalls = response.tool_calls && response.tool_calls.length > 0
+    console.log(`[flowAgent] LLM 调用完成, hasToolCalls=${hasToolCalls}, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)
+    return { messages: [response] }
+  } catch (err) {
+    console.error(`[flowAgent] LLM 调用失败:`, err)
+    throw err
+  }
 }

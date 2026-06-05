@@ -83,7 +83,6 @@ router.get('/conversations/:id/export', async (ctx) => {
       flow: m.flow,
       timestamp: m.timestamp,
     })),
-    taskChain: convo.taskChain,
     createdAt: convo.createdAt,
     updatedAt: convo.updatedAt,
     exportedAt: new Date(),

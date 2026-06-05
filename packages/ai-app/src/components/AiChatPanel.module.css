@@ -171,11 +171,13 @@
 }
 
 .inputBox {
-  background: var(--ai-bg-white, #FFFFFF);
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: 12px;
+  background: var(--ai-glass-bg, rgba(255, 255, 255, 0.72));
+  backdrop-filter: var(--ai-glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--ai-glass-blur, blur(16px));
+  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
+  border-radius: var(--ai-radius-xl, 16px);
   padding: 12px 14px 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--ai-shadow-float, 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06));
 }
 
 .inputDisabled {

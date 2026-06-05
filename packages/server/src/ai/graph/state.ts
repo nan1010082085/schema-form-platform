@@ -4,6 +4,17 @@
  * Defines the shared state passed through the agent graph using
  * LangGraph's Annotation.Root() pattern. MessagesAnnotation serves
  * as the base for message handling with proper reducer semantics.
+ *
+ * State is organized into 5 nested groups:
+ *   - session:  identifiers and active agent
+ *   - task:     task chain, step tracking, intermediate results
+ *   - tools:    tool calling state
+ *   - error:    error handling
+ *   - interaction: clarification, preferences, history summary, collaboration
+ *
+ * Plus two top-level fields:
+ *   - messages: from MessagesAnnotation (reducer for message combining)
+ *   - context:  business context (AIContext — well-structured, not flat)
  */
 
 import { Annotation, MessagesAnnotation } from '@langchain/langgraph'
@@ -35,7 +46,7 @@ export interface AIMessage {
 export type AgentSource = 'editor' | 'flow' | 'page' | 'standalone'
 export type ActiveAgent = 'router' | 'editor' | 'flow' | 'page' | 'general'
 
-/** 任务链步骤 */
+/** Task chain step */
 export interface TaskStep {
   agent: 'editor' | 'flow' | 'page'
   description: string
@@ -54,7 +65,7 @@ export interface AIContext {
   currentSchema?: Record<string, unknown>[]
   /** Current flow graph, provided for flow conversations. */
   currentFlow?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
-  /** @ 引用的资源内容 */
+  /** @ referenced resource content */
   mentionedResources?: Array<{ type: 'schema' | 'flow'; name: string; content: Record<string, unknown> | Record<string, unknown>[] }>
   /** Running count of user turns in this conversation. */
   turnCount: number
@@ -86,7 +97,17 @@ export interface AgentToolResult {
 }
 
 // ────────────────────────────────────────────
-// LangGraph State Annotation
+// Collaboration request type
+// ────────────────────────────────────────────
+export interface CollaborationRequest {
+  targetAgent: 'editor' | 'flow' | 'page'
+  description: string
+  context?: Record<string, unknown>
+  conversationId?: string
+}
+
+// ────────────────────────────────────────────
+// LangGraph State Annotation (nested structure)
 // ────────────────────────────────────────────
 
 /**
@@ -101,108 +122,65 @@ export const AgentStateAnnotation = Annotation.Root({
   // Inherit messages from MessagesAnnotation (includes reducer for message combining)
   ...MessagesAnnotation.spec,
 
-  // Session and conversation identifiers
-  sessionId: Annotation<string>({
-    reducer: (_, next) => next,
-    default: () => '',
-  }),
-
-  conversationId: Annotation<string>({
-    reducer: (_, next) => next,
-    default: () => '',
-  }),
-
-  // Current active agent in the graph
-  currentAgent: Annotation<ActiveAgent>({
-    reducer: (_, next) => next,
-    default: () => 'router' as ActiveAgent,
-  }),
-
-  // Business context (schema, flow, source info)
+  // Business context (schema, flow, source info) — well-structured, stays top-level
   context: Annotation<AIContext>({
     reducer: (_, next) => next,
     default: () => ({ source: 'standalone' as AgentSource, turnCount: 0 }),
   }),
 
-  // Task type classification
-  taskType: Annotation<string>({
+  // ── Group 1: Session ──
+  session: Annotation<{
+    id: string
+    conversationId: string
+    currentAgent: ActiveAgent
+  }>({
     reducer: (_, next) => next,
-    default: () => 'general',
+    default: () => ({ id: '', conversationId: '', currentAgent: 'router' as ActiveAgent }),
   }),
 
-  // Tool calling state
-  needsTool: Annotation<boolean>({
+  // ── Group 2: Task ──
+  task: Annotation<{
+    type: string
+    chain: TaskStep[]
+    currentStepIndex: number
+    intermediateResults: Record<string, unknown>[]
+    currentVersion: number
+  }>({
     reducer: (_, next) => next,
-    default: () => false,
+    default: () => ({ type: 'general', chain: [], currentStepIndex: 0, intermediateResults: [], currentVersion: 0 }),
   }),
 
-  toolResults: Annotation<AgentToolResult[]>({
+  // ── Group 3: Tools ──
+  tools: Annotation<{
+    needsTool: boolean
+    results: AgentToolResult[]
+  }>({
     reducer: (_, next) => next,
-    default: () => [],
+    default: () => ({ needsTool: false, results: [] }),
   }),
 
-  // Error handling
+  // ── Group 4: Error ──
   error: Annotation<AIError | null>({
     reducer: (_, next) => next,
     default: () => null,
   }),
 
-  // Clarification flow
-  clarificationRequest: Annotation<string | null>({
+  // ── Group 5: Interaction ──
+  interaction: Annotation<{
+    clarificationRequest: string | null
+    clarificationOptions: string[]
+    preferences: Record<string, unknown>
+    historySummary: string
+    collaborationRequest: CollaborationRequest | null
+  }>({
     reducer: (_, next) => next,
-    default: () => null,
-  }),
-
-  clarificationOptions: Annotation<string[]>({
-    reducer: (_, next) => next,
-    default: () => [],
-  }),
-
-  // Task chain (Router decomposes complex requests)
-  taskChain: Annotation<TaskStep[]>({
-    reducer: (_, next) => next,
-    default: () => [],
-  }),
-
-  currentStepIndex: Annotation<number>({
-    reducer: (_, next) => next,
-    default: () => 0,
-  }),
-
-  // Intermediate results from subtasks
-  intermediateResults: Annotation<Record<string, unknown>[]>({
-    reducer: (_, next) => next,
-    default: () => [],
-  }),
-
-  // User preferences (layout style, conventions)
-  preferences: Annotation<Record<string, unknown>>({
-    reducer: (_, next) => next,
-    default: () => ({}),
-  }),
-
-  // Summary of earlier conversation turns
-  historySummary: Annotation<string>({
-    reducer: (_, next) => next,
-    default: () => '',
-  }),
-
-  // Version tracking — incremented on each schema/flow update
-  currentVersion: Annotation<number>({
-    reducer: (_, next) => next,
-    default: () => 0,
-  }),
-
-  // Collaboration request — set by afterToolsNode when request_collaboration
-  // tool_call is detected, consumed by thinkerNode to inject a new task step.
-  collaborationRequest: Annotation<{
-    targetAgent: 'editor' | 'flow' | 'page'
-    description: string
-    context?: Record<string, unknown>
-    conversationId?: string
-  } | null>({
-    reducer: (_, next) => next,
-    default: () => null,
+    default: () => ({
+      clarificationRequest: null,
+      clarificationOptions: [],
+      preferences: {},
+      historySummary: '',
+      collaborationRequest: null,
+    }),
   }),
 })
 

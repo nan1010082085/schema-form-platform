@@ -248,15 +248,19 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       <div :class="styles.hint">表单数据写入流程变量的名称</div>
 
       <FieldRow label="宿主方法">
-        <el-checkbox-group
+        <el-select
           :model-value="(node.data?.hostMethods as string[]) ?? ['setValues', 'getValues', 'validate']"
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
+          placeholder="选择宿主方法"
           @change="update('hostMethods', $event)"
         >
-          <el-checkbox value="setValues" label="setValues" />
-          <el-checkbox value="getValues" label="getValues" />
-          <el-checkbox value="validate" label="validate" />
-          <el-checkbox value="submit" label="submit" />
-        </el-checkbox-group>
+          <el-option value="setValues" label="setValues" />
+          <el-option value="getValues" label="getValues" />
+          <el-option value="validate" label="validate" />
+          <el-option value="submit" label="submit" />
+        </el-select>
       </FieldRow>
       <div :class="styles.hint">允许宿主调用的表单方法</div>
     </template>

@@ -57,10 +57,8 @@ describe('RAG Tools', () => {
     })
 
     it('returns search results', async () => {
-      const result = await ragSearchTool.invoke({
-        query: 'user registration form',
-        limit: 5,
-      }) as Record<string, unknown>
+      const raw = await ragSearchTool.invoke({ query: 'user registration form', limit: 5 })
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw
       expect(result.success).toBe(true)
       expect((result.data as Record<string, unknown>).total).toBe(1)
       expect(((result.data as Record<string, unknown>).schemas as Array<Record<string, unknown>>)[0].name).toBe('User Registration Form')
@@ -68,9 +66,8 @@ describe('RAG Tools', () => {
     })
 
     it('returns summary with match count', async () => {
-      const result = await ragSearchTool.invoke({
-        query: 'user form',
-      }) as Record<string, unknown>
+      const raw = await ragSearchTool.invoke({ query: 'user form' })
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw
       expect(result.summary).toContain('1 个语义相关 Schema')
       expect(result.summary).toContain('85%')
     })
@@ -83,17 +80,15 @@ describe('RAG Tools', () => {
     })
 
     it('indexes a single schema', async () => {
-      const result = await ragIndexTool.invoke({
-        schemaId: 'test-id',
-      }) as Record<string, unknown>
+      const raw = await ragIndexTool.invoke({ schemaId: 'test-id' })
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw
       expect(result.success).toBe(true)
       expect((result.data as Record<string, unknown>).action).toBe('created')
     })
 
     it('reindexes all schemas', async () => {
-      const result = await ragIndexTool.invoke({
-        reindex: true,
-      }) as Record<string, unknown>
+      const raw = await ragIndexTool.invoke({ reindex: true })
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw
       expect(result.success).toBe(true)
       expect((result.data as Record<string, unknown>).total).toBe(5)
       expect((result.data as Record<string, unknown>).created).toBe(3)

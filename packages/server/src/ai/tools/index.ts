@@ -5,3 +5,4 @@
 export { editorTools } from './editorTools.js'
 export { flowTools } from './flowTools.js'
 export { widgetTools } from './widgetTools.js'
+export { searchSchemasTool } from './schemaTools.js'

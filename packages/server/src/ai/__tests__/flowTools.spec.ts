@@ -34,10 +34,10 @@ import {
   searchFlowsTool,
   getFlowDetailTool,
   searchUsersTool,
-  searchSchemasForFlowTool,
   validateFlowTool,
   validateFlowGraph,
 } from '../tools/flowTools.js'
+import { searchSchemasTool } from '../tools/schemaTools.js'
 import { FlowDefinitionModel } from '../../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../../flow-models/FlowVersion.js'
 import { FormSchemaModel } from '../../models/FormSchema.js'
@@ -48,8 +48,8 @@ beforeEach(() => {
 })
 
 describe('flowTools', () => {
-  it('defines 10 tools', () => {
-    expect(flowTools).toHaveLength(10)
+  it('defines 9 tools', () => {
+    expect(flowTools).toHaveLength(9)
   })
 
   it('has correct tool names', () => {
@@ -58,7 +58,6 @@ describe('flowTools', () => {
       'search_flows',
       'get_flow_detail',
       'search_users',
-      'search_schemas',
       'generate_schema',
       'validate_flow',
       'save_and_bind_schema',
@@ -178,7 +177,7 @@ describe('tool.invoke()', () => {
     })
   })
 
-  describe('search_schemas', () => {
+  describe('search_schemas (via schemaTools)', () => {
     it('searches schemas by keyword', async () => {
       const mockSchemas = [{ _id: 's1', name: '用户表单', type: 'form', status: 'draft', version: '1' }]
       vi.mocked(FormSchemaModel.find).mockReturnValue({
@@ -191,7 +190,7 @@ describe('tool.invoke()', () => {
         }),
       } as any)
 
-      const result = await searchSchemasForFlowTool.invoke({ keyword: '用户' })
+      const result = await searchSchemasTool.invoke({ keyword: '用户', source: 'flow' })
       const parsed = typeof result === 'string' ? JSON.parse(result) : result
       expect(parsed.success).toBe(true)
       expect(parsed.data).toHaveProperty('total', 1)

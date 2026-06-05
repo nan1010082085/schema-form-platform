@@ -165,82 +165,98 @@ const steps = computed<StepData[]>(() => {
 </script>
 
 <template>
-  <div :class="$style.msg">
-    <span :class="[$style.label, role === 'user' ? $style.user : $style.ai]">
-      {{ label }}
-    </span>
+  <div :class="[$style.msg, role === 'user' ? $style.msgUser : $style.msgAssistant]">
+    <!-- Avatar -->
+    <div :class="[$style.avatar, role === 'user' ? $style.avatarUser : $style.avatarAssistant]">
+      <!-- User icon -->
+      <svg v-if="role === 'user'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <!-- AI icon -->
+      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    </div>
 
-    <!-- User message: plain content -->
-    <template v-if="role === 'user'">
-      <div :class="$style.body">
-        <div v-if="content" :class="$style.plainText">{{ content }}</div>
-      </div>
-    </template>
+    <!-- Content area -->
+    <div :class="$style.content">
+      <!-- User message: bubble style -->
+      <template v-if="role === 'user'">
+        <div v-if="content" :class="$style.userBubble">{{ content }}</div>
+      </template>
 
-    <!-- Assistant message: step cards -->
-    <template v-else>
-      <!-- Loading placeholder when no steps yet -->
-      <div v-if="loading && steps.length === 0" :class="$style.loadingPlaceholder">
-        <AiLoadingDots />
-      </div>
+      <!-- Assistant message: step cards -->
+      <template v-else>
+        <!-- Loading placeholder when no steps yet -->
+        <div v-if="loading && steps.length === 0" :class="$style.loadingPlaceholder">
+          <AiLoadingDots />
+        </div>
 
-      <!-- Step card list -->
-      <div v-if="steps.length > 0" :class="$style.stepList">
-        <AiStepCard
-          v-for="(step, idx) in steps"
-          :key="idx"
-          :index="idx + 1"
-          :type="step.type"
-          :title="step.title"
-          :content="step.content"
-          :status="step.status"
-          :tool-name="step.toolName"
-          :tool-display-name="step.toolDisplayName"
-          :tool-result="step.toolResult"
-          :tool-arguments="step.toolArguments"
-          :error="step.error"
-          :card-type="step.cardType"
-          :card-title="step.cardTitle"
-          :primary-action="step.primaryAction"
-          :secondary-action="step.secondaryAction"
-          :is-last="idx === steps.length - 1"
-          @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
-          @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
-        >
-          <!-- Result card slot -->
-          <template v-if="step.type === 'result' && cards">
-            <SchemaCard
-              v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
-              :key="'s' + cIdx"
-              :title="card.title"
-              :fields="card.fields"
-              :primary-action="card.primaryAction"
-              :secondary-action="card.secondaryAction"
-              compact
-              @primary-action="emit('card-primary-action', cIdx)"
-              @secondary-action="emit('card-secondary-action', cIdx)"
-            />
-            <FlowCard
-              v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
-              :key="'f' + cIdx"
-              :title="card.title"
-              :nodes="card.nodes"
-              :primary-action="card.primaryAction"
-              :secondary-action="card.secondaryAction"
-              compact
-              @primary-action="emit('card-primary-action', cIdx)"
-              @secondary-action="emit('card-secondary-action', cIdx)"
-            />
-          </template>
-        </AiStepCard>
-      </div>
+        <!-- Step card list -->
+        <div v-if="steps.length > 0" :class="$style.stepList">
+          <AiStepCard
+            v-for="(step, idx) in steps"
+            :key="idx"
+            :index="idx + 1"
+            :type="step.type"
+            :title="step.title"
+            :content="step.content"
+            :status="step.status"
+            :tool-name="step.toolName"
+            :tool-display-name="step.toolDisplayName"
+            :tool-result="step.toolResult"
+            :tool-arguments="step.toolArguments"
+            :error="step.error"
+            :card-type="step.cardType"
+            :card-title="step.cardTitle"
+            :primary-action="step.primaryAction"
+            :secondary-action="step.secondaryAction"
+            :is-last="idx === steps.length - 1"
+            @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
+            @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
+          >
+            <!-- Result card slot -->
+            <template v-if="step.type === 'result' && cards">
+              <SchemaCard
+                v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
+                :key="'s' + cIdx"
+                :title="card.title"
+                :fields="card.fields"
+                :primary-action="card.primaryAction"
+                :secondary-action="card.secondaryAction"
+                compact
+                @primary-action="emit('card-primary-action', cIdx)"
+                @secondary-action="emit('card-secondary-action', cIdx)"
+              />
+              <FlowCard
+                v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
+                :key="'f' + cIdx"
+                :title="card.title"
+                :nodes="card.nodes"
+                :primary-action="card.primaryAction"
+                :secondary-action="card.secondaryAction"
+                compact
+                @primary-action="emit('card-primary-action', cIdx)"
+                @secondary-action="emit('card-secondary-action', cIdx)"
+              />
+            </template>
+          </AiStepCard>
+        </div>
 
-      <!-- Tip -->
-      <div v-if="tip" :class="$style.tip">
-        <span :class="$style.tipIcon">&#x1F4A1;</span>
-        <span>{{ tip }}</span>
-      </div>
-    </template>
+        <!-- Tip -->
+        <div v-if="tip" :class="$style.tip">
+          <svg :class="$style.tipIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          <span :class="$style.tipText">{{ tip }}</span>
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 

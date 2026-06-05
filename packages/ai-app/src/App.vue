@@ -68,20 +68,54 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
   --ai-color-info: #4581E9;
   --ai-color-info-bg: rgba(22, 119, 255, 0.08);
   --ai-color-danger: #E50113;
-  --ai-text-primary: #333333;
+  --ai-color-danger-bg: rgba(229, 1, 19, 0.08);
+  --ai-color-purple: #7C3AED;
+  --ai-color-purple-bg: rgba(124, 58, 237, 0.08);
+  --ai-color-warning: #E6A23C;
+  --ai-color-warning-bg: rgba(230, 162, 60, 0.1);
+  --ai-color-primary-light: rgba(0, 96, 162, 0.08);
+  --ai-text-primary: #1A1A1A;
   --ai-text-secondary: #666666;
   --ai-text-hint: #999999;
   --ai-text-disabled: #C0C4CC;
   --ai-text-inverse: #FFFFFF;
-  --ai-border-base: #D5DDE3;
-  --ai-border-light: #EBEDF3;
+  --ai-border-base: #E0E4EA;
+  --ai-border-light: #F0F2F5;
   --ai-bg-white: #FFFFFF;
   --ai-bg-page: #F5F6FA;
-  --ai-bg-gray: #F5F7FA;
+  --ai-bg-gray: #F7F8FA;
   --ai-bg-gray-light: #FAFAFA;
-  --ai-bg-hover: #E5EFF6;
-  --ai-radius-sm: 2px;
-  --ai-radius-md: 4px;
+  --ai-bg-hover: #F0F5FF;
+  --ai-radius-sm: 6px;
+  --ai-radius-md: 8px;
+  --ai-radius-lg: 12px;
+  --ai-radius-xl: 16px;
+  --ai-radius-2xl: 20px;
+
+  /* 间距 */
+  --ai-spacing-xs: 6px;
+  --ai-spacing-sm: 10px;
+  --ai-spacing-md: 16px;
+  --ai-spacing-lg: 24px;
+  --ai-spacing-xl: 32px;
+
+  /* 阴影 */
+  --ai-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --ai-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --ai-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --ai-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06);
+  --ai-shadow-float: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* 毛玻璃 */
+  --ai-glass-bg: rgba(255, 255, 255, 0.72);
+  --ai-glass-blur: blur(16px);
+  --ai-glass-border: rgba(255, 255, 255, 0.18);
+
+  /* 渐变 */
+  --ai-gradient-primary: linear-gradient(135deg, #0060A2 0%, #0078D4 100%);
+  --ai-gradient-user: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --ai-gradient-subtle: linear-gradient(135deg, rgba(0, 96, 162, 0.04) 0%, rgba(0, 120, 212, 0.02) 100%);
+  --ai-gradient-card-header: linear-gradient(180deg, rgba(245, 247, 250, 0.8) 0%, rgba(245, 247, 250, 0.4) 100%);
 }
 
 html,

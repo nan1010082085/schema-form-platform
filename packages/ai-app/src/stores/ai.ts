@@ -23,6 +23,7 @@ import type {
   FlowDiff,
   VersionEntry,
   RagSearchResult,
+  PendingInterrupt,
 } from '@/types'
 import {
   chat,
@@ -40,6 +41,7 @@ import {
   searchRag,
   searchConversations,
   mentionSearch,
+  resumeInterrupt,
   type LLMProviderInfo,
   type LLMAggregatedUsage,
   type MentionSearchResult,
@@ -101,6 +103,9 @@ export const useAiStore = defineStore('ai', () => {
   const ragSearching = ref(false)
   /** 用户选中的 RAG context，发送消息时携带 */
   const ragContext = ref<RagSearchResult[]>([])
+
+  // ---- HITL Interrupt 状态 ----
+  const pendingInterrupt = ref<PendingInterrupt | null>(null)
 
   // ---- Chat Settings ----
   const CHAT_SETTINGS_KEY = 'ai-chat-settings'
@@ -535,8 +540,35 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
+      case 'interrupt': {
+        // HITL 确认：写操作需要用户确认
+        const interruptData: PendingInterrupt = {
+          threadId: event.threadId ?? '',
+          type: event.interruptType ?? 'unknown',
+          message: event.message ?? '需要您的确认',
+          data: event.data,
+        }
+        pendingInterrupt.value = interruptData
+        messages.value.push({
+          role: 'assistant',
+          type: 'interrupt',
+          content: interruptData.message,
+          data: interruptData,
+          timestamp: new Date(),
+          status: 'received',
+        })
+        break
+      }
+
       case 'error':
         error.value = event.content ?? 'Unknown error'
+        // 将错误信息写入消息内容，让用户明确看到失败原因
+        if (msg.status === 'streaming') {
+          const agentLabel = event.agent ? ` [${event.agent}]` : ''
+          msg.content = (msg.content || msg.thinking || '')
+            + `\n\n⚠️${agentLabel} ${event.content ?? '未知错误'}`
+          msg.status = 'error'
+        }
         break
     }
   }
@@ -576,6 +608,87 @@ export const useAiStore = defineStore('ai', () => {
   function clearRagContext(): void {
     ragContext.value = []
     ragSearchResults.value = []
+  }
+
+  // ---- HITL Interrupt Actions ----
+
+  /** 清除 pending interrupt 状态 */
+  function clearInterrupt(): void {
+    pendingInterrupt.value = null
+  }
+
+  /**
+   * 响应 HITL interrupt：确认或拒绝。
+   * 发送 resume 请求，订阅返回的 SSE 流继续对话。
+   */
+  async function respondInterrupt(confirmed: boolean): Promise<void> {
+    const interrupt = pendingInterrupt.value
+    if (!interrupt) return
+
+    loading.value = true
+    error.value = null
+    pendingInterrupt.value = null
+
+    // 准备 assistant 消息占位，承接 resume 后的流式输出
+    const assistantIndex = messages.value.length
+    messages.value.push({
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      status: 'streaming',
+    })
+
+    // 复用 _executeStream 的模式，但用 resumeInterrupt 流
+    const localController = new AbortController()
+    abortController.value = localController
+    const { signal } = localController
+
+    sseStatus.value = 'connecting'
+
+    try {
+      const stream = resumeInterrupt(interrupt.threadId, confirmed, signal)
+      const reader = stream.getReader()
+      let doneEventReceived = false
+
+      while (true) {
+        if (signal.aborted) {
+          reader.cancel()
+          break
+        }
+
+        const { done, value } = await reader.read()
+        if (done) break
+
+        sseStatus.value = 'connected'
+        const event = value as SSEEvent
+        if (event.type === 'done') doneEventReceived = true
+        handleSSEEvent(event, assistantIndex)
+      }
+
+      sseStatus.value = 'idle'
+
+      if (!doneEventReceived && !signal.aborted) {
+        if (currentConversationId.value) loadConversations()
+      }
+    } catch (err) {
+      if (signal.aborted) {
+        messages.value[assistantIndex].content += '\n\n[已停止]'
+        messages.value[assistantIndex].status = 'received'
+        sseStatus.value = 'idle'
+      } else {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        sseStatus.value = 'disconnected'
+        error.value = msg
+        messages.value[assistantIndex].content = `Error: ${msg}`
+        messages.value[assistantIndex].status = 'error'
+      }
+    } finally {
+      loading.value = false
+      if (messages.value[assistantIndex].status === 'streaming') {
+        messages.value[assistantIndex].status = 'received'
+      }
+      abortController.value = null
+    }
   }
 
   function loadChatSettings(): ChatSettings {
@@ -628,6 +741,9 @@ export const useAiStore = defineStore('ai', () => {
     // 重置 RAG 状态
     ragSearchResults.value = []
     ragContext.value = []
+
+    // 重置 HITL 状态
+    pendingInterrupt.value = null
 
     // 重置 SSE 状态
     sseStatus.value = 'idle'
@@ -852,6 +968,7 @@ export const useAiStore = defineStore('ai', () => {
     ragSearchResults,
     ragSearching,
     ragContext,
+    pendingInterrupt,
 
     // getters
     currentConversation,
@@ -891,5 +1008,7 @@ export const useAiStore = defineStore('ai', () => {
     clearRagContext,
     searchConversationsAction,
     mentionSearchAction,
+    clearInterrupt,
+    respondInterrupt,
   }
 })

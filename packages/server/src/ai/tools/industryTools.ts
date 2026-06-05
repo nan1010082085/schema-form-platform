@@ -15,17 +15,7 @@ import {
   type IndustryType,
   type IndustryTemplate,
 } from '../config/industryAgents.js'
-
-// ────────────────────────────────────────────
-// Tool result type (consistent with editorTools)
-// ────────────────────────────────────────────
-
-interface ToolResult {
-  success: boolean
-  data?: unknown
-  error?: string
-  summary?: string
-}
+import type { ToolResult } from './types.js'
 
 // ────────────────────────────────────────────
 // Industry-specific validation rules
@@ -65,7 +55,7 @@ const INDUSTRY_VALIDATION_RULES: Record<IndustryType, ValidationRule[]> = {
  * Search industry-specific templates.
  */
 export const searchIndustryTemplatesTool = tool(
-  async ({ keyword, industry, type }): Promise<ToolResult> => {
+  async ({ keyword, industry, type }): Promise<string> => {
     const results = searchIndustryTemplates(keyword, industry as IndustryType | undefined)
 
     const filtered = type ? results.filter((r) => r.type === type) : results
@@ -74,7 +64,7 @@ export const searchIndustryTemplatesTool = tool(
       ? `没有找到${industry ? `${getIndustryConfig(industry as IndustryType)?.name ?? industry}的` : ''}相关模板`
       : `找到 ${filtered.length} 个行业模板：${filtered.slice(0, 3).map((t) => `${t.name}（${t.type === 'form' ? '表单' : '流程'}）`).join('、')}${filtered.length > 3 ? '等' : ''}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         total: filtered.length,
@@ -88,10 +78,14 @@ export const searchIndustryTemplatesTool = tool(
       },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'search_industry_templates',
-    description: '搜索行业专属模板。当用户要求生成特定行业的表单或流程时，先搜索相关模板作为参考。',
+    description: `搜索行业专属模板。当用户要求生成特定行业的表单或流程时，先搜索相关模板作为参考。
+
+参数：keyword — 搜索关键词（如"病历"、"贷款"）；industry — 指定行业（medical/finance/education）；type — 按类型筛选（form/flow）。
+返回 JSON 包含 templates 数组，每项含 id、name、description、type、industry。`,
     schema: z.object({
       keyword: z.string().describe('搜索关键词，如"病历"、"贷款"、"请假"'),
       industry: z.enum(['medical', 'finance', 'education']).optional().describe('指定行业，不传则搜索所有行业'),
@@ -104,10 +98,10 @@ export const searchIndustryTemplatesTool = tool(
  * Validate a form schema against industry-specific rules.
  */
 export const validateIndustryFormTool = tool(
-  async ({ widgets, industry }): Promise<ToolResult> => {
+  async ({ widgets, industry }): Promise<string> => {
     const config = getIndustryConfig(industry as IndustryType)
     if (!config) {
-      return { success: false, error: `未知行业类型: ${industry}` }
+      return JSON.stringify({ success: false, error: `未知行业类型: ${industry}` } satisfies ToolResult)
     }
 
     const rules = INDUSTRY_VALIDATION_RULES[industry as IndustryType] ?? []
@@ -141,7 +135,7 @@ export const validateIndustryFormTool = tool(
       ? `${config.name}表单校验通过，共 ${(widgets as unknown[]).length} 个组件`
       : `${config.name}表单校验发现 ${warnings.length} 个建议：${warnings.map((w) => w.message).join('；')}`
 
-    return {
+    const result: ToolResult = {
       success: true,
       data: {
         industry,
@@ -151,10 +145,14 @@ export const validateIndustryFormTool = tool(
       },
       summary,
     }
+    return JSON.stringify(result)
   },
   {
     name: 'validate_industry_form',
-    description: '根据行业规范校验表单 Schema。在生成行业表单后调用此工具检查是否符合行业要求。',
+    description: `根据行业规范校验表单 Schema。检查必填字段（如患者姓名、学号）和敏感字段标记。在生成行业表单后调用此工具检查是否符合行业要求。
+
+参数：widgets — 要校验的 Widget 数组；industry — 行业类型（medical/finance/education）。
+返回 JSON 包含 warnings 建议列表和 componentCount 组件数量。`,
     schema: z.object({
       widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
       industry: z.enum(['medical', 'finance', 'education']).describe('行业类型'),

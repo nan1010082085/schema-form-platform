@@ -79,6 +79,8 @@ export interface ToolCallInfo {
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  /** 消息子类型（如 interrupt 表示 HITL 确认） */
+  type?: 'interrupt' | string
   agent?: 'editor' | 'flow' | 'page' | 'general'
   thinking?: string
   thinkingExpanded?: boolean
@@ -90,6 +92,8 @@ export interface AIMessage {
   timestamp: Date
   /** 消息状态（用于实时同步） */
   status?: MessageStatus
+  /** 附加数据（如 interrupt 的确认信息） */
+  data?: unknown
 }
 
 /** 消息状态 */
@@ -149,7 +153,7 @@ export interface ChatRequest {
 
 // ---- SSE 事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error' | 'schema_diff' | 'flow_diff' | 'version_created' | 'schema_update' | 'schema_complete'
+export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error' | 'schema_diff' | 'flow_diff' | 'version_created' | 'schema_update' | 'schema_complete' | 'interrupt'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -178,6 +182,11 @@ export interface SSEEvent {
   /** Schema update event data (streaming generation) */
   step?: string
   schema?: Widget[]
+  /** Interrupt event data (HITL) */
+  threadId?: string
+  interruptType?: string
+  message?: string
+  data?: unknown
 }
 
 // ---- 任务链 ----
@@ -328,6 +337,16 @@ export interface RagSearchResult {
 export interface RagSearchResponse {
   total: number
   schemas: RagSearchResult[]
+}
+
+// ---- HITL Interrupt ----
+
+/** 前端 pending interrupt 状态 */
+export interface PendingInterrupt {
+  threadId: string
+  type: string
+  message: string
+  data?: unknown
 }
 
 // ---- Agent ----

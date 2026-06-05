@@ -206,6 +206,116 @@ export async function publish(payload: PublishRequest): Promise<PublishResponse>
   })
 }
 
+// ---- HITL Interrupt Resume ----
+
+/**
+ * 恢复被 interrupt 挂起的对话。返回 SSE 流。
+ */
+export function resumeInterrupt(
+  threadId: string,
+  confirmed: boolean,
+  signal?: AbortSignal,
+): ReadableStream<SSEEvent> {
+  const body = JSON.stringify({ threadId, confirmed })
+
+  const stream = new ReadableStream<SSEEvent>({
+    async start(controller) {
+      const response = await fetch(`${BASE_URL}/ai/chat/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal,
+      })
+
+      if (!response.ok) {
+        controller.error(new AiApiError(`Resume request failed: ${response.status}`, response.status))
+        return
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        controller.error(new AiApiError('Response body is null', 0))
+        return
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let streamClosed = false
+
+      function extractData(line: string): string | null {
+        if (line.startsWith('data: ')) return line.slice(6)
+        if (line.startsWith('data:')) return line.slice(5)
+        return null
+      }
+
+      function handleData(data: string): void {
+        if (data === '[DONE]') {
+          controller.close()
+          streamClosed = true
+          return
+        }
+        try {
+          const event = JSON.parse(data) as SSEEvent
+          controller.enqueue(event)
+        } catch {
+          // Skip unparseable JSON
+        }
+      }
+
+      function processBuffer(buf: string): string {
+        const lines = buf.split('\n')
+        const remainder = lines.pop() ?? ''
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed || trimmed.startsWith(':')) continue
+          const data = extractData(trimmed)
+          if (data === null) continue
+          handleData(data)
+          if (streamClosed) return ''
+        }
+        return remainder
+      }
+
+      try {
+        while (true) {
+          if (signal?.aborted) {
+            reader.cancel()
+            if (!streamClosed) controller.close()
+            return
+          }
+
+          const { done, value } = await reader.read()
+
+          if (value) {
+            buffer += decoder.decode(value, { stream: true })
+          }
+
+          if (done) {
+            buffer += decoder.decode()
+            for (const line of buffer.split('\n')) {
+              const trimmed = line.trim()
+              if (!trimmed || trimmed.startsWith(':')) continue
+              const data = extractData(trimmed)
+              if (data === null) continue
+              handleData(data)
+              if (streamClosed) return
+            }
+            if (!streamClosed) controller.close()
+            return
+          }
+
+          buffer = processBuffer(buffer)
+          if (streamClosed) return
+        }
+      } catch (err) {
+        controller.error(err)
+      }
+    },
+  })
+
+  return stream
+}
+
 // ---- 文件上传 ----
 
 export interface UploadResult {

@@ -7,7 +7,7 @@
  *
  * 与 AiChatView 的区别：
  * - 无对话列表、无预览面板
- * - Agent 固定显示为 Badge（不可切换）
+ * - Agent 可切换（支持同项目多 Agent）
  * - 有上下文条（Schema / Node 信息）
  */
 
@@ -21,13 +21,48 @@ import type { MessageEmbeddedCard } from '@/components/AiMessage.vue'
 
 const store = useAiStore()
 
-// Agent 从 URL query 读取，默认 editor
+// Agent 配置：从 URL query 读取初始值，支持切换
 const params = new URLSearchParams(window.location.search)
-const fixedAgent = ref<AgentType>((params.get('agent') as AgentType) ?? 'editor')
+const initialAgent = (params.get('agent') as AgentType) ?? 'editor'
+
+// 可用 Agents 配置（根据项目类型）
+const agentConfig: Record<string, { agents: AgentType[]; label: Record<AgentType, string> }> = {
+  editor: {
+    agents: ['editor', 'page'],
+    label: { editor: 'Editor', page: 'Page' }
+  },
+  flow: {
+    agents: ['flow'],
+    label: { flow: 'Flow' }
+  }
+}
+
+// 当前项目类型（从 URL 或默认）
+const projectType = params.get('project') ?? initialAgent === 'flow' ? 'flow' : 'editor'
+const config = agentConfig[projectType] ?? agentConfig.editor
+
+// 当前选中的 Agent
+const selectedAgent = ref<AgentType>(initialAgent)
+
+// Agent 选项列表
+const agentOptions = computed(() => config.agents.map(a => ({
+  value: a,
+  label: config.label[a]
+})))
+
+// Agent 标签颜色
+const agentColors: Record<AgentType, string> = {
+  editor: 'var(--ai-color-success, #26A036)',
+  page: 'var(--ai-color-info, #4581E9)',
+  flow: 'var(--ai-color-info, #4581E9)',
+  auto: 'var(--ai-color-primary, #0060A2)',
+  general: 'var(--ai-text-hint, #999999)'
+}
 
 // 上下文标签
 const contextLabel = computed(() => {
-  if (fixedAgent.value === 'editor') return 'Schema'
+  if (selectedAgent.value === 'editor') return 'Schema'
+  if (selectedAgent.value === 'page') return 'Page'
   return 'Node'
 })
 
@@ -63,8 +98,8 @@ function getDisplayCards(msg: typeof store.messages[0]): MessageEmbeddedCard[] |
         type: w.type,
         required: false,
       })),
-      primaryAction: '确认发布',
-      secondaryAction: '修改',
+      primaryAction: '应用到画布',
+      secondaryAction: '继续优化',
     }]
   }
   if (msg.flow) {
@@ -76,14 +111,14 @@ function getDisplayCards(msg: typeof store.messages[0]): MessageEmbeddedCard[] |
         type: (n.data.bpmnType === 'startEvent' ? 'start' : n.data.bpmnType === 'endEvent' ? 'end' : 'task') as 'start' | 'task' | 'end',
       })),
       primaryAction: '应用到画布',
-      secondaryAction: '修改',
+      secondaryAction: '继续优化',
     }]
   }
   return undefined
 }
 
 function getLabel(msg: typeof store.messages[0]): string {
-  return msg.role === 'user' ? 'You' : (fixedAgent.value === 'editor' ? 'Editor' : 'Flow')
+  return msg.role === 'user' ? 'You' : config.label[selectedAgent.value] ?? 'AI'
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -96,8 +131,8 @@ function handleKeydown(e: KeyboardEvent) {
 async function handleSend() {
   const text = inputText.value.trim()
   if (!text || store.loading) return
-  if (fixedAgent.value !== store.activeAgent) {
-    store.switchAgent(fixedAgent.value)
+  if (selectedAgent.value !== store.activeAgent) {
+    store.switchAgent(selectedAgent.value)
   }
   await store.sendMessage(text)
   inputText.value = ''
@@ -153,7 +188,7 @@ async function handleApply() {
 
 onMounted(() => {
   // 设置 agent
-  store.switchAgent(fixedAgent.value)
+  store.switchAgent(selectedAgent.value)
 
   // 连接 Socket
   connectSocket()
@@ -216,10 +251,19 @@ function handleHostData(data: Record<string, unknown>) {
           <span :class="$style.modelDot"></span>
           <span>DeepSeek</span>
         </div>
-        <div :class="[$style.agentBadge, $style[fixedAgent]]">
-          <span :class="[$style.agentDot, $style[fixedAgent]]"></span>
-          <span>{{ fixedAgent === 'editor' ? 'Editor' : 'Flow' }}</span>
-        </div>
+        <select
+          v-model="selectedAgent"
+          :class="$style.agentSelect"
+          :disabled="store.loading"
+        >
+          <option
+            v-for="opt in agentOptions"
+            :key="opt.value"
+            :value="opt.value"
+          >
+            {{ opt.label }}
+          </option>
+        </select>
       </div>
     </div>
 
@@ -244,7 +288,7 @@ function handleHostData(data: Record<string, unknown>) {
         :key="idx"
         :role="msg.role === 'system' ? 'assistant' : msg.role"
         :label="getLabel(msg)"
-        :agent="fixedAgent"
+        :agent="selectedAgent"
         :content="msg.content"
         :thinking="msg.thinking"
         :tip="msg.tip"
@@ -282,8 +326,18 @@ function handleHostData(data: Record<string, unknown>) {
             </template>
           </div>
           <div :class="$style.inputActions">
-            <select :class="$style.agentSelect" disabled>
-              <option :value="fixedAgent" selected>{{ fixedAgent === 'editor' ? 'Editor' : 'Flow' }}</option>
+            <select
+              v-model="selectedAgent"
+              :class="$style.agentSelect"
+              :disabled="store.loading"
+            >
+              <option
+                v-for="opt in agentOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </option>
             </select>
             <button
               v-if="store.loading"

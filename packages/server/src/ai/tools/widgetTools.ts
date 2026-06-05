@@ -118,12 +118,16 @@ export async function validateSchema(widgets: Record<string, unknown>[]): Promis
 // ────────────────────────────────────────────
 
 export const queryWidgetsTool = tool(
-  async ({ category }): Promise<QueryWidgetsResult> => {
-    return queryWidgets(category)
+  async ({ category }): Promise<string> => {
+    const result = await queryWidgets(category)
+    return JSON.stringify(result)
   },
   {
     name: 'query_widgets',
-    description: '获取 Widget 组件目录，包含所有可用组件类型及其关键属性。可按分类筛选。',
+    description: `获取 Widget 组件目录，包含所有可用组件类型及其关键属性（defaultProps、keyProps、exposedValues 等）。可按分类筛选。
+
+参数：category — 组件分类（container/layout/form/static/action/table/business/chart），不传返回全部。
+返回 JSON 包含 total 数量和 widgets 数组。`,
     schema: z.object({
       category: z.enum(['container', 'layout', 'form', 'static', 'action', 'table', 'business', 'chart'])
         .optional()
@@ -133,12 +137,16 @@ export const queryWidgetsTool = tool(
 )
 
 export const validateWidgetSchemaTool = tool(
-  async ({ widgets }): Promise<ValidateSchemaResult> => {
-    return validateSchema(widgets as Record<string, unknown>[])
+  async ({ widgets }): Promise<string> => {
+    const result = await validateSchema(widgets as Record<string, unknown>[])
+    return JSON.stringify(result)
   },
   {
     name: 'validate_widget_schema',
-    description: '校验 Widget Schema JSON 的结构正确性。检查类型合法性、ID 存在性、嵌套规则等。',
+    description: `校验 Widget Schema JSON 的结构正确性。检查类型合法性、ID 存在性、position 完整性、容器嵌套规则等。
+
+参数：widgets — 要校验的 Widget 数组。
+返回 JSON 包含 valid 布尔值和 errors 错误列表（每项含 path 和 message）。`,
     schema: z.object({
       widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
     }),

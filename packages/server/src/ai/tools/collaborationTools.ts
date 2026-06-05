@@ -18,14 +18,10 @@ export interface CollaborationRequest {
 }
 
 export const requestCollaborationTool = tool(
-  async ({ targetAgent, description, context }): Promise<{
-    success: boolean
-    message: string
-    collaboration: CollaborationRequest
-  }> => {
+  async ({ targetAgent, description, context }): Promise<string> => {
     // 这个工具的实际执行由图结构处理
     // 工具返回协作请求，图结构会检测到并路由到对应的智能体
-    return {
+    return JSON.stringify({
       success: true,
       message: `已请求 ${targetAgent} 专家协作：${description}`,
       collaboration: {
@@ -33,7 +29,7 @@ export const requestCollaborationTool = tool(
         description,
         context,
       },
-    }
+    })
   },
   {
     name: 'request_collaboration',
@@ -44,12 +40,8 @@ export const requestCollaborationTool = tool(
 - flow: 流程/BPMN 生成专家
 - page: 业务页面配置专家
 
-使用场景：
-- Editor 需要 Flow 生成审批流程
-- Flow 需要 Editor 生成申请表单
-- Page 需要 Flow 生成审批流程
-- Page 需要 Editor 生成表单录入界面
-- 需要其他专家的专业知识`,
+参数：targetAgent — 要请求协作的专家；description — 需要协作的具体任务描述；context — 可选的上下文信息。
+返回 JSON 包含 message 和 collaboration 请求对象。`,
     schema: z.object({
       targetAgent: z.enum(['editor', 'flow', 'page']).describe('要请求协作的专家智能体'),
       description: z.string().describe('需要协作的具体任务描述'),
