@@ -3,13 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // 登录页 — 独立布局，不使用 AppLayout
+    // 登录页 — 独立布局
     {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
     },
-    // 公开页面 — 使用 AppLayout 作为父布局
+    // 首页 — 使用 AppLayout
     {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
@@ -18,21 +18,6 @@ const router = createRouter({
           path: '',
           name: 'portal',
           component: () => import('@/views/PortalView.vue'),
-        },
-        {
-          path: 'editor',
-          name: 'editor-embed',
-          component: () => import('@/views/EditorView.vue'),
-        },
-        {
-          path: 'flow',
-          name: 'flow-embed',
-          component: () => import('@/views/FlowView.vue'),
-        },
-        {
-          path: 'ai',
-          name: 'ai-embed',
-          component: () => import('@/views/AiView.vue'),
         },
         {
           path: 'users',
@@ -45,6 +30,22 @@ const router = createRouter({
           component: () => import('@/views/RoleManageView.vue'),
         },
       ],
+    },
+    // 子应用 — 独立布局，无导航栏
+    {
+      path: '/editor',
+      name: 'editor-embed',
+      component: () => import('@/views/EditorView.vue'),
+    },
+    {
+      path: '/flow',
+      name: 'flow-embed',
+      component: () => import('@/views/FlowView.vue'),
+    },
+    {
+      path: '/ai',
+      name: 'ai-embed',
+      component: () => import('@/views/AiView.vue'),
     },
     // 兜底重定向
     {
