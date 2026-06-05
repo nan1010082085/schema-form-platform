@@ -169,7 +169,7 @@ function goToConversation(conv: RecentConversation) {
     <main :class="$style.main">
       <!-- Hero -->
       <section :class="$style.hero">
-        <h1 :class="$style.heroTitle">PyFlow</h1>
+        <h1 :class="$style.heroTitle">Platform</h1>
         <p :class="$style.heroDesc">Schema 驱动的可视化表单设计器与流程引擎</p>
       </section>
 
