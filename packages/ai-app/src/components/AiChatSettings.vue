@@ -17,7 +17,7 @@ const emit = defineEmits<{
 // Local copy for editing
 const localSettings = ref<ChatSettings>(JSON.parse(JSON.stringify(props.settings)))
 
-// Sync from props when dialog opens
+// Sync from props when drawer opens
 watch(() => props.visible, (val) => {
   if (val) {
     localSettings.value = JSON.parse(JSON.stringify(props.settings))
@@ -55,104 +55,119 @@ function handleSave(): void {
 </script>
 
 <template>
-  <el-dialog
-    :model-value="visible"
-    title="对话设置"
-    width="420px"
-    :close-on-click-modal="true"
-    @update:model-value="handleClose"
-  >
-    <div :class="$style.settingsForm">
-      <!-- Section: Preferences -->
-      <div :class="$style.section">
-        <div :class="$style.sectionTitle">用户偏好</div>
+  <Teleport to="body">
+    <Transition name="drawer">
+      <div v-if="visible" :class="$style.overlay" @click.self="handleClose">
+        <div :class="$style.drawer">
+          <!-- Header -->
+          <div :class="$style.header">
+            <span :class="$style.title">对话设置</span>
+            <button :class="$style.closeBtn" @click="handleClose">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
-        <div :class="$style.formItem">
-          <label :class="$style.label">回复语言</label>
-          <el-radio-group
-            v-model="localSettings.preferences.replyLanguage"
-            :class="$style.radioGroup"
-          >
-            <el-radio-button
-              v-for="opt in languageOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
+          <!-- Body -->
+          <div :class="$style.body">
+            <!-- Card: Preferences -->
+            <div :class="$style.card">
+              <div :class="$style.cardTitle">用户偏好</div>
+              <div :class="$style.cardBody">
+                <div :class="$style.formItem">
+                  <label :class="$style.label">回复语言</label>
+                  <el-radio-group
+                    v-model="localSettings.preferences.replyLanguage"
+                    :class="$style.radioGroup"
+                  >
+                    <el-radio-button
+                      v-for="opt in languageOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </div>
 
-        <div :class="$style.formItem">
-          <label :class="$style.label">回复风格</label>
-          <el-radio-group
-            v-model="localSettings.preferences.replyStyle"
-            :class="$style.radioGroup"
-          >
-            <el-radio-button
-              v-for="opt in styleOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
+                <div :class="$style.formItem">
+                  <label :class="$style.label">回复风格</label>
+                  <el-radio-group
+                    v-model="localSettings.preferences.replyStyle"
+                    :class="$style.radioGroup"
+                  >
+                    <el-radio-button
+                      v-for="opt in styleOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </div>
 
-        <div :class="$style.formItem">
-          <label :class="$style.label">代码注释</label>
-          <el-radio-group
-            v-model="localSettings.preferences.codeComment"
-            :class="$style.radioGroup"
-          >
-            <el-radio-button
-              v-for="opt in codeCommentOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </el-radio-button>
-          </el-radio-group>
+                <div :class="$style.formItem">
+                  <label :class="$style.label">代码注释</label>
+                  <el-radio-group
+                    v-model="localSettings.preferences.codeComment"
+                    :class="$style.radioGroup"
+                  >
+                    <el-radio-button
+                      v-for="opt in codeCommentOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: History Summary -->
+            <div :class="$style.card">
+              <div :class="$style.cardTitle">对话历史摘要</div>
+              <div :class="$style.cardBody">
+                <div :class="$style.formItem">
+                  <label :class="$style.label">生成方式</label>
+                  <el-radio-group
+                    v-model="localSettings.historySummary.mode"
+                    :class="$style.radioGroup"
+                  >
+                    <el-radio-button
+                      v-for="opt in historyModeOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </div>
+
+                <div v-if="localSettings.historySummary.mode === 'manual'" :class="$style.formItem">
+                  <label :class="$style.label">手动摘要</label>
+                  <el-input
+                    v-model="localSettings.historySummary.manualSummary"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="输入对话历史摘要..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div :class="$style.footer">
+            <button :class="$style.cancelBtn" @click="handleClose">取消</button>
+            <button :class="$style.saveBtn" @click="handleSave">保存</button>
+          </div>
         </div>
       </div>
-
-      <!-- Section: History Summary -->
-      <div :class="$style.section">
-        <div :class="$style.sectionTitle">对话历史摘要</div>
-
-        <div :class="$style.formItem">
-          <label :class="$style.label">生成方式</label>
-          <el-radio-group
-            v-model="localSettings.historySummary.mode"
-            :class="$style.radioGroup"
-          >
-            <el-radio-button
-              v-for="opt in historyModeOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <div v-if="localSettings.historySummary.mode === 'manual'" :class="$style.formItem">
-          <label :class="$style.label">手动摘要</label>
-          <el-input
-            v-model="localSettings.historySummary.manualSummary"
-            type="textarea"
-            :rows="3"
-            placeholder="输入对话历史摘要..."
-          />
-        </div>
-      </div>
-    </div>
-
-    <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="handleSave">保存</el-button>
-    </template>
-  </el-dialog>
+    </Transition>
+  </Teleport>
 </template>
 
 <style module src="./AiChatSettings.module.css" />

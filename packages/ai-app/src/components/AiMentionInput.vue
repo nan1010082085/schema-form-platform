@@ -32,6 +32,18 @@ const inputText = ref('')
 const textareaRef = ref<HTMLTextAreaElement>()
 const mentions = ref<MentionReference[]>([])
 
+// ---- Auto resize textarea ----
+function autoResize(): void {
+  const el = textareaRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
+watch(inputText, () => {
+  nextTick(autoResize)
+})
+
 // ---- Mention panel state ----
 const panelVisible = ref(false)
 const searchQuery = ref('')
