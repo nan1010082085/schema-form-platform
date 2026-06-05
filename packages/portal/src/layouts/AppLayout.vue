@@ -48,7 +48,7 @@ const activeNav = computed(() => {
 const version = 'v1.0.0'
 
 /** GitHub 链接 */
-const githubUrl = 'https://github.com/nicknisi/schema-form-platform'
+const githubUrl = 'https://github.com/nan1010082085/schema-form-platform'
 
 /** 导航到指定路由 */
 function navigateTo(path: string): void {
@@ -75,7 +75,7 @@ function closeDrawer(): void {
         <!-- 左侧：Logo + 平台名称 -->
         <router-link to="/" :class="styles.logoArea">
           <div :class="styles.logoIcon">P</div>
-          <span :class="styles.logoText">PyFlow</span>
+          <span :class="styles.logoText">Schema Form Platform</span>
         </router-link>
 
         <!-- 中间：模块切换菜单（桌面端） -->
@@ -127,7 +127,7 @@ function closeDrawer(): void {
       aria-label="导航菜单"
     >
       <div :class="styles.mobileNavHeader">
-        <span :class="styles.logoText">PyFlow</span>
+        <span :class="styles.logoText">Schema Form Platform</span>
         <button
           :class="styles.mobileNavClose"
           aria-label="关闭导航菜单"
