@@ -13,10 +13,15 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   const yField = (props.yField as string) || 'value'
   const title = props.title as string
   const showLegend = props.showLegend !== false
+  const legendPosition = (props.legendPosition as string) || 'bottom'
+  const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel === true
   const stack = props.stack === true
   const horizontal = props.horizontal === true
+  const animation = props.animation !== false
   const colorScheme = (props.colorScheme as string) || 'default'
+  const xAxisName = props.xAxisName as string
+  const yAxisName = props.yAxisName as string
 
   const xData = data.map(item => item[xField])
   const seriesData = data.map(item => item[yField])
@@ -29,18 +34,24 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
 
   const colors = colorMap[colorScheme] || colorMap.default
 
+  const legendConfig = showLegend ? { [legendPosition]: 0 } : undefined
+
+  const xAxis = horizontal
+    ? { type: 'value', name: yAxisName || undefined }
+    : { type: 'category', data: xData, name: xAxisName || undefined }
+  const yAxis = horizontal
+    ? { type: 'category', data: xData, name: xAxisName || undefined }
+    : { type: 'value', name: yAxisName || undefined }
+
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
-    tooltip: { trigger: 'axis' },
-    legend: showLegend ? { bottom: 0 } : undefined,
+    tooltip: showTooltip ? { trigger: 'axis' } : undefined,
+    legend: legendConfig,
     grid: { left: '3%', right: '4%', bottom: showLegend ? '12%' : '3%', containLabel: true },
-    xAxis: horizontal
-      ? { type: 'value' }
-      : { type: 'category', data: xData },
-    yAxis: horizontal
-      ? { type: 'category', data: xData }
-      : { type: 'value' },
+    xAxis,
+    yAxis,
+    animation,
     series: [{
       type: 'bar',
       data: seriesData,

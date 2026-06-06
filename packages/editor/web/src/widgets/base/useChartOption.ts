@@ -1,10 +1,32 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import type { Widget } from './types'
+import type { Widget, SchemaApiConfig } from './types'
 import { useApiRequest } from '../../composables/useApiRequest'
 
 export interface UseChartOptionOptions {
   widgetData: Ref<Widget>
   buildOption: (data: Record<string, unknown>[], props: Record<string, unknown>) => Record<string, unknown>
+}
+
+/**
+ * Resolve the effective API config for a chart widget.
+ * Prefers widget.api (standard SchemaApiConfig from OptionsApiConfigDialog),
+ * falls back to legacy props-based config (apiUrl/apiMethod/apiHeaders/responseDataPath).
+ */
+function resolveChartApi(widget: Widget): SchemaApiConfig | null {
+  // Standard widget.api takes precedence
+  if (widget.api?.url) return widget.api
+
+  // Legacy props-based fallback
+  const p = widget.props ?? {}
+  const url = p.apiUrl as string
+  if (!url) return null
+
+  return {
+    url,
+    method: (p.apiMethod as 'get' | 'post') ?? 'get',
+    headers: (p.apiHeaders as Record<string, string>) ?? {},
+    dataPath: (p.responseDataPath as string) || undefined,
+  }
 }
 
 export function useChartOption({ widgetData, buildOption }: UseChartOptionOptions) {
@@ -14,11 +36,10 @@ export function useChartOption({ widgetData, buildOption }: UseChartOptionOption
 
   const props = computed(() => widgetData.value.props ?? {})
   const staticData = computed(() => (props.value.staticData as Record<string, unknown>[]) ?? [])
-  const apiUrl = computed(() => props.value.apiUrl as string)
-  const apiMethod = computed(() => (props.value.apiMethod as string) ?? 'get')
-  const apiHeaders = computed(() => (props.value.apiHeaders as Record<string, string>) ?? {})
-  const responseDataPath = computed(() => props.value.responseDataPath as string)
   const rawOption = computed(() => (props.value.rawOption as Record<string, unknown>) ?? null)
+
+  const effectiveApi = computed(() => resolveChartApi(widgetData.value))
+  const hasApi = computed(() => !!effectiveApi.value)
 
   function resolveDataPath(data: unknown, path: string): unknown {
     if (!path) return data
@@ -31,11 +52,17 @@ export function useChartOption({ widgetData, buildOption }: UseChartOptionOption
   }
 
   async function loadData() {
-    if (!apiUrl.value) return
+    const api = effectiveApi.value
+    if (!api) return
     loading.value = true
     try {
-      const result = await fetchApi(apiUrl.value, apiMethod.value, apiHeaders.value)
-      const extracted = resolveDataPath(result, responseDataPath.value)
+      const result = await fetchApi(
+        api.url,
+        api.method ?? 'get',
+        api.headers ?? {},
+        api.method === 'post' ? api.body : api.params,
+      )
+      const extracted = resolveDataPath(result, api.dataPath ?? '')
       chartData.value = Array.isArray(extracted) ? extracted as Record<string, unknown>[] : []
     } catch {
       chartData.value = []
@@ -45,7 +72,7 @@ export function useChartOption({ widgetData, buildOption }: UseChartOptionOption
   }
 
   const chartOption = computed(() => {
-    const data = apiUrl.value ? chartData.value : staticData.value
+    const data = hasApi.value ? chartData.value : staticData.value
     if (!data || data.length === 0) return {}
 
     const option = buildOption(data, props.value)
@@ -56,12 +83,12 @@ export function useChartOption({ widgetData, buildOption }: UseChartOptionOption
     return option
   })
 
-  // Load API data on mount if URL is set
-  if (apiUrl.value) {
+  // Load API data on mount if API is configured
+  if (hasApi.value) {
     loadData()
   }
-  watch(apiUrl, (url) => {
-    if (url) loadData()
+  watch(effectiveApi, (api) => {
+    if (api) loadData()
     else chartData.value = []
   })
 

@@ -20,10 +20,6 @@ export const funnelConfig: WidgetConfig = {
     showLegend: true,
     showLabel: true,
     colorScheme: 'default',
-    apiUrl: '',
-    apiMethod: 'get',
-    apiHeaders: {} as Record<string, string>,
-    responseDataPath: '',
     rawOption: null as Record<string, unknown> | null,
   },
   exposedValues: [
@@ -43,9 +39,9 @@ export const funnelConfig: WidgetConfig = {
         { key: 'name', label: '名称', type: 'text' },
         { key: 'value', label: '值', type: 'number' },
       ]},
-      { key: 'nameField', label: '名称字段', type: 'input', placeholder: '如: name' },
-      { key: 'valueField', label: '值字段', type: 'input', placeholder: '如: value' },
-      { key: 'title', label: '图表标题', type: 'input' },
+      { key: 'nameField', label: '名称字段', type: 'text', placeholder: '如: name' },
+      { key: 'valueField', label: '值字段', type: 'text', placeholder: '如: value' },
+      { key: 'title', label: '图表标题', type: 'text' },
       { key: 'showLegend', label: '显示图例', type: 'switch', default: true },
       { key: 'showLabel', label: '显示标签', type: 'switch', default: true },
       { key: 'colorScheme', label: '颜色主题', type: 'select', options: [

@@ -12,7 +12,10 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   const valueField = (props.valueField as string) || 'value'
   const title = props.title as string
   const showLegend = props.showLegend !== false
+  const legendPosition = (props.legendPosition as string) || 'bottom'
+  const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel === true
+  const animation = props.animation !== false
   const colorScheme = (props.colorScheme as string) || 'default'
   const indicators = (props.indicators as Record<string, unknown>[]) || []
 
@@ -29,11 +32,12 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
-    tooltip: { trigger: 'item' },
-    legend: showLegend ? { bottom: 0 } : undefined,
+    tooltip: showTooltip ? { trigger: 'item' } : undefined,
+    legend: showLegend ? { [legendPosition]: 0 } : undefined,
     radar: {
       indicator: indicators,
     },
+    animation,
     series: [{
       type: 'radar',
       data: [{ value: values }],

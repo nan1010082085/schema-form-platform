@@ -25,6 +25,7 @@ import flowBatchRouter from './flow-routes/flowBatch.js'
 import flowNotificationRouter from './flow-routes/flowNotification.js'
 import { aiRouter, monitorRouter } from './ai/index.js'
 import aiPluginRouter from './ai/pluginRoutes.js'
+import mcpRouter from './routes/mcp.js'
 import { validateApiKey } from './ai/graph/agentBase.js'
 
 // ── Startup validation ──
@@ -95,5 +96,7 @@ app.use(monitorRouter.routes())
 app.use(monitorRouter.allowedMethods())
 app.use(aiPluginRouter.routes())
 app.use(aiPluginRouter.allowedMethods())
+app.use(mcpRouter.routes())
+app.use(mcpRouter.allowedMethods())
 
 export default app

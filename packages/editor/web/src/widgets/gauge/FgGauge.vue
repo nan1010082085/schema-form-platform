@@ -14,8 +14,10 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   const max = (props.max as number) ?? 100
   const unit = (props.unit as string) || ''
   const title = props.title as string
+  const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel !== false
   const colorScheme = (props.colorScheme as string) || 'default'
+  const animation = props.animation !== false
 
   const value = data[0] ? (data[0][valueField] as number) : 0
 
@@ -30,6 +32,8 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
+    tooltip: showTooltip ? { formatter: unit ? '{b}: {c}' + unit : '{b}: {c}' } : undefined,
+    animation,
     series: [{
       type: 'gauge',
       min,

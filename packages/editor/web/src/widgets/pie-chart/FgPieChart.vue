@@ -13,9 +13,12 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   const valueField = (props.valueField as string) || 'value'
   const title = props.title as string
   const showLegend = props.showLegend !== false
+  const legendPosition = (props.legendPosition as string) || 'left'
+  const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel === true
   const roseType = props.roseType === true
   const innerRadius = props.innerRadius as string
+  const animation = props.animation !== false
   const colorScheme = (props.colorScheme as string) || 'default'
 
   const seriesData = data.map(item => ({
@@ -35,11 +38,17 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
     ? [innerRadius, '70%']
     : ['0%', '70%']
 
+  const isVertical = legendPosition === 'top' || legendPosition === 'bottom'
+  const legendConfig = showLegend
+    ? { orient: isVertical ? 'horizontal' : 'vertical', [legendPosition]: isVertical ? 'auto' : 'left' }
+    : undefined
+
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
-    tooltip: { trigger: 'item' },
-    legend: showLegend ? { orient: 'vertical', left: 'left' } : undefined,
+    tooltip: showTooltip ? { trigger: 'item' } : undefined,
+    legend: legendConfig,
+    animation,
     series: [{
       type: 'pie',
       radius,

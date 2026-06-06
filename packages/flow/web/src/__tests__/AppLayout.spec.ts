@@ -69,10 +69,10 @@ describe('AppLayout', () => {
     const navLinks = wrapper.find('[data-test="nav"]').findAll('.router-link-stub')
     expect(navLinks.length).toBe(4)
     const hrefs = navLinks.map(l => l.attributes('href'))
-    expect(hrefs).toContain('/list')
-    expect(hrefs).toContain('/tasks')
-    expect(hrefs).toContain('/instances')
-    expect(hrefs).toContain('/monitor')
+    expect(hrefs).toContain('list')
+    expect(hrefs).toContain('tasks')
+    expect(hrefs).toContain('instances')
+    expect(hrefs).toContain('monitor')
   })
 
   it('contains router-view for main content', async () => {

@@ -23,6 +23,7 @@
     "@langchain/langgraph": "^0.2.60",
     "@langchain/langgraph-checkpoint": "^1.0.4",
     "@langchain/openai": "^1.4.7",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@schema-form/flow-shared": "workspace:*",
     "@schema-form/shared-ai": "workspace:*",
     "bcryptjs": "^3.0.3",

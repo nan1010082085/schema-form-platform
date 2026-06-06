@@ -13,10 +13,15 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   const yField = (props.yField as string) || 'value'
   const title = props.title as string
   const showLegend = props.showLegend !== false
+  const legendPosition = (props.legendPosition as string) || 'bottom'
+  const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel === true
   const smooth = props.smooth === true
   const area = props.area === true
+  const animation = props.animation !== false
   const colorScheme = (props.colorScheme as string) || 'default'
+  const xAxisName = props.xAxisName as string
+  const yAxisName = props.yAxisName as string
 
   const xData = data.map(item => item[xField])
   const seriesData = data.map(item => item[yField])
@@ -32,11 +37,12 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
-    tooltip: { trigger: 'axis' },
-    legend: showLegend ? { bottom: 0 } : undefined,
+    tooltip: showTooltip ? { trigger: 'axis' } : undefined,
+    legend: showLegend ? { [legendPosition]: 0 } : undefined,
     grid: { left: '3%', right: '4%', bottom: showLegend ? '12%' : '3%', containLabel: true },
-    xAxis: { type: 'category', data: xData, boundaryGap: !area },
-    yAxis: { type: 'value' },
+    xAxis: { type: 'category', data: xData, boundaryGap: !area, name: xAxisName || undefined },
+    yAxis: { type: 'value', name: yAxisName || undefined },
+    animation,
     series: [{
       type: 'line',
       data: seriesData,
