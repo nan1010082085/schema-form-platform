@@ -11,7 +11,7 @@
 import Router from '@koa/router'
 import { PassThrough } from 'node:stream'
 import { v4 as uuidv4 } from 'uuid'
-import { HumanMessage, AIMessage as LangChainAIMessage, ToolMessage } from '@langchain/core/messages'
+import { HumanMessage } from '@langchain/core/messages'
 import { Command } from '@langchain/langgraph'
 import { isGraphInterrupt } from '@langchain/langgraph'
 import { validate } from '../middleware/validate.js'
@@ -159,49 +159,13 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   }
   await appendMessage(convo._id, userMessage)
 
-  // ── Reconstruct conversation history with ToolMessages ──
-  function reconstructHistory(messages: Array<{ role: string; content: string; toolCalls?: Array<{ name: string; arguments: Record<string, unknown>; result?: unknown }> }>): Array<HumanMessage | LangChainAIMessage | ToolMessage> {
-    const result: Array<HumanMessage | LangChainAIMessage | ToolMessage> = []
-
-    for (const msg of messages) {
-      if (msg.role === 'user') {
-        result.push(new HumanMessage(msg.content))
-      } else if (msg.role === 'assistant') {
-        if (msg.toolCalls && msg.toolCalls.length > 0) {
-          // AIMessage with tool_calls
-          const toolCalls = msg.toolCalls.map((tc, idx) => ({
-            name: tc.name,
-            args: tc.arguments,
-            id: `call_${idx}_${tc.name}`,
-            type: 'tool_call' as const,
-          }))
-          result.push(new LangChainAIMessage({
-            content: msg.content || '',
-            tool_calls: toolCalls,
-          }))
-          // Add ToolMessage for each tool call
-          for (const tc of msg.toolCalls) {
-            result.push(new ToolMessage({
-              content: tc.result ? JSON.stringify(tc.result) : '工具执行完成',
-              tool_call_id: `call_${msg.toolCalls.indexOf(tc)}_${tc.name}`,
-              name: tc.name,
-            }))
-          }
-        } else {
-          // Regular AIMessage without tool_calls
-          result.push(new LangChainAIMessage(msg.content))
-        }
-      }
-    }
-
-    return result
-  }
-
   // ── Build LangGraph input state ──
+  // 注意：使用 Checkpointer 时，历史消息已由 checkpointer 存储和加载。
+  // messages reducer 会将 graphInput.messages 追加到已有消息上，
+  // 因此这里只传当前用户消息，不要传历史，否则会重复。
   const threadId = convo._id
-  const historyMessages = reconstructHistory(convo.messages.slice(0, -1)) // Exclude the current user message
   const graphInput = {
-    messages: [...historyMessages, new HumanMessage(message)],
+    messages: [new HumanMessage(message)],
     context: {
       source: context.source as 'editor' | 'flow' | 'page' | 'standalone',
       schemaId: context.schemaId,
