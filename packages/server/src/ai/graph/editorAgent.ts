@@ -127,6 +127,7 @@ export async function editorAgentNode(
   ]
 
   try {
+    // 使用 invoke() 保持 tool_calls 格式正确（LangGraph ToolNode 需要）
     const response = await model.invoke(messages)
     const hasToolCalls = response.tool_calls && response.tool_calls.length > 0
     console.log(`[editorAgent] LLM 调用完成, hasToolCalls=${hasToolCalls}, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)

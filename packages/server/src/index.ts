@@ -15,6 +15,10 @@ async function start() {
   const server = httpServer.listen(PORT, () => {
     console.log(`[server] Schema API running at http://localhost:${PORT}`)
     console.log(`[server] Health check: http://localhost:${PORT}/api/health`)
+
+    // SSE 流式输出超时配置
+    server.keepAliveTimeout = 300_000  // 5 分钟
+    server.headersTimeout = 310_000    // 比 keepAliveTimeout 略大
   })
 
   let shuttingDown = false

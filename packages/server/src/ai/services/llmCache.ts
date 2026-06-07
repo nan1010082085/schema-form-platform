@@ -54,6 +54,7 @@ export function getLLM(opts: LLMOptions = {}): ChatOpenAI {
       temperature: opts.temperature ?? 0.7,
       maxTokens: opts.maxTokens ?? 8192,
       streaming: true,
+      timeout: 120_000,  // 2 分钟单次 LLM 调用超时
       ...(opts.jsonMode ? { modelKwargs: { response_format: { type: 'json_object' } } } : {}),
     })
 

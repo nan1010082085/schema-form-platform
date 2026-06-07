@@ -135,6 +135,7 @@ export async function flowAgentNode(
   console.log(`[flowAgent] 开始执行, messages=${state.messages.length}`)
 
   try {
+    // 使用 invoke() 保持 tool_calls 格式正确（LangGraph ToolNode 需要）
     const response = await model.invoke(messages)
     const hasToolCalls = response.tool_calls && response.tool_calls.length > 0
     console.log(`[flowAgent] LLM 调用完成, hasToolCalls=${hasToolCalls}, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)

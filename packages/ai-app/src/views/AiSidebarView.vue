@@ -26,7 +26,7 @@ const params = new URLSearchParams(window.location.search)
 const initialAgent = (params.get('agent') as AgentType) ?? 'editor'
 
 // 可用 Agents 配置（根据项目类型）
-const agentConfig: Record<string, { agents: AgentType[]; label: Record<AgentType, string> }> = {
+const agentConfig: Record<string, { agents: AgentType[]; label: Partial<Record<AgentType, string>> }> = {
   editor: {
     agents: ['editor', 'page'],
     label: { editor: 'Editor', page: 'Page' }
@@ -50,14 +50,6 @@ const agentOptions = computed(() => config.agents.map(a => ({
   label: config.label[a]
 })))
 
-// Agent 标签颜色
-const agentColors: Record<AgentType, string> = {
-  editor: 'var(--ai-color-success, #26A036)',
-  page: 'var(--ai-color-info, #4581E9)',
-  flow: 'var(--ai-color-info, #4581E9)',
-  auto: 'var(--ai-color-primary, #0060A2)',
-  general: 'var(--ai-text-hint, #999999)'
-}
 
 // 上下文标签
 const contextLabel = computed(() => {

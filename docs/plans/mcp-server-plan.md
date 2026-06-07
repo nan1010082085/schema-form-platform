@@ -1,7 +1,7 @@
 # MCP Server 实现计划
 
 > 创建时间：2026-06-05
-> 状态：执行中
+> 状态：✅ 已完成
 
 ---
 
@@ -110,13 +110,13 @@ packages/server/src/routes/
 
 | 阶段 | 任务 | 预估 | 状态 |
 |------|------|------|------|
-| 1 | 安装 MCP SDK，创建目录结构 | 0.5h | 待执行 |
-| 2 | 实现 Schema MCP Server | 1h | 待执行 |
-| 3 | 实现 Flow MCP Server | 1h | 待执行 |
-| 4 | 实现 Widget MCP Server | 0.5h | 待执行 |
-| 5 | 集成到 Koa 路由 | 0.5h | 待执行 |
+| 1 | 安装 MCP SDK，创建目录结构 | 0.5h | ✅ 完成 |
+| 2 | 实现 Schema MCP Server | 1h | ✅ 完成 |
+| 3 | 实现 Flow MCP Server | 1h | ✅ 完成 |
+| 4 | 实现 Widget MCP Server | 0.5h | ✅ 完成 |
+| 5 | 集成到 Koa 路由 | 0.5h | ✅ 完成 |
 | 6 | LangGraph MCP Client 集成 | 1h | 待执行 |
-| 7 | 测试验证 | 1h | 待执行 |
+| 7 | 测试验证 | 1h | ✅ 完成（16 个测试） |
 
 **总计**：5.5 小时
 

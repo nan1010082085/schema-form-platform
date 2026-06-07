@@ -16,7 +16,7 @@
 
 import { StateGraph, END, START, BaseCheckpointSaver } from '@langchain/langgraph'
 import { ToolNode } from '@langchain/langgraph/prebuilt'
-import { AIMessage, SystemMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
+import { AIMessage, AIMessageChunk, SystemMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import { AgentStateAnnotation } from './state.js'
 import { editorAgentNode } from './editorAgent.js'
 import { flowAgentNode } from './flowAgent.js'
@@ -185,12 +185,18 @@ async function thinkerNode(
   const model = getLLM({ temperature: 0, maxTokens: 4096, jsonMode: true })
 
   try {
-    const response = await model.invoke([
+    // 使用流式调用，让 reasoning_content 可以通过 streamEvents 捕获
+    const stream = await model.stream([
       new SystemMessage(THINKER_SYSTEM_PROMPT),
       new HumanMessage(userContent),
     ])
 
-    const raw = typeof response.content === 'string' ? response.content : JSON.stringify(response.content)
+    let raw = ''
+    for await (const chunk of stream) {
+      const content = typeof chunk.content === 'string' ? chunk.content : ''
+      if (content) raw += content
+    }
+
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
 
     if (jsonMatch) {
@@ -301,11 +307,29 @@ async function generalAgentNode(
   console.log(`[generalAgent] 开始执行, messages=${state.messages.length}`)
 
   try {
-    const response = await model.invoke([
+    // 使用流式调用，让 content 可以通过 streamEvents 捕获
+    const stream = await model.stream([
       new SystemMessage(GENERAL_SYSTEM_PROMPT),
       new HumanMessage(userContent),
     ])
-    console.log(`[generalAgent] LLM 调用完成, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)
+
+    let content = ''
+    let reasoningContent = ''
+    for await (const chunk of stream) {
+      const chunkContent = typeof chunk.content === 'string' ? chunk.content : ''
+      const chunkReasoning = (chunk as any).additional_kwargs?.reasoning_content ?? (chunk as any).reasoning_content
+      if (chunkContent) content += chunkContent
+      if (chunkReasoning) reasoningContent += chunkReasoning
+    }
+
+    console.log(`[generalAgent] LLM 调用完成, contentLength=${content.length}, reasoningLength=${reasoningContent.length}`)
+
+    // 构造 AIMessage 响应
+    const { AIMessage } = await import('@langchain/core/messages')
+    const response = new AIMessage({
+      content: reasoningContent ? `<think>${reasoningContent}</think>\n\n${content}` : content,
+    })
+
     return {
       messages: [response],
       session: { ...state.session, currentAgent: 'general' },
@@ -352,10 +376,20 @@ ${taskResults || '无'}
 
 请以助手身份总结执行结果，并给出后续建议。`
 
-  const response = await model.invoke([
+  // 使用流式调用
+  const stream = await model.stream([
     new SystemMessage(prompt),
     new HumanMessage(userContent),
   ])
+
+  let content = ''
+  for await (const chunk of stream) {
+    const chunkContent = typeof chunk.content === 'string' ? chunk.content : ''
+    if (chunkContent) content += chunkContent
+  }
+
+  const { AIMessage } = await import('@langchain/core/messages')
+  const response = new AIMessage({ content })
 
   return {
     messages: [response],
@@ -419,7 +453,9 @@ export function afterAgent(
   state: typeof AgentStateAnnotation.State,
 ): string {
   const lastMessage = state.messages[state.messages.length - 1]
-  const hasToolCalls = lastMessage instanceof AIMessage && lastMessage.tool_calls && lastMessage.tool_calls.length > 0
+  // 支持 AIMessage 和 AIMessageChunk（invoke 可能返回 Chunk）
+  const isAiMessage = lastMessage instanceof AIMessage || lastMessage instanceof AIMessageChunk
+  const hasToolCalls = isAiMessage && lastMessage.tool_calls && lastMessage.tool_calls.length > 0
 
   console.log(`[afterAgent] source=${state.context.source}, hasToolCalls=${hasToolCalls}, taskChain=${state.task.chain.length}, step=${state.task.currentStepIndex}, messages=${state.messages.length}`)
 
