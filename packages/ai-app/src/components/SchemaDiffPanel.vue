@@ -14,17 +14,19 @@ const emit = defineEmits<{
   dismiss: []
 }>()
 
+const addedItems = computed(() => props.diff.changes.filter((c) => c.type === 'add'))
+const removedItems = computed(() => props.diff.changes.filter((c) => c.type === 'remove'))
+const modifiedItems = computed(() => props.diff.changes.filter((c) => c.type === 'modify'))
+
 const hasChanges = computed(() =>
-  props.diff.added.length > 0 ||
-  props.diff.removed.length > 0 ||
-  props.diff.modified.length > 0,
+  props.diff.added > 0 ||
+  props.diff.removed > 0 ||
+  props.diff.modified > 0,
 )
 
 const changeCount = computed(() =>
-  props.diff.added.length + props.diff.removed.length + props.diff.modified.length,
+  props.diff.added + props.diff.removed + props.diff.modified,
 )
-
-const unchangedCount = computed(() => props.diff.unchanged ?? 0)
 </script>
 
 <template>
@@ -52,44 +54,35 @@ const unchangedCount = computed(() => props.diff.unchanged ?? 0)
     <div :class="$style.diffList">
       <!-- Added -->
       <div
-        v-for="item in diff.added"
-        :key="'add-' + item.id"
+        v-for="item in addedItems"
+        :key="'add-' + item.widgetId"
         :class="[$style.diffItem, $style.added]"
       >
         <span :class="$style.badge">+ 新增</span>
-        <span :class="$style.itemType">{{ item.type }}</span>
-        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
+        <span :class="$style.itemType">{{ item.widgetType }}</span>
+        <span :class="$style.itemLabel">{{ item.summary }}</span>
       </div>
 
       <!-- Modified -->
       <div
-        v-for="item in diff.modified"
-        :key="'mod-' + item.id"
+        v-for="item in modifiedItems"
+        :key="'mod-' + item.widgetId"
         :class="[$style.diffItem, $style.modified]"
       >
         <span :class="$style.badge">~ 修改</span>
-        <span :class="$style.itemType">{{ item.type }}</span>
-        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
-        <span v-if="item.changes" :class="$style.changes">
-          ({{ item.changes.join(', ') }})
-        </span>
+        <span :class="$style.itemType">{{ item.widgetType }}</span>
+        <span :class="$style.itemLabel">{{ item.summary }}</span>
       </div>
 
       <!-- Removed -->
       <div
-        v-for="item in diff.removed"
-        :key="'rem-' + item.id"
+        v-for="item in removedItems"
+        :key="'rem-' + item.widgetId"
         :class="[$style.diffItem, $style.removed]"
       >
         <span :class="$style.badge">- 删除</span>
-        <span :class="$style.itemType">{{ item.type }}</span>
-        <span v-if="item.label" :class="$style.itemLabel">{{ item.label }}</span>
-      </div>
-
-      <!-- Unchanged summary -->
-      <div v-if="unchangedCount > 0" :class="[$style.diffItem, $style.unchanged]">
-        <span :class="$style.badge">=</span>
-        <span>{{ unchangedCount }} 个组件未变更</span>
+        <span :class="$style.itemType">{{ item.widgetType }}</span>
+        <span :class="$style.itemLabel">{{ item.summary }}</span>
       </div>
     </div>
   </div>
