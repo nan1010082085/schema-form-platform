@@ -12,6 +12,7 @@
 import { getLLM } from '../services/llmCache.js'
 import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langchain/core/messages'
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
+import { getMetadata } from '../tools/toolHandlers.js'
 import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 // truncateMessages removed — agent nodes now use state.messages directly
@@ -19,25 +20,14 @@ import { callLLMWithFallback } from './agentErrorHandler.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
-// Metadata loading (lazy, cached)
+// System prompt (lazy, cached)
 // ────────────────────────────────────────────
 
 let flowSystemPrompt: string | null = null
 
-async function loadMetadata(): Promise<Record<string, unknown>> {
-  const { readFileSync } = await import('node:fs')
-  const { dirname, join } = await import('node:path')
-  const { createRequire } = await import('node:module')
-  const require = createRequire(import.meta.url)
-  const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
-  const jsonPath = join(dirname(pkgPath), 'metadata.json')
-  return JSON.parse(readFileSync(jsonPath, 'utf-8'))
-}
-
 async function getFlowSystemPrompt(): Promise<string> {
   if (!flowSystemPrompt) {
-    const metadata = await loadMetadata()
-    flowSystemPrompt = buildFlowSystemPrompt(metadata as unknown as Parameters<typeof buildFlowSystemPrompt>[0])
+    flowSystemPrompt = buildFlowSystemPrompt(getMetadata())
   }
   return flowSystemPrompt
 }

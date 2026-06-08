@@ -39,9 +39,6 @@ import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../flow-models/FlowVersion.js'
 import { PromptVersionModel } from './models/promptVersion.js'
 import { promptOptimizer } from './services/promptOptimizer.js'
-import { EDITOR_SYSTEM_PROMPT } from './prompts/editor.js'
-import { FLOW_SYSTEM_PROMPT } from './prompts/flow.js'
-import { ROUTER_SYSTEM_PROMPT } from './prompts/router.js'
 import type { AIMessage } from './graph/state.js'
 import { recordBehavior, analyzeUserPreferences, getBehaviorStats } from './services/behaviorService.js'
 import { getAvailableIndustries, getIndustryTemplates, type IndustryType } from './config/industryAgents.js'
@@ -641,6 +638,42 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             }
           }
           break
+        }
+      }
+    }
+
+    // ── Parse <schema> tags from accumulated content ──
+    // Flow agent outputs <schema> tags as text content instead of tool calls.
+    // Extract and emit as flow/schema events for the frontend.
+    if (accumulatedContent.includes('<schema>')) {
+      const schemaMatch = accumulatedContent.match(/<schema>\s*([\s\S]*?)\s*<\/schema>/)
+      if (schemaMatch) {
+        try {
+          const parsed = JSON.parse(schemaMatch[1])
+          if (parsed.type === 'flow_update' && parsed.flow) {
+            send({ type: 'flow', payload: parsed.flow, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
+            // Save version
+            const v = await createVersion({
+              conversationId: convo._id,
+              messageId: `text-${Date.now()}`,
+              type: 'flow',
+              content: parsed.flow,
+              description: 'AI 生成流程',
+            })
+            send({ type: 'version_created', versionId: v._id, version: v.version })
+          } else if (parsed.type === 'schema_update' && parsed.widgets) {
+            send({ type: 'schema', payload: parsed.widgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
+            const v = await createVersion({
+              conversationId: convo._id,
+              messageId: `text-${Date.now()}`,
+              type: 'schema',
+              content: parsed.widgets,
+              description: 'AI 生成 Schema',
+            })
+            send({ type: 'version_created', versionId: v._id, version: v.version })
+          }
+        } catch {
+          // JSON parse failed — skip
         }
       }
     }

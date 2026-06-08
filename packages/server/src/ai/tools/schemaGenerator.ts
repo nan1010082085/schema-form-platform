@@ -21,12 +21,7 @@ let editorPrompt: string | null = null
 
 async function getPrompt(): Promise<string> {
   if (!editorPrompt) {
-    const { readFileSync } = await import('node:fs')
-    const { dirname, join } = await import('node:path')
-    const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
-    const jsonPath = join(dirname(pkgPath), 'metadata.json')
-    const metadata = JSON.parse(readFileSync(jsonPath, 'utf-8'))
-    editorPrompt = buildEditorSystemPrompt(metadata)
+    editorPrompt = buildEditorSystemPrompt(getMetadata())
   }
   return editorPrompt
 }

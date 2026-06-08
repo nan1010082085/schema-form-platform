@@ -23,40 +23,20 @@ import {
 import type { ToolResult } from './types.js'
 
 // ────────────────────────────────────────────
-// Metadata（widget 目录）
+// Metadata 加载（单一入口，消除 6 处重复）
 // ────────────────────────────────────────────
 
-interface WidgetAIMetadata {
-  type: string
-  group: string
-  canHaveChildren: boolean
-  displayName: string
-  description: string
-  defaultProps: Record<string, unknown>
-  keyProps: string[]
-  defaultSize: { w: number; h: number } | null
-  exposedValues: Array<{ key: string; type: string; description: string; example?: unknown }>
-  receivableEvents: Array<{ name: string; description: string; params?: Record<string, string> }>
-  eventTargets: Array<{ id: string; label: string; description?: string }>
-  configPanels: string[]
-}
+import type { AIMetadata } from '@schema-form/shared-ai'
 
-interface AIMetadata {
-  version: string
-  generatedAt: string
-  widgets: WidgetAIMetadata[]
-}
-
-let metadata: AIMetadata | null = null
+let _metadata: AIMetadata | null = null
 
 export function getMetadata(): AIMetadata {
-  if (!metadata) {
+  if (!_metadata) {
     const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
-    const aiDir = dirname(pkgPath)
-    const jsonPath = join(aiDir, 'metadata.json')
-    metadata = JSON.parse(readFileSync(jsonPath, 'utf-8')) as AIMetadata
+    const jsonPath = join(dirname(pkgPath), 'metadata.json')
+    _metadata = JSON.parse(readFileSync(jsonPath, 'utf-8')) as AIMetadata
   }
-  return metadata
+  return _metadata
 }
 
 // ────────────────────────────────────────────

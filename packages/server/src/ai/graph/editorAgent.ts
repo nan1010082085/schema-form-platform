@@ -11,6 +11,7 @@
 import { getLLM } from '../services/llmCache.js'
 import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langchain/core/messages'
 import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
+import { getMetadata } from '../tools/toolHandlers.js'
 import { editorTools } from '../tools/editorTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 // truncateMessages removed — agent nodes now use state.messages directly
@@ -18,25 +19,14 @@ import { callLLMWithFallback } from './agentErrorHandler.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
-// Metadata loading (lazy, cached)
+// System prompt (lazy, cached)
 // ────────────────────────────────────────────
 
 let editorSystemPrompt: string | null = null
 
-async function loadMetadata(): Promise<Record<string, unknown>> {
-  const { readFileSync } = await import('node:fs')
-  const { dirname, join } = await import('node:path')
-  const { createRequire } = await import('node:module')
-  const require = createRequire(import.meta.url)
-  const pkgPath = require.resolve('@schema-form/shared-ai/package.json')
-  const jsonPath = join(dirname(pkgPath), 'metadata.json')
-  return JSON.parse(readFileSync(jsonPath, 'utf-8'))
-}
-
 async function getEditorSystemPrompt(): Promise<string> {
   if (!editorSystemPrompt) {
-    const metadata = await loadMetadata()
-    editorSystemPrompt = buildEditorSystemPrompt(metadata as unknown as Parameters<typeof buildEditorSystemPrompt>[0])
+    editorSystemPrompt = buildEditorSystemPrompt(getMetadata())
   }
   return editorSystemPrompt
 }
