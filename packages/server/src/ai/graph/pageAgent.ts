@@ -15,6 +15,7 @@ import { buildPageSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { editorTools } from '../tools/editorTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 import { truncateMessages } from './agentBase.js'
+import { callLLMWithFallback } from './agentErrorHandler.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -125,21 +126,16 @@ export async function pageAgentNode(
     new HumanMessage(userContent),
   ]
 
-  try {
-    // 使用 stream() 触发 LangChain 回调，让 streamEvents 能捕获 on_chat_model_stream 逐 token 事件
+  return callLLMWithFallback('pageAgent', async () => {
     const stream = await model.stream(messages)
     let final: AIMessageChunk | null = null
     for await (const chunk of stream) {
       final = final ? final.concat(chunk) : chunk
     }
     if (!final) throw new Error('LLM 返回空流')
-    // AIMessageChunk implements AIMessage, use directly
     const response = final as unknown as AIMessage
     const hasToolCalls = response.tool_calls && response.tool_calls.length > 0
     console.log(`[pageAgent] LLM 调用完成, hasToolCalls=${hasToolCalls}, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)
     return { messages: [response] }
-  } catch (err) {
-    console.error(`[pageAgent] LLM 调用失败:`, err)
-    throw err
-  }
+  })
 }

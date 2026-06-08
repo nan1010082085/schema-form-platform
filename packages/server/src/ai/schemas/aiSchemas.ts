@@ -10,7 +10,7 @@ export const chatRequestSchema = z.object({
     .min(1, 'Message is required')
     .max(10000, 'Message must be 10000 characters or fewer'),
   context: z.object({
-    source: z.enum(['editor', 'flow', 'standalone']),
+    source: z.enum(['editor', 'flow', 'page', 'standalone']),
     schemaId: z.string().optional(),
     flowId: z.string().optional(),
     nodeId: z.string().optional(),

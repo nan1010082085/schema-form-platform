@@ -395,7 +395,7 @@ describe('POST /api/ai/chat', () => {
     expect(res.status).toBe(200)
     expect(res.sse).toBe(true)
     expect(res.text).toContain('"type":"error"')
-    expect(res.text).toContain('Graph compilation failed')
+    expect(res.text).toContain('AI 处理异常，请重试')
     // done event is guaranteed by the finally block even on error
     expect(res.text).toContain('"type":"done"')
   })

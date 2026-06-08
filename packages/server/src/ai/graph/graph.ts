@@ -24,6 +24,7 @@ import { pageAgentNode } from './pageAgent.js'
 import { allTools } from '../tools/allTools.js'
 import { checkpointer } from './checkpointer.js'
 import { getLLM } from '../services/llmCache.js'
+import { callLLMWithFallback } from './agentErrorHandler.js'
 
 // ────────────────────────────────────────────
 // Tool nodes
@@ -306,8 +307,7 @@ async function generalAgentNode(
 
   console.log(`[generalAgent] 开始执行, messages=${state.messages.length}`)
 
-  try {
-    // 使用流式调用，让 content 可以通过 streamEvents 捕获
+  const result = await callLLMWithFallback('generalAgent', async () => {
     const stream = await model.stream([
       new SystemMessage(GENERAL_SYSTEM_PROMPT),
       new HumanMessage(userContent),
@@ -324,19 +324,17 @@ async function generalAgentNode(
 
     console.log(`[generalAgent] LLM 调用完成, contentLength=${content.length}, reasoningLength=${reasoningContent.length}`)
 
-    // 构造 AIMessage 响应
-    const { AIMessage } = await import('@langchain/core/messages')
     const response = new AIMessage({
       content: reasoningContent ? `<think>${reasoningContent}</think>\n\n${content}` : content,
     })
 
-    return {
-      messages: [response],
-      session: { ...state.session, currentAgent: 'general' },
-    }
-  } catch (err) {
-    console.error(`[generalAgent] LLM 调用失败:`, err)
-    throw err
+    return { messages: [response] }
+  })
+
+  const messages = 'messages' in result ? result.messages : [new AIMessage({ content: '⚠️ AI 处理异常，请重试' })]
+  return {
+    messages,
+    session: { ...state.session, currentAgent: 'general' },
   }
 }
 
@@ -361,7 +359,7 @@ async function summarizerNode(
 
   const taskResults = state.task.chain
     .filter((step) => step.status === 'done')
-    .map((step) => `${step.agent} 专家完成了：${step.description}`)
+    .map((step) => `✅ ${step.agent} 专家：${step.description}`)
     .join('\n')
 
   const model = getLLM({ temperature: 0.7, maxTokens: 2048 })
@@ -376,20 +374,25 @@ ${taskResults || '无'}
 
 请以助手身份总结执行结果，并给出后续建议。`
 
-  // 使用流式调用
-  const stream = await model.stream([
-    new SystemMessage(prompt),
-    new HumanMessage(userContent),
-  ])
+  // 降级内容：LLM 失败时直接返回任务列表
+  const fallbackContent = `## 执行完成\n\n${taskResults || '无执行结果'}\n\n如需进一步调整，请继续描述需求。`
 
-  let content = ''
-  for await (const chunk of stream) {
-    const chunkContent = typeof chunk.content === 'string' ? chunk.content : ''
-    if (chunkContent) content += chunkContent
-  }
+  const result = await callLLMWithFallback('summarizer', async () => {
+    const stream = await model.stream([
+      new SystemMessage(prompt),
+      new HumanMessage(userContent),
+    ])
 
-  const { AIMessage } = await import('@langchain/core/messages')
-  const response = new AIMessage({ content })
+    let content = ''
+    for await (const chunk of stream) {
+      const chunkContent = typeof chunk.content === 'string' ? chunk.content : ''
+      if (chunkContent) content += chunkContent
+    }
+
+    return new AIMessage({ content })
+  }, fallbackContent)
+
+  const response = result instanceof AIMessage ? result : new AIMessage({ content: fallbackContent })
 
   return {
     messages: [response],

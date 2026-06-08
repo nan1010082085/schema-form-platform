@@ -18,6 +18,7 @@ import { validate } from '../middleware/validate.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { chatRequestSchema, publishRequestSchema, behaviorRequestSchema } from './schemas/aiSchemas.js'
 import { graph } from './graph/graph.js'
+import { createSendError } from './graph/agentErrorHandler.js'
 import {
   createConversation,
   getConversation,
@@ -694,18 +695,12 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       return
     }
 
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    console.error(`[AI Chat] Stream error (thread=${threadId}, agent=${currentAgent}):`, err)
-    const phaseLabel = accumulatedContent ? '生成阶段' : '思考阶段'
-    send({
-      type: 'error',
-      content: `[${phaseLabel}] ${errorMsg}`,
+    const sendError = createSendError(send)
+    sendError({
+      error: err,
       agent: currentAgent,
+      phase: accumulatedContent ? 'generating' : 'thinking',
     })
-    // 如果已有部分内容，追加错误提示到消息中
-    if (accumulatedContent) {
-      send({ type: 'text', content: `\n\n⚠️ 生成中断：${errorMsg}` })
-    }
   } finally {
     // Guarantee done event is sent even when stream errors out
     if (!doneSent) {
@@ -851,9 +846,11 @@ router.post('/chat/resume', async (ctx) => {
       return
     }
 
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-    console.error(`[AI Chat Resume] Error (thread=${threadId}):`, err)
-    send({ type: 'error', content: errorMsg })
+    const sendError = createSendError(send)
+    sendError({
+      error: err,
+      phase: 'generating',
+    })
   } finally {
     if (!doneSent) {
       send({ type: 'done', conversationId: interrupted.conversationId })
