@@ -11,6 +11,7 @@ import { FormSchemaModel } from '../../models/FormSchema.js'
 import { PublishedSchemaModel } from '../../models/PublishedSchema.js'
 import { escapeRegex } from '../graph/agentBase.js'
 import { searchPublishedSchemas as searchPublishedSchemasService, validateWidgetSchema as validateWidgetSchemaService } from '../services/schemaService.js'
+import { adaptWidgets, type PartialWidget } from '../services/schemaAdapter.js'
 import { z } from 'zod'
 import type { ToolResult } from './types.js'
 
@@ -476,6 +477,9 @@ export const updateSchemaTool = tool(
     } catch {
       return JSON.stringify({ success: false, error: 'widgetsJson JSON 解析失败，请确保传入合法的 JSON 字符串' } satisfies ToolResult)
     }
+
+    // 1.5. Adapt: 补全 name/formId/position/validationRules 等缺失字段
+    widgets = adaptWidgets(widgets as unknown as PartialWidget[]) as unknown as Record<string, unknown>[]
 
     // 2. Validate the new schema
     const meta = await getMetadata()

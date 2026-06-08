@@ -14,6 +14,7 @@ import { UserModel } from '../../models/User.js'
 import { escapeRegex } from '../graph/agentBase.js'
 import { generateSchemaFromPrompt } from './schemaGenerator.js'
 import { searchFlows as searchFlowsService, getFlowDetail as getFlowDetailService, searchUsers as searchUsersService, validateFlowGraph as validateFlowGraphService } from '../services/flowService.js'
+import { adaptFlowGraph, type PartialFlowGraph } from '../services/flowAdapter.js'
 import { z } from 'zod'
 import type { ToolResult } from './types.js'
 
@@ -482,9 +483,11 @@ export function computeFlowDiff(
 
 export const updateFlowTool = tool(
   async ({ flow, flowId, description }): Promise<string> => {
-    const flowGraph = flow as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
+    // 1. Adapt: 补全 shape/BpmnNodeConfig 默认值
+    const adapted = adaptFlowGraph(flow as unknown as PartialFlowGraph)
+    const flowGraph = adapted as unknown as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
 
-    // 1. Validate
+    // 2. Validate
     const errors = validateFlowGraph(flowGraph)
     if (errors.length > 0) {
       return JSON.stringify({
