@@ -209,19 +209,11 @@ export interface SchemaDiffEntry {
   summary: string
 }
 
-export interface SchemaDiffItem {
-  id: string
-  type: string
-  label?: string
-  changes?: string[]
-}
-
 export interface SchemaDiff {
   changes: SchemaDiffEntry[]
-  added: SchemaDiffItem[]
-  removed: SchemaDiffItem[]
-  modified: SchemaDiffItem[]
-  unchanged?: number
+  added: number
+  removed: number
+  modified: number
 }
 
 export interface FlowDiffEntry {
@@ -318,6 +310,10 @@ export interface StepData {
   /** 卡片操作标签 */
   primaryAction?: string
   secondaryAction?: string
+  /** 步骤时间戳 */
+  timestamp?: Date
+  /** 智能体类型 */
+  agent?: 'editor' | 'flow' | 'page' | 'auto' | 'general'
 }
 
 // ---- RAG ----

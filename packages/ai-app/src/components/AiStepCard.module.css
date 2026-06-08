@@ -1,12 +1,33 @@
 /* ---- Card ---- */
 .card {
+  position: relative;
   background: var(--ai-bg-white, #FFFFFF);
   border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
   border-radius: var(--ai-radius-lg, 12px);
   overflow: hidden;
   box-shadow: var(--ai-shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06));
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  margin-bottom: 8px;
 }
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ai-color-info, #4581E9);
+  border: 2px solid var(--ai-bg-white, #FFFFFF);
+  z-index: 1;
+}
+
+.type_thinking::before { background: #722ED1; }
+.type_tool_call::before { background: #1890FF; }
+.type_tool_error::before { background: #FF4D4F; }
+.type_result::before { background: #52C41A; }
+.type_text::before { background: #4581E9; }
 
 .card:hover {
   box-shadow: var(--ai-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04));
@@ -64,6 +85,27 @@
   margin-top: 2px;
   font-family: 'SF Mono', 'Fira Code', Consolas, Monaco, monospace;
 }
+
+.timestamp {
+  font-size: 11px;
+  color: var(--ai-text-tertiary, #8C8C8C);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.agentBadge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.agent_editor { background: #E6F7FF; color: #1890FF; }
+.agent_flow { background: #F6FFED; color: #52C41A; }
+.agent_page { background: #FFF7E6; color: #FA8C16; }
+.agent_general { background: #F9F0FF; color: #722ED1; }
 
 .headerRight {
   display: flex;
@@ -245,6 +287,45 @@
   padding: 8px 12px;
   margin-bottom: 8px;
   font-weight: 500;
+}
+
+.summaryText {
+  font-size: 13px;
+  color: var(--ai-text-secondary, #595959);
+  margin-bottom: 4px;
+}
+
+.compactList {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+}
+
+.compactList li {
+  padding: 2px 0;
+  font-size: 13px;
+  color: var(--ai-text-secondary, #595959);
+}
+
+.compactList li::before {
+  content: '•';
+  margin-right: 6px;
+  color: var(--ai-color-primary, #4581E9);
+}
+
+.moreItem {
+  color: var(--ai-text-tertiary, #8C8C8C);
+  font-style: italic;
+}
+
+.rawDetails {
+  margin-top: 8px;
+}
+
+.rawDetails summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ai-text-tertiary, #8C8C8C);
 }
 
 /* ---- Typing indicator ---- */

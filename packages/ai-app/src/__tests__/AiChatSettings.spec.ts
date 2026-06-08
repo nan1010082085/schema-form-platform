@@ -6,13 +6,9 @@ import { mount } from '@vue/test-utils'
 import AiChatSettings from '@/components/AiChatSettings.vue'
 import type { ChatSettings } from '@/types'
 
-// Stub Element Plus components
-const ElDialogStub = {
-  template: '<div v-if="modelValue"><div class="dialog-title">{{ title }}</div><slot /><div class="footer"><slot name="footer" /></div></div>',
-  props: ['modelValue', 'title', 'width', 'closeOnClickModal'],
-}
+// Stub Element Plus components used by AiChatSettings
 const ElRadioButtonStub = {
-  template: '<button :class="{ active: modelValue === value }" @click="$emit(\'update:modelValue\', value)"><slot /></button>',
+  template: '<button :class="{ active: modelValue === $attrs.value }" @click="$emit(\'update:modelValue\', $attrs.value)"><slot /></button>',
   props: ['value', 'modelValue'],
 }
 const ElRadioGroupStub = {
@@ -22,10 +18,6 @@ const ElRadioGroupStub = {
 const ElInputStub = {
   template: '<textarea :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
   props: ['modelValue', 'type', 'rows', 'placeholder'],
-}
-const ElButtonStub = {
-  template: '<button @click="$emit(\'click\')"><slot /></button>',
-  props: ['type'],
 }
 
 const defaultSettings: ChatSettings = {
@@ -40,66 +32,78 @@ const defaultSettings: ChatSettings = {
 }
 
 const stubs = {
-  ElDialog: ElDialogStub,
   ElRadioButton: ElRadioButtonStub,
   ElRadioGroup: ElRadioGroupStub,
   ElInput: ElInputStub,
-  ElButton: ElButtonStub,
+}
+
+/**
+ * Helper: mount AiChatSettings and return the wrapper plus a function
+ * to query the teleported content in document.body.
+ *
+ * The component uses <Teleport to="body">, so its visible content
+ * lands in document.body, not in wrapper.text().
+ */
+function mountSettings(visible: boolean, settings: ChatSettings = defaultSettings) {
+  const wrapper = mount(AiChatSettings, {
+    props: { visible, settings },
+    global: { stubs },
+  })
+  return {
+    wrapper,
+    /** Full text including teleported content */
+    text: () => document.body.textContent ?? '',
+    /** Query buttons in the teleported drawer */
+    findButton: (label: string) =>
+      [...document.body.querySelectorAll('button')].find((b) => b.textContent?.trim() === label),
+  }
 }
 
 describe('AiChatSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    document.body.innerHTML = ''
   })
 
   it('renders when visible is true', () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
-    expect(wrapper.text()).toContain('对话设置')
-    expect(wrapper.text()).toContain('用户偏好')
-    expect(wrapper.text()).toContain('对话历史摘要')
+    const { wrapper, text } = mountSettings(true)
+    expect(text()).toContain('对话设置')
+    expect(text()).toContain('用户偏好')
+    expect(text()).toContain('对话历史摘要')
+    wrapper.unmount()
   })
 
   it('does not render content when visible is false', () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: false, settings: defaultSettings },
-      global: { stubs },
-    })
-    // Dialog stub hides content when modelValue is false
-    expect(wrapper.text()).not.toContain('用户偏好')
+    const { wrapper, text } = mountSettings(false)
+    expect(text()).not.toContain('用户偏好')
+    wrapper.unmount()
   })
 
   it('displays all preference options', () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
+    const { wrapper, text } = mountSettings(true)
     // Language options
-    expect(wrapper.text()).toContain('回复语言')
-    expect(wrapper.text()).toContain('中文')
-    expect(wrapper.text()).toContain('English')
+    expect(text()).toContain('回复语言')
+    expect(text()).toContain('中文')
+    expect(text()).toContain('English')
 
     // Style options
-    expect(wrapper.text()).toContain('回复风格')
-    expect(wrapper.text()).toContain('简洁')
-    expect(wrapper.text()).toContain('详细')
+    expect(text()).toContain('回复风格')
+    expect(text()).toContain('简洁')
+    expect(text()).toContain('详细')
 
     // Code comment options
-    expect(wrapper.text()).toContain('代码注释')
-    expect(wrapper.text()).toContain('是')
-    expect(wrapper.text()).toContain('否')
+    expect(text()).toContain('代码注释')
+    expect(text()).toContain('是')
+    expect(text()).toContain('否')
+    wrapper.unmount()
   })
 
   it('displays history summary mode options', () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
-    expect(wrapper.text()).toContain('生成方式')
-    expect(wrapper.text()).toContain('自动生成')
-    expect(wrapper.text()).toContain('手动编辑')
+    const { wrapper, text } = mountSettings(true)
+    expect(text()).toContain('生成方式')
+    expect(text()).toContain('自动生成')
+    expect(text()).toContain('手动编辑')
+    wrapper.unmount()
   })
 
   it('shows manual summary textarea when mode is manual', () => {
@@ -107,65 +111,59 @@ describe('AiChatSettings', () => {
       ...defaultSettings,
       historySummary: { mode: 'manual', manualSummary: 'test summary' },
     }
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: manualSettings },
-      global: { stubs },
-    })
-    expect(wrapper.text()).toContain('手动摘要')
-    expect(wrapper.find('textarea').exists()).toBe(true)
+    const { wrapper, text } = mountSettings(true, manualSettings)
+    expect(text()).toContain('手动摘要')
+    // Textarea is inside Teleport, query from document.body
+    expect(document.body.querySelector('textarea')).toBeTruthy()
+    wrapper.unmount()
   })
 
   it('hides manual summary textarea when mode is auto', () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
-    // The manual summary textarea should not be visible when mode is auto
-    expect(wrapper.text()).not.toContain('手动摘要')
+    const { wrapper, text } = mountSettings(true)
+    expect(text()).not.toContain('手动摘要')
+    wrapper.unmount()
   })
 
   it('emits update:settings on save', async () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
+    const { wrapper, findButton } = mountSettings(true)
 
-    // Click save button
-    const buttons = wrapper.findAll('button')
-    const saveBtn = buttons.find((b) => b.text() === '保存')
+    const saveBtn = findButton('保存')
     expect(saveBtn).toBeTruthy()
-    await saveBtn!.trigger('click')
+    saveBtn!.click()
+
+    // Wait for Vue reactivity
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('update:settings')).toBeTruthy()
     expect(wrapper.emitted('update:settings')![0][0]).toEqual(defaultSettings)
+    wrapper.unmount()
   })
 
   it('emits update:visible false on cancel', async () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
+    const { wrapper, findButton } = mountSettings(true)
 
-    const buttons = wrapper.findAll('button')
-    const cancelBtn = buttons.find((b) => b.text() === '取消')
+    const cancelBtn = findButton('取消')
     expect(cancelBtn).toBeTruthy()
-    await cancelBtn!.trigger('click')
+    cancelBtn!.click()
+
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('update:visible')).toBeTruthy()
     expect(wrapper.emitted('update:visible')![0][0]).toBe(false)
+    wrapper.unmount()
   })
 
   it('emits update:visible false on save', async () => {
-    const wrapper = mount(AiChatSettings, {
-      props: { visible: true, settings: defaultSettings },
-      global: { stubs },
-    })
+    const { wrapper, findButton } = mountSettings(true)
 
-    const buttons = wrapper.findAll('button')
-    const saveBtn = buttons.find((b) => b.text() === '保存')
-    await saveBtn!.trigger('click')
+    const saveBtn = findButton('保存')
+    expect(saveBtn).toBeTruthy()
+    saveBtn!.click()
+
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('update:visible')).toBeTruthy()
     expect(wrapper.emitted('update:visible')![0][0]).toBe(false)
+    wrapper.unmount()
   })
 })

@@ -104,6 +104,7 @@ function formatToolName(name: string): string {
 
 const steps = computed<StepData[]>(() => {
   const result: StepData[] = []
+  const now = new Date()
 
   // Step: thinking
   if (props.thinking) {
@@ -112,6 +113,8 @@ const steps = computed<StepData[]>(() => {
       title: '思考过程',
       content: props.thinking,
       status: 'done',
+      timestamp: now,
+      agent: props.agent,
     })
   }
 
@@ -131,6 +134,8 @@ const steps = computed<StepData[]>(() => {
         toolResult: tc.result,
         toolArguments: tc.arguments,
         error: tc.error,
+        timestamp: now,
+        agent: props.agent,
       })
     }
   }
@@ -146,6 +151,8 @@ const steps = computed<StepData[]>(() => {
         cardTitle: card.title,
         primaryAction: card.primaryAction,
         secondaryAction: card.secondaryAction,
+        timestamp: now,
+        agent: props.agent,
       })
     }
   }
@@ -157,6 +164,8 @@ const steps = computed<StepData[]>(() => {
       title: '回复',
       content: renderedContentRef.value,
       status: 'done',
+      timestamp: now,
+      agent: props.agent,
     })
   }
 
@@ -214,6 +223,8 @@ const steps = computed<StepData[]>(() => {
             :card-title="step.cardTitle"
             :primary-action="step.primaryAction"
             :secondary-action="step.secondaryAction"
+            :timestamp="step.timestamp"
+            :agent="step.agent"
             :is-last="idx === steps.length - 1"
             @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
             @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"

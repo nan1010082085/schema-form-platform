@@ -154,9 +154,10 @@ export const AgentStateAnnotation = Annotation.Root({
   tools: Annotation<{
     needsTool: boolean
     results: AgentToolResult[]
+    toolIterationCount: number
   }>({
     reducer: (_, next) => next,
-    default: () => ({ needsTool: false, results: [] }),
+    default: () => ({ needsTool: false, results: [], toolIterationCount: 0 }),
   }),
 
   // ── Group 4: Error ──

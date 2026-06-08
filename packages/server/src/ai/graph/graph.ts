@@ -459,7 +459,12 @@ export function afterAgent(
 
   console.log(`[afterAgent] source=${state.context.source}, hasToolCalls=${hasToolCalls}, taskChain=${state.task.chain.length}, step=${state.task.currentStepIndex}, messages=${state.messages.length}`)
 
+  const MAX_TOOL_ITERATIONS = 3
   if (hasToolCalls) {
+    if (state.tools.toolIterationCount >= MAX_TOOL_ITERATIONS) {
+      console.warn(`[afterAgent] 工具迭代上限 ${MAX_TOOL_ITERATIONS}，强制结束`)
+      return END
+    }
     console.log(`[afterAgent] -> allTools (${lastMessage.tool_calls!.length} tool_calls)`)
     return 'allTools'
   }
@@ -494,6 +499,7 @@ async function afterToolsNode(
         const targetAgent = collaborationCall.args.targetAgent as string
         if (targetAgent === 'editor' || targetAgent === 'flow' || targetAgent === 'page') {
           return {
+            tools: { ...state.tools, toolIterationCount: state.tools.toolIterationCount + 1 },
             interaction: {
               ...state.interaction,
               collaborationRequest: {
@@ -510,7 +516,9 @@ async function afterToolsNode(
     }
   }
 
-  return {}
+  return {
+    tools: { ...state.tools, toolIterationCount: state.tools.toolIterationCount + 1 },
+  }
 }
 
 export function afterToolsRoute(

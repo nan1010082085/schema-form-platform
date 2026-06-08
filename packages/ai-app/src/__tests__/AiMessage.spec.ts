@@ -231,15 +231,10 @@ describe('AiMessage', () => {
 
       // tool_error is NOT collapsed by default — no need to click header
 
-      // Error badge should be rendered
-      const badge = wrapper.find('[class*="toolBadgeError"]')
-      expect(badge.exists()).toBe(true)
-      expect(badge.text()).toBe('生成表单')
-
-      // Error card should be visible
-      const errorCard = wrapper.find('[class*="errorCard"]')
-      expect(errorCard.exists()).toBe(true)
-      expect(errorCard.text()).toContain('Schema validation failed: missing required field "type"')
+      // Error content should be visible (tool_error type is NOT collapsed by default)
+      const errorContent = wrapper.find('[class*="errorContent"]')
+      expect(errorContent.exists()).toBe(true)
+      expect(errorContent.text()).toContain('Schema validation failed: missing required field "type"')
     })
 
     it('renders normal result when no error', async () => {
@@ -291,8 +286,8 @@ describe('AiMessage', () => {
         await headers[0].trigger('click')
       }
 
-      // Error card exists in the DOM (from the second step, already expanded)
-      expect(wrapper.find('[class*="errorCard"]').exists()).toBe(true)
+      // Error content exists in the DOM (from the second step, already expanded)
+      expect(wrapper.find('[class*="errorContent"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('Validation timeout')
     })
   })

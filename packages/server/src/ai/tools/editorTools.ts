@@ -250,7 +250,18 @@ export const searchWidgetsByKeywordTool = tool(
 )
 
 export const validateSchemaTool = tool(
-  async ({ widgets }): Promise<string> => {
+  async ({ widgetsJson }): Promise<string> => {
+    let widgets: Record<string, unknown>[]
+    try {
+      const parsed = JSON.parse(widgetsJson)
+      if (!Array.isArray(parsed)) {
+        return JSON.stringify({ success: false, error: 'widgetsJson 解析结果不是数组，请传入合法的 JSON 数组字符串' } satisfies ToolResult)
+      }
+      widgets = parsed as Record<string, unknown>[]
+    } catch {
+      return JSON.stringify({ success: false, error: 'widgetsJson JSON 解析失败，请确保传入合法的 JSON 字符串' } satisfies ToolResult)
+    }
+
     const meta = await getMetadata()
     const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
     const CONTAINER_TYPES = new Set(
@@ -299,10 +310,10 @@ export const validateSchemaTool = tool(
       }
     }
 
-    walk(widgets as Record<string, unknown>[], '', 0)
+    walk(widgets, '', 0)
 
     const summary = errors.length === 0
-      ? `Schema 校验通过，共 ${(widgets as unknown[]).length} 个组件`
+      ? `Schema 校验通过，共 ${widgets.length} 个组件`
       : `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}${errors.length > 3 ? '等' : ''}`
 
     const result: ToolResult = {
@@ -316,10 +327,10 @@ export const validateSchemaTool = tool(
     name: 'validate_schema',
     description: `校验 Widget Schema JSON 的结构正确性。检查组件类型合法性、ID 存在性、容器嵌套规则。在生成 Schema 后调用此工具确认无误再返回给用户。
 
-参数：widgets — 要校验的 Widget 数组。
+参数：widgetsJson — Widget 数组的 JSON 字符串。
 返回 JSON 包含 valid 布尔值和 errors 错误列表（每项含 path 和 message）。`,
     schema: z.object({
-      widgets: z.array(z.record(z.unknown())).describe('要校验的 Widget 数组'),
+      widgetsJson: z.string().describe('Widget 数组的 JSON 字符串'),
     }),
   },
 )
@@ -531,8 +542,20 @@ export function computeSchemaDiff(
 // ────────────────────────────────────────────
 
 export const updateSchemaTool = tool(
-  async ({ widgets, schemaId, description }): Promise<string> => {
-    // 1. Validate the new schema
+  async ({ widgetsJson, schemaId, description }): Promise<string> => {
+    // 1. Parse JSON string
+    let widgets: Record<string, unknown>[]
+    try {
+      const parsed = JSON.parse(widgetsJson)
+      if (!Array.isArray(parsed)) {
+        return JSON.stringify({ success: false, error: 'widgetsJson 解析结果不是数组，请传入合法的 JSON 数组字符串' } satisfies ToolResult)
+      }
+      widgets = parsed as Record<string, unknown>[]
+    } catch {
+      return JSON.stringify({ success: false, error: 'widgetsJson JSON 解析失败，请确保传入合法的 JSON 字符串' } satisfies ToolResult)
+    }
+
+    // 2. Validate the new schema
     const meta = await getMetadata()
     const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
     const CONTAINER_TYPES = new Set(
@@ -581,7 +604,7 @@ export const updateSchemaTool = tool(
       }
     }
 
-    walk(widgets as Record<string, unknown>[], '', 0)
+    walk(widgets, '', 0)
 
     if (errors.length > 0) {
       return JSON.stringify({
@@ -590,7 +613,7 @@ export const updateSchemaTool = tool(
       } satisfies ToolResult)
     }
 
-    // 2. Compute diff against existing schema
+    // 3. Compute diff against existing schema
     let diff: SchemaDiff | null = null
     if (schemaId) {
       const existing = await FormSchemaModel.findById(schemaId)
@@ -600,15 +623,15 @@ export const updateSchemaTool = tool(
       if (existing && Array.isArray(existing.json)) {
         diff = computeSchemaDiff(
           existing.json as Record<string, unknown>[],
-          widgets as Record<string, unknown>[],
+          widgets,
         )
       }
     }
 
-    // 3. Human-in-the-Loop: confirm before write operation
+    // 4. Human-in-the-Loop: confirm before write operation
     const diffSummary = diff
       ? `变更：新增 ${diff.added} 个组件，删除 ${diff.removed} 个，修改 ${diff.modified} 个`
-      : `Schema 包含 ${(widgets as unknown[]).length} 个组件`
+      : `Schema 包含 ${widgets.length} 个组件`
 
     const confirmed = interrupt({
       type: 'schema_update',
@@ -622,7 +645,7 @@ export const updateSchemaTool = tool(
           modified: diff.modified,
           changes: diff.changes.slice(0, 10),
         } : null,
-        widgetCount: (widgets as unknown[]).length,
+        widgetCount: widgets.length,
       },
     })
 
@@ -633,7 +656,7 @@ export const updateSchemaTool = tool(
       } satisfies ToolResult)
     }
 
-    // 4. Save version (version creation is handled by route handler)
+    // 5. Save version (version creation is handled by route handler)
     if (schemaId) {
       // Update existing schema
       const { v4: uuidv4 } = await import('uuid')
@@ -676,10 +699,11 @@ export const updateSchemaTool = tool(
     const result: ToolResult = {
       success: true,
       data: {
-        widgets,
+        // 不包含 widgets — 前端通过 SSE schema 事件获取
         schemaId,
         diff,
         description,
+        widgetCount: widgets.length,
       },
       summary: diffSummary,
     }
@@ -702,7 +726,7 @@ export const updateSchemaTool = tool(
 
 工具会自动计算 diff 并保存版本历史。`,
     schema: z.object({
-      widgets: z.array(z.record(z.unknown())).describe('修改后的完整 Widget Schema JSON 数组'),
+      widgetsJson: z.string().describe('修改后的完整 Widget Schema JSON 字符串（数组格式）'),
       schemaId: z.string().optional().describe('要更新的 Schema ID。如果不提供则创建新 Schema'),
       description: z.string().describe('本次修改的自然语言描述，如"添加了手机号输入框"'),
     }),

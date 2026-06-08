@@ -35,6 +35,10 @@ export interface AiStepCardProps {
   secondaryAction?: string
   /** 是否是最后一个步骤（隐藏连接线） */
   isLast?: boolean
+  /** 步骤时间戳 */
+  timestamp?: Date
+  /** 智能体类型 */
+  agent?: 'editor' | 'flow' | 'page' | 'auto' | 'general'
 }
 
 const props = withDefaults(defineProps<AiStepCardProps>(), {
@@ -46,6 +50,22 @@ defineEmits<{
   'primary-action': []
   'secondary-action': []
 }>()
+
+const SEARCH_TOOL_NAMES = new Set([
+  'search_schemas', 'search_published_schemas', 'fuzzy_search_schemas',
+  'search_flows', 'search_users', 'get_widget_catalogue',
+])
+
+const agentLabels: Record<string, string> = {
+  editor: 'Editor 专家',
+  flow: 'Flow 专家',
+  page: 'Page 专家',
+  general: '通用助手',
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
 
 const COLLAPSED_BY_DEFAULT: Set<StepType> = new Set(['thinking', 'tool_call'])
 const collapsed = ref(COLLAPSED_BY_DEFAULT.has(props.type))
@@ -77,6 +97,25 @@ const toolResultSummary = computed(() => {
   if (!props.toolResult || typeof props.toolResult !== 'object') return null
   const r = props.toolResult as Record<string, unknown>
   return typeof r.summary === 'string' ? r.summary : null
+})
+
+const compactResult = computed(() => {
+  if (!props.toolResult || typeof props.toolResult !== 'object') return null
+  const r = props.toolResult as Record<string, unknown>
+  if (!SEARCH_TOOL_NAMES.has(props.toolName ?? '')) return null
+  if (r.error) return null
+
+  const data = r.data as Record<string, unknown> | undefined
+  if (!data) return null
+
+  const items = (data.schemas ?? data.flows ?? data.users ?? data.widgets ?? []) as Array<Record<string, unknown>>
+  const names = items
+    .map(item => (item.name ?? item.displayName ?? item.username ?? item.id) as string)
+    .filter(Boolean)
+    .slice(0, 5)
+  const total = (data.total as number) ?? items.length
+
+  return { total, names, summary: r.summary as string | undefined }
 })
 
 const statusLabel = computed(() => {
@@ -121,7 +160,12 @@ function toggleCollapse(): void {
         </div>
         <!-- Title + subtitle -->
         <div :class="$style.headerText">
-          <div :class="$style.title">{{ type === 'tool_error' ? '工具调用失败' : title }}</div>
+          <div :class="$style.title">
+            {{ type === 'tool_error' ? '工具调用失败' : title }}
+            <span v-if="agent" :class="[$style.agentBadge, $style[`agent_${agent}`]]">
+              {{ agentLabels[agent] }}
+            </span>
+          </div>
           <div v-if="toolName && (type === 'tool_call' || type === 'tool_error')" :class="$style.subtitle">
             {{ toolName }}
           </div>
@@ -131,6 +175,10 @@ function toggleCollapse(): void {
         </div>
       </div>
       <div :class="$style.headerRight">
+        <!-- Timestamp -->
+        <div v-if="timestamp" :class="$style.timestamp">
+          {{ formatTime(timestamp) }}
+        </div>
         <!-- Status indicator for tool cards -->
         <div v-if="type === 'tool_call' || type === 'tool_error'" :class="$style.status">
           <span :class="[$style.statusDot, isRunning ? $style.statusDotLoading : isError ? $style.statusDotError : $style.statusDotSuccess]" />
@@ -176,13 +224,31 @@ function toggleCollapse(): void {
               <pre>{{ JSON.stringify(toolArguments, null, 2) }}</pre>
             </div>
           </div>
-          <div v-if="hasToolResult" :class="$style.toolSection">
+          <!-- 搜索工具：精简显示 -->
+          <div v-if="compactResult" :class="$style.toolSection">
             <div :class="$style.toolSectionLabel">结果</div>
-            <div v-if="toolResultSummary" :class="$style.toolSummary">{{ toolResultSummary }}</div>
-            <div :class="$style.toolJson">
-              <pre>{{ JSON.stringify(toolResult, null, 2) }}</pre>
-            </div>
+            <div v-if="compactResult.summary" :class="$style.toolSummary">{{ compactResult.summary }}</div>
+            <ul v-if="compactResult.names.length > 0" :class="$style.compactList">
+              <li v-for="(name, i) in compactResult.names" :key="i">{{ name }}</li>
+              <li v-if="compactResult.total > compactResult.names.length" :class="$style.moreItem">
+                ...共 {{ compactResult.total }} 条
+              </li>
+            </ul>
+            <details :class="$style.rawDetails">
+              <summary>查看原始数据</summary>
+              <div :class="$style.toolJson"><pre>{{ JSON.stringify(toolResult, null, 2) }}</pre></div>
+            </details>
           </div>
+          <!-- 非搜索工具：保持原样 -->
+          <template v-else>
+            <div v-if="hasToolResult" :class="$style.toolSection">
+              <div :class="$style.toolSectionLabel">结果</div>
+              <div v-if="toolResultSummary" :class="$style.toolSummary">{{ toolResultSummary }}</div>
+              <div :class="$style.toolJson">
+                <pre>{{ JSON.stringify(toolResult, null, 2) }}</pre>
+              </div>
+            </div>
+          </template>
           <!-- Loading indicator for running tool calls -->
           <div v-if="isRunning" :class="$style.typingIndicator">
             <span :class="$style.typingDot" />

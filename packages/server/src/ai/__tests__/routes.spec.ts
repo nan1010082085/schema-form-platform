@@ -313,7 +313,7 @@ describe('POST /api/ai/chat', () => {
         {
           event: 'on_tool_start',
           name: 'validate_schema',
-          data: { input: { widgets: [{ id: '1', type: 'input' }] } },
+          data: { input: { widgetsJson: JSON.stringify([{ id: '1', type: 'input' }]) } },
           run_id: 'tc-s1',
         },
         {

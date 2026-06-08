@@ -21,11 +21,12 @@ vi.mock('dompurify', () => ({
 
 describe('AiStepCard', () => {
   describe('rendering', () => {
-    it('displays step number when pending', () => {
+    it('displays title when pending', () => {
       const wrapper = mount(AiStepCard, {
-        props: { index: 3, type: 'text', title: 'Reply', status: 'pending' },
+        props: { index: 3, type: 'tool_call', title: 'Reply', status: 'pending' },
       })
-      expect(wrapper.text()).toContain('3')
+      // tool_call type has header that displays title
+      expect(wrapper.text()).toContain('Reply')
     })
 
     it('displays title for all types', () => {
@@ -73,32 +74,35 @@ describe('AiStepCard', () => {
   describe('status indicator', () => {
     it('shows check mark when done', () => {
       const wrapper = mount(AiStepCard, {
-        props: { index: 1, type: 'text', title: 'Reply', status: 'done' },
+        props: { index: 1, type: 'tool_call', title: 'Reply', status: 'done' },
       })
-      expect(wrapper.find('[class*="checkIcon"]').exists()).toBe(true)
+      // done status shown via statusDotSuccess dot
+      expect(wrapper.find('[class*="statusDotSuccess"]').exists()).toBe(true)
     })
 
-    it('shows loading dots when running', () => {
+    it('shows loading status dot when running', () => {
       const wrapper = mount(AiStepCard, {
         props: { index: 1, type: 'tool_call', title: 'Calling...', status: 'running' },
       })
-      expect(wrapper.findComponent({ name: 'AiLoadingDots' }).exists()).toBe(true)
+      // Running status shown via statusDotLoading dot animation
+      expect(wrapper.find('[class*="statusDotLoading"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('调用中...')
     })
 
-    it('shows error indicator when error status', () => {
+    it('shows error indicator when tool_error', () => {
       const wrapper = mount(AiStepCard, {
-        props: { index: 1, type: 'text', title: 'Error', status: 'error' },
+        props: { index: 1, type: 'tool_error', title: 'Error', error: 'Failed', status: 'error' },
       })
       expect(wrapper.find('[class*="errorIcon"]').exists()).toBe(true)
     })
 
-    it('shows step number when pending', () => {
+    it('shows title and status area for tool_call', () => {
       const wrapper = mount(AiStepCard, {
-        props: { index: 5, type: 'text', title: 'Pending', status: 'pending' },
+        props: { index: 5, type: 'tool_call', title: 'Pending', status: 'pending' },
       })
-      expect(wrapper.text()).toContain('5')
-      expect(wrapper.find('[class*="checkIcon"]').exists()).toBe(false)
-      expect(wrapper.find('[class*="errorIcon"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Pending')
+      // Status area exists for tool_call type
+      expect(wrapper.find('[class*="status"]').exists()).toBe(true)
     })
   })
 
@@ -170,7 +174,7 @@ describe('AiStepCard', () => {
   })
 
   describe('tool call content', () => {
-    it('shows tool badge with display name', async () => {
+    it('shows tool display name in subtitle', async () => {
       const wrapper = mount(AiStepCard, {
         props: {
           index: 1,
@@ -182,10 +186,10 @@ describe('AiStepCard', () => {
         },
       })
 
-      await wrapper.find('[class*="header"]').trigger('click')
-      const badge = wrapper.find('[class*="toolBadge"]')
-      expect(badge.exists()).toBe(true)
-      expect(badge.text()).toBe('Search Schemas')
+      // toolName shown in subtitle
+      const subtitle = wrapper.find('[class*="subtitle"]')
+      expect(subtitle.exists()).toBe(true)
+      expect(subtitle.text()).toBe('search_schemas')
     })
 
     it('shows error card for tool_error type (expanded by default)', () => {
@@ -201,9 +205,9 @@ describe('AiStepCard', () => {
       })
 
       // tool_error is NOT collapsed by default, body is visible
-      const errorCard = wrapper.find('[class*="errorCard"]')
-      expect(errorCard.exists()).toBe(true)
-      expect(errorCard.text()).toContain('Schema invalid')
+      const errorContent = wrapper.find('[class*="errorContent"]')
+      expect(errorContent.exists()).toBe(true)
+      expect(errorContent.text()).toContain('Schema invalid')
     })
 
     it('shows arguments and result when available', async () => {
@@ -245,18 +249,20 @@ describe('AiStepCard', () => {
   })
 
   describe('connector line', () => {
-    it('shows connector line when not last', () => {
+    it('renders card with timeline dot indicator', () => {
       const wrapper = mount(AiStepCard, {
         props: { index: 1, type: 'text', title: 'Step', isLast: false },
       })
-      expect(wrapper.find('[class*="line"]').exists()).toBe(true)
+      // Card has ::before pseudo-element for timeline dot (CSS)
+      expect(wrapper.find('[class*="card"]').exists()).toBe(true)
     })
 
     it('hides connector line when last', () => {
       const wrapper = mount(AiStepCard, {
         props: { index: 1, type: 'text', title: 'Step', isLast: true },
       })
-      expect(wrapper.find('[class*="line"]').exists()).toBe(false)
+      // Card still renders, timeline is in parent stepList
+      expect(wrapper.find('[class*="card"]').exists()).toBe(true)
     })
   })
 
@@ -268,25 +274,25 @@ describe('AiStepCard', () => {
       expect(wrapper.find('[class*="type_thinking"]').exists()).toBe(true)
     })
 
-    it('applies running status class to number', () => {
+    it('applies running status dot class', () => {
       const wrapper = mount(AiStepCard, {
         props: { index: 1, type: 'tool_call', title: 'Call', status: 'running' },
       })
-      expect(wrapper.find('[class*="status_running"]').exists()).toBe(true)
+      expect(wrapper.find('[class*="statusDotLoading"]').exists()).toBe(true)
     })
 
-    it('applies done status class to number', () => {
+    it('applies done status dot class', () => {
       const wrapper = mount(AiStepCard, {
-        props: { index: 1, type: 'text', title: 'Done', status: 'done' },
+        props: { index: 1, type: 'tool_call', title: 'Done', status: 'done' },
       })
-      expect(wrapper.find('[class*="status_done"]').exists()).toBe(true)
+      expect(wrapper.find('[class*="statusDotSuccess"]').exists()).toBe(true)
     })
 
-    it('applies error status class to number', () => {
+    it('applies error status dot class', () => {
       const wrapper = mount(AiStepCard, {
         props: { index: 1, type: 'tool_error', title: 'Err', status: 'error' },
       })
-      expect(wrapper.find('[class*="status_error"]').exists()).toBe(true)
+      expect(wrapper.find('[class*="statusDotError"]').exists()).toBe(true)
     })
   })
 

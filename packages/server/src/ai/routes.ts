@@ -304,9 +304,14 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           // 1. DeepSeek 私有字段 additional_kwargs.reasoning_content
           // 2. 标准 reasoning_content 字段（其他模型兼容）
           // 3. 从 content 中提取 <think>...</think> 标签（支持跨 chunk）
+          const chunkRec = chunk as Record<string, unknown> | undefined
+          const chunkAk = chunk?.additional_kwargs as Record<string, unknown> | undefined
           const reasoningContent =
-            chunk?.additional_kwargs?.reasoning_content ??
-            (chunk as Record<string, unknown> | undefined)?.reasoning_content as string | undefined
+            chunkAk?.reasoning_content as string | undefined ??
+            chunkRec?.reasoning_content as string | undefined ??
+            (chunkRec?.lc_kwargs as Record<string, unknown> | undefined)?.additional_kwargs
+              ? ((chunkRec?.lc_kwargs as Record<string, unknown>).additional_kwargs as Record<string, unknown> | undefined)?.reasoning_content as string | undefined
+              : undefined
 
           if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.trim().length > 0) {
             send({ type: 'thinking', content: reasoningContent })
@@ -409,20 +414,28 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           }
 
           // Capture schema/flow payloads from validation tool arguments
-          if (SCHEMA_TOOLS.has(toolName) && toolArgs.widgets) {
-            pendingPayloads.set(event.run_id as string, toolArgs.widgets as Record<string, unknown>[])
+          if (SCHEMA_TOOLS.has(toolName) && toolArgs.widgetsJson) {
+            let parsedWidgets: unknown
+            try { parsedWidgets = JSON.parse(toolArgs.widgetsJson as string) } catch { parsedWidgets = null }
+            if (parsedWidgets) {
+              pendingPayloads.set(event.run_id as string, parsedWidgets as Record<string, unknown>[])
+            }
           }
           if (FLOW_TOOLS.has(toolName) && toolArgs.flow) {
             pendingPayloads.set(event.run_id as string, toolArgs.flow as Record<string, unknown>)
           }
           // Capture payloads from update tools
-          if (toolName === UPDATE_SCHEMA_TOOL && toolArgs.widgets) {
-            pendingPayloads.set(event.run_id as string, {
-              type: 'update_schema',
-              widgets: toolArgs.widgets,
-              schemaId: toolArgs.schemaId,
-              description: toolArgs.description,
-            })
+          if (toolName === UPDATE_SCHEMA_TOOL && toolArgs.widgetsJson) {
+            let parsedWidgets: unknown
+            try { parsedWidgets = JSON.parse(toolArgs.widgetsJson as string) } catch { parsedWidgets = null }
+            if (parsedWidgets) {
+              pendingPayloads.set(event.run_id as string, {
+                type: 'update_schema',
+                widgets: parsedWidgets,
+                schemaId: toolArgs.schemaId,
+                description: toolArgs.description,
+              })
+            }
           }
           if (toolName === UPDATE_FLOW_TOOL && toolArgs.flow) {
             pendingPayloads.set(event.run_id as string, {
@@ -547,19 +560,22 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           if (toolName === UPDATE_SCHEMA_TOOL) {
             const result = toolResult as Record<string, unknown> | undefined
             const resultData = result?.data as Record<string, unknown> | undefined
-            if (resultData?.widgets) {
+            // Widgets are captured from tool arguments via pendingPayloads (not in tool result)
+            const pending = pendingPayloads.get(toolRunId) as Record<string, unknown> | undefined
+            const widgetsPayload = pending?.widgets as Record<string, unknown>[] | undefined
+            if (widgetsPayload) {
               // Send schema update event
               send({
                 type: 'schema',
-                payload: resultData.widgets,
-                description: (resultData.description as string) ?? (resultData.summary as string) ?? '',
+                payload: widgetsPayload,
+                description: (resultData?.description as string) ?? (result?.summary as string) ?? '',
               })
               // Send diff event if available
-              if (resultData.diff) {
+              if (resultData?.diff) {
                 send({
                   type: 'schema_diff',
                   diff: resultData.diff,
-                  description: (resultData.description as string) ?? '',
+                  description: (resultData?.description as string) ?? '',
                 })
               }
               // Save version via version service
@@ -567,8 +583,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
                 conversationId: convo._id,
                 messageId: toolRunId,
                 type: 'schema',
-                content: resultData.widgets as Record<string, unknown>[],
-                description: (resultData.description as string) ?? '更新 Schema',
+                content: widgetsPayload,
+                description: (resultData?.description as string) ?? '更新 Schema',
               })
               send({ type: 'version_created', versionId: v._id, version: v.version })
               pendingPayloads.delete(toolRunId)

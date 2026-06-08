@@ -10,7 +10,7 @@
  */
 
 import { getLLM } from '../services/llmCache.js'
-import { HumanMessage, SystemMessage } from '@langchain/core/messages'
+import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langchain/core/messages'
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
@@ -58,18 +58,19 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
     ? lastHumanMessage.content
     : JSON.stringify(lastHumanMessage.content)
 
-  // Inject current flow for modification requests
+  // Inject current flow summary (not full JSON)
   if (state.context.currentFlow && state.context.currentFlow.nodes.length > 0) {
-    prompt += '\n\n--- 当前已有流程（供参考和修改）---\n```json\n'
-    prompt += JSON.stringify(state.context.currentFlow, null, 2)
-    prompt += '\n```'
+    const nodeCount = state.context.currentFlow.nodes.length
+    const edgeCount = state.context.currentFlow.edges.length
+    const nodeTypes = state.context.currentFlow.nodes.map(n => (n.data as Record<string, unknown>)?.bpmnType ?? n.type).join(', ')
+    prompt += `\n\n--- 当前流程概要 ---\n共 ${nodeCount} 个节点，${edgeCount} 条连线：${nodeTypes}`
   }
 
-  // Inject current schema (flow may reference forms)
+  // Inject current schema summary (flow may reference forms)
   if (state.context.currentSchema && state.context.currentSchema.length > 0) {
-    prompt += '\n\n--- 当前已有 Schema（供参考）---\n```json\n'
-    prompt += JSON.stringify(state.context.currentSchema, null, 2)
-    prompt += '\n```'
+    const widgetTypes = state.context.currentSchema.map(w => w.type).join(', ')
+    const widgetCount = state.context.currentSchema.length
+    prompt += `\n\n--- 当前 Schema 概要 ---\n共 ${widgetCount} 个组件：${widgetTypes}`
   }
 
   // Inject conversation history summary
@@ -135,8 +136,15 @@ export async function flowAgentNode(
   console.log(`[flowAgent] 开始执行, messages=${state.messages.length}`)
 
   try {
-    // 使用 invoke() 保持 tool_calls 格式正确（LangGraph ToolNode 需要）
-    const response = await model.invoke(messages)
+    // 使用 stream() 触发 LangChain 回调，让 streamEvents 能捕获 on_chat_model_stream 逐 token 事件
+    const stream = await model.stream(messages)
+    let final: AIMessageChunk | null = null
+    for await (const chunk of stream) {
+      final = final ? final.concat(chunk) : chunk
+    }
+    if (!final) throw new Error('LLM 返回空流')
+    // AIMessageChunk implements AIMessage, use directly
+    const response = final as unknown as AIMessage
     const hasToolCalls = response.tool_calls && response.tool_calls.length > 0
     console.log(`[flowAgent] LLM 调用完成, hasToolCalls=${hasToolCalls}, contentLength=${typeof response.content === 'string' ? response.content.length : 0}`)
     return { messages: [response] }
