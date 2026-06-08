@@ -5,6 +5,7 @@ export interface IRole {
   _id: string
   name: string
   description?: string
+  permissions: string[]  // 权限编码数组
   createdAt: Date
   updatedAt: Date
 }
@@ -14,6 +15,7 @@ const roleSchema = new mongoose.Schema(
     _id: { type: String, default: uuidv4 },
     name: { type: String, required: true, unique: true },
     description: { type: String },
+    permissions: { type: [String], default: [] },  // 权限编码数组
   },
   {
     timestamps: true,
@@ -26,6 +28,8 @@ const roleSchema = new mongoose.Schema(
     },
   },
 )
+
+roleSchema.index({ permissions: 1 })
 
 export const RoleModel =
   mongoose.models.Role ?? mongoose.model<IRole>('Role', roleSchema)

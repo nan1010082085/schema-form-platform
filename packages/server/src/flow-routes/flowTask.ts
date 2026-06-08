@@ -2,12 +2,14 @@ import Router from '@koa/router'
 import { validate as uuidValidate } from 'uuid'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { completeTaskSchema, delegateTaskSchema, rejectToNodeSchema } from '../flow-schemas/instanceSchemas.js'
 import { flowEngine } from '../flow-services/FlowEngine.js'
 import { taskService } from '../flow-services/TaskService.js'
 
 const requireAuth = authMiddleware({ required: true })
+const requireFlowApprove = requirePermission('flow:approve')
 
 const router = new Router({ prefix: '/api/flow-tasks' })
 
@@ -42,7 +44,7 @@ router.get('/:id', requireAuth, async (ctx) => {
 })
 
 // POST /api/flow-tasks/:id/claim
-router.post('/:id/claim', requireAuth, async (ctx) => {
+router.post('/:id/claim', requireAuth, requireFlowApprove, async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400
@@ -56,7 +58,7 @@ router.post('/:id/claim', requireAuth, async (ctx) => {
 })
 
 // POST /api/flow-tasks/:id/complete
-router.post('/:id/complete', requireAuth, validate(completeTaskSchema), async (ctx) => {
+router.post('/:id/complete', requireAuth, requireFlowApprove, validate(completeTaskSchema), async (ctx) => {
   const { id } = ctx.params
   const { formData, outcome } = ctx.request.body as {
     formData?: Record<string, unknown>
@@ -76,7 +78,7 @@ router.post('/:id/complete', requireAuth, validate(completeTaskSchema), async (c
 })
 
 // POST /api/flow-tasks/:id/delegate
-router.post('/:id/delegate', requireAuth, validate(delegateTaskSchema), async (ctx) => {
+router.post('/:id/delegate', requireAuth, requireFlowApprove, validate(delegateTaskSchema), async (ctx) => {
   const { id } = ctx.params
   const { targetUserId } = ctx.request.body as { targetUserId: string }
 
@@ -104,7 +106,7 @@ router.get('/:id/reject-targets', requireAuth, async (ctx) => {
 })
 
 // POST /api/flow-tasks/:id/reject-to-node
-router.post('/:id/reject-to-node', requireAuth, validate(rejectToNodeSchema), async (ctx) => {
+router.post('/:id/reject-to-node', requireAuth, requireFlowApprove, validate(rejectToNodeSchema), async (ctx) => {
   const { id } = ctx.params
   const { targetNodeId, comment } = ctx.request.body as {
     targetNodeId: string

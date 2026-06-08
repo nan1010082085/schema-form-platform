@@ -4,6 +4,7 @@ import type { Node } from '@vue-flow/core'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
 import UserPicker from '../UserPicker.vue'
+import RolePicker from '../RolePicker.vue'
 import { flowApi } from '../../api/flowApi'
 import styles from './UserTaskPanel.module.scss'
 
@@ -123,24 +124,17 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       <UserPicker
         :model-value="(node.data?.candidateUsers as string[]) ?? []"
         placeholder="选择审批用户"
+        users-only
         @update:model-value="update('candidateUsers', $event)"
       />
     </FieldRow>
 
     <FieldRow v-if="assigneeType === 'role'" label="审批角色">
-      <el-select
+      <RolePicker
         :model-value="(node.data?.candidateRoles as string[]) ?? []"
-        multiple
-        filterable
-        allow-create
-
-        placeholder="输入或选择角色"
-        @change="update('candidateRoles', $event)"
-      >
-        <el-option label="admin" value="admin" />
-        <el-option label="editor" value="editor" />
-        <el-option label="viewer" value="viewer" />
-      </el-select>
+        placeholder="选择审批角色"
+        @update:model-value="update('candidateRoles', $event)"
+      />
     </FieldRow>
 
     <FieldRow v-if="assigneeType === 'expression'" label="审批人表达式">

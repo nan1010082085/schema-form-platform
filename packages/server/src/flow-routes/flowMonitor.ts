@@ -2,13 +2,15 @@ import Router from '@koa/router'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 
 const requireAuth = authMiddleware({ required: true })
+const requireFlowMonitor = requirePermission('flow:monitor')
 
 const router = new Router({ prefix: '/api/flow-monitor' })
 
 // GET /api/flow-monitor/stats — 按状态分组的实例统计
-router.get('/stats', requireAuth, async (ctx) => {
+router.get('/stats', requireAuth, requireFlowMonitor, async (ctx) => {
   const stats = await FlowInstanceModel.aggregate([
     { $group: { _id: '$status', count: { $sum: 1 } } },
   ])
@@ -30,7 +32,7 @@ router.get('/stats', requireAuth, async (ctx) => {
 })
 
 // GET /api/flow-monitor/avg-duration — 已完成实例的平均时长（毫秒）
-router.get('/avg-duration', requireAuth, async (ctx) => {
+router.get('/avg-duration', requireAuth, requireFlowMonitor, async (ctx) => {
   const result = await FlowInstanceModel.aggregate([
     { $match: { status: 'completed', completedAt: { $ne: null } } },
     {
@@ -48,7 +50,7 @@ router.get('/avg-duration', requireAuth, async (ctx) => {
 })
 
 // GET /api/flow-monitor/node-stats — 各节点的完成次数和平均耗时
-router.get('/node-stats', requireAuth, async (ctx) => {
+router.get('/node-stats', requireAuth, requireFlowMonitor, async (ctx) => {
   const stats = await TaskInstanceModel.aggregate([
     { $match: { status: 'completed' } },
     {
@@ -82,7 +84,7 @@ router.get('/node-stats', requireAuth, async (ctx) => {
 })
 
 // GET /api/flow-monitor/trend — 按天统计实例创建趋势
-router.get('/trend', requireAuth, async (ctx) => {
+router.get('/trend', requireAuth, requireFlowMonitor, async (ctx) => {
   const { days: daysStr = '30' } = ctx.query
   const days = Math.min(365, Math.max(1, parseInt(daysStr as string, 10) || 30))
 
@@ -127,7 +129,7 @@ router.get('/trend', requireAuth, async (ctx) => {
 })
 
 // GET /api/flow-monitor/top-flows — 按实例数排名的热门流程 Top N
-router.get('/top-flows', requireAuth, async (ctx) => {
+router.get('/top-flows', requireAuth, requireFlowMonitor, async (ctx) => {
   const { limit: limitStr = '5' } = ctx.query
   const limit = Math.min(20, Math.max(1, parseInt(limitStr as string, 10) || 5))
 

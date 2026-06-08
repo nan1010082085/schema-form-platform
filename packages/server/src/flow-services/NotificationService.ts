@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import mongoose from 'mongoose'
-import { type NotificationType, type INotification } from '../flow-models/Notification.js'
+import { type NotificationType, type INotification, NotificationModel } from '../flow-models/Notification.js'
 import { getIO } from '../socket.js'
 
 interface TaskNotificationData {
@@ -13,7 +12,7 @@ interface TaskNotificationData {
 
 export class NotificationService {
   private get model() {
-    return mongoose.model<INotification>('Notification')
+    return NotificationModel
   }
 
   private getTitle(type: NotificationType, data: TaskNotificationData): string {

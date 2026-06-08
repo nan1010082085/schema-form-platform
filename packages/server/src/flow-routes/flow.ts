@@ -5,11 +5,14 @@ import { FlowVersionModel } from '../flow-models/FlowVersion.js'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createFlowSchema, updateFlowSchema } from '../flow-schemas/flowSchemas.js'
 import { flowPermissionService } from '../flow-services/FlowPermissionService.js'
 
 const requireAuth = authMiddleware({ required: true })
+const requireFlowDesign = requirePermission('flow:design')
+const requireFlowView = requirePermission('flow:view')
 
 const router = new Router({ prefix: '/api/flows' })
 
@@ -18,7 +21,7 @@ function escapeRegex(str: string): string {
 }
 
 // GET /api/flows
-router.get('/', async (ctx) => {
+router.get('/', requireAuth, requireFlowView, async (ctx) => {
   const { search, status, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
@@ -42,7 +45,7 @@ router.get('/', async (ctx) => {
 })
 
 // POST /api/flows
-router.post('/', requireAuth, validate(createFlowSchema), async (ctx) => {
+router.post('/', requireAuth, requireFlowDesign, validate(createFlowSchema), async (ctx) => {
   const { name, description, category, permissions } = ctx.request.body as {
     name: string
     description?: string
@@ -69,7 +72,7 @@ router.post('/', requireAuth, validate(createFlowSchema), async (ctx) => {
 })
 
 // GET /api/flows/:id
-router.get('/:id', async (ctx) => {
+router.get('/:id', requireAuth, requireFlowView, async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400
@@ -88,7 +91,7 @@ router.get('/:id', async (ctx) => {
 })
 
 // PUT /api/flows/:id
-router.put('/:id', requireAuth, validate(updateFlowSchema), async (ctx) => {
+router.put('/:id', requireAuth, requireFlowDesign, validate(updateFlowSchema), async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400
@@ -140,7 +143,7 @@ router.put('/:id', requireAuth, validate(updateFlowSchema), async (ctx) => {
 })
 
 // DELETE /api/flows/:id
-router.delete('/:id', requireAuth, async (ctx) => {
+router.delete('/:id', requireAuth, requireFlowDesign, async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400
@@ -177,7 +180,7 @@ router.delete('/:id', requireAuth, async (ctx) => {
 })
 
 // POST /api/flows/:id/publish
-router.post('/:id/publish', requireAuth, async (ctx) => {
+router.post('/:id/publish', requireAuth, requireFlowDesign, async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400

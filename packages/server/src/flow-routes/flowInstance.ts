@@ -3,17 +3,20 @@ import { validate as uuidValidate } from 'uuid'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { startInstanceSchema } from '../flow-schemas/instanceSchemas.js'
 import { flowEngine } from '../flow-services/FlowEngine.js'
 import { flowPermissionService } from '../flow-services/FlowPermissionService.js'
 
 const requireAuth = authMiddleware({ required: true })
+const requireFlowStart = requirePermission('flow:start')
+const requireFlowView = requirePermission('flow:view')
 
 const router = new Router({ prefix: '/api/flow-instances' })
 
 // GET /api/flow-instances
-router.get('/', requireAuth, async (ctx) => {
+router.get('/', requireAuth, requireFlowView, async (ctx) => {
   const { definitionId, status, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
@@ -53,7 +56,7 @@ router.get('/', requireAuth, async (ctx) => {
 })
 
 // POST /api/flow-instances
-router.post('/', requireAuth, validate(startInstanceSchema), async (ctx) => {
+router.post('/', requireAuth, requireFlowStart, validate(startInstanceSchema), async (ctx) => {
   const { definitionId, variables } = ctx.request.body as {
     definitionId: string
     variables?: Record<string, unknown>
@@ -75,7 +78,7 @@ router.post('/', requireAuth, validate(startInstanceSchema), async (ctx) => {
 })
 
 // GET /api/flow-instances/:id
-router.get('/:id', requireAuth, async (ctx) => {
+router.get('/:id', requireAuth, requireFlowView, async (ctx) => {
   const { id } = ctx.params
   if (!uuidValidate(id)) {
     ctx.status = 400

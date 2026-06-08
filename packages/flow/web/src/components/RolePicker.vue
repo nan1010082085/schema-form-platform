@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { flowApi } from '../api/flowApi.js'
-import styles from './UserPicker.module.scss'
-
-interface User {
-  id: string
-  username: string
-  displayName: string
-  roles: string[]
-}
+import styles from './RolePicker.module.scss'
 
 interface Role {
   id: string
@@ -19,18 +12,13 @@ interface Role {
 interface SelectOption {
   value: string
   label: string
-  type: 'user' | 'role'
-  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<{
   modelValue?: string[]
   placeholder?: string
-  /** 只显示用户，不显示角色 */
-  usersOnly?: boolean
 }>(), {
-  placeholder: '搜索用户或角色...',
-  usersOnly: false,
+  placeholder: '搜索角色...',
 })
 
 const emit = defineEmits<{
@@ -47,10 +35,6 @@ const hasMore = ref(true)
 
 let timer: ReturnType<typeof setTimeout> | null = null
 
-function formatUserLabel(user: User): string {
-  return `${user.displayName} (${user.username})`
-}
-
 function formatRoleLabel(role: Role): string {
   return role.description ? `${role.name} - ${role.description}` : role.name
 }
@@ -66,39 +50,14 @@ async function loadData(reset = false) {
 
   loading.value = true
   try {
-    const promises: Promise<{ items: Array<{ id: string; username?: string; displayName?: string; name?: string; description?: string; roles?: string[] }>; total: number }>[] = [
-      flowApi.searchUsers(searchQuery.value, page.value, pageSize),
-    ]
-
-    // 只在非 usersOnly 模式下加载角色
-    if (!props.usersOnly) {
-      promises.push(flowApi.searchRoles(searchQuery.value, page.value, pageSize))
-    }
-
-    const results = await Promise.all(promises)
-    const usersRes = results[0]
-    const rolesRes = results[1]
+    const res = await flowApi.searchRoles(searchQuery.value, page.value, pageSize)
 
     const newOptions: SelectOption[] = []
-
-    // 添加用户选项
-    for (const user of usersRes.items) {
+    for (const role of res.items) {
       newOptions.push({
-        value: `user:${user.id}`,
-        label: formatUserLabel(user as User),
-        type: 'user',
+        value: `role:${role.id}`,
+        label: formatRoleLabel(role),
       })
-    }
-
-    // 添加角色选项（仅在非 usersOnly 模式下）
-    if (rolesRes) {
-      for (const role of rolesRes.items) {
-        newOptions.push({
-          value: `role:${role.id}`,
-          label: formatRoleLabel(role as Role),
-          type: 'role',
-        })
-      }
     }
 
     if (reset) {
@@ -107,11 +66,11 @@ async function loadData(reset = false) {
       options.value = [...options.value, ...newOptions]
     }
 
-    total.value = usersRes.total + (rolesRes?.total ?? 0)
+    total.value = res.total
     hasMore.value = options.value.length < total.value
     page.value++
   } catch (error) {
-    console.error('Failed to load data:', error)
+    console.error('Failed to load roles:', error)
   } finally {
     loading.value = false
   }
@@ -139,7 +98,6 @@ function onScroll(event: Event) {
 function onChange(val: string[]) {
   emit('update:modelValue', val)
 }
-
 
 onMounted(() => {
   // 初始化时不加载，等下拉框打开时再加载
@@ -179,12 +137,8 @@ watch(() => props.modelValue, (val) => {
         :value="item.value"
       >
         <div :class="styles.optionItem">
-          <el-tag
-            :type="item.type === 'user' ? '' : 'warning'"
-            size="small"
-            :class="styles.typeTag"
-          >
-            {{ item.type === 'user' ? '用户' : '角色' }}
+          <el-tag type="warning" size="small" :class="styles.typeTag">
+            角色
           </el-tag>
           <span :class="styles.optionLabel">{{ item.label }}</span>
         </div>
