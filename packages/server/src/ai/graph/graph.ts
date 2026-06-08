@@ -87,6 +87,16 @@ async function taskChainNode(
 
   if (state.interaction.collaborationRequest) {
     const { targetAgent, description } = state.interaction.collaborationRequest
+    const currentAgent = state.session.currentAgent
+
+    // 协作去重：防止 A→B→A→B 无限循环
+    const reverseExists = state.interaction.collaborationHistory.some(
+      (h) => h.from === targetAgent && h.to === currentAgent,
+    )
+    if (reverseExists) {
+      console.warn(`[taskChain] 检测到协作循环 ${currentAgent}↔${targetAgent}，跳过`)
+      return { interaction: { ...state.interaction, collaborationRequest: null } }
+    }
 
     const newStep = {
       agent: targetAgent as 'editor' | 'flow' | 'page',
@@ -109,7 +119,14 @@ async function taskChainNode(
       session: { ...state.session, currentAgent: targetAgent as 'editor' | 'flow' | 'page' },
       task: { ...state.task, type: 'generate_simple', chain: updatedChain, currentStepIndex: currentIndex + 1 },
       tools: { ...state.tools, needsTool: true },
-      interaction: { ...state.interaction, collaborationRequest: null },
+      interaction: {
+        ...state.interaction,
+        collaborationRequest: null,
+        collaborationHistory: [
+          ...state.interaction.collaborationHistory,
+          { from: currentAgent, to: targetAgent, timestamp: Date.now() },
+        ],
+      },
     }
   }
 

@@ -173,6 +173,7 @@ export const AgentStateAnnotation = Annotation.Root({
     preferences: Record<string, unknown>
     historySummary: string
     collaborationRequest: CollaborationRequest | null
+    collaborationHistory: Array<{ from: string; to: string; timestamp: number }>
   }>({
     reducer: (_, next) => next,
     default: () => ({
@@ -181,6 +182,7 @@ export const AgentStateAnnotation = Annotation.Root({
       preferences: {},
       historySummary: '',
       collaborationRequest: null,
+      collaborationHistory: [],
     }),
   }),
 })
