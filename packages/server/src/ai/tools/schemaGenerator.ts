@@ -8,7 +8,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { getClient, buildMessages, parseStructuredOutput, withRetry } from '../graph/agentBase.js'
 import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
-import { getWidgetCatalogueFromMetadata } from './editorTools.js'
+import { getMetadata } from './toolHandlers.js'
 
 interface GenerateResult {
   tempId: string
@@ -72,7 +72,7 @@ export async function generateSchemaFromPrompt(description: string): Promise<Gen
   }
 
   // 校验
-  const meta = await getWidgetCatalogueFromMetadata()
+  const meta = getMetadata().widgets
   const validTypes = new Set(meta.map(w => w.type))
   const containerTypes = new Set(meta.filter(w => w.canHaveChildren).map(w => w.type))
 
