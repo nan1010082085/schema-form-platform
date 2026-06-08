@@ -14,7 +14,7 @@ import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langcha
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
-import { truncateMessages } from './agentBase.js'
+// truncateMessages removed — agent nodes now use state.messages directly
 import { callLLMWithFallback } from './agentErrorHandler.js'
 import type { AgentStateAnnotation } from './state.js'
 
@@ -125,12 +125,11 @@ export async function flowAgentNode(
 
   const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools])
 
-  // Build message list: system prompt + conversation history (truncated) + current user message
-  const truncatedHistory = truncateMessages(state.messages)
-
+  // 直接使用 state.messages + system prompt，不重建消息列表
+  // 避免 truncateMessages 截断 ToolMessage 导致 API 400 错误
   const messages = [
     new SystemMessage(systemPrompt),
-    ...truncatedHistory,
+    ...state.messages,
     new HumanMessage(userContent),
   ]
 
