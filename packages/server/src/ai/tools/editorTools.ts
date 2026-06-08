@@ -10,6 +10,7 @@ import { interrupt } from '@langchain/langgraph'
 import { FormSchemaModel } from '../../models/FormSchema.js'
 import { PublishedSchemaModel } from '../../models/PublishedSchema.js'
 import { escapeRegex } from '../graph/agentBase.js'
+import { searchPublishedSchemas as searchPublishedSchemasService, validateWidgetSchema as validateWidgetSchemaService } from '../services/schemaService.js'
 import { z } from 'zod'
 import type { ToolResult } from './types.js'
 
@@ -109,37 +110,8 @@ export const getSchemaDetailTool = tool(
 
 export const searchPublishedSchemasTool = tool(
   async ({ keyword, limit }): Promise<string> => {
-    const filter: Record<string, unknown> = {}
-    if (keyword) {
-      filter.name = { $regex: escapeRegex(keyword), $options: 'i' }
-    }
-
-    const schemas = await PublishedSchemaModel.find(filter)
-      .select('_id sourceId name type publishId version publishedAt')
-      .sort({ publishedAt: -1 })
-      .limit(limit)
-      .lean()
-
-    const mapped = schemas.map((s: Record<string, unknown>) => ({
-      id: s._id,
-      sourceId: s.sourceId,
-      name: s.name,
-      type: s.type,
-      publishId: s.publishId,
-      version: s.version,
-      publishedAt: s.publishedAt,
-    }))
-
-    const summary = schemas.length === 0
-      ? '没有找到已发布的 Schema'
-      : `找到 ${schemas.length} 个已发布 Schema：${mapped.slice(0, 3).map((s: Record<string, unknown>) => `${s.name}（v${s.version}）`).join('、')}${schemas.length > 3 ? '等' : ''}`
-
-    const result: ToolResult = {
-      success: true,
-      data: { total: schemas.length, schemas: mapped },
-      summary,
-    }
-    return JSON.stringify(result)
+    const result = await searchPublishedSchemasService({ keyword, limit })
+    return JSON.stringify(result satisfies ToolResult)
   },
   {
     name: 'search_published_schemas',
@@ -262,66 +234,16 @@ export const validateSchemaTool = tool(
       return JSON.stringify({ success: false, error: 'widgetsJson JSON 解析失败，请确保传入合法的 JSON 字符串' } satisfies ToolResult)
     }
 
-    const meta = await getMetadata()
-    const VALID_TYPES = new Set(meta.widgets.map((w) => w.type))
-    const CONTAINER_TYPES = new Set(
-      meta.widgets.filter((w) => w.canHaveChildren).map((w) => w.type),
-    )
-
-    interface ValidationError {
-      path: string
-      message: string
-    }
-
-    const errors: ValidationError[] = []
-
-    function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i]
-        const path = prefix ? `${prefix}[${i}]` : `[${i}]`
-
-        const type = node.type as string | undefined
-        if (!type) {
-          errors.push({ path: `${path}.type`, message: '缺少 type 字段' })
-          continue
-        }
-        if (!VALID_TYPES.has(type)) {
-          errors.push({ path: `${path}.type`, message: `无效的组件类型 "${type}"` })
-          continue
-        }
-
-        const id = node.id as string | undefined
-        if (!id) {
-          errors.push({ path: `${path}.id`, message: '缺少 id 字段' })
-        }
-
-        const isContainer = CONTAINER_TYPES.has(type)
-        const children = node.children as Record<string, unknown>[] | undefined
-
-        if (isContainer) {
-          if (!Array.isArray(children)) {
-            errors.push({ path: `${path}.children`, message: `容器组件 "${type}" 必须有 children 数组` })
-          } else {
-            walk(children, path, depth + 1)
-          }
-        } else if (depth === 0 && !isContainer) {
-          errors.push({ path, message: `基础组件 "${type}" 必须嵌套在布局容器内` })
-        }
-      }
-    }
-
-    walk(widgets, '', 0)
-
-    const summary = errors.length === 0
+    const result = await validateWidgetSchemaService(widgets)
+    const summary = result.valid
       ? `Schema 校验通过，共 ${widgets.length} 个组件`
-      : `Schema 校验失败，${errors.length} 个错误：${errors.slice(0, 3).map(e => e.message).join('；')}${errors.length > 3 ? '等' : ''}`
+      : `Schema 校验失败，${result.errors.length} 个错误：${result.errors.slice(0, 3).map(e => e.message).join('；')}${result.errors.length > 3 ? '等' : ''}`
 
-    const result: ToolResult = {
+    return JSON.stringify({
       success: true,
-      data: { valid: errors.length === 0, errors },
+      data: { valid: result.valid, errors: result.errors },
       summary,
-    }
-    return JSON.stringify(result)
+    } satisfies ToolResult)
   },
   {
     name: 'validate_schema',

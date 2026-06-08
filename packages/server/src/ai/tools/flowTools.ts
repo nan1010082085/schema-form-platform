@@ -13,6 +13,7 @@ import { FormSchemaModel } from '../../models/FormSchema.js'
 import { UserModel } from '../../models/User.js'
 import { escapeRegex } from '../graph/agentBase.js'
 import { generateSchemaFromPrompt } from './schemaGenerator.js'
+import { searchFlows as searchFlowsService, getFlowDetail as getFlowDetailService, searchUsers as searchUsersService, validateFlowGraph as validateFlowGraphService } from '../services/flowService.js'
 import { z } from 'zod'
 import type { ToolResult } from './types.js'
 
@@ -22,44 +23,8 @@ import type { ToolResult } from './types.js'
 
 export const searchFlowsTool = tool(
   async ({ keyword, status, category, limit }): Promise<string> => {
-    const filter: Record<string, unknown> = {}
-    if (keyword) {
-      filter.$or = [
-        { name: { $regex: escapeRegex(keyword), $options: 'i' } },
-        { description: { $regex: escapeRegex(keyword), $options: 'i' } },
-      ]
-    }
-    if (status) filter.status = status
-    if (category) filter.category = category
-
-    const flows = await FlowDefinitionModel.find(filter)
-      .select('_id name description category status currentVersionId createdBy createdAt updatedAt')
-      .sort({ updatedAt: -1 })
-      .limit(limit)
-      .lean()
-
-    const mapped = flows.map((f: Record<string, unknown>) => ({
-      id: f._id,
-      name: f.name,
-      description: f.description,
-      category: f.category,
-      status: f.status,
-      currentVersionId: f.currentVersionId,
-      createdBy: f.createdBy,
-      createdAt: f.createdAt,
-      updatedAt: f.updatedAt,
-    }))
-
-    const summary = flows.length === 0
-      ? `没有找到${keyword ? `包含"${keyword}"的` : ''}流程`
-      : `找到 ${flows.length} 个流程：${mapped.slice(0, 3).map((f: Record<string, unknown>) => `${f.name}（${f.status}）`).join('、')}${flows.length > 3 ? '等' : ''}`
-
-    const result: ToolResult = {
-      success: true,
-      data: { total: flows.length, flows: mapped },
-      summary,
-    }
-    return JSON.stringify(result)
+    const result = await searchFlowsService({ keyword, status, category, limit })
+    return JSON.stringify(result satisfies ToolResult)
   },
   {
     name: 'search_flows',
@@ -78,38 +43,8 @@ export const searchFlowsTool = tool(
 
 export const getFlowDetailTool = tool(
   async ({ flowId }): Promise<string> => {
-    const definition = await FlowDefinitionModel.findById(flowId).lean() as Record<string, unknown> | null
-    if (!definition) {
-      return JSON.stringify({ success: false, error: `Flow definition ${flowId} not found` } satisfies ToolResult)
-    }
-
-    let graph: Record<string, unknown> | null = null
-    if (definition.currentVersionId) {
-      const version = await FlowVersionModel.findById(definition.currentVersionId).lean() as Record<string, unknown> | null
-      if (version) {
-        graph = version.graph as Record<string, unknown>
-      }
-    }
-
-    const nodeCount = graph ? ((graph as Record<string, unknown>).nodes as unknown[])?.length ?? 0 : 0
-    const edgeCount = graph ? ((graph as Record<string, unknown>).edges as unknown[])?.length ?? 0 : 0
-
-    const result: ToolResult = {
-      success: true,
-      data: {
-        id: definition._id,
-        name: definition.name,
-        description: definition.description,
-        category: definition.category,
-        status: definition.status,
-        createdBy: definition.createdBy,
-        graph,
-        createdAt: definition.createdAt,
-        updatedAt: definition.updatedAt,
-      },
-      summary: `流程 "${definition.name}"（${definition.status}）包含 ${nodeCount} 个节点、${edgeCount} 条边`,
-    }
-    return JSON.stringify(result)
+    const result = await getFlowDetailService(flowId)
+    return JSON.stringify(result satisfies ToolResult)
   },
   {
     name: 'get_flow_detail',
@@ -125,40 +60,8 @@ export const getFlowDetailTool = tool(
 
 export const searchUsersTool = tool(
   async ({ keyword, role, limit }): Promise<string> => {
-    const filter: Record<string, unknown> = {}
-    if (keyword) {
-      filter.$or = [
-        { username: { $regex: escapeRegex(keyword), $options: 'i' } },
-        { displayName: { $regex: escapeRegex(keyword), $options: 'i' } },
-      ]
-    }
-    if (role) {
-      filter.roles = role
-    }
-
-    const users = await UserModel.find(filter)
-      .select('_id username displayName roles')
-      .sort({ username: 1 })
-      .limit(limit)
-      .lean()
-
-    const mapped = users.map((u: Record<string, unknown>) => ({
-      id: u._id,
-      username: u.username,
-      displayName: u.displayName,
-      roles: u.roles,
-    }))
-
-    const summary = users.length === 0
-      ? `没有找到${keyword ? `包含"${keyword}"的` : ''}用户`
-      : `找到 ${users.length} 个用户：${mapped.slice(0, 5).map((u: Record<string, unknown>) => `${u.displayName || u.username}`).join('、')}${users.length > 5 ? '等' : ''}`
-
-    const result: ToolResult = {
-      success: true,
-      data: { total: users.length, users: mapped },
-      summary,
-    }
-    return JSON.stringify(result)
+    const result = await searchUsersService({ keyword, role, limit })
+    return JSON.stringify(result satisfies ToolResult)
   },
   {
     name: 'search_users',
@@ -206,18 +109,11 @@ export const generateSchemaTool = tool(
 
 export const validateFlowTool = tool(
   async ({ flow }): Promise<string> => {
-    const errors = validateFlowGraph(flow as FlowGraphInput)
-
-    const summary = errors.length === 0
+    const result = validateFlowGraphService(flow as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] })
+    const summary = result.valid
       ? `流程校验通过，${flow.nodes.length} 个节点、${flow.edges.length} 条边`
-      : `流程校验失败，${errors.length} 个错误：${errors.slice(0, 3).join('；')}${errors.length > 3 ? '等' : ''}`
-
-    const result: ToolResult = {
-      success: true,
-      data: { valid: errors.length === 0, errors },
-      summary,
-    }
-    return JSON.stringify(result)
+      : `流程校验失败，${result.errors.length} 个错误：${result.errors.slice(0, 3).join('；')}${result.errors.length > 3 ? '等' : ''}`
+    return JSON.stringify({ success: true, data: { valid: result.valid, errors: result.errors }, summary } satisfies ToolResult)
   },
   {
     name: 'validate_flow',
@@ -722,11 +618,6 @@ export const flowTools = [
 // Shared validation logic (used by agent output validation)
 // ────────────────────────────────────────────
 
-interface FlowGraphInput {
-  nodes: Record<string, unknown>[]
-  edges: Record<string, unknown>[]
-}
-
 // ────────────────────────────────────────────
 // Shared helper: bind schema to flow node
 // ────────────────────────────────────────────
@@ -806,62 +697,5 @@ async function bindSchemaToFlowNode(
   }
 }
 
-/**
- * Core flow validation logic — shared between tool execution and agent output validation.
- */
-export function validateFlowGraph(flow: FlowGraphInput): string[] {
-  const errors: string[] = []
-  const nodeIds = new Set(flow.nodes.map((n) => n.id))
-
-  if (flow.nodes.length === 0) {
-    errors.push('流程至少需要一个节点')
-    return errors
-  }
-
-  const hasStart = flow.nodes.some((n) => (n.data as Record<string, unknown>)?.bpmnType === 'startEvent')
-  const hasEnd = flow.nodes.some((n) => (n.data as Record<string, unknown>)?.bpmnType === 'endEvent')
-  if (!hasStart) errors.push('缺少 startEvent 开始节点')
-  if (!hasEnd) errors.push('缺少 endEvent 结束节点')
-
-  for (const edge of flow.edges) {
-    const source = edge.source as Record<string, unknown> | undefined
-    const target = edge.target as Record<string, unknown> | undefined
-    if (source?.cell && !nodeIds.has(source.cell)) errors.push(`边 ${edge.id} 的源节点 ${source.cell} 不存在`)
-    if (target?.cell && !nodeIds.has(target.cell)) errors.push(`边 ${edge.id} 的目标节点 ${target.cell} 不存在`)
-  }
-
-  for (const node of flow.nodes) {
-    const data = node.data as Record<string, unknown> | undefined
-    if (data?.bpmnType === 'exclusiveGateway' && data.gatewayDirection === 'diverging') {
-      const outEdges = flow.edges.filter((e) => {
-        const source = e.source as Record<string, unknown> | undefined
-        return source?.cell === node.id
-      })
-      if (outEdges.length >= 2) {
-        const hasDefault = !!data.defaultFlow
-        const allHaveConditions = outEdges.every((e) => {
-          const edgeData = e.data as Record<string, unknown> | undefined
-          return edgeData?.conditionExpression || edgeData?.isDefault
-        })
-        if (!hasDefault && !allHaveConditions) {
-          errors.push(`排他网关 "${node.id}" 出边 >= 2 但缺少 defaultFlow 或条件表达式`)
-        }
-      }
-    }
-
-    if (data?.bpmnType === 'userTask') {
-      const hasAssignee = data.candidateUsers || data.candidateRoles || data.assignee || data.assigneeCollection
-      if (!hasAssignee) {
-        errors.push(`用户任务 "${data.label || node.id}" 缺少指派人配置`)
-      }
-    }
-
-    if (data?.bpmnType === 'timerEvent') {
-      if (!data.timerType || !data.timerValue) {
-        errors.push(`定时事件 "${data.label || node.id}" 缺少 timerType 或 timerValue`)
-      }
-    }
-  }
-
-  return errors
-}
+// validateFlowGraph 已迁移到 services/flowService.ts，此处保留导出兼容
+export { validateFlowGraph } from '../services/flowService.js'

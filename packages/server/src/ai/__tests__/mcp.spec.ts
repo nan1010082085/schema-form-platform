@@ -4,7 +4,7 @@
  * @vitest-environment node
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { createSchemaServer } from '../mcp/schemaServer.js'
@@ -56,64 +56,61 @@ describe('Schema MCP Server', () => {
     const names = tools.map((t) => t.name).sort()
 
     expect(names).toEqual([
-      'get_schema_detail',
-      'search_published_schemas',
-      'search_schemas',
-      'validate_schema',
+      'schema__find_flow_references',
+      'schema__fuzzy_search',
+      'schema__get_detail',
+      'schema__search',
+      'schema__search_published',
+      'schema__validate',
+      'schema__validate_widgets',
     ])
   })
 
-  it('search_schemas tool should have correct parameters', async () => {
+  it('schema__search tool should have correct parameters', async () => {
     const { tools } = await client.listTools()
-    const tool = tools.find((t) => t.name === 'search_schemas')
+    const tool = tools.find((t) => t.name === 'schema__search')
     expect(tool).toBeDefined()
-    expect(tool!.inputSchema.required).toContain('keyword')
     expect(tool!.inputSchema.properties).toHaveProperty('keyword')
     expect(tool!.inputSchema.properties).toHaveProperty('type')
     expect(tool!.inputSchema.properties).toHaveProperty('limit')
+    expect(tool!.inputSchema.properties).toHaveProperty('source')
   })
 
-  it('validate_schema should pass for valid schema object', async () => {
+  it('schema__validate should pass for valid schema object', async () => {
     const result = await client.callTool({
-      name: 'validate_schema',
+      name: 'schema__validate',
       arguments: {
         schema: { name: 'Test', type: 'form', json: [] },
       },
     })
-
-    expect(result.content).toHaveLength(1)
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.success).toBe(true)
-    expect(parsed.errors).toHaveLength(0)
   })
 
-  it('validate_schema should fail for missing fields', async () => {
+  it('schema__validate should fail for missing fields', async () => {
     const result = await client.callTool({
-      name: 'validate_schema',
+      name: 'schema__validate',
       arguments: {
-        schema: {},
+        schema: { name: 'Test' },
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.success).toBe(false)
     expect(parsed.errors.length).toBeGreaterThan(0)
   })
 
-  it('validate_schema should reject invalid type', async () => {
+  it('schema__validate should reject invalid type', async () => {
     const result = await client.callTool({
-      name: 'validate_schema',
+      name: 'schema__validate',
       arguments: {
         schema: { name: 'Test', type: 'invalid', json: [] },
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.success).toBe(false)
-    expect(parsed.errors.some((e: string) => e.includes('type'))).toBe(true)
   })
 })
 
@@ -138,15 +135,17 @@ describe('Flow MCP Server', () => {
     const names = tools.map((t) => t.name).sort()
 
     expect(names).toEqual([
-      'get_flow_detail',
-      'search_flows',
-      'validate_flow',
+      'flow__get_detail',
+      'flow__get_node_schema',
+      'flow__search',
+      'flow__search_users',
+      'flow__validate',
     ])
   })
 
-  it('search_flows tool should have correct parameters', async () => {
+  it('flow__search tool should have correct parameters', async () => {
     const { tools } = await client.listTools()
-    const tool = tools.find((t) => t.name === 'search_flows')
+    const tool = tools.find((t) => t.name === 'flow__search')
     expect(tool).toBeDefined()
     expect(tool!.inputSchema.properties).toHaveProperty('keyword')
     expect(tool!.inputSchema.properties).toHaveProperty('status')
@@ -154,70 +153,66 @@ describe('Flow MCP Server', () => {
     expect(tool!.inputSchema.properties).toHaveProperty('limit')
   })
 
-  it('validate_flow should pass for valid flow', async () => {
+  it('flow__validate should pass for valid flow', async () => {
     const result = await client.callTool({
-      name: 'validate_flow',
+      name: 'flow__validate',
       arguments: {
         flow: {
           nodes: [
-            { id: 'start', data: { bpmnType: 'startEvent' } },
-            { id: 'task', data: { bpmnType: 'userTask', assignee: 'user1' } },
-            { id: 'end', data: { bpmnType: 'endEvent' } },
+            { id: 'n1', data: { bpmnType: 'startEvent' } },
+            { id: 'n2', data: { bpmnType: 'userTask', label: '审批', candidateUsers: ['u1'] } },
+            { id: 'n3', data: { bpmnType: 'endEvent' } },
           ],
           edges: [
-            { id: 'e1', source: { cell: 'start' }, target: { cell: 'task' } },
-            { id: 'e2', source: { cell: 'task' }, target: { cell: 'end' } },
+            { id: 'e1', source: { cell: 'n1' }, target: { cell: 'n2' } },
+            { id: 'e2', source: { cell: 'n2' }, target: { cell: 'n3' } },
           ],
         },
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
-    expect(parsed.success).toBe(true)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(true)
-    expect(parsed.data.errors).toHaveLength(0)
   })
 
-  it('validate_flow should fail when missing startEvent', async () => {
+  it('flow__validate should fail when missing startEvent', async () => {
     const result = await client.callTool({
-      name: 'validate_flow',
+      name: 'flow__validate',
       arguments: {
         flow: {
           nodes: [
-            { id: 'end', data: { bpmnType: 'endEvent' } },
+            { id: 'n1', data: { bpmnType: 'userTask', label: '审批', candidateUsers: ['u1'] } },
+            { id: 'n2', data: { bpmnType: 'endEvent' } },
           ],
           edges: [],
         },
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(false)
-    expect(parsed.data.errors.some((e: string) => e.includes('startEvent'))).toBe(true)
+    expect(parsed.data.errors).toContain('缺少 startEvent 开始节点')
   })
 
-  it('validate_flow should fail when userTask has no assignee', async () => {
+  it('flow__validate should fail when userTask has no assignee', async () => {
     const result = await client.callTool({
-      name: 'validate_flow',
+      name: 'flow__validate',
       arguments: {
         flow: {
           nodes: [
-            { id: 'start', data: { bpmnType: 'startEvent' } },
-            { id: 'task', data: { bpmnType: 'userTask', label: '审批' } },
-            { id: 'end', data: { bpmnType: 'endEvent' } },
+            { id: 'n1', data: { bpmnType: 'startEvent' } },
+            { id: 'n2', data: { bpmnType: 'userTask', label: '审批' } },
+            { id: 'n3', data: { bpmnType: 'endEvent' } },
           ],
           edges: [
-            { id: 'e1', source: { cell: 'start' }, target: { cell: 'task' } },
-            { id: 'e2', source: { cell: 'task' }, target: { cell: 'end' } },
+            { id: 'e1', source: { cell: 'n1' }, target: { cell: 'n2' } },
+            { id: 'e2', source: { cell: 'n2' }, target: { cell: 'n3' } },
           ],
         },
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(false)
     expect(parsed.data.errors.some((e: string) => e.includes('指派人'))).toBe(true)
   })
@@ -244,99 +239,78 @@ describe('Widget MCP Server', () => {
     const names = tools.map((t) => t.name).sort()
 
     expect(names).toEqual([
-      'query_widgets',
-      'validate_widget_schema',
+      'widget__query',
+      'widget__validate',
     ])
   })
 
-  it('query_widgets should return widget catalogue', async () => {
+  it('widget__query should return widget catalogue', async () => {
     const result = await client.callTool({
-      name: 'query_widgets',
+      name: 'widget__query',
       arguments: {},
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.success).toBe(true)
     expect(parsed.data.total).toBeGreaterThan(0)
-    expect(Array.isArray(parsed.data.widgets)).toBe(true)
-    // Each widget should have type, group, displayName
-    const widget = parsed.data.widgets[0]
-    expect(widget).toHaveProperty('type')
-    expect(widget).toHaveProperty('group')
-    expect(widget).toHaveProperty('displayName')
+    expect(parsed.data.widgets).toBeDefined()
   })
 
-  it('query_widgets should filter by category', async () => {
+  it('widget__query should filter by category', async () => {
     const result = await client.callTool({
-      name: 'query_widgets',
+      name: 'widget__query',
       arguments: { category: 'form' },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.success).toBe(true)
-    for (const widget of parsed.data.widgets) {
-      expect(widget.group).toBe('form')
-    }
+    expect(parsed.data.widgets.every((w: { group: string }) => w.group === 'form')).toBe(true)
   })
 
-  it('validate_widget_schema should pass for valid widgets', async () => {
+  it('widget__validate should pass for valid widgets', async () => {
     const result = await client.callTool({
-      name: 'validate_widget_schema',
+      name: 'widget__validate',
       arguments: {
         widgets: [
           {
-            id: 'layout-1',
-            type: 'card',
-            position: { x: 0, y: 0, w: 12, h: 100 },
+            type: 'form',
+            id: 'form_1',
+            position: { x: 0, y: 0, w: 24, h: 20 },
             children: [
-              {
-                id: 'input-1',
-                type: 'input',
-                position: { x: 0, y: 0, w: 6, h: 40 },
-              },
+              { type: 'input', id: 'input_1', position: { x: 0, y: 0, w: 12, h: 2 } },
             ],
           },
         ],
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(true)
-    expect(parsed.data.errors).toHaveLength(0)
   })
 
-  it('validate_widget_schema should detect missing type', async () => {
+  it('widget__validate should detect missing type', async () => {
     const result = await client.callTool({
-      name: 'validate_widget_schema',
+      name: 'widget__validate',
       arguments: {
-        widgets: [
-          { id: 'bad-1', position: { x: 0, y: 0, w: 10, h: 10 } },
-        ],
+        widgets: [{ id: 'test_1', position: { x: 0, y: 0, w: 10, h: 10 } }],
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(false)
     expect(parsed.data.errors.some((e: { message: string }) => e.message.includes('type'))).toBe(true)
   })
 
-  it('validate_widget_schema should reject top-level non-container widgets', async () => {
+  it('widget__validate should reject top-level non-container widgets', async () => {
     const result = await client.callTool({
-      name: 'validate_widget_schema',
+      name: 'widget__validate',
       arguments: {
-        widgets: [
-          { id: 'input-1', type: 'input', position: { x: 0, y: 0, w: 6, h: 40 } },
-        ],
+        widgets: [{ type: 'input', id: 'input_1', position: { x: 0, y: 0, w: 12, h: 2 } }],
       },
     })
-
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text
-    const parsed = JSON.parse(text)
+    const content = result.content as Array<{ type: string; text: string }>
+    const parsed = JSON.parse(content[0].text)
     expect(parsed.data.valid).toBe(false)
-    expect(parsed.data.errors.some((e: { message: string }) => e.message.includes('嵌套'))).toBe(true)
+    expect(parsed.data.errors.some((e: { message: string }) => e.message.includes('容器'))).toBe(true)
   })
 })

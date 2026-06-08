@@ -153,7 +153,7 @@ describe('tool.invoke()', () => {
       const result = await getFlowDetailTool.invoke({ flowId: 'nonexistent' })
       const parsed = typeof result === 'string' ? JSON.parse(result) : result
       expect(parsed.success).toBe(false)
-      expect(parsed.error).toContain('not found')
+      expect(parsed.error).toContain('不存在')
     })
   })
 
@@ -227,8 +227,8 @@ describe('tool.invoke()', () => {
 })
 
 describe('validateFlowGraph', () => {
-  it('returns empty array for valid flow', () => {
-    const errors = validateFlowGraph({
+  it('returns valid for valid flow', () => {
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'userTask', label: '审批', candidateUsers: ['u1'] } },
@@ -239,38 +239,39 @@ describe('validateFlowGraph', () => {
         { id: 'e2', source: { cell: 'n2' }, target: { cell: 'n3' } },
       ],
     })
-    expect(errors).toHaveLength(0)
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
   })
 
   it('reports missing startEvent', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'userTask', label: '审批', candidateUsers: ['u1'] } },
         { id: 'n2', data: { bpmnType: 'endEvent' } },
       ],
       edges: [],
     })
-    expect(errors).toContain('缺少 startEvent 开始节点')
+    expect(result.errors).toContain('缺少 startEvent 开始节点')
   })
 
   it('reports missing endEvent', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'userTask', label: '审批', candidateUsers: ['u1'] } },
       ],
       edges: [],
     })
-    expect(errors).toContain('缺少 endEvent 结束节点')
+    expect(result.errors).toContain('缺少 endEvent 结束节点')
   })
 
   it('reports empty nodes', () => {
-    const errors = validateFlowGraph({ nodes: [], edges: [] })
-    expect(errors).toContain('流程至少需要一个节点')
+    const result = validateFlowGraph({ nodes: [], edges: [] })
+    expect(result.errors).toContain('流程至少需要一个节点')
   })
 
   it('reports invalid edge references', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'endEvent' } },
@@ -279,11 +280,11 @@ describe('validateFlowGraph', () => {
         { id: 'e1', source: { cell: 'n1' }, target: { cell: 'nonexistent' } },
       ],
     })
-    expect(errors.some((e) => e.includes('nonexistent'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('nonexistent'))).toBe(true)
   })
 
   it('reports userTask without assignee', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'userTask', label: '审批' } },
@@ -294,11 +295,11 @@ describe('validateFlowGraph', () => {
         { id: 'e2', source: { cell: 'n2' }, target: { cell: 'n3' } },
       ],
     })
-    expect(errors.some((e) => e.includes('缺少指派人配置'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('缺少指派人配置'))).toBe(true)
   })
 
   it('reports timerEvent without timer config', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'timerEvent', label: '超时' } },
@@ -309,11 +310,11 @@ describe('validateFlowGraph', () => {
         { id: 'e2', source: { cell: 'n2' }, target: { cell: 'n3' } },
       ],
     })
-    expect(errors.some((e) => e.includes('缺少 timerType'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('缺少 timerType'))).toBe(true)
   })
 
   it('reports exclusiveGateway without conditions', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'exclusiveGateway', gatewayDirection: 'diverging' } },
@@ -326,11 +327,11 @@ describe('validateFlowGraph', () => {
         { id: 'e3', source: { cell: 'n2' }, target: { cell: 'n4' } },
       ],
     })
-    expect(errors.some((e) => e.includes('排他网关'))).toBe(true)
+    expect(result.errors.some((e) => e.includes('排他网关'))).toBe(true)
   })
 
   it('accepts exclusiveGateway with defaultFlow', () => {
-    const errors = validateFlowGraph({
+    const result = validateFlowGraph({
       nodes: [
         { id: 'n1', data: { bpmnType: 'startEvent' } },
         { id: 'n2', data: { bpmnType: 'exclusiveGateway', gatewayDirection: 'diverging', defaultFlow: 'e2' } },
@@ -343,6 +344,7 @@ describe('validateFlowGraph', () => {
         { id: 'e3', source: { cell: 'n2' }, target: { cell: 'n4' } },
       ],
     })
-    expect(errors).toHaveLength(0)
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
   })
 })
