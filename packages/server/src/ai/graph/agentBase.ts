@@ -73,17 +73,17 @@ export type TaskType = 'router' | 'generate_simple' | 'generate_complex' | 'anal
 /**
  * Select model by task type.
  *
- * - router: intent classification, cheap and fast
- * - generate_simple: simple generation (single form, single list), V3
- * - generate_complex: complex reasoning (multi-step, linkage, nested), R1
- * - analyze: analysis/diagnosis tasks, V3
+ * - router: intent classification, lightweight and fast
+ * - generate_simple: simple generation (single form, single list)
+ * - generate_complex: complex reasoning (multi-step, linkage, nested)
+ * - analyze: analysis/diagnosis tasks
  */
 export function getModelForTask(taskType: TaskType): string {
   const modelMap: Record<TaskType, string> = {
-    router: 'deepseek-v4-pro',
+    router: 'deepseek-chat',
     generate_simple: 'deepseek-v4-pro',
     generate_complex: 'deepseek-v4-pro',
-    analyze: 'deepseek-v4-pro',
+    analyze: 'deepseek-chat',
   }
   return modelMap[taskType] ?? 'deepseek-v4-pro'
 }

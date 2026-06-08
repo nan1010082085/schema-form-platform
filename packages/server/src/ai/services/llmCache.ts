@@ -47,6 +47,9 @@ export function getLLM(opts: LLMOptions = {}): ChatOpenAI {
       throw new Error('DEEPSEEK_API_KEY environment variable is required.')
     }
 
+    // temperature=0 时不启用 jsonMode（DeepSeek 兼容性：低温 + json_object 可能不稳定）
+    const effectiveJsonMode = opts.jsonMode && (opts.temperature ?? 0.7) > 0
+
     const model = new ChatOpenAI({
       model: opts.model ?? 'deepseek-v4-pro',
       apiKey,
@@ -55,7 +58,7 @@ export function getLLM(opts: LLMOptions = {}): ChatOpenAI {
       maxTokens: opts.maxTokens ?? 8192,
       streaming: true,
       timeout: 120_000,  // 2 分钟单次 LLM 调用超时
-      ...(opts.jsonMode ? { modelKwargs: { response_format: { type: 'json_object' } } } : {}),
+      ...(effectiveJsonMode ? { modelKwargs: { response_format: { type: 'json_object' } } } : {}),
     })
 
     llmCache.set(key, model)

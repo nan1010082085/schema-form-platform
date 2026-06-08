@@ -24,6 +24,7 @@ import { pageAgentNode } from './pageAgent.js'
 import { allTools } from '../tools/allTools.js'
 import { checkpointer } from './checkpointer.js'
 import { getLLM } from '../services/llmCache.js'
+import { getModelForTask } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
 
 // ────────────────────────────────────────────
@@ -222,7 +223,7 @@ async function thinkerNode(
 
   console.log(`[thinker] 开始 LLM 分析, messages=${state.messages.length}`)
 
-  const model = getLLM({ temperature: 0, maxTokens: 4096, jsonMode: true })
+  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
 
   try {
     // 使用流式调用，让 reasoning_content 可以通过 streamEvents 捕获
@@ -334,7 +335,7 @@ const GENERAL_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基�
 async function generalAgentNode(
   state: typeof AgentStateAnnotation.State,
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
-  const model = getLLM({ temperature: 0.7, maxTokens: 2048 })
+  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
 
   const lastUserMessage = [...state.messages]
     .reverse()
@@ -401,7 +402,7 @@ async function summarizerNode(
     .map((step) => `✅ ${step.agent} 专家：${step.description}`)
     .join('\n')
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 2048 })
+  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
 
   const prompt = `${SUMMARIZER_SYSTEM_PROMPT}
 
