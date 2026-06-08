@@ -3,10 +3,11 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AiStepCard from './AiStepCard.vue'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
+import SchemaPreviewCard from './SchemaPreviewCard.vue'
 import FlowCard from './FlowCard.vue'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
-import type { StepData } from '@/types'
+import type { StepData, Widget } from '@/types'
 
 export type MessageRole = 'user' | 'assistant'
 
@@ -47,6 +48,8 @@ export interface AiMessageProps {
   toolCalls?: ToolCallDisplay[]
   loading?: boolean
   cards?: MessageEmbeddedCard[]
+  /** 原始 Widget 数据，用于渲染器预览卡片 */
+  schemaWidgets?: Widget[]
 }
 
 const props = defineProps<AiMessageProps>()
@@ -54,6 +57,7 @@ const props = defineProps<AiMessageProps>()
 const emit = defineEmits<{
   'card-primary-action': [cardIndex: number]
   'card-secondary-action': [cardIndex: number]
+  'open-json-drawer': []
 }>()
 
 // ---- F2: rAF-batched content for streaming ----
@@ -231,17 +235,30 @@ const steps = computed<StepData[]>(() => {
           >
             <!-- Result card slot -->
             <template v-if="step.type === 'result' && cards">
-              <SchemaCard
-                v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
-                :key="'s' + cIdx"
-                :title="card.title"
-                :fields="card.fields"
-                :primary-action="card.primaryAction"
-                :secondary-action="card.secondaryAction"
+              <!-- 有原始 Widget 数据时，使用渲染器预览卡片 -->
+              <SchemaPreviewCard
+                v-if="schemaWidgets && schemaWidgets.length > 0"
+                :widgets="schemaWidgets"
+                :title="cards.find((c) => c.type === 'schema')?.title ?? '生成的表单'"
                 compact
-                @primary-action="emit('card-primary-action', cIdx)"
-                @secondary-action="emit('card-secondary-action', cIdx)"
+                @click="emit('open-json-drawer')"
+                @primary-action="emit('card-primary-action', 0)"
+                @secondary-action="emit('card-secondary-action', 0)"
               />
+              <!-- fallback: 字段列表卡片 -->
+              <template v-else>
+                <SchemaCard
+                  v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
+                  :key="'s' + cIdx"
+                  :title="card.title"
+                  :fields="card.fields"
+                  :primary-action="card.primaryAction"
+                  :secondary-action="card.secondaryAction"
+                  compact
+                  @primary-action="emit('card-primary-action', cIdx)"
+                  @secondary-action="emit('card-secondary-action', cIdx)"
+                />
+              </template>
               <FlowCard
                 v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
                 :key="'f' + cIdx"

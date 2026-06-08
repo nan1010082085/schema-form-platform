@@ -57,6 +57,7 @@ const emit = defineEmits<{
   'rag-search': [query: string]
   'rag-select': [item: RagSearchResult]
   'rag-remove': [id: string]
+  'open-json-drawer': []
 }>()
 
 const selectedAgent = ref<AgentType>('auto')
@@ -338,8 +339,10 @@ function handleCardAction(
         :tool-calls="msg.toolCalls"
         :loading="loading && msg.role === 'assistant' && !msg.content && idx === messages.length - 1"
         :cards="getDisplayCards(msg)"
+        :schema-widgets="msg.schema"
         @card-primary-action="(ci) => handleCardAction('primary', idx, ci)"
         @card-secondary-action="(ci) => handleCardAction('secondary', idx, ci)"
+        @open-json-drawer="emit('open-json-drawer')"
       />
     </div>
 

@@ -50,20 +50,23 @@
 
 .list {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+}
+
+.list :deep(.el-scrollbar__view) {
   padding: 6px;
 }
 
-.list::-webkit-scrollbar {
+.list :deep(.el-scrollbar__bar.is-vertical) {
   width: 4px;
 }
 
-.list::-webkit-scrollbar-thumb {
+.list :deep(.el-scrollbar__thumb) {
   background: var(--ai-border-base, #D5DDE3);
   border-radius: 2px;
 }
 
-.list::-webkit-scrollbar-thumb:hover {
+.list :deep(.el-scrollbar__thumb:hover) {
   background: var(--ai-text-hint, #999999);
 }
 

@@ -113,3 +113,22 @@
   display: flex;
   overflow: hidden;
 }
+
+/* ---- JSON Drawer ---- */
+.jsonDrawer {
+  height: 100%;
+}
+
+.jsonContent {
+  background: #1E1E1E;
+  color: #D4D4D4;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}

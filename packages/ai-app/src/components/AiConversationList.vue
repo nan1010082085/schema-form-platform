@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElScrollbar } from 'element-plus'
 import { downloadConversation } from '@/api/aiApi'
 import AiConversationSearch from './AiConversationSearch.vue'
 import type { Conversation } from '@/types'
@@ -49,7 +49,7 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
       <button :class="$style.newBtn" @click="emit('new-conversation')">+</button>
     </div>
     <AiConversationSearch @select="(id) => emit('select', id)" />
-    <div :class="$style.list">
+    <ElScrollbar :class="$style.list">
       <div
         v-for="conv in conversations"
         :key="conv.id"
@@ -94,7 +94,7 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
       <div v-if="conversations.length === 0" :class="$style.empty">
         暂无对话
       </div>
-    </div>
+    </ElScrollbar>
   </div>
 </template>
 

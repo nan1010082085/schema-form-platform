@@ -505,8 +505,8 @@ export function afterAgent(
   const MAX_TOOL_ITERATIONS = 3
   if (hasToolCalls) {
     if (state.tools.toolIterationCount >= MAX_TOOL_ITERATIONS) {
-      console.warn(`[afterAgent] 工具迭代上限 ${MAX_TOOL_ITERATIONS}，强制结束`)
-      return END
+      console.warn(`[afterAgent] 工具迭代上限 ${MAX_TOOL_ITERATIONS}，路由到 summarizer`)
+      return 'summarizer'
     }
     console.log(`[afterAgent] -> allTools (${lastMessage.tool_calls!.length} tool_calls)`)
     return 'allTools'

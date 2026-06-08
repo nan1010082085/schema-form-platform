@@ -6,7 +6,20 @@
   background: var(--ai-bg-subtle, #F0F5FF);
   border-bottom: 1px solid var(--ai-border-light, #E8E8E8);
   font-size: 12px;
-  overflow-x: auto;
+}
+
+.scrollWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.scrollWrap :deep(.el-scrollbar__bar.is-horizontal) {
+  height: 4px;
+}
+
+.scrollWrap :deep(.el-scrollbar__thumb) {
+  background: var(--ai-border-base, #D5DDE3);
+  border-radius: 2px;
 }
 
 .label {

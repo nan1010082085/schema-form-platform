@@ -11,6 +11,7 @@ import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
+import { ElDrawer } from 'element-plus'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
@@ -36,6 +37,29 @@ function handleUpdateSettingsVisible(val: boolean): void {
 function handleSaveSettings(settings: ChatSettings): void {
   store.updateChatSettings(settings)
 }
+
+// ---- JSON Drawer ----
+const jsonDrawerVisible = ref(false)
+
+function handleOpenJsonDrawer(): void {
+  jsonDrawerVisible.value = true
+}
+
+const jsonDrawerContent = computed(() => {
+  if (currentSchema.value) {
+    return JSON.stringify(currentSchema.value, null, 2)
+  }
+  if (currentFlow.value) {
+    return JSON.stringify(currentFlow.value, null, 2)
+  }
+  return '{}'
+})
+
+const jsonDrawerTitle = computed(() => {
+  if (currentSchema.value) return 'Schema JSON 结构'
+  if (currentFlow.value) return 'Flow JSON 结构'
+  return 'JSON 结构'
+})
 
 // ---- Preview data ----
 
@@ -228,6 +252,7 @@ onMounted(() => {
         @rag-search="handleRagSearch"
         @rag-select="handleRagSelect"
         @rag-remove="handleRagRemove"
+        @open-json-drawer="handleOpenJsonDrawer"
       />
 
       <!-- 右侧：预览面板 -->
@@ -262,6 +287,19 @@ onMounted(() => {
       @update:visible="handleUpdateSettingsVisible"
       @update:settings="handleSaveSettings"
     />
+
+    <!-- JSON 结构抽屉 -->
+    <ElDrawer
+      v-model="jsonDrawerVisible"
+      :title="jsonDrawerTitle"
+      direction="rtl"
+      size="420px"
+      :z-index="2000"
+    >
+      <div :class="$style.jsonDrawer">
+        <pre :class="$style.jsonContent">{{ jsonDrawerContent }}</pre>
+      </div>
+    </ElDrawer>
   </div>
 </template>
 
