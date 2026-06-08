@@ -13,11 +13,20 @@ import { MongoDBCheckpointer } from './checkpointMongo.js'
 import type { BaseCheckpointSaver } from '@langchain/langgraph-checkpoint'
 
 function createCheckpointer(): BaseCheckpointSaver {
-  // Use MongoDB checkpointer when mongoose is connected
-  // MemorySaver fallback for tests and pre-connection state
+  if (process.env.NODE_ENV === 'production') {
+    // 生产环境：必须用 MongoDB，失败则抛错阻止启动
+    const cp = new MongoDBCheckpointer()
+    console.log('[checkpointer] MongoDB checkpointer 初始化成功')
+    return cp
+  }
+
+  // 开发环境：优先 MongoDB，降级 MemorySaver
   try {
-    return new MongoDBCheckpointer()
-  } catch {
+    const cp = new MongoDBCheckpointer()
+    console.log('[checkpointer] MongoDB checkpointer 初始化成功')
+    return cp
+  } catch (err) {
+    console.warn('[checkpointer] MongoDB 不可用，降级到 MemorySaver:', err instanceof Error ? err.message : err)
     return new MemorySaver() as unknown as BaseCheckpointSaver
   }
 }

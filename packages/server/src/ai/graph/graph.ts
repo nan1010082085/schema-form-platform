@@ -27,10 +27,32 @@ import { getLLM } from '../services/llmCache.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
 
 // ────────────────────────────────────────────
-// Tool nodes
+// Tool nodes（带错误兜底）
 // ────────────────────────────────────────────
 
 const allToolNode = new ToolNode(allTools)
+
+/**
+ * 包装 ToolNode，捕获未预期的异常（如 MongoDB 断连），
+ * 返回友好的 ToolMessage 而不是中断图执行。
+ */
+async function allToolNodeWithErrorHandling(
+  state: typeof AgentStateAnnotation.State,
+): Promise<Partial<typeof AgentStateAnnotation.State>> {
+  try {
+    return await allToolNode.invoke(state)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`[ToolNode] 工具执行异常:`, message)
+    return {
+      messages: [new ToolMessage({
+        content: JSON.stringify({ success: false, error: '工具执行异常，请重试', recoverable: true }),
+        tool_call_id: 'error',
+        name: 'system_error',
+      })],
+    }
+  }
+}
 
 // ────────────────────────────────────────────
 // Router node — routing decisions only
@@ -562,7 +584,7 @@ const builder = new StateGraph(AgentStateAnnotation)
   .addNode('flow', flowAgentNode)
   .addNode('page', pageAgentNode)
   .addNode('general', generalAgentNode)
-  .addNode('allTools', allToolNode)
+  .addNode('allTools', allToolNodeWithErrorHandling)
   .addNode('afterTools', afterToolsNode)
   .addNode('summarizer', summarizerNode)
 

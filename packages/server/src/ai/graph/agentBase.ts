@@ -352,6 +352,38 @@ export async function withRetry<T>(
       if (!isTransient) break
 
       const delay = BASE_DELAY_MS * Math.pow(2, attempt)
+      console.warn(`[withRetry] 重试 ${attempt + 1}/${maxRetries}，等待 ${delay}ms`)
+      await new Promise((r) => setTimeout(r, delay))
+    }
+  }
+  throw lastError
+}
+
+/**
+ * 带重试的流式 LLM 调用包装器。
+ *
+ * 用于 Agent 节点的 model.stream() 调用，
+ * 对 429/5xx 错误自动重试，400 参数错误不重试。
+ */
+export async function streamWithRetry<T>(
+  agentName: string,
+  fn: () => Promise<T>,
+  maxRetries = 2,
+): Promise<T> {
+  let lastError: Error | undefined
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      if (attempt === maxRetries) break
+
+      const status = (err as { status?: number }).status
+      // 400 不重试（参数错误），429/5xx 重试
+      if (status && status < 500 && status !== 429) break
+
+      const delay = BASE_DELAY_MS * Math.pow(2, attempt)
+      console.warn(`[${agentName}] LLM 流式调用重试 ${attempt + 1}/${maxRetries}，等待 ${delay}ms`)
       await new Promise((r) => setTimeout(r, delay))
     }
   }

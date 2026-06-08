@@ -7,6 +7,7 @@
  */
 
 import { AIMessage } from '@langchain/core/messages'
+import { streamWithRetry } from './agentBase.js'
 
 // ────────────────────────────────────────────
 // 错误分类 → 用户友好消息
@@ -76,7 +77,8 @@ export async function callLLMWithFallback<T>(
   fallbackContent?: string,
 ): Promise<T | { messages: AIMessage[] }> {
   try {
-    return await fn()
+    // 自动重试：429/5xx 错误重试 2 次，400 不重试
+    return await streamWithRetry(agentName, fn, 2)
   } catch (err) {
     const errorType = classifyError(err)
     const friendlyMsg = getFriendlyMessage(errorType)
