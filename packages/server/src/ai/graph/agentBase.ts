@@ -139,12 +139,39 @@ export function truncateMessages<T extends { constructor: { name: string } }>(
   }
 
   // Keep the last N complete turns
+  let cutoffIndex = 0
   if (turnStarts.length > maxTurns) {
-    const cutoffIndex = turnStarts[turnStarts.length - maxTurns]
-    return historyMessages.slice(cutoffIndex)
+    cutoffIndex = turnStarts[turnStarts.length - maxTurns]
   }
 
-  return historyMessages
+  // Ensure the cutoff doesn't break a tool_calls → ToolMessage chain.
+  // If the message at cutoffIndex is an AIMessage with tool_calls,
+  // we need to include the subsequent ToolMessages too.
+  // Walk forward from cutoffIndex to find a safe cut point.
+  while (cutoffIndex > 0 && cutoffIndex < historyMessages.length) {
+    const msg = historyMessages[cutoffIndex]
+    const prevMsg = historyMessages[cutoffIndex - 1]
+
+    // If previous message is AIMessage with tool_calls, current must be ToolMessage
+    if (prevMsg.constructor.name === 'AIMessage' || prevMsg.constructor.name === 'AIMessageChunk') {
+      const hasToolCalls = (prevMsg as unknown as { tool_calls?: unknown[] }).tool_calls?.length
+      if (hasToolCalls && msg.constructor.name !== 'ToolMessage') {
+        // Move cutoff back to include the AIMessage with tool_calls
+        cutoffIndex--
+        continue
+      }
+    }
+
+    // If current message is ToolMessage, we're inside a tool chain — move back
+    if (msg.constructor.name === 'ToolMessage') {
+      cutoffIndex--
+      continue
+    }
+
+    break
+  }
+
+  return historyMessages.slice(cutoffIndex)
 }
 
 /**

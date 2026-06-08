@@ -35,8 +35,8 @@ import {
   getFlowDetailTool,
   searchUsersTool,
   validateFlowTool,
-  validateFlowGraph,
 } from '../tools/flowTools.js'
+import { validateFlowGraph } from '../services/flowService.js'
 import { searchSchemasTool } from '../tools/schemaTools.js'
 import { FlowDefinitionModel } from '../../flow-models/FlowDefinition.js'
 import { FlowVersionModel } from '../../flow-models/FlowVersion.js'
