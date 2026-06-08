@@ -187,6 +187,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       preferences: (context.preferences ?? {}) as Record<string, unknown>,
       historySummary: (convo.historySummary ?? context.historySummary ?? '') as string,
       collaborationRequest: null as null,
+      collaborationHistory: [] as Array<{ from: string; to: string; timestamp: number }>,
     },
   }
 

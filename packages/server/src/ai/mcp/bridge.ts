@@ -22,7 +22,6 @@ async function createInternalClient(factory: () => McpServer): Promise<Client> {
 
   const client = new Client(
     { name: 'langgraph-internal', version: '1.0.0' },
-    { capabilities: { tools: {} } },
   )
   await client.connect(clientTransport)
 

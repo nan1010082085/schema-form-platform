@@ -488,11 +488,11 @@ export const updateFlowTool = tool(
     const flowGraph = adapted as unknown as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
 
     // 2. Validate
-    const errors = validateFlowGraph(flowGraph)
-    if (errors.length > 0) {
+    const validationResult = validateFlowGraphService(flowGraph)
+    if (!validationResult.valid) {
       return JSON.stringify({
         success: false,
-        error: `流程校验失败，${errors.length} 个错误：${errors.slice(0, 3).join('；')}`,
+        error: `流程校验失败，${validationResult.errors.length} 个错误：${validationResult.errors.slice(0, 3).join('；')}`,
       } satisfies ToolResult)
     }
 
@@ -700,5 +700,3 @@ async function bindSchemaToFlowNode(
   }
 }
 
-// validateFlowGraph 已迁移到 services/flowService.ts，此处保留导出兼容
-export { validateFlowGraph } from '../services/flowService.js'

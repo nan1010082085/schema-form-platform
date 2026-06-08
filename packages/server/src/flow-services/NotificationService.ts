@@ -122,7 +122,7 @@ export class NotificationService {
       { _id: notificationId, userId },
       { isRead: true },
       { new: true },
-    ).lean()
+    ).lean() as Promise<INotification | null>
   }
 
   async markAllAsRead(userId: string): Promise<number> {

@@ -277,17 +277,17 @@ function resolveContainerBindings(widgets: AdaptedWidget[], parentFormId: string
         for (let i = 0; i < widget.children.length; i++) {
           const child = widget.children[i]
           child.colIndex = i
-          child.formId = parentFormId
+          child.formId = parentFormId ?? undefined
           if (child.children) {
             resolveContainerBindings(child.children, parentFormId)
           }
         }
       }
     } else if (widget.children) {
-      widget.formId = parentFormId
+      widget.formId = parentFormId ?? undefined
       resolveContainerBindings(widget.children, parentFormId)
     } else {
-      widget.formId = parentFormId
+      widget.formId = parentFormId ?? undefined
     }
   }
 }

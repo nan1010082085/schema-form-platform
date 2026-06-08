@@ -217,7 +217,7 @@ async function getWidgetTypeSets(): Promise<{ VALID_TYPES: Set<string>; CONTAINE
     cachedWidgetTypes = new Set(metadata.widgets.map((w) => w.type))
     cachedContainerTypes = new Set(metadata.widgets.filter((w) => w.canHaveChildren).map((w) => w.type))
   }
-  return { VALID_TYPES: cachedWidgetTypes, CONTAINER_TYPES: cachedContainerTypes }
+  return { VALID_TYPES: cachedWidgetTypes!, CONTAINER_TYPES: cachedContainerTypes! }
 }
 
 export async function validateWidgetSchema(widgets: Record<string, unknown>[]): Promise<ValidationResult> {
