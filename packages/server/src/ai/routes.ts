@@ -718,7 +718,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
               conversationId: convo._id,
               messageId: `text-${Date.now()}`,
               type: 'schema',
-              content: parsed.widgets,
+              content: adaptedWidgets,
               description: 'AI 生成 Schema',
             })
             send({ type: 'version_created', versionId: v._id, version: v.version })
