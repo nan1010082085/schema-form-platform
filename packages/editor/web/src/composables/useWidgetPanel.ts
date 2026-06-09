@@ -17,6 +17,7 @@ export function useWidgetPanel() {
     { label: '操作组件', key: 'action' as const, items: getWidgetsByGroup('action') },
     { label: '静态组件', key: 'static' as const, items: getWidgetsByGroup('static') },
     { label: '业务组件', key: 'business' as const, items: getWidgetsByGroup('business') },
+    { label: '图表组件', key: 'chart' as const, items: getWidgetsByGroup('chart') },
   ].filter(g => g.items.length > 0))
 
   return { groups }

@@ -36,6 +36,43 @@ function getColContainerColumns(type: string): number {
   return COL_CONTAINER_COLUMNS[type] ?? 0
 }
 
+/**
+ * 清理非法容器嵌套：将嵌套在其他容器内的容器提升到根级。
+ * 容器之间不允许互相嵌套（只允许嵌套在布局组件内的普通部件）。
+ *
+ * 策略：遇到"容器内嵌套容器"时，将内层容器从原位置移除并追加到根级末尾。
+ */
+function sanitizeContainerNesting(widgets: Widget[]): Widget[] {
+  const promoted: Widget[] = []
+
+  function walk(list: Widget[]): Widget[] {
+    return list.reduce<Widget[]>((acc, w) => {
+      if (w.children?.length) {
+        // 先递归清理子节点
+        w.children = walk(w.children)
+        // 再把子节点中的容器提升到根级
+        const kept: Widget[] = []
+        for (const child of w.children) {
+          if (CONTAINER_TYPES.has(child.type)) {
+            // 容器禁止嵌套 — 提升到根级
+            delete child.colIndex
+            delete child.tabKey
+            promoted.push(child)
+          } else {
+            kept.push(child)
+          }
+        }
+        w.children = kept
+      }
+      acc.push(w)
+      return acc
+    }, [])
+  }
+
+  const cleaned = walk(widgets)
+  return [...cleaned, ...promoted]
+}
+
 export const useWidgetStore = defineStore('widget', () => {
   // ================================================================
   // 数据
@@ -120,7 +157,28 @@ export const useWidgetStore = defineStore('widget', () => {
 
   function addWidget(widget: Widget): void {
     widget.position.zIndex = getMaxZIndex() + 1
-    widgets.value.push(widget)
+    // 容器禁止嵌套：将被添加容器的子容器提升到根级
+    if (widget.children?.length) {
+      const promoted: Widget[] = []
+      const kept: Widget[] = []
+      for (const child of widget.children) {
+        if (CONTAINER_TYPES.has(child.type)) {
+          delete child.colIndex
+          delete child.tabKey
+          promoted.push(child)
+        } else {
+          kept.push(child)
+        }
+      }
+      widget.children = kept
+      widgets.value.push(widget)
+      for (const p of promoted) {
+        p.position.zIndex = getMaxZIndex() + 1
+        widgets.value.push(p)
+      }
+    } else {
+      widgets.value.push(widget)
+    }
   }
 
   function removeWidget(id: string): void {
@@ -406,7 +464,7 @@ export const useWidgetStore = defineStore('widget', () => {
    * 批量替换所有 Widget（从 API 加载时使用）。
    */
   function loadWidgets(data: Widget[]): void {
-    widgets.value = data
+    widgets.value = sanitizeContainerNesting(data)
   }
 
   /**

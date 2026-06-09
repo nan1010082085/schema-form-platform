@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ComponentDoc } from './types'
 
 const doc: ComponentDoc = {

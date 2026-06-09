@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ComponentDoc } from './types'
 
 const doc: ComponentDoc = {
@@ -32,9 +31,9 @@ const doc: ComponentDoc = {
               children: [{
                 type: 'file-preview', field: 'doc_files', multiple: true, maxFiles: 5,
                 options: [
-                  { id: '1', name: '需求文档_v3.pdf', url: '/files/req.pdf' },
-                  { id: '2', name: '技术方案.md', url: '/files/design.md' },
-                  { id: '3', name: '验收报告.xlsx', url: '/files/report.xlsx' },
+                  { label: '需求文档_v3.pdf', value: '1' },
+                  { label: '技术方案.md', value: '2' },
+                  { label: '验收报告.xlsx', value: '3' },
                 ],
               }],
             },

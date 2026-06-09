@@ -29,6 +29,8 @@ export interface ExposeDoc {
 type DocWidget = Omit<PartialWidget, 'type' | 'children'> & {
   type: string
   children?: DocWidget[]
+  /** 文档示例中的额外属性（如 multiple、maxFiles 等组件专属 props） */
+  [key: string]: unknown
 }
 
 export interface SchemaExample {

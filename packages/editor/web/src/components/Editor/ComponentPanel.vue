@@ -19,6 +19,7 @@ const GROUP_LABELS: Record<string, string> = {
   action: '操作部件',
   static: '静态部件',
   business: '业务部件',
+  chart: '图表部件',
 }
 
 interface ComponentGroup {

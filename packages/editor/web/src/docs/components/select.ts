@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ComponentDoc } from './types'
 
 const doc: ComponentDoc = {
@@ -41,7 +40,7 @@ const doc: ComponentDoc = {
           type: 'grid-row',
           children: [
             { type: 'grid-col', span: 4, label: '字典选择', align: 'center' },
-            { type: 'grid-col', span: 8, children: [{ type: 'select', field: 'demo_dict', api: { dictCode: 'sys_status', labelKey: 'dictLabel', valueKey: 'dictValue' }, props: { placeholder: '从字典加载' } }] },
+            { type: 'grid-col', span: 8, children: [{ type: 'select', field: 'demo_dict', api: { url: '', dictCode: 'sys_status', labelKey: 'dictLabel', valueKey: 'dictValue' }, props: { placeholder: '从字典加载' } }] },
             { type: 'grid-col', span: 4, label: 'API 选择', align: 'center' },
             { type: 'grid-col', span: 8, children: [{ type: 'select', field: 'demo_api', api: { url: '/api/options/departments', method: 'get', labelKey: 'name', valueKey: 'id' }, props: { placeholder: '从 API 加载' } }] }
           ]

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ComponentDoc } from './types'
 
 const doc: ComponentDoc = {
@@ -6,10 +5,8 @@ const doc: ComponentDoc = {
   name: 'FgDialog',
   category: 'business',
   description:
-    '通用弹窗组件。对齐 UI 规范：宽度 994px，内边距 16px。',
-  author: 'yangdongnan' +
-    '支持 footer 插槽、确认/取消回调、数据预填、与按钮动作链深度集成。' +
-    '通过 dialogMode 支持内部/外部两种弹窗管理模式。',
+    '通用弹窗组件。对齐 UI 规范：宽度 994px，内边距 16px。支持 footer 插槽、确认/取消回调、数据预填、与按钮动作链深度集成。通过 dialogMode 支持内部/外部两种弹窗管理模式。',
+  author: 'yangdongnan',
   receivableEvents: [
     { name: 'open', description: '打开弹窗' },
     { name: 'close', description: '关闭弹窗' },

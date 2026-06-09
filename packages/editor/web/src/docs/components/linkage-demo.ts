@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * 联动配置示例 Schema — 覆盖 6 种联动类型 + 复杂交互模式
  *
@@ -35,13 +34,13 @@ export const linkageDemoSchema: import('@/components/WidgetRenderer/types').Part
       {
         type: 'visible',
         watchFields: ['features'],
-        condition: (v) => Array.isArray(v.features) && v.features.includes('advanced'),
+        condition: (v) => Array.isArray(v.features) && (v.features as string[]).includes('advanced'),
         elseValue: undefined, // 隐藏时清空
       },
       {
         type: 'required',
         watchFields: ['features'],
-        condition: (v) => Array.isArray(v.features) && v.features.includes('advanced'),
+        condition: (v) => Array.isArray(v.features) && (v.features as string[]).includes('advanced'),
       },
     ],
   },
@@ -60,7 +59,7 @@ export const linkageDemoSchema: import('@/components/WidgetRenderer/types').Part
       {
         type: 'set-value',
         watchFields: ['features'],
-        condition: (v) => Array.isArray(v.features) && v.features.includes('urgent'),
+        condition: (v) => Array.isArray(v.features) && (v.features as string[]).includes('urgent'),
         thenValue: 'urgent',
         elseValue: 'normal',
       },
@@ -80,12 +79,12 @@ export const linkageDemoSchema: import('@/components/WidgetRenderer/types').Part
       {
         type: 'disabled',
         watchFields: ['features'],
-        condition: (v) => Array.isArray(v.features) && v.features.includes('international'),
+        condition: (v) => Array.isArray(v.features) && (v.features as string[]).includes('international'),
       },
       {
         type: 'set-value',
         watchFields: ['features'],
-        condition: (v) => Array.isArray(v.features) && v.features.includes('international'),
+        condition: (v) => Array.isArray(v.features) && (v.features as string[]).includes('international'),
         thenValue: 'international',
       },
     ],
