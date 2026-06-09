@@ -248,7 +248,7 @@ describe('useAiStore', () => {
       expect(result).toBeNull()
     })
 
-    it('publishes schema and returns publishId', async () => {
+    it('publishes schema and returns id/publishId/type', async () => {
       const store = useAiStore()
       store.currentConversationId = 'conv-1'
       store.currentSchema = [{ id: '1', type: 'input' }] as any
@@ -256,7 +256,7 @@ describe('useAiStore', () => {
 
       const result = await store.publishCurrent()
 
-      expect(result).toBe('p1')
+      expect(result).toEqual({ id: 's1', publishId: 'p1', type: 'schema' })
       expect(publish).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         type: 'schema',
@@ -272,7 +272,7 @@ describe('useAiStore', () => {
 
       const result = await store.publishCurrent()
 
-      expect(result).toBe('p2')
+      expect(result).toEqual({ id: 'f1', publishId: 'p2', type: 'flow' })
       expect(publish).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         type: 'flow',

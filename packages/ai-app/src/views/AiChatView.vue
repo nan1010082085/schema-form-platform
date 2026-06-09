@@ -147,36 +147,44 @@ function handlePrimaryAction(): void {
   handlePublish()
 }
 
-function handleSecondaryAction(): void {
-  const payload = {
-    schema: currentSchema.value,
-    flow: currentFlow.value,
-  }
+async function handleSecondaryAction(): Promise<void> {
+  try {
+    const result = await store.publishCurrent()
+    if (!result) {
+      ElMessage.warning('没有可发布的内容')
+      return
+    }
 
-  // micro-app 嵌入模式：通过 bridge 通知宿主
-  if (window.__MICRO_APP_ENVIRONMENT__) {
-    bridge.send('ai:open-in-editor', payload)
-    return
-  }
+    // micro-app 嵌入模式：通过 bridge 通知宿主
+    if (window.__MICRO_APP_ENVIRONMENT__) {
+      bridge.send('ai:open-in-editor', {
+        schema: currentSchema.value,
+        flow: currentFlow.value,
+        id: result.id,
+        type: result.type,
+      })
+      return
+    }
 
-  // standalone 模式：直接跳转到对应编辑器
-  if (currentFlow.value) {
-    window.open('/flow/', '_blank')
-  } else if (currentSchema.value) {
-    window.open('/editor/', '_blank')
+    // standalone 模式：先发布再跳转到对应编辑器
+    const url = result.type === 'flow'
+      ? `/flow/?id=${result.id}`
+      : `/editor/?id=${result.id}`
+    window.open(url, '_blank')
+  } catch {
+    ElMessage.error('发布失败，请稍后重试')
   }
 }
 
 async function handlePublish(): Promise<void> {
   try {
-    const publishId = await store.publishCurrent()
-    if (publishId) {
-      const type = currentSchema.value ? 'schema' : 'flow'
-      ElMessage.success(type === 'schema' ? '表单发布成功' : '流程发布成功')
+    const result = await store.publishCurrent()
+    if (result) {
+      ElMessage.success(result.type === 'schema' ? '表单发布成功' : '流程发布成功')
       bridge.send('ai:published', {
-        id: publishId,
-        publishId,
-        type,
+        id: result.id,
+        publishId: result.publishId,
+        type: result.type,
       })
     } else {
       ElMessage.warning('没有可发布的内容')

@@ -816,7 +816,7 @@ export const useAiStore = defineStore('ai', () => {
     error.value = null
   }
 
-  async function publishCurrent(): Promise<string | null> {
+  async function publishCurrent(): Promise<{ id: string; publishId?: string; type: 'schema' | 'flow' } | null> {
     if (!currentConversationId.value) return null
 
     const type = currentSchema.value ? 'schema' : 'flow'
@@ -829,7 +829,7 @@ export const useAiStore = defineStore('ai', () => {
       payload,
     })
 
-    return result.publishId ?? result.id
+    return { id: result.id, publishId: result.publishId, type }
   }
 
   function setContext(ctx: Partial<ChatContext>): void {

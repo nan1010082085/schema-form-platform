@@ -139,17 +139,33 @@ function handleCardAction(type: 'primary' | 'secondary') {
   if (type === 'primary') {
     handleApply()
   } else {
-    // 在编辑器中打开（同时走 Socket + bridge 双通道）
+    handleOpenInEditor()
+  }
+}
+
+async function handleOpenInEditor(): Promise<void> {
+  try {
+    const result = await store.publishCurrent()
+    if (!result) {
+      ElMessage.warning('没有可发布的内容')
+      return
+    }
+
     const payload = {
       schema: store.currentSchema,
       flow: store.currentFlow,
+      id: result.id,
+      type: result.type,
     }
+
     emitAiApply({
-      type: store.currentSchema ? 'schema' : 'flow',
-      payload: store.currentSchema ?? store.currentFlow!,
+      type: result.type,
+      payload: (result.type === 'schema' ? store.currentSchema : store.currentFlow)!,
       conversationId: store.currentConversationId ?? undefined,
     })
     bridge.send('ai:open-in-editor', payload)
+  } catch {
+    ElMessage.error('发布失败，请稍后重试')
   }
 }
 
@@ -166,19 +182,19 @@ async function handleApply() {
     })
 
     // 同时发布到服务端
-    const publishId = await store.publishCurrent()
-    if (publishId) {
+    const result = await store.publishCurrent()
+    if (result) {
       ElMessage.success(isSchema ? '表单已应用到画布并发布成功' : '流程已应用到画布并发布成功')
       emitAiPublished({
-        type,
-        id: publishId,
-        publishId,
+        type: result.type,
+        id: result.id,
+        publishId: result.publishId,
         conversationId: store.currentConversationId ?? undefined,
       })
       bridge.send('ai:published', {
-        id: publishId,
-        publishId,
-        type,
+        id: result.id,
+        publishId: result.publishId,
+        type: result.type,
       })
     } else {
       ElMessage.warning('没有可发布的内容')
