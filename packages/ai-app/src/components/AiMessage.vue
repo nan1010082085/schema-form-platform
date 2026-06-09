@@ -113,8 +113,28 @@ interface TextPart {
 }
 
 /**
+ * 判断文本是否是 LLM 输出的多余总结性内容
+ * 匹配 <schema> 标签后常见的总结模式
+ */
+function isRedundantSummary(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  const patterns = [
+    /^(好的|已|我|现在|以上|这就是|这是|根据|基于)/,
+    /^(表单|流程|Schema|JSON|数据)\s*(已|已经|已生成|已创建|已更新)/,
+    /已(生成|创建|更新|完成|应用)(好|了)?/,
+    /以上(就是|是)/,
+    /请(查看|确认|检查|参考)/,
+    /希望(这|这个)/,
+  ]
+  // 只匹配短文本（< 100 字符），长文本大概率是有意义的内容
+  return trimmed.length < 100 && patterns.some(p => p.test(trimmed))
+}
+
+/**
  * 将 Markdown 内容拆分为文字和代码块两部分
  * 识别 ```json ... ``` 格式和 <schema>...</schema> 标签
+ * 过滤 <schema> 标签后的多余总结文本
  */
 function splitTextAndCodeBlocks(content: string): TextPart[] {
   const parts: TextPart[] = []
@@ -123,6 +143,7 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
   const blockRegex = /(<schema>[\s\S]*?<\/schema>|```(\w+)?\n([\s\S]*?)```)/g
   let lastIndex = 0
   let match
+  let hasSchemaTag = false
 
   while ((match = blockRegex.exec(content)) !== null) {
     // 添加代码块之前的文字
@@ -139,6 +160,7 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
     if (fullMatch.startsWith('<schema>')) {
       const jsonContent = fullMatch.replace(/<\/?schema>/g, '').trim()
       parts.push({ type: 'code', content: jsonContent, language: 'json' })
+      hasSchemaTag = true
     }
     // ```json 代码块
     else {
@@ -150,11 +172,16 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
     lastIndex = match.index + fullMatch.length
   }
 
-  // 添加最后剩余的文字
+  // 添加最后剩余的文字（如果有 <schema> 标签，过滤多余总结）
   if (lastIndex < content.length) {
     const remaining = content.slice(lastIndex).trim()
     if (remaining) {
-      parts.push({ type: 'text', content: remaining })
+      // 如果前面有 <schema> 标签，检查是否是多余总结
+      if (hasSchemaTag && isRedundantSummary(remaining)) {
+        // 过滤掉多余总结文本
+      } else {
+        parts.push({ type: 'text', content: remaining })
+      }
     }
   }
 

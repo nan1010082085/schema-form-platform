@@ -69,6 +69,7 @@ function formatTime(date: Date): string {
 
 // 默认展开所有步骤，用户可手动折叠
 const collapsed = ref(false)
+const jsonCollapsed = ref(false)
 
 const hasHeader = computed(() =>
   props.type === 'thinking' || props.type === 'tool_call' || props.type === 'tool_error',
@@ -137,6 +138,31 @@ function formatJson(content: string): string {
     return content
   }
 }
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function highlightJsonSyntax(json: string): string {
+  // Escape HTML first, then apply syntax highlighting
+  const escaped = escapeHtml(json)
+  // Highlight: strings (green), numbers (orange), booleans/null (purple), keys (blue)
+  return escaped
+    .replace(/"([^"\\]*(\\.[^"\\]*)*)"\s*:/g, '<span class="jsonKey">"$1"</span>:')
+    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, '<span class="jsonString">"$1"</span>')
+    .replace(/\b(-?\d+\.?\d*([eE][+-]?\d+)?)\b/g, '<span class="jsonNumber">$1</span>')
+    .replace(/\b(true|false)\b/g, '<span class="jsonBool">$1</span>')
+    .replace(/\bnull\b/g, '<span class="jsonNull">null</span>')
+}
+
+const highlightedJson = computed(() => {
+  if (!props.content) return ''
+  return highlightJsonSyntax(formatJson(props.content))
+})
 </script>
 
 <template>
@@ -223,17 +249,26 @@ function formatJson(content: string): string {
 
       <!-- 展开状态内容 -->
       <template v-if="!collapsed || !hasHeader">
-        <!-- thinking / text content -->
+        <!-- thinking / text content (skip markdown for JSON blocks) -->
         <div
-          v-if="(type === 'thinking' || type === 'text') && content"
+          v-if="(type === 'thinking' || type === 'text') && title !== 'JSON 数据' && content"
           :class="type === 'text' ? $style.markdown : $style.thinkingContent"
           v-html="renderedContent"
         />
 
-        <!-- JSON code block (for "JSON 数据" title) -->
+        <!-- JSON code block with syntax highlighting and collapse -->
         <div v-if="type === 'text' && title === 'JSON 数据' && content" :class="$style.jsonBlock">
-          <div :class="$style.jsonBlockLabel">JSON 数据</div>
-          <pre><code>{{ formatJson(content) }}</code></pre>
+          <div :class="$style.jsonBlockHeader" @click="jsonCollapsed = !jsonCollapsed">
+            <div :class="$style.jsonBlockLabel">JSON 数据</div>
+            <div :class="[$style.toggle, { [$style.toggleExpanded]: !jsonCollapsed }]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+          <div v-show="!jsonCollapsed" :class="$style.jsonBlockBody">
+            <pre><code v-html="highlightedJson" /></pre>
+          </div>
         </div>
 
       <!-- tool call / tool error content -->
