@@ -104,6 +104,17 @@ function formatToolName(name: string): string {
   return TOOL_NAME_MAP[name] ?? name
 }
 
+// ---- Markdown rendering for text replies ----
+
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
+function renderMarkdown(content: string): string {
+  if (!content) return ''
+  const rawHtml = marked.parse(content, { breaks: true }) as string
+  return DOMPurify.sanitize(rawHtml)
+}
+
 // ---- Split text and code blocks for better rendering ----
 
 interface TextPart {
@@ -313,48 +324,64 @@ const steps = computed<StepData[]>(() => {
 
         <!-- Step card list -->
         <div v-if="steps.length > 0" :class="$style.stepList">
-          <AiStepCard
-            v-for="(step, idx) in steps"
-            :key="idx"
-            :index="idx + 1"
-            :type="step.type"
-            :title="step.title"
-            :content="step.content"
-            :status="step.status"
-            :tool-name="step.toolName"
-            :tool-display-name="step.toolDisplayName"
-            :tool-result="step.toolResult"
-            :tool-arguments="step.toolArguments"
-            :error="step.error"
-            :card-type="step.cardType"
-            :card-title="step.cardTitle"
-            :primary-action="step.primaryAction"
-            :secondary-action="step.secondaryAction"
-            :timestamp="step.timestamp"
-            :agent="step.agent"
-            :is-last="idx === steps.length - 1"
-            @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
-            @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
-          >
-            <!-- Result card slot -->
-            <template v-if="step.type === 'result' && cards">
-              <!-- 有原始 Widget 数据时，使用渲染器预览卡片 -->
-              <SchemaPreviewCard
-                v-if="schemaWidgets && schemaWidgets.length > 0"
-                :widgets="schemaWidgets"
-                :title="cards.find((c) => c.type === 'schema')?.title ?? '生成的表单'"
-                compact
-                @click="emit('open-json-drawer')"
-                @primary-action="emit('card-primary-action', 0)"
-                @secondary-action="emit('card-secondary-action', 0)"
-              />
-              <!-- fallback: 字段列表卡片 -->
-              <template v-else>
-                <SchemaCard
-                  v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
-                  :key="'s' + cIdx"
+          <template v-for="(step, idx) in steps" :key="idx">
+            <!-- Text reply: 直接渲染 Markdown，不包裹卡片 -->
+            <div v-if="step.type === 'text' && step.content" :class="$style.markdownContent" v-html="renderMarkdown(step.content)" />
+
+            <!-- Thinking/Tool/Result: 用卡片包裹 -->
+            <AiStepCard
+              v-else
+              :index="idx + 1"
+              :type="step.type"
+              :title="step.title"
+              :content="step.content"
+              :status="step.status"
+              :tool-name="step.toolName"
+              :tool-display-name="step.toolDisplayName"
+              :tool-result="step.toolResult"
+              :tool-arguments="step.toolArguments"
+              :error="step.error"
+              :card-type="step.cardType"
+              :card-title="step.cardTitle"
+              :primary-action="step.primaryAction"
+              :secondary-action="step.secondaryAction"
+              :timestamp="step.timestamp"
+              :agent="step.agent"
+              :is-last="idx === steps.length - 1"
+              @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
+              @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
+            >
+              <!-- Result card slot -->
+              <template v-if="step.type === 'result' && cards">
+                <!-- 有原始 Widget 数据时，使用渲染器预览卡片 -->
+                <SchemaPreviewCard
+                  v-if="schemaWidgets && schemaWidgets.length > 0"
+                  :widgets="schemaWidgets"
+                  :title="cards.find((c) => c.type === 'schema')?.title ?? '生成的表单'"
+                  compact
+                  @click="emit('open-json-drawer')"
+                  @primary-action="emit('card-primary-action', 0)"
+                  @secondary-action="emit('card-secondary-action', 0)"
+                />
+                <!-- fallback: 字段列表卡片 -->
+                <template v-else>
+                  <SchemaCard
+                    v-for="(card, cIdx) in cards.filter((c) => c.type === 'schema')"
+                    :key="'s' + cIdx"
+                    :title="card.title"
+                    :fields="card.fields"
+                    :primary-action="card.primaryAction"
+                    :secondary-action="card.secondaryAction"
+                    compact
+                    @primary-action="emit('card-primary-action', cIdx)"
+                    @secondary-action="emit('card-secondary-action', cIdx)"
+                  />
+                </template>
+                <FlowCard
+                  v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
+                  :key="'f' + cIdx"
                   :title="card.title"
-                  :fields="card.fields"
+                  :nodes="card.nodes"
                   :primary-action="card.primaryAction"
                   :secondary-action="card.secondaryAction"
                   compact
@@ -362,19 +389,8 @@ const steps = computed<StepData[]>(() => {
                   @secondary-action="emit('card-secondary-action', cIdx)"
                 />
               </template>
-              <FlowCard
-                v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
-                :key="'f' + cIdx"
-                :title="card.title"
-                :nodes="card.nodes"
-                :primary-action="card.primaryAction"
-                :secondary-action="card.secondaryAction"
-                compact
-                @primary-action="emit('card-primary-action', cIdx)"
-                @secondary-action="emit('card-secondary-action', cIdx)"
-              />
-            </template>
-          </AiStepCard>
+            </AiStepCard>
+          </template>
         </div>
 
         <!-- Tip -->
