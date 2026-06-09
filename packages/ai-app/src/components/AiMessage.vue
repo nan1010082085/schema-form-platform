@@ -104,6 +104,57 @@ function formatToolName(name: string): string {
   return TOOL_NAME_MAP[name] ?? name
 }
 
+// ---- Split text and code blocks for better rendering ----
+
+interface TextPart {
+  type: 'text' | 'code'
+  content: string
+  language?: string
+}
+
+/**
+ * 将 Markdown 内容拆分为文字和代码块两部分
+ * 识别 ```json ... ``` 格式的代码块
+ */
+function splitTextAndCodeBlocks(content: string): TextPart[] {
+  const parts: TextPart[] = []
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
+  let lastIndex = 0
+  let match
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // 添加代码块之前的文字
+    if (match.index > lastIndex) {
+      const textBefore = content.slice(lastIndex, match.index).trim()
+      if (textBefore) {
+        parts.push({ type: 'text', content: textBefore })
+      }
+    }
+
+    // 添加代码块
+    const language = match[1] || 'json'
+    const codeContent = match[2].trim()
+    parts.push({ type: 'code', content: codeContent, language })
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // 添加最后剩余的文字
+  if (lastIndex < content.length) {
+    const remaining = content.slice(lastIndex).trim()
+    if (remaining) {
+      parts.push({ type: 'text', content: remaining })
+    }
+  }
+
+  // 如果没有代码块，返回原始内容
+  if (parts.length === 0) {
+    parts.push({ type: 'text', content })
+  }
+
+  return parts
+}
+
 // ---- Derive step list from flat message data ----
 
 const steps = computed<StepData[]>(() => {
@@ -144,16 +195,30 @@ const steps = computed<StepData[]>(() => {
     }
   }
 
-  // Step: text reply（在结果卡片之前显示）
+  // Step: text reply — 拆分文字和 JSON 代码块
   if (renderedContentRef.value) {
-    result.push({
-      type: 'text',
-      title: '回复',
-      content: renderedContentRef.value,
-      status: 'done',
-      timestamp: now,
-      agent: props.agent,
-    })
+    const parts = splitTextAndCodeBlocks(renderedContentRef.value)
+    for (const part of parts) {
+      if (part.type === 'text' && part.content.trim()) {
+        result.push({
+          type: 'text',
+          title: '回复',
+          content: part.content,
+          status: 'done',
+          timestamp: now,
+          agent: props.agent,
+        })
+      } else if (part.type === 'code') {
+        result.push({
+          type: 'text',
+          title: 'JSON 数据',
+          content: part.content,
+          status: 'done',
+          timestamp: now,
+          agent: props.agent,
+        })
+      }
+    }
   }
 
   // Steps: embedded result cards（最后显示渲染结果）

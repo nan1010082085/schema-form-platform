@@ -128,6 +128,15 @@ const statusLabel = computed(() => {
 function toggleCollapse(): void {
   collapsed.value = !collapsed.value
 }
+
+function formatJson(content: string): string {
+  try {
+    const parsed = JSON.parse(content)
+    return JSON.stringify(parsed, null, 2)
+  } catch {
+    return content
+  }
+}
 </script>
 
 <template>
@@ -220,6 +229,12 @@ function toggleCollapse(): void {
           :class="type === 'text' ? $style.markdown : $style.thinkingContent"
           v-html="renderedContent"
         />
+
+        <!-- JSON code block (for "JSON 数据" title) -->
+        <div v-if="type === 'text' && title === 'JSON 数据' && content" :class="$style.jsonBlock">
+          <div :class="$style.jsonBlockLabel">JSON 数据</div>
+          <pre><code>{{ formatJson(content) }}</code></pre>
+        </div>
 
       <!-- tool call / tool error content -->
       <template v-if="type === 'tool_call' || type === 'tool_error'">
