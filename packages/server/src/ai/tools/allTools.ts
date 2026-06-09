@@ -36,6 +36,12 @@ import {
 // Collaboration tools
 import { requestCollaborationTool } from './collaborationTools.js'
 
+// RAG tools
+import { ragTools } from './ragTools.js'
+
+// Widget tools
+import { widgetTools } from './widgetTools.js'
+
 // Industry tools
 import { industryTools } from './industryTools.js'
 
@@ -69,6 +75,12 @@ export const allTools = [
 
   // Industry tools
   ...industryTools,
+
+  // RAG tools
+  ...ragTools,
+
+  // Widget tools
+  ...widgetTools,
 
   // Collaboration tools
   requestCollaborationTool,

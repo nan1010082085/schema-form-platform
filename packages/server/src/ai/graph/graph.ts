@@ -2,12 +2,11 @@
  * AI Agent Graph — StateGraph assembly.
  *
  * Graph structure:
- *   START -> router -> (agentSelector | taskChain | thinker) -> ... -> END
+ *   START -> router -> (agentSelector | taskChain) -> ... -> END
  *
  * Nodes:
  * - router: routing decisions (explicit mode, task chain, or LLM analysis)
  * - taskChain: task chain progression management
- * - thinker: pure LLM analysis + JSON parsing (auto mode only)
  * - editor/flow/page/general: expert agents
  * - allTools: tool execution
  * - afterTools: post-tool collaboration extraction
@@ -26,6 +25,8 @@ import { checkpointer } from './checkpointer.js'
 import { getLLM } from '../services/llmCache.js'
 import { getModelForTask } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
+import { getMetadata } from '../tools/toolHandlers.js'
+import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
 
 // ────────────────────────────────────────────
 // Tool nodes（带错误兜底）
@@ -120,7 +121,7 @@ async function routerNode(
 
     const model = getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
     const stream = await model.stream([
-      new SystemMessage(THINKER_SYSTEM_PROMPT),
+      new SystemMessage(ROUTER_SYSTEM_PROMPT),
       new HumanMessage(userContent),
     ])
 
@@ -236,189 +237,38 @@ async function taskChainNode(
 }
 
 // ────────────────────────────────────────────
-// Thinker node — pure LLM analysis
-// ────────────────────────────────────────────
-
-const THINKER_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基于 DeepSeek V4 Pro 模型驱动。
-
-## 你的任务
-
-1. **思考**：分析用户的需求，理解他们想要什么
-2. **决策**：决定由哪些专家处理这个需求，以及执行顺序
-
-## 可用的专家
-
-### Editor 专家 - 表单/UI 生成
-- 表单设计（输入框、选择器、日期、上传等 18 种表单组件）
-- 页面布局（卡片、标签页、多列布局等 8 种容器）
-- 图表可视化（柱状图、折线图、饼图等 9 种图表）
-
-### Page 专家 - 业务页面配置
-- 统计卡片页面（FgStatistic 展示关键指标）
-- 详情页面（FgDescriptions 展示数据详情）
-- 数据列表页面（FgTable 展示表格数据）
-- 搜索列表页面（FgSearchList 实现搜索+列表）
-- 仪表盘页面（组合多种组件构建数据看板）
-
-### Flow 专家 - 流程/BPMN 生成
-- 审批流程设计（单人审批、会签、或签）
-- 工作流编排（节点、连线、分支、并行）
-- BPMN 元素（开始/结束事件、用户任务、服务任务、网关）
-
-### General - 通用回答
-- 介绍平台能力
-- 回答与平台无关的通用问题
-
-## 输出格式
-
-先用自然语言思考用户需求，然后输出 JSON 决策：
-
-思考过程用自然语言描述...
-
-\`\`\`json
-{
-  "target": "editor" | "page" | "flow" | "general" | "chain",
-  "steps": [
-    { "agent": "editor" | "page" | "flow", "description": "这一步做什么" }
-  ]
-}
-\`\`\`
-
-## 决策规则
-
-1. **表单/UI 任务**：涉及表单输入、表单布局 -> "editor"
-2. **业务页面任务**：涉及列表、统计、详情、仪表盘、搜索列表 -> "page"
-3. **流程任务**：涉及流程/BPMN/审批 -> "flow"
-4. **通用问题**：介绍、能力询问、与平台无关的问题 -> "general"
-5. **联动任务**：同时涉及多个领域 -> "chain"，拆分为多步
-6. **能力介绍**：用户问"你有什么能力"时 -> "general"，介绍所有能力`
-
-async function thinkerNode(
-  state: typeof AgentStateAnnotation.State,
-): Promise<Partial<typeof AgentStateAnnotation.State>> {
-  const lastUserMessage = [...state.messages]
-    .reverse()
-    .find((m) => m.constructor.name === 'HumanMessage')
-
-  const userContent = lastUserMessage
-    ? (typeof lastUserMessage.content === 'string' ? lastUserMessage.content : JSON.stringify(lastUserMessage.content))
-    : '你好'
-
-  console.log(`[thinker] 开始 LLM 分析, messages=${state.messages.length}`)
-
-  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
-
-  try {
-    // 使用流式调用，让 reasoning_content 可以通过 streamEvents 捕获
-    const stream = await model.stream([
-      new SystemMessage(THINKER_SYSTEM_PROMPT),
-      new HumanMessage(userContent),
-    ])
-
-    let raw = ''
-    for await (const chunk of stream) {
-      const content = typeof chunk.content === 'string' ? chunk.content : ''
-      if (content) raw += content
-    }
-
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]) as {
-        target: string
-        steps?: Array<{ agent: string; description: string }>
-      }
-
-      if (parsed.target === 'chain' && Array.isArray(parsed.steps) && parsed.steps.length > 0) {
-        const chain = parsed.steps.map((step) => ({
-          agent: step.agent as 'editor' | 'flow' | 'page',
-          description: step.description,
-          status: 'pending' as const,
-        }))
-        console.log(`[thinker] 链式任务: ${chain.length} 步`)
-        return {
-          session: { ...state.session, currentAgent: chain[0].agent },
-          task: { ...state.task, type: 'generate_simple', chain, currentStepIndex: 0 },
-          tools: { ...state.tools, needsTool: true },
-        }
-      }
-
-      if (parsed.target === 'flow') {
-        console.log(`[thinker] 路由到 flow`)
-        return {
-          session: { ...state.session, currentAgent: 'flow' },
-          task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'flow', description: '生成流程', status: 'pending' }], currentStepIndex: 0 },
-          tools: { ...state.tools, needsTool: true },
-        }
-      }
-      if (parsed.target === 'page') {
-        console.log(`[thinker] 路由到 page`)
-        return {
-          session: { ...state.session, currentAgent: 'page' },
-          task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'page', description: '生成业务页面', status: 'pending' }], currentStepIndex: 0 },
-          tools: { ...state.tools, needsTool: true },
-        }
-      }
-      if (parsed.target === 'general') {
-        console.log(`[thinker] 路由到 general`)
-        return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
-      }
-    }
-
-    console.log(`[thinker] 默认路由到 editor`)
-    return {
-      session: { ...state.session, currentAgent: 'editor' },
-      task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'editor', description: '生成表单', status: 'pending' }], currentStepIndex: 0 },
-      tools: { ...state.tools, needsTool: true },
-    }
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err)
-    console.warn(`[thinker] LLM 调用失败，降级到关键词匹配路由: ${errMsg}`)
-    const lower = userContent.toLowerCase()
-
-    const isFlow = ['流程', '审批', '节点', 'BPMN', 'workflow'].some(kw => lower.includes(kw.toLowerCase()))
-    const isPage = ['列表', '统计', '详情', '仪表盘', 'dashboard', '搜索列表', '数据表格'].some(kw => lower.includes(kw.toLowerCase()))
-
-    let agent: 'editor' | 'flow' | 'page'
-    let description: string
-
-    if (isFlow) {
-      agent = 'flow'
-      description = '生成流程'
-    } else if (isPage) {
-      agent = 'page'
-      description = '生成业务页面'
-    } else {
-      agent = 'editor'
-      description = '生成表单'
-    }
-
-    console.log(`[thinker] 降级路由到 ${agent}`)
-    return {
-      session: { ...state.session, currentAgent: agent },
-      task: { ...state.task, type: 'generate_simple', chain: [{ agent, description, status: 'pending' }], currentStepIndex: 0 },
-      tools: { ...state.tools, needsTool: true },
-    }
-  }
-}
-
-// ────────────────────────────────────────────
 // General agent node
 // ────────────────────────────────────────────
 
-const GENERAL_SYSTEM_PROMPT = `你是 schema-form-platform 的 AI 助手，基于 DeepSeek V4 Pro 模型驱动。
+function buildGeneralSystemPrompt(): string {
+  const metadata = getMetadata()
+  const widgetCount = metadata.widgets.length
+  const flowNodeCount = metadata.flowNodes.length
 
-你有两个专家能力：
+  const widgetGroups = new Map<string, number>()
+  for (const w of metadata.widgets) {
+    widgetGroups.set(w.group, (widgetGroups.get(w.group) ?? 0) + 1)
+  }
+  const widgetSummary = [...widgetGroups.entries()]
+    .map(([group, count]) => `${count} 种${group}组件`)
+    .join('、')
 
-1. **Editor 专家**：表单/页面/UI 生成
-2. **Flow 专家**：流程/BPMN 生成
+  return `你是 schema-form-platform 的 AI 助手。
+
+你有三个专家能力：
+
+1. **Editor 专家**：表单/UI 生成 — 精通 ${widgetCount} 种组件（${widgetSummary}），能生成高质量的表单和页面 Schema
+2. **Page 专家**：业务页面配置 — 专精统计卡片、详情页、数据列表、搜索列表、仪表盘等业务页面
+3. **Flow 专家**：流程/BPMN 生成 — 精通 ${flowNodeCount} 种 BPMN 节点，能生成审批流程、工作流
 
 请用友好、专业的语气回答用户问题。如果用户问你能做什么，引导他们描述具体需求。`
+}
 
 async function generalAgentNode(
   state: typeof AgentStateAnnotation.State,
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
   const model = getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
+  const systemPrompt = buildGeneralSystemPrompt()
 
   const lastUserMessage = [...state.messages]
     .reverse()
@@ -432,7 +282,7 @@ async function generalAgentNode(
 
   const result = await callLLMWithFallback('generalAgent', async () => {
     const stream = await model.stream([
-      new SystemMessage(GENERAL_SYSTEM_PROMPT),
+      new SystemMessage(systemPrompt),
       new HumanMessage(userContent),
     ])
 
@@ -562,18 +412,6 @@ export function routeAfterTaskChain(
   if (state.session.currentAgent === 'general') return 'general'
 
   console.warn(`[routeAfterTaskChain] 未知的 currentAgent="${state.session.currentAgent}", 路由到 END`)
-  return END
-}
-
-export function routeAfterThinker(
-  state: typeof AgentStateAnnotation.State,
-): string {
-  console.log(`[routeAfterThinker] currentAgent=${state.session.currentAgent}, taskChain=${state.task.chain.length}, step=${state.task.currentStepIndex}`)
-  if (state.session.currentAgent === 'editor') return 'editor'
-  if (state.session.currentAgent === 'flow') return 'flow'
-  if (state.session.currentAgent === 'page') return 'page'
-  if (state.session.currentAgent === 'general') return 'general'
-  console.warn(`[routeAfterThinker] 未知的 currentAgent="${state.session.currentAgent}", 路由到 END`)
   return END
 }
 

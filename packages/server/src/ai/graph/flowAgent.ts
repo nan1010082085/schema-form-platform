@@ -15,6 +15,8 @@ import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { getMetadata } from '../tools/toolHandlers.js'
 import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
+import { searchSchemasTool } from '../tools/schemaTools.js'
+import { getSchemaDetailTool } from '../tools/editorTools.js'
 // truncateMessages removed — agent nodes now use state.messages directly
 import { callLLMWithFallback } from './agentErrorHandler.js'
 import type { AgentStateAnnotation } from './state.js'
@@ -113,7 +115,7 @@ export async function flowAgentNode(
   const systemPrompt = await getFlowSystemPrompt()
   const userContent = buildContextMessage(state)
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools])
+  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools, searchSchemasTool, getSchemaDetailTool])
 
   // 直接使用 state.messages + system prompt，不重建消息列表
   // 避免 truncateMessages 截断 ToolMessage 导致 API 400 错误
