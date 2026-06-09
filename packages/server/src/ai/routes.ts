@@ -200,7 +200,12 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const stream = new PassThrough()
   ctx.body = stream
 
+  const sendStartTime = Date.now()
+  let eventCount = 0
   const send = (event: Record<string, unknown>) => {
+    eventCount++
+    const elapsed = Date.now() - sendStartTime
+    console.log(`[SSE] #${eventCount} +${elapsed}ms type=${event.type}`)
     stream.write(`data: ${JSON.stringify(event)}\n\n`)
   }
 
@@ -221,6 +226,9 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   let insideThinkTag = false
 
   try {
+    // 立即发送 thinking 指示器，让用户知道请求已接收
+    send({ type: 'thinking', content: '正在分析需求...\n' })
+
     const eventStream = graph.streamEvents(graphInput, {
       version: 'v2',
       configurable: { thread_id: threadId },
