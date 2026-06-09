@@ -61,6 +61,9 @@ const jsonDrawerTitle = computed(() => {
   return 'JSON 结构'
 })
 
+// ---- 右侧预览面板折叠 ----
+const rightPanelCollapsed = ref(false)
+
 // ---- Preview data ----
 
 const previewTabs = computed<PreviewTab[]>(() => {
@@ -256,7 +259,7 @@ onMounted(() => {
       />
 
       <!-- 右侧：预览面板 -->
-      <div :class="$style.rightPanel">
+      <div :class="[$style.rightPanel, { [$style.collapsed]: rightPanelCollapsed }]">
         <!-- Diff 面板（增量更新时显示） -->
         <SchemaDiffPanel
           v-if="currentDiff"
@@ -278,6 +281,11 @@ onMounted(() => {
         @secondary-action="handleSecondaryAction"
       />
       </div>
+
+      <!-- 折叠/展开切换按钮 -->
+      <button :class="$style.panelToggle" @click="rightPanelCollapsed = !rightPanelCollapsed">
+        {{ rightPanelCollapsed ? '◀' : '▶' }}
+      </button>
     </div>
 
     <!-- Settings Dialog -->
