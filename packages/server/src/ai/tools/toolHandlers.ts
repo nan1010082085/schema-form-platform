@@ -95,12 +95,45 @@ export async function handleSchemaGetDetail(schemaId: string): Promise<ToolResul
   return getSchemaDetail(schemaId) as Promise<ToolResult>
 }
 
+// 容器类型集合（禁止互相嵌套）
+const CONTAINER_TYPES = new Set([
+  'form', 'double-col', 'triple-col', 'quad-col', 'card', 'drawer', 'modal',
+  'tabs', 'collapse', 'fieldset', 'group',
+])
+
 export async function handleSchemaValidate(widgets: Record<string, unknown>[]): Promise<ToolResult> {
   const result = await validateWidgetSchema(widgets)
-  const summary = result.valid
+
+  // 检查容器嵌套违规
+  const nestingErrors: Array<{ path: string; message: string }> = []
+  function checkNesting(nodes: Record<string, unknown>[], parentType: string | null, path: string): void {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]
+      const type = node.type as string
+      const nodePath = path ? `${path}[${i}]` : `[${i}]`
+      const isContainer = CONTAINER_TYPES.has(type)
+
+      if (parentType && isContainer) {
+        nestingErrors.push({
+          path: nodePath,
+          message: `容器 "${type}" 不能嵌套在容器 "${parentType}" 内部。所有组件只允许嵌套在布局组件（grid/flex-row/tabs）内。`,
+        })
+      }
+
+      if (Array.isArray(node.children)) {
+        checkNesting(node.children as Record<string, unknown>[], isContainer ? type : parentType, nodePath)
+      }
+    }
+  }
+  checkNesting(widgets, null, '')
+
+  const allErrors = [...result.errors, ...nestingErrors]
+  const valid = allErrors.length === 0
+  const summary = valid
     ? `Schema 校验通过，共 ${widgets.length} 个组件`
-    : `Schema 校验失败，${result.errors.length} 个错误：${result.errors.slice(0, 3).map(e => e.message).join('；')}${result.errors.length > 3 ? '等' : ''}`
-  return { success: true, data: { valid: result.valid, errors: result.errors }, summary }
+    : `Schema 校验失败，${allErrors.length} 个错误：${allErrors.slice(0, 3).map(e => e.message).join('；')}${allErrors.length > 3 ? '等' : ''}`
+
+  return { success: true, data: { valid, errors: allErrors }, summary }
 }
 
 export async function handleSchemaSearchPublished(params: {
