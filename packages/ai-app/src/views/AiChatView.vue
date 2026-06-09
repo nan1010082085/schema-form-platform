@@ -148,20 +148,41 @@ function handlePrimaryAction(): void {
 }
 
 function handleSecondaryAction(): void {
-  bridge.send('ai:open-in-editor', {
+  const payload = {
     schema: currentSchema.value,
     flow: currentFlow.value,
-  })
+  }
+
+  // micro-app 嵌入模式：通过 bridge 通知宿主
+  if (window.__MICRO_APP_ENVIRONMENT__) {
+    bridge.send('ai:open-in-editor', payload)
+    return
+  }
+
+  // standalone 模式：直接跳转到对应编辑器
+  if (currentFlow.value) {
+    window.open('/flow/', '_blank')
+  } else if (currentSchema.value) {
+    window.open('/editor/', '_blank')
+  }
 }
 
 async function handlePublish(): Promise<void> {
-  const publishId = await store.publishCurrent()
-  if (publishId) {
-    bridge.send('ai:published', {
-      id: publishId,
-      publishId,
-      type: currentSchema.value ? 'schema' : 'flow',
-    })
+  try {
+    const publishId = await store.publishCurrent()
+    if (publishId) {
+      const type = currentSchema.value ? 'schema' : 'flow'
+      ElMessage.success(type === 'schema' ? '表单发布成功' : '流程发布成功')
+      bridge.send('ai:published', {
+        id: publishId,
+        publishId,
+        type,
+      })
+    } else {
+      ElMessage.warning('没有可发布的内容')
+    }
+  } catch {
+    ElMessage.error('发布失败，请稍后重试')
   }
 }
 

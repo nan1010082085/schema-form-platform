@@ -18,6 +18,7 @@ import { validate } from '../middleware/validate.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { chatRequestSchema, publishRequestSchema, behaviorRequestSchema } from './schemas/aiSchemas.js'
 import { graph } from './graph/graph.js'
+import { adaptWidgets } from './services/schemaAdapter.js'
 import { createSendError } from './graph/agentErrorHandler.js'
 import {
   createConversation,
@@ -718,8 +719,9 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             })
             send({ type: 'version_created', versionId: v._id, version: v.version })
           } else if (parsed.type === 'schema_update' && parsed.widgets) {
-            accumulatedSchema = parsed.widgets
-            send({ type: 'schema', payload: parsed.widgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
+            const adaptedWidgets = adaptWidgets(parsed.widgets)
+            accumulatedSchema = adaptedWidgets
+            send({ type: 'schema', payload: adaptedWidgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
             const v = await createVersion({
               conversationId: convo._id,
               messageId: `text-${Date.now()}`,

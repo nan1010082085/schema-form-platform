@@ -14,6 +14,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
+import { ElMessage } from 'element-plus'
 import { connect as connectSocket, emitAiApply, emitAiPublished } from '@schema-form/socket'
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
@@ -153,28 +154,37 @@ function handleCardAction(type: 'primary' | 'secondary') {
 }
 
 async function handleApply() {
-  // 通过 Socket 推送到宿主
   const isSchema = !!store.currentSchema
-  emitAiApply({
-    type: isSchema ? 'schema' : 'flow',
-    payload: (isSchema ? store.currentSchema : store.currentFlow)!,
-    conversationId: store.currentConversationId ?? undefined,
-  })
+  const type = isSchema ? 'schema' : 'flow'
 
-  // 同时发布到服务端
-  const publishId = await store.publishCurrent()
-  if (publishId) {
-    emitAiPublished({
-      type: isSchema ? 'schema' : 'flow',
-      id: publishId,
-      publishId,
+  try {
+    // 通过 Socket 推送到宿主
+    emitAiApply({
+      type,
+      payload: (isSchema ? store.currentSchema : store.currentFlow)!,
       conversationId: store.currentConversationId ?? undefined,
     })
-    bridge.send('ai:published', {
-      id: publishId,
-      publishId,
-      type: isSchema ? 'schema' : 'flow',
-    })
+
+    // 同时发布到服务端
+    const publishId = await store.publishCurrent()
+    if (publishId) {
+      ElMessage.success(isSchema ? '表单已应用到画布并发布成功' : '流程已应用到画布并发布成功')
+      emitAiPublished({
+        type,
+        id: publishId,
+        publishId,
+        conversationId: store.currentConversationId ?? undefined,
+      })
+      bridge.send('ai:published', {
+        id: publishId,
+        publishId,
+        type,
+      })
+    } else {
+      ElMessage.warning('没有可发布的内容')
+    }
+  } catch {
+    ElMessage.error('应用失败，请稍后重试')
   }
 }
 
@@ -287,6 +297,7 @@ function handleHostData(data: Record<string, unknown>) {
         :tool-calls="msg.toolCalls"
         :loading="store.loading && msg.role === 'assistant' && !msg.content && idx === store.messages.length - 1"
         :cards="getDisplayCards(msg)"
+        :schema-widgets="msg.schema"
         @card-primary-action="handleCardAction('primary')"
         @card-secondary-action="handleCardAction('secondary')"
       />
