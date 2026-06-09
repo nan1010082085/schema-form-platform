@@ -217,6 +217,9 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   // ── Streaming state ──
   let currentAgent: 'router' | 'editor' | 'flow' | 'page' | 'general' = 'router'
   let accumulatedContent = ''
+  let accumulatedThinking = ''
+  let accumulatedSchema: Record<string, unknown>[] | null = null
+  let accumulatedFlow: Record<string, unknown> | null = null
   const toolCallRegistry: Array<{ id?: string; name: string; arguments: Record<string, unknown>; result?: unknown }> = []
   const pendingPayloads = new Map<string, Record<string, unknown>[] | Record<string, unknown>>()
   let doneSent = false
@@ -321,6 +324,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
               : undefined
 
           if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.trim().length > 0) {
+            accumulatedThinking += reasoningContent
             send({ type: 'thinking', content: reasoningContent })
             break
           }
@@ -336,6 +340,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             if (closeIdx >= 0) {
               thinkBuffer += content.slice(0, closeIdx)
               if (thinkBuffer.trim().length > 0) {
+                accumulatedThinking += thinkBuffer
                 send({ type: 'thinking', content: thinkBuffer })
               }
               thinkBuffer = ''
@@ -360,6 +365,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
               // 开闭标签在同一 chunk 内
               const thinkContent = afterOpen.slice(0, closeIdx)
               if (thinkContent.trim().length > 0) {
+                accumulatedThinking += thinkContent
                 send({ type: 'thinking', content: thinkContent })
               }
               const remaining = afterOpen.slice(closeIdx + 7).trim()
@@ -501,6 +507,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           if (SCHEMA_TOOLS.has(toolName)) {
             const payload = pendingPayloads.get(toolRunId)
             if (payload) {
+              accumulatedSchema = payload as Record<string, unknown>[]
               send({
                 type: 'schema',
                 payload,
@@ -523,6 +530,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           if (FLOW_TOOLS.has(toolName)) {
             const payload = pendingPayloads.get(toolRunId)
             if (payload) {
+              accumulatedFlow = payload as Record<string, unknown>
               send({
                 type: 'flow',
                 payload,
@@ -659,6 +667,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         try {
           const parsed = JSON.parse(schemaMatch[1])
           if (parsed.type === 'flow_update' && parsed.flow) {
+            accumulatedFlow = parsed.flow
             send({ type: 'flow', payload: parsed.flow, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
             // Save version
             const v = await createVersion({
@@ -670,6 +679,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             })
             send({ type: 'version_created', versionId: v._id, version: v.version })
           } else if (parsed.type === 'schema_update' && parsed.widgets) {
+            accumulatedSchema = parsed.widgets
             send({ type: 'schema', payload: parsed.widgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
             const v = await createVersion({
               conversationId: convo._id,
@@ -692,12 +702,21 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       content: accumulatedContent,
       timestamp: new Date(),
     }
+    if (accumulatedThinking) {
+      assistantMessage.thinking = accumulatedThinking
+    }
     if (toolCallRegistry.length > 0) {
       assistantMessage.toolCalls = toolCallRegistry.map((tc) => ({
         name: tc.name,
         arguments: tc.arguments,
         result: tc.result,
       }))
+    }
+    if (accumulatedSchema) {
+      assistantMessage.schema = accumulatedSchema
+    }
+    if (accumulatedFlow) {
+      assistantMessage.flow = accumulatedFlow
     }
 
     await appendMessage(convo._id, assistantMessage)
