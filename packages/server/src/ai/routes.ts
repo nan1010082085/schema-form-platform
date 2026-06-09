@@ -269,9 +269,6 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   let insideThinkTag = false
 
   try {
-    // 立即发送 thinking 指示器，让用户知道请求已接收
-    send({ type: 'thinking', content: '正在分析需求...\n' })
-
     const eventStream = graph.streamEvents(graphInput, {
       version: 'v2',
       configurable: { thread_id: threadId },
@@ -283,11 +280,6 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         case 'on_chain_start': {
           const nodeName = event.name as string
           console.log(`[stream] on_chain_start: ${nodeName}`)
-          if (nodeName === 'thinker') {
-            // S3: Emit initial thinking indicator so the UI shows feedback
-            // even when the LLM doesn't support reasoning_content
-            send({ type: 'thinking', content: '正在分析需求...\n' })
-          }
           if (nodeName === 'editor' || nodeName === 'flow' || nodeName === 'page' || nodeName === 'general' || nodeName === 'summarizer') {
             currentAgent = nodeName === 'summarizer' ? 'general' : nodeName
             send({ type: 'agent_switch', agent: nodeName === 'summarizer' ? 'general' : nodeName })
