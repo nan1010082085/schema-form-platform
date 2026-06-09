@@ -115,6 +115,19 @@ function renderMarkdown(content: string): string {
   return DOMPurify.sanitize(rawHtml)
 }
 
+function formatJson(content: string): string {
+  try {
+    const parsed = JSON.parse(content)
+    return JSON.stringify(parsed, null, 2)
+  } catch {
+    return content
+  }
+}
+
+function copyCode(content: string) {
+  navigator.clipboard.writeText(formatJson(content))
+}
+
 // ---- Split text and code blocks for better rendering ----
 
 interface TextPart {
@@ -259,7 +272,7 @@ const steps = computed<StepData[]>(() => {
         })
       } else if (part.type === 'code') {
         result.push({
-          type: 'text',
+          type: 'code',
           title: 'JSON 数据',
           content: part.content,
           status: 'done',
@@ -327,6 +340,15 @@ const steps = computed<StepData[]>(() => {
           <template v-for="(step, idx) in steps" :key="idx">
             <!-- Text reply: 直接渲染 Markdown，不包裹卡片 -->
             <div v-if="step.type === 'text' && step.content" :class="$style.markdownContent" v-html="renderMarkdown(step.content)" />
+
+            <!-- Code/JSON: 用代码块展示，不包裹卡片 -->
+            <div v-else-if="step.type === 'code' && step.content" :class="$style.codeBlock">
+              <div :class="$style.codeBlockHeader">
+                <span :class="$style.codeBlockTitle">{{ step.title }}</span>
+                <button :class="$style.codeCopyBtn" @click="copyCode(step.content)">复制</button>
+              </div>
+              <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
+            </div>
 
             <!-- Thinking/Tool/Result: 用卡片包裹 -->
             <AiStepCard

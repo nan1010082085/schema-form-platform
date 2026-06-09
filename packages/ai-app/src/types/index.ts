@@ -282,7 +282,7 @@ export interface Conversation {
 // ---- Step Card ----
 
 /** 步骤类型 */
-export type StepType = 'thinking' | 'tool_call' | 'tool_error' | 'result' | 'text'
+export type StepType = 'thinking' | 'tool_call' | 'tool_error' | 'result' | 'text' | 'code'
 
 /** 步骤状态 */
 export type StepStatus = 'pending' | 'running' | 'done' | 'error'
