@@ -83,6 +83,14 @@ onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)
 })
 
+// ---- Code block collapse state ----
+
+const codeCollapsed = ref<Record<number, boolean>>({})
+
+function toggleCodeCollapse(idx: number) {
+  codeCollapsed.value[idx] = !codeCollapsed.value[idx]
+}
+
 // ---- Tool name display map ----
 
 const TOOL_NAME_MAP: Record<string, string> = {
@@ -341,13 +349,18 @@ const steps = computed<StepData[]>(() => {
             <!-- Text reply: 直接渲染 Markdown，不包裹卡片 -->
             <div v-if="step.type === 'text' && step.content" :class="$style.markdownContent" v-html="renderMarkdown(step.content)" />
 
-            <!-- Code/JSON: 用代码块展示，不包裹卡片 -->
+            <!-- Code/JSON: 用代码块展示，可折叠 -->
             <div v-else-if="step.type === 'code' && step.content" :class="$style.codeBlock">
-              <div :class="$style.codeBlockHeader">
-                <span :class="$style.codeBlockTitle">{{ step.title }}</span>
-                <button :class="$style.codeCopyBtn" @click="copyCode(step.content)">复制</button>
+              <div :class="$style.codeBlockHeader" @click="toggleCodeCollapse(idx)">
+                <div :class="$style.codeBlockLeft">
+                  <span :class="[$style.codeBlockArrow, { [$style.codeBlockArrowExpanded]: !codeCollapsed[idx] }]">▸</span>
+                  <span :class="$style.codeBlockTitle">{{ step.title }}</span>
+                </div>
+                <button :class="$style.codeCopyBtn" @click.stop="copyCode(step.content)">复制</button>
               </div>
-              <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
+              <div v-if="!codeCollapsed[idx]" :class="$style.codeBlockBody">
+                <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
+              </div>
             </div>
 
             <!-- Thinking/Tool/Result: 用卡片包裹 -->
