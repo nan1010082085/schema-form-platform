@@ -78,7 +78,14 @@ function scrollToBottom() {
   }, 50)
 }
 
-watch(() => store.messages.length, scrollToBottom)
+// 监听消息数量变化（新消息）和最后一条消息内容长度变化（流式响应）
+watch(
+  () => {
+    const last = store.messages[store.messages.length - 1]
+    return `${store.messages.length}:${last?.content?.length ?? 0}`
+  },
+  scrollToBottom,
+)
 
 function getDisplayCards(msg: typeof store.messages[0]): MessageEmbeddedCard[] | undefined {
   if (msg.schema) {
@@ -269,19 +276,6 @@ function handleHostData(data: Record<string, unknown>) {
           <span :class="$style.modelDot"></span>
           <span>DeepSeek</span>
         </div>
-        <select
-          v-model="selectedAgent"
-          :class="$style.agentSelect"
-          :disabled="store.loading"
-        >
-          <option
-            v-for="opt in agentOptions"
-            :key="opt.value"
-            :value="opt.value"
-          >
-            {{ opt.label }}
-          </option>
-        </select>
       </div>
     </div>
 

@@ -131,7 +131,7 @@ function getButtonType(w: Widget): string {
               :clearable="isClearable(widget)"
               :show-password="isShowPassword(widget)"
               :maxlength="getMaxlength(widget)"
-              :disabled="!compact"
+              :disabled="compact"
               size="default"
             />
           </el-form-item>
@@ -146,7 +146,7 @@ function getButtonType(w: Widget): string {
               type="textarea"
               :placeholder="getPlaceholder(widget)"
               :rows="3"
-              :disabled="!compact"
+              :disabled="compact"
             />
           </el-form-item>
 
@@ -159,7 +159,7 @@ function getButtonType(w: Widget): string {
             <el-select
               :placeholder="getPlaceholder(widget)"
               :clearable="isClearable(widget)"
-              :disabled="!compact"
+              :disabled="compact"
               style="width: 100%"
             >
               <el-option
@@ -177,7 +177,7 @@ function getButtonType(w: Widget): string {
             :label="widget.label || undefined"
             :class="$style.formItem"
           >
-            <el-checkbox-group :disabled="!compact">
+            <el-checkbox-group :disabled="compact">
               <el-checkbox
                 v-for="opt in getOptions(widget)"
                 :key="String(opt.value)"
@@ -193,7 +193,7 @@ function getButtonType(w: Widget): string {
             :label="widget.label"
             :class="$style.formItem"
           >
-            <el-radio-group :disabled="!compact">
+            <el-radio-group :disabled="compact">
               <el-radio
                 v-for="opt in getOptions(widget)"
                 :key="String(opt.value)"
@@ -210,7 +210,7 @@ function getButtonType(w: Widget): string {
             :label="widget.label"
             :class="$style.formItem"
           >
-            <el-switch :disabled="!compact" />
+            <el-switch :disabled="compact" />
           </el-form-item>
 
           <!-- date-picker -->
@@ -221,7 +221,7 @@ function getButtonType(w: Widget): string {
           >
             <el-date-picker
               :placeholder="getPlaceholder(widget)"
-              :disabled="!compact"
+              :disabled="compact"
               style="width: 100%"
             />
           </el-form-item>
@@ -234,7 +234,7 @@ function getButtonType(w: Widget): string {
           >
             <el-time-picker
               :placeholder="getPlaceholder(widget)"
-              :disabled="!compact"
+              :disabled="compact"
               style="width: 100%"
             />
           </el-form-item>
@@ -246,7 +246,7 @@ function getButtonType(w: Widget): string {
           >
             <el-button
               :type="getButtonType(widget) as any"
-              :disabled="!compact"
+              :disabled="compact"
             >
               {{ getButtonText(widget) }}
             </el-button>
@@ -260,7 +260,7 @@ function getButtonType(w: Widget): string {
           >
             <el-input-number
               :placeholder="getPlaceholder(widget)"
-              :disabled="!compact"
+              :disabled="compact"
               style="width: 100%"
             />
           </el-form-item>
@@ -273,7 +273,7 @@ function getButtonType(w: Widget): string {
           >
             <el-input
               :placeholder="getPlaceholder(widget) || widget.type"
-              :disabled="!compact"
+              :disabled="compact"
             />
           </el-form-item>
         </template>

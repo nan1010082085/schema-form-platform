@@ -206,7 +206,14 @@ function scrollToBottom() {
   })
 }
 
-watch(() => props.messages.length, scrollToBottom)
+// 监听消息数量变化（新消息）和最后一条消息内容长度变化（流式响应）
+watch(
+  () => {
+    const last = props.messages[props.messages.length - 1]
+    return `${props.messages.length}:${last?.content?.length ?? 0}`
+  },
+  scrollToBottom,
+)
 
 function handleMentionSend(text: string, mentions?: MentionReference[]): void {
   // 允许只发送附件（无文本）

@@ -237,7 +237,6 @@ onMounted(() => {
         <div :class="$style.topbarDivider"></div>
         <div :class="$style.topbarNav">
           <span :class="[$style.topbarNavItem, $style.topbarNavItemActive]">对话</span>
-          <span :class="$style.topbarNavItem">历史</span>
         </div>
       </div>
       <div :class="$style.topbarRight">
