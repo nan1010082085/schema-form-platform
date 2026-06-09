@@ -283,6 +283,7 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "type_xxxxx（5位随机hash）",
+  "name": "Vue 组件名，如 FgInput、FgSelect、FgForm 等（见下方映射表）",
   "type": "组件类型",
   "field": "camelCase 字段名（表单组件必填，用于数据绑定）",
   "label": "显示标签",
@@ -290,6 +291,11 @@ ${widgetTable}
   "position": { "x": 数字, "y": 数字, "w": 数字, "h": 数字, "zIndex": 1 }
 }
 \`\`\`
+
+### type → name 映射表（必填）
+| type | name |
+|------|------|
+${metadata.widgets.map(w => `| ${w.type} | Fg${w.type.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')} |`).join('\n')}
 
 ### 默认尺寸参考
 ${metadata.widgets.filter(w => w.defaultSize).map(w => `- ${w.type}: w: ${w.defaultSize!.w}, h: ${w.defaultSize!.h}`).join('\n')}
@@ -310,13 +316,14 @@ ${apiConfig}
 ## 核心规则
 
 1. **🚫 组件嵌套唯一规则（强制）**：所有组件只允许嵌套在**布局组件**（grid、flex-row、tabs）内部。**容器组件**（form、double-col、triple-col、card、drawer 等）**禁止互相嵌套**。form 内部只能放基础组件（input/select/checkbox 等），不能放 double-col。
-2. **每个 Widget 必须有 position**：非负整数，同级不重叠
-3. **id 格式**：\`{type}_{5位hash}\`，如 input_abc12
-4. **field 命名**：camelCase，语义化（userName, orderDate）
-5. **容器必须有 children**：即使为空
-6. **图表/表格/上传等宽类型**：w 应设为 600+，占满容器宽度
-7. **表单字段必须有 field 和 label**
-8. **options 格式**：\`[{ label: '显示文本', value: '值' }]\`
+2. **每个 Widget 必须有 name 字段**：Vue 组件名，参照上方映射表（如 input → FgInput, bar-chart → FgBarChart）
+3. **每个 Widget 必须有 position**：非负整数，同级不重叠
+4. **id 格式**：\`{type}_{5位hash}\`，如 input_abc12
+5. **field 命名**：camelCase，语义化（userName, orderDate）
+6. **容器必须有 children**：即使为空
+7. **图表/表格/上传等宽类型**：w 应设为 600+，占满容器宽度
+8. **表单字段必须有 field 和 label**
+9. **options 格式**：\`[{ label: '显示文本', value: '值' }]\`
 
 ## 典型示例
 
@@ -337,6 +344,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "form_a1b2c",
+      "name": "FgForm",
       "type": "form",
       "label": "用户信息",
       "props": { "labelWidth": "100px", "labelPosition": "right" },
@@ -344,6 +352,7 @@ ${apiConfig}
       "children": [
         {
           "id": "input_d3e4f",
+          "name": "FgInput",
           "type": "input",
           "field": "userName",
           "label": "姓名",
@@ -352,6 +361,7 @@ ${apiConfig}
         },
         {
           "id": "input_g5h6i",
+          "name": "FgInput",
           "type": "input",
           "field": "phone",
           "label": "手机",
@@ -360,6 +370,7 @@ ${apiConfig}
         },
         {
           "id": "input_j7k8l",
+          "name": "FgInput",
           "type": "input",
           "field": "email",
           "label": "邮箱",
@@ -389,6 +400,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "form_t3u4v",
+      "name": "FgForm",
       "type": "form",
       "label": "报销申请",
       "props": { "labelWidth": "100px", "labelPosition": "right" },
@@ -396,6 +408,7 @@ ${apiConfig}
       "children": [
         {
           "id": "select_w5x6y",
+          "name": "FgSelect",
           "type": "select",
           "field": "expenseType",
           "label": "报销类型",
@@ -409,6 +422,7 @@ ${apiConfig}
         },
         {
           "id": "number_z7a8b",
+          "name": "FgNumber",
           "type": "number",
           "field": "amount",
           "label": "金额",
@@ -417,6 +431,7 @@ ${apiConfig}
         },
         {
           "id": "select_c9d0e",
+          "name": "FgSelect",
           "type": "select",
           "field": "approver",
           "label": "审批人",
@@ -811,7 +826,8 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "stat_xxxxx",
-  "type": "fg-statistic",
+  "name": "FgStatistic",
+  "type": "statistic",
   "label": "统计卡片",
   "props": {
     "title": "总销售额",
@@ -830,7 +846,8 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "desc_xxxxx",
-  "type": "fg-descriptions",
+  "name": "FgDescriptions",
+  "type": "descriptions",
   "label": "描述列表",
   "props": {
     "title": "用户信息",
@@ -852,7 +869,8 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "table_xxxxx",
-  "type": "fg-table",
+  "name": "FgTable",
+  "type": "table",
   "label": "数据表格",
   "props": {
     "title": "订单列表",
@@ -876,7 +894,8 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "search_xxxxx",
-  "type": "fg-search-list",
+  "name": "FgSearchList",
+  "type": "search-list",
   "label": "搜索列表",
   "props": {
     "title": "用户管理",
@@ -905,6 +924,7 @@ ${widgetTable}
 \`\`\`json
 {
   "id": "type_xxxxx（5位随机hash）",
+  "name": "Vue 组件名，如 FgInput、FgSelect、FgForm 等（见下方映射表）",
   "type": "组件类型",
   "field": "camelCase 字段名（表单组件必填，用于数据绑定）",
   "label": "显示标签",
@@ -912,6 +932,11 @@ ${widgetTable}
   "position": { "x": 数字, "y": 数字, "w": 数字, "h": 数字, "zIndex": 1 }
 }
 \`\`\`
+
+### type → name 映射表（必填）
+| type | name |
+|------|------|
+${metadata.widgets.map(w => `| ${w.type} | Fg${w.type.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')} |`).join('\n')}
 
 ### 默认尺寸参考
 ${metadata.widgets.filter(w => w.defaultSize).map(w => `- ${w.type}: w: ${w.defaultSize!.w}, h: ${w.defaultSize!.h}`).join('\n')}
@@ -932,13 +957,14 @@ ${apiConfig}
 ## 核心规则
 
 1. **组件嵌套唯一规则**：基础组件只能嵌套在布局/容器组件内，禁止基础组件互相嵌套
-2. **每个 Widget 必须有 position**：非负整数，同级不重叠
-3. **id 格式**：\`{type}_{5位hash}\`，如 stat_abc12
-4. **field 命名**：camelCase，语义化（orderNo, customerName）
-5. **容器必须有 children**：即使为空
-6. **表格/统计等宽类型**：w 应设为 600+，占满容器宽度
-7. **统计卡片**：使用 grid 或 row 容器排列多个统计卡片
-8. **数据源配置**：通过 api 字段配置动态数据加载
+2. **每个 Widget 必须有 name 字段**：Vue 组件名，参照上方映射表（如 input → FgInput, bar-chart → FgBarChart）
+3. **每个 Widget 必须有 position**：非负整数，同级不重叠
+4. **id 格式**：\`{type}_{5位hash}\`，如 stat_abc12
+5. **field 命名**：camelCase，语义化（orderNo, customerName）
+6. **容器必须有 children**：即使为空
+7. **表格/统计等宽类型**：w 应设为 600+，占满容器宽度
+8. **统计卡片**：使用 grid 或 row 容器排列多个统计卡片
+9. **数据源配置**：通过 api 字段配置动态数据加载
 
 ## 典型示例
 
@@ -959,6 +985,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "grid_a1b2c",
+      "name": "FgGrid",
       "type": "grid",
       "label": "统计卡片",
       "props": { "columns": 3, "gutter": 16 },
@@ -966,7 +993,8 @@ ${apiConfig}
       "children": [
         {
           "id": "stat_d3e4f",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "总销售额",
           "props": {
             "title": "总销售额",
@@ -979,7 +1007,8 @@ ${apiConfig}
         },
         {
           "id": "stat_g5h6i",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "订单数",
           "props": {
             "title": "订单数",
@@ -990,7 +1019,8 @@ ${apiConfig}
         },
         {
           "id": "stat_j7k8l",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "客户数",
           "props": {
             "title": "客户数",
@@ -1026,6 +1056,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "toolbar_m9n0p",
+      "name": "FgToolbarButtons",
       "type": "toolbar-buttons",
       "props": {
         "buttons": [
@@ -1036,7 +1067,8 @@ ${apiConfig}
     },
     {
       "id": "search_q1r2s",
-      "type": "fg-search-list",
+      "name": "FgSearchList",
+      "type": "search-list",
       "label": "用户管理",
       "props": {
         "title": "用户列表",
@@ -1081,6 +1113,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "card_t3u4v",
+      "name": "FgCard",
       "type": "card",
       "label": "订单信息",
       "props": { "title": "订单信息" },
@@ -1088,7 +1121,8 @@ ${apiConfig}
       "children": [
         {
           "id": "desc_w5x6y",
-          "type": "fg-descriptions",
+          "name": "FgDescriptions",
+          "type": "descriptions",
           "label": "订单详情",
           "props": {
             "border": true,
@@ -1108,6 +1142,7 @@ ${apiConfig}
     },
     {
       "id": "card_z7a8b",
+      "name": "FgCard",
       "type": "card",
       "label": "商品列表",
       "props": { "title": "商品列表" },
@@ -1115,7 +1150,8 @@ ${apiConfig}
       "children": [
         {
           "id": "table_c9d0e",
-          "type": "fg-table",
+          "name": "FgTable",
+          "type": "table",
           "label": "商品表格",
           "props": {
             "stripe": true,
@@ -1152,6 +1188,7 @@ ${apiConfig}
   "widgets": [
     {
       "id": "grid_f1g2h",
+      "name": "FgGrid",
       "type": "grid",
       "label": "统计卡片",
       "props": { "columns": 4, "gutter": 16 },
@@ -1159,7 +1196,8 @@ ${apiConfig}
       "children": [
         {
           "id": "stat_i3j4k",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "总销售额",
           "props": {
             "title": "总销售额",
@@ -1172,7 +1210,8 @@ ${apiConfig}
         },
         {
           "id": "stat_l5m6n",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "订单数",
           "props": {
             "title": "订单数",
@@ -1183,7 +1222,8 @@ ${apiConfig}
         },
         {
           "id": "stat_o7p8q",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "客户数",
           "props": {
             "title": "客户数",
@@ -1194,7 +1234,8 @@ ${apiConfig}
         },
         {
           "id": "stat_r9s0t",
-          "type": "fg-statistic",
+          "name": "FgStatistic",
+          "type": "statistic",
           "label": "转化率",
           "props": {
             "title": "转化率",
@@ -1208,12 +1249,14 @@ ${apiConfig}
     },
     {
       "id": "dcol_u1v2w",
+      "name": "FgDoubleCol",
       "type": "double-col",
       "label": "图表区域",
       "position": { "x": 0, "y": 156, "w": 600, "h": 350, "zIndex": 2 },
       "children": [
         {
           "id": "line_x3y4z",
+          "name": "FgLineChart",
           "type": "line-chart",
           "label": "销售趋势",
           "props": {
@@ -1226,6 +1269,7 @@ ${apiConfig}
         },
         {
           "id": "pie_a5b6c",
+          "name": "FgPieChart",
           "type": "pie-chart",
           "label": "订单状态分布",
           "props": {

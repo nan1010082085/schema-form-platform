@@ -13,6 +13,7 @@ import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langcha
 import { buildEditorSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { getMetadata } from '../tools/toolHandlers.js'
 import { editorTools } from '../tools/editorTools.js'
+import { generateSchemaTool } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 // truncateMessages removed — agent nodes now use state.messages directly
 import { callLLMWithFallback } from './agentErrorHandler.js'
@@ -114,7 +115,7 @@ export async function editorAgentNode(
   const systemPrompt = await getEditorSystemPrompt()
   const userContent = buildContextMessage(state)
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, ...collaborationTools])
+  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, generateSchemaTool, ...collaborationTools])
 
   // 直接使用 state.messages + system prompt，不重建消息列表
   // 避免 truncateMessages 截断 ToolMessage 导致 API 400 错误

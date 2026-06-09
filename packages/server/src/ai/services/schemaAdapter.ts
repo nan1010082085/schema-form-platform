@@ -76,6 +76,19 @@ let nameMap: Map<string, string> | null = null
 
 // type → Vue component name 映射规则
 const TYPE_NAME_RULES: Record<string, string> = {
+  // container
+  form: 'FgForm',
+  dialog: 'FgDialog',
+  // layout
+  card: 'FgCard',
+  tabs: 'FgTabs',
+  'single-col': 'FgSingleCol',
+  'double-col': 'FgDoubleCol',
+  'triple-col': 'FgTripleCol',
+  'quad-col': 'FgQuadCol',
+  divider: 'FgDivider',
+  spacer: 'FgSpacer',
+  // form
   input: 'FgInput',
   number: 'FgNumber',
   select: 'FgSelect',
@@ -90,32 +103,36 @@ const TYPE_NAME_RULES: Record<string, string> = {
   switch: 'FgSwitch',
   slider: 'FgSlider',
   rate: 'FgRate',
-  button: 'FgButton',
-  title: 'FgTitle',
-  divider: 'FgDivider',
-  spacer: 'FgSpacer',
-  'toolbar-buttons': 'FgToolbarButtons',
-  'file-list': 'FgFileList',
-  transfer: 'FgTransfer',
-  banner: 'FgBanner',
-  'tree-layout': 'FgTreeLayout',
   cascader: 'FgCascader',
   'color-picker': 'FgColorPicker',
   'tag-input': 'FgTagInput',
   autocomplete: 'FgAutocomplete',
   descriptions: 'FgDescriptions',
   statistic: 'FgStatistic',
+  // static
+  title: 'FgTitle',
+  banner: 'FgBanner',
+  // action
+  button: 'FgButton',
+  'toolbar-buttons': 'FgToolbarButtons',
+  // table
   table: 'FgTable',
   'search-list': 'FgSearchList',
   'editable-table': 'FgEditableTable',
-  form: 'FgForm',
-  card: 'FgCard',
-  tabs: 'FgTabs',
-  dialog: 'FgDialog',
-  'single-col': 'FgSingleCol',
-  'double-col': 'FgDoubleCol',
-  'triple-col': 'FgTripleCol',
-  'quad-col': 'FgQuadCol',
+  // business
+  'file-list': 'FgFileList',
+  transfer: 'FgTransfer',
+  'tree-layout': 'FgTreeLayout',
+  // chart
+  'bar-chart': 'FgBarChart',
+  candlestick: 'FgCandlestick',
+  funnel: 'FgFunnel',
+  gauge: 'FgGauge',
+  heatmap: 'FgHeatmap',
+  'line-chart': 'FgLineChart',
+  'pie-chart': 'FgPieChart',
+  radar: 'FgRadar',
+  'scatter-chart': 'FgScatterChart',
 }
 
 function loadMetadata(): AIMetadata {
