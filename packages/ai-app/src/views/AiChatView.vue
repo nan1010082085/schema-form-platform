@@ -205,6 +205,31 @@ async function handlePublish(): Promise<void> {
   }
 }
 
+async function handleApplyToEditor(widgetIds?: string[]): Promise<void> {
+  if (isPublishing.value) return
+  isPublishing.value = true
+  try {
+    const result = await store.publishCurrent()
+    if (result) {
+      ElMessage.success('已应用到编辑器')
+      bridge.send('ai:open-in-editor', {
+        id: result.id,
+        publishId: result.publishId,
+        type: result.type,
+        widgetIds,
+      })
+      const url = result.type === 'flow'
+        ? `/flow/?id=${result.id}`
+        : `/editor/?id=${result.id}`
+      window.open(url, '_blank')
+    }
+  } catch {
+    ElMessage.error('应用失败，请稍后重试')
+  } finally {
+    isPublishing.value = false
+  }
+}
+
 // ---- RAG ----
 
 function handleRagSearch(query: string): void {
@@ -320,6 +345,7 @@ onMounted(() => {
         secondary-action="在编辑器中打开"
         @primary-action="handlePrimaryAction"
         @secondary-action="handleSecondaryAction"
+        @apply-to-editor="handleApplyToEditor"
       />
       </div>
 

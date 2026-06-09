@@ -24,7 +24,7 @@ interface BridgeOutgoingEvents {
   'ai:preview-schema': { payload: Widget[] }
   'ai:preview-flow': { payload: FlowGraph }
   'ai:published': { payload: { id: string; publishId?: string; type: 'schema' | 'flow' } }
-  'ai:open-in-editor': { payload: { schema: Widget[] | null; flow: FlowGraph | null; id?: string; type?: 'schema' | 'flow' } }
+  'ai:open-in-editor': { payload: { schema?: Widget[] | null; flow?: FlowGraph | null; id?: string; publishId?: string; type?: 'schema' | 'flow'; widgetIds?: string[] } }
 }
 
 // ---- 接收事件类型 ----
