@@ -237,6 +237,26 @@ router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) =>
 })
 
 // ────────────────────────────────────────────
+// GET /api/schemas/published
+// Lists all published schemas (no auth required).
+// ────────────────────────────────────────────
+router.get('/published', async (ctx) => {
+  const items = await PublishedSchemaModel.find({}, { json: 0 }).sort({ updatedAt: -1 })
+
+  ctx.body = {
+    success: true,
+    data: items.map((item) => ({
+      id: item._id,
+      name: item.name,
+      type: item.type,
+      publishId: item.publishId,
+      version: item.version,
+      updatedAt: item.updatedAt,
+    })),
+  }
+})
+
+// ────────────────────────────────────────────
 // GET /api/schemas/published/:sourceId
 // Reads published schema by source FormSchema ID.
 // ────────────────────────────────────────────
