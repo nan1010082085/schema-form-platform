@@ -1,7 +1,7 @@
 # Schema Form Platform 开发计划
 
 > 更新日期：2026/06/09
-> 文档版本：v3.0
+> 文档版本：v4.0
 > 整合自：overall-improvement-plan.md, ai-dev-alignment.md, flow-improvement-plan.md, 多租户分析报告
 
 ---
@@ -10,12 +10,12 @@
 
 | 项目 | 完成度 | 核心能力 | 状态 | 已用时间 | 剩余预估 |
 |------|--------|----------|------|----------|----------|
-| **Editor** | 88% | 49 个 Widget、Schema 驱动渲染、事件引擎、联动系统 | ✅ 生产就绪 | 5天 | 3-4天 |
-| **Flow** | 82% | BPMN 引擎、流程设计器、审批日志、表单集成 | ✅ 核心完成 | 8天 | 7-10天 |
-| **AI** | 85% | LangGraph 多智能体、SSE 流式对话、任务链 | ✅ 核心完成 | 10天 | 8-12天 |
+| **Editor** | 90% | 49 个 Widget、Schema 驱动渲染、事件引擎、联动系统 | ✅ 生产就绪 | 5天 | 2-3天 |
+| **Flow** | 85% | BPMN 引擎、流程设计器、审批日志、表单集成 | ✅ 核心完成 | 8天 | 5-7天 |
+| **AI** | 90% | LangGraph 多智能体、SSE 流式对话、任务链、工具系统 | ✅ 核心完成 | 10天 | 5-8天 |
 | **Platform** | 20% | 多租户、RBAC 权限、SSO 单点登录 | 🆕 新增 | 0天 | 14-18天 |
 
-**总体完成度：65%（含新增 Platform）**
+**总体完成度：70%（含新增 Platform）**
 
 ---
 
@@ -463,3 +463,62 @@ Portal
 - v2.0 (2026/06/09)：整合所有计划文档，更新任务状态
 - v3.0 (2026/06/09)：整合多租户+业务闭环分析，新增 Platform 项目
 - v3.1 (2026/06/09)：明确按钮事件系统、审批表单模式、表单渲染器嵌入方案
+- v4.0 (2026/06/09)：今日优化总结，更新项目完成度
+
+---
+
+## 十四、今日优化记录（2026/06/09）
+
+### AI 项目优化
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| Editor Agent 添加 generate_schema 工具 | ✅ | Editor Agent 现在可以生成 Schema |
+| Flow Agent 添加 searchSchemasTool、getSchemaDetailTool | ✅ | Flow Agent 可以搜索和查看 Schema |
+| allTools 注册 ragTools、widgetTools | ✅ | 4 个新工具可用（rag_search、rag_index、query_widgets、validate_widget_schema） |
+| general prompt 改为 metadata 动态构建 | ✅ | 修正为 3 个专家（Editor/Page/Flow） |
+| 删除 thinker 死代码 | ✅ | 清理 THINKER_SYSTEM_PROMPT、thinkerNode、routeAfterThinker |
+| schemaAdapter TYPE_NAME_RULES 补全 | ✅ | 覆盖 48 种 widget 类型映射 |
+| promptBuilder 要求 name 字段 | ✅ | 每个 widget 必须包含 name 字段 |
+| 版本历史存储适配后数据 | ✅ | 存储 adaptedWidgets 而非 parsed.widgets |
+| GET /api/schemas/published 接口 | ✅ | 支持 Flow 设计器选择表单 |
+
+### Flow 引擎优化
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| FlowInstance schema 添加 waitingSince 字段 | ✅ | 修复并行网关超时检测 |
+| completeTask 单人审批模式移动 token | ✅ | 避免流程循环卡在同一节点 |
+| GET /api/schemas/published 列表接口 | ✅ | 支持 Flow 设计器选择表单 |
+
+### AI 界面优化
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 流式内容自动滚动 | ✅ | 监听 content 长度变化触发滚动 |
+| 用户消息气泡宽度 | ✅ | max-width 改为 100% |
+| SchemaPreviewCard disabled 逻辑 | ✅ | compact 模式下禁用交互 |
+| 发布按钮防重复提交 | ✅ | 添加 isPublishing 状态 |
+| 折叠按钮定位修复 | ✅ | 移到 body 外部避免裁剪 |
+| 步骤卡片滚动条样式 | ✅ | 添加 WebKit 滚动条样式 |
+| starter prompt agent 同步 | ✅ | 点击时同步更新 selectedAgent |
+| 上传后自动聚焦 | ✅ | processFile 完成后聚焦输入框 |
+| JSON 代码块折叠/展开 | ✅ | 支持点击 header 切换 |
+| 应用到编辑器按钮修复 | ✅ | AiPreviewPanel 事件监听 |
+
+### 业务闭环修复
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| publishCurrent() 返回 id/publishId/type | ✅ | 返回完整信息用于跳转 |
+| 在编辑器中打开先 publish 再跳转 | ✅ | standalone 模式正确跳转 |
+| bridge 事件 payload 增加 id/type | ✅ | 支持完整数据传递 |
+
+### 项目完成度更新
+
+| 项目 | 优化前 | 优化后 | 提升 |
+|------|--------|--------|------|
+| Editor | 88% | 90% | +2% |
+| Flow | 82% | 85% | +3% |
+| AI | 85% | 90% | +5% |
+| **总体** | **65%** | **70%** | **+5%** |
