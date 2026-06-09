@@ -335,14 +335,13 @@ export function evaluateCondition(
   }
 
   try {
-    // 构建沙箱参数：
-    // 1. values/variables: 上下文数据（formData + variables 展平）
-    // 2. exposed: 组件暴露值
-    // 3. 同时支持直接访问 context 中的 key（向后兼容）
-    const keys = ['values', 'variables', 'exposed', ...Object.keys(context)]
-    const args = [context, context, exposed ?? {}, ...Object.values(context)]
-    const fn = new Function(...keys, `"use strict"; return (${expression})`)
-    return Boolean(fn(...args))
+    // 使用固定参数名（values/variables/exposed），避免 context key 碰到 JS 关键字导致崩溃。
+    // 与 useLinkage.ts 的模式保持一致。
+    const fn = new Function(
+      'values', 'variables', 'exposed',
+      `"use strict"; return (${expression})`,
+    )
+    return Boolean(fn(context, context, exposed ?? {}))
   } catch {
     logger.warn(`Expression evaluation failed: ${expression}`)
     return false

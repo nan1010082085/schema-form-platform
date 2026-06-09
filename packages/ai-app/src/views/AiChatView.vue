@@ -11,7 +11,7 @@ import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
-import { ElDrawer } from 'element-plus'
+import { ElDrawer, ElMessage } from 'element-plus'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
@@ -168,7 +168,9 @@ async function handlePublish(): Promise<void> {
 // ---- RAG ----
 
 function handleRagSearch(query: string): void {
-  store.searchRagAction(query)
+  store.searchRagAction(query).catch(() => {
+    ElMessage.error('RAG 搜索失败，请稍后重试')
+  })
 }
 
 function handleRagSelect(item: RagSearchResult): void {

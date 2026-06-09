@@ -237,8 +237,6 @@ export const useWidgetStore = defineStore('widget', () => {
     // 已经是目标容器的直接子节点
     if (container.children?.some((c) => c.id === widgetId)) return
 
-    removeFromList(widgetId, widgets.value)
-
     // tabs 容器：自动分配 tabKey
     if (container.type === 'tabs' && !widget.tabKey) {
       const tabs = container.props?.tabs as Array<{ key: string }> | undefined
@@ -246,7 +244,7 @@ export const useWidgetStore = defineStore('widget', () => {
       widget.tabKey = activeKey || tabs?.[0]?.key || 'tab1'
     }
 
-    // 列容器：自动分配 colIndex（放入列数最少的列）
+    // 列容器：容量检查必须在 removeFromList 之前，否则 widget 会从画布消失
     const colContainerColumns = getColContainerColumns(container.type)
     if (colContainerColumns > 0) {
       // 先自动分配 colIndex，再检查容量
@@ -261,7 +259,11 @@ export const useWidgetStore = defineStore('widget', () => {
       const targetCol = widget.colIndex ?? 0
       const existing = container.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
       if (existing.length >= 1) return // column full — 1 widget per column
+    }
 
+    removeFromList(widgetId, widgets.value)
+
+    if (colContainerColumns > 0) {
       // 调整子部件尺寸以填满所在列
       const colWidths = (container.props?.colWidths as number[]) || []
       const gutter = (container.props?.gutter as number) || 0
@@ -332,11 +334,6 @@ export const useWidgetStore = defineStore('widget', () => {
     if (CONTAINER_TYPES.has(widget.type)) return
     if (target.children?.some((c) => c.id === id)) return
 
-    removeFromList(id, widgets.value)
-
-    widget.position.x = x
-    widget.position.y = y
-
     // tabs 容器：自动分配 tabKey
     if (target.type === 'tabs' && !widget.tabKey) {
       const tabs = target.props?.tabs as Array<{ key: string }> | undefined
@@ -344,10 +341,9 @@ export const useWidgetStore = defineStore('widget', () => {
       widget.tabKey = activeKey || tabs?.[0]?.key || 'tab1'
     }
 
-    // 列容器：自动分配 colIndex（放入列数最少的列）
+    // 列容器：容量检查必须在 removeFromList 之前，否则 widget 会从画布消失
     const colContainerColumns = getColContainerColumns(target.type)
     if (colContainerColumns > 0) {
-      // 先自动分配 colIndex，再检查容量
       if (widget.colIndex === undefined) {
         const colCounts = new Array(colContainerColumns).fill(0)
         for (const child of target.children ?? []) {
@@ -359,7 +355,14 @@ export const useWidgetStore = defineStore('widget', () => {
       const targetCol = widget.colIndex ?? 0
       const existing = target.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
       if (existing.length >= 1) return // column full — 1 widget per column
+    }
 
+    removeFromList(id, widgets.value)
+
+    widget.position.x = x
+    widget.position.y = y
+
+    if (colContainerColumns > 0) {
       // 调整子部件尺寸以填满所在列
       const colWidths = (target.props?.colWidths as number[]) || []
       const gutter = (target.props?.gutter as number) || 0

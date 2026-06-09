@@ -73,8 +73,75 @@ async function routerNode(
     return {}
   }
 
-  console.log(`[router] 自动模式, 路由到 thinker 进行 LLM 分析`)
-  return {}
+  // 自动模式：关键词快速匹配 + LLM 兜底
+  const lower = (state.messages[state.messages.length - 1]?.content as string ?? '').toLowerCase()
+  const isFlow = ['流程', '审批', '节点', 'bpmn', 'workflow', '开始', '结束'].some(kw => lower.includes(kw))
+  const isPage = ['列表', '统计', '详情', '仪表盘', 'dashboard', '搜索列表', '数据表格'].some(kw => lower.includes(kw))
+  const isGeneral = ['你好', '你是谁', '能做什么', '帮助', '介绍'].some(kw => lower.includes(kw))
+
+  if (isGeneral) {
+    console.log(`[router] 关键词匹配 -> general`)
+    return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
+  }
+
+  if (isFlow) {
+    console.log(`[router] 关键词匹配 -> flow`)
+    return { session: { ...state.session, currentAgent: 'flow' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'flow', description: '生成流程', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+  }
+
+  if (isPage) {
+    console.log(`[router] 关键词匹配 -> page`)
+    return { session: { ...state.session, currentAgent: 'page' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'page', description: '生成业务页面', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+  }
+
+  // 关键词无法匹配，使用 LLM 分析（thinker）
+  console.log(`[router] 关键词无法匹配，执行 LLM 分析...`)
+  try {
+    const lastHumanMessage = [...state.messages].reverse().find((m) => m.constructor.name === 'HumanMessage')
+    const userContent = lastHumanMessage
+      ? (typeof lastHumanMessage.content === 'string' ? lastHumanMessage.content : JSON.stringify(lastHumanMessage.content))
+      : ''
+
+    const model = getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
+    const stream = await model.stream([
+      new SystemMessage(THINKER_SYSTEM_PROMPT),
+      new HumanMessage(userContent),
+    ])
+
+    let raw = ''
+    for await (const chunk of stream) {
+      const content = typeof chunk.content === 'string' ? chunk.content : ''
+      if (content) raw += content
+    }
+
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]) as { target: string; steps?: Array<{ agent: string; description: string }> }
+
+      if (parsed.target === 'chain' && Array.isArray(parsed.steps) && parsed.steps.length > 0) {
+        const chain = parsed.steps.map((step) => ({ agent: step.agent as 'editor' | 'flow' | 'page', description: step.description, status: 'pending' as const }))
+        console.log(`[router] LLM 链式任务: ${chain.length} 步`)
+        return { session: { ...state.session, currentAgent: chain[0].agent }, task: { ...state.task, type: 'generate_simple', chain, currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+      }
+
+      if (parsed.target === 'general') {
+        console.log(`[router] LLM 路由到 general`)
+        return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
+      }
+      for (const target of ['flow', 'page'] as const) {
+        if (parsed.target === target) {
+          console.log(`[router] LLM 路由到 ${target}`)
+          return { session: { ...state.session, currentAgent: target }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: target, description: `生成${target}`, status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+        }
+      }
+    }
+
+    console.log(`[router] LLM 默认路由到 editor`)
+    return { session: { ...state.session, currentAgent: 'editor' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'editor', description: '生成表单', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+  } catch (err) {
+    console.warn(`[router] LLM 分析失败，降级到 editor`)
+    return { session: { ...state.session, currentAgent: 'editor' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'editor', description: '生成表单', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
+  }
 }
 
 // ────────────────────────────────────────────
@@ -448,7 +515,7 @@ export function routeAfterRouter(
   state: typeof AgentStateAnnotation.State,
 ): string {
   if (state.context.source === 'editor' || state.context.source === 'flow' || state.context.source === 'page') {
-    console.log(`[routeAfterRouter] 显式模式 -> ${state.context.source} (source=${state.context.source})`)
+    console.log(`[routeAfterRouter] 显式模式 -> ${state.context.source}`)
     return state.context.source
   }
 
@@ -457,8 +524,10 @@ export function routeAfterRouter(
     return 'taskChain'
   }
 
-  console.log(`[routeAfterRouter] 自动模式 -> thinker`)
-  return 'thinker'
+  // router 已完成 LLM 分析，直接路由到 currentAgent
+  const agent = state.session.currentAgent
+  console.log(`[routeAfterRouter] 自动模式 -> ${agent}`)
+  return agent
 }
 
 export function routeAfterTaskChain(
@@ -597,7 +666,6 @@ export function afterToolsRoute(
 const builder = new StateGraph(AgentStateAnnotation)
   .addNode('router', routerNode)
   .addNode('taskChain', taskChainNode)
-  .addNode('thinker', thinkerNode)
   .addNode('editor', editorAgentNode)
   .addNode('flow', flowAgentNode)
   .addNode('page', pageAgentNode)
@@ -610,7 +678,6 @@ const builder = new StateGraph(AgentStateAnnotation)
 
   .addConditionalEdges('router', routeAfterRouter)
   .addConditionalEdges('taskChain', routeAfterTaskChain)
-  .addConditionalEdges('thinker', routeAfterThinker)
 
   .addConditionalEdges('editor', afterAgent)
   .addConditionalEdges('flow', afterAgent)

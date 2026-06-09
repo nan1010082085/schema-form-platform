@@ -67,8 +67,8 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-const COLLAPSED_BY_DEFAULT: Set<StepType> = new Set(['thinking', 'tool_call'])
-const collapsed = ref(COLLAPSED_BY_DEFAULT.has(props.type))
+// 默认展开所有步骤，用户可手动折叠
+const collapsed = ref(false)
 
 const hasHeader = computed(() =>
   props.type === 'thinking' || props.type === 'tool_call' || props.type === 'tool_error',
@@ -196,13 +196,30 @@ function toggleCollapse(): void {
     </div>
 
     <!-- Body -->
-    <div v-if="!hasHeader || !collapsed" :class="$style.body">
-      <!-- thinking / text content -->
-      <div
-        v-if="(type === 'thinking' || type === 'text') && content"
-        :class="type === 'text' ? $style.markdown : $style.thinkingContent"
-        v-html="renderedContent"
-      />
+    <div :class="[$style.body, { [$style.bodyCollapsed]: collapsed && hasHeader }]">
+      <!-- 折叠状态摘要 -->
+      <div v-if="collapsed && hasHeader" :class="$style.collapsedSummary">
+        <template v-if="type === 'thinking'">
+          <span :class="$style.summaryText">已完成思考</span>
+        </template>
+        <template v-else-if="type === 'tool_call'">
+          <span :class="$style.summaryText">{{ toolDisplayName }}</span>
+          <span v-if="hasToolResult" :class="$style.summaryBadge">完成</span>
+          <span v-else-if="isRunning" :class="$style.summaryBadgeRunning">执行中</span>
+        </template>
+        <template v-else-if="type === 'tool_error'">
+          <span :class="$style.summaryTextError">调用失败</span>
+        </template>
+      </div>
+
+      <!-- 展开状态内容 -->
+      <template v-if="!collapsed || !hasHeader">
+        <!-- thinking / text content -->
+        <div
+          v-if="(type === 'thinking' || type === 'text') && content"
+          :class="type === 'text' ? $style.markdown : $style.thinkingContent"
+          v-html="renderedContent"
+        />
 
       <!-- tool call / tool error content -->
       <template v-if="type === 'tool_call' || type === 'tool_error'">
@@ -258,11 +275,12 @@ function toggleCollapse(): void {
         </template>
       </template>
 
-      <!-- result embedded card slot -->
-      <slot v-if="type === 'result'" />
+        <!-- result embedded card slot -->
+        <slot v-if="type === 'result'" />
 
-      <!-- tool call extra slot -->
-      <slot v-if="type === 'tool_call' && !isError" name="tool-extra" />
+        <!-- tool call extra slot -->
+        <slot v-if="type === 'tool_call' && !isError" name="tool-extra" />
+      </template>
     </div>
 
     <!-- Footer for result cards (schema/flow) -->

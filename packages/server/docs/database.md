@@ -130,9 +130,3 @@ FormSchemaModel.findOne({ publishId: 'uuid' })
 // 统计
 FormSchemaModel.countDocuments({ type: 'form', status: 'published' })
 ```
-
-## Vercel Serverless 注意事项
-
-- handler 惰性连接 MongoDB，每次冷启动约 3-5 秒
-- 连接断开时自动重连，失败返回 503
-- `serverSelectionTimeoutMS: 5000` 保证超时不会过长

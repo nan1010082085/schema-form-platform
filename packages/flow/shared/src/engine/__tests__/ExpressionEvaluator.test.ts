@@ -72,38 +72,29 @@ describe('evaluateExpression', () => {
     })
   })
 
-  describe('blocked patterns', () => {
-    it.each([
-      'import("fs")',
-      'require("fs")',
-      'eval("1+1")',
-      'new Function("return 1")',
-      'fetch("http://evil.com")',
-      'process.exit()',
-      'window.location',
-      'document.cookie',
-    ] as const)('blocks dangerous pattern: %s', (expr) => {
-      expect(() => evaluateExpression(expr, {})).toThrow(ExpressionEvaluationError)
+  describe('security: no global scope access', () => {
+    it('global identifiers resolve to undefined (not global objects)', () => {
+      // The AST parser only resolves variables from the explicitly passed variables map.
+      // "window", "document", "process", etc. are just identifier names that resolve to undefined.
+      expect(evaluateExpression('window === undefined', {})).toBe(true)
+      expect(evaluateExpression('document === undefined', {})).toBe(true)
+      expect(evaluateExpression('process === undefined', {})).toBe(true)
+      expect(evaluateExpression('globalThis === undefined', {})).toBe(true)
+      expect(evaluateExpression('navigator === undefined', {})).toBe(true)
+      expect(evaluateExpression('location === undefined', {})).toBe(true)
     })
 
-    it('blocks XMLHttpRequest', () => {
-      expect(() => evaluateExpression('new XMLHttpRequest()', {})).toThrow(ExpressionEvaluationError)
+    it('undeclared variables resolve to undefined, not throw', () => {
+      // Variables not in the map resolve to undefined — no ReferenceError
+      expect(evaluateExpression('undeclaredVar > 0', {})).toBe(false)
+      expect(evaluateExpression('undeclaredVar === undefined', {})).toBe(true)
     })
 
-    it('blocks WebSocket', () => {
-      expect(() => evaluateExpression('new WebSocket("ws://x")', {})).toThrow(ExpressionEvaluationError)
-    })
-
-    it('blocks globalThis access', () => {
-      expect(() => evaluateExpression('globalThis.x', {})).toThrow(ExpressionEvaluationError)
-    })
-
-    it('blocks navigator access', () => {
-      expect(() => evaluateExpression('navigator.userAgent', {})).toThrow(ExpressionEvaluationError)
-    })
-
-    it('blocks location access', () => {
-      expect(() => evaluateExpression('location.href', {})).toThrow(ExpressionEvaluationError)
+    it('blocked identifier names throw errors', () => {
+      // These specific identifiers are blocked at the AST level
+      expect(() => evaluateExpression('constructor.x', {})).toThrow(ExpressionEvaluationError)
+      expect(() => evaluateExpression('prototype.x', {})).toThrow(ExpressionEvaluationError)
+      expect(() => evaluateExpression('__proto__.x', {})).toThrow(ExpressionEvaluationError)
     })
   })
 
@@ -125,17 +116,12 @@ describe('evaluateExpression', () => {
     it('throws ExpressionEvaluationError for malformed expression', () => {
       expect(() => evaluateExpression('=== !!!', {})).toThrow(ExpressionEvaluationError)
     })
-
-    it('throws ExpressionEvaluationError referencing undefined variable behavior', () => {
-      // The expression references a variable not passed — new Function will throw ReferenceError
-      expect(() => evaluateExpression('undeclaredVar > 0', {})).toThrow(ExpressionEvaluationError)
-    })
   })
 
   describe('error type', () => {
     it('throws ExpressionEvaluationError (not generic Error)', () => {
       try {
-        evaluateExpression('import("x")', {})
+        evaluateExpression('constructor.x', {})
         expect.fail('should have thrown')
       } catch (err) {
         expect(err).toBeInstanceOf(ExpressionEvaluationError)
@@ -191,16 +177,22 @@ describe('evaluateScript', () => {
     })
   })
 
-  describe('blocked patterns', () => {
-    it.each([
-      'import("fs")',
-      'require("fs")',
-      'eval("1+1")',
-      'fetch("http://evil.com")',
-      'process.exit()',
-      'window.location',
-    ] as const)('blocks dangerous pattern: %s', (expr) => {
-      expect(() => evaluateScript(expr, {})).toThrow(ExpressionEvaluationError)
+  describe('security: no global scope access', () => {
+    it('global identifiers resolve to undefined', () => {
+      expect(evaluateScript('window', {})).toBeUndefined()
+      expect(evaluateScript('document', {})).toBeUndefined()
+      expect(evaluateScript('process', {})).toBeUndefined()
+      expect(evaluateScript('fetch', {})).toBeUndefined()
+    })
+
+    it('method calls on undefined throw', () => {
+      expect(() => evaluateScript('process.exit()', {})).toThrow()
+      expect(() => evaluateScript('window.location', {})).toThrow()
+    })
+
+    it('blocked identifier names throw errors', () => {
+      expect(() => evaluateScript('constructor.x', {})).toThrow(ExpressionEvaluationError)
+      expect(() => evaluateScript('prototype.x', {})).toThrow(ExpressionEvaluationError)
     })
   })
 

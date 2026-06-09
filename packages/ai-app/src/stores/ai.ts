@@ -405,7 +405,7 @@ export const useAiStore = defineStore('ai', () => {
           msg.schema = event.payload as Widget[]
         }
         if (event.description) {
-          msg.content = event.description
+          msg.content = (msg.content ?? '') + event.description
         }
         break
 
@@ -475,7 +475,7 @@ export const useAiStore = defineStore('ai', () => {
           msg.flow = event.payload as FlowGraph
         }
         if (event.description) {
-          msg.content = event.description
+          msg.content = (msg.content ?? '') + event.description
         }
         break
 
@@ -590,6 +590,9 @@ export const useAiStore = defineStore('ai', () => {
     try {
       const result = await searchRag({ query: query.trim(), limit: limit ?? 5 })
       ragSearchResults.value = result.schemas
+    } catch (err) {
+      ragSearchResults.value = []
+      throw err
     } finally {
       ragSearching.value = false
     }
@@ -787,6 +790,9 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   async function loadConversation(id: string): Promise<void> {
+    // 重置当前对话状态，防止加载前一个对话的残留数据（diff、版本历史等）
+    clearConversation()
+
     const detail = await getConversationDetail(id)
     currentConversationId.value = detail.id
     messages.value = detail.messages.map((m) => ({

@@ -69,7 +69,7 @@ const emit = defineEmits<{
         <span v-else :class="$style.fieldOpt">可选</span>
       </div>
     </div>
-    <div v-if="primaryAction || secondaryAction" :class="$style.actions">
+    <div v-if="!compact && (primaryAction || secondaryAction)" :class="$style.actions">
       <button
         v-if="secondaryAction"
         :class="$style.btnGhost"

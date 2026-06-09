@@ -131,8 +131,10 @@ export const useEditorStore = defineStore('editor', () => {
     history.value.push(snapshot)
     if (history.value.length > MAX_HISTORY) {
       history.value.shift()
-      // MAX_HISTORY 被截断时，savedHistoryIndex 也需要调整
-      if (savedHistoryIndex.value >= 0) savedHistoryIndex.value--
+      // MAX_HISTORY 被截断时，savedHistoryIndex 也需要调整，但不能变为 -1（-1 表示"无保存点"）
+      if (savedHistoryIndex.value >= 0) {
+        savedHistoryIndex.value = Math.max(0, savedHistoryIndex.value - 1)
+      }
     }
     historyIndex.value = history.value.length - 1
     markDirty()
