@@ -75,13 +75,29 @@ async function routerNode(
 
   // 自动模式：关键词快速匹配 + LLM 兜底
   const lower = (state.messages[state.messages.length - 1]?.content as string ?? '').toLowerCase()
-  const isFlow = ['流程', '审批', '节点', 'bpmn', 'workflow', '开始', '结束'].some(kw => lower.includes(kw))
-  const isPage = ['列表', '统计', '详情', '仪表盘', 'dashboard', '搜索列表', '数据表格'].some(kw => lower.includes(kw))
-  const isGeneral = ['你好', '你是谁', '能做什么', '帮助', '介绍'].some(kw => lower.includes(kw))
+  const isFlow = /流程|审批|节点|bpmn|workflow|开始|结束/.test(lower)
+  const isPage = /列表|统计|详情|仪表盘|dashboard|搜索列表|数据表格/.test(lower)
+  const isForm = /表单|表|输入|填写|编辑/.test(lower)
+  const isGeneral = /你好|你是谁|能做什么|帮助|介绍/.test(lower)
 
   if (isGeneral) {
     console.log(`[router] 关键词匹配 -> general`)
     return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
+  }
+
+  // 多意图检测：同时包含页面相关和表单/流程相关关键词时，创建 chain
+  if (isPage && (isForm || isFlow)) {
+    console.log(`[router] 多意图检测 -> chain (page + ${isForm ? 'form' : 'flow'})`)
+    const chain = isForm
+      ? [
+          { agent: 'page' as const, description: '生成搜索列表页面', status: 'pending' as const },
+          { agent: 'editor' as const, description: '生成新增/编辑表单', status: 'pending' as const },
+        ]
+      : [
+          { agent: 'page' as const, description: '生成业务页面', status: 'pending' as const },
+          { agent: 'flow' as const, description: '生成审批流程', status: 'pending' as const },
+        ]
+    return { session: { ...state.session, currentAgent: chain[0].agent }, task: { ...state.task, type: 'generate_simple', chain, currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
   }
 
   if (isFlow) {

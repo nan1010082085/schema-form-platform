@@ -263,6 +263,7 @@ export function buildEditorSystemPrompt(metadata: Metadata): string {
 ## 协作能力
 
 你可以使用 request_collaboration 工具请求其他专家协作：
+- **page**: 当需要生成搜索列表页、统计仪表盘、数据表格页面时，请求 Page 专家协作
 - **flow**: 当需要生成审批流程、工作流时，请求 Flow 专家协作
 
 使用场景：
@@ -362,64 +363,6 @@ ${apiConfig}
           "position": { "x": 16, "y": 136, "w": 280, "h": 44, "zIndex": 3 }
         }
       ]
-    }
-  ]
-}
-</schema>
-
-### 示例 2：搜索列表页
-
-用户："做一个用户管理列表页，支持按姓名和状态搜索"
-
-<think>用户需要一个搜索列表页。使用 search-list 组件作为主体，配置姓名（input）和状态（select）搜索字段，表格展示姓名、手机、状态列。顶部放 toolbar-buttons 放新增按钮。search-list 宽度 600 占满容器。
-</think>
-
-<answer>
-已生成用户管理搜索列表页，包含姓名、状态搜索条件，表格展示姓名/手机/状态列，顶部有新增按钮。
-</answer>
-
-<tip>
-建议为状态列配置 options 联动，根据值显示不同颜色标签。
-</tip>
-
-<schema>
-{
-  "type": "schema_update",
-  "widgets": [
-    {
-      "id": "toolbar_m9n0p",
-      "type": "toolbar-buttons",
-      "props": {
-        "buttons": [
-          { "text": "新增用户", "type": "primary", "icon": "Plus" }
-        ]
-      },
-      "position": { "x": 0, "y": 0, "w": 600, "h": 44, "zIndex": 1 }
-    },
-    {
-      "id": "search_q1r2s",
-      "type": "search-list",
-      "label": "用户管理",
-      "props": {
-        "title": "用户列表",
-        "pageSize": 10,
-        "showPagination": true,
-        "stripe": true,
-        "border": true,
-        "searchFields": [
-          { "field": "userName", "label": "姓名", "type": "input", "placeholder": "请输入姓名" },
-          { "field": "status", "label": "状态", "type": "select", "options": [
-            { "label": "启用", "value": "active" },
-            { "label": "禁用", "value": "disabled" }
-          ]}
-        ],
-        "columns": [
-          { "field": "userName", "label": "姓名", "width": 120 },
-          { "field": "phone", "label": "手机", "width": 140 },
-          { "field": "status", "label": "状态", "width": 100 }
-        ]
-      },
-      "position": { "x": 0, "y": 60, "w": 600, "h": 500, "zIndex": 2 }
     }
   ]
 }
