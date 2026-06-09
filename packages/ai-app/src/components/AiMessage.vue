@@ -148,8 +148,8 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
   while ((match = blockRegex.exec(content)) !== null) {
     // 添加代码块之前的文字
     if (match.index > lastIndex) {
-      const textBefore = content.slice(lastIndex, match.index).trim()
-      if (textBefore) {
+      const textBefore = content.slice(lastIndex, match.index)
+      if (textBefore.trim()) {
         parts.push({ type: 'text', content: textBefore })
       }
     }
@@ -174,8 +174,8 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
 
   // 添加最后剩余的文字（如果有 <schema> 标签，过滤多余总结）
   if (lastIndex < content.length) {
-    const remaining = content.slice(lastIndex).trim()
-    if (remaining) {
+    const remaining = content.slice(lastIndex)
+    if (remaining.trim()) {
       // 如果前面有 <schema> 标签，检查是否是多余总结
       if (hasSchemaTag && isRedundantSummary(remaining)) {
         // 过滤掉多余总结文本
