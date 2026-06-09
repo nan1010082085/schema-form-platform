@@ -202,8 +202,13 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
 
   const sendStartTime = Date.now()
   let eventCount = 0
+  let lastSendTime = Date.now()
+  let clientDisconnected = false
+
   const send = (event: Record<string, unknown>) => {
+    if (clientDisconnected) return
     eventCount++
+    lastSendTime = Date.now()
     const elapsed = Date.now() - sendStartTime
     console.log(`[SSE] #${eventCount} +${elapsed}ms type=${event.type}`)
     stream.write(`data: ${JSON.stringify(event)}\n\n`)
@@ -211,8 +216,42 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
 
   // SSE heartbeat to keep connection alive (every 15s)
   const heartbeat = setInterval(() => {
+    if (clientDisconnected) return
     stream.write(':heartbeat\n\n')
   }, 15_000)
+
+  // Stream idle timeout — close if no data sent for 90s
+  const IDLE_TIMEOUT_MS = 90_000
+  const idleCheck = setInterval(() => {
+    if (clientDisconnected) return
+    if (Date.now() - lastSendTime > IDLE_TIMEOUT_MS) {
+      console.log(`[SSE] Idle timeout (${IDLE_TIMEOUT_MS}ms), closing connection`)
+      send({ type: 'error', error: { message: '流式响应超时，请重试' } })
+      send({ type: 'done', conversationId: convo._id })
+      cleanup()
+      if (!stream.destroyed) stream.end()
+    }
+  }, 15_000)
+
+  // Client disconnect detection
+  ctx.req.on('close', () => {
+    if (clientDisconnected) return
+    clientDisconnected = true
+    console.log(`[SSE] Client disconnected (thread=${threadId})`)
+    cleanup()
+    if (!stream.destroyed) stream.destroy()
+  })
+
+  // Stream error handling
+  stream.on('error', (err) => {
+    console.error(`[SSE] Stream error:`, err.message)
+    cleanup()
+  })
+
+  function cleanup() {
+    clearInterval(heartbeat)
+    clearInterval(idleCheck)
+  }
 
   // ── Streaming state ──
   let currentAgent: 'router' | 'editor' | 'flow' | 'page' | 'general' = 'router'
@@ -764,11 +803,11 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     })
   } finally {
     // Guarantee done event is sent even when stream errors out
-    if (!doneSent) {
+    if (!doneSent && !clientDisconnected) {
       send({ type: 'done', conversationId: convo._id })
     }
-    clearInterval(heartbeat)
-    stream.end()
+    cleanup()
+    if (!stream.destroyed) stream.end()
   }
 })
 
@@ -835,13 +874,51 @@ router.post('/chat/resume', async (ctx) => {
   const stream = new PassThrough()
   ctx.body = stream
 
+  let clientDisconnected = false
+  let lastSendTime = Date.now()
+
   const send = (event: Record<string, unknown>) => {
+    if (clientDisconnected) return
+    lastSendTime = Date.now()
     stream.write(`data: ${JSON.stringify(event)}\n\n`)
   }
 
   const heartbeat = setInterval(() => {
+    if (clientDisconnected) return
     stream.write(':heartbeat\n\n')
   }, 15_000)
+
+  // Stream idle timeout
+  const IDLE_TIMEOUT_MS = 90_000
+  const idleCheck = setInterval(() => {
+    if (clientDisconnected) return
+    if (Date.now() - lastSendTime > IDLE_TIMEOUT_MS) {
+      console.log(`[SSE] Resume idle timeout, closing connection`)
+      send({ type: 'error', error: { message: '流式响应超时，请重试' } })
+      send({ type: 'done', conversationId: interrupted.conversationId })
+      cleanup()
+      if (!stream.destroyed) stream.end()
+    }
+  }, 15_000)
+
+  // Client disconnect detection
+  ctx.req.on('close', () => {
+    if (clientDisconnected) return
+    clientDisconnected = true
+    console.log(`[SSE] Client disconnected (resume thread=${threadId})`)
+    cleanup()
+    if (!stream.destroyed) stream.destroy()
+  })
+
+  stream.on('error', (err) => {
+    console.error(`[SSE] Resume stream error:`, err.message)
+    cleanup()
+  })
+
+  function cleanup() {
+    clearInterval(heartbeat)
+    clearInterval(idleCheck)
+  }
 
   let doneSent = false
 
@@ -913,11 +990,11 @@ router.post('/chat/resume', async (ctx) => {
       phase: 'generating',
     })
   } finally {
-    if (!doneSent) {
+    if (!doneSent && !clientDisconnected) {
       send({ type: 'done', conversationId: interrupted.conversationId })
     }
-    clearInterval(heartbeat)
-    stream.end()
+    cleanup()
+    if (!stream.destroyed) stream.end()
   }
 })
 
