@@ -144,7 +144,19 @@ const steps = computed<StepData[]>(() => {
     }
   }
 
-  // Steps: embedded result cards
+  // Step: text reply（在结果卡片之前显示）
+  if (renderedContentRef.value) {
+    result.push({
+      type: 'text',
+      title: '回复',
+      content: renderedContentRef.value,
+      status: 'done',
+      timestamp: now,
+      agent: props.agent,
+    })
+  }
+
+  // Steps: embedded result cards（最后显示渲染结果）
   if (props.cards && props.cards.length > 0) {
     for (const card of props.cards) {
       result.push({
@@ -159,18 +171,6 @@ const steps = computed<StepData[]>(() => {
         agent: props.agent,
       })
     }
-  }
-
-  // Step: text reply
-  if (renderedContentRef.value) {
-    result.push({
-      type: 'text',
-      title: '回复',
-      content: renderedContentRef.value,
-      status: 'done',
-      timestamp: now,
-      agent: props.agent,
-    })
   }
 
   return result

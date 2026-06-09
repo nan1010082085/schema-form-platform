@@ -166,7 +166,7 @@ function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
         required: false,
       })),
       primaryAction: '确认发布',
-      secondaryAction: '修改',
+      secondaryAction: '在编辑器中打开',
     }]
   }
   if (msg.flow) {
@@ -177,8 +177,8 @@ function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
         label: n.data.label ?? n.data.bpmnType ?? n.id,
         type: (n.data.bpmnType === 'startEvent' ? 'start' : n.data.bpmnType === 'endEvent' ? 'end' : 'task') as 'start' | 'task' | 'end',
       })),
-      primaryAction: '应用到画布',
-      secondaryAction: '修改',
+      primaryAction: '确认发布',
+      secondaryAction: '在编辑器中打开',
     }]
   }
   return undefined
