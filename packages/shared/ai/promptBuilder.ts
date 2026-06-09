@@ -304,7 +304,7 @@ ${apiConfig}
 
 ## 核心规则
 
-1. **组件嵌套唯一规则**：基础组件只能嵌套在布局/容器组件内，禁止基础组件互相嵌套
+1. **🚫 组件嵌套唯一规则（强制）**：所有组件只允许嵌套在**布局组件**（grid、flex-row、tabs）内部。**容器组件**（form、double-col、triple-col、card、drawer 等）**禁止互相嵌套**。form 内部只能放基础组件（input/select/checkbox 等），不能放 double-col。
 2. **每个 Widget 必须有 position**：非负整数，同级不重叠
 3. **id 格式**：\`{type}_{5位hash}\`，如 input_abc12
 4. **field 命名**：camelCase，语义化（userName, orderDate）
