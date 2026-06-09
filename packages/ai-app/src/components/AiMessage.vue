@@ -114,15 +114,17 @@ interface TextPart {
 
 /**
  * 将 Markdown 内容拆分为文字和代码块两部分
- * 识别 ```json ... ``` 格式的代码块
+ * 识别 ```json ... ``` 格式和 <schema>...</schema> 标签
  */
 function splitTextAndCodeBlocks(content: string): TextPart[] {
   const parts: TextPart[] = []
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
+
+  // 同时匹配 ```json 代码块和 <schema> 标签
+  const blockRegex = /(<schema>[\s\S]*?<\/schema>|```(\w+)?\n([\s\S]*?)```)/g
   let lastIndex = 0
   let match
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
+  while ((match = blockRegex.exec(content)) !== null) {
     // 添加代码块之前的文字
     if (match.index > lastIndex) {
       const textBefore = content.slice(lastIndex, match.index).trim()
@@ -131,12 +133,21 @@ function splitTextAndCodeBlocks(content: string): TextPart[] {
       }
     }
 
-    // 添加代码块
-    const language = match[1] || 'json'
-    const codeContent = match[2].trim()
-    parts.push({ type: 'code', content: codeContent, language })
+    const fullMatch = match[0]
 
-    lastIndex = match.index + match[0].length
+    // <schema> 标签
+    if (fullMatch.startsWith('<schema>')) {
+      const jsonContent = fullMatch.replace(/<\/?schema>/g, '').trim()
+      parts.push({ type: 'code', content: jsonContent, language: 'json' })
+    }
+    // ```json 代码块
+    else {
+      const language = match[2] || 'json'
+      const codeContent = match[3].trim()
+      parts.push({ type: 'code', content: codeContent, language })
+    }
+
+    lastIndex = match.index + fullMatch.length
   }
 
   // 添加最后剩余的文字

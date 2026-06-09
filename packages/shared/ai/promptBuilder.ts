@@ -208,6 +208,8 @@ function buildApiConfigPrompt(): string {
 function buildOutputFormatPrompt(schemaTagType: 'schema_update' | 'flow_update'): string {
   return `## 输出格式
 
+**重要：只输出以下 XML 标签，标签之外不要输出任何其他文字。**
+
 严格按以下结构输出，XML 标签顺序固定：
 
 ### 1. <think> 标签（必填）
@@ -243,7 +245,9 @@ JSON 对象：
 
 <schema>
 { "type": "${schemaTagType}", ... }
-</schema>`
+</schema>
+
+**禁止在标签之外输出任何总结、解释或额外文字。**`
 }
 
 // ────────────────────────────────────────────
