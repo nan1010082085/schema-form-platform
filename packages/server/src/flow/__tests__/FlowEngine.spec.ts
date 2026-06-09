@@ -379,13 +379,12 @@ describe('FlowEngine', () => {
       expect(task.save).toHaveBeenCalled()
       // Instance should have been saved
       expect(instance.save).toHaveBeenCalled()
-      // After completeTask + advance: the token is reactivated to 'active',
-      // then advance re-enters the UserTask node. Since no pending task exists
-      // (we just completed it), advance creates a new task and sets token to 'waiting'.
-      // This is the engine's designed behavior for single-mode UserTasks.
-      expect(instance.tokens[0].state).toBe('waiting')
-      // A new task was created during advance
-      expect(mockTaskInstanceCreate).toHaveBeenCalled()
+      // After completeTask + advance: token is moved past the UserTask to the next node (end),
+      // then advance processes the EndEvent and marks the token as 'completed'.
+      // The instance completes because all tokens reached the EndEvent.
+      expect(instance.tokens[0].state).toBe('completed')
+      expect(instance.tokens[0].nodeId).toBe('end')
+      expect(instance.status).toBe('completed')
     })
 
     it('completeTask writes form data to instance variables when formVariable is configured', async () => {
@@ -525,18 +524,21 @@ describe('FlowEngine', () => {
       // Verify form data persisted into instance.variables
       expect(instance.variables.data1).toEqual({ amount: 200 })
 
-      // Step 2: engine re-enters UserTask node after completion (known behavior).
-      // The persisted data survives the re-entry cycle and remains available
+      // Step 2: token is moved past task1 to task2 (the next node).
+      // The persisted data survives the transition and remains available
       // for downstream nodes (task2 condition 'data1.amount > 100' can evaluate).
-      // The instance was saved after variables were written, so the data is durable.
       expect(instance.save).toHaveBeenCalled()
 
-      // The new task created during advance still has instance context with variables
+      // Token should now be at task2 (waiting, since a new task was created there)
+      expect(instance.tokens[0].nodeId).toBe('task2')
+      expect(instance.tokens[0].state).toBe('waiting')
+
+      // The new task created during advance is at task2
       const createdTaskData = mockTaskInstanceCreate.mock.calls[0][0] as Record<string, unknown>
       expect(createdTaskData.instanceId).toBe('inst1')
+      expect(createdTaskData.nodeId).toBe('task2')
 
       // Verify the graph with condition expression can parse correctly
-      // (parseBpmnGraph runs internally during advance, confirming edge conditions are valid)
       expect(instance.variables.data1.amount).toBe(200)
     })
 
@@ -575,7 +577,7 @@ describe('FlowEngine', () => {
       ).rejects.toThrow('not in a completable state')
     })
 
-    it('full cycle: startFlow -> advance pauses at UserTask -> completeTask -> advance creates next task', async () => {
+    it('full cycle: startFlow -> advance pauses at UserTask -> completeTask -> advance reaches end', async () => {
       setupDefinition()
       setupVersion(linearGraph({ assignee: 'user1', assigneeType: 'user', candidateUsers: ['user1'] }))
 
@@ -617,13 +619,14 @@ describe('FlowEngine', () => {
 
       // After completeTask + advance:
       // 1. Task is marked completed
-      // 2. Token reactivated to 'active' at task1
-      // 3. advance re-enters UserTask: no pending task -> creates new one -> token 'waiting'
+      // 2. Token moved past UserTask to 'end' node
+      // 3. advance processes EndEvent: token 'completed', instance 'completed'
       expect(task.status).toBe('completed')
-      expect(instance.tokens[0].state).toBe('waiting')
-      expect(instance.tokens[0].nodeId).toBe('task1')
-      // A new task was created during the advance cycle
-      expect(mockTaskInstanceCreate).toHaveBeenCalledTimes(2)
+      expect(instance.tokens[0].state).toBe('completed')
+      expect(instance.tokens[0].nodeId).toBe('end')
+      expect(instance.status).toBe('completed')
+      // Only 1 task was created (no re-entry)
+      expect(mockTaskInstanceCreate).toHaveBeenCalledTimes(1)
     })
   })
 

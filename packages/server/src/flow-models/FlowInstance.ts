@@ -29,6 +29,7 @@ const flowTokenSchema = new mongoose.Schema(
       default: 'active',
     },
     createdAt: { type: Date, default: Date.now },
+    waitingSince: { type: Date, default: null },
   },
   { _id: false },
 )

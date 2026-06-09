@@ -991,6 +991,23 @@ export class FlowEngine {
     }
 
     token.state = 'active'
+    // For single-mode UserTasks (not multi-instance), move the token past the completed node
+    // before advancing. Without this, advance() re-enters the same UserTask and creates a
+    // duplicate task. For multi-instance modes (countersign/or-sign/sequential/parallel),
+    // advance() handles the completion logic and token stays at the same node.
+    if (flowVersion) {
+      const completeModel = parseBpmnGraph(flowVersion.graph)
+      const completedNode = completeModel.getNode(task.nodeId)
+      const approvalMode = (completedNode?.config?.approvalMode as string) ?? 'single'
+      const multiInstanceType = completedNode?.config?.multiInstance?.type
+      const isMultiInstance = approvalMode !== 'single' || (multiInstanceType && multiInstanceType !== 'none')
+      if (!isMultiInstance) {
+        const outEdgesForComplete = completeModel.getOutgoing(task.nodeId)
+        if (outEdgesForComplete.length > 0) {
+          token.nodeId = outEdgesForComplete[0].targetNodeId
+        }
+      }
+    }
     await instance.save()
     await this.advance(instance._id)
   }
