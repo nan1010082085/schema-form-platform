@@ -7,7 +7,11 @@
 
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import { FormSchemaModel } from '../../models/FormSchema.js'
+
+const require = createRequire(fileURLToPath(import.meta.url))
 import {
   searchSchemas,
   getSchemaDetail,

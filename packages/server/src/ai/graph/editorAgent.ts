@@ -103,6 +103,14 @@ export async function editorAgentNode(
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
   console.log(`[editorAgent] 开始执行, messages=${state.messages.length}, turnCount=${state.context.turnCount}`)
 
+  // Debug: 打印消息类型序列
+  const msgTypes = state.messages.map((m) => {
+    const name = m.constructor.name
+    const hasToolCalls = (m as unknown as { tool_calls?: unknown[] }).tool_calls?.length
+    return hasToolCalls ? `${name}(tool_calls=${hasToolCalls})` : name
+  })
+  console.log(`[editorAgent] 消息序列: ${msgTypes.join(' -> ')}`)
+
   const systemPrompt = await getEditorSystemPrompt()
   const userContent = buildContextMessage(state)
 
@@ -115,6 +123,17 @@ export async function editorAgentNode(
     ...state.messages,
     new HumanMessage(userContent),
   ]
+
+  // Debug: 打印发送给 LLM 的消息结构
+  const llmMsgTypes = messages.map((m) => {
+    const name = m.constructor.name
+    const tc = (m as unknown as { tool_calls?: unknown[] }).tool_calls
+    const tcId = (m as unknown as { tool_call_id?: string }).tool_call_id
+    if (tc?.length) return `${name}(tool_calls=${tc.length})`
+    if (tcId) return `${name}(tool_call_id=${tcId})`
+    return name
+  })
+  console.log(`[editorAgent] LLM 消息: ${llmMsgTypes.join(' -> ')}`)
 
   return callLLMWithFallback('editorAgent', async () => {
     const stream = await model.stream(messages)
