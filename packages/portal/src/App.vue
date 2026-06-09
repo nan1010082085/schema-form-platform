@@ -2,7 +2,9 @@
 </script>
 
 <template>
-  <router-view />
+  <div class="app-root">
+    <router-view />
+  </div>
 </template>
 
 <style>
@@ -29,6 +31,12 @@ body {
 
 #app {
   height: 100%;
+}
+
+.app-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ============================================================
