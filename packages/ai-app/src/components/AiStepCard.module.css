@@ -203,6 +203,26 @@
   padding: 16px;
   max-height: 320px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ai-border-base, #E0E4EA) transparent;
+  position: relative;
+}
+
+.body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.body::-webkit-scrollbar-thumb {
+  background: var(--ai-border-base, #E0E4EA);
+  border-radius: 2px;
+}
+
+.body::-webkit-scrollbar-thumb:hover {
+  background: var(--ai-text-hint, #999999);
 }
 
 /* 折叠状态隐藏内容 */

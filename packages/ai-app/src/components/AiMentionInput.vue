@@ -191,6 +191,12 @@ function handleClickOutside(e: MouseEvent): void {
   }
 }
 
+function focus(): void {
+  textareaRef.value?.focus()
+}
+
+defineExpose({ focus })
+
 onMounted(() => {
   document.addEventListener('mousedown', handleClickOutside)
 })

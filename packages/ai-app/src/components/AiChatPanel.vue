@@ -62,6 +62,7 @@ const emit = defineEmits<{
 
 const selectedAgent = ref<AgentType>('auto')
 const messagesRef = ref<HTMLElement>()
+const mentionInputRef = ref<InstanceType<typeof AiMentionInput>>()
 const ragVisible = ref(false)
 
 // ---- 多模态输入 ----
@@ -125,6 +126,8 @@ async function processFile(file: File): Promise<void> {
       error: err instanceof Error ? err.message : '上传失败',
     }
     ElMessage.error(`上传失败: ${err instanceof Error ? err.message : '未知错误'}`)
+  } finally {
+    nextTick(() => mentionInputRef.value?.focus())
   }
 }
 
@@ -325,7 +328,7 @@ function handleCardAction(
             v-for="(prompt, idx) in starterPrompts"
             :key="idx"
             :class="$style.promptCard"
-            @click="emit('send', prompt.text, prompt.agent)"
+            @click="selectedAgent = prompt.agent; emit('send', prompt.text, prompt.agent)"
           >
             <span :class="$style.promptIcon" v-html="prompt.icon" />
             <span :class="$style.promptText">{{ prompt.text }}</span>
@@ -406,6 +409,7 @@ function handleCardAction(
         </div>
 
         <AiMentionInput
+          ref="mentionInputRef"
           :disabled="disabled"
           :loading="loading"
           :placeholder="messages.length === 0 ? '描述你想要生成的内容...' : '继续描述...'"

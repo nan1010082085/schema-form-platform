@@ -23,6 +23,9 @@ const store = useAiStore()
 const { messages, loading, currentSchema, currentFlow, activeAgent, conversations, currentConversationId, taskChain, taskChainIndex, currentDiff, schemaUpdateDescription, sseStatus, retryCount, MAX_AUTO_RETRIES, chatSettings, ragSearchResults, ragSearching, ragContext } =
   storeToRefs(store)
 
+// ---- 防止发布按钮重复调用 ----
+const isPublishing = ref(false)
+
 // ---- Settings dialog ----
 const settingsVisible = ref(false)
 
@@ -148,6 +151,8 @@ function handlePrimaryAction(): void {
 }
 
 async function handleSecondaryAction(): Promise<void> {
+  if (isPublishing.value) return
+  isPublishing.value = true
   try {
     const result = await store.publishCurrent()
     if (!result) {
@@ -173,10 +178,14 @@ async function handleSecondaryAction(): Promise<void> {
     window.open(url, '_blank')
   } catch {
     ElMessage.error('发布失败，请稍后重试')
+  } finally {
+    isPublishing.value = false
   }
 }
 
 async function handlePublish(): Promise<void> {
+  if (isPublishing.value) return
+  isPublishing.value = true
   try {
     const result = await store.publishCurrent()
     if (result) {
@@ -191,6 +200,8 @@ async function handlePublish(): Promise<void> {
     }
   } catch {
     ElMessage.error('发布失败，请稍后重试')
+  } finally {
+    isPublishing.value = false
   }
 }
 
@@ -312,11 +323,12 @@ onMounted(() => {
       />
       </div>
 
-      <!-- 折叠/展开切换按钮 -->
-      <button :class="$style.panelToggle" @click="rightPanelCollapsed = !rightPanelCollapsed">
-        {{ rightPanelCollapsed ? '◀' : '▶' }}
-      </button>
     </div>
+
+    <!-- 折叠/展开切换按钮（放在 body 外部，避免被 overflow: hidden 裁剪） -->
+    <button :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" @click="rightPanelCollapsed = !rightPanelCollapsed">
+      {{ rightPanelCollapsed ? '◀' : '▶' }}
+    </button>
 
     <!-- Settings Dialog -->
     <AiChatSettings

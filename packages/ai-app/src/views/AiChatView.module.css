@@ -135,8 +135,8 @@
 
 /* 折叠/展开切换按钮 */
 .panelToggle {
-  position: absolute;
-  right: 0;
+  position: fixed;
+  right: 400px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
@@ -151,7 +151,7 @@
   border-radius: 6px 0 0 6px;
   cursor: pointer;
   color: var(--text-hint, #999);
-  transition: all 0.2s;
+  transition: right 0.3s ease, background 0.2s, color 0.2s, border-color 0.2s;
   font-size: 12px;
 }
 
@@ -161,13 +161,8 @@
   border-color: var(--color-primary, #0060A2);
 }
 
-.rightPanel.collapsed + .panelToggle,
-.rightPanel.collapsed ~ .panelToggle {
+.panelToggleCollapsed {
   right: 0;
-}
-
-.rightPanel:not(.collapsed) ~ .panelToggle {
-  right: 400px;
 }
 
 /* ---- JSON Drawer ---- */
