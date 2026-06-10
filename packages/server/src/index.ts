@@ -9,6 +9,7 @@ import { seedPermissions } from './utils/seedPermissions.js'
 import { seedAdmin } from './utils/seedAdmin.js'
 import { seedMicroApps } from './utils/seedMicroApps.js'
 import { seedMenus } from './utils/seedMenus.js'
+import { seedRoles } from './utils/seedRoles.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
@@ -18,6 +19,7 @@ async function start() {
   await seedPermissions()
   await seedMicroApps()
   await seedMenus()
+  await seedRoles()
   await seedBuiltinTemplates()
   await seedAdmin()
 
