@@ -31,16 +31,40 @@ export class AiApiError extends Error {
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api'
 
+/** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合 micro-app */
+let tokenProvider: (() => string | null) | null = null
+
+export function setTokenProvider(provider: () => string | null): void {
+  tokenProvider = provider
+}
+
 interface ApiResponse<T> {
   success: boolean
   data: T
   error?: { message: string }
 }
 
+/** 构建请求 headers，自动注入 Authorization */
+function buildHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...extra }
+  const token = tokenProvider?.()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE_URL}${path}`, init)
+  const mergedInit: RequestInit = { ...init }
+  mergedInit.headers = buildHeaders(init?.headers as Record<string, string>)
+
+  const response = await fetch(`${BASE_URL}${path}`, mergedInit)
 
   if (!response.ok) {
+    // 401: 通知调用方认证失败
+    if (response.status === 401) {
+      throw new AiApiError('Authentication required', 401)
+    }
     const body = await response.json().catch(() => null)
     const msg = body?.error?.message ?? `${response.status} ${response.statusText}`
     throw new AiApiError(msg, response.status)
@@ -74,7 +98,7 @@ export function chat(request: ChatRequest, signal?: AbortSignal): ReadableStream
     async start(controller) {
       const response = await fetch(`${BASE_URL}/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: buildHeaders({ 'Content-Type': 'application/json' }),
         body,
         signal,
       })
@@ -222,7 +246,7 @@ export function resumeInterrupt(
     async start(controller) {
       const response = await fetch(`${BASE_URL}/ai/chat/resume`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: buildHeaders({ 'Content-Type': 'application/json' }),
         body,
         signal,
       })
@@ -330,6 +354,7 @@ export async function uploadFile(file: File): Promise<UploadResult> {
   form.append('file', file)
   const response = await fetch(`${BASE_URL}/ai/upload`, {
     method: 'POST',
+    headers: buildHeaders(),
     body: form,
   })
   if (!response.ok) {
@@ -363,7 +388,9 @@ export async function analyzeImage(base64Image: string): Promise<AnalyzeImageRes
 export type ExportFormat = 'json' | 'markdown' | 'html'
 
 export async function downloadConversation(id: string, format: ExportFormat): Promise<void> {
-  const response = await fetch(`${BASE_URL}/ai/conversations/${encodeURIComponent(id)}/export?format=${format}`)
+  const response = await fetch(`${BASE_URL}/ai/conversations/${encodeURIComponent(id)}/export?format=${format}`, {
+    headers: buildHeaders(),
+  })
   if (!response.ok) {
     const body = await response.json().catch(() => null)
     const msg = body?.error?.message ?? `${response.status} ${response.statusText}`

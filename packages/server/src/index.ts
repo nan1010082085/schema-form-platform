@@ -7,6 +7,8 @@ import { initDefaultTenant } from './utils/initDefaultTenant.js'
 import { seedBuiltinTemplates } from './utils/seedBuiltinTemplates.js'
 import { seedPermissions } from './utils/seedPermissions.js'
 import { seedAdmin } from './utils/seedAdmin.js'
+import { seedMicroApps } from './utils/seedMicroApps.js'
+import { seedMenus } from './utils/seedMenus.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
@@ -14,6 +16,8 @@ async function start() {
   await connectDatabase()
   await initDefaultTenant()
   await seedPermissions()
+  await seedMicroApps()
+  await seedMenus()
   await seedBuiltinTemplates()
   await seedAdmin()
 

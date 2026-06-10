@@ -72,6 +72,12 @@ const PERMISSION_DEFINITIONS: Array<{ code: string; name: string; module: string
   // ── Audit (操作日志) ──
   { code: 'audit:view', name: '查看日志', module: 'system', description: '查看操作日志' },
   { code: 'audit:export', name: '导出日志', module: 'system', description: '导出操作日志' },
+
+  // ── MicroApp (微应用) ──
+  { code: 'microapp:view', name: '查看微应用', module: 'microapp', description: '查看微应用列表和详情' },
+  { code: 'microapp:create', name: '创建微应用', module: 'microapp', description: '创建新微应用' },
+  { code: 'microapp:edit', name: '编辑微应用', module: 'microapp', description: '修改微应用信息' },
+  { code: 'microapp:delete', name: '删除微应用', module: 'microapp', description: '删除微应用' },
 ]
 
 /**

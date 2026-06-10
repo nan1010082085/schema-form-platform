@@ -9,7 +9,7 @@
 declare const window: { location: { hostname: string; port: string } } | undefined
 
 /** 应用名称（含宿主） */
-export type AppName = 'editor' | 'flow' | 'ai' | 'portal'
+export type AppName = 'editor' | 'flow' | 'ai' | 'portal' | 'admin'
 
 /** 单个子应用的配置 */
 export interface AppConfig {
@@ -31,6 +31,7 @@ export const APP_CONFIGS: Record<AppName, AppConfig> = {
   flow:   { name: 'flow',   basePath: '/flow/',   devPort: 5200 },
   ai:     { name: 'ai',     basePath: '/ai/',     devPort: 5300 },
   portal: { name: 'portal', basePath: '/',        devPort: 4000 },
+  admin:  { name: 'admin',  basePath: '/admin/',  devPort: 5400 },
 }
 
 /** API 服务端口 */

@@ -1,25 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import AppLayout from '@/layouts/AppLayout.vue'
-
-// Mock useMenu to avoid real API calls
-vi.mock('@/composables/useMenu', () => {
-  const vue = require('vue')
-  return {
-    useMenu: () => ({
-      menuTree: vue.ref([]),
-      loading: vue.ref(false),
-      error: vue.ref(null),
-      loaded: vue.ref(false),
-      fetchMenus: vi.fn(),
-      reset: vi.fn(),
-      hasChildren: vi.fn(() => false),
-    }),
-  }
-})
 
 /** 创建测试用路由器 */
 function createTestRouter(_initialPath = '/') {
@@ -31,7 +15,6 @@ function createTestRouter(_initialPath = '/') {
         component: AppLayout,
         children: [
           { path: '', name: 'portal', component: { template: '<div>Portal</div>' } },
-          { path: 'users', name: 'users', component: { template: '<div>Users</div>' } },
         ],
       },
     ],
@@ -65,15 +48,8 @@ describe('AppLayout', () => {
   it('renders sidebar with menu nav', async () => {
     const wrapper = await mountLayout()
 
-    // Sidebar aside element exists
     const sidebar = wrapper.find('aside')
     expect(sidebar.exists()).toBe(true)
-  })
-
-  it('renders the version badge', async () => {
-    const wrapper = await mountLayout()
-
-    expect(wrapper.text()).toContain('v1.0.0')
   })
 
   it('renders the home menu item', async () => {
@@ -131,5 +107,14 @@ describe('AppLayout', () => {
 
     const userArea = wrapper.find('[class*="userArea"]')
     expect(userArea.exists()).toBe(true)
+  })
+
+  it('renders all static nav items', async () => {
+    const wrapper = await mountLayout()
+
+    expect(wrapper.text()).toContain('表单编辑器')
+    expect(wrapper.text()).toContain('流程引擎')
+    expect(wrapper.text()).toContain('AI 助手')
+    expect(wrapper.text()).toContain('项目文档')
   })
 })

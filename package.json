@@ -13,6 +13,8 @@
     "dev:editor": "no_proxy='*' pnpm --filter @schema-form/editor-web dev",
     "dev:flow": "no_proxy='*' pnpm --filter @schema-form/flow-web dev",
     "dev:portal": "no_proxy='*' pnpm --filter @schema-form/portal dev",
+    "dev:shell": "no_proxy='*' pnpm --filter @schema-form/shell dev",
+    "build:shell": "pnpm --filter @schema-form/shell build",
     "dev:ai": "no_proxy='*' pnpm --filter @schema-form/ai-app dev",
     "kill-ports": "bash scripts/kill-ports.sh",
     "build": "pnpm -r build",

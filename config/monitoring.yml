@@ -1,0 +1,320 @@
+# Schema Form Platform 监控配置
+# 用于配置监控系统的各项参数
+
+# 服务健康检查配置
+health_check:
+  # API 服务健康检查
+  api:
+    url: "http://localhost:3001/api/health"
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    expected_status: "ok"
+    expected_database: "connected"
+
+  # 前端服务健康检查
+  frontend:
+    - name: "Shell"
+      url: "http://localhost:4100"
+      interval: 60s
+      timeout: 5s
+    - name: "Admin"
+      url: "http://localhost:5400"
+      interval: 60s
+      timeout: 5s
+    - name: "Editor"
+      url: "http://localhost:5173"
+      interval: 60s
+      timeout: 5s
+    - name: "Flow"
+      url: "http://localhost:5174"
+      interval: 60s
+      timeout: 5s
+    - name: "AI"
+      url: "http://localhost:5175"
+      interval: 60s
+      timeout: 5s
+
+# 性能监控配置
+performance:
+  # API 响应时间监控
+  api_response_time:
+    enabled: true
+    thresholds:
+      warning: 500ms
+      critical: 2000ms
+    percentiles:
+      - 50
+      - 95
+      - 99
+
+  # 微应用加载时间监控
+  micro_app_load_time:
+    enabled: true
+    thresholds:
+      warning: 2000ms
+      critical: 5000ms
+    apps:
+      - editor
+      - flow
+      - ai
+      - admin
+
+  # 数据库性能监控
+  database:
+    enabled: true
+    thresholds:
+      query_time_warning: 50ms
+      query_time_critical: 200ms
+      connection_pool_warning: 80
+      connection_pool_critical: 100
+
+# 告警配置
+alerts:
+  # 告警级别定义
+  levels:
+    - name: "P0"
+      description: "服务完全不可用"
+      response_time: "5m"
+      notification_channels:
+        - email
+        - sms
+        - slack
+
+    - name: "P1"
+      description: "核心功能不可用"
+      response_time: "15m"
+      notification_channels:
+        - email
+        - slack
+
+    - name: "P2"
+      description: "非核心功能异常"
+      response_time: "1h"
+      notification_channels:
+        - email
+
+    - name: "P3"
+      description: "体验问题"
+      response_time: "24h"
+      notification_channels:
+        - email
+
+  # 告警规则
+  rules:
+    - name: "API 服务宕机"
+      condition: "api.status != 'ok'"
+      level: "P0"
+      duration: "1m"
+
+    - name: "数据库连接失败"
+      condition: "api.database != 'connected'"
+      level: "P0"
+      duration: "1m"
+
+    - name: "API 响应时间过长"
+      condition: "api.response_time.p95 > 1000ms"
+      level: "P1"
+      duration: "5m"
+
+    - name: "错误率过高"
+      condition: "api.error_rate > 10%"
+      level: "P1"
+      duration: "5m"
+
+    - name: "磁盘空间不足"
+      condition: "system.disk_usage > 90%"
+      level: "P1"
+      duration: "5m"
+
+    - name: "内存使用率过高"
+      condition: "system.memory_usage > 90%"
+      level: "P1"
+      duration: "5m"
+
+  # 通知渠道配置
+  notification_channels:
+    email:
+      enabled: true
+      smtp_host: "smtp.gmail.com"
+      smtp_port: 587
+      username: "alerts@schema-form.com"
+      password: "${SMTP_PASSWORD}"
+      from: "alerts@schema-form.com"
+      to:
+        - "team@schema-form.com"
+        - "oncall@schema-form.com"
+
+    slack:
+      enabled: true
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#alerts"
+
+    sms:
+      enabled: false
+      provider: "twilio"
+      account_sid: "${TWILIO_ACCOUNT_SID}"
+      auth_token: "${TWILIO_AUTH_TOKEN}"
+      from: "+1234567890"
+      to:
+        - "+0987654321"
+
+# 日志监控配置
+logging:
+  # 日志级别
+  levels:
+    - "error"
+    - "warn"
+    - "info"
+
+  # 日志文件路径
+  paths:
+    - "/var/log/schema-form/api.log"
+    - "/var/log/schema-form/error.log"
+
+  # 日志轮转
+  rotation:
+    max_size: "100MB"
+    max_files: 10
+    compress: true
+
+  # 错误日志告警
+  error_alert:
+    enabled: true
+    threshold: 10
+    interval: "5m"
+
+# 业务指标监控
+business:
+  # 用户活跃度
+  user_activity:
+    enabled: true
+    metrics:
+      - "active_users"
+      - "login_success_rate"
+      - "session_duration"
+
+  # 表单使用情况
+  form_usage:
+    enabled: true
+    metrics:
+      - "schemas_created"
+      - "forms_submitted"
+      - "form_completion_rate"
+
+  # 流程使用情况
+  flow_usage:
+    enabled: true
+    metrics:
+      - "flows_created"
+      - "flow_instances"
+      - "flow_completion_rate"
+
+# 系统资源监控
+system:
+  # CPU 监控
+  cpu:
+    enabled: true
+    thresholds:
+      warning: 80%
+      critical: 90%
+
+  # 内存监控
+  memory:
+    enabled: true
+    thresholds:
+      warning: 80%
+      critical: 90%
+
+  # 磁盘监控
+  disk:
+    enabled: true
+    thresholds:
+      warning: 80%
+      critical: 90%
+    paths:
+      - "/"
+      - "/var/log"
+
+  # 网络监控
+  network:
+    enabled: true
+    interfaces:
+      - "eth0"
+      - "lo"
+
+# 监控数据存储
+storage:
+  # 指标数据存储
+  metrics:
+    type: "prometheus"
+    retention: "30d"
+    aggregation:
+      - interval: "1m"
+        retention: "7d"
+      - interval: "5m"
+        retention: "30d"
+
+  # 日志数据存储
+  logs:
+    type: "elasticsearch"
+    retention: "7d"
+    index_pattern: "schema-form-*"
+
+  # 告警数据存储
+  alerts:
+    type: "sqlite"
+    path: "/var/lib/schema-form/alerts.db"
+    retention: "90d"
+
+# 监控仪表盘配置
+dashboard:
+  # Grafana 配置
+  grafana:
+    url: "http://localhost:3000"
+    admin_user: "admin"
+    admin_password: "${GRAFANA_PASSWORD}"
+
+  # 仪表盘模板
+  templates:
+    - name: "Overview"
+      description: "系统概览仪表盘"
+      refresh_interval: "30s"
+
+    - name: "API Performance"
+      description: "API 性能监控仪表盘"
+      refresh_interval: "1m"
+
+    - name: "Business Metrics"
+      description: "业务指标仪表盘"
+      refresh_interval: "5m"
+
+    - name: "System Resources"
+      description: "系统资源监控仪表盘"
+      refresh_interval: "1m"
+
+# 监控脚本配置
+scripts:
+  # 健康检查脚本
+  health_check:
+    path: "scripts/monitor.sh"
+    schedule: "*/5 * * * *"
+    log_file: "/var/log/schema-form/health-check.log"
+
+  # 测试覆盖率脚本
+  test_coverage:
+    path: "scripts/test-coverage.sh"
+    schedule: "0 2 * * *"
+    log_file: "/var/log/schema-form/test-coverage.log"
+
+  # 端到端测试脚本
+  e2e_test:
+    path: "scripts/e2e-test.sh"
+    schedule: "0 3 * * 0"
+    log_file: "/var/log/schema-form/e2e-test.log"
+
+  # 数据清理脚本
+  cleanup:
+    path: "scripts/cleanup-monitoring-data.sh"
+    schedule: "0 4 * * *"
+    log_file: "/var/log/schema-form/cleanup.log"

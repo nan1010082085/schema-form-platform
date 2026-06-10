@@ -5,13 +5,8 @@ import {
   Edit,
   Connection,
   ChatLineSquare,
-  User,
   Document,
-  UserFilled,
   Warning,
-  Folder,
-  Menu,
-  Collection,
 } from '@element-plus/icons-vue'
 import { useHomeData } from '@/composables/useHomeData'
 import StatsChart from '@/components/StatsChart.vue'
@@ -70,41 +65,6 @@ const cards: NavCard[] = [
     gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
   },
   {
-    title: '用户管理',
-    desc: '管理平台用户、角色与权限配置',
-    icon: User,
-    route: '/users',
-    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  },
-  {
-    title: '角色管理',
-    desc: '管理平台角色，配置权限与数据范围',
-    icon: UserFilled,
-    route: '/roles',
-    gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-  },
-  {
-    title: '部门管理',
-    desc: '管理组织架构，维护部门树形结构',
-    icon: Folder,
-    route: '/depts',
-    gradient: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
-  },
-  {
-    title: '菜单管理',
-    desc: '管理系统菜单与权限编码配置',
-    icon: Menu,
-    route: '/menus',
-    gradient: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
-  },
-  {
-    title: '字典管理',
-    desc: '管理系统字典类型与字典数据，支持 CRUD',
-    icon: Collection,
-    route: '/dict',
-    gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-  },
-  {
     title: '项目文档',
     desc: '前端、后端、流程引擎、AI 全平台技术文档',
     icon: Document,
@@ -148,14 +108,6 @@ const statCards: StatCardDef[] = [
     gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     getValue: (s) => String(s.ai.total),
     getSub: (s) => `成功率 ${(s.ai.successRate * 100).toFixed(0)}%`,
-  },
-  {
-    key: 'userActivity',
-    title: '用户活跃',
-    icon: User,
-    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    getValue: (s) => String(s.userActivity.onlineUsers),
-    getSub: (s) => `今日访问 ${s.userActivity.todayVisits}`,
   },
 ]
 
@@ -394,7 +346,7 @@ function goToConversation(conv: RecentConversation) {
 
 .statsSection {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 32px;
 }

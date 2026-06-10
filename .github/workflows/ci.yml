@@ -1,0 +1,181 @@
+# CI/CD 配置文件
+# 用于自动化测试和部署
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+
+    - name: 安装 pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
+    - name: 安装依赖
+      run: pnpm install
+
+    - name: 运行测试
+      run: pnpm test
+
+    - name: 生成覆盖率报告
+      run: |
+        pnpm --filter @schema-form/server test -- --coverage
+        pnpm --filter @schema-form/editor-web test -- --coverage
+
+    - name: 上传覆盖率报告
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./packages/server/coverage/lcov.info,./packages/editor/web/coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  build:
+    name: 构建
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'pnpm'
+
+    - name: 安装 pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
+    - name: 安装依赖
+      run: pnpm install
+
+    - name: 构建所有包
+      run: pnpm build
+
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        path: |
+          packages/*/dist
+          packages/*/web/dist
+
+  e2e:
+    name: 端到端测试
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'pnpm'
+
+    - name: 安装 pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
+    - name: 安装依赖
+      run: pnpm install
+
+    - name: 启动服务
+      run: |
+        pnpm dev:server &
+        sleep 5
+        pnpm dev:web &
+        sleep 5
+      env:
+        MONGODB_URI: mongodb://localhost:27017/schema-form
+        NODE_ENV: development
+
+    - name: 运行端到端测试
+      run: bash scripts/e2e-test.sh
+
+    - name: 停止服务
+      run: |
+        pkill -f "pnpm dev" || true
+        pkill -f "vite" || true
+
+  deploy:
+    name: 部署
+    runs-on: ubuntu-latest
+    needs: [build, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 部署到生产环境
+      run: |
+        echo "部署到生产环境..."
+        # 这里添加实际的部署命令
+        # bash deploy/pack.sh && bash deploy/deploy.sh
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+
+  monitoring:
+    name: 监控
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 检查服务健康
+      run: |
+        echo "检查生产环境服务健康..."
+        # 这里添加健康检查命令
+        # curl -f http://***REMOVED***:30001/api/health || exit 1
+
+    - name: 发送部署通知
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          部署完成: ${{ github.sha }}
+          分支: ${{ github.ref }}
+          作者: ${{ github.actor }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: always()

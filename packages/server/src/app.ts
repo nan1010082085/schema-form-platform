@@ -37,6 +37,7 @@ import aiPluginRouter from './ai/pluginRoutes.js'
 import mcpRouter from './routes/mcp.js'
 import configRouter from './routes/config.js'
 import auditLogRouter from './routes/auditLog.js'
+import microAppRouter from './routes/microApp.js'
 import { auditLogMiddleware } from './middleware/auditLog.js'
 import { validateApiKey } from './ai/graph/agentBase.js'
 
@@ -163,5 +164,7 @@ app.use(configRouter.routes())
 app.use(configRouter.allowedMethods())
 app.use(auditLogRouter.routes())
 app.use(auditLogRouter.allowedMethods())
+app.use(microAppRouter.routes())
+app.use(microAppRouter.allowedMethods())
 
 export default app

@@ -4,7 +4,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import '@/styles/variables.scss'
 import '@/styles/theme.scss'
-import { createChildApp } from '@schema-form/micro-app/child'
+import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
 import { applyThemeInline, installThemeWatchdog, EDITOR_THEME_VARS } from '@schema-form/micro-app'
 
@@ -45,6 +45,7 @@ createChildApp({
 
     configureApiClient({
       baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
+      getToken: () => resolveToken(),
       useMock: import.meta.env.VITE_USE_MOCK === 'true',
     })
 

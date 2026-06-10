@@ -1,0 +1,49 @@
+.page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+  width: 380px;
+  padding: 40px 32px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1677ff;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #909399;
+  margin: 0;
+}
+
+.errorAlert {
+  margin-bottom: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rememberRow {
+  display: flex;
+  align-items: center;
+}

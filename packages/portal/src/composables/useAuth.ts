@@ -10,12 +10,10 @@
  * - useAuthStore（状态持有）
  * - apiClient（HTTP 通信）
  * - vue-router（路由跳转）
- * - usePermission（权限清除）
  */
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { usePermission } from '@/composables/usePermission'
 import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@/utils/apiClient'
 import type { LoginPayload, LoginResponse, AuthUser } from '@/types/auth'
 
@@ -27,14 +25,12 @@ export function useAuth() {
   const router = useRouter()
   const route = useRoute()
   const { user, token, isAuthenticated, loading } = storeToRefs(store)
-  const { clearPermissions } = usePermission()
 
   // 注入 tokenProvider + 401 回调，使 apiClient 自动携带 Authorization header
   if (!providerInitialized) {
     setTokenProvider(() => store.token)
     setUnauthorizedHandler(() => {
       store.reset()
-      clearPermissions()
     })
     providerInitialized = true
   }
@@ -70,7 +66,6 @@ export function useAuth() {
     } catch {
       // token 无效，清除状态
       store.reset()
-      clearPermissions()
     } finally {
       store.setLoading('fetchUser', false)
     }
@@ -78,14 +73,13 @@ export function useAuth() {
 
   /**
    * 退出登录
-   * 清除状态和权限，跳转登录页
+   * 清除状态，跳转登录页
    */
   async function logout(): Promise<void> {
     try {
       await apiClient.post('/auth/logout')
     } finally {
       store.reset()
-      clearPermissions()
       await router.push('/login')
     }
   }

@@ -38,7 +38,7 @@ export { initMicroApp, useMicroApp, type MicroAppStatus } from './host.js'
 export { default as MicroApp } from './MicroApp.vue'
 
 // ---- 子应用侧 ----
-export { createChildApp } from './child.js'
+export { createChildApp, getMicroAppToken, resolveToken } from './child.js'
 
 // ---- 主题守卫 ----
 export {

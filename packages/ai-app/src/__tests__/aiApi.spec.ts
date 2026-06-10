@@ -534,7 +534,7 @@ describe('searchConversations', () => {
     expect(result).toEqual(mockData)
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('keyword=test'),
-      undefined,
+      expect.any(Object),
     )
   })
 
@@ -569,7 +569,7 @@ describe('searchConversations', () => {
     await searchConversations({})
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/ai/conversations/search',
-      undefined,
+      expect.any(Object),
     )
   })
 

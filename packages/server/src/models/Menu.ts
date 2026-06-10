@@ -14,6 +14,7 @@ export interface IMenu {
   sort: number
   status: 'active' | 'inactive'
   component: string
+  microAppId: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -31,6 +32,7 @@ const menuSchema = new mongoose.Schema(
     sort: { type: Number, default: 0 },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     component: { type: String, default: '' },
+    microAppId: { type: String, default: null, index: true },
   },
   {
     timestamps: true,

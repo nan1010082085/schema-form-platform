@@ -7,11 +7,15 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
-import { createChildApp } from '@schema-form/micro-app/child'
+import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
 import { applyThemeInline, installThemeWatchdog, FLOW_THEME_VARS } from '@schema-form/micro-app'
 import App from '../App.vue'
 import { createFlowRouter } from '../router/index.js'
+import { setTokenProvider } from '../api/flowApi.js'
+
+// 注入 token 提供者：优先 localStorage（standalone），其次 micro-app data（微前端）
+setTokenProvider(() => resolveToken())
 
 /**
  * 初始化 flow 子应用

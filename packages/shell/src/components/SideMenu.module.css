@@ -1,0 +1,193 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #001529;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarHeader {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #1677ff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.menuNav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+.menuNav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.menuNav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.menuLoading,
+.menuError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
+
+.menuLoadingText,
+.menuErrorText {
+  white-space: nowrap;
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px;
+  margin: 2px 8px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.menuItem:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.menuItemActive {
+  color: #fff;
+  background: #1677ff;
+}
+
+.menuItemActive:hover {
+  background: #1677ff;
+}
+
+.menuLabel {
+  font-size: 14px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.menuArrow {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.menuArrowOpen {
+  transform: rotate(90deg);
+}
+
+.submenu {
+  padding-left: 8px;
+}
+
+.submenuItem {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px 0 42px;
+  margin: 2px 8px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.submenuItem:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.submenuItemActive {
+  color: #fff;
+  background: rgba(22, 119, 255, 0.7);
+}
+
+.submenuLabel {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sidebarFooter {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.sidebarFooter:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.collapseText {
+  font-size: 12px;
+  white-space: nowrap;
+}

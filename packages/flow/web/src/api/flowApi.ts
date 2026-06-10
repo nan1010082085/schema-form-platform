@@ -35,12 +35,29 @@ import type {
 
 const API_BASE = '/api'
 
+/** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合 micro-app */
+let tokenProvider: (() => string | null) | null = null
+
+export function setTokenProvider(provider: () => string | null): void {
+  tokenProvider = provider
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = tokenProvider?.()
+  const authHeaders: Record<string, string> = {}
+  if (token) {
+    authHeaders['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: { 'Content-Type': 'application/json', ...authHeaders, ...options?.headers },
     ...options,
   })
   if (!res.ok) {
+    // 401: 抛出认证错误
+    if (res.status === 401) {
+      throw new Error('Authentication required')
+    }
     const text = await res.text().catch(() => '')
     throw new Error(`HTTP ${res.status}: ${text || res.statusText}`)
   }
@@ -297,7 +314,10 @@ export const flowApi = {
 
   // Export
   exportInstanceCsv: async (instanceId: string): Promise<Blob> => {
-    const res = await fetch(`${API_BASE}/flow-export/approval-logs?instanceId=${encodeURIComponent(instanceId)}&format=csv`)
+    const token = tokenProvider?.()
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(`${API_BASE}/flow-export/approval-logs?instanceId=${encodeURIComponent(instanceId)}&format=csv`, { headers })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return res.blob()
   },
@@ -308,7 +328,10 @@ export const flowApi = {
     if (params.startDate) searchParams.set('startDate', params.startDate)
     if (params.endDate) searchParams.set('endDate', params.endDate)
     searchParams.set('format', params.format ?? 'csv')
-    const res = await fetch(`${API_BASE}/flow-export/approval-logs?${searchParams}`)
+    const token = tokenProvider?.()
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(`${API_BASE}/flow-export/approval-logs?${searchParams}`, { headers })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     if (params.format === 'json') {
       const json = await res.json()

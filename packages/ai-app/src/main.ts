@@ -2,12 +2,16 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import { createChildApp } from '@schema-form/micro-app/child'
+import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
 import { applyThemeInline, installThemeWatchdog, AI_THEME_VARS } from '@schema-form/micro-app'
 
 import App from './App.vue'
 import { createAiRouter } from './router'
+import { setTokenProvider } from './api/aiApi'
+
+// 注入 token 提供者：优先 localStorage（standalone），其次 micro-app data（微前端）
+setTokenProvider(() => resolveToken())
 
 // 独立运行时初始化 micro-app 引擎（作为子应用嵌入宿主时宿主已初始化）
 if (window.__MICRO_APP_ENVIRONMENT__) {

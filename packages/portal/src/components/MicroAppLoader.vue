@@ -5,16 +5,30 @@
  * 封装 <micro-app> 组件，提供 loading 和错误状态显示。
  * micro-app 必须始终渲染（不能 display:none），否则无法初始化。
  * 用覆盖层实现 loading/error 状态。
+ *
+ * 自动将 portal 的 token 注入子应用的 data，实现鉴权串联。
  */
 import { computed } from 'vue'
 import { useMicroApp } from '@schema-form/micro-app/host'
+import { useAuthStore } from '@/stores/auth'
 import type { MicroAppConfig } from '@schema-form/micro-app/types'
 
 const props = defineProps<{
   config: MicroAppConfig
 }>()
 
-const { status, error } = useMicroApp(props.config)
+const authStore = useAuthStore()
+
+// 将 token 注入到 config.data 中，传递给子应用
+const configWithData = computed<MicroAppConfig>(() => ({
+  ...props.config,
+  data: {
+    ...props.config.data,
+    token: authStore.token ?? undefined,
+  },
+}))
+
+const { status, error } = useMicroApp(configWithData.value)
 
 const isLoading = computed(() => status.value === 'loading')
 const isError = computed(() => status.value === 'error')
@@ -39,9 +53,9 @@ const isError = computed(() => status.value === 'error')
 
     <!-- 子应用始终渲染，不能隐藏 -->
     <micro-app
-      :name="config.name"
-      :url="config.url"
-      :data="config.data ?? {}"
+      :name="configWithData.name"
+      :url="configWithData.url"
+      :data="configWithData.data ?? {}"
       destroy
       iframe
     />
