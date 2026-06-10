@@ -8,7 +8,7 @@ import { DEFAULT_TENANT_ID } from './initDefaultTenant.js'
  */
 export async function seedRoles(): Promise<void> {
   const existing = await RoleModel.findOne({
-    code: 'admin',
+    name: '管理员',
     tenantId: DEFAULT_TENANT_ID,
   })
 
@@ -34,11 +34,9 @@ export async function seedRoles(): Promise<void> {
 
   await RoleModel.create({
     name: '管理员',
-    code: 'admin',
     permissions: allPermissions,
     data_scope: 'all',
     tenantId: DEFAULT_TENANT_ID,
-    status: 'active',
   })
 
   console.log('[seed] Admin role created with all permissions')
