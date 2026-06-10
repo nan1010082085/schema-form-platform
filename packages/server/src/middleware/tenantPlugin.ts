@@ -56,17 +56,17 @@ function applyPopulateTenantFilter(query: Query<unknown, unknown>, tenantId: str
       // string path — convert to object form with match
       // We need to modify the options in place
       const idx = Array.isArray(options.populate)
-        ? options.populate.indexOf(pop)
+        ? (options.populate as unknown[]).indexOf(pop)
         : -1
       const entry = { path: pop, match: { tenantId } }
       if (idx >= 0) {
         ;(options.populate as unknown[])[idx] = entry
       } else {
-        options.populate = entry
+        options.populate = entry as any
       }
     } else if (pop && typeof pop === 'object') {
       // object form — inject tenantId into match
-      const popObj = pop as Record<string, unknown>
+      const popObj = pop as unknown as Record<string, unknown>
       if (!popObj.match) {
         popObj.match = { tenantId }
       } else if (typeof popObj.match === 'object' && (popObj.match as Record<string, unknown>).tenantId === undefined) {
