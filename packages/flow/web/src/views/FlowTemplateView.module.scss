@@ -44,10 +44,9 @@
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
-  padding: 20px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   transition: box-shadow 0.2s, border-color 0.2s;
 
   &:hover {
@@ -56,22 +55,44 @@
   }
 }
 
+.cardThumbnail {
+  height: 140px;
+  overflow: hidden;
+  background: var(--el-fill-color-lighter);
+}
+
+.thumbnailImg {
+  width: 100%;
+  height: 100%;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--el-text-color-placeholder);
+  background: linear-gradient(135deg, var(--el-fill-color-light) 0%, var(--el-fill-color-lighter) 100%);
+
+  span {
+    font-size: 12px;
+  }
+}
+
 .cardHeader {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-}
-
-.cardIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  padding: 16px 16px 0;
 }
 
 .cardMeta {
@@ -100,6 +121,7 @@
 
 .cardDesc {
   margin: 0;
+  padding: 0 16px;
   font-size: 13px;
   color: var(--el-text-color-regular);
   line-height: 1.5;
@@ -113,6 +135,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 0 16px;
 }
 
 .cardFooter {
@@ -120,13 +143,27 @@
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 12px;
+  padding: 12px 16px;
   border-top: 1px solid var(--el-border-color-extra-light);
+}
+
+.cardStats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .cardDate {
   font-size: 12px;
   color: var(--el-text-color-placeholder);
+}
+
+.cardUseCount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 
 .cardActions {
@@ -140,4 +177,11 @@
   align-items: center;
   justify-content: center;
   min-height: 300px;
+}
+
+.previewContainer {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

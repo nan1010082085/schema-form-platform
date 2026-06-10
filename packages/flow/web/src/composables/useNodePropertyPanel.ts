@@ -20,7 +20,7 @@ const registry = new Map<string, Component>([
   ['receive-task', markRaw(ReceiveTaskPanel)],
   ['timer-event', markRaw(TimerEventPanel)],
   ['exclusive-gateway', markRaw(GatewayConditionPanel)],
-  ['parallel-gateway', markRaw(GatewayPanel)],
+  ['parallel-gateway', markRaw(GatewayConditionPanel)],
   ['inclusive-gateway', markRaw(GatewayConditionPanel)],
   ['sub-process', markRaw(SubProcessPanel)],
 ])

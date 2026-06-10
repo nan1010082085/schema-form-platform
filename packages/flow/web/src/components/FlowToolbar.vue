@@ -26,16 +26,16 @@
         </button>
       </el-tooltip>
       <div :class="styles.btnGroup">
-        <el-tooltip content="撤销" placement="bottom">
-          <button :class="styles.iconBtn" title="撤销" @click="$emit('undo')">
+        <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
+          <button :class="styles.iconBtn" title="撤销 (Ctrl+Z)" @click="$emit('undo')">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 3 2 7 6 11" />
               <path d="M2 7h8a4 4 0 0 1 0 8H7" />
             </svg>
           </button>
         </el-tooltip>
-        <el-tooltip content="重做" placement="bottom">
-          <button :class="styles.iconBtn" title="重做" @click="$emit('redo')">
+        <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
+          <button :class="styles.iconBtn" title="重做 (Ctrl+Y)" @click="$emit('redo')">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="10 3 14 7 10 11" />
               <path d="M14 7H6a4 4 0 0 0 0 8h3" />
@@ -158,6 +158,49 @@
           <el-icon :size="14"><View /></el-icon>
         </button>
       </el-tooltip>
+      <!-- 快捷键帮助 -->
+      <el-popover placement="bottom" :width="300" trigger="click">
+        <template #reference>
+          <button :class="styles.iconBtn" title="快捷键帮助">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="6.5" />
+              <path d="M5.5 6.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
+              <circle cx="8" cy="12" r="0.5" fill="currentColor" />
+            </svg>
+          </button>
+        </template>
+        <div :class="styles.shortcuts">
+          <div :class="styles.shortcutsTitle">快捷键</div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">撤销</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">重做</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">复制节点</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">粘贴节点</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">复制并粘贴</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>D</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">删除</span>
+            <span :class="styles.shortcutKeys"><kbd>Delete</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">保存</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+          </div>
+        </div>
+      </el-popover>
     </div>
 
     <!-- Center: preview label + simulation controls -->
@@ -266,6 +309,7 @@
         </el-tooltip>
         <button :class="[styles.btn, styles.btnOutline]" title="设置" @click="$emit('settings')">设置</button>
         <button :class="[styles.btn, styles.btnOutline]" title="保存" :disabled="saving" @click="$emit('save')">{{ saving ? '保存中...' : '保存' }}</button>
+        <button :class="[styles.btn, styles.btnOutline]" title="保存为模板" @click="$emit('save-as-template')">存为模板</button>
         <button :class="[styles.btn, styles.btnPrimary]" title="发布" :disabled="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</button>
       </template>
       <template v-else>
@@ -336,6 +380,7 @@ defineEmits<{
   'cycle-speed': []
   // Auto-layout events
   'auto-layout': []
+  'save-as-template': []
   'update:layoutDirection': [direction: LayoutDirection]
   'update:layoutNodeSep': [value: number]
   'update:layoutRankSep': [value: number]

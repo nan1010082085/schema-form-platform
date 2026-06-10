@@ -1,9 +1,11 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export type FlowMessageStatus = 'pending' | 'consumed'
 
 export interface IFlowMessage {
   _id: string
+  tenantId: string
   channel: string
   payload: Record<string, unknown>
   senderInstanceId: string
@@ -18,6 +20,7 @@ export interface IFlowMessage {
 const flowMessageSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     channel: { type: String, required: true, index: true },
     payload: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
     senderInstanceId: { type: String, required: true, index: true },
@@ -45,6 +48,8 @@ const flowMessageSchema = new mongoose.Schema(
 
 flowMessageSchema.index({ channel: 1, status: 1, createdAt: -1 })
 flowMessageSchema.index({ receiverInstanceId: 1, status: 1 })
+
+flowMessageSchema.plugin(tenantPlugin)
 
 export const FlowMessageModel =
   mongoose.models.FlowMessage ??

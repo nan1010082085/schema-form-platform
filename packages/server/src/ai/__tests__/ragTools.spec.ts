@@ -53,7 +53,7 @@ describe('RAG Tools', () => {
   describe('ragSearchTool', () => {
     it('has correct name and description', () => {
       expect(ragSearchTool.name).toBe('rag_search')
-      expect(ragSearchTool.description).toContain('向量语义搜索')
+      expect(ragSearchTool.description).toContain('向量智能匹配')
     })
 
     it('returns search results', async () => {

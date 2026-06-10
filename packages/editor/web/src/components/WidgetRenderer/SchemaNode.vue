@@ -9,18 +9,21 @@
  * - provide 当前 Widget 的 data 和 style 给子组件
  * - 判断是否容器组件，渲染组件 + 递归 children
  * - 位置通过 position: absolute + left/top 定位
+ *
+ * 性能优化：
+ * - 注入共享的 linkageStateMap（由 EditorCanvas/WidgetRenderer 提供），
+ *   避免每个 SchemaNode 独立创建 useLinkage 实例
+ * - 使用缓存的组件映射表
  */
 import { computed, inject, provide, ref, onMounted, onUnmounted, type ComputedRef, type ComponentPublicInstance } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
-import type { Widget, SchemaType } from '../../widgets/base/types'
+import type { Widget, SchemaType, LinkageState } from '../../widgets/base/types'
 import type { PartialWidget, FormData } from './types'
-import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from './types'
+import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY, FORM_GRID_LINKAGE_KEY } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
-import { useLinkage } from '../../composables/useLinkage'
-import type { Ref } from 'vue'
-import { triggerWidgetEvent, type EventExecutionContext } from '../../engine/eventEngine'
+import { triggerWidgetEvent } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
 import EnhancedDialog from '../EnhancedDialog.vue'
@@ -31,7 +34,7 @@ const props = defineProps<{
   mode?: 'edit' | 'preview'
 }>()
 
-/** 组件映射表 — SchemaType → Vue Component（从 registry 动态获取） */
+/** 组件映射表 — 缓存版本，避免每次 mount 创建新对象 */
 const compMap = getComponentMap()
 
 /** 容器组件类型集合 */
@@ -200,8 +203,8 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
 }
 
 /**
- * 当前表单上下文的值集合。
- * 当任意 Widget 的 defaultValue 变化时自动重算。
+ * 当前表单上下文的值集合（编辑模式仅用于事件引擎调试日志）。
+ * 延迟计算：仅在事件触发时按需收集，避免每次渲染都 O(n) 遍历。
  */
 const formData = computed<FormData>(() => {
   const formId = props.widget.formId
@@ -209,19 +212,23 @@ const formData = computed<FormData>(() => {
   return widgetStore.collectFormValues(formId) as FormData
 })
 
+// formData 在编辑模式下仅供 buildEditorEventContext 使用，
+// 通过 lazy computed 避免在 render 路径中触发
+
 /**
  * 规则引擎输出：visible / disabled / required。
- * SchemaNode 用此结果控制渲染条件，Widget 通过 inject 获取。
  *
- * 基于 useLinkage composable，按 field 查找联动状态。
- * widget.hidden 作为静态可见性覆盖（优先于联动状态）。
+ * 性能优化：从父级注入共享的 linkageStateMap（由 EditorCanvas 或 WidgetRenderer 提供），
+ * 而非每个 SchemaNode 独立创建 useLinkage 实例。
+ * widget.hidden / widget.disabled 作为静态属性覆盖（优先于联动状态）。
  */
-const injectedVariables = inject<Ref<Record<string, unknown>>>('variablesContext', ref({}))
-const injectedExposed = inject<Ref<Record<string, Record<string, unknown>>>>('exposedContext', ref({}))
-const linkage = useLinkage(widgetStore.widgets as unknown as PartialWidget[], formData, injectedVariables, injectedExposed)
+const DEFAULT_LINKAGE_STATE: LinkageState = { visible: true, disabled: false, required: false }
+const linkageStateMap = inject(FORM_GRID_LINKAGE_KEY, null)
+
 const renderState = computed(() => {
-  const linkageState = linkage.stateMap.value.get(props.widget.field ?? '')
-  const base = linkageState ?? { visible: true, disabled: false, required: false }
+  const field = props.widget.field
+  const linkageState = field ? linkageStateMap?.value.get(field) : undefined
+  const base = linkageState ?? DEFAULT_LINKAGE_STATE
   // hidden 静态属性覆盖：hidden=true 时强制不可见
   if (props.widget.hidden) {
     return { ...base, visible: false }

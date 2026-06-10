@@ -67,6 +67,10 @@ export interface AIContext {
   currentFlow?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
   /** @ referenced resource content */
   mentionedResources?: Array<{ type: 'schema' | 'flow'; name: string; content: Record<string, unknown> | Record<string, unknown>[] }>
+  /** Currently selected widget in the editor. */
+  selectedWidget?: { id: string; type: string; field?: string; label?: string }
+  /** Current editor mode. */
+  editorMode?: 'edit' | 'preview'
   /** Running count of user turns in this conversation. */
   turnCount: number
 }

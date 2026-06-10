@@ -6,6 +6,7 @@
  */
 
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../../middleware/tenantPlugin.js'
 
 // ────────────────────────────────────────────
 // Interfaces
@@ -13,6 +14,7 @@ import mongoose from 'mongoose'
 
 export interface ICollaborationSession {
   _id: string
+  tenantId: string
   conversationId: string
   participants: string[]
   createdAt: Date
@@ -26,6 +28,7 @@ export interface ICollaborationSession {
 const collaborationSessionSchema = new mongoose.Schema<ICollaborationSession>(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     conversationId: { type: String, required: true, index: true },
     participants: { type: [String], default: [] },
   },
@@ -42,6 +45,8 @@ const collaborationSessionSchema = new mongoose.Schema<ICollaborationSession>(
 )
 
 collaborationSessionSchema.index({ conversationId: 1 }, { unique: true })
+
+collaborationSessionSchema.plugin(tenantPlugin)
 
 // ────────────────────────────────────────────
 // Model

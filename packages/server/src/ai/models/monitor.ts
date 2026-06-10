@@ -9,6 +9,7 @@
  */
 
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../../middleware/tenantPlugin.js'
 
 // ────────────────────────────────────────────
 // Interfaces
@@ -22,6 +23,7 @@ export interface ITokenUsage {
 
 export interface IAgentMetric {
   _id: string
+  tenantId: string
   agentName: string
   operation: string
   duration: number
@@ -48,6 +50,7 @@ const tokenUsageSchema = new mongoose.Schema(
 const agentMetricSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     agentName: {
       type: String,
       required: true,
@@ -82,6 +85,8 @@ const agentMetricSchema = new mongoose.Schema(
 agentMetricSchema.index({ agentName: 1, createdAt: -1 })
 agentMetricSchema.index({ success: 1, createdAt: -1 })
 agentMetricSchema.index({ createdAt: -1 })
+
+agentMetricSchema.plugin(tenantPlugin)
 
 // ────────────────────────────────────────────
 // Model

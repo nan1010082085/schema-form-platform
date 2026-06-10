@@ -60,6 +60,15 @@
 
       <Background :gap="20" :size="0.8" color="#d0d5dd" />
       <Controls />
+      <MiniMap
+        v-if="!readOnly"
+        :class="styles.minimap"
+        :node-color="minimapNodeColor"
+        :node-stroke-width="2"
+        :mask-color="'rgba(255, 255, 255, 0.7)'"
+        :pannable="true"
+        :zoomable="true"
+      />
     </VueFlow>
   </div>
 </template>
@@ -69,9 +78,12 @@ import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
+import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/controls/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { useFlowGraphStore } from '../stores/flowGraph.js'
+import { useCopyNode } from '../composables/useCopyNode.js'
 import {
   StartEventNode,
   EndEventNode,
@@ -133,6 +145,32 @@ const {
   fitView,
 } = useVueFlow({ id: 'flow-canvas' })
 
+// Wire up copy/paste (Ctrl+C / Ctrl+V / Ctrl+D)
+useCopyNode({
+  getSelectedNodes: () => getNodes.value.filter(n => n.selected),
+  enabled: () => !readOnly.value,
+})
+
+// MiniMap node color by type
+const NODE_TYPE_COLORS: Record<string, string> = {
+  'start-event': '#67c23a',
+  'end-event': '#f56c6c',
+  'timer-event': '#e6a23c',
+  'user-task': '#409eff',
+  'service-task': '#909399',
+  'script-task': '#b37feb',
+  'send-task': '#36cfc9',
+  'receive-task': '#597ef7',
+  'exclusive-gateway': '#f759ab',
+  'parallel-gateway': '#ff85c0',
+  'inclusive-gateway': '#d3adf7',
+  'sub-process': '#ffc53d',
+}
+
+function minimapNodeColor(node: { type?: string }): string {
+  return NODE_TYPE_COLORS[node.type ?? ''] ?? '#c0c4cc'
+}
+
 onNodeClick(({ node }) => designerStore.selectNode(node.id))
 onEdgeClick(({ edge }) => designerStore.selectEdge(edge.id))
 onPaneClick(() => designerStore.clearSelection())
@@ -170,6 +208,27 @@ function onKeyDown(e: KeyboardEvent) {
     const selectedEdges = getEdges.value.filter(e => e.selected)
     for (const n of selectedNodes) flowGraph.removeNode(n.id)
     for (const e of selectedEdges) flowGraph.removeEdge(e.id)
+  }
+
+  // Ctrl+Z: undo, Ctrl+Y / Ctrl+Shift+Z: redo
+  const isMod = e.ctrlKey || e.metaKey
+  if (isMod && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    const snapshot = designerStore.undo()
+    if (snapshot) flowGraph.loadSnapshot(snapshot)
+  }
+  if (isMod && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault()
+    const snapshot = designerStore.redo()
+    if (snapshot) flowGraph.loadSnapshot(snapshot)
+  }
+
+  // Ctrl+S: save (prevent browser default, emit through parent)
+  if (isMod && e.key === 's') {
+    e.preventDefault()
+    // Save is handled at FlowDesigner level via toolbar
+    // We dispatch a custom event that FlowDesigner can listen to
+    window.dispatchEvent(new CustomEvent('flow:save'))
   }
 }
 

@@ -13,10 +13,32 @@
 .scroll {
   flex: 1;
   height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.virtualWrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.virtualContent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
 }
 
 .group {
   border-bottom: 1px solid var(--bg-color-page);
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 10px;
 }
 
 .groupHeader {
@@ -72,6 +94,7 @@
   cursor: grab;
   transition: all 0.15s;
   background: var(--bg-color-surface);
+  margin-bottom: 6px;
 }
 
 .item:hover {
@@ -91,9 +114,25 @@
   text-align: center;
 }
 
+.highlight {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-style: normal;
+}
+
 .empty {
-  padding: 24px;
+  padding: 32px 16px;
   text-align: center;
+}
+
+.emptyText {
+  color: var(--text-color-secondary);
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+
+.emptyHint {
   color: var(--text-color-disabled);
   font-size: 12px;
+  margin: 0;
 }

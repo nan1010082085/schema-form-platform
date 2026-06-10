@@ -11,6 +11,7 @@ vi.mock('@element-plus/icons-vue', () => ({
   ArrowDown: { template: '<span />' },
   Plus: { template: '<span />' },
   Delete: { template: '<span />' },
+  Search: { template: '<span />' },
 }))
 
 /* ------------------------------------------------------------------ */

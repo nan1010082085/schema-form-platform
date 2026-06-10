@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { ChatSettings, ReplyLanguage, ReplyStyle, CodeCommentMode, HistorySummaryMode } from '@/types'
+import { checkAIHealth, type AIHealthResponse } from '@/api/aiApi'
 
 export interface AiChatSettingsProps {
   visible: boolean
@@ -17,10 +18,29 @@ const emit = defineEmits<{
 // Local copy for editing
 const localSettings = ref<ChatSettings>(JSON.parse(JSON.stringify(props.settings)))
 
+// AI health state
+const healthData = ref<AIHealthResponse | null>(null)
+const healthLoading = ref(false)
+const healthError = ref(false)
+
+async function fetchHealth(): Promise<void> {
+  healthLoading.value = true
+  healthError.value = false
+  try {
+    healthData.value = await checkAIHealth()
+  } catch {
+    healthError.value = true
+    healthData.value = null
+  } finally {
+    healthLoading.value = false
+  }
+}
+
 // Sync from props when drawer opens
 watch(() => props.visible, (val) => {
   if (val) {
     localSettings.value = JSON.parse(JSON.stringify(props.settings))
+    fetchHealth()
   }
 })
 
@@ -72,6 +92,42 @@ function handleSave(): void {
 
           <!-- Body -->
           <div :class="$style.body">
+            <!-- Card: Connection Status -->
+            <div :class="$style.card">
+              <div :class="$style.cardTitle">连接状态</div>
+              <div :class="$style.cardBody">
+                <div v-if="healthLoading" :class="$style.statusRow">
+                  <span :class="[$style.statusDot, $style.statusChecking]" />
+                  <span :class="$style.statusText">检测中...</span>
+                </div>
+                <div v-else-if="healthError" :class="$style.statusRow">
+                  <span :class="[$style.statusDot, $style.statusError]" />
+                  <span :class="$style.statusText">无法连接到 AI 服务</span>
+                </div>
+                <div v-else-if="healthData">
+                  <div :class="$style.statusRow">
+                    <span :class="[$style.statusDot, healthData.status === 'ok' ? $style.statusOk : $style.statusError]" />
+                    <span :class="$style.statusText">
+                      {{ healthData.status === 'ok' ? 'API Key 已配置' : '未配置 API Key' }}
+                    </span>
+                  </div>
+                  <div v-if="healthData.providers.length > 0" :class="$style.providerList">
+                    <div
+                      v-for="p in healthData.providers"
+                      :key="p.name"
+                      :class="$style.providerItem"
+                    >
+                      <span :class="$style.providerName">
+                        {{ p.name }}
+                        <span v-if="p.isDefault" :class="$style.defaultBadge">默认</span>
+                      </span>
+                      <span :class="$style.providerModel">{{ p.model }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Card: Preferences -->
             <div :class="$style.card">
               <div :class="$style.cardTitle">用户偏好</div>

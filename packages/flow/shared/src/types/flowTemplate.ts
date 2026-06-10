@@ -9,6 +9,7 @@ export interface FlowTemplateData {
   thumbnail?: string
   tags?: string[]
   isBuiltin: boolean
+  useCount?: number
   createdBy: string
   createdAt: Date
   updatedAt: Date

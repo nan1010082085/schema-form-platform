@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import mongoose from 'mongoose'
 
-// Mock mongoose model
+// Mock the NotificationModel directly instead of mocking mongoose
 const mockModel = {
   create: vi.fn(),
   insertMany: vi.fn(),
@@ -11,10 +10,12 @@ const mockModel = {
   updateMany: vi.fn(),
 }
 
-vi.mock('mongoose', () => ({
-  default: {
-    model: vi.fn().mockReturnValue(mockModel),
-  },
+vi.mock('../flow-models/Notification.js', () => ({
+  NotificationModel: mockModel,
+}))
+
+vi.mock('../socket.js', () => ({
+  getIO: vi.fn().mockReturnValue(null),
 }))
 
 // Import after mock setup

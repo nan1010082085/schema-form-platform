@@ -11,11 +11,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { defineComponent, h, type Component, type PropType } from 'vue'
+import { computed, defineComponent, h, type Component, type PropType } from 'vue'
 import ElementPlus from 'element-plus'
-import type { Widget, SchemaType } from '@/widgets/base/types'
+import type { Widget, SchemaType, PartialWidget } from '@/widgets/base/types'
 import SchemaRenderComponent from '@/components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '@/stores/widget'
+import { useLinkage } from '@/composables/useLinkage'
+import { FORM_GRID_LINKAGE_KEY } from '@/components/WidgetRenderer/types'
 
 // ---------------------------------------------------------------------------
 // Mock registry — provide stub components for all types SchemaNode resolves.
@@ -132,6 +134,17 @@ function mountSchemaRender(widgets: Widget[], props: Record<string, unknown> = {
   const widgetStore = useWidgetStore()
   widgetStore.widgets = widgets
 
+  // Provide the linkage state map so SchemaNode can consume it via inject
+  const formData: Record<string, unknown> = {}
+  for (const w of widgets) {
+    if (w.field) formData[w.field] = w.defaultValue ?? null
+  }
+
+  const linkage = useLinkage(
+    widgets as unknown as PartialWidget[],
+    computed(() => formData),
+  )
+
   return mount(SchemaRenderComponent, {
     props: {
       widgets,
@@ -139,6 +152,9 @@ function mountSchemaRender(widgets: Widget[], props: Record<string, unknown> = {
     },
     global: {
       plugins: [ElementPlus],
+      provide: {
+        [FORM_GRID_LINKAGE_KEY]: linkage.stateMap,
+      },
     },
   })
 }

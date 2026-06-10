@@ -27,7 +27,8 @@
     "deploy:pack": "bash deploy/pack.sh",
     "deploy:run": "bash deploy/deploy.sh",
     "format": "pnpm -r format",
-    "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo"
+    "clean": "pnpm -r exec -- rm -rf node_modules dist .turbo",
+    "test": "pnpm --filter @schema-form/micro-app test"
   },
   "engines": {
     "node": ">=18",

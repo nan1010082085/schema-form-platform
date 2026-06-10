@@ -1,23 +1,48 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TaskInstanceModel } from '../flow-models/TaskInstance.js'
+import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 import { UserModel } from '../models/User.js'
 
 export class TaskService {
-  async getMyTasks(userId: string, page = 1, pageSize = 20) {
+  async getMyTasks(
+    userId: string,
+    page = 1,
+    pageSize = 20,
+    opts?: { status?: string; q?: string; instanceOwnerFilter?: Record<string, unknown> },
+  ) {
     const skip = (page - 1) * pageSize
 
     // Fetch user roles for role-based matching
     const user = await UserModel.findById(userId).select('roles').lean()
     const userRoles = (user as { roles?: string[] } | null)?.roles ?? []
 
-    const filter = {
-      status: { $in: ['pending', 'claimed'] },
+    const filter: Record<string, unknown> = {
       $or: [
         { assignee: userId },
         { candidateUsers: userId },
         { candidateRoles: { $in: userRoles } },
       ],
+    }
+
+    // Status filter: if provided use it, otherwise default to pending+claimed
+    if (opts?.status) {
+      filter.status = opts.status
+    } else {
+      filter.status = { $in: ['pending', 'claimed'] }
+    }
+
+    // Keyword search on nodeName
+    if (opts?.q) {
+      const escaped = opts.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      filter.nodeName = { $regex: escaped, $options: 'i' }
+    }
+
+    // Data scope: restrict by flow instance owner
+    if (opts?.instanceOwnerFilter) {
+      const scopedInstances = await FlowInstanceModel.find(opts.instanceOwnerFilter).select('_id').lean()
+      const instanceIds = scopedInstances.map(i => (i as { _id: string })._id)
+      filter.instanceId = { $in: instanceIds }
     }
 
     const [items, total] = await Promise.all([

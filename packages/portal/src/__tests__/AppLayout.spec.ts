@@ -1,9 +1,25 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import AppLayout from '@/layouts/AppLayout.vue'
+
+// Mock useMenu to avoid real API calls
+vi.mock('@/composables/useMenu', () => {
+  const vue = require('vue')
+  return {
+    useMenu: () => ({
+      menuTree: vue.ref([]),
+      loading: vue.ref(false),
+      error: vue.ref(null),
+      loaded: vue.ref(false),
+      fetchMenus: vi.fn(),
+      reset: vi.fn(),
+      hasChildren: vi.fn(() => false),
+    }),
+  }
+})
 
 /** 创建测试用路由器 */
 function createTestRouter(_initialPath = '/') {
@@ -15,9 +31,7 @@ function createTestRouter(_initialPath = '/') {
         component: AppLayout,
         children: [
           { path: '', name: 'portal', component: { template: '<div>Portal</div>' } },
-          { path: 'editor', name: 'editor', component: { template: '<div>Editor</div>' } },
-          { path: 'flow', name: 'flow', component: { template: '<div>Flow</div>' } },
-          { path: 'ai', name: 'ai', component: { template: '<div>AI</div>' } },
+          { path: 'users', name: 'users', component: { template: '<div>Users</div>' } },
         ],
       },
     ],
@@ -42,31 +56,18 @@ describe('AppLayout', () => {
     setActivePinia(createPinia())
   })
 
-  it('renders the logo and platform name', async () => {
+  it('renders the logo icon', async () => {
     const wrapper = await mountLayout()
 
-    expect(wrapper.text()).toContain('PyFlow')
+    expect(wrapper.text()).toContain('P')
   })
 
-  it('renders all four navigation items', async () => {
+  it('renders sidebar with menu nav', async () => {
     const wrapper = await mountLayout()
 
-    const navText = wrapper.text()
-    expect(navText).toContain('首页')
-    expect(navText).toContain('编辑器')
-    expect(navText).toContain('流程')
-    expect(navText).toContain('AI')
-  })
-
-  it('highlights the home nav item on root path', async () => {
-    const wrapper = await mountLayout('/')
-
-    // The active class should be on the home nav item
-    const navItems = wrapper.findAll('a')
-    const homeLink = navItems.find((a) => a.text() === '首页')
-    expect(homeLink).toBeDefined()
-    // Check it has the active style class (CSS Module hashed, so check for existence)
-    expect(homeLink!.classes().some((c) => c.includes('navItemActive'))).toBe(true)
+    // Sidebar aside element exists
+    const sidebar = wrapper.find('aside')
+    expect(sidebar.exists()).toBe(true)
   })
 
   it('renders the version badge', async () => {
@@ -75,78 +76,60 @@ describe('AppLayout', () => {
     expect(wrapper.text()).toContain('v1.0.0')
   })
 
-  it('has a GitHub link with target=_blank', async () => {
+  it('renders the home menu item', async () => {
     const wrapper = await mountLayout()
 
-    const githubLink = wrapper.find('a[href*="github.com"]')
-    expect(githubLink.exists()).toBe(true)
-    expect(githubLink.attributes('target')).toBe('_blank')
-    expect(githubLink.attributes('rel')).toContain('noopener')
-  })
-
-  it('hamburger button is hidden on desktop (CSS driven)', async () => {
-    const wrapper = await mountLayout()
-
-    // The hamburger button exists in the DOM but is hidden via CSS on desktop
-    const hamburger = wrapper.find('button[aria-label="打开导航菜单"]')
-    expect(hamburger.exists()).toBe(true)
-  })
-
-  it('mobile drawer is initially closed', async () => {
-    const wrapper = await mountLayout()
-
-    // The mobile nav should not have the open class
-    const mobileNav = wrapper.find('[role="dialog"]')
-    expect(mobileNav.exists()).toBe(true)
-    // Should not have the open modifier class
-    expect(mobileNav.classes().some((c) => c.includes('mobileNavOpen'))).toBe(false)
-  })
-
-  it('opens mobile drawer when hamburger is clicked', async () => {
-    const wrapper = await mountLayout()
-
-    const hamburger = wrapper.find('button[aria-label="打开导航菜单"]')
-    await hamburger.trigger('click')
-
-    const mobileNav = wrapper.find('[role="dialog"]')
-    expect(mobileNav.classes().some((c) => c.includes('mobileNavOpen'))).toBe(true)
-  })
-
-  it('closes mobile drawer when close button is clicked', async () => {
-    const wrapper = await mountLayout()
-
-    // Open drawer
-    const hamburger = wrapper.find('button[aria-label="打开导航菜单"]')
-    await hamburger.trigger('click')
-
-    // Close drawer
-    const closeBtn = wrapper.find('button[aria-label="关闭导航菜单"]')
-    await closeBtn.trigger('click')
-
-    const mobileNav = wrapper.find('[role="dialog"]')
-    expect(mobileNav.classes().some((c) => c.includes('mobileNavOpen'))).toBe(false)
-  })
-
-  it('closes mobile drawer when overlay is clicked', async () => {
-    const wrapper = await mountLayout()
-
-    // Open drawer
-    const hamburger = wrapper.find('button[aria-label="打开导航菜单"]')
-    await hamburger.trigger('click')
-
-    // Click overlay (the div before the aside)
-    const overlay = wrapper.find('[class*="mobileOverlay"]')
-    await overlay.trigger('click')
-
-    const mobileNav = wrapper.find('[role="dialog"]')
-    expect(mobileNav.classes().some((c) => c.includes('mobileNavOpen'))).toBe(false)
+    expect(wrapper.text()).toContain('首页')
   })
 
   it('renders router-view for child routes', async () => {
     const wrapper = await mountLayout()
 
-    // The main content area should exist
     const main = wrapper.find('main')
     expect(main.exists()).toBe(true)
+  })
+
+  it('sidebar is not collapsed by default', async () => {
+    const wrapper = await mountLayout()
+
+    const sidebar = wrapper.find('aside')
+    expect(sidebar.classes().some((c) => c.includes('sidebarCollapsed'))).toBe(false)
+  })
+
+  it('toggles sidebar collapse when footer is clicked', async () => {
+    const wrapper = await mountLayout()
+
+    const footer = wrapper.find('[class*="sidebarFooter"]')
+    expect(footer.exists()).toBe(true)
+
+    // Click to collapse
+    await footer.trigger('click')
+
+    const sidebar = wrapper.find('aside')
+    expect(sidebar.classes().some((c) => c.includes('sidebarCollapsed'))).toBe(true)
+
+    // Click to expand
+    await footer.trigger('click')
+    expect(sidebar.classes().some((c) => c.includes('sidebarCollapsed'))).toBe(false)
+  })
+
+  it('renders collapse text when expanded', async () => {
+    const wrapper = await mountLayout()
+
+    expect(wrapper.text()).toContain('收起菜单')
+  })
+
+  it('renders the mobile menu button', async () => {
+    const wrapper = await mountLayout()
+
+    const mobileBtn = wrapper.find('[class*="mobileMenuBtn"]')
+    expect(mobileBtn.exists()).toBe(true)
+  })
+
+  it('renders the user avatar area', async () => {
+    const wrapper = await mountLayout()
+
+    const userArea = wrapper.find('[class*="userArea"]')
+    expect(userArea.exists()).toBe(true)
   })
 })

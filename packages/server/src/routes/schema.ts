@@ -3,6 +3,7 @@ import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import { FormSchemaModel } from '../models/FormSchema.js'
 import { PublishedSchemaModel } from '../models/PublishedSchema.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createSchemaSchema, updateSchemaSchema, importSchemaSchema } from '../schemas/schemaSchemas.js'
 
@@ -100,7 +101,7 @@ function isUUID(str: string): boolean {
 // GET /api/schemas
 // Lists draft schemas with optional filters.
 // ────────────────────────────────────────────
-router.get('/', async (ctx) => {
+router.get('/', requireAuth, async (ctx) => {
   const { search, type, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
@@ -143,7 +144,7 @@ router.get('/', async (ctx) => {
 // POST /api/schemas
 // Create a new schema document (first save). editId is auto-generated.
 // ────────────────────────────────────────────
-router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
+router.post('/', requireAuth, requirePermission('schema:create'), validate(createSchemaSchema), async (ctx) => {
   const { name, json, type, thumbnail } = ctx.request.body as {
     name?: string; json?: unknown; type?: string; thumbnail?: string
   }
@@ -163,6 +164,8 @@ router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
   const schemaType = (type === 'search-list' || type === 'search_list') ? 'search_list' : 'form'
   const version = generateVersion()
 
+  const userId = (ctx.state.user as { id: string }).id
+
   const schema = await FormSchemaModel.create({
     _id: uuidv4(),
     editId: uuidv4(),
@@ -171,6 +174,7 @@ router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
     type: schemaType,
     json: json as object,
     versions: [],
+    createdBy: userId,
     ...(thumbnail ? { thumbnail } : {}),
   })
 
@@ -182,7 +186,7 @@ router.post('/', requireAuth, validate(createSchemaSchema), async (ctx) => {
 // POST /api/schemas/import
 // Import a schema with deep validation.
 // ────────────────────────────────────────────
-router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) => {
+router.post('/import', requireAuth, requirePermission('schema:create'), validate(importSchemaSchema), async (ctx) => {
   const { name, type, json, thumbnail } = ctx.request.body as {
     name?: string; type?: string; json?: unknown; thumbnail?: string
   }
@@ -222,6 +226,8 @@ router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) =>
   const editId = uuidv4()
   const version = generateVersion()
 
+  const userId = (ctx.state.user as { id: string }).id
+
   const schema = await FormSchemaModel.create({
     _id: uuidv4(),
     editId,
@@ -229,6 +235,7 @@ router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) =>
     name: name.trim(),
     type: schemaType,
     json: json as object,
+    createdBy: userId,
     ...(thumbnail ? { thumbnail } : {}),
   })
 
@@ -240,7 +247,7 @@ router.post('/import', requireAuth, validate(importSchemaSchema), async (ctx) =>
 // GET /api/schemas/published
 // Lists all published schemas (no auth required).
 // ────────────────────────────────────────────
-router.get('/published', async (ctx) => {
+router.get('/published', requireAuth, async (ctx) => {
   const items = await PublishedSchemaModel.find({}, { json: 0 }).sort({ updatedAt: -1 })
 
   ctx.body = {
@@ -260,7 +267,7 @@ router.get('/published', async (ctx) => {
 // GET /api/schemas/published/:sourceId
 // Reads published schema by source FormSchema ID.
 // ────────────────────────────────────────────
-router.get('/published/:sourceId', async (ctx) => {
+router.get('/published/:sourceId', requireAuth, async (ctx) => {
   const { sourceId } = ctx.params
 
   if (!uuidValidate(sourceId)) {
@@ -284,7 +291,7 @@ router.get('/published/:sourceId', async (ctx) => {
 // GET /api/schemas/published/by-publish-id/:publishId
 // Reads published schema by publishId.
 // ────────────────────────────────────────────
-router.get('/published/by-publish-id/:publishId', async (ctx) => {
+router.get('/published/by-publish-id/:publishId', requireAuth, async (ctx) => {
   const { publishId } = ctx.params
 
   const published = await PublishedSchemaModel.findOne({ publishId })
@@ -303,7 +310,7 @@ router.get('/published/by-publish-id/:publishId', async (ctx) => {
 // Query FormSchema by editId, sort by version desc.
 // Must be registered before GET /:id to avoid param collision.
 // ────────────────────────────────────────────
-router.get('/:param/versions', async (ctx) => {
+router.get('/:param/versions', requireAuth, async (ctx) => {
   const { param } = ctx.params
   const { page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
@@ -355,7 +362,7 @@ router.get('/:param/versions', async (ctx) => {
 // GET /api/schemas/:editId/versions/:version
 // Query by editId, find version in embedded versions array or current.
 // ────────────────────────────────────────────
-router.get('/:param/versions/:version', async (ctx) => {
+router.get('/:param/versions/:version', requireAuth, async (ctx) => {
   const { param, version } = ctx.params
 
   const schema = await FormSchemaModel.findOne({ editId: param })
@@ -403,7 +410,7 @@ router.get('/:param/versions/:version', async (ctx) => {
 // Remove a specific version snapshot from the embedded versions array.
 // Cannot delete the current (active) version.
 // ────────────────────────────────────────────
-router.delete('/:param/versions/:version', async (ctx) => {
+router.delete('/:param/versions/:version', requireAuth, requirePermission('schema:delete'), async (ctx) => {
   const { param, version } = ctx.params
 
   const schema = await FormSchemaModel.findOne({ editId: param })
@@ -441,7 +448,7 @@ router.delete('/:param/versions/:version', async (ctx) => {
 // ────────────────────────────────────────────
 // GET /api/schemas/:id
 // ────────────────────────────────────────────
-router.get('/:id', async (ctx) => {
+router.get('/:id', requireAuth, async (ctx) => {
   const { id } = ctx.params
 
   if (!uuidValidate(id)) {
@@ -467,7 +474,7 @@ router.get('/:id', async (ctx) => {
 // ────────────────────────────────────────────
 const MAX_VERSIONS = 15
 
-router.put('/:id', requireAuth, validate(updateSchemaSchema), async (ctx) => {
+router.put('/:id', requireAuth, requirePermission('schema:edit'), validate(updateSchemaSchema), async (ctx) => {
   const { id } = ctx.params
   const { name, json, status, type, thumbnail } = ctx.request.body as {
     name?: string; json?: unknown; status?: string; type?: string; thumbnail?: string
@@ -558,7 +565,7 @@ router.put('/:id', requireAuth, validate(updateSchemaSchema), async (ctx) => {
 // If provided, find the schema by editId+version and publish that.
 // Otherwise publish the `:id` document.
 // ────────────────────────────────────────────
-router.post('/:id/publish', requireAuth, async (ctx) => {
+router.post('/:id/publish', requireAuth, requirePermission('schema:publish'), async (ctx) => {
   const { id } = ctx.params
   const { version: bodyVersion } = ctx.request.body as { version?: string }
 
@@ -607,6 +614,7 @@ router.post('/:id/publish', requireAuth, async (ctx) => {
       $setOnInsert: {
         _id: uuidv4(),
         sourceId: draft.editId,
+        tenantId: draft.tenantId,
       },
     },
     { upsert: true, new: true, runValidators: true },
@@ -618,7 +626,7 @@ router.post('/:id/publish', requireAuth, async (ctx) => {
 // ────────────────────────────────────────────
 // DELETE /api/schemas/:id
 // ────────────────────────────────────────────
-router.delete('/:id', requireAuth, async (ctx) => {
+router.delete('/:id', requireAuth, requirePermission('schema:delete'), async (ctx) => {
   const { id } = ctx.params
 
   if (!uuidValidate(id)) {

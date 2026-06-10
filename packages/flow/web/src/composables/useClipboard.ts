@@ -1,8 +1,8 @@
-import { ref } from 'vue'
 import type { Node } from '@vue-flow/core'
 
 const OFFSET_STEP = 20
-const copiedNodes = ref<Node[]>([])
+// Use a plain array type to avoid TS2589 from VueFlow's deep generic inference on ref<Node[]>
+const copiedNodes: { value: Record<string, unknown>[] } = { value: [] }
 let pasteCount = 0
 
 export function useClipboard() {
@@ -19,15 +19,15 @@ export function useClipboard() {
     pasteCount++
     const offset = OFFSET_STEP * pasteCount
 
-    return copiedNodes.value.map((node) => ({
+    return copiedNodes.value.map((node): Node => ({
       ...node,
       id: `node-${crypto.randomUUID()}`,
       position: {
-        x: node.position.x + offset,
-        y: node.position.y + offset,
+        x: (node.position as { x: number; y: number }).x + offset,
+        y: (node.position as { x: number; y: number }).y + offset,
       },
       selected: false,
-    }))
+    } as unknown as Node))
   }
 
   function hasClipboardContent(): boolean {

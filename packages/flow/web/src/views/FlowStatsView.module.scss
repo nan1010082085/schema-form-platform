@@ -1,0 +1,93 @@
+.container {
+  padding: var(--spacing-lg, 24px);
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, 12px);
+  margin-bottom: var(--spacing-20px, 20px);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-20, 20px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--text-color-primary, #303133);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+}
+
+.timeRangeGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+.datePicker {
+  margin-left: var(--spacing-xs, 4px);
+}
+
+.metricsRow {
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.metricCard {
+  text-align: center;
+}
+
+.metricItem {
+  padding: var(--spacing-sm, 12px) 0;
+}
+
+.metricValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.metricTotal {
+  color: var(--el-color-primary, #409eff);
+}
+
+.metricRunning {
+  color: var(--el-color-info, #909399);
+}
+
+.metricCompleted {
+  color: var(--el-color-success, #67c23a);
+}
+
+.metricDuration {
+  font-size: 20px;
+  color: var(--el-color-success, #67c23a);
+}
+
+.metricLabel {
+  margin-top: var(--spacing-xs, 4px);
+  font-size: var(--el-font-size-base, 14px);
+  color: var(--el-text-color-secondary, #909399);
+}
+
+.chartCard {
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart {
+  height: 320px;
+  width: 100%;
+}

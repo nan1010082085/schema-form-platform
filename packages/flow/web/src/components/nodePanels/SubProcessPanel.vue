@@ -5,6 +5,7 @@ import { Plus, Delete } from '@element-plus/icons-vue'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
 import HintText from './HintText.vue'
+import SubProcessSelector from '../SubProcessSelector.vue'
 import { flowApi } from '../../api/flowApi'
 import styles from './SubProcessPanel.module.scss'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
@@ -48,6 +49,18 @@ const selectedFlow = computed(() => flowList.value.find((f) => f.id === selected
 
 function onFlowSelect(definitionId: string) {
   update('subProcessDefinitionId', definitionId)
+}
+
+/* --- SubProcess Selector dialog --- */
+
+const selectorRef = ref<InstanceType<typeof SubProcessSelector>>()
+
+function openSelector() {
+  selectorRef.value?.open()
+}
+
+function onSelectorConfirm(flow: FlowDefinitionData) {
+  update('subProcessDefinitionId', flow.id)
 }
 
 /* --- Mapping mode toggle --- */
@@ -195,31 +208,41 @@ function statusLabel(status: string): string {
 </script>
 
 <template>
+  <!-- 子流程选择器弹窗 -->
+  <SubProcessSelector
+    ref="selectorRef"
+    :model-value="selectedFlowId"
+    @confirm="onSelectorConfirm"
+  />
+
   <!-- 子流程选择 -->
   <SectionToggle title="子流程配置" :count="2">
     <FieldRow label="选择子流程">
-      <el-select
-        :model-value="selectedFlowId"
-        filterable
-        :filter-method="(q: string) => { flowSearch = q }"
-        :loading="flowLoading"
-        placeholder="搜索并选择已发布的流程"
-        clearable
-        :class="styles['flow-select']"
-        @change="onFlowSelect"
-      >
-        <el-option
-          v-for="flow in filteredFlows"
-          :key="flow.id"
-          :label="flow.name"
-          :value="flow.id"
+      <div :class="styles['flow-select-row']">
+        <el-select
+          :model-value="selectedFlowId"
+          filterable
+          :filter-method="(q: string) => { flowSearch = q }"
+          :loading="flowLoading"
+          placeholder="搜索并选择已发布的流程"
+          clearable
+          :class="styles['flow-select']"
+          @change="onFlowSelect"
         >
-          <span>{{ flow.name }}</span>
-          <span v-if="flow.description" :class="styles['option-desc']">
-            {{ flow.description }}
-          </span>
-        </el-option>
-      </el-select>
+          <el-option
+            v-for="flow in filteredFlows"
+            :key="flow.id"
+            :label="flow.name"
+            :value="flow.id"
+          >
+            <span>{{ flow.name }}</span>
+            <span v-if="flow.description" :class="styles['option-desc']">
+              {{ flow.description }}
+            </span>
+          </el-option>
+        </el-select>
+        <el-button size="small" @click="openSelector">浏览</el-button>
+      </div>
     </FieldRow>
 
     <template v-if="selectedFlow">

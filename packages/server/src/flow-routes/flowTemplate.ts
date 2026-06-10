@@ -516,6 +516,9 @@ router.post('/:id/apply', requireAuth, validate(applyFlowTemplateSchema), async 
   definition.currentVersionId = version._id
   await definition.save()
 
+  // Increment template use count
+  await FlowTemplateModel.findByIdAndUpdate(id, { $inc: { useCount: 1 } })
+
   ctx.status = 201
   ctx.body = { success: true, data: definition }
 })

@@ -1,31 +1,9 @@
 import { ref, computed } from 'vue'
-import dagre from '@dagrejs/dagre'
-import { BpmnElementType, DEFAULT_NODE_SIZES } from '@schema-form/flow-shared'
-import type { Node } from '@vue-flow/core'
+import type { Node, Edge } from '@vue-flow/core'
+import { applyAutoLayout, type LayoutDirection } from '../utils/autoLayout.js'
 import { useFlowGraphStore } from '../stores/flowGraph.js'
 
-export type LayoutDirection = 'TB' | 'LR'
-
-const VF_TO_BPMN: Record<string, BpmnElementType> = {
-  'start-event': BpmnElementType.StartEvent,
-  'end-event': BpmnElementType.EndEvent,
-  'timer-event': BpmnElementType.TimerEvent,
-  'user-task': BpmnElementType.UserTask,
-  'service-task': BpmnElementType.ServiceTask,
-  'script-task': BpmnElementType.ScriptTask,
-  'send-task': BpmnElementType.SendTask,
-  'receive-task': BpmnElementType.ReceiveTask,
-  'exclusive-gateway': BpmnElementType.ExclusiveGateway,
-  'parallel-gateway': BpmnElementType.ParallelGateway,
-  'inclusive-gateway': BpmnElementType.InclusiveGateway,
-  'sub-process': BpmnElementType.SubProcess,
-}
-
-function resolveNodeSize(node: Node): { width: number; height: number } {
-  const bpmnType = VF_TO_BPMN[node.type ?? '']
-  if (bpmnType) return DEFAULT_NODE_SIZES[bpmnType]
-  return { width: 160, height: 80 }
-}
+export type { LayoutDirection }
 
 export function useAutoLayout() {
   const graphStore = useFlowGraphStore()
@@ -36,46 +14,24 @@ export function useAutoLayout() {
 
   const directionLabel = computed(() => (direction.value === 'TB' ? '垂直' : '水平'))
 
-  function applyLayout(): void {
+  /**
+   * Compute the layout result without mutating the store.
+   * Returns the updated nodes/edges for the caller to apply as needed.
+   */
+  function computeLayout(): { nodes: Node[]; edges: Edge[] } | null {
     const nodes = graphStore.nodes
     const edges = graphStore.edges
-    if (nodes.length === 0) return
+    if (nodes.length === 0) return null
+    return applyAutoLayout(nodes, edges, { direction: direction.value, nodeSep: nodeSep.value, rankSep: rankSep.value })
+  }
 
-    const g = new dagre.graphlib.Graph()
-    g.setGraph({
-      rankdir: direction.value,
-      nodesep: nodeSep.value,
-      ranksep: rankSep.value,
-      marginx: 20,
-      marginy: 20,
-    })
-    g.setDefaultEdgeLabel(() => ({}))
-
-    for (const node of nodes) {
-      const size = resolveNodeSize(node)
-      g.setNode(node.id, { width: size.width, height: size.height })
-    }
-
-    for (const edge of edges) {
-      g.setEdge(edge.source, edge.target)
-    }
-
-    dagre.layout(g)
-
-    const updatedNodes = nodes.map((node) => {
-      const pos = g.node(node.id)
-      if (!pos) return node
-      const size = resolveNodeSize(node)
-      return {
-        ...node,
-        position: {
-          x: pos.x - size.width / 2,
-          y: pos.y - size.height / 2,
-        },
-      }
-    })
-
-    graphStore.loadGraph({ nodes: updatedNodes, edges })
+  /**
+   * Apply layout directly to the store (convenience for callers that
+   * don't need undo integration).
+   */
+  function applyLayout(): void {
+    const result = computeLayout()
+    if (result) graphStore.loadGraph(result)
   }
 
   function toggleDirection() {
@@ -87,6 +43,7 @@ export function useAutoLayout() {
     nodeSep,
     rankSep,
     directionLabel,
+    computeLayout,
     applyLayout,
     toggleDirection,
   }

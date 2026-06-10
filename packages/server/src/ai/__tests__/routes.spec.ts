@@ -452,3 +452,244 @@ describe('DELETE /api/ai/conversations/:id', () => {
     expect(res.body.success).toBe(true)
   })
 })
+
+describe('Tool error handling', () => {
+  it('sends tool_error event when tool execution returns error in result', async () => {
+    const mockConvo = { _id: 'conv-err-1', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockReturnValue(
+      mockStreamEvents([
+        { event: 'on_chain_start', name: 'editor' },
+        {
+          event: 'on_tool_start',
+          name: 'validate_schema',
+          data: { input: { widgetsJson: 'invalid json' } },
+          run_id: 'tc-err-1',
+        },
+        {
+          event: 'on_tool_end',
+          name: 'validate_schema',
+          data: { output: { error: 'JSON 解析失败: Unexpected token' } },
+          run_id: 'tc-err-1',
+        },
+        { event: 'on_chain_end', name: '__end__', data: {} },
+      ]),
+    )
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '验证这个表单',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"tool_error"')
+    expect(res.text).toContain('"toolName":"validate_schema"')
+    expect(res.text).toContain('"runId":"tc-err-1"')
+    expect(res.text).toContain('JSON 解析失败')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('sends tool_error event when tool execution has error field in data', async () => {
+    const mockConvo = { _id: 'conv-err-2', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockReturnValue(
+      mockStreamEvents([
+        { event: 'on_chain_start', name: 'flow' },
+        {
+          event: 'on_tool_start',
+          name: 'search_schemas',
+          data: { input: { keyword: 'test' } },
+          run_id: 'tc-err-2',
+        },
+        {
+          event: 'on_tool_end',
+          name: 'search_schemas',
+          data: { error: 'Database connection timeout', output: null },
+          run_id: 'tc-err-2',
+        },
+        { event: 'on_chain_end', name: '__end__', data: {} },
+      ]),
+    )
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '搜索表单',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"tool_error"')
+    expect(res.text).toContain('"toolName":"search_schemas"')
+    expect(res.text).toContain('Database connection timeout')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('sends tool_error with fallback message when error content is empty', async () => {
+    const mockConvo = { _id: 'conv-err-3', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockReturnValue(
+      mockStreamEvents([
+        { event: 'on_chain_start', name: 'editor' },
+        {
+          event: 'on_tool_start',
+          name: 'generate_schema',
+          data: { input: {} },
+          run_id: 'tc-err-3',
+        },
+        {
+          event: 'on_tool_end',
+          name: 'generate_schema',
+          data: { output: { error: '' } },
+          run_id: 'tc-err-3',
+        },
+        { event: 'on_chain_end', name: '__end__', data: {} },
+      ]),
+    )
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '生成表单',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"tool_error"')
+    expect(res.text).toContain('"toolName":"generate_schema"')
+    expect(res.text).toContain('工具执行失败')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('sends regular tool_call result when tool execution succeeds', async () => {
+    const mockConvo = { _id: 'conv-err-4', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockReturnValue(
+      mockStreamEvents([
+        { event: 'on_chain_start', name: 'editor' },
+        {
+          event: 'on_tool_start',
+          name: 'search_schemas',
+          data: { input: { keyword: '用户' } },
+          run_id: 'tc-ok-1',
+        },
+        {
+          event: 'on_tool_end',
+          name: 'search_schemas',
+          data: { output: { success: true, data: { total: 5 } } },
+          run_id: 'tc-ok-1',
+        },
+        { event: 'on_chain_end', name: '__end__', data: {} },
+      ]),
+    )
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '搜索表单',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"tool_call"')
+    expect(res.text).toContain('"phase":"result"')
+    expect(res.text).not.toContain('"type":"tool_error"')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('handles network timeout errors with user-friendly message', async () => {
+    const mockConvo = { _id: 'conv-err-5', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockImplementation(() => {
+      throw new Error('Connection timed out after 30000ms')
+    })
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '测试超时',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"error"')
+    expect(res.text).toContain('AI 响应超时，请稍后重试')
+    expect(res.text).toContain('"errorType":"timeout"')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('handles rate limit errors with user-friendly message', async () => {
+    const mockConvo = { _id: 'conv-err-6', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockImplementation(() => {
+      throw new Error('Rate limit exceeded: 429 Too Many Requests')
+    })
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '测试限流',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"error"')
+    expect(res.text).toContain('AI 服务繁忙，请稍后重试')
+    expect(res.text).toContain('"errorType":"rate_limit"')
+    expect(res.text).toContain('"recoverable":true')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('handles network connection errors with user-friendly message', async () => {
+    const mockConvo = { _id: 'conv-err-7', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockImplementation(() => {
+      throw new Error('fetch failed ECONNREFUSED 127.0.0.1:11434')
+    })
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '测试网络错误',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"error"')
+    expect(res.text).toContain('网络连接异常，请检查网络后重试')
+    expect(res.text).toContain('"errorType":"network"')
+    expect(res.text).toContain('"type":"done"')
+  })
+
+  it('handles invalid API key errors with non-recoverable flag', async () => {
+    const mockConvo = { _id: 'conv-err-8', messages: [] }
+    vi.mocked(convoService.createConversation).mockResolvedValue(mockConvo as any)
+    vi.mocked(convoService.appendMessage).mockResolvedValue(null)
+
+    vi.mocked(graph.streamEvents).mockImplementation(() => {
+      throw new Error('Invalid API key provided: sk-xxx')
+    })
+
+    const res = await request('POST', '/api/ai/chat', {
+      message: '测试 API key 错误',
+      context: { source: 'standalone' },
+    })
+
+    expect(res.status).toBe(200)
+    expect(res.sse).toBe(true)
+    expect(res.text).toContain('"type":"error"')
+    expect(res.text).toContain('AI 服务配置异常，请联系管理员')
+    expect(res.text).toContain('"errorType":"invalid_api_key"')
+    expect(res.text).toContain('"recoverable":false')
+    expect(res.text).toContain('"type":"done"')
+  })
+})

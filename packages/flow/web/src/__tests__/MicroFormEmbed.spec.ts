@@ -11,6 +11,9 @@ vi.mock('../components/MicroFormEmbed.module.scss', () => ({
   },
 }))
 
+// Track postMessage calls for assertions on fg:set-mode
+const postMessageSpy = vi.fn()
+
 // Stub micro-app as a Vue component that emits 'created' on mount
 const microAppStub = {
   name: 'micro-app',
@@ -36,6 +39,7 @@ function createWrapper(props: Record<string, unknown> = {}) {
 describe('MicroFormEmbed', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    postMessageSpy.mockClear()
   })
 
   afterEach(() => {
@@ -95,6 +99,59 @@ describe('MicroFormEmbed', () => {
     const app = wrapper.findComponent({ name: 'micro-app' })
     const data = app.props('data')
     expect(data.initialData).toEqual(initialData)
+  })
+
+  it('includes editableFields and readonlyFields in microAppData', () => {
+    const wrapper = createWrapper({
+      publishId: 'pub-123',
+      mode: 'partial',
+      editableFields: ['comment', 'amount'],
+      readonlyFields: ['name'],
+    })
+    const app = wrapper.findComponent({ name: 'micro-app' })
+    const data = app.props('data')
+    expect(data.mode).toBe('partial')
+    expect(data.editableFields).toEqual(['comment', 'amount'])
+    expect(data.readonlyFields).toEqual(['name'])
+  })
+
+  // ── Test: fg:set-mode sent on created ──
+  it('sends fg:set-mode message to child iframe after created', async () => {
+    const mockIframe = { contentWindow: { postMessage: postMessageSpy } }
+    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
+    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
+
+    createWrapper({ publishId: 'pub-123', mode: 'partial', editableFields: ['comment'] })
+
+    // requestAnimationFrame needs timer advancement to flush
+    await vi.advanceTimersByTimeAsync(16)
+
+    expect(postMessageSpy).toHaveBeenCalled()
+    const setModeMsg = postMessageSpy.mock.calls.find(
+      (call: unknown[]) => (call[0] as Record<string, unknown>).type === 'fg:set-mode',
+    )
+    expect(setModeMsg).toBeTruthy()
+    const msg = setModeMsg![0] as Record<string, unknown>
+    expect(msg.mode).toBe('partial')
+    expect(msg.editableFields).toEqual(['comment'])
+  })
+
+  it('sends fg:set-data with initialData after created', async () => {
+    const mockIframe = { contentWindow: { postMessage: postMessageSpy } }
+    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
+    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
+
+    const initialData = { name: 'test' }
+    createWrapper({ publishId: 'pub-123', initialData })
+
+    await vi.advanceTimersByTimeAsync(16)
+
+    const setDataMsg = postMessageSpy.mock.calls.find(
+      (call: unknown[]) => (call[0] as Record<string, unknown>).type === 'fg:set-data',
+    )
+    expect(setDataMsg).toBeTruthy()
+    const msg = setDataMsg![0] as Record<string, unknown>
+    expect(msg.data).toEqual(initialData)
   })
 
   // ── Test 3: Exposed methods ──

@@ -40,12 +40,84 @@ describe('usePreviewInteraction', () => {
       })
     })
 
+    it('opens field detail panel on selection', () => {
+      interaction.selectField(mockWidget)
+
+      expect(interaction.isFieldDetailVisible.value).toBe(true)
+    })
+
+    it('closes field detail panel', () => {
+      interaction.selectField(mockWidget)
+      interaction.closeFieldDetail()
+
+      expect(interaction.isFieldDetailVisible.value).toBe(false)
+      // detail is still populated, just hidden
+      expect(interaction.selectedFieldDetail.value).not.toBeNull()
+    })
+
     it('clears field selection', () => {
       interaction.selectField(mockWidget)
       interaction.clearFieldSelection()
 
       expect(interaction.selectedFieldId.value).toBeNull()
       expect(interaction.selectedFieldDetail.value).toBeNull()
+      expect(interaction.isFieldDetailVisible.value).toBe(false)
+    })
+  })
+
+  describe('Inline field editing', () => {
+    it('starts inline edit for a widget', () => {
+      interaction.startInlineEdit(mockWidget)
+
+      expect(interaction.inlineEditWidgetId.value).toBe('w1')
+      expect(interaction.inlineEditData.value).toEqual({
+        label: '用户名',
+        field: 'username',
+        placeholder: '请输入用户名',
+        required: true,
+      })
+      expect(interaction.isInInlineEditMode.value).toBe(true)
+    })
+
+    it('updates inline edit data', () => {
+      interaction.startInlineEdit(mockWidget)
+      interaction.updateInlineEdit('label', '新用户名')
+
+      expect(interaction.inlineEditData.value!.label).toBe('新用户名')
+    })
+
+    it('commits inline edit and returns patch', () => {
+      interaction.startInlineEdit(mockWidget)
+      interaction.updateInlineEdit('label', '新用户名')
+
+      const patch = interaction.commitInlineEdit()
+
+      expect(patch).toEqual({
+        widgetId: 'w1',
+        changes: {
+          label: '新用户名',
+          field: 'username',
+          placeholder: '请输入用户名',
+          required: true,
+        },
+      })
+      // After commit, inline edit state is cleared
+      expect(interaction.inlineEditWidgetId.value).toBeNull()
+      expect(interaction.isInInlineEditMode.value).toBe(false)
+    })
+
+    it('cancels inline edit', () => {
+      interaction.startInlineEdit(mockWidget)
+      interaction.cancelInlineEdit()
+
+      expect(interaction.inlineEditWidgetId.value).toBeNull()
+      expect(interaction.inlineEditData.value).toBeNull()
+      expect(interaction.isInInlineEditMode.value).toBe(false)
+    })
+
+    it('commitInlineEdit returns null when not in edit mode', () => {
+      const patch = interaction.commitInlineEdit()
+      expect(patch).toBeNull()
     })
   })
 
@@ -211,6 +283,7 @@ describe('usePreviewInteraction', () => {
       interaction.toggleWidgetSelection('w1')
       interaction.openFieldEdit(mockWidget)
       interaction.setNodeStatus('n1', 'added')
+      interaction.startInlineEdit(mockWidget)
 
       // Reset
       interaction.reset()
@@ -223,6 +296,8 @@ describe('usePreviewInteraction', () => {
       expect(interaction.isEditDialogVisible.value).toBe(false)
       expect(interaction.editContext.value).toBeNull()
       expect(interaction.nodeStatusMap.value.size).toBe(0)
+      expect(interaction.inlineEditWidgetId.value).toBeNull()
+      expect(interaction.inlineEditData.value).toBeNull()
     })
   })
 })

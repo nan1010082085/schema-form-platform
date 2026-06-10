@@ -1,7 +1,9 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IWidgetTemplate {
   _id: string
+  tenantId: string
   name: string
   description: string
   category: 'form' | 'layout' | 'table' | 'search' | 'chart' | 'business' | 'report' | 'other'
@@ -19,6 +21,7 @@ export interface IWidgetTemplate {
 const widgetTemplateSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     name: { type: String, required: true, maxlength: 100 },
     description: { type: String, default: '', maxlength: 500 },
     category: {
@@ -50,6 +53,8 @@ const widgetTemplateSchema = new mongoose.Schema(
 widgetTemplateSchema.index({ category: 1, isBuiltin: 1 })
 widgetTemplateSchema.index({ tags: 1 })
 widgetTemplateSchema.index({ name: 'text', description: 'text' })
+
+widgetTemplateSchema.plugin(tenantPlugin)
 
 export const WidgetTemplateModel =
   mongoose.models.WidgetTemplate ?? mongoose.model<IWidgetTemplate>('WidgetTemplate', widgetTemplateSchema)

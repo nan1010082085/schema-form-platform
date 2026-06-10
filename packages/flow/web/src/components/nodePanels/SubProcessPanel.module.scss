@@ -1,5 +1,11 @@
+.flow-select-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .flow-select {
-  width: 100%;
+  flex: 1;
 }
 
 .option-desc {

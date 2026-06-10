@@ -3,12 +3,14 @@
  * AiConversationSearch — 对话列表搜索组件
  *
  * 搜索对话标题和消息内容，展示匹配结果。
+ * 支持时间范围筛选和来源筛选。
  * 点击结果跳转到对应对话。
  */
 
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, computed, onBeforeUnmount } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import type { Conversation } from '@/types'
+import type { SearchConversationsParams } from '@/api/aiApi'
 
 export interface AiConversationSearchResult {
   conversations: Conversation[]
@@ -27,21 +29,50 @@ const total = ref(0)
 const searching = ref(false)
 const panelVisible = ref(false)
 
+// ---- 筛选状态 ----
+const filtersExpanded = ref(false)
+const startDate = ref('')
+const endDate = ref('')
+const sourceFilter = ref('')
+
+const SOURCE_OPTIONS = [
+  { value: '', label: '全部来源' },
+  { value: 'editor', label: 'Editor' },
+  { value: 'flow', label: 'Flow' },
+  { value: 'standalone', label: 'AI' },
+]
+
+const hasActiveFilters = computed(() =>
+  startDate.value !== '' || endDate.value !== '' || sourceFilter.value !== '',
+)
+
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-function debounceSearch(q: string): void {
+function debounceSearch(): void {
   if (searchTimer) clearTimeout(searchTimer)
-  if (!q.trim()) {
+
+  const hasQuery = query.value.trim() !== ''
+  const hasFilters = hasActiveFilters.value
+
+  if (!hasQuery && !hasFilters) {
     results.value = []
     total.value = 0
     panelVisible.value = false
     return
   }
+
   searching.value = true
   panelVisible.value = true
+
   searchTimer = setTimeout(async () => {
     try {
-      const data = await store.searchConversationsAction(q)
+      const params: SearchConversationsParams = {}
+      if (query.value.trim()) params.keyword = query.value.trim()
+      if (startDate.value) params.startDate = startDate.value
+      if (endDate.value) params.endDate = endDate.value
+      if (sourceFilter.value) params.source = sourceFilter.value
+
+      const data = await store.searchConversationsAction(params)
       results.value = data.conversations
       total.value = data.total
     } catch {
@@ -53,7 +84,8 @@ function debounceSearch(q: string): void {
   }, 300)
 }
 
-watch(query, (val) => debounceSearch(val))
+watch(query, () => debounceSearch())
+watch([startDate, endDate, sourceFilter], () => debounceSearch())
 
 function handleSelect(id: string): void {
   emit('select', id)
@@ -63,7 +95,14 @@ function handleSelect(id: string): void {
 
 function handleClear(): void {
   query.value = ''
+  startDate.value = ''
+  endDate.value = ''
+  sourceFilter.value = ''
   panelVisible.value = false
+}
+
+function toggleFilters(): void {
+  filtersExpanded.value = !filtersExpanded.value
 }
 
 /** 格式化时间 YYYYMMDD hhmmss */
@@ -101,13 +140,52 @@ onBeforeUnmount(() => {
         type="text"
       />
       <button
-        v-if="query"
+        :class="[$style.filterToggle, { [$style.filterToggleActive]: hasActiveFilters || filtersExpanded }]"
+        title="筛选"
+        @click="toggleFilters"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+      </button>
+      <button
+        v-if="query || hasActiveFilters"
         :class="$style.clearBtn"
         title="清除"
         @click="handleClear"
       >
         &times;
       </button>
+    </div>
+
+    <!-- Filter panel -->
+    <div v-if="filtersExpanded" :class="$style.filterPanel">
+      <div :class="$style.filterRow">
+        <label :class="$style.filterLabel">来源</label>
+        <select v-model="sourceFilter" :class="$style.filterSelect">
+          <option v-for="opt in SOURCE_OPTIONS" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+      <div :class="$style.filterRow">
+        <label :class="$style.filterLabel">时间</label>
+        <div :class="$style.filterDateRange">
+          <input
+            v-model="startDate"
+            type="date"
+            :class="$style.filterDate"
+            placeholder="开始日期"
+          />
+          <span :class="$style.filterDateSep">~</span>
+          <input
+            v-model="endDate"
+            type="date"
+            :class="$style.filterDate"
+            placeholder="结束日期"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Search results -->

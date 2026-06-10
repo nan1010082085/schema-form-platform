@@ -24,6 +24,7 @@ const DEFAULT_USER: Readonly<UserContext> = Object.freeze({
   deptId: '',
   deptName: '',
   roles: Object.freeze([]) as unknown as string[],
+  permissions: Object.freeze([]) as unknown as string[],
 })
 
 /**

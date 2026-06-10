@@ -14,7 +14,8 @@ let observerInstalled = false
 /**
  * 安装样式防污染 MutationObserver
  *
- * 剥离子应用注入的 :root / html / body 规则，防止 Element Plus 默认主题覆盖宿主。
+ * 剥离子应用注入的 html / body 视觉样式规则，防止子应用覆盖宿主页面样式。
+ * 仅在非 iframe 模式下需要（iframe 有天然的 CSS 隔离边界）。
  * 幂等——多次调用只安装一次。
  */
 export function installStyleGuard(): void {
@@ -24,18 +25,25 @@ export function installStyleGuard(): void {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
-        if (node instanceof HTMLStyleElement && node.textContent) {
-          node.textContent = node.textContent.replace(
-            /([^{}]+)\{[^}]*\}/g,
-            (match, selectors: string) => {
-              // 保留 :root 的 CSS 变量定义（不会影响宿主页面）
-              if (/\b:root\b/.test(selectors) && !/\b(html|body)\b/.test(selectors)) {
-                return match
-              }
-              // 删除 html / body 的视觉样式规则
-              return /(?:^|[:,\s])\s*(?:html|body)\b/.test(selectors) ? '' : match
-            },
-          )
+        if (!(node instanceof HTMLStyleElement) || !node.textContent) continue
+
+        const original = node.textContent
+        // 移除以 html 或 body 开头的选择器规则（含逗号分隔的复合选择器）
+        // 保留 :root CSS 变量定义和不涉及 html/body 的规则
+        const sanitized = original.replace(
+          /([^{}]+)\{([^}]*)\}/g,
+          (match, selectors: string, _declarations: string) => {
+            // 保留 :root 纯 CSS 变量定义
+            if (/^\s*:root\s*$/.test(selectors)) return match
+            // 移除选择器列表中包含 html 或 body 的规则
+            const hasHtmlBody = selectors.split(',').some(
+              (s) => /(?:^|[:,\s])\s*(?:html|body)\b/.test(s.trim()),
+            )
+            return hasHtmlBody ? '' : match
+          },
+        )
+        if (sanitized !== original) {
+          node.textContent = sanitized
         }
       }
     }

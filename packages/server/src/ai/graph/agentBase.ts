@@ -107,56 +107,164 @@ export function classifyTaskComplexity(message: string): TaskType {
 }
 
 // ────────────────────────────────────────────
-// Message history builder (with truncation)
+// Token estimation & dynamic truncation
 // ────────────────────────────────────────────
 
-const MAX_HISTORY_TURNS = 5
+/**
+ * Estimate token count for a message.
+ *
+ * Uses a simple heuristic: ~1.5 tokens per Chinese character,
+ * ~0.75 tokens per English word, plus overhead for JSON/structured content.
+ * This is intentionally fast (no API call) and errs on the side of
+ * over-counting to avoid context overflow.
+ */
+export function estimateTokens(text: string): number {
+  if (!text) return 0
+  // Count CJK characters (each ~1.5 tokens)
+  const cjkCount = (text.match(/[一-鿿㐀-䶿]/g) ?? []).length
+  // Count non-CJK characters (rough: 4 chars ≈ 1 token)
+  const nonCjkLength = text.length - cjkCount
+  // Overhead for JSON structure (brackets, quotes, keys)
+  const jsonOverhead = (text.match(/[{}[\]":,]/g) ?? []).length * 0.1
+  return Math.ceil(cjkCount * 1.5 + nonCjkLength / 4 + jsonOverhead)
+}
 
 /**
- * Truncate conversation history by conversation turns, preserving
- * complete user-assistant pairs. A "turn" is a user message followed
- * by the subsequent assistant response.
- *
- * Keeps the most recent N turns to maintain coherent multi-turn context.
- * The last message (current user message) is always excluded from history.
- *
- * Used by editor/flow agent nodes to keep the LLM context window manageable.
+ * Estimate token count for a LangGraph BaseMessage.
+ * Handles string content, content arrays, and tool_calls arguments.
  */
-export function truncateMessages<T extends { constructor: { name: string } }>(
-  messages: readonly T[],
-  maxTurns = MAX_HISTORY_TURNS,
-): T[] {
-  const historyMessages = messages.slice(0, -1)
+export function estimateMessageTokens(message: { content?: unknown; tool_calls?: unknown[]; additional_kwargs?: unknown }): number {
+  let tokens = 0
 
-  // Scan backwards to find turn boundaries.
-  // A turn starts with a HumanMessage and includes all subsequent messages
-  // up to (but not including) the next HumanMessage.
-  const turnStarts: number[] = []
-  for (let i = historyMessages.length - 1; i >= 0; i--) {
-    if (historyMessages[i].constructor.name === 'HumanMessage') {
-      turnStarts.unshift(i)
+  // Content
+  if (typeof message.content === 'string') {
+    tokens += estimateTokens(message.content)
+  } else if (Array.isArray(message.content)) {
+    for (const part of message.content) {
+      if (typeof part === 'string') {
+        tokens += estimateTokens(part)
+      } else if (part && typeof part === 'object' && 'text' in part && typeof (part as { text?: unknown }).text === 'string') {
+        tokens += estimateTokens((part as { text: string }).text)
+      }
     }
   }
 
-  // Keep the last N complete turns
-  let cutoffIndex = 0
-  if (turnStarts.length > maxTurns) {
-    cutoffIndex = turnStarts[turnStarts.length - maxTurns]
+  // Tool calls (AIMessage with tool_calls)
+  if (Array.isArray(message.tool_calls)) {
+    for (const tc of message.tool_calls) {
+      const args = (tc as { args?: unknown }).args
+      if (typeof args === 'string') {
+        tokens += estimateTokens(args)
+      } else if (args && typeof args === 'object') {
+        tokens += estimateTokens(JSON.stringify(args))
+      }
+    }
   }
 
-  // Ensure the cutoff doesn't break a tool_calls → ToolMessage chain.
-  // If the message at cutoffIndex is an AIMessage with tool_calls,
-  // we need to include the subsequent ToolMessages too.
-  // Walk forward from cutoffIndex to find a safe cut point.
-  while (cutoffIndex > 0 && cutoffIndex < historyMessages.length) {
-    const msg = historyMessages[cutoffIndex]
-    const prevMsg = historyMessages[cutoffIndex - 1]
+  // reasoning_content (DeepSeek chain-of-thought)
+  const ak = message.additional_kwargs as Record<string, unknown> | undefined
+  if (ak && typeof ak.reasoning_content === 'string') {
+    tokens += estimateTokens(ak.reasoning_content)
+  }
+
+  // Base overhead per message (role, formatting, etc.)
+  tokens += 4
+
+  return tokens
+}
+
+/** Default token budget for conversation history (non-graph path). */
+const DEFAULT_HISTORY_TOKEN_BUDGET = 4000
+
+/**
+ * Token budget for LangGraph agent nodes.
+ *
+ * DeepSeek v4-pro has 128K context window. We allocate:
+ * - ~8K for system prompt
+ * - ~2K for the new user message
+ * - ~60K for conversation history
+ * - Reserve the rest for LLM response and safety margin
+ */
+const LANGGRAPH_HISTORY_TOKEN_BUDGET = 60_000
+
+/** Minimum number of recent messages to always keep. */
+const MIN_KEEP_MESSAGES = 4
+
+/**
+ * Truncate conversation history based on token budget.
+ *
+ * Strategy:
+ * 1. Always keep the first message (original user request) if possible
+ * 2. Always keep the last MIN_KEEP_MESSAGES messages
+ * 3. Fill the middle from newest to oldest until token budget is exhausted
+ * 4. Never break a tool_calls → ToolMessage chain
+ *
+ * This replaces the fixed turn-count truncation to better handle
+ * conversations with varying message lengths (tool results can be huge).
+ */
+export function truncateMessages<T extends { constructor: { name: string }; content?: unknown }>(
+  messages: readonly T[],
+  tokenBudget: number = DEFAULT_HISTORY_TOKEN_BUDGET,
+): T[] {
+  const historyMessages = messages.slice(0, -1)
+
+  if (historyMessages.length <= MIN_KEEP_MESSAGES) {
+    return [...historyMessages]
+  }
+
+  // Estimate tokens per message
+  const tokenCosts = historyMessages.map((m) => {
+    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content ?? '')
+    return estimateTokens(content)
+  })
+
+  // Always include the last MIN_KEEP_MESSAGES messages
+  const alwaysIncludeStart = historyMessages.length - MIN_KEEP_MESSAGES
+  let totalTokens = 0
+  for (let i = alwaysIncludeStart; i < historyMessages.length; i++) {
+    totalTokens += tokenCosts[i]
+  }
+
+  // Walk backwards from the "always include" boundary to fill budget
+  let cutoffIndex = alwaysIncludeStart
+  for (let i = alwaysIncludeStart - 1; i >= 0; i--) {
+    if (totalTokens + tokenCosts[i] > tokenBudget) break
+    totalTokens += tokenCosts[i]
+    cutoffIndex = i
+  }
+
+  // Always try to include the first message (original user request)
+  if (cutoffIndex > 0 && cutoffIndex <= 1) {
+    cutoffIndex = 0
+  }
+
+  // Ensure cutoff doesn't break a tool_calls → ToolMessage chain
+  cutoffIndex = findSafeCutoffPoint(historyMessages, cutoffIndex)
+
+  return historyMessages.slice(cutoffIndex)
+}
+
+/**
+ * Find a safe cutoff point that doesn't break tool_calls → ToolMessage chains.
+ *
+ * If the message at cutoffIndex is a ToolMessage, walk back to before
+ * the corresponding AIMessage with tool_calls.
+ * If the message before cutoffIndex is an AIMessage with tool_calls,
+ * walk forward to include the ToolMessages.
+ */
+function findSafeCutoffPoint<T extends { constructor: { name: string } }>(
+  messages: readonly T[],
+  cutoffIndex: number,
+): number {
+  // Ensure we don't land in the middle of a tool chain
+  while (cutoffIndex > 0 && cutoffIndex < messages.length) {
+    const msg = messages[cutoffIndex]
+    const prevMsg = messages[cutoffIndex - 1]
 
     // If previous message is AIMessage with tool_calls, current must be ToolMessage
     if (prevMsg.constructor.name === 'AIMessage' || prevMsg.constructor.name === 'AIMessageChunk') {
       const hasToolCalls = (prevMsg as unknown as { tool_calls?: unknown[] }).tool_calls?.length
       if (hasToolCalls && msg.constructor.name !== 'ToolMessage') {
-        // Move cutoff back to include the AIMessage with tool_calls
         cutoffIndex--
         continue
       }
@@ -171,7 +279,121 @@ export function truncateMessages<T extends { constructor: { name: string } }>(
     break
   }
 
-  return historyMessages.slice(cutoffIndex)
+  return cutoffIndex
+}
+
+/**
+ * Find safe cutoff using instanceof checks (for LangGraph BaseMessage objects).
+ *
+ * This variant works with actual LangGraph message instances where
+ * constructor.name may differ due to bundling/minification.
+ */
+function findSafeCutoffPointForLangGraph<T extends { constructor: Function }>(
+  messages: readonly T[],
+  cutoffIndex: number,
+): number {
+  // Lazily import to avoid circular deps at module level
+  const isAiMessage = (m: T): boolean => {
+    const name = m.constructor.name
+    return name === 'AIMessage' || name === 'AIMessageChunk'
+  }
+  const hasToolCalls = (m: T): boolean => {
+    const tc = (m as unknown as { tool_calls?: unknown[] }).tool_calls
+    return Array.isArray(tc) && tc.length > 0
+  }
+  const isToolMessage = (m: T): boolean => m.constructor.name === 'ToolMessage'
+
+  while (cutoffIndex > 0 && cutoffIndex < messages.length) {
+    const msg = messages[cutoffIndex]
+    const prevMsg = messages[cutoffIndex - 1]
+
+    // If previous is AIMessage with tool_calls, current must be ToolMessage
+    if (isAiMessage(prevMsg) && hasToolCalls(prevMsg) && !isToolMessage(msg)) {
+      cutoffIndex--
+      continue
+    }
+
+    // If current is ToolMessage, we're inside a tool chain — move back
+    if (isToolMessage(msg)) {
+      cutoffIndex--
+      continue
+    }
+
+    break
+  }
+
+  return cutoffIndex
+}
+
+/**
+ * Truncate messages for LangGraph agent nodes.
+ *
+ * Uses a larger token budget (60K) than the non-graph path since
+ * DeepSeek v4-pro has 128K context. The strategy is:
+ *
+ * 1. If total tokens fit within budget, return all messages unchanged
+ * 2. Always keep the last MIN_KEEP_MESSAGES messages (recent tool call results are critical)
+ * 3. Keep the first HumanMessage (original user request) if possible
+ * 4. Fill the middle from newest to oldest until budget is exhausted
+ * 5. Never break a tool_calls -> ToolMessage chain
+ * 6. If first message gets dropped, insert a summary placeholder
+ *
+ * @param messages - LangGraph state.messages (BaseMessage[])
+ * @param tokenBudget - max tokens for history (default 60K)
+ * @returns truncated message array (new array, does not mutate input)
+ */
+export function truncateMessagesForLangGraph<T extends { constructor: Function; content?: unknown; tool_calls?: unknown[]; additional_kwargs?: unknown }>(
+  messages: readonly T[],
+  tokenBudget: number = LANGGRAPH_HISTORY_TOKEN_BUDGET,
+): T[] {
+  if (messages.length <= MIN_KEEP_MESSAGES) {
+    return [...messages]
+  }
+
+  // Fast path: estimate total tokens first
+  let totalTokens = 0
+  const tokenCosts: number[] = []
+  for (const m of messages) {
+    const cost = estimateMessageTokens(m)
+    tokenCosts.push(cost)
+    totalTokens += cost
+  }
+
+  // If within budget, return as-is
+  if (totalTokens <= tokenBudget) {
+    return [...messages]
+  }
+
+  console.log(`[truncateMessages] 触发截断: ${totalTokens} tokens > ${tokenBudget} budget, ${messages.length} messages`)
+
+  // Strategy: keep last MIN_KEEP_MESSAGES + fill from newest to oldest
+  const alwaysIncludeStart = messages.length - MIN_KEEP_MESSAGES
+  let usedTokens = 0
+  for (let i = alwaysIncludeStart; i < messages.length; i++) {
+    usedTokens += tokenCosts[i]
+  }
+
+  // Walk backwards from alwaysIncludeStart to fill budget
+  let cutoffIndex = alwaysIncludeStart
+  for (let i = alwaysIncludeStart - 1; i >= 0; i--) {
+    if (usedTokens + tokenCosts[i] > tokenBudget) break
+    usedTokens += tokenCosts[i]
+    cutoffIndex = i
+  }
+
+  // Always try to include the first message (original user request)
+  if (cutoffIndex > 0 && cutoffIndex <= 1) {
+    cutoffIndex = 0
+  }
+
+  // Ensure cutoff doesn't break a tool_calls → ToolMessage chain
+  cutoffIndex = findSafeCutoffPointForLangGraph(messages, cutoffIndex)
+
+  const truncated = messages.slice(cutoffIndex)
+
+  console.log(`[truncateMessages] 截断完成: ${messages.length} -> ${truncated.length} messages, dropped ${cutoffIndex} from front`)
+
+  return truncated
 }
 
 /**
@@ -180,7 +402,7 @@ export function truncateMessages<T extends { constructor: { name: string } }>(
  * Used by schemaGenerator.ts for direct (non-graph) LLM calls.
  * LangGraph nodes handle message management via the graph state.
  *
- * Accepts a loose state shape since schemaGenerator constructs its own.
+ * Uses token-budget-based truncation instead of fixed turn count.
  */
 export function buildMessages(
   state: { messages: Array<{ role: string; content: string }>; [key: string]: unknown },
@@ -193,17 +415,32 @@ export function buildMessages(
 
   const historyMessages = state.messages.slice(0, -1)
 
-  // Turn-based truncation for buildMessages: keep last N user+assistant pairs
-  const MAX_BUILDMessages_TURNS = 5
-  const turnStarts: number[] = []
-  for (let i = historyMessages.length - 1; i >= 0; i--) {
-    if (historyMessages[i].role === 'user') {
-      turnStarts.unshift(i)
+  // Token-budget-based truncation
+  const TOKEN_BUDGET = 4000
+  let totalTokens = 0
+
+  // Always include the last 4 messages (2 turns)
+  const alwaysIncludeStart = Math.max(0, historyMessages.length - 4)
+  for (let i = alwaysIncludeStart; i < historyMessages.length; i++) {
+    const msg = historyMessages[i]
+    if (msg.role === 'user' || msg.role === 'assistant') {
+      totalTokens += estimateTokens(msg.content)
     }
   }
-  const truncatedHistory = turnStarts.length > MAX_BUILDMessages_TURNS
-    ? historyMessages.slice(turnStarts[turnStarts.length - MAX_BUILDMessages_TURNS])
-    : historyMessages
+
+  // Find cutoff by walking backwards from alwaysIncludeStart
+  let cutoffIndex = alwaysIncludeStart
+  for (let i = alwaysIncludeStart - 1; i >= 0; i--) {
+    const msg = historyMessages[i]
+    if (msg.role !== 'user' && msg.role !== 'assistant') continue
+    const cost = estimateTokens(msg.content)
+    if (totalTokens + cost > TOKEN_BUDGET) break
+    totalTokens += cost
+    cutoffIndex = i
+  }
+
+  // Build the truncated history in original order
+  const truncatedHistory = historyMessages.slice(cutoffIndex)
 
   for (const msg of truncatedHistory) {
     if (msg.role === 'user') {

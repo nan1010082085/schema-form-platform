@@ -11,14 +11,16 @@ import { PublishedSchemaModel } from '../models/PublishedSchema.js'
 import { FlowDefinitionModel } from '../flow-models/FlowDefinition.js'
 import { FlowInstanceModel } from '../flow-models/FlowInstance.js'
 import { AIConversationModel } from '../ai/services/conversationService.js'
+import { authMiddleware } from '../middleware/auth.js'
 
+const requireAuth = authMiddleware({ required: true })
 const router = new Router({ prefix: '/api/stats' })
 
 // ────────────────────────────────────────────
 // GET /api/stats
 // ────────────────────────────────────────────
 
-router.get('/', async (ctx) => {
+router.get('/', requireAuth, async (ctx) => {
   const [
     totalSchemas,
     publishedSchemas,
@@ -93,7 +95,7 @@ router.get('/', async (ctx) => {
 // GET /api/stats/conversations
 // ────────────────────────────────────────────
 
-router.get('/conversations', async (ctx) => {
+router.get('/conversations', requireAuth, async (ctx) => {
   const limit = Math.min(Math.max(Number(ctx.query.limit) || 10, 1), 50)
 
   const conversations = await AIConversationModel.find()

@@ -5,6 +5,7 @@ import type {
   FlowInstanceData,
   TaskInstanceData,
   RejectTargetNode,
+  BatchResult,
 } from '@schema-form/flow-shared'
 import { flowApi } from '../api/flowApi.js'
 
@@ -16,6 +17,7 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
   const total = ref(0)
   const currentInstance = ref<FlowInstance | null>(null)
   const tasks = ref<TaskInstance[]>([])
+  const tasksTotal = ref(0)
   const loading = ref(false)
 
   async function fetchInstances(params?: FlowInstanceQuery) {
@@ -65,11 +67,12 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
     if (currentInstance.value?.id === id) currentInstance.value = instance
   }
 
-  async function fetchMyTasks() {
+  async function fetchMyTasks(page = 1, pageSize = 20, opts?: { status?: string; q?: string }) {
     loading.value = true
     try {
-      const data = await flowApi.getMyTasks()
+      const data = await flowApi.getMyTasks(page, pageSize, opts)
       tasks.value = data.items
+      tasksTotal.value = data.total
     } finally {
       loading.value = false
     }
@@ -100,11 +103,25 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
     return task
   }
 
+  async function batchApprove(taskIds: string[]): Promise<BatchResult> {
+    const result = await flowApi.batchApprove(taskIds)
+    // Refresh task list after batch operation
+    await fetchMyTasks()
+    return result
+  }
+
+  async function batchReject(taskIds: string[], reason?: string): Promise<BatchResult> {
+    const result = await flowApi.batchReject(taskIds, reason)
+    await fetchMyTasks()
+    return result
+  }
+
   return {
     instances,
     total,
     currentInstance,
     tasks,
+    tasksTotal,
     loading,
     fetchInstances,
     startInstance,
@@ -117,5 +134,7 @@ export const useFlowInstanceStore = defineStore('flowInstance', () => {
     completeTask,
     getRejectTargets,
     rejectToNode,
+    batchApprove,
+    batchReject,
   }
 })

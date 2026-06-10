@@ -1,0 +1,180 @@
+.card {
+  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
+  border-radius: var(--ai-radius-lg, 12px);
+  overflow: hidden;
+  background: var(--ai-bg-white, #FFFFFF);
+  box-shadow: var(--ai-shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--ai-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04));
+  transform: translateY(-1px);
+}
+
+/* ---- Header ---- */
+.head {
+  padding: 10px 14px;
+  background: var(--ai-gradient-card-header, linear-gradient(180deg, rgba(245, 247, 250, 0.8) 0%, rgba(245, 247, 250, 0.4) 100%));
+  border-bottom: 1px solid var(--ai-border-light, #F0F2F5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ai-color-warning-bg, rgba(230, 162, 60, 0.1));
+  color: var(--ai-color-warning, #E6A23C);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ai-text-primary, #1A1A1A);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
+  color: var(--ai-color-info, #4581E9);
+}
+
+.fitBtn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  border-radius: var(--ai-radius-sm, 2px);
+  background: var(--ai-bg-white, #FFFFFF);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--ai-text-secondary, #666666);
+}
+
+.fitBtn:hover {
+  border-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #0060A2);
+}
+
+/* ---- Canvas ---- */
+.canvasWrapper {
+  height: 280px;
+  background: var(--ai-bg-gray, #F5F7FA);
+}
+
+/* Override Vue Flow styles for preview context */
+.canvasWrapper :deep(.vue-flow__node) {
+  font-family: inherit;
+}
+
+.canvasWrapper :deep(.vue-flow__node.selected) {
+  box-shadow: 0 0 0 2px var(--ai-color-primary, #0060A2);
+  border-radius: 4px;
+}
+
+.canvasWrapper :deep(.vue-flow__edge-path) {
+  stroke: var(--ai-color-info, #4581e9);
+}
+
+.canvasWrapper :deep(.vue-flow__controls) {
+  box-shadow: none;
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  border-radius: var(--ai-radius-sm, 2px);
+}
+
+.canvasWrapper :deep(.vue-flow__controls-button) {
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  background: var(--ai-bg-white, #FFFFFF);
+}
+
+.canvasWrapper :deep(.vue-flow__controls-button:hover) {
+  background: var(--ai-bg-gray, #F5F7FA);
+}
+
+/* ---- Actions ---- */
+.actions {
+  padding: 10px 14px;
+  border-top: 1px solid var(--ai-border-light, #F0F2F5);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: var(--ai-color-primary, #0060A2);
+  color: #FFFFFF;
+  font-family: inherit;
+}
+
+.btnPrimary:hover {
+  background: var(--ai-color-primary-hover, #035B9C);
+}
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--ai-bg-white, #FFFFFF);
+  color: var(--ai-text-secondary, #666666);
+  border: 1px solid var(--ai-border-base, #E0E4EA);
+  font-family: inherit;
+}
+
+.btnGhost:hover {
+  background: var(--ai-bg-gray, #F7F8FA);
+  border-color: var(--ai-text-hint, #999999);
+}
+
+/* ---- Compact mode ---- */
+.compact .head {
+  padding: 8px 12px;
+}
+
+.compact .canvasWrapper {
+  height: 220px;
+}
+
+.compact .actions {
+  padding: 8px 12px;
+}

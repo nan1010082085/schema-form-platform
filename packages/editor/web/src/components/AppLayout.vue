@@ -6,7 +6,8 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, DataBoard } from '@element-plus/icons-vue'
+import { Document, DataBoard, OfficeBuilding, Collection } from '@element-plus/icons-vue'
+import BreadcrumbNav from './BreadcrumbNav.vue'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
@@ -14,11 +15,15 @@ const router = useRouter()
 
 const navItems = [
   { path: '/instances', label: '实例管理', icon: DataBoard },
+  { path: '/templates', label: '模板库', icon: Collection },
   { path: '/docs', label: '部件文档', icon: Document },
+  { path: '/system/tenants', label: '租户管理', icon: OfficeBuilding },
 ]
 
 const activeNav = computed(() => {
+  if (route.path.startsWith('/templates')) return '/templates'
   if (route.path.startsWith('/docs')) return '/docs'
+  if (route.path.startsWith('/system/tenants')) return '/system/tenants'
   return route.path
 })
 </script>
@@ -46,6 +51,7 @@ const activeNav = computed(() => {
 
     <!-- 主内容区 -->
     <main :class="styles.main">
+      <BreadcrumbNav />
       <router-view />
     </main>
   </div>

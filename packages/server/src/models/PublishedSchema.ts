@@ -1,7 +1,9 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IPublishedSchema {
   _id: string
+  tenantId: string
   sourceId: string
   name: string
   type: 'form' | 'search_list'
@@ -17,6 +19,7 @@ export interface IPublishedSchema {
 const publishedSchemaDef = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     sourceId: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
     type: { type: String, enum: ['form', 'search_list'], default: 'form' },
@@ -37,6 +40,8 @@ const publishedSchemaDef = new mongoose.Schema(
     },
   },
 )
+
+publishedSchemaDef.plugin(tenantPlugin)
 
 export const PublishedSchemaModel =
   mongoose.models.PublishedSchema ?? mongoose.model<IPublishedSchema>('PublishedSchema', publishedSchemaDef)

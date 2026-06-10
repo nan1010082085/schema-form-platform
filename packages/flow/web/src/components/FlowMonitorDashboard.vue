@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { Refresh } from '@element-plus/icons-vue'
 import { useFlowMonitorStore } from '../stores/flowMonitor.js'
+import type { TimeRangePreset } from '@schema-form/flow-shared'
 import styles from './FlowMonitorDashboard.module.scss'
 
+const router = useRouter()
 const store = useFlowMonitorStore()
 
 const statusChartRef = ref<HTMLDivElement>()
@@ -18,8 +21,24 @@ let nodeChart: echarts.ECharts | null = null
 let topFlowChart: echarts.ECharts | null = null
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const REFRESH_INTERVAL = 30_000
+const autoRefreshEnabled = ref(true)
+const countdownSeconds = ref(REFRESH_INTERVAL / 1000)
+const lastRefreshTime = ref<number>(0)
+
+const timeRangeOptions: Array<{ value: TimeRangePreset; label: string }> = [
+  { value: 'today', label: '今日' },
+  { value: 'week', label: '本周' },
+  { value: 'month', label: '本月' },
+  { value: 'all', label: '全部' },
+]
+
+const selectedPreset = ref<TimeRangePreset>('month')
+const customDateRange = ref<[string, string] | null>(null)
+
+const isCustomRange = computed(() => selectedPreset.value === 'custom')
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return '-'
@@ -33,6 +52,29 @@ function formatDuration(ms: number): string {
   const days = Math.floor(hours / 24)
   const remainHours = hours % 24
   return `${days} 天 ${remainHours} 小时`
+}
+
+function handlePresetChange(preset: TimeRangePreset) {
+  selectedPreset.value = preset
+  if (preset !== 'custom') {
+    customDateRange.value = null
+    store.setTimeRange(preset)
+  }
+}
+
+function handleCustomDateChange(dates: [string, string] | null) {
+  if (dates && dates[0] && dates[1]) {
+    customDateRange.value = dates
+    store.setTimeRange('custom', dates[0], dates[1])
+  }
+}
+
+function handleNavigateToFailed() {
+  router.push({ name: 'flow-instances', query: { status: 'failed' } })
+}
+
+function handleNavigateToInstance(id: string) {
+  router.push({ name: 'flow-instance-detail', params: { id } })
 }
 
 // ---- Status Pie Chart ----
@@ -55,7 +97,7 @@ function updateStatusChart() {
         center: ['50%', '45%'],
         avoidLabelOverlap: true,
         itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
-        label: { show: true, formatter: '{b}\n{c}' },
+        label: { show: true, formatter: '{b}\n{c} ({d}%)' },
         data: [
           { value: running, name: '运行中', itemStyle: { color: '#409eff' } },
           { value: completed, name: '已完成', itemStyle: { color: '#67c23a' } },
@@ -227,8 +269,18 @@ function disposeCharts() {
 }
 
 function startAutoRefresh() {
+  countdownSeconds.value = REFRESH_INTERVAL / 1000
+  lastRefreshTime.value = Date.now()
+
+  countdownTimer = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - lastRefreshTime.value) / 1000)
+    countdownSeconds.value = Math.max(0, REFRESH_INTERVAL / 1000 - elapsed)
+  }, 1000)
+
   refreshTimer = setInterval(() => {
     store.fetchDashboard()
+    lastRefreshTime.value = Date.now()
+    countdownSeconds.value = REFRESH_INTERVAL / 1000
   }, REFRESH_INTERVAL)
 }
 
@@ -237,10 +289,28 @@ function stopAutoRefresh() {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+function toggleAutoRefresh() {
+  autoRefreshEnabled.value = !autoRefreshEnabled.value
+  if (autoRefreshEnabled.value) {
+    startAutoRefresh()
+  } else {
+    stopAutoRefresh()
+    countdownSeconds.value = 0
+  }
 }
 
 async function handleManualRefresh() {
   await store.fetchDashboard()
+  if (autoRefreshEnabled.value) {
+    lastRefreshTime.value = Date.now()
+    countdownSeconds.value = REFRESH_INTERVAL / 1000
+  }
 }
 
 watch(
@@ -270,13 +340,63 @@ onBeforeUnmount(() => {
   stopAutoRefresh()
   disposeCharts()
 })
+
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return '--'
+  return `${seconds}s`
+}
 </script>
 
 <template>
   <div :class="styles.dashboard" v-loading="store.loading">
     <div :class="styles.header">
       <h2 :class="styles.title">流程监控仪表盘</h2>
-      <el-button :icon="Refresh" circle @click="handleManualRefresh" :loading="store.loading" data-test="refresh-btn" />
+      <div :class="styles.headerActions">
+        <!-- 时间范围筛选 -->
+        <div :class="styles.timeRangeGroup">
+          <el-radio-group
+            v-model="selectedPreset"
+            size="small"
+            @change="handlePresetChange"
+          >
+            <el-radio-button
+              v-for="opt in timeRangeOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </el-radio-button>
+            <el-radio-button value="custom">自定义</el-radio-button>
+          </el-radio-group>
+          <el-date-picker
+            v-if="isCustomRange"
+            v-model="customDateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            size="small"
+            value-format="YYYY-MM-DD"
+            :class="styles.datePicker"
+            @change="handleCustomDateChange"
+          />
+        </div>
+        <div :class="styles.refreshGroup">
+          <el-tooltip :content="autoRefreshEnabled ? '暂停自动刷新' : '开启自动刷新'" placement="top">
+            <el-button
+              :type="autoRefreshEnabled ? 'primary' : 'default'"
+              size="small"
+              :class="styles.autoRefreshBtn"
+              data-test="auto-refresh-toggle"
+              @click="toggleAutoRefresh"
+            >
+              <el-icon :size="14"><Refresh /></el-icon>
+              {{ autoRefreshEnabled ? formatCountdown(countdownSeconds) : '已暂停' }}
+            </el-button>
+          </el-tooltip>
+          <el-button :icon="Refresh" circle @click="handleManualRefresh" :loading="store.loading" data-test="refresh-btn" />
+        </div>
+      </div>
     </div>
 
     <!-- 统计卡片 -->
@@ -294,6 +414,52 @@ onBeforeUnmount(() => {
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statRunning]">{{ store.stats.running }}</div>
             <div :class="styles.statLabel">运行中</div>
+            <div :class="styles.statPct">{{ store.stats.runningPct }}%</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <el-card shadow="hover" :class="styles.statCard">
+          <div :class="styles.statItem">
+            <div :class="[styles.statValue, styles.statCompleted]">{{ store.stats.completed }}</div>
+            <div :class="styles.statLabel">已完成</div>
+            <div :class="styles.statPct">{{ store.stats.completedPct }}%</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <el-card
+          shadow="hover"
+          :class="[styles.statCard, styles.statCardClickable]"
+          @click="handleNavigateToFailed"
+          data-test="failed-card"
+        >
+          <div :class="styles.statItem">
+            <div :class="[styles.statValue, styles.statFailed]">{{ store.stats.failed }}</div>
+            <div :class="styles.statLabel">已失败</div>
+            <div :class="[styles.statPct, styles.statPctFailed]">{{ store.stats.failedPct }}%</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 第二行统计: 已终止 + 已挂起 + 今日新增 + 平均处理时长 -->
+    <el-row :gutter="16" :class="styles.statsRow">
+      <el-col :xs="12" :sm="6">
+        <el-card shadow="hover" :class="styles.statCard">
+          <div :class="styles.statItem">
+            <div :class="[styles.statValue, styles.statTerminated]">{{ store.stats.terminated }}</div>
+            <div :class="styles.statLabel">已终止</div>
+            <div :class="styles.statPct">{{ store.stats.terminatedPct }}%</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <el-card shadow="hover" :class="styles.statCard">
+          <div :class="styles.statItem">
+            <div :class="[styles.statValue, styles.statSuspended]">{{ store.stats.suspended }}</div>
+            <div :class="styles.statLabel">已挂起</div>
+            <div :class="styles.statPct">{{ store.stats.suspendedPct }}%</div>
           </div>
         </el-card>
       </el-col>

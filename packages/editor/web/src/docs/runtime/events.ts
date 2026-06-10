@@ -176,6 +176,22 @@ export const eventActionTypes = {
       requiredFields: ['target'],
       example: { type: 'refresh', target: 'list_1' },
     },
+    {
+      type: 'startFlow',
+      label: '发起流程',
+      description: '调用后端 API 发起一个流程实例',
+      requiredFields: ['definitionId'],
+      optionalFields: ['variables'],
+      example: { type: 'startFlow', definitionId: 'def-123', variables: { amount: 100 } },
+    },
+    {
+      type: 'endFlow',
+      label: '结束流程',
+      description: '调用后端 API 终止指定流程实例',
+      requiredFields: ['instanceId'],
+      optionalFields: ['reason'],
+      example: { type: 'endFlow', instanceId: 'inst-456', reason: '用户取消' },
+    },
   ],
 }
 

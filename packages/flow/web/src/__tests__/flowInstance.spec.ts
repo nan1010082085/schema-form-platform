@@ -13,6 +13,8 @@ vi.mock('../api/flowApi', () => ({
     getMyTasks: vi.fn(),
     claimTask: vi.fn(),
     completeTask: vi.fn(),
+    batchApprove: vi.fn(),
+    batchReject: vi.fn(),
   },
 }))
 
@@ -112,10 +114,11 @@ describe('flowInstance store', () => {
   describe('fetchMyTasks', () => {
     it('loads tasks from API', async () => {
       const items = [{ id: 't1', status: 'pending' }]
-      mockedApi.getMyTasks.mockResolvedValue({ items } as any)
+      mockedApi.getMyTasks.mockResolvedValue({ items, total: 1 } as any)
       const store = useFlowInstanceStore()
       await store.fetchMyTasks()
       expect(store.tasks).toEqual(items)
+      expect(store.tasksTotal).toBe(1)
     })
   })
 
@@ -140,6 +143,69 @@ describe('flowInstance store', () => {
       const result = await store.completeTask('t1', { form: 'data' }, 'approved')
       expect(result.status).toBe('completed')
       expect(store.tasks[0].status).toBe('completed')
+    })
+  })
+
+  describe('batchApprove', () => {
+    it('calls API and refreshes task list', async () => {
+      const batchResult = {
+        results: [
+          { taskId: 't1', success: true },
+          { taskId: 't2', success: true },
+        ],
+        summary: { total: 2, success: 2, failed: 0 },
+      }
+      mockedApi.batchApprove.mockResolvedValue(batchResult as any)
+      mockedApi.getMyTasks.mockResolvedValue({ items: [], total: 0 } as any)
+      const store = useFlowInstanceStore()
+      const result = await store.batchApprove(['t1', 't2'])
+      expect(result.summary.success).toBe(2)
+      expect(mockedApi.batchApprove).toHaveBeenCalledWith(['t1', 't2'])
+      expect(mockedApi.getMyTasks).toHaveBeenCalled()
+    })
+
+    it('returns partial failure results', async () => {
+      const batchResult = {
+        results: [
+          { taskId: 't1', success: true },
+          { taskId: 't2', success: false, error: 'Already completed' },
+        ],
+        summary: { total: 2, success: 1, failed: 1 },
+      }
+      mockedApi.batchApprove.mockResolvedValue(batchResult as any)
+      mockedApi.getMyTasks.mockResolvedValue({ items: [], total: 0 } as any)
+      const store = useFlowInstanceStore()
+      const result = await store.batchApprove(['t1', 't2'])
+      expect(result.summary.failed).toBe(1)
+      expect(result.results[1].error).toBe('Already completed')
+    })
+  })
+
+  describe('batchReject', () => {
+    it('calls API with reason and refreshes task list', async () => {
+      const batchResult = {
+        results: [{ taskId: 't1', success: true }],
+        summary: { total: 1, success: 1, failed: 0 },
+      }
+      mockedApi.batchReject.mockResolvedValue(batchResult as any)
+      mockedApi.getMyTasks.mockResolvedValue({ items: [], total: 0 } as any)
+      const store = useFlowInstanceStore()
+      const result = await store.batchReject(['t1'], '不符合要求')
+      expect(result.summary.success).toBe(1)
+      expect(mockedApi.batchReject).toHaveBeenCalledWith(['t1'], '不符合要求')
+      expect(mockedApi.getMyTasks).toHaveBeenCalled()
+    })
+
+    it('calls API without reason', async () => {
+      const batchResult = {
+        results: [{ taskId: 't1', success: true }],
+        summary: { total: 1, success: 1, failed: 0 },
+      }
+      mockedApi.batchReject.mockResolvedValue(batchResult as any)
+      mockedApi.getMyTasks.mockResolvedValue({ items: [], total: 0 } as any)
+      const store = useFlowInstanceStore()
+      await store.batchReject(['t1'])
+      expect(mockedApi.batchReject).toHaveBeenCalledWith(['t1'], undefined)
     })
   })
 })

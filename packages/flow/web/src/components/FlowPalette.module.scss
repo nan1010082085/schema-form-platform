@@ -15,6 +15,10 @@
   color: var(--el-text-color-primary);
 }
 
+.searchWrap {
+  margin-bottom: 12px;
+}
+
 .group {
   margin-bottom: 16px;
 }
@@ -48,4 +52,17 @@
 .item:hover {
   border-color: var(--el-color-primary);
   color: var(--el-color-primary);
+}
+
+.highlight {
+  color: var(--el-color-primary);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.empty {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--el-text-color-placeholder);
+  font-size: 13px;
 }

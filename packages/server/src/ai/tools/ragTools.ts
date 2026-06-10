@@ -49,7 +49,7 @@ export const ragSearchTool = tool(
   },
   {
     name: 'rag_search',
-    description: `基于向量语义搜索 Schema。使用 DeepSeek Embedding API 生成语义向量，通过余弦相似度匹配，支持自然语言描述的模糊搜索。比关键词搜索更智能，能理解同义词、近义词和语义相关的内容。当用户用自然语言描述需求时优先使用此工具。
+    description: `基于向量智能匹配 Schema。使用 DeepSeek Embedding API 生成向量，通过余弦相似度匹配，支持自然语言描述的模糊搜索。比关键词搜索更智能，能理解同义词、近义词和语义相关的内容。当用户用自然语言描述需求时优先使用此工具。
 
 参数：query — 自然语言描述（如"一个包含用户信息和地址的表单"）；limit — 返回数量上限，默认 5；type — 按类型筛选（form/search_list）。
 返回 JSON 包含 schemas 数组，每项含 score（相似度百分比）、widgetTypes、fieldNames、labels 等元数据。`,

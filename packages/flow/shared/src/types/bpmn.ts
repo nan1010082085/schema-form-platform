@@ -37,7 +37,7 @@ export type ServiceType = 'http' | 'function' | 'script'
 export type GatewayDirection = 'converging' | 'diverging'
 export type TimerType = 'duration' | 'date' | 'cycle'
 export type ApprovalMode = 'single' | 'countersign' | 'or-sign'
-export type FormMode = 'edit' | 'view'
+export type FormMode = 'edit' | 'view' | 'readonly' | 'editable' | 'partial'
 export type RejectPolicy = 'reject-on-all' | 'reject-on-any'
 
 export interface MultiInstanceConfig {
@@ -61,6 +61,10 @@ export interface BpmnNodeConfig {
   formPublishId?: string
   formVersion?: string
   formMode?: FormMode
+  /** partial 模式下可编辑的字段列表（未指定则默认全部只读） */
+  editableFields?: string[]
+  /** partial 模式下只读的字段列表（与 editableFields 二选一） */
+  readonlyFields?: string[]
   formVariable?: string
   hostMethods?: string[]
   serviceType?: ServiceType

@@ -11,6 +11,9 @@
 
 import { Server as HttpServer } from 'node:http'
 import { Server } from 'socket.io'
+import jwt from 'jsonwebtoken'
+import { JWT_SECRET } from './config/jwt.js'
+import type { JwtPayload } from './middleware/auth.js'
 
 let io: Server | null = null
 
@@ -24,6 +27,36 @@ export function initSocket(httpServer: HttpServer): Server {
       credentials: true,
     },
     transports: ['websocket', 'polling'],
+  })
+
+  // JWT authentication middleware for Socket.io
+  io.use((socket, next) => {
+    // Skip auth in development
+    if (process.env.NODE_ENV !== 'production') {
+      socket.data.user = { id: 'dev', username: 'dev', roles: [], tenantId: '000000' }
+      next()
+      return
+    }
+
+    const token = socket.handshake.auth?.token as string | undefined
+      ?? socket.handshake.query?.token as string | undefined
+
+    if (!token) {
+      next(new Error('Authentication required'))
+      return
+    }
+
+    try {
+      const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
+      if (payload.tokenType === 'refresh') {
+        next(new Error('Access token required'))
+        return
+      }
+      socket.data.user = payload
+      next()
+    } catch {
+      next(new Error('Invalid or expired token'))
+    }
   })
 
   io.on('connection', (socket) => {

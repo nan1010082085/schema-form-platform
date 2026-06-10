@@ -201,3 +201,54 @@
   width: 100%;
   margin-top: 4px;
 }
+
+.shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcutsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  margin-bottom: 4px;
+}
+
+.shortcutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.shortcutLabel {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.shortcutKeys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color);
+    border-radius: 3px;
+    box-shadow: 0 1px 0 var(--el-border-color);
+  }
+}

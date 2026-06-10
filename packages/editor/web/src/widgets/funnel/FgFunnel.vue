@@ -3,6 +3,7 @@ import { inject, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import { useChartOption } from '../base/useChartOption'
+import { useChartLazyInit } from '../base/useChartLazyInit'
 import { echarts, type EChartsType } from '../base/echarts'
 import styles from './style.module.scss'
 
@@ -68,6 +69,8 @@ useExposeWidget(() => ({
 const chartRef = ref<HTMLDivElement>()
 let chartInstance: EChartsType | null = null
 
+const { isVisible } = useChartLazyInit(chartRef)
+
 function initChart() {
   if (!chartRef.value) return
   chartInstance = echarts.init(chartRef.value)
@@ -80,7 +83,14 @@ function handleResize() {
   chartInstance?.resize()
 }
 
+watch(isVisible, (visible) => {
+  if (visible) {
+    nextTick(() => initChart())
+  }
+})
+
 watch(chartOption, async (option) => {
+  if (!isVisible.value) return
   if (!chartInstance) {
     await nextTick()
     initChart()
@@ -91,7 +101,9 @@ watch(chartOption, async (option) => {
 })
 
 onMounted(() => {
-  initChart()
+  if (isVisible.value) {
+    initChart()
+  }
   window.addEventListener('resize', handleResize)
 })
 

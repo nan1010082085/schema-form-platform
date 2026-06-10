@@ -44,6 +44,7 @@ import type { SchemaType, Widget, WidgetEvent, WidgetRenderState } from '@/widge
 export function computeWidgetRenderState(
   widget: Widget,
   formData: Record<string, unknown>,
+  exposed?: Record<string, Record<string, unknown>>,
 ): WidgetRenderState {
   const staticDisabled = (widget.props?.disabled as boolean) ?? false
   const staticRequired = widget.validationRules?.some((r) => r.required) ?? false
@@ -68,7 +69,7 @@ export function computeWidgetRenderState(
     })
     if (!shouldExecute) continue
 
-    if (!evaluateCondition(rule.condition, formData)) continue
+    if (!evaluateCondition(rule.condition, formData, exposed)) continue
 
     for (const action of rule.actions) {
       switch (action.type) {

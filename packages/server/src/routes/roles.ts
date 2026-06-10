@@ -1,13 +1,23 @@
 import Router from '@koa/router'
 import { RoleModel } from '../models/Role.js'
 import { UserModel } from '../models/User.js'
+import { PermissionModel } from '../models/Permission.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createRoleSchema, updateRoleSchema } from '../schemas/roleSchemas.js'
 
+const requireAuth = authMiddleware({ required: true })
 const router = new Router({ prefix: '/api/roles' })
 
+// GET /api/roles/permissions — 获取可用权限列表（按模块分组）
+router.get('/permissions', requireAuth, requirePermission('role:view'), async (ctx) => {
+  const permissions = await PermissionModel.find({}).sort({ module: 1, code: 1 })
+  ctx.body = { success: true, data: permissions.map(p => p.toJSON()) }
+})
+
 // GET /api/roles?q=xxx&page=1&pageSize=20 — 角色列表（分页+搜索）
-router.get('/', async (ctx) => {
+router.get('/', requireAuth, requirePermission('role:view'), async (ctx) => {
   const q = ctx.query.q as string
   const page = Math.max(1, parseInt(ctx.query.page as string) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(ctx.query.pageSize as string) || 20))
@@ -41,24 +51,30 @@ router.get('/', async (ctx) => {
 })
 
 // POST /api/roles — 创建角色
-router.post('/', validate(createRoleSchema), async (ctx) => {
-  const { name, description } = ctx.request.body as { name: string; description?: string }
+router.post('/', requireAuth, requirePermission('role:create'), validate(createRoleSchema), async (ctx) => {
+  const body = ctx.request.body as { name: string; description?: string; permissions?: string[]; data_scope?: string; dept_ids?: string[] }
 
-  const existing = await RoleModel.findOne({ name })
+  const existing = await RoleModel.findOne({ name: body.name })
   if (existing) {
     ctx.status = 409
     ctx.body = { success: false, error: { message: '角色名称已存在' } }
     return
   }
 
-  const role = await RoleModel.create({ name, description })
+  const role = await RoleModel.create({
+    name: body.name,
+    description: body.description,
+    permissions: body.permissions ?? [],
+    data_scope: body.data_scope,
+    dept_ids: body.dept_ids,
+  })
   ctx.status = 201
   ctx.body = { success: true, data: role.toJSON() }
 })
 
 // PUT /api/roles/:id — 更新角色
-router.put('/:id', validate(updateRoleSchema), async (ctx) => {
-  const updates = ctx.request.body as { name?: string; description?: string }
+router.put('/:id', requireAuth, requirePermission('role:edit'), validate(updateRoleSchema), async (ctx) => {
+  const updates = ctx.request.body as { name?: string; description?: string; permissions?: string[]; data_scope?: string; dept_ids?: string[] }
 
   if (updates.name) {
     const existing = await RoleModel.findOne({ name: updates.name, _id: { $ne: ctx.params.id } })
@@ -85,7 +101,7 @@ router.put('/:id', validate(updateRoleSchema), async (ctx) => {
 })
 
 // DELETE /api/roles/:id — 删除角色
-router.delete('/:id', async (ctx) => {
+router.delete('/:id', requireAuth, requirePermission('role:delete'), async (ctx) => {
   const role = await RoleModel.findById(ctx.params.id)
   if (!role) {
     ctx.status = 404
@@ -104,7 +120,7 @@ router.delete('/:id', async (ctx) => {
 })
 
 // GET /api/roles/:id/users — 获取角色下的用户
-router.get('/:id/users', async (ctx) => {
+router.get('/:id/users', requireAuth, requirePermission('role:view'), async (ctx) => {
   const role = await RoleModel.findById(ctx.params.id)
   if (!role) {
     ctx.status = 404

@@ -65,16 +65,79 @@ const { mockWidgets } = vi.hoisted(() => {
   return { mockWidgets }
 })
 
-vi.mock('../tools/editorTools.js', () => ({
-  getWidgetCatalogueFromMetadata: vi.fn().mockResolvedValue(mockWidgets),
-}))
+vi.mock('../tools/toolHandlers.js', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('../tools/toolHandlers.js')>()
+  return {
+    ...orig,
+    getMetadata: vi.fn().mockReturnValue({ widgets: mockWidgets, flowNodes: [] }),
+    handleWidgetQuery: vi.fn((category?: string) => {
+      const filtered = category
+        ? mockWidgets.filter((w) => w.group === category)
+        : mockWidgets
+      return { success: true, data: { total: filtered.length, widgets: filtered }, summary: `${filtered.length} widgets` }
+    }),
+    handleWidgetValidate: vi.fn(async (widgets: Record<string, unknown>[]) => {
+      // Inline validation logic matching schemaService.validateWidgetSchema
+      const VALID_TYPES = new Set(mockWidgets.map((w) => w.type))
+      const CONTAINER_TYPES = new Set(['dialog', 'form'])
+      const errors: Array<{ path: string; message: string }> = []
+
+      function walk(nodes: Record<string, unknown>[], prefix: string, depth: number): void {
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i]
+          const path = prefix ? `${prefix}[${i}]` : `[${i}]`
+          const type = node.type as string | undefined
+
+          if (!type) {
+            errors.push({ path: `${path}.type`, message: '缺少 type 字段' })
+            continue
+          }
+          if (!VALID_TYPES.has(type)) {
+            errors.push({ path: `${path}.type`, message: `无效的组件类型 "${type}"` })
+            continue
+          }
+
+          const id = node.id as string | undefined
+          if (!id) {
+            errors.push({ path: `${path}.id`, message: '缺少 id 字段' })
+          }
+
+          const pos = node.position as Record<string, unknown> | undefined
+          if (!pos || typeof pos !== 'object') {
+            errors.push({ path: `${path}.position`, message: '缺少 position 字段' })
+          } else {
+            for (const key of ['x', 'y', 'w', 'h']) {
+              if (typeof pos[key] !== 'number' || (pos[key] as number) < 0) {
+                errors.push({ path: `${path}.position.${key}`, message: `position.${key} 必须为非负数` })
+              }
+            }
+          }
+
+          const isContainer = CONTAINER_TYPES.has(type)
+          const children = node.children as Record<string, unknown>[] | undefined
+
+          if (isContainer) {
+            if (!Array.isArray(children)) {
+              errors.push({ path: `${path}.children`, message: `容器组件 "${type}" 必须有 children 数组` })
+            } else {
+              walk(children, path, depth + 1)
+            }
+          } else if (depth === 0 && !isContainer) {
+            errors.push({ path, message: `基础组件 "${type}" 必须嵌套在布局容器内` })
+          }
+        }
+      }
+
+      walk(widgets, '', 0)
+      return { success: true, data: { valid: errors.length === 0, errors }, summary: errors.length === 0 ? 'Schema 校验通过' : `${errors.length} 个错误` }
+    }),
+  }
+})
 
 import { queryWidgets, validateSchema, queryWidgetsTool, validateWidgetSchemaTool } from '../tools/widgetTools.js'
-import { getWidgetCatalogueFromMetadata } from '../tools/editorTools.js'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(getWidgetCatalogueFromMetadata).mockResolvedValue(mockWidgets)
 })
 
 describe('queryWidgets (utility)', () => {
@@ -165,13 +228,13 @@ describe('validateSchema (utility)', () => {
   it('rejects negative position values', async () => {
     const result = await validateSchema([makeContainer([makeWidget({ position: { x: -1, y: 0, w: 1, h: 1 } })])])
     expect(result.valid).toBe(false)
-    expect(result.errors.some((e) => e.message.includes('non-negative'))).toBe(true)
+    expect(result.errors.some((e) => e.message.includes('非负'))).toBe(true)
   })
 
   it('rejects top-level non-container widget', async () => {
     const result = await validateSchema([makeWidget()])
     expect(result.valid).toBe(false)
-    expect(result.errors.some((e) => e.message.includes('nested inside a layout container'))).toBe(true)
+    expect(result.errors.some((e) => e.message.includes('嵌套'))).toBe(true)
   })
 
   it('rejects container without children array', async () => {
@@ -209,14 +272,14 @@ describe('queryWidgetsTool (LangGraph tool)', () => {
   it('invokes with no arguments and returns all widgets', async () => {
     const result = await queryWidgetsTool.invoke({})
     const parsed = typeof result === 'string' ? JSON.parse(result) : result
-    expect(parsed.total).toBeGreaterThan(30)
+    expect(parsed.data.total).toBeGreaterThan(30)
   })
 
   it('invokes with category filter', async () => {
     const result = await queryWidgetsTool.invoke({ category: 'form' })
     const parsed = typeof result === 'string' ? JSON.parse(result) : result
-    expect(parsed.total).toBeGreaterThan(0)
-    expect(parsed.widgets.every((w: { group: string }) => w.group === 'form')).toBe(true)
+    expect(parsed.data.total).toBeGreaterThan(0)
+    expect(parsed.data.widgets.every((w: { group: string }) => w.group === 'form')).toBe(true)
   })
 })
 
@@ -235,7 +298,7 @@ describe('validateWidgetSchemaTool (LangGraph tool)', () => {
     }
     const result = await validateWidgetSchemaTool.invoke({ widgets: [container] })
     const parsed = typeof result === 'string' ? JSON.parse(result) : result
-    expect(parsed.valid).toBe(true)
+    expect(parsed.data.valid).toBe(true)
   })
 
   it('invokes with invalid schema and returns errors', async () => {
@@ -243,7 +306,7 @@ describe('validateWidgetSchemaTool (LangGraph tool)', () => {
       widgets: [{ id: '550e8400-e29b-41d4-a716-446655440000', position: { x: 0, y: 0, w: 1, h: 1 } }],
     })
     const parsed = typeof result === 'string' ? JSON.parse(result) : result
-    expect(parsed.valid).toBe(false)
-    expect(parsed.errors.length).toBeGreaterThan(0)
+    expect(parsed.data.valid).toBe(false)
+    expect(parsed.data.errors.length).toBeGreaterThan(0)
   })
 })

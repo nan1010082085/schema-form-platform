@@ -58,6 +58,7 @@ const emit = defineEmits<{
   'rag-select': [item: RagSearchResult]
   'rag-remove': [id: string]
   'open-json-drawer': []
+  'retry-tool': [messageIndex: number, toolCallIndex: number]
 }>()
 
 const selectedAgent = ref<AgentType>('auto')
@@ -174,12 +175,13 @@ function getDisplayCards(msg: AIMessage): MessageEmbeddedCard[] | undefined {
   }
   if (msg.flow) {
     return [{
-      type: 'flow',
+      type: 'flow' as const,
       title: '流程预览',
       nodes: msg.flow.nodes.map((n) => ({
         label: n.data.label ?? n.data.bpmnType ?? n.id,
         type: (n.data.bpmnType === 'startEvent' ? 'start' : n.data.bpmnType === 'endEvent' ? 'end' : 'task') as 'start' | 'task' | 'end',
       })),
+      graph: msg.flow,
       primaryAction: '确认发布',
       secondaryAction: '在编辑器中打开',
     }]
@@ -353,6 +355,7 @@ function handleCardAction(
         @card-primary-action="(ci) => handleCardAction('primary', idx, ci)"
         @card-secondary-action="(ci) => handleCardAction('secondary', idx, ci)"
         @open-json-drawer="emit('open-json-drawer')"
+        @retry-tool="(tci) => emit('retry-tool', idx, tci)"
       />
     </div>
 
@@ -445,7 +448,7 @@ function handleCardAction(
             <button
               :class="[$style.ragBtn, { [$style.ragBtnActive]: ragVisible }]"
               :disabled="disabled || loading"
-              title="引用 Schema（语义搜索）"
+              title="引用 Schema（智能匹配）"
               @click="ragVisible = !ragVisible"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

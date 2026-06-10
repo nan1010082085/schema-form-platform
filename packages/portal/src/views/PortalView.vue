@@ -9,6 +9,9 @@ import {
   Document,
   UserFilled,
   Warning,
+  Folder,
+  Menu,
+  Collection,
 } from '@element-plus/icons-vue'
 import { useHomeData } from '@/composables/useHomeData'
 import StatsChart from '@/components/StatsChart.vue'
@@ -75,10 +78,31 @@ const cards: NavCard[] = [
   },
   {
     title: '角色管理',
-    desc: '管理平台角色，配置角色成员',
+    desc: '管理平台角色，配置权限与数据范围',
     icon: UserFilled,
     route: '/roles',
     gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  },
+  {
+    title: '部门管理',
+    desc: '管理组织架构，维护部门树形结构',
+    icon: Folder,
+    route: '/depts',
+    gradient: 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  },
+  {
+    title: '菜单管理',
+    desc: '管理系统菜单与权限编码配置',
+    icon: Menu,
+    route: '/menus',
+    gradient: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+  },
+  {
+    title: '字典管理',
+    desc: '管理系统字典类型与字典数据，支持 CRUD',
+    icon: Collection,
+    route: '/dict',
+    gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
   },
   {
     title: '项目文档',

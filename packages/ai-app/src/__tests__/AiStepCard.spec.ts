@@ -307,4 +307,165 @@ describe('AiStepCard', () => {
       expect(wrapper.emitted('primary-action')).toBeUndefined()
     })
   })
+
+  // ---- S6-02: tool_error card ----
+
+  describe('S6-02: tool_error card', () => {
+    it('shows friendly error description for timeout errors', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'Connection timeout after 30s',
+          status: 'error',
+        },
+      })
+
+      expect(wrapper.text()).toContain('服务响应超时，请稍后重试')
+    })
+
+    it('shows friendly error description for database errors', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'database connection refused',
+          status: 'error',
+        },
+      })
+
+      expect(wrapper.text()).toContain('数据库操作失败，请稍后重试')
+    })
+
+    it('shows friendly error description for validation errors', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'validate_schema',
+          error: 'validation failed: missing required field',
+          status: 'error',
+        },
+      })
+
+      expect(wrapper.text()).toContain('数据校验失败，请检查输入内容')
+    })
+
+    it('shows raw error as detail when it differs from friendly description', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'Connection timeout after 30s',
+          status: 'error',
+        },
+      })
+
+      const detail = wrapper.find('[class*="errorDetail"]')
+      expect(detail.exists()).toBe(true)
+      expect(detail.text()).toBe('Connection timeout after 30s')
+    })
+
+    it('does not show detail when raw error equals friendly description', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'unknown error occurred',
+          status: 'error',
+        },
+      })
+
+      const detail = wrapper.find('[class*="errorDetail"]')
+      expect(detail.exists()).toBe(false)
+    })
+
+    it('shows retry button for tool_error type', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'timeout',
+          status: 'error',
+        },
+      })
+
+      const retryBtn = wrapper.find('[class*="retryBtn"]')
+      expect(retryBtn.exists()).toBe(true)
+      expect(retryBtn.text()).toContain('重试')
+    })
+
+    it('does not show retry button for tool_call type', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_call',
+          title: 'Search',
+          toolName: 'search_schemas',
+          status: 'done',
+        },
+      })
+
+      expect(wrapper.find('[class*="retryBtn"]').exists()).toBe(false)
+    })
+
+    it('emits retry-tool when retry button is clicked', async () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'timeout',
+          status: 'error',
+        },
+      })
+
+      await wrapper.find('[class*="retryBtn"]').trigger('click')
+      expect(wrapper.emitted('retry-tool')).toHaveLength(1)
+    })
+
+    it('tool_error is expanded by default to show error details', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: 'timeout',
+          status: 'error',
+        },
+      })
+
+      // Body should be visible (not collapsed)
+      expect(wrapper.find('[class*="errorContent"]').exists()).toBe(true)
+      expect(wrapper.find('[class*="retryBtn"]').exists()).toBe(true)
+    })
+
+    it('shows default friendly description when error is empty', () => {
+      const wrapper = mount(AiStepCard, {
+        props: {
+          index: 1,
+          type: 'tool_error',
+          title: 'Failed',
+          toolName: 'save_widget',
+          error: '',
+          status: 'error',
+        },
+      })
+
+      expect(wrapper.text()).toContain('工具执行失败，请重试')
+    })
+  })
 })

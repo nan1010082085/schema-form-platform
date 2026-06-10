@@ -22,6 +22,7 @@ import {
   SubProcessNode,
 } from '../components/nodes/index.js'
 import { AnimatedEdge } from '../components/edges/index.js'
+import { useFlowExport } from '../composables/useFlowExport.js'
 import styles from './FlowInstanceDetailView.module.scss'
 
 import '@vue-flow/core/dist/style.css'
@@ -29,6 +30,7 @@ import '@vue-flow/core/dist/theme-default.css'
 
 const route = useRoute()
 const store = useFlowInstanceStore()
+const { exporting, exportInstance } = useFlowExport()
 
 const instanceId = computed(() => route.params.id as string)
 const graphNodes = ref<Node[]>([])
@@ -247,6 +249,18 @@ function formatDate(dateStr?: string | Date) {
   <div v-loading="store.loading" :class="styles.instanceDetail">
     <div v-if="instance" :class="styles.content">
       <!-- Instance info header -->
+      <div :class="styles.header">
+        <div :class="styles.headerActions">
+          <el-button
+            type="primary"
+            :loading="exporting"
+            @click="exportInstance(instanceId)"
+          >
+            导出审批记录
+          </el-button>
+        </div>
+      </div>
+
       <div :class="styles.infoCard">
         <div :class="styles.infoRow">
           <span :class="styles.label">流程名称</span>

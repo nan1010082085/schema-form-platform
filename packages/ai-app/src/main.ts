@@ -4,7 +4,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import { createChildApp } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
-import { applyThemeInline, installThemeWatchdog } from './themeGuard'
+import { applyThemeInline, installThemeWatchdog, AI_THEME_VARS } from '@schema-form/micro-app'
 
 import App from './App.vue'
 import { createAiRouter } from './router'
@@ -16,8 +16,8 @@ if (window.__MICRO_APP_ENVIRONMENT__) {
   initMicroApp()
 }
 
-applyThemeInline()
-installThemeWatchdog()
+applyThemeInline(AI_THEME_VARS)
+installThemeWatchdog(AI_THEME_VARS)
 
 let router: ReturnType<typeof createAiRouter>
 

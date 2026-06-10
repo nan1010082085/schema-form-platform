@@ -18,6 +18,7 @@ import type {
   SchemaCreatePayload,
   SchemaUpdatePayload,
 } from '@/types/api'
+import { executeWithRetry, type RetryOptions } from './retryRequest'
 
 // ---- 拦截器类型 ----
 
@@ -41,11 +42,13 @@ export class ApiClient {
   private useMock = false
   private requestInterceptors: RequestInterceptor[] = []
   private responseInterceptors: ResponseInterceptor[] = []
+  private retryOptions: RetryOptions = { enableRetry: true, maxRetries: 2, delayMs: 1000 }
 
   configure(config: ApiClientConfig = {}): void {
     if (config.baseUrl) this.baseUrl = config.baseUrl.replace(/\/+$/, '')
     if (config.getToken) this.getToken = config.getToken
     if (config.useMock !== undefined) this.useMock = config.useMock
+    if (config.retry !== undefined) this.retryOptions = { ...this.retryOptions, ...config.retry }
   }
 
   getBaseUrl(): string {
@@ -67,60 +70,74 @@ export class ApiClient {
       cfg = await interceptor(cfg)
     }
 
-    const url = cfg.params
-      ? `${cfg.url}?${new URLSearchParams(cfg.params as Record<string, string>).toString()}`
-      : cfg.url
+    const doFetch = async (): Promise<T> => {
+      const url = cfg.params
+        ? `${cfg.url}?${new URLSearchParams(cfg.params as Record<string, string>).toString()}`
+        : cfg.url
 
-    let response: Response
-    try {
-      response = await fetch(url, {
-        method: cfg.method,
-        headers: cfg.headers,
-        body: cfg.body !== undefined ? JSON.stringify(cfg.body) : undefined,
-        signal: cfg.signal,
-      })
-    } catch (err) {
-      throw new ApiError(
-        `Network error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        0,
-      )
+      let response: Response
+      try {
+        response = await fetch(url, {
+          method: cfg.method,
+          headers: cfg.headers,
+          body: cfg.body !== undefined ? JSON.stringify(cfg.body) : undefined,
+          signal: cfg.signal,
+        })
+      } catch (err) {
+        throw new ApiError(
+          `Network error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          0,
+        )
+      }
+
+      let json: ApiResponse<T>
+      try {
+        json = (await response.json()) as ApiResponse<T>
+      } catch {
+        throw new ApiError(
+          `Invalid JSON response (HTTP ${response.status})`,
+          response.status,
+        )
+      }
+
+      // 401: 直接抛出错误，不再自动跳转登录页
+      if (response.status === 401) {
+        throw new ApiError(
+          json.error?.message ?? 'Unauthorized',
+          401,
+          json.error,
+        )
+      }
+
+      // 5xx 服务器错误：抛出可重试的错误
+      if (response.status >= 500) {
+        throw new ApiError(
+          json.error?.message ?? `Server error (HTTP ${response.status})`,
+          response.status,
+          json.error,
+        )
+      }
+
+      if (!json.success) {
+        throw new ApiError(
+          json.error?.message ?? `Request failed (HTTP ${response.status})`,
+          response.status,
+          json.error,
+        )
+      }
+
+      let data = json.data as T
+
+      // 执行响应拦截器链
+      for (const interceptor of this.responseInterceptors) {
+        data = await interceptor(data, response)
+      }
+
+      return data
     }
 
-    let json: ApiResponse<T>
-    try {
-      json = (await response.json()) as ApiResponse<T>
-    } catch {
-      throw new ApiError(
-        `Invalid JSON response (HTTP ${response.status})`,
-        response.status,
-      )
-    }
-
-    // 401: 直接抛出错误，不再自动跳转登录页
-    if (response.status === 401) {
-      throw new ApiError(
-        json.error?.message ?? 'Unauthorized',
-        401,
-        json.error,
-      )
-    }
-
-    if (!json.success) {
-      throw new ApiError(
-        json.error?.message ?? `Request failed (HTTP ${response.status})`,
-        response.status,
-        json.error,
-      )
-    }
-
-    let data = json.data as T
-
-    // 执行响应拦截器链
-    for (const interceptor of this.responseInterceptors) {
-      data = await interceptor(data, response)
-    }
-
-    return data
+    // 对网络错误和 5xx 服务器错误启用重试
+    return executeWithRetry(doFetch, this.retryOptions)
   }
 
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
@@ -221,6 +238,7 @@ export interface ApiClientConfig {
   baseUrl?: string
   getToken?: () => string
   useMock?: boolean
+  retry?: RetryOptions
 }
 
 export function configureApiClient(config: ApiClientConfig = {}): void {

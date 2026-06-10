@@ -3,14 +3,20 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
+import { useFlowExport } from '../composables/useFlowExport.js'
 import type { FlowInstanceStatus } from '@schema-form/flow-shared'
 import styles from './FlowInstanceListView.module.scss'
 
 const router = useRouter()
 const store = useFlowInstanceStore()
 const { instances, total, loading } = storeToRefs(store)
+const { exporting, exportInstance, exportBatch } = useFlowExport()
 
+const selectedIds = ref<string[]>([])
+
+const searchQuery = ref('')
 const statusFilter = ref<FlowInstanceStatus | ''>('')
 const page = ref(1)
 const pageSize = ref(20)
@@ -31,6 +37,7 @@ onMounted(() => {
 function fetchInstances() {
   store.fetchInstances({
     status: statusFilter.value || undefined,
+    search: searchQuery.value || undefined,
     page: page.value,
     pageSize: pageSize.value,
   })
@@ -107,15 +114,38 @@ function formatDate(dateStr: string) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString('zh-CN')
 }
+
+function handleSelectionChange(rows: Array<{ id: string }>) {
+  selectedIds.value = rows.map((r) => r.id)
+}
 </script>
 
 <template>
   <div :class="styles.flowInstanceList">
     <div :class="styles.header">
       <h2>流程实例</h2>
+      <div :class="styles.headerActions">
+        <el-button
+          v-if="selectedIds.length > 0"
+          type="primary"
+          :loading="exporting"
+          @click="exportBatch(selectedIds)"
+        >
+          批量导出 ({{ selectedIds.length }})
+        </el-button>
+      </div>
     </div>
 
     <div :class="styles.filters">
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索流程名称或发起人"
+        :prefix-icon="Search"
+        clearable
+        :class="styles.searchInput"
+        @clear="handleFilter"
+        @keyup.enter="handleFilter"
+      />
       <el-select
         v-model="statusFilter"
         placeholder="状态筛选"
@@ -132,7 +162,8 @@ function formatDate(dateStr: string) {
       </el-select>
     </div>
 
-    <el-table :data="instances" v-loading="loading" stripe>
+    <el-table :data="instances" v-loading="loading" stripe @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="50" />
       <el-table-column label="流程名称" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
           {{ row.definitionName || row.definitionId }}
@@ -185,6 +216,13 @@ function formatDate(dateStr: string) {
               @click="handleResume(row.id)"
             >
               恢复
+            </el-button>
+            <el-button
+              size="small"
+              :loading="exporting"
+              @click="exportInstance(row.id)"
+            >
+              导出
             </el-button>
           </div>
         </template>

@@ -15,6 +15,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import { useSnapshot } from '@/composables/useSnapshot'
+import { useAutoSave } from '@/composables/useAutoSave'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
 import { useEditorStore } from '@/stores/editor'
@@ -54,6 +55,13 @@ const apiStore = useApiStore()
 const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
+
+// 自动保存：脏数据 60 秒后自动触发保存
+const { isAutoSaving } = useAutoSave({
+  delayMs: 60_000,
+  enabled: true,
+  onSave: handleSave,
+})
 
 // ================================================================
 // Layout state
@@ -246,6 +254,10 @@ function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'v') {
       e.preventDefault()
       handlePasteWidget()
+    }
+    if (e.key === 's') {
+      e.preventDefault()
+      handleSave()
     }
   }
 }
@@ -491,6 +503,8 @@ function handleClearCanvas() {
             placeholder="未命名画布"
           />
           <span v-if="currentVersion" class="editor-view__version-badge">v{{ formatVersion(currentVersion) }}</span>
+          <span v-if="isAutoSaving" class="editor-view__auto-save-badge">自动保存中...</span>
+          <span v-else-if="editorStore.isDirty" class="editor-view__dirty-badge">未保存</span>
         </template>
       </div>
 
@@ -562,6 +576,46 @@ function handleClearCanvas() {
             <span class="editor-view__ai-label">AI</span>
           </button>
         </el-tooltip>
+        <div class="editor-view__divider" />
+        <!-- 快捷键帮助 -->
+        <el-popover placement="bottom" :width="320" trigger="click">
+          <template #reference>
+            <button class="editor-view__icon-btn" title="快捷键帮助">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="8" r="6.5" />
+                <path d="M5.5 6.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
+                <circle cx="8" cy="12" r="0.5" fill="currentColor" />
+              </svg>
+            </button>
+          </template>
+          <div class="editor-view__shortcuts">
+            <div class="editor-view__shortcuts-title">快捷键</div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">撤销</span>
+              <span class="editor-view__shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
+            </div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">重做</span>
+              <span class="editor-view__shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
+            </div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">复制部件</span>
+              <span class="editor-view__shortcut-keys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+            </div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">粘贴部件</span>
+              <span class="editor-view__shortcut-keys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+            </div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">删除部件</span>
+              <span class="editor-view__shortcut-keys"><kbd>Delete</kbd></span>
+            </div>
+            <div class="editor-view__shortcut-row">
+              <span class="editor-view__shortcut-label">保存</span>
+              <span class="editor-view__shortcut-keys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+            </div>
+          </div>
+        </el-popover>
         <div class="editor-view__divider" />
         <el-tooltip content="预览" placement="bottom">
           <button
@@ -975,6 +1029,21 @@ function handleClearCanvas() {
     flex-shrink: 0;
   }
 
+  &__auto-save-badge {
+    font-size: 11px;
+    color: var(--el-color-success);
+    white-space: nowrap;
+    flex-shrink: 0;
+    animation: autoSavePulse 1.5s ease-in-out infinite;
+  }
+
+  &__dirty-badge {
+    font-size: 11px;
+    color: var(--el-color-warning);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   &__version-panel {
     max-height: 400px;
     overflow-y: auto;
@@ -1203,6 +1272,62 @@ function handleClearCanvas() {
     color: #303133;
     white-space: pre-wrap;
     word-break: break-all;
+  }
+
+  &__shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__shortcuts-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 4px;
+  }
+
+  &__shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+
+  &__shortcut-label {
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+  }
+
+  &__shortcut-keys {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 20px;
+      padding: 0 5px;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--el-text-color-primary);
+      background: var(--el-fill-color-light);
+      border: 1px solid var(--el-border-color);
+      border-radius: 3px;
+      box-shadow: 0 1px 0 var(--el-border-color);
+    }
+  }
+
+  @keyframes autoSavePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 }
 </style>

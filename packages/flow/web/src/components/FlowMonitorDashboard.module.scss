@@ -7,6 +7,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm, 12px);
   margin-bottom: var(--spacing-20px, 20px);
 }
 
@@ -17,12 +19,38 @@
   color: var(--text-color-primary, #303133);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+}
+
+.timeRangeGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+.datePicker {
+  margin-left: var(--spacing-xs, 4px);
+}
+
 .statsRow {
   margin-bottom: var(--spacing-md, 16px);
 }
 
 .statCard {
   text-align: center;
+}
+
+.statCardClickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.25);
+  }
 }
 
 .statItem {
@@ -44,6 +72,22 @@
   color: var(--el-color-info, #909399);
 }
 
+.statCompleted {
+  color: var(--el-color-success, #67c23a);
+}
+
+.statFailed {
+  color: var(--el-color-danger, #f56c6c);
+}
+
+.statTerminated {
+  color: var(--el-text-color-secondary, #909399);
+}
+
+.statSuspended {
+  color: var(--el-color-warning, #e6a23c);
+}
+
 .statToday {
   color: var(--el-color-warning, #e6a23c);
 }
@@ -59,6 +103,17 @@
   color: var(--el-text-color-secondary, #909399);
 }
 
+.statPct {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--el-text-color-placeholder, #c0c4cc);
+}
+
+.statPctFailed {
+  color: var(--el-color-danger, #f56c6c);
+  font-weight: 500;
+}
+
 .chartRow {
   margin-bottom: var(--spacing-md, 16px);
 }
@@ -66,4 +121,15 @@
 .chart {
   height: 320px;
   width: 100%;
+}
+
+.refreshGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.autoRefreshBtn {
+  font-size: 12px;
+  gap: 4px;
 }

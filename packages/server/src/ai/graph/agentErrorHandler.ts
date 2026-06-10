@@ -34,7 +34,7 @@ export function classifyError(err: unknown): ErrorType {
   if (lower.includes('context_length') || lower.includes('too many tokens') || lower.includes('maximum context')) {
     return 'context_length'
   }
-  if (lower.includes('api_key') || lower.includes('unauthorized') || lower.includes('401') || lower.includes('invalid_api_key')) {
+  if (lower.includes('api_key') || lower.includes('api key') || lower.includes('unauthorized') || lower.includes('401') || lower.includes('invalid_api_key')) {
     return 'invalid_api_key'
   }
   if (lower.includes('rate') || lower.includes('429') || lower.includes('too many requests')) {

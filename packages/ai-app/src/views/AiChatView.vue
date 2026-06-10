@@ -96,6 +96,7 @@ const flowData = computed<PreviewFlowData | undefined>(() => {
       label: n.data.label ?? n.data.bpmnType ?? n.id,
       type: (n.data.bpmnType === 'startEvent' ? 'start' : n.data.bpmnType === 'endEvent' ? 'end' : 'task') as 'start' | 'task' | 'end',
     })),
+    graph: currentFlow.value,
   }
 })
 
@@ -322,6 +323,7 @@ onMounted(() => {
         @rag-select="handleRagSelect"
         @rag-remove="handleRagRemove"
         @open-json-drawer="handleOpenJsonDrawer"
+        @retry-tool="(mi, tci) => store.retryToolCall(mi, tci)"
       />
 
       <!-- 右侧：预览面板 -->

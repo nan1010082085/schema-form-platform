@@ -21,7 +21,10 @@ export interface LoginPayload {
 
 /** 登录响应 */
 export interface LoginResponse {
-  token: string
+  accessToken: string
+  refreshToken: string
+  tokenType: string
+  expiresIn: number
   user: AuthUser
 }
 

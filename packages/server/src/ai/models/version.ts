@@ -6,9 +6,11 @@
  */
 
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../../middleware/tenantPlugin.js'
 
 export interface IAIVersion {
   _id: string
+  tenantId: string
   conversationId: string
   messageId: string
   type: 'schema' | 'flow'
@@ -21,6 +23,7 @@ export interface IAIVersion {
 const aiVersionSchema = new mongoose.Schema<IAIVersion>(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     conversationId: { type: String, required: true },
     messageId: { type: String, required: true },
     type: { type: String, enum: ['schema', 'flow'], required: true },
@@ -42,6 +45,8 @@ const aiVersionSchema = new mongoose.Schema<IAIVersion>(
 
 aiVersionSchema.index({ conversationId: 1, version: -1 })
 aiVersionSchema.index({ conversationId: 1, type: 1 })
+
+aiVersionSchema.plugin(tenantPlugin)
 
 export const AIVersionModel =
   mongoose.models.AIVersion ??

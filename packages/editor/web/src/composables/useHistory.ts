@@ -23,6 +23,14 @@ export interface UseHistoryReturn {
   clear: () => void
 }
 
+/**
+ * 深拷贝 — 使用 JSON 序列化。
+ * structuredClone 无法处理 Vue reactive proxy 对象，因此统一使用 JSON 方式。
+ */
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
   const maxSize = options.maxSize ?? 50
 
@@ -40,7 +48,7 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
   })
 
   function clone(schema: PartialWidget[]): PartialWidget[] {
-    return JSON.parse(JSON.stringify(schema)) as PartialWidget[]
+    return deepClone(schema)
   }
 
   function pushState(schema: PartialWidget[]): void {
@@ -51,9 +59,12 @@ export function useHistory(options: UseHistoryOptions = {}): UseHistoryReturn {
       history.splice(pointer + 1)
     }
 
-    // Skip duplicate states
-    if (history.length > 0 && JSON.stringify(history[pointer]) === JSON.stringify(snapshot)) {
-      return
+    // Skip duplicate states — use fast structural comparison
+    if (history.length > 0) {
+      const current = history[pointer]
+      if (current.length === snapshot.length && JSON.stringify(current) === JSON.stringify(snapshot)) {
+        return
+      }
     }
 
     history.push(snapshot)

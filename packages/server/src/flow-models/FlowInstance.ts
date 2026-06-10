@@ -1,8 +1,10 @@
 import mongoose from 'mongoose'
 import type { FlowInstanceStatus, FlowToken } from '@schema-form/flow-shared'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IFlowInstance {
   _id: string
+  tenantId: string
   definitionId: string
   versionId: string
   version: string
@@ -37,6 +39,7 @@ const flowTokenSchema = new mongoose.Schema(
 const flowInstanceSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     definitionId: { type: String, required: true, index: true },
     versionId: { type: String, required: true },
     version: { type: String, required: true },
@@ -66,6 +69,8 @@ const flowInstanceSchema = new mongoose.Schema(
 )
 
 flowInstanceSchema.index({ status: 1, updatedAt: -1 })
+
+flowInstanceSchema.plugin(tenantPlugin)
 
 export const FlowInstanceModel =
   mongoose.models.FlowInstance ??

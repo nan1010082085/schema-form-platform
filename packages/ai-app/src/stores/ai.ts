@@ -190,6 +190,9 @@ export const useAiStore = defineStore('ai', () => {
             historySummary: chatSettings.value.historySummary.mode === 'manual'
               ? chatSettings.value.historySummary.manualSummary
               : context.value.historySummary,
+            // 多轮迭代：携带当前已生成的 Schema/Flow，供 AI 基于上次结果修改
+            currentSchema: currentSchema.value ?? undefined,
+            currentFlow: currentFlow.value ?? undefined,
           },
           mentions: mentions && mentions.length > 0 ? mentions : undefined,
         }, signal)
@@ -347,6 +350,46 @@ export const useAiStore = defineStore('ai', () => {
       messages.value[lastIdx].status = 'streaming'
       await _executeStream(lastMessagePayload.value.content, lastMessagePayload.value.mentions, lastIdx)
     }
+  }
+
+  /**
+   * 重试指定 assistant 消息中的某个失败工具调用。
+   * 清除该工具调用的 error 状态，然后重新发送原始用户消息以触发 AI 重试。
+   */
+  async function retryToolCall(messageIndex: number, toolCallIndex: number): Promise<void> {
+    const msg = messages.value[messageIndex]
+    if (!msg || msg.role !== 'assistant' || !msg.toolCalls) return
+
+    const toolCall = msg.toolCalls[toolCallIndex]
+    if (!toolCall || !toolCall.error) return
+
+    // 清除该工具调用的错误状态，标记为重试中
+    toolCall.error = undefined
+    toolCall.result = undefined
+
+    // 找到该 assistant 消息之前的用户消息
+    let userContent = ''
+    let userMentions: MentionReference[] | undefined
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (messages.value[i].role === 'user') {
+        userContent = messages.value[i].content
+        break
+      }
+    }
+    if (!userContent) return
+
+    // 取消正在进行的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
+
+    loading.value = true
+    error.value = null
+
+    // 重置 assistant 消息状态
+    msg.status = 'streaming'
+
+    await _executeStream(userContent, userMentions, messageIndex)
   }
 
   /**
@@ -887,9 +930,12 @@ export const useAiStore = defineStore('ai', () => {
 
   // ---- 对话搜索 ----
 
-  /** 搜索对话列表 */
-  async function searchConversationsAction(query: string): Promise<SearchResult> {
-    return searchConversations({ keyword: query })
+  /** 搜索对话列表，支持关键词、时间范围、来源筛选 */
+  async function searchConversationsAction(
+    params: string | import('@/api/aiApi').SearchConversationsParams,
+  ): Promise<SearchResult> {
+    const normalized = typeof params === 'string' ? { keyword: params } : params
+    return searchConversations(normalized)
   }
 
   // ---- Mention 搜索 ----
@@ -987,6 +1033,7 @@ export const useAiStore = defineStore('ai', () => {
     // actions
     sendMessage,
     retryLastMessage,
+    retryToolCall,
     stopGeneration,
     switchAgent,
     clearConversation,

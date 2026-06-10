@@ -40,6 +40,9 @@ const {
   mockApprovalLogCreate,
   mockSendNotification,
   mockSendBatchNotifications,
+  mockCreateTaskAssignedNotification,
+  mockCreateTaskRejectedNotification,
+  mockCreateFlowCompletedNotification,
 } = vi.hoisted(() => ({
   mockFlowDefinitionFindById: vi.fn(),
   mockFlowVersionFindById: vi.fn(),
@@ -62,6 +65,9 @@ const {
   mockApprovalLogCreate: vi.fn(),
   mockSendNotification: vi.fn().mockResolvedValue(undefined),
   mockSendBatchNotifications: vi.fn().mockResolvedValue(undefined),
+  mockCreateTaskAssignedNotification: vi.fn().mockResolvedValue(undefined),
+  mockCreateTaskRejectedNotification: vi.fn().mockResolvedValue(undefined),
+  mockCreateFlowCompletedNotification: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../../flow-models/FlowDefinition.js', () => ({
@@ -121,6 +127,9 @@ vi.mock('../../flow-services/NotificationService.js', () => ({
   notificationService: {
     sendNotification: mockSendNotification,
     sendBatchNotifications: mockSendBatchNotifications,
+    createTaskAssignedNotification: mockCreateTaskAssignedNotification,
+    createTaskRejectedNotification: mockCreateTaskRejectedNotification,
+    createFlowCompletedNotification: mockCreateFlowCompletedNotification,
   },
 }))
 

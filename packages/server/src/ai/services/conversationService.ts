@@ -83,7 +83,7 @@ const messageSchema = new mongoose.Schema<AIConversationMessage>(
 const aiConversationSchema = new mongoose.Schema<IAIConversation>(
   {
     _id: { type: String, required: true },
-    source: { type: String, enum: ['editor', 'flow', 'standalone'], required: true },
+    source: { type: String, enum: ['editor', 'flow', 'page', 'standalone'], required: true },
     schemaId: { type: String },
     flowId: { type: String },
     nodeId: { type: String },
@@ -272,6 +272,9 @@ export async function saveHistorySummary(
 
 /**
  * Format messages into a transcript for the summarization LLM call.
+ *
+ * Includes structured schema/flow metadata so the summary captures
+ * what was generated (widget types, field names, node counts).
  */
 function formatMessagesForSummary(messages: AIConversationMessage[]): string {
   return messages
@@ -282,15 +285,56 @@ function formatMessagesForSummary(messages: AIConversationMessage[]): string {
         const toolNames = m.toolCalls.map((tc) => tc.name).join(', ')
         line += ` (调用了工具: ${toolNames})`
       }
-      if (m.schema) {
-        line += ` (生成了 Schema)`
+      if (m.schema && Array.isArray(m.schema)) {
+        const widgetTypes = extractWidgetTypeSummary(m.schema)
+        const fieldNames = extractFieldNames(m.schema)
+        line += ` (生成了 Schema: ${m.schema.length} 个组件 [${widgetTypes}])`
+        if (fieldNames.length > 0) {
+          line += `, 字段: ${fieldNames.slice(0, 8).join(', ')}${fieldNames.length > 8 ? '...' : ''}`
+        }
       }
-      if (m.flow) {
-        line += ` (生成了 Flow)`
+      if (m.flow && typeof m.flow === 'object') {
+        const nodes = (m.flow as Record<string, unknown>).nodes as Array<Record<string, unknown>> | undefined
+        const edges = (m.flow as Record<string, unknown>).edges as Array<Record<string, unknown>> | undefined
+        if (nodes) {
+          const nodeTypes = Array.from(new Set(nodes.map((n) => {
+            const data = n.data as Record<string, unknown> | undefined
+            return (data?.bpmnType as string) ?? (n.type as string) ?? 'unknown'
+          }))).join(', ')
+          line += ` (生成了 Flow: ${nodes.length} 个节点, ${(edges ?? []).length} 条连线 [${nodeTypes}])`
+        }
       }
       return line
     })
     .join('\n')
+}
+
+/**
+ * Extract unique widget types from a schema tree (recursive).
+ */
+function extractWidgetTypeSummary(widgets: Record<string, unknown>[]): string {
+  const types: string[] = []
+  const collect = (w: Record<string, unknown>) => {
+    if (w.type) types.push(w.type as string)
+    const children = w.children as Record<string, unknown>[] | undefined
+    if (children) children.forEach(collect)
+  }
+  widgets.forEach(collect)
+  return Array.from(new Set(types)).join(', ')
+}
+
+/**
+ * Extract field names from a schema tree (recursive).
+ */
+function extractFieldNames(widgets: Record<string, unknown>[]): string[] {
+  const fields: string[] = []
+  const collect = (w: Record<string, unknown>) => {
+    if (w.field) fields.push(w.field as string)
+    const children = w.children as Record<string, unknown>[] | undefined
+    if (children) children.forEach(collect)
+  }
+  widgets.forEach(collect)
+  return Array.from(new Set(fields))
 }
 
 /**
@@ -325,7 +369,9 @@ async function generateSummaryFromMessages(
       : JSON.stringify(response.content)
 
     return content.trim() || null
-  } catch {
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    console.warn(`[historySummary] 摘要生成失败: ${errorMessage}`)
     return null
   }
 }

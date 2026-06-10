@@ -213,6 +213,39 @@ export async function executeEventAction(
       }
       break
     }
+    case 'startFlow': {
+      if (!action.definitionId) break
+      logger.api(`发起流程: definitionId=${action.definitionId}`)
+      try {
+        const response = await apiClient.requestUrl<unknown>('post', '/flow-instances', {
+          definitionId: action.definitionId,
+          variables: action.variables ?? {},
+        })
+        logger.api('流程发起成功', response)
+        ctx.emit('flow-started', { definitionId: action.definitionId, response })
+      } catch (err) {
+        logger.warn(`流程发起失败: definitionId=${action.definitionId}`, err)
+        ctx.emit('flow-error', { action: 'startFlow', definitionId: action.definitionId, error: String(err) })
+      }
+      break
+    }
+    case 'endFlow': {
+      if (!action.instanceId) break
+      logger.api(`结束流程: instanceId=${action.instanceId}`)
+      try {
+        const response = await apiClient.requestUrl<unknown>(
+          'post',
+          `/flow-instances/${action.instanceId}/terminate`,
+          action.reason ? { reason: action.reason } : undefined,
+        )
+        logger.api('流程结束成功', response)
+        ctx.emit('flow-ended', { instanceId: action.instanceId, response })
+      } catch (err) {
+        logger.warn(`流程结束失败: instanceId=${action.instanceId}`, err)
+        ctx.emit('flow-error', { action: 'endFlow', instanceId: action.instanceId, error: String(err) })
+      }
+      break
+    }
   }
 }
 
@@ -335,13 +368,14 @@ export function evaluateCondition(
   }
 
   try {
-    // 使用固定参数名（values/variables/exposed），避免 context key 碰到 JS 关键字导致崩溃。
-    // 与 useLinkage.ts 的模式保持一致。
+    // 使用 with(env) 让表达式可以直接引用表单字段名（如 status、lock），
+    // 同时支持 values.xxx、variables.xxx、exposed.xxx 命名空间访问。
+    const env = { ...context, values: context, variables: context, exposed: exposed ?? {} }
     const fn = new Function(
-      'values', 'variables', 'exposed',
-      `"use strict"; return (${expression})`,
+      'env',
+      `with(env) { return (${expression}) }`,
     )
-    return Boolean(fn(context, context, exposed ?? {}))
+    return Boolean(fn(env))
   } catch {
     logger.warn(`Expression evaluation failed: ${expression}`)
     return false

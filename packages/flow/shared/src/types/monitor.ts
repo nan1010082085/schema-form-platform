@@ -10,6 +10,24 @@ export interface FlowMonitorStats {
   failed: number
 }
 
+/** 带占比的状态统计 */
+export interface FlowMonitorStatsWithPercent extends FlowMonitorStats {
+  runningPct: number
+  completedPct: number
+  terminatedPct: number
+  suspendedPct: number
+  failedPct: number
+}
+
+/** 时间范围筛选参数 */
+export type TimeRangePreset = 'today' | 'week' | 'month' | 'custom'
+
+export interface FlowMonitorTimeRange {
+  preset: TimeRangePreset
+  startDate?: string
+  endDate?: string
+}
+
 /** 平均审批时长（毫秒） */
 export interface FlowMonitorAvgDuration {
   avgDuration: number

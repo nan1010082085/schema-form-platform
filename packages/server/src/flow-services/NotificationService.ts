@@ -8,6 +8,8 @@ interface TaskNotificationData {
   instanceId?: string
   assignee?: string
   delegatedBy?: string
+  rejector?: string
+  flowName?: string
 }
 
 export class NotificationService {
@@ -25,6 +27,10 @@ export class NotificationService {
         return `任务已完成: ${data.taskName}`
       case 'task_delegated':
         return `任务已委派: ${data.taskName}`
+      case 'task_rejected':
+        return `任务已驳回: ${data.taskName}`
+      case 'flow_completed':
+        return `流程已完成: ${data.flowName ?? data.taskName}`
       default:
         return `任务通知: ${data.taskName}`
     }
@@ -40,6 +46,10 @@ export class NotificationService {
         return `任务「${data.taskName}」已被完成。`
       case 'task_delegated':
         return `任务「${data.taskName}」已由 ${data.delegatedBy ?? '未知用户'} 委派给您。`
+      case 'task_rejected':
+        return `您提交的任务「${data.taskName}」已被 ${data.rejector ?? '审批人'} 驳回，请查看并修改。`
+      case 'flow_completed':
+        return `流程「${data.flowName ?? data.taskName}」已全部完成。`
       default:
         return ''
     }
@@ -90,6 +100,48 @@ export class NotificationService {
     }))
 
     await this.model.insertMany(notifications)
+  }
+
+  /**
+   * Create a notification when a task is assigned to a user.
+   */
+  async createTaskAssignedNotification(taskId: string, userId: string, taskName?: string): Promise<INotification> {
+    return this.sendNotification(userId, 'task_created', {
+      taskId,
+      taskName: taskName ?? '待办任务',
+    })
+  }
+
+  /**
+   * Create a notification when a task is rejected — sent to the original task submitter.
+   */
+  async createTaskRejectedNotification(
+    taskId: string,
+    submitterUserId: string,
+    taskName?: string,
+    rejector?: string,
+  ): Promise<INotification> {
+    return this.sendNotification(submitterUserId, 'task_rejected', {
+      taskId,
+      taskName: taskName ?? '待办任务',
+      rejector,
+    })
+  }
+
+  /**
+   * Create a notification when the entire flow instance is completed — sent to the initiator.
+   */
+  async createFlowCompletedNotification(
+    instanceId: string,
+    initiatorUserId: string,
+    flowName?: string,
+  ): Promise<INotification> {
+    return this.sendNotification(initiatorUserId, 'flow_completed', {
+      taskId: instanceId,
+      taskName: flowName ?? '流程',
+      instanceId,
+      flowName,
+    })
   }
 
   async getNotifications(

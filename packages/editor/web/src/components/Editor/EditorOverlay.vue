@@ -9,7 +9,8 @@
  * - 辅助线层（灰色虚线）
  * - 交互事件（选中、拖拽、缩放）
  */
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import { useDragStore } from '../../stores/drag'
@@ -18,6 +19,9 @@ import { useDrag } from '../../composables/useDrag'
 import { useResize } from '../../composables/useResize'
 import { useClipboard } from '../../composables/useClipboard'
 import { useSnapshot } from '../../composables/useSnapshot'
+import { applyTemplate } from '../../utils/apiClient'
+import { viewportToCanvas, constrainToCanvasBounds } from '../../utils/coordinate'
+import { collectAllContainers } from '../../utils/collision'
 import type { Widget, SchemaType } from '../../widgets/base/types'
 import type { ResizeHandle } from '../../composables/useResize'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
@@ -65,9 +69,25 @@ const editorStore = useEditorStore()
 const dragStore = useDragStore()
 const boardStore = useBoardStore()
 
-const { startDragFromPanel, startDragOnCanvas, updateDrag, endDrag } = useDrag()
+const { startDragFromPanel, startDragOnCanvas, updateDrag, endDrag, cancelDrag } = useDrag()
 const { copy } = useClipboard()
 const { captureElement } = useSnapshot()
+
+// ---- ESC 键取消拖拽 ----
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && dragStore.isDragging) {
+    e.preventDefault()
+    cancelDrag()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+})
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+})
 
 /** 自渲染容器：children 在组件内部渲染，flattenWidgets 跳过其子组件 */
 const SELF_RENDERING_CONTAINERS: ReadonlySet<SchemaType> = new Set()
@@ -214,7 +234,7 @@ const handles: { type: ResizeHandle; style: Record<string, string> }[] = [
 const guideLines = computed(() => dragStore.guideLines)
 
 // ================================================================
-// 容器高亮（拖拽悬停时）
+// 容器高亮（拖拽悬停时，支持嵌套容器的画布绝对坐标）
 // ================================================================
 
 const hoveredContainer = computed(() => {
@@ -222,19 +242,69 @@ const hoveredContainer = computed(() => {
   return widgetStore.findWidget(dragStore.hoveredContainerId)
 })
 
+/** 计算嵌套容器的画布绝对坐标（递归累加父容器偏移） */
+function getContainerCanvasPosition(containerId: string): { x: number; y: number } {
+  const allContainers = collectAllContainers(widgetStore.widgets)
+  const found = allContainers.find(c => c.id === containerId)
+  if (found && '_canvasX' in found) {
+    return { x: (found as Widget & { _canvasX: number })._canvasX, y: (found as Widget & { _canvasY: number })._canvasY }
+  }
+  // 回退到根级坐标
+  const widget = widgetStore.findWidget(containerId)
+  return { x: widget?.position.x ?? 0, y: widget?.position.y ?? 0 }
+}
+
 const containerHighlightStyle = computed(() => {
   const c = hoveredContainer.value
   if (!c) return { display: 'none' as const }
+  const canvasPos = getContainerCanvasPosition(c.id)
   return {
     position: 'absolute' as const,
-    left: `${c.position.x}px`,
-    top: `${c.position.y}px`,
+    left: `${canvasPos.x}px`,
+    top: `${canvasPos.y}px`,
     width: `${c.position.w}px`,
     height: `${c.position.h}px`,
     border: '2px dashed var(--color-primary)',
     backgroundColor: 'rgba(64, 158, 255, 0.1)',
     pointerEvents: 'none' as const,
     zIndex: 9998,
+  }
+})
+
+// ================================================================
+// 放置预览线（指示新组件的插入位置）
+// ================================================================
+
+const dropPreviewLine = computed(() => dragStore.dropPreviewLine)
+
+const dropPreviewLineStyle = computed(() => {
+  const line = dropPreviewLine.value
+  if (!line) return { display: 'none' as const }
+
+  if (line.orientation === 'horizontal') {
+    return {
+      position: 'absolute' as const,
+      left: `${line.start}px`,
+      top: `${line.position - 1}px`,
+      width: `${line.end - line.start}px`,
+      height: '2px',
+      backgroundColor: 'var(--color-primary)',
+      pointerEvents: 'none' as const,
+      zIndex: 9999,
+      boxShadow: '0 0 4px var(--color-primary)',
+    }
+  }
+
+  return {
+    position: 'absolute' as const,
+    left: `${line.position - 1}px`,
+    top: `${line.start}px`,
+    width: '2px',
+    height: `${line.end - line.start}px`,
+    backgroundColor: 'var(--color-primary)',
+    pointerEvents: 'none' as const,
+    zIndex: 9999,
+    boxShadow: '0 0 4px var(--color-primary)',
   }
 })
 
@@ -324,22 +394,102 @@ function handleHandleMouseDown(e: MouseEvent, handle: ResizeHandle) {
 /** 拖拽悬停（从面板拖入时更新位置） */
 function handleDragOver(e: DragEvent) {
   e.preventDefault()
+  // 面板拖入：首次 dragover 时启动拖拽跟踪，使碰撞检测和预览线在悬停阶段生效
+  if (!dragStore.isDragging) {
+    const hasSchemaType = e.dataTransfer?.types.includes('schema-type') || e.dataTransfer?.types.includes('application/schema-drag')
+    if (hasSchemaType && overlayRef.value) {
+      // dragover 阶段无法读取 data，用临时 type 启动跟踪
+      dragStore.startDrag('panel', `preview_${Date.now()}`, 'input')
+    }
+  }
   if (dragStore.isDragging && overlayRef.value) {
     updateDrag(e.clientX, e.clientY, overlayRef.value)
+  }
+}
+
+/** 拖拽离开画布区域时清理预览状态 */
+function handleDragLeave(e: DragEvent) {
+  // 只在真正离开 overlay 区域时清理（避免子元素触发的 leave 事件）
+  const relatedTarget = e.relatedTarget as HTMLElement | null
+  if (relatedTarget && overlayRef.value?.contains(relatedTarget)) return
+  if (dragStore.isDragging && dragStore.dragSource === 'panel') {
+    dragStore.endDrag()
   }
 }
 
 /** 放置（从面板拖入结束） */
 function handleDrop(e: DragEvent) {
   e.preventDefault()
+  const templateId = e.dataTransfer?.getData('template-id')
+  if (templateId) {
+    dragStore.endDrag()
+    handleTemplateDrop(templateId, e.clientX, e.clientY)
+    return
+  }
   const schemaType = e.dataTransfer?.getData('schema-type') as import('../../widgets/base/types').SchemaType | undefined
   if (schemaType) {
+    // 如果 dragover 阶段已经启动了拖拽跟踪，先结束再用正确的类型重新开始
+    if (dragStore.isDragging) {
+      dragStore.endDrag()
+    }
     startDragFromPanel(schemaType)
     if (overlayRef.value) {
       updateDrag(e.clientX, e.clientY, overlayRef.value)
     }
   }
   endDrag()
+}
+
+/** 处理模板拖放到画布 */
+async function handleTemplateDrop(templateId: string, clientX: number, clientY: number) {
+  try {
+    const result = await applyTemplate(templateId)
+    const widgets = result.widgets as unknown as Widget[]
+
+    // 计算放置位置（画布坐标系）
+    let dropX = 0
+    let dropY = 0
+    if (overlayRef.value) {
+      const rect = overlayRef.value.getBoundingClientRect()
+      const zoom = boardStore.canvas.zoom
+      const canvasPos = viewportToCanvas(clientX, clientY, rect, overlayRef.value.scrollLeft, overlayRef.value.scrollTop, zoom)
+      dropX = canvasPos.x
+      dropY = canvasPos.y
+    }
+
+    // 计算模板 widgets 的包围盒，用于偏移到放置点
+    if (widgets.length > 0) {
+      const minX = Math.min(...widgets.map(w => w.position?.x ?? 0))
+      const minY = Math.min(...widgets.map(w => w.position?.y ?? 0))
+      const offsetX = dropX - minX
+      const offsetY = dropY - minY
+
+      for (const w of widgets) {
+        if (w.position) {
+          w.position.x += offsetX
+          w.position.y += offsetY
+          // 边界约束
+          const constrained = constrainToCanvasBounds(
+            w.position.x, w.position.y, w.position.w, w.position.h,
+            boardStore.canvas.width, boardStore.canvas.height,
+          )
+          w.position.x = constrained.x
+          w.position.y = constrained.y
+        }
+        widgetStore.addWidget(w)
+      }
+    } else {
+      // 无位置信息的 widgets 直接添加
+      for (const w of widgets) {
+        widgetStore.addWidget(w)
+      }
+    }
+
+    editorStore.pushHistory([...widgetStore.widgets])
+    ElMessage.success(`已应用模板「${result.name}」`)
+  } catch {
+    ElMessage.error('应用模板失败')
+  }
 }
 </script>
 
@@ -349,6 +499,7 @@ function handleDrop(e: DragEvent) {
     :class="styles.overlay"
     @click="handleOverlayClick"
     @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
     @drop="handleDrop"
   >
     <!-- 渲染层：事件穿透由 hitArea 层控制 -->
@@ -381,6 +532,12 @@ function handleDrop(e: DragEvent) {
     <div
       v-if="hoveredContainer"
       :style="containerHighlightStyle"
+    />
+
+    <!-- 放置预览线 -->
+    <div
+      v-if="dropPreviewLine"
+      :style="dropPreviewLineStyle"
     />
 
     <!-- 选中框 -->

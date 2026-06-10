@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import FlowMonitorDashboard from '../components/FlowMonitorDashboard.vue'
@@ -16,8 +16,15 @@ vi.mock('echarts', () => ({
   })),
 }))
 
+// Mock router
+const mockPush = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+}))
+
 // Mock store
 const mockFetchDashboard = vi.fn().mockResolvedValue(undefined)
+const mockSetTimeRange = vi.fn()
 
 const mockStoreState = {
   stats: {
@@ -27,6 +34,11 @@ const mockStoreState = {
     terminated: 5,
     suspended: 3,
     failed: 2,
+    runningPct: 10,
+    completedPct: 80,
+    terminatedPct: 5,
+    suspendedPct: 3,
+    failedPct: 2,
   },
   avgDuration: 3600000,
   nodeStats: [
@@ -43,7 +55,9 @@ const mockStoreState = {
   ],
   todayNew: 8,
   loading: false,
+  timeRange: { preset: 'month' },
   fetchDashboard: mockFetchDashboard,
+  setTimeRange: mockSetTimeRange,
 }
 
 vi.mock('../stores/flowMonitor', () => ({
@@ -55,6 +69,19 @@ describe('FlowMonitorDashboard', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     mockStoreState.loading = false
+    mockStoreState.stats = {
+      total: 100,
+      running: 10,
+      completed: 80,
+      terminated: 5,
+      suspended: 3,
+      failed: 2,
+      runningPct: 10,
+      completedPct: 80,
+      terminatedPct: 5,
+      suspendedPct: 3,
+      failedPct: 2,
+    }
   })
 
   function createWrapper() {
@@ -76,6 +103,18 @@ describe('FlowMonitorDashboard', () => {
           'el-button': {
             template: '<button class="el-button"><slot /></button>',
             props: ['icon', 'circle', 'loading'],
+          },
+          'el-radio-group': {
+            template: '<div class="el-radio-group"><slot /></div>',
+            props: ['modelValue', 'size'],
+          },
+          'el-radio-button': {
+            template: '<button class="el-radio-button"><slot /></button>',
+            props: ['value'],
+          },
+          'el-date-picker': {
+            template: '<div class="el-date-picker"></div>',
+            props: ['modelValue', 'type', 'rangeSeparator', 'startPlaceholder', 'endPlaceholder', 'size', 'valueFormat'],
           },
         },
         directives: {
@@ -104,6 +143,10 @@ describe('FlowMonitorDashboard', () => {
     const wrapper = createWrapper()
     expect(wrapper.text()).toContain('总实例数')
     expect(wrapper.text()).toContain('运行中')
+    expect(wrapper.text()).toContain('已完成')
+    expect(wrapper.text()).toContain('已失败')
+    expect(wrapper.text()).toContain('已终止')
+    expect(wrapper.text()).toContain('已挂起')
     expect(wrapper.text()).toContain('今日新增')
     expect(wrapper.text()).toContain('平均处理时长')
   })
@@ -114,6 +157,13 @@ describe('FlowMonitorDashboard', () => {
     expect(wrapper.text()).toContain('10')
     expect(wrapper.text()).toContain('8')
     expect(wrapper.text()).toContain('1 小时 0 分钟')
+  })
+
+  it('displays percentage values', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.text()).toContain('80%')
+    expect(wrapper.text()).toContain('10%')
+    expect(wrapper.text()).toContain('2%')
   })
 
   it('displays chart section titles', () => {
@@ -139,6 +189,27 @@ describe('FlowMonitorDashboard', () => {
     await btn.trigger('click')
 
     expect(mockFetchDashboard).toHaveBeenCalledOnce()
+  })
+
+  it('displays time range selector', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.text()).toContain('今日')
+    expect(wrapper.text()).toContain('本周')
+    expect(wrapper.text()).toContain('本月')
+    expect(wrapper.text()).toContain('全部')
+    expect(wrapper.text()).toContain('自定义')
+  })
+
+  it('failed stat card is clickable and navigates to instances filtered by failed', async () => {
+    const wrapper = createWrapper()
+    const failedCard = wrapper.find('[data-test="failed-card"]')
+    expect(failedCard.exists()).toBe(true)
+
+    await failedCard.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({
+      name: 'flow-instances',
+      query: { status: 'failed' },
+    })
   })
 
   it('formats zero duration as dash', () => {

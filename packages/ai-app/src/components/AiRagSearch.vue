@@ -69,7 +69,7 @@ function getScoreClass(score: number): string {
       <input
         v-model="searchQuery"
         :class="$style.searchInput"
-        placeholder="语义搜索 Schema，如：用户注册表单..."
+        placeholder="智能匹配 Schema，如：用户注册表单..."
         @input="handleInput"
       />
       <span v-if="loading" :class="$style.searchLoading" />
@@ -131,7 +131,7 @@ function getScoreClass(score: number): string {
       </div>
       <div v-else-if="!loading" :class="$style.emptyHint">
         <div :class="$style.emptyIcon">&#x2728;</div>
-        <div>输入自然语言描述，语义搜索已有 Schema</div>
+        <div>输入自然语言描述，智能匹配已有 Schema</div>
       </div>
     </div>
 

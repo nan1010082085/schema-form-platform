@@ -126,6 +126,9 @@ vi.mock('../flow-services/NotificationService.js', () => ({
   notificationService: {
     sendNotification: mockSendNotification,
     sendBatchNotifications: mockSendBatchNotifications,
+    createTaskAssignedNotification: vi.fn().mockResolvedValue(undefined),
+    createTaskRejectedNotification: vi.fn().mockResolvedValue(undefined),
+    createFlowCompletedNotification: vi.fn().mockResolvedValue(undefined),
   },
 }))
 

@@ -90,6 +90,7 @@ describe('executeEventAction', () => {
 
   beforeEach(() => {
     ctx = createMockContext()
+    mockRequestUrl.mockReset()
   })
 
   // ---- 基础动作测试 ----
@@ -335,6 +336,86 @@ describe('executeEventAction', () => {
     it('does nothing if navigatePath is missing', () => {
       executeEventAction({ type: 'navigate' }, ctx)
       expect(ctx.emit).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('startFlow', () => {
+    it('calls POST /flow-instances with definitionId and variables', async () => {
+      mockRequestUrl.mockResolvedValue({ id: 'inst-1', status: 'running' })
+      await executeEventAction({
+        type: 'startFlow',
+        definitionId: 'def-123',
+        variables: { amount: 100 },
+      }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/flow-instances', {
+        definitionId: 'def-123',
+        variables: { amount: 100 },
+      })
+      expect(ctx.emit).toHaveBeenCalledWith('flow-started', {
+        definitionId: 'def-123',
+        response: { id: 'inst-1', status: 'running' },
+      })
+    })
+
+    it('uses empty variables when not provided', async () => {
+      mockRequestUrl.mockResolvedValue({ id: 'inst-2' })
+      await executeEventAction({ type: 'startFlow', definitionId: 'def-456' }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/flow-instances', {
+        definitionId: 'def-456',
+        variables: {},
+      })
+    })
+
+    it('emits flow-error on request failure', async () => {
+      mockRequestUrl.mockRejectedValue(new Error('permission denied'))
+      await executeEventAction({ type: 'startFlow', definitionId: 'def-err' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('flow-error', {
+        action: 'startFlow',
+        definitionId: 'def-err',
+        error: 'Error: permission denied',
+      })
+    })
+
+    it('does nothing if definitionId is missing', async () => {
+      await executeEventAction({ type: 'startFlow' }, ctx)
+      expect(mockRequestUrl).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('endFlow', () => {
+    it('calls POST /flow-instances/:id/terminate', async () => {
+      mockRequestUrl.mockResolvedValue({ id: 'inst-1', status: 'terminated' })
+      await executeEventAction({
+        type: 'endFlow',
+        instanceId: 'inst-1',
+        reason: '用户取消',
+      }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/flow-instances/inst-1/terminate', { reason: '用户取消' })
+      expect(ctx.emit).toHaveBeenCalledWith('flow-ended', {
+        instanceId: 'inst-1',
+        response: { id: 'inst-1', status: 'terminated' },
+      })
+    })
+
+    it('omits reason body when not provided', async () => {
+      mockRequestUrl.mockResolvedValue({ id: 'inst-2', status: 'terminated' })
+      await executeEventAction({ type: 'endFlow', instanceId: 'inst-2' }, ctx)
+      expect(mockRequestUrl).toHaveBeenCalledWith('post', '/flow-instances/inst-2/terminate', undefined)
+    })
+
+    it('emits flow-error on request failure', async () => {
+      mockRequestUrl.mockRejectedValue(new Error('not found'))
+      await executeEventAction({ type: 'endFlow', instanceId: 'inst-err' }, ctx)
+      expect(ctx.emit).toHaveBeenCalledWith('flow-error', {
+        action: 'endFlow',
+        instanceId: 'inst-err',
+        error: 'Error: not found',
+      })
+    })
+
+    it('does nothing if instanceId is missing', async () => {
+      await executeEventAction({ type: 'endFlow' }, ctx)
+      expect(mockRequestUrl).not.toHaveBeenCalled()
     })
   })
 })

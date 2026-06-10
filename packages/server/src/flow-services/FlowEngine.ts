@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { parseBpmnGraph, BpmnElementType, evaluateScript } from '@schema-form/flow-shared'
 import type { FlowToken, FlowInstanceStatus, RejectPolicy } from '@schema-form/flow-shared'
-import type { AssigneeType, FlowApiConfig } from '@schema-form/flow-shared'
+import type { AssigneeType, FlowApiConfig, NodeFormDataMap, UpstreamNodeData } from '@schema-form/flow-shared'
 
 /**
  * Evaluate an assignee expression against instance variables.
@@ -34,6 +34,7 @@ import { TimerJobModel } from '../flow-models/TimerJob.js'
 import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 import { parseTimerValue } from './TimerService.js'
 import { messageQueue } from './MessageQueue.js'
+import { notificationService } from './NotificationService.js'
 import type { RejectTargetNode } from '@schema-form/flow-shared'
 
 export class FlowEngine {
@@ -370,9 +371,24 @@ export class FlowEngine {
                   formPublishId: node.config.formPublishId,
                   formVersion: node.config.formVersion,
                   formMode: node.config.formMode,
+                  editableFields: node.config.editableFields,
+                  readonlyFields: node.config.readonlyFields,
                   hostMethods: node.config.hostMethods,
                   priority: 1,
                 })
+
+                // Notify assigned users
+                const notifyUsers = candidateUsers.length > 0
+                  ? candidateUsers
+                  : []
+                for (const uid of notifyUsers) {
+                  await notificationService.createTaskAssignedNotification(
+                    token.nodeId,
+                    uid,
+                    node.config.label,
+                  ).catch(() => { /* notification failure should not block engine */ })
+                }
+
                 changed = true
               }
               break
@@ -414,11 +430,20 @@ export class FlowEngine {
                   formPublishId: node.config.formPublishId,
                   formVersion: node.config.formVersion,
                   formMode: node.config.formMode,
+                  editableFields: node.config.editableFields,
+                  readonlyFields: node.config.readonlyFields,
                   hostMethods: node.config.hostMethods,
                   priority: 1,
                   multiInstanceIndex: i,
                   multiInstanceItem: assignees[i],
                 })
+
+                // Notify each assignee
+                await notificationService.createTaskAssignedNotification(
+                  token.nodeId,
+                  assignees[i],
+                  node.config.label,
+                ).catch(() => { /* notification failure should not block engine */ })
               }
               changed = true
               break
@@ -722,6 +747,8 @@ export class FlowEngine {
                 formPublishId: node.config.formPublishId,
                 formVersion: node.config.formVersion,
                 formMode: node.config.formMode,
+                editableFields: node.config.editableFields,
+                readonlyFields: node.config.readonlyFields,
                 hostMethods: node.config.hostMethods,
                 priority: 1,
               })
@@ -903,7 +930,18 @@ export class FlowEngine {
       instance.completedAt = new Date()
     }
 
+    const isCompleted = instance.status === 'completed'
     await instance.save()
+
+    // Notify the flow initiator when the flow completes
+    if (isCompleted && instance.initiatedBy) {
+      const flowDef = await FlowDefinitionModel.findById(instance.definitionId)
+      await notificationService.createFlowCompletedNotification(
+        instance._id,
+        instance.initiatedBy,
+        flowDef?.name,
+      ).catch(() => { /* notification failure should not block engine */ })
+    }
 
     if (instance.status === 'completed' && instance.parentInstanceId) {
       await this.advance(instance.parentInstanceId)
@@ -945,6 +983,16 @@ export class FlowEngine {
       operator,
       outcome: outcome ?? undefined,
     })
+
+    // Notify flow initiator when a task is rejected
+    if (outcome === 'rejected' && instance.initiatedBy) {
+      await notificationService.createTaskRejectedNotification(
+        task._id,
+        instance.initiatedBy,
+        task.nodeName,
+        operator,
+      ).catch(() => { /* notification failure should not block engine */ })
+    }
 
     // Write form data to instance variables only if formVariable is configured
     const flowVersion = await FlowVersionModel.findById(instance.versionId)
@@ -1010,6 +1058,72 @@ export class FlowEngine {
     }
     await instance.save()
     await this.advance(instance._id)
+  }
+
+  /**
+   * Collect form data from all upstream completed UserTask nodes for a given task.
+   * Traverses the flow graph backwards from the current node following incoming edges.
+   * Returns a NodeFormDataMap keyed by nodeId.
+   */
+  async getUpstreamNodeData(taskId: string): Promise<UpstreamNodeData> {
+    const task = await TaskInstanceModel.findById(taskId)
+    if (!task) throw new Error('Task not found')
+
+    const instance = await FlowInstanceModel.findById(task.instanceId)
+    if (!instance) throw new Error('Instance not found')
+
+    const flowVersion = await FlowVersionModel.findById(instance.versionId)
+    if (!flowVersion) throw new Error('Flow version not found')
+
+    const model = parseBpmnGraph(flowVersion.graph)
+
+    // BFS backwards from current node to find all upstream UserTask nodes
+    const visited = new Set<string>()
+    const queue = [task.nodeId]
+    const upstreamUserTaskNodeIds: string[] = []
+
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!
+      if (visited.has(nodeId)) continue
+      visited.add(nodeId)
+
+      const inEdges = model.getIncoming(nodeId)
+      for (const edge of inEdges) {
+        const sourceNode = model.getNode(edge.sourceNodeId)
+        if (!sourceNode) continue
+
+        if (sourceNode.bpmnType === BpmnElementType.UserTask) {
+          upstreamUserTaskNodeIds.push(sourceNode.id)
+        }
+        queue.push(edge.sourceNodeId)
+      }
+    }
+
+    // Query completed tasks at those upstream nodes to get their formData
+    const nodeData: NodeFormDataMap = {}
+
+    if (upstreamUserTaskNodeIds.length > 0) {
+      const completedTasks = await TaskInstanceModel.find({
+        instanceId: instance._id,
+        nodeId: { $in: upstreamUserTaskNodeIds },
+        status: 'completed',
+        formData: { $ne: null },
+      }).lean()
+
+      for (const completedTask of completedTasks) {
+        const t = completedTask as unknown as { nodeId: string; formData?: Record<string, unknown> }
+        if (t.formData && !nodeData[t.nodeId]) {
+          // Use the first completed task's data per node (most recent is sufficient)
+          nodeData[t.nodeId] = t.formData
+        }
+      }
+    }
+
+    return {
+      taskId: task._id,
+      currentNodeId: task.nodeId,
+      nodeData,
+    }
   }
 
   async terminateInstance(instanceId: string) {

@@ -1,7 +1,9 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IUserBehavior {
   _id: string
+  tenantId: string
   userId: string
   action: 'use_component' | 'set_property' | 'create_schema' | 'generate_ai'
   target?: string
@@ -12,6 +14,7 @@ export interface IUserBehavior {
 const userBehaviorSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     userId: { type: String, required: true, index: true },
     action: {
       type: String,
@@ -39,6 +42,8 @@ userBehaviorSchema.index({ userId: 1, action: 1, createdAt: -1 })
 
 // TTL 索引：90 天后自动清理行为数据
 userBehaviorSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
+
+userBehaviorSchema.plugin(tenantPlugin)
 
 export const UserBehaviorModel =
   mongoose.models.UserBehavior ?? mongoose.model<IUserBehavior>('UserBehavior', userBehaviorSchema)

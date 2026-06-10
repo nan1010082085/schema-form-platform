@@ -76,6 +76,9 @@ vi.mock('../NotificationService.js', () => ({
   notificationService: {
     sendNotification: vi.fn().mockResolvedValue(undefined),
     sendBatchNotifications: vi.fn().mockResolvedValue(undefined),
+    createTaskAssignedNotification: vi.fn().mockResolvedValue(undefined),
+    createTaskRejectedNotification: vi.fn().mockResolvedValue(undefined),
+    createFlowCompletedNotification: vi.fn().mockResolvedValue(undefined),
   },
 }))
 

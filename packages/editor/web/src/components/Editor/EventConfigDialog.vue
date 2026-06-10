@@ -78,6 +78,8 @@ const actionTypeOptions: ActionTypeOption[] = [
   { label: '复制文本', value: 'copy' },
   { label: '刷新数据', value: 'refresh' },
   { label: '关闭页签', value: 'close-tab' },
+  { label: '发起流程', value: 'startFlow' },
+  { label: '结束流程', value: 'endFlow' },
 ]
 
 // ---- 根据目标组件获取可接收事件 ----

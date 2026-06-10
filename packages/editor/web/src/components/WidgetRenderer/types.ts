@@ -51,6 +51,8 @@ export interface UserContext {
   deptId: string
   deptName: string
   roles: string[]
+  /** 权限码列表，如 ['flow:design', 'flow:approve'] */
+  permissions: string[]
   [key: string]: unknown
 }
 
@@ -214,6 +216,12 @@ export const FORM_GRID_T_KEY: InjectionKey<TranslateFn> = Symbol('FormGridTransl
 
 /** 只读模式注入 Key — 禁用表单输入、隐藏内部按钮 */
 export const FORM_GRID_READONLY_KEY: InjectionKey<ComputedRef<boolean>> = Symbol('FormGridReadonly')
+
+/** partial 模式下只读字段列表注入 Key */
+export const FORM_GRID_READONLY_FIELDS_KEY: InjectionKey<ComputedRef<string[] | undefined>> = Symbol('FormGridReadonlyFields')
+
+/** partial 模式下可编辑字段列表注入 Key */
+export const FORM_GRID_EDITABLE_FIELDS_KEY: InjectionKey<ComputedRef<string[] | undefined>> = Symbol('FormGridEditableFields')
 
 /** 事件执行上下文注入 Key — 运行时事件引擎 */
 import type { EventExecutionContext } from '../../engine/eventEngine'

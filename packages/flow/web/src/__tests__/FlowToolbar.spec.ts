@@ -23,10 +23,14 @@ const elTooltipStub = {
   template: '<span><slot /></span>',
 }
 
+const elPopoverStub = {
+  template: '<span><slot name="reference" /></span>',
+}
+
 function mountToolbar(props: Record<string, unknown> = {}) {
   return mount(FlowToolbar, {
     props,
-    global: { stubs: { 'el-tooltip': elTooltipStub } },
+    global: { stubs: { 'el-tooltip': elTooltipStub, 'el-popover': elPopoverStub } },
   })
 }
 
@@ -48,16 +52,16 @@ describe('FlowToolbar', () => {
   it('renders all toolbar buttons', () => {
     const wrapper = mountToolbar()
     const buttons = wrapper.findAll('button')
-    // 14 buttons: 返回, 节点面板, 撤销, 重做, 属性面板, 导出BPMN, 导入BPMN, 版本历史, AI, 校验, 设置, 保存, 发布, 预览
-    expect(buttons.length).toBe(14)
+    // 17 buttons: 返回, 节点面板, 撤销, 重做, 属性面板, 导出BPMN, 导入BPMN, 版本历史, AI, 校验, 快捷键帮助, 设置, 保存, 存为模板, 发布, 预览 + popover trigger
+    expect(buttons.length).toBe(17)
   })
 
   it('has correct title attributes on icon buttons', () => {
     const wrapper = mountToolbar()
     const titles = wrapper.findAll('button').map(b => b.attributes('title'))
     expect(titles).toContain('返回')
-    expect(titles).toContain('撤销')
-    expect(titles).toContain('重做')
+    expect(titles).toContain('撤销 (Ctrl+Z)')
+    expect(titles).toContain('重做 (Ctrl+Y)')
     expect(titles).toContain('导出 BPMN')
     expect(titles).toContain('导入 BPMN')
     expect(titles).toContain('版本历史')
@@ -65,6 +69,7 @@ describe('FlowToolbar', () => {
     expect(titles).toContain('设置')
     expect(titles).toContain('保存')
     expect(titles).toContain('发布')
+    expect(titles).toContain('快捷键帮助')
   })
 
   it('renders text labels for 设置, 保存 and 发布', () => {
@@ -84,14 +89,14 @@ describe('FlowToolbar', () => {
 
   it('emits undo when undo button clicked', async () => {
     const wrapper = mountToolbar()
-    const btn = wrapper.find('button[title="撤销"]')
+    const btn = wrapper.find('button[title="撤销 (Ctrl+Z)"]')
     await btn.trigger('click')
     expect(wrapper.emitted('undo')).toHaveLength(1)
   })
 
   it('emits redo when redo button clicked', async () => {
     const wrapper = mountToolbar()
-    const btn = wrapper.find('button[title="重做"]')
+    const btn = wrapper.find('button[title="重做 (Ctrl+Y)"]')
     await btn.trigger('click')
     expect(wrapper.emitted('redo')).toHaveLength(1)
   })
@@ -149,8 +154,8 @@ describe('FlowToolbar', () => {
     const wrapper = mountToolbar()
     const buttons = wrapper.findAll('button')
     const titles = buttons.map(b => b.attributes('title'))
-    const undoIdx = titles.indexOf('撤销')
-    const redoIdx = titles.indexOf('重做')
+    const undoIdx = titles.indexOf('撤销 (Ctrl+Z)')
+    const redoIdx = titles.indexOf('重做 (Ctrl+Y)')
     expect(undoIdx).toBeGreaterThanOrEqual(0)
     expect(redoIdx).toBeGreaterThanOrEqual(0)
     expect(Math.abs(undoIdx - redoIdx)).toBe(1)

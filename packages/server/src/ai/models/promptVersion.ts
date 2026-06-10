@@ -6,6 +6,7 @@
  */
 
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../../middleware/tenantPlugin.js'
 
 // ────────────────────────────────────────────
 // Interfaces
@@ -13,6 +14,7 @@ import mongoose from 'mongoose'
 
 export interface IPromptVersion {
   _id: string
+  tenantId: string
   promptId: string
   version: number
   content: string
@@ -29,6 +31,7 @@ export interface IPromptVersion {
 const promptVersionSchema = new mongoose.Schema<IPromptVersion>(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     promptId: {
       type: String,
       required: true,
@@ -70,6 +73,8 @@ const promptVersionSchema = new mongoose.Schema<IPromptVersion>(
 // Compound index: unique version per prompt
 promptVersionSchema.index({ promptId: 1, version: -1 })
 promptVersionSchema.index({ promptId: 1, createdAt: -1 })
+
+promptVersionSchema.plugin(tenantPlugin)
 
 // ────────────────────────────────────────────
 // Model

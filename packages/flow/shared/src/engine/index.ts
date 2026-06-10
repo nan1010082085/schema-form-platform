@@ -7,3 +7,10 @@ export { exportToBpmnXml } from './BpmnXmlExporter.js'
 export { importFromBpmnXml } from './BpmnXmlImporter.js'
 export { validateFlow } from './FlowValidator.js'
 export type { ValidationError } from './FlowValidator.js'
+export {
+  extractCrossNodeRefs,
+  resolveSingleRef,
+  resolveCrossNodeTemplate,
+  resolveCrossNodeValues,
+  collectReferencedNodeIds,
+} from './CrossNodeResolver.js'

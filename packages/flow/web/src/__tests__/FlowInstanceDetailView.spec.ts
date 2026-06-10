@@ -21,6 +21,15 @@ vi.mock('@vue-flow/background', () => ({
   Background: { template: '<div class="background" />' },
 }))
 
+vi.mock('../composables/useFlowExport', () => ({
+  useFlowExport: () => ({
+    exporting: { value: false },
+    exportInstance: vi.fn(),
+    exportBatch: vi.fn(),
+    exportFiltered: vi.fn(),
+  }),
+}))
+
 vi.mock('../stores/flowInstance', () => {
   const mockStore = {
     loading: false,
@@ -128,6 +137,24 @@ describe('FlowInstanceDetailView', () => {
     expect(wrapper.find('.el-timeline').exists()).toBe(true)
     expect(wrapper.text()).toContain('start')
     expect(wrapper.text()).toContain('task-1')
+  })
+
+  it('renders export button', async () => {
+    mockStore.currentInstance = {
+      id: 'inst-001',
+      status: 'running',
+      variables: {},
+      tokens: [],
+      initiatedBy: 'admin',
+      startedAt: '2026-05-28T10:00:00Z',
+      createdAt: '2026-05-28T10:00:00Z',
+      updatedAt: '2026-05-28T10:00:00Z',
+    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('导出审批记录')
   })
 
   it('renders flow variables when present', async () => {

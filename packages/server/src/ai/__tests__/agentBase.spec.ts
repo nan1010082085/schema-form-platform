@@ -16,6 +16,7 @@ import {
   escapeRegex,
   validateApiKey,
   truncateMessages,
+  estimateTokens,
 } from '../graph/agentBase.js'
 import type { AIConversationState } from '../graph/state.js'
 
@@ -182,8 +183,8 @@ describe('validateApiKey', () => {
 })
 
 describe('truncateMessages', () => {
-  function msg(name: string) {
-    return { constructor: { name } }
+  function msg(name: string, content?: string) {
+    return { constructor: { name }, content: content ?? '' }
   }
 
   it('returns empty array when only the current user message exists', () => {
@@ -191,50 +192,101 @@ describe('truncateMessages', () => {
     expect(truncateMessages(messages)).toEqual([])
   })
 
-  it('returns all history when within turn limit', () => {
-    // 1 complete turn: Human -> Assistant
-    const messages = [msg('HumanMessage'), msg('AIMessage'), msg('HumanMessage')]
-    const result = truncateMessages(messages)
-    expect(result).toHaveLength(2) // excludes last HumanMessage
+  it('returns all history when within budget', () => {
+    const messages = [
+      msg('HumanMessage', 'hello'),
+      msg('AIMessage', 'hi there'),
+      msg('HumanMessage', 'test'),
+    ]
+    const result = truncateMessages(messages, 10000)
+    expect(result).toHaveLength(2)
     expect(result[0].constructor.name).toBe('HumanMessage')
     expect(result[1].constructor.name).toBe('AIMessage')
   })
 
-  it('preserves complete turns when truncating', () => {
-    // 3 turns, limit to 2
+  it('truncates when messages exceed token budget', () => {
+    // Create messages with large content to exceed budget
+    const longContent = 'a'.repeat(10000) // ~2500 tokens
     const messages = [
-      msg('HumanMessage'), msg('AIMessage'),  // turn 1
-      msg('HumanMessage'), msg('AIMessage'),  // turn 2
-      msg('HumanMessage'), msg('AIMessage'),  // turn 3
-      msg('HumanMessage'),                    // current message (excluded)
+      msg('HumanMessage', longContent), msg('AIMessage', longContent),  // old turn
+      msg('HumanMessage', longContent), msg('AIMessage', longContent),  // old turn
+      msg('HumanMessage', longContent), msg('AIMessage', longContent),  // recent turn
+      msg('HumanMessage', 'current'),                                   // current
     ]
-    const result = truncateMessages(messages, 2)
-    // Should keep turns 2 and 3 (4 messages), not the incomplete turn 1
+    const result = truncateMessages(messages, 2000) // Small budget
+    // Should keep the last MIN_KEEP_MESSAGES (4) at minimum
+    expect(result.length).toBeGreaterThanOrEqual(4)
+    // Should not keep all 6 history messages
+    expect(result.length).toBeLessThan(6)
+  })
+
+  it('preserves tool message chains', () => {
+    const messages = [
+      msg('HumanMessage', 'test'),
+      msg('AIMessage', ''),
+      msg('ToolMessage', 'result'),
+      msg('AIMessage', 'response'),
+      msg('HumanMessage', 'current'),
+    ]
+    const result = truncateMessages(messages, 10000)
+    // Should include all history (4 messages)
     expect(result).toHaveLength(4)
-    expect(result[0].constructor.name).toBe('HumanMessage') // turn 2 start
-    expect(result[3].constructor.name).toBe('AIMessage')    // turn 3 end
+    expect(result[2].constructor.name).toBe('ToolMessage')
   })
 
-  it('handles tool messages within a turn', () => {
-    // Turn with tool calls: Human -> AI -> Tool -> AI
+  it('always keeps minimum recent messages', () => {
     const messages = [
-      msg('HumanMessage'), msg('AIMessage'), msg('ToolMessage'), msg('AIMessage'),  // turn 1
-      msg('HumanMessage'), msg('AIMessage'),  // turn 2
-      msg('HumanMessage'),                    // current
+      msg('HumanMessage', 'very old message'),
+      msg('AIMessage', 'very old response'),
+      msg('HumanMessage', 'old message'),
+      msg('AIMessage', 'old response'),
+      msg('HumanMessage', 'recent'),
+      msg('AIMessage', 'recent response'),
+      msg('HumanMessage', 'current'),
     ]
-    const result = truncateMessages(messages, 1)
-    // Keep only the last complete turn (turn 2)
-    expect(result).toHaveLength(2)
-    expect(result[0].constructor.name).toBe('HumanMessage')
-    expect(result[1].constructor.name).toBe('AIMessage')
+    const result = truncateMessages(messages, 100) // Very small budget
+    // Should keep at least MIN_KEEP_MESSAGES (4)
+    expect(result.length).toBeGreaterThanOrEqual(4)
   })
 
-  it('returns all messages when fewer turns than limit', () => {
+  it('returns all messages when budget is large', () => {
     const messages = [
-      msg('HumanMessage'), msg('AIMessage'),
-      msg('HumanMessage'),
+      msg('HumanMessage', 'a'), msg('AIMessage', 'b'),
+      msg('HumanMessage', 'c'), msg('AIMessage', 'd'),
+      msg('HumanMessage', 'e'),
     ]
-    const result = truncateMessages(messages, 5)
-    expect(result).toHaveLength(2)
+    const result = truncateMessages(messages, 100000)
+    expect(result).toHaveLength(4)
+  })
+})
+
+describe('estimateTokens', () => {
+  it('returns 0 for empty string', () => {
+    expect(estimateTokens('')).toBe(0)
+  })
+
+  it('estimates tokens for Chinese text', () => {
+    const tokens = estimateTokens('这是一个测试字符串')
+    expect(tokens).toBeGreaterThan(0)
+    expect(tokens).toBeLessThan(50)
+  })
+
+  it('estimates tokens for English text', () => {
+    const tokens = estimateTokens('hello world this is a test')
+    expect(tokens).toBeGreaterThan(0)
+    expect(tokens).toBeLessThan(20)
+  })
+
+  it('estimates more tokens for CJK than ASCII of same length', () => {
+    const cjkTokens = estimateTokens('一二三四五六七八九十')
+    const asciiTokens = estimateTokens('abcdefghij')
+    // CJK chars are ~1.5 tokens each, ASCII chars are ~0.25 tokens each
+    expect(cjkTokens).toBeGreaterThan(asciiTokens)
+  })
+
+  it('handles JSON-like content with overhead', () => {
+    const json = '{"key":"value","nested":{"a":1}}'
+    const tokens = estimateTokens(json)
+    expect(tokens).toBeGreaterThan(0)
   })
 })

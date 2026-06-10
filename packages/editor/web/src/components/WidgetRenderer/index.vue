@@ -26,6 +26,8 @@ import {
   FORM_GRID_LINKAGE_KEY,
   FORM_GRID_T_KEY,
   FORM_GRID_READONLY_KEY,
+  FORM_GRID_READONLY_FIELDS_KEY,
+  FORM_GRID_EDITABLE_FIELDS_KEY,
   EVENT_CONTEXT_KEY,
   DIALOG_REGISTRY_KEY,
 } from './types'
@@ -55,6 +57,10 @@ const props = defineProps<FormGridProps & {
   isDragging?: boolean
   /** 只读模式：禁用所有表单输入，隐藏内部按钮（文件列表保留） */
   readonly?: boolean
+  /** partial 模式下只读的字段列表 */
+  readonlyFields?: string[]
+  /** partial 模式下可编辑的字段列表（与 readonlyFields 二选一） */
+  editableFields?: string[]
 }>()
 
 const isAbsoluteLayout = computed(() => props.layout === 'absolute')
@@ -217,6 +223,12 @@ provide(DIALOG_REGISTRY_KEY, dialogRegistry)
 // 只读模式注入（使用 toRef 保持响应式）
 const readonlyRef = computed(() => props.readonly ?? false)
 provide(FORM_GRID_READONLY_KEY, readonlyRef)
+
+// partial 模式：字段级只读控制
+const readonlyFieldsRef = computed(() => props.readonlyFields)
+provide(FORM_GRID_READONLY_FIELDS_KEY, readonlyFieldsRef)
+const editableFieldsRef = computed(() => props.editableFields)
+provide(FORM_GRID_EDITABLE_FIELDS_KEY, editableFieldsRef)
 
 // ---- 运行时事件执行上下文 ----
 

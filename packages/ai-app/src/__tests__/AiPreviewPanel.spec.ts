@@ -37,6 +37,9 @@ const globalStubs = {
   ElRate: ElRateStub,
   ElButton: ElButtonStub,
   ElDialog: ElDialogStub,
+  VueFlow: { template: '<div><slot /></div>', props: {} },
+  Background: { template: '<div />', props: {} },
+  Controls: { template: '<div />', props: {} },
 }
 
 describe('AiPreviewPanel', () => {
@@ -345,6 +348,192 @@ describe('AiPreviewPanel', () => {
       await selectAllBtn.trigger('click')
 
       expect(wrapper.text()).toContain('应用选中 (2)')
+    })
+  })
+
+  describe('Field detail panel', () => {
+    const mockSchema: Widget[] = [
+      { id: 'w1', type: 'input', field: 'username', label: '用户名', props: { placeholder: '请输入用户名', required: true } },
+    ]
+
+    const schemaData = {
+      title: '测试表单',
+      fields: mockSchema.map((w) => ({
+        icon: 'T',
+        name: w.label ?? w.field ?? w.type,
+        type: w.type,
+      })),
+    }
+
+    it('shows field detail panel when a field is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const fieldWrapper = wrapper.find('[class*="fieldWrapper"]')
+      await fieldWrapper.trigger('click')
+
+      // Detail panel should appear
+      expect(wrapper.text()).toContain('组件详情')
+      expect(wrapper.text()).toContain('用户名')
+      expect(wrapper.text()).toContain('username')
+    })
+
+    it('closes field detail panel when close button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // Click field to open detail
+      const fieldWrapper = wrapper.find('[class*="fieldWrapper"]')
+      await fieldWrapper.trigger('click')
+      expect(wrapper.text()).toContain('组件详情')
+
+      // Click close
+      const closeBtn = wrapper.find('[class*="fieldDetailClose"]')
+      await closeBtn.trigger('click')
+
+      // Detail panel should be hidden
+      expect(wrapper.find('[class*="fieldDetail"]').exists()).toBe(false)
+    })
+  })
+
+  describe('Inline field editing', () => {
+    const mockSchema: Widget[] = [
+      { id: 'w1', type: 'input', field: 'username', label: '用户名', props: { placeholder: '请输入用户名' } },
+    ]
+
+    const schemaData = {
+      title: '测试表单',
+      fields: mockSchema.map((w) => ({
+        icon: 'T',
+        name: w.label ?? w.field ?? w.type,
+        type: w.type,
+      })),
+    }
+
+    it('enters inline edit mode when edit button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // Find the first edit button (inline edit)
+      const editBtns = wrapper.findAll('[class*="fieldEditBtn"]')
+      await editBtns[0].trigger('click')
+
+      // Should show inline edit UI
+      expect(wrapper.text()).toContain('编辑组件')
+      expect(wrapper.text()).toContain('标签')
+      expect(wrapper.text()).toContain('字段名')
+    })
+
+    it('emits field-update when inline edit is confirmed', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // Enter inline edit
+      const editBtns = wrapper.findAll('[class*="fieldEditBtn"]')
+      await editBtns[0].trigger('click')
+
+      // Click confirm button
+      const confirmBtn = wrapper.find('[class*="inlineEditConfirm"]')
+      await confirmBtn.trigger('click')
+
+      expect(wrapper.emitted('field-update')).toBeTruthy()
+      expect(wrapper.emitted('field-update')![0][0]).toBe('w1')
+    })
+
+    it('cancels inline edit when cancel button is clicked', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // Enter inline edit
+      const editBtns = wrapper.findAll('[class*="fieldEditBtn"]')
+      await editBtns[0].trigger('click')
+      expect(wrapper.text()).toContain('编辑组件')
+
+      // Click cancel
+      const cancelBtn = wrapper.find('[class*="inlineEditCancel"]')
+      await cancelBtn.trigger('click')
+
+      // Should exit inline edit mode
+      expect(wrapper.find('[class*="inlineEditHeader"]').exists()).toBe(false)
+    })
+
+    it('adds inlineEditing class when in inline edit mode', async () => {
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['schema'],
+          schemaData,
+          schemaWidgets: mockSchema,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      const editBtns = wrapper.findAll('[class*="fieldEditBtn"]')
+      await editBtns[0].trigger('click')
+
+      const fieldWrapper = wrapper.find('[class*="fieldWrapper"]')
+      expect(fieldWrapper.attributes('class')).toContain('fieldInlineEditing')
+    })
+  })
+
+  describe('Zoom and pan', () => {
+    it('renders flow canvas with zoom controls', () => {
+      const flowData = {
+        title: '测试流程',
+        nodes: [
+          { id: 'n1', data: { bpmnType: 'startEvent', label: '开始' }, position: { x: 0, y: 0 } },
+          { id: 'n2', data: { bpmnType: 'endEvent', label: '结束' }, position: { x: 200, y: 0 } },
+        ],
+        graph: {
+          nodes: [
+            { id: 'n1', data: { bpmnType: 'startEvent', label: '开始' }, position: { x: 0, y: 0 } },
+            { id: 'n2', data: { bpmnType: 'endEvent', label: '结束' }, position: { x: 200, y: 0 } },
+          ],
+          edges: [],
+        },
+      }
+
+      const wrapper = mount(AiPreviewPanel, {
+        props: {
+          tabs: ['flow'],
+          flowData,
+        },
+        global: { stubs: globalStubs },
+      })
+
+      // Should have fit button
+      expect(wrapper.find('[class*="fitBtn"]').exists()).toBe(true)
+      // Should show node count
+      expect(wrapper.text()).toContain('2 节点')
     })
   })
 })

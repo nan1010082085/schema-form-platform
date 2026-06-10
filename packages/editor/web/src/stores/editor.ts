@@ -10,12 +10,23 @@
  *
  * 不涉及 Widget 数据本身，数据由 useWidgetStore 管理。
  * undo/redo 返回快照，由调用方赋值给 widgetStore.widgets。
+ *
+ * 性能优化：统一深拷贝函数，集中管理快照序列化逻辑。
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Widget } from '../widgets/base/types'
 
 const MAX_HISTORY = 30
+
+/**
+ * 高效深拷贝 — 使用 JSON 序列化。
+ * structuredClone 无法处理 Vue reactive proxy 对象（DataCloneError），
+ * 因此始终使用 JSON 方式，这也是 undo/redo 快照的标准做法。
+ */
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
 
 export const useEditorStore = defineStore('editor', () => {
   // ================================================================
@@ -126,12 +137,11 @@ export const useEditorStore = defineStore('editor', () => {
    * 返回深拷贝的快照数组，由调用方决定是否赋值。
    */
   function pushHistory(widgets: Widget[]): void {
-    const snapshot = JSON.parse(JSON.stringify(widgets))
+    const snapshot = deepClone(widgets)
     history.value = history.value.slice(0, historyIndex.value + 1)
     history.value.push(snapshot)
     if (history.value.length > MAX_HISTORY) {
       history.value.shift()
-      // MAX_HISTORY 被截断时，savedHistoryIndex 也需要调整，但不能变为 -1（-1 表示"无保存点"）
       if (savedHistoryIndex.value >= 0) {
         savedHistoryIndex.value = Math.max(0, savedHistoryIndex.value - 1)
       }
@@ -148,7 +158,7 @@ export const useEditorStore = defineStore('editor', () => {
     if (historyIndex.value <= 0) return null
     historyIndex.value--
     isDirty.value = historyIndex.value !== savedHistoryIndex.value
-    return JSON.parse(JSON.stringify(history.value[historyIndex.value]))
+    return deepClone(history.value[historyIndex.value])
   }
 
   /**
@@ -159,7 +169,7 @@ export const useEditorStore = defineStore('editor', () => {
     if (historyIndex.value >= history.value.length - 1) return null
     historyIndex.value++
     isDirty.value = historyIndex.value !== savedHistoryIndex.value
-    return JSON.parse(JSON.stringify(history.value[historyIndex.value]))
+    return deepClone(history.value[historyIndex.value])
   }
 
   // ================================================================
@@ -167,7 +177,7 @@ export const useEditorStore = defineStore('editor', () => {
   // ================================================================
 
   function copy(widget: Widget): void {
-    clipboard.value = JSON.parse(JSON.stringify(widget))
+    clipboard.value = deepClone(widget)
   }
 
   /**
@@ -176,7 +186,7 @@ export const useEditorStore = defineStore('editor', () => {
    */
   function paste(): Widget | null {
     if (!clipboard.value) return null
-    return JSON.parse(JSON.stringify(clipboard.value))
+    return deepClone(clipboard.value)
   }
 
   // ================================================================
@@ -207,7 +217,7 @@ export const useEditorStore = defineStore('editor', () => {
    * 推入弹窗编辑器历史快照。
    */
   function pushDialogHistory(widgets: Widget[]): void {
-    const snapshot = JSON.parse(JSON.stringify(widgets))
+    const snapshot = deepClone(widgets)
     dialogHistory.value = dialogHistory.value.slice(0, dialogHistoryIndex.value + 1)
     dialogHistory.value.push(snapshot)
     if (dialogHistory.value.length > MAX_HISTORY) {
@@ -222,9 +232,7 @@ export const useEditorStore = defineStore('editor', () => {
   function undoDialog(): Widget[] | null {
     if (dialogHistoryIndex.value <= 0) return null
     dialogHistoryIndex.value--
-    return JSON.parse(
-      JSON.stringify(dialogHistory.value[dialogHistoryIndex.value]),
-    )
+    return deepClone(dialogHistory.value[dialogHistoryIndex.value])
   }
 
   /**
@@ -233,9 +241,7 @@ export const useEditorStore = defineStore('editor', () => {
   function redoDialog(): Widget[] | null {
     if (dialogHistoryIndex.value >= dialogHistory.value.length - 1) return null
     dialogHistoryIndex.value++
-    return JSON.parse(
-      JSON.stringify(dialogHistory.value[dialogHistoryIndex.value]),
-    )
+    return deepClone(dialogHistory.value[dialogHistoryIndex.value])
   }
 
   // ================================================================

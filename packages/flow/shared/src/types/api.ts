@@ -57,6 +57,29 @@ export interface FlowListQuery {
 export interface FlowInstanceQuery {
   definitionId?: string
   status?: FlowInstanceStatus
+  search?: string
   page?: number
   pageSize?: number
+}
+
+// ── Batch operations ──
+
+export interface BatchTaskDto {
+  taskIds: string[]
+}
+
+export interface BatchRejectDto {
+  taskIds: string[]
+  reason?: string
+}
+
+export interface BatchTaskResult {
+  taskId: string
+  success: boolean
+  error?: string
+}
+
+export interface BatchResult {
+  results: BatchTaskResult[]
+  summary: { total: number; success: number; failed: number }
 }

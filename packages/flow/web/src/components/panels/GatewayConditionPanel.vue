@@ -19,11 +19,19 @@ function update(key: string, value: unknown) {
 const defaultFlow = computed(() => (props.node.data?.defaultFlow as string) ?? '')
 const description = computed(() => (props.node.data?.description as string) ?? '')
 
-const isExclusive = computed(() => props.node.type === 'exclusive-gateway')
-const gatewayLabel = computed(() => isExclusive.value ? '排他网关' : '包含网关')
-const conditionPlaceholder = computed(() =>
-  isExclusive.value ? '${amount > 10000}' : '${status == \'active\'}',
-)
+const gatewayType = computed(() => props.node.type ?? '')
+const isExclusive = computed(() => gatewayType.value === 'exclusive-gateway')
+const isParallel = computed(() => gatewayType.value === 'parallel-gateway')
+const gatewayLabel = computed(() => {
+  if (isExclusive.value) return '排他网关'
+  if (isParallel.value) return '并行网关'
+  return '包含网关'
+})
+const conditionPlaceholder = computed(() => {
+  if (isExclusive.value) return '${amount > 10000}'
+  if (isParallel.value) return '(并行网关无条件，所有分支同时执行)'
+  return '${status == \'active\'}'
+})
 
 /* --- Outgoing edges --- */
 
@@ -70,9 +78,14 @@ function targetLabel(edge: Edge): string {
     </FieldRow>
 
     <HintText>
-      {{ gatewayLabel }}：所有出线中，第一个条件为 true 的分支将被执行。
-      <template v-if="!isExclusive">
-        包含网关允许多个条件同时为 true，所有匹配的分支都会执行。
+      <template v-if="isParallel">
+        {{ gatewayLabel }}：所有出线将同时执行，无需配置条件。
+      </template>
+      <template v-else-if="isExclusive">
+        {{ gatewayLabel }}：所有出线中，第一个条件为 true 的分支将被执行。
+      </template>
+      <template v-else>
+        包含网关：允许多个条件同时为 true，所有匹配的分支都会执行。
       </template>
     </HintText>
   </SectionToggle>

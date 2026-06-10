@@ -123,6 +123,8 @@ export type EventActionType =
   | 'refresh'         // 刷新目标组件数据
   | 'api'             // 调用后端 API
   | 'navigate'        // 路由跳转
+  | 'startFlow'       // 发起流程
+  | 'endFlow'         // 结束流程
 
 /** 事件动作 */
 export interface SchemaEventAction {
@@ -155,6 +157,16 @@ export interface SchemaEventAction {
   navigatePath?: string
   /** 路由查询参数 */
   navigateQuery?: Record<string, string>
+  // ---- startFlow 专用 ----
+  /** 流程定义 ID */
+  definitionId?: string
+  /** 流程变量 */
+  variables?: Record<string, unknown>
+  // ---- endFlow 专用 ----
+  /** 流程实例 ID */
+  instanceId?: string
+  /** 结束原因 */
+  reason?: string
 }
 
 // ============================================================

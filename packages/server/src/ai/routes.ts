@@ -44,8 +44,223 @@ import type { AIMessage } from './graph/state.js'
 import { recordBehavior, analyzeUserPreferences, getBehaviorStats } from './services/behaviorService.js'
 import { getAvailableIndustries, getIndustryTemplates, type IndustryType } from './config/industryAgents.js'
 import { semanticSearch } from './services/ragService.js'
+import { logger } from '../utils/logger.js'
 
 const router = new Router({ prefix: '/api/ai' })
+
+// All AI routes require authentication
+router.use(authMiddleware())
+
+// ────────────────────────────────────────────
+// Version diff computation
+// ────────────────────────────────────────────
+
+interface VersionDiffChange {
+  type: 'add' | 'remove' | 'modify'
+  elementId: string
+  elementType: 'widget' | 'node' | 'edge'
+  before?: Record<string, unknown>
+  after?: Record<string, unknown>
+  summary: string
+}
+
+interface VersionDiff {
+  changes: VersionDiffChange[]
+  summary: {
+    added: number
+    removed: number
+    modified: number
+  }
+}
+
+function computeSchemaVersionDiff(
+  oldWidgets: Record<string, unknown>[],
+  newWidgets: Record<string, unknown>[],
+): VersionDiff {
+  const changes: VersionDiffChange[] = []
+  let added = 0, removed = 0, modified = 0
+
+  function indexWidgets(
+    widgets: Record<string, unknown>[],
+    parentPath = '',
+  ): Map<string, { widget: Record<string, unknown>; path: string }> {
+    const map = new Map<string, { widget: Record<string, unknown>; path: string }>()
+    for (let i = 0; i < widgets.length; i++) {
+      const w = widgets[i]
+      const id = w.id as string
+      const path = parentPath ? `${parentPath}[${i}]` : `[${i}]`
+      if (id) map.set(id, { widget: w, path })
+      if (Array.isArray(w.children)) {
+        for (const [childId, entry] of indexWidgets(w.children as Record<string, unknown>[], path)) {
+          map.set(childId, entry)
+        }
+      }
+    }
+    return map
+  }
+
+  const oldMap = indexWidgets(oldWidgets)
+  const newMap = indexWidgets(newWidgets)
+
+  for (const [id, { widget }] of oldMap) {
+    if (!newMap.has(id)) {
+      removed++
+      changes.push({
+        type: 'remove',
+        elementId: id,
+        elementType: 'widget',
+        before: widget,
+        summary: `删除了 ${widget.type ?? '未知'} 组件（${widget.label ?? id}）`,
+      })
+    }
+  }
+
+  for (const [id, { widget }] of newMap) {
+    const oldEntry = oldMap.get(id)
+    if (!oldEntry) {
+      added++
+      changes.push({
+        type: 'add',
+        elementId: id,
+        elementType: 'widget',
+        after: widget,
+        summary: `新增了 ${widget.type ?? '未知'} 组件（${widget.label ?? id}）`,
+      })
+    } else {
+      const SKIP_KEYS = new Set(['children', 'position', 'events', 'linkages', 'variables', 'lifecycle'])
+      const allKeys = new Set([...Object.keys(oldEntry.widget), ...Object.keys(widget)])
+      const changedProps = [...allKeys].filter(k => !SKIP_KEYS.has(k) && JSON.stringify(oldEntry.widget[k]) !== JSON.stringify(widget[k]))
+      if (changedProps.length > 0) {
+        modified++
+        changes.push({
+          type: 'modify',
+          elementId: id,
+          elementType: 'widget',
+          before: oldEntry.widget,
+          after: widget,
+          summary: `修改了 ${widget.type ?? '未知'} 组件的 ${changedProps.join('、')} 属性`,
+        })
+      }
+    }
+  }
+
+  return { changes, summary: { added, removed, modified } }
+}
+
+function computeFlowVersionDiff(
+  oldFlow: Record<string, unknown>,
+  newFlow: Record<string, unknown>,
+): VersionDiff {
+  const changes: VersionDiffChange[] = []
+  let added = 0, removed = 0, modified = 0
+
+  const oldNodes = (oldFlow.nodes ?? []) as Record<string, unknown>[]
+  const newNodes = (newFlow.nodes ?? []) as Record<string, unknown>[]
+  const oldEdges = (oldFlow.edges ?? []) as Record<string, unknown>[]
+  const newEdges = (newFlow.edges ?? []) as Record<string, unknown>[]
+
+  const oldNodeMap = new Map(oldNodes.map((n) => [n.id as string, n]))
+  const newNodeMap = new Map(newNodes.map((n) => [n.id as string, n]))
+
+  for (const [id, node] of oldNodeMap) {
+    if (!newNodeMap.has(id)) {
+      removed++
+      changes.push({
+        type: 'remove',
+        elementId: id,
+        elementType: 'node',
+        before: node,
+        summary: `删除了节点 "${(node.data as Record<string, unknown>)?.label ?? id}"`,
+      })
+    }
+  }
+
+  for (const [id, node] of newNodeMap) {
+    const oldNode = oldNodeMap.get(id)
+    if (!oldNode) {
+      added++
+      changes.push({
+        type: 'add',
+        elementId: id,
+        elementType: 'node',
+        after: node,
+        summary: `新增了节点 "${(node.data as Record<string, unknown>)?.label ?? id}"`,
+      })
+    } else if (JSON.stringify(oldNode.data) !== JSON.stringify(node.data)) {
+      modified++
+      const oldD = (oldNode.data ?? {}) as Record<string, unknown>
+      const newD = (node.data ?? {}) as Record<string, unknown>
+      const changedKeys = Object.keys({ ...oldD, ...newD }).filter(k => JSON.stringify(oldD[k]) !== JSON.stringify(newD[k]))
+      changes.push({
+        type: 'modify',
+        elementId: id,
+        elementType: 'node',
+        before: oldNode,
+        after: node,
+        summary: `修改了节点 "${(node.data as Record<string, unknown>)?.label ?? id}" 的 ${changedKeys.join('、')} 属性`,
+      })
+    }
+  }
+
+  const oldEdgeMap = new Map(oldEdges.map((e) => [e.id as string, e]))
+  const newEdgeMap = new Map(newEdges.map((e) => [e.id as string, e]))
+
+  for (const [id, edge] of oldEdgeMap) {
+    if (!newEdgeMap.has(id)) {
+      removed++
+      changes.push({
+        type: 'remove',
+        elementId: id,
+        elementType: 'edge',
+        before: edge,
+        summary: `删除了连线 ${id}`,
+      })
+    }
+  }
+
+  for (const [id, edge] of newEdgeMap) {
+    const oldEdge = oldEdgeMap.get(id)
+    if (!oldEdge) {
+      added++
+      changes.push({
+        type: 'add',
+        elementId: id,
+        elementType: 'edge',
+        after: edge,
+        summary: `新增了连线 ${id}`,
+      })
+    } else if (JSON.stringify(oldEdge) !== JSON.stringify(edge)) {
+      modified++
+      changes.push({
+        type: 'modify',
+        elementId: id,
+        elementType: 'edge',
+        before: oldEdge,
+        after: edge,
+        summary: `修改了连线 ${id}`,
+      })
+    }
+  }
+
+  return { changes, summary: { added, removed, modified } }
+}
+
+function computeVersionDiff(
+  oldContent: Record<string, unknown>[] | Record<string, unknown>,
+  newContent: Record<string, unknown>[] | Record<string, unknown>,
+  type: 'schema' | 'flow',
+): VersionDiff {
+  if (type === 'schema') {
+    return computeSchemaVersionDiff(
+      oldContent as Record<string, unknown>[],
+      newContent as Record<string, unknown>[],
+    )
+  }
+  return computeFlowVersionDiff(
+    oldContent as Record<string, unknown>,
+    newContent as Record<string, unknown>,
+  )
+}
 
 // ────────────────────────────────────────────
 // Interrupted thread tracking for HITL resume
@@ -91,6 +306,14 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       version?: string
       preferences?: Record<string, unknown>
       historySummary?: string
+      /** 前端携带的当前 Schema（多轮迭代） */
+      currentSchema?: Record<string, unknown>[]
+      /** 前端携带的当前流程（多轮迭代） */
+      currentFlow?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
+      /** 当前选中的组件信息 */
+      selectedWidget?: { id: string; type: string; field?: string; label?: string }
+      /** 编辑器当前模式 */
+      editorMode?: 'edit' | 'preview'
     }
   }
 
@@ -117,6 +340,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   }
 
   // ── Load current schema if schemaId provided ──
+  // 优先从 DB 加载（schemaId 模式），否则使用前端携带的 currentSchema（多轮迭代）
   let currentSchema: Record<string, unknown>[] | undefined
   if (context.schemaId) {
     const schema = await FormSchemaModel.findById(context.schemaId)
@@ -134,8 +358,13 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       }
     }
   }
+  // 多轮迭代：如果 DB 中没有 schema 且前端携带了 currentSchema，使用前端数据
+  if (!currentSchema && context.currentSchema && context.currentSchema.length > 0) {
+    currentSchema = context.currentSchema
+  }
 
   // ── Load current flow graph if flowId provided ──
+  // 优先从 DB 加载（flowId 模式），否则使用前端携带的 currentFlow（多轮迭代）
   let currentFlow: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] } | undefined
   if (context.flowId) {
     const flowVersion = await FlowVersionModel.findOne({ definitionId: context.flowId })
@@ -148,6 +377,10 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         edges: Array.isArray(g.edges) ? g.edges as Record<string, unknown>[] : [],
       }
     }
+  }
+  // 多轮迭代：如果 DB 中没有 flow 且前端携带了 currentFlow，使用前端数据
+  if (!currentFlow && context.currentFlow && context.currentFlow.nodes) {
+    currentFlow = context.currentFlow
   }
 
   // ── Persist user message ──
@@ -172,6 +405,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
       nodeId: context.nodeId,
       currentSchema,
       currentFlow,
+      selectedWidget: context.selectedWidget,
+      editorMode: context.editorMode,
       turnCount,
     },
     session: {
@@ -510,9 +745,20 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
             || (toolResult && typeof toolResult === 'object' && 'error' in (toolResult as Record<string, unknown>))
 
           if (isError) {
-            const errorMessage = event.data?.error != null
+            const rawError = event.data?.error != null
               ? String(event.data.error)
-              : String((toolResult as Record<string, unknown>)?.error ?? '工具执行失败')
+              : String((toolResult as Record<string, unknown>)?.error ?? '')
+            const errorMessage = rawError.trim() || '工具执行失败'
+
+            // 结构化日志：ai:thinker:error
+            logger.error({
+              msg: 'ai:thinker:error',
+              toolName,
+              toolInput: entry?.arguments ?? {},
+              error: errorMessage,
+              conversationId: convo._id,
+              agent: currentAgent,
+            })
 
             // Update registry entry with error info for persistence
             if (entry) {
@@ -944,11 +1190,33 @@ router.post('/chat/resume', async (ctx) => {
       }
 
       if (event.event === 'on_tool_end') {
-        send({
-          type: 'tool_call',
-          phase: 'result',
-          tools: [{ id: event.run_id, name: event.name, result: event.data?.output }],
-        })
+        const toolName = event.name as string
+        const toolResult = event.data?.output
+        const toolRunId = event.run_id as string
+
+        // Check for tool execution errors (same logic as main chat endpoint)
+        const isError = event.data?.error != null
+          || (toolResult && typeof toolResult === 'object' && 'error' in (toolResult as Record<string, unknown>))
+
+        if (isError) {
+          const rawError = event.data?.error != null
+            ? String(event.data.error)
+            : String((toolResult as Record<string, unknown>)?.error ?? '')
+          const errorMessage = rawError.trim() || '工具执行失败'
+
+          send({
+            type: 'tool_error',
+            toolName,
+            runId: toolRunId,
+            content: errorMessage,
+          })
+        } else {
+          send({
+            type: 'tool_call',
+            phase: 'result',
+            tools: [{ id: toolRunId, name: toolName, result: toolResult }],
+          })
+        }
       }
     }
 
@@ -1369,6 +1637,70 @@ router.get('/conversations/:id/versions', async (ctx) => {
       description: v.description,
       createdAt: v.createdAt,
     })),
+  }
+})
+
+/**
+ * GET /api/ai/versions/compare
+ *
+ * Compare two versions side by side.
+ *
+ * Query params:
+ * - v1: First version ID (required)
+ * - v2: Second version ID (required)
+ *
+ * Returns both versions' content and a structural diff.
+ */
+router.get('/versions/compare', async (ctx) => {
+  const { v1, v2 } = ctx.query as { v1?: string; v2?: string }
+
+  if (!v1 || !v2) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'v1 and v2 query parameters are required' } }
+    return
+  }
+
+  const [version1, version2] = await Promise.all([getVersion(v1), getVersion(v2)])
+
+  if (!version1) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: `Version ${v1} not found.` } }
+    return
+  }
+  if (!version2) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: `Version ${v2} not found.` } }
+    return
+  }
+
+  if (version1.type !== version2.type) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Cannot compare versions of different types (schema vs flow).' } }
+    return
+  }
+
+  // Compute structural diff
+  const diff = computeVersionDiff(version1.content, version2.content, version1.type)
+
+  ctx.body = {
+    success: true,
+    data: {
+      v1: {
+        id: version1._id,
+        version: version1.version,
+        type: version1.type,
+        description: version1.description,
+        createdAt: version1.createdAt,
+      },
+      v2: {
+        id: version2._id,
+        version: version2.version,
+        type: version2.type,
+        description: version2.description,
+        createdAt: version2.createdAt,
+      },
+      diff,
+    },
   }
 })
 

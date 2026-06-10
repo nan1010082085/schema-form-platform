@@ -25,6 +25,8 @@ export interface AiStepCardProps {
   toolArguments?: Record<string, unknown>
   /** 错误信息 */
   error?: string
+  /** 工具调用在 toolCalls 数组中的索引（用于重试） */
+  toolCallIndex?: number
   /** 嵌入卡片类型 */
   cardType?: 'schema' | 'flow'
   /** 嵌入卡片标题 */
@@ -49,12 +51,36 @@ const props = withDefaults(defineProps<AiStepCardProps>(), {
 defineEmits<{
   'primary-action': []
   'secondary-action': []
+  'retry-tool': []
 }>()
 
 const SEARCH_TOOL_NAMES = new Set([
   'search_schemas', 'search_published_schemas', 'fuzzy_search_schemas',
   'search_flows', 'search_users', 'get_widget_catalogue',
+  'query_widgets', 'search_industry_templates',
 ])
+
+/** 错误类型到用户友好描述的映射 */
+const ERROR_DESCRIPTION_MAP: Record<string, string> = {
+  'timeout': '服务响应超时，请稍后重试',
+  'database': '数据库操作失败，请稍后重试',
+  'validation': '数据校验失败，请检查输入内容',
+  'network': '网络连接异常，请检查网络后重试',
+  'permission': '权限不足，无法执行此操作',
+  'not_found': '请求的资源不存在',
+  'conflict': '数据冲突，请刷新后重试',
+  'rate_limit': '请求过于频繁，请稍后重试',
+}
+
+/** 根据错误信息返回用户友好的描述 */
+const friendlyErrorDescription = computed(() => {
+  const raw = props.error ?? ''
+  const lower = raw.toLowerCase()
+  for (const [keyword, description] of Object.entries(ERROR_DESCRIPTION_MAP)) {
+    if (lower.includes(keyword)) return description
+  }
+  return raw || '工具执行失败，请重试'
+})
 
 const agentLabels: Record<string, string> = {
   editor: 'Editor 专家',
@@ -67,8 +93,8 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-// 默认展开所有步骤，用户可手动折叠
-const collapsed = ref(false)
+// 默认折叠（错误类型默认展开，便于用户立即看到错误信息）
+const collapsed = ref(props.type !== 'tool_error')
 const jsonCollapsed = ref(false)
 
 const hasHeader = computed(() =>
@@ -230,25 +256,23 @@ const highlightedJson = computed(() => {
       </div>
     </div>
 
-    <!-- Body -->
-    <div :class="[$style.body, { [$style.bodyCollapsed]: collapsed && hasHeader }]">
-      <!-- 折叠状态摘要 -->
-      <div v-if="collapsed && hasHeader" :class="$style.collapsedSummary">
-        <template v-if="type === 'thinking'">
-          <span :class="$style.summaryText">已完成思考</span>
-        </template>
-        <template v-else-if="type === 'tool_call'">
-          <span :class="$style.summaryText">{{ toolDisplayName }}</span>
-          <span v-if="hasToolResult" :class="$style.summaryBadge">完成</span>
-          <span v-else-if="isRunning" :class="$style.summaryBadgeRunning">执行中</span>
-        </template>
-        <template v-else-if="type === 'tool_error'">
-          <span :class="$style.summaryTextError">调用失败</span>
-        </template>
-      </div>
+    <!-- 折叠状态摘要（在 body 外部，始终可见） -->
+    <div v-if="collapsed && hasHeader" :class="$style.collapsedSummary">
+      <template v-if="type === 'thinking'">
+        <span :class="$style.summaryText">已完成思考</span>
+      </template>
+      <template v-else-if="type === 'tool_call'">
+        <span :class="$style.summaryText">{{ toolDisplayName }}</span>
+        <span v-if="hasToolResult" :class="$style.summaryBadge">完成</span>
+        <span v-else-if="isRunning" :class="$style.summaryBadgeRunning">执行中</span>
+      </template>
+      <template v-else-if="type === 'tool_error'">
+        <span :class="$style.summaryTextError">调用失败</span>
+      </template>
+    </div>
 
-      <!-- 展开状态内容 -->
-      <template v-if="!collapsed || !hasHeader">
+    <!-- Body（展开时显示） -->
+    <div v-if="!collapsed || !hasHeader" :class="$style.body">
         <!-- thinking / text content (skip markdown for JSON blocks) -->
         <div
           v-if="(type === 'thinking' || type === 'text') && title !== 'JSON 数据' && content"
@@ -280,7 +304,21 @@ const highlightedJson = computed(() => {
             <line x1="15" y1="9" x2="9" y2="15" />
             <line x1="9" y1="9" x2="15" y2="15" />
           </svg>
-          <div :class="$style.errorText">{{ error ?? '工具执行失败' }}</div>
+          <div :class="$style.errorBody">
+            <div :class="$style.errorText">{{ friendlyErrorDescription }}</div>
+            <div v-if="error && error !== friendlyErrorDescription" :class="$style.errorDetail">{{ error }}</div>
+            <button
+              v-if="type === 'tool_error'"
+              :class="$style.retryBtn"
+              @click.stop="$emit('retry-tool')"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              重试
+            </button>
+          </div>
         </div>
 
         <!-- Tool details (success) -->
@@ -325,12 +363,11 @@ const highlightedJson = computed(() => {
         </template>
       </template>
 
-        <!-- result embedded card slot -->
-        <slot v-if="type === 'result'" />
+      <!-- result embedded card slot -->
+      <slot v-if="type === 'result'" />
 
-        <!-- tool call extra slot -->
-        <slot v-if="type === 'tool_call' && !isError" name="tool-extra" />
-      </template>
+      <!-- tool call extra slot -->
+      <slot v-if="type === 'tool_call' && !isError" name="tool-extra" />
     </div>
 
     <!-- Footer for result cards (schema/flow) -->

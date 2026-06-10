@@ -22,9 +22,13 @@ import styles from './MicroFormEmbed.module.scss'
 
 const props = defineProps<{
   publishId?: string
-  mode?: 'edit' | 'view'
+  mode?: 'edit' | 'view' | 'partial'
   hostMethods?: string[]
   initialData?: Record<string, unknown>
+  /** partial 模式下可编辑的字段列表 */
+  editableFields?: string[]
+  /** partial 模式下只读的字段列表 */
+  readonlyFields?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -51,6 +55,8 @@ const microAppData = computed(() => ({
   mode: props.mode ?? 'edit',
   hostMethods: props.hostMethods ?? ['setValues', 'getValues', 'validate'],
   initialData: props.initialData,
+  editableFields: props.editableFields,
+  readonlyFields: props.readonlyFields,
 }))
 
 // Pending request callbacks for command-response pattern
@@ -112,6 +118,27 @@ function handleHostMessage(event: MessageEvent) {
 function onCreated() {
   window.addEventListener('message', handleHostMessage)
   emit('ready')
+
+  // 向子 iframe 发送表单模式配置
+  // 延迟一帧确保子 iframe 的 message listener 已就绪
+  requestAnimationFrame(() => {
+    sendToChild({
+      type: 'fg:set-mode',
+      id: props.publishId,
+      mode: props.mode ?? 'edit',
+      editableFields: props.editableFields,
+      readonlyFields: props.readonlyFields,
+    })
+
+    // 如果有初始数据，一并发送
+    if (props.initialData) {
+      sendToChild({
+        type: 'fg:set-data',
+        id: props.publishId,
+        data: props.initialData,
+      })
+    }
+  })
 }
 
 function onUnmount() {

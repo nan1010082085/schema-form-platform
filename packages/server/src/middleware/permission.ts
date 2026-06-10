@@ -8,8 +8,8 @@ import type { JwtPayload } from './auth.js'
  */
 export function requirePermission(...requiredPermissions: string[]): Middleware {
   return async (ctx, next) => {
-    // 本地开发跳过权限检查
-    if (process.env.NODE_ENV !== 'production') {
+    // 通过环境变量控制是否跳过权限检查
+    if (process.env.SKIP_PERMISSION_CHECK === 'true') {
       await next()
       return
     }
@@ -51,8 +51,8 @@ export function requirePermission(...requiredPermissions: string[]): Middleware 
  */
 export function requireRole(...requiredRoles: string[]): Middleware {
   return async (ctx, next) => {
-    // 本地开发跳过角色检查
-    if (process.env.NODE_ENV !== 'production') {
+    // 通过环境变量控制是否跳过角色检查
+    if (process.env.SKIP_PERMISSION_CHECK === 'true') {
       await next()
       return
     }

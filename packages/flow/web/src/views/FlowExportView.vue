@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import { flowApi } from '../api/flowApi.js'
+import { useFlowExport } from '../composables/useFlowExport.js'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
 import styles from './FlowExportView.module.scss'
 
 const flows = ref<FlowDefinitionData[]>([])
-const loading = ref(false)
+const { exporting, exportFiltered } = useFlowExport()
 
 const exportForm = reactive({
   flowId: '',
@@ -25,44 +25,12 @@ onMounted(async () => {
 })
 
 async function handleExport() {
-  loading.value = true
-  try {
-    const params = new URLSearchParams()
-    if (exportForm.flowId) params.set('flowId', exportForm.flowId)
-    if (exportForm.dateRange) {
-      params.set('startDate', exportForm.dateRange[0].toISOString())
-      params.set('endDate', exportForm.dateRange[1].toISOString())
-    }
-    params.set('format', exportForm.format)
-
-    const res = await fetch(`/api/flow-export/approval-logs?${params}`)
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`)
-    }
-
-    if (exportForm.format === 'json') {
-      const json = await res.json()
-      const blob = new Blob([JSON.stringify(json.data, null, 2)], { type: 'application/json' })
-      triggerDownload(blob, 'approval-logs.json')
-    } else {
-      const blob = await res.blob()
-      triggerDownload(blob, 'approval-logs.csv')
-    }
-    ElMessage.success('导出成功')
-  } catch {
-    ElMessage.error('导出失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  await exportFiltered({
+    flowId: exportForm.flowId || undefined,
+    startDate: exportForm.dateRange?.[0].toISOString(),
+    endDate: exportForm.dateRange?.[1].toISOString(),
+    format: exportForm.format,
+  })
 }
 </script>
 
@@ -114,7 +82,7 @@ function triggerDownload(blob: Blob, filename: string) {
           <el-button
             type="primary"
             :icon="Download"
-            :loading="loading"
+            :loading="exporting"
             @click="handleExport"
           >
             导出

@@ -3,11 +3,17 @@ import { createServer } from 'node:http'
 import app from './app.js'
 import { connectDatabase, mongoose } from './config/database.js'
 import { initSocket } from './socket.js'
+import { initDefaultTenant } from './utils/initDefaultTenant.js'
+import { seedBuiltinTemplates } from './utils/seedBuiltinTemplates.js'
+import { seedPermissions } from './utils/seedPermissions.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
 async function start() {
   await connectDatabase()
+  await initDefaultTenant()
+  await seedPermissions()
+  await seedBuiltinTemplates()
 
   const httpServer = createServer(app.callback())
   initSocket(httpServer)

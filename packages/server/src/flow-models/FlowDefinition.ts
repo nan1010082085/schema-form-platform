@@ -1,7 +1,9 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IFlowDefinition {
   _id: string
+  tenantId: string
   name: string
   description?: string
   category?: string
@@ -20,6 +22,7 @@ export interface IFlowDefinition {
 const flowDefinitionSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     name: { type: String, required: true },
     description: { type: String, default: '' },
     category: { type: String, default: '' },
@@ -51,6 +54,8 @@ const flowDefinitionSchema = new mongoose.Schema(
 flowDefinitionSchema.index({ name: 1 })
 flowDefinitionSchema.index({ status: 1 })
 flowDefinitionSchema.index({ createdBy: 1 })
+
+flowDefinitionSchema.plugin(tenantPlugin)
 
 export const FlowDefinitionModel =
   mongoose.models.FlowDefinition ??

@@ -126,11 +126,13 @@ function compileCondition(expression: string): (values: Record<string, FormField
   }
 
   try {
-    // 使用 new Function 创建沙箱函数，注入 values、variables、exposed 参数
-    const fn = new Function('values', 'variables', 'exposed', `"use strict"; return (${expression});`)
+    // 使用 with(env) 让表达式可以直接引用表单字段名（如 status、lock），
+    // 同时支持 values.xxx、variables.xxx、exposed.xxx 命名空间访问。
+    const fn = new Function('env', `with(env) { return (${expression}); }`)
     return (values: Record<string, FormFieldValue>, variables?: Record<string, unknown>, exposed?: Record<string, Record<string, unknown>>): boolean => {
       try {
-        return Boolean(fn(values, variables ?? {}, exposed ?? {}))
+        const env = { ...values, ...variables, values, variables: variables ?? {}, exposed: exposed ?? {} }
+        return Boolean(fn(env))
       } catch {
         logger.rule(`条件表达式求值失败: "${expression}"`)
         return false

@@ -147,6 +147,84 @@
   background: #035B9C;
 }
 
+/* Connection status */
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusOk {
+  background: #22c55e;
+  box-shadow: 0 0 4px rgba(34, 197, 94, 0.4);
+}
+
+.statusError {
+  background: #ef4444;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+}
+
+.statusChecking {
+  background: #f59e0b;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.statusText {
+  font-size: 13px;
+  color: var(--ai-text-primary, #333333);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.providerList {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.providerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--ai-bg-gray, #F5F7FA);
+  border-radius: var(--ai-radius-md, 4px);
+}
+
+.providerName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ai-text-primary, #333333);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.defaultBadge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--ai-color-primary, #0060A2);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.providerModel {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+}
+
 /* Transition */
 :global(.drawer-enter-active),
 :global(.drawer-leave-active) {

@@ -2,7 +2,7 @@
 import { onMounted, ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Folder, Collection } from '@element-plus/icons-vue'
+import { Search, Folder, Collection, View } from '@element-plus/icons-vue'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowTemplateView.module.scss'
 
@@ -14,6 +14,8 @@ const categoryFilter = ref('')
 const applyDialogVisible = ref(false)
 const applyForm = reactive({ name: '', description: '' })
 const applyingTemplateId = ref<string | null>(null)
+const previewDialogVisible = ref(false)
+const previewTemplateId = ref<string | null>(null)
 
 const categories = computed(() => {
   const set = new Set(store.templates.map((t) => t.category).filter(Boolean))
@@ -62,6 +64,11 @@ async function handleApplyConfirm() {
   } catch {
     ElMessage.error('创建失败')
   }
+}
+
+function handlePreview(templateId: string) {
+  previewTemplateId.value = templateId
+  previewDialogVisible.value = true
 }
 
 async function handleDelete(id: string, name: string) {
@@ -122,10 +129,17 @@ function formatDate(dateStr: string | Date) {
         :key="tpl.id"
         :class="styles.card"
       >
-        <div :class="styles.cardHeader">
-          <div :class="styles.cardIcon">
-            <el-icon :size="24"><Collection /></el-icon>
+        <div :class="styles.cardThumbnail">
+          <div v-if="tpl.thumbnail" :class="styles.thumbnailImg">
+            <img :src="tpl.thumbnail" :alt="tpl.name" />
           </div>
+          <div v-else :class="styles.thumbnailPlaceholder">
+            <el-icon :size="32"><Collection /></el-icon>
+            <span>流程预览</span>
+          </div>
+        </div>
+
+        <div :class="styles.cardHeader">
           <div :class="styles.cardMeta">
             <h3 :class="styles.cardTitle">{{ tpl.name }}</h3>
             <div :class="styles.cardCategory">
@@ -151,8 +165,17 @@ function formatDate(dateStr: string | Date) {
         </div>
 
         <div :class="styles.cardFooter">
-          <span :class="styles.cardDate">{{ formatDate(tpl.createdAt) }}</span>
+          <div :class="styles.cardStats">
+            <span :class="styles.cardDate">{{ formatDate(tpl.createdAt) }}</span>
+            <span :class="styles.cardUseCount">
+              <el-icon :size="12"><View /></el-icon>
+              {{ tpl.useCount ?? 0 }} 次使用
+            </span>
+          </div>
           <div :class="styles.cardActions">
+            <el-button size="small" @click="handlePreview(tpl.id)">
+              预览
+            </el-button>
             <el-button size="small" type="primary" @click="handleApply(tpl.id, tpl.name)">
               使用模板
             </el-button>
@@ -197,6 +220,21 @@ function formatDate(dateStr: string | Date) {
       <template #footer>
         <el-button @click="applyDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleApplyConfirm">创建并编辑</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Preview template dialog -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      title="模板预览"
+      width="720px"
+      destroy-on-close
+    >
+      <div :class="styles.previewContainer">
+        <el-empty description="流程图预览功能开发中" />
+      </div>
+      <template #footer>
+        <el-button @click="previewDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
   </div>

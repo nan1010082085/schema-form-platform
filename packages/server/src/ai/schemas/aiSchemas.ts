@@ -17,6 +17,19 @@ export const chatRequestSchema = z.object({
     version: z.string().optional(),
     preferences: z.record(z.string(), z.unknown()).optional(),
     historySummary: z.string().optional(),
+    /** 当前已生成的 Schema（多轮迭代时前端携带） */
+    currentSchema: z.array(z.record(z.string(), z.unknown())).optional(),
+    /** 当前已生成的流程（多轮迭代时前端携带） */
+    currentFlow: z.record(z.string(), z.unknown()).optional(),
+    /** 当前选中的组件信息 */
+    selectedWidget: z.object({
+      id: z.string(),
+      type: z.string(),
+      field: z.string().optional(),
+      label: z.string().optional(),
+    }).optional(),
+    /** 编辑器当前模式 */
+    editorMode: z.enum(['edit', 'preview']).optional(),
   }),
   mentions: z.array(z.object({
     id: z.string().min(1),

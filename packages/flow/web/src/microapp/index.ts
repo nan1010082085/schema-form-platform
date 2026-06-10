@@ -9,8 +9,8 @@ import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import { createChildApp } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
+import { applyThemeInline, installThemeWatchdog, FLOW_THEME_VARS } from '@schema-form/micro-app'
 import App from '../App.vue'
-import { applyThemeInline, installThemeWatchdog } from './themeGuard.js'
 import { createFlowRouter } from '../router/index.js'
 
 /**
@@ -26,8 +26,8 @@ export function createFlowChildApp(): void {
     initMicroApp()
   }
 
-  applyThemeInline()
-  installThemeWatchdog()
+  applyThemeInline(FLOW_THEME_VARS)
+  installThemeWatchdog(FLOW_THEME_VARS)
 
   let router: ReturnType<typeof createFlowRouter>
 

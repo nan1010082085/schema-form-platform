@@ -5,6 +5,7 @@ export {
   type AiApplyEvent,
   type AiPublishedEvent,
   type HostContextEvent,
+  type SelectedWidgetInfo,
   type CollabAiSyncEvent,
   type CollabMessageStatusEvent,
   type CollabGenerationStartEvent,

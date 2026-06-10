@@ -472,7 +472,7 @@ export async function searchConversations(params: SearchConversationsParams): Pr
   return request<SearchResult>(`/ai/conversations/search${qs ? `?${qs}` : ''}`)
 }
 
-// ---- RAG Semantic Search ----
+// ---- RAG Smart Match ----
 
 export interface RagSearchParams {
   query: string
@@ -511,6 +511,52 @@ export async function mentionSearch(
 ): Promise<MentionSearchResult[]> {
   const params = new URLSearchParams({ q: query, limit: String(limit) })
   return request<MentionSearchResult[]>(`/ai/mention/search/${type}?${params}`)
+}
+
+// ---- RAG Knowledge Base Management ----
+
+export interface RagStatusData {
+  totalSchemas: number
+  totalEmbeddings: number
+  indexed: number
+  unindexed: number
+  stale: number
+  unindexedSchemas: Array<{ id: string; name: string; type: string }>
+}
+
+export interface RagReindexResult {
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  errors: number
+}
+
+export interface RagSingleReindexResult {
+  schemaId: string
+  action: 'created' | 'updated' | 'skipped'
+}
+
+export async function getRagStatus(): Promise<RagStatusData> {
+  return request<RagStatusData>('/ai/rag/status')
+}
+
+export async function reindexAllRag(): Promise<RagReindexResult> {
+  return request<RagReindexResult>('/ai/rag/reindex', {
+    method: 'POST',
+  })
+}
+
+export async function reindexSingleRag(schemaId: string): Promise<RagSingleReindexResult> {
+  return request<RagSingleReindexResult>(`/ai/rag/reindex/${encodeURIComponent(schemaId)}`, {
+    method: 'POST',
+  })
+}
+
+export async function deleteRagEmbedding(schemaId: string): Promise<{ schemaId: string; deleted: boolean }> {
+  return request<{ schemaId: string; deleted: boolean }>(`/ai/rag/${encodeURIComponent(schemaId)}`, {
+    method: 'DELETE',
+  })
 }
 
 // ---- LLM Provider Management ----
@@ -626,4 +672,27 @@ export async function rollbackVersion(conversationId: string, versionId: string)
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ versionId }),
   })
+}
+
+// ---- AI 健康检查 ----
+
+export interface AIProviderHealth {
+  name: string
+  hasApiKey: boolean
+  model: string
+  isDefault: boolean
+}
+
+export interface AIHealthResponse {
+  status: 'ok' | 'unconfigured'
+  defaultProvider: string
+  providers: AIProviderHealth[]
+  hasApiKey: boolean
+}
+
+/**
+ * 检查 AI 服务健康状态（API Key 配置、Provider 可用性）。
+ */
+export async function checkAIHealth(): Promise<AIHealthResponse> {
+  return request<AIHealthResponse>('/ai/health')
 }

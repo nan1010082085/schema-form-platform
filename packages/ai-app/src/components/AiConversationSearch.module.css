@@ -196,3 +196,103 @@
 .clearBtn:hover {
   background: var(--ai-text-hint, #999999);
 }
+
+/* Filter toggle button */
+.filterToggle {
+  position: absolute;
+  top: 50%;
+  right: 36px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ai-radius-sm, 3px);
+  border: none;
+  background: transparent;
+  color: var(--ai-text-hint, #999999);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.filterToggle:hover {
+  color: var(--ai-text-primary, #333333);
+  background: var(--ai-bg-gray, #F5F7FA);
+}
+
+.filterToggleActive {
+  color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-color-primary-bg, #EEF5FF);
+}
+
+/* Filter panel */
+.filterPanel {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  background: var(--ai-bg-gray, #F5F7FA);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterLabel {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.filterSelect {
+  flex: 1;
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  border-radius: var(--ai-radius-sm, 4px);
+  padding: 4px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--ai-text-primary, #333333);
+  background: var(--ai-bg-white, #FFFFFF);
+  outline: none;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  border-color: var(--ai-color-primary, #0060A2);
+}
+
+.filterDateRange {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filterDate {
+  flex: 1;
+  border: 1px solid var(--ai-border-base, #D5DDE3);
+  border-radius: var(--ai-radius-sm, 4px);
+  padding: 4px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--ai-text-primary, #333333);
+  background: var(--ai-bg-white, #FFFFFF);
+  outline: none;
+  min-width: 0;
+}
+
+.filterDate:focus {
+  border-color: var(--ai-color-primary, #0060A2);
+}
+
+.filterDateSep {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+  flex-shrink: 0;
+}

@@ -60,11 +60,13 @@ function toggleForm() {
   if (data.formSchemaId !== undefined) {
     emit('updateNodeData', 'formSchemaId', undefined)
     emit('updateNodeData', 'formMode', undefined)
+    emit('updateNodeData', 'editableFields', undefined)
     emit('updateNodeData', 'formVariable', undefined)
     emit('updateNodeData', 'hostMethods', undefined)
   } else {
     emit('updateNodeData', 'formSchemaId', '')
-    emit('updateNodeData', 'formMode', 'edit')
+    emit('updateNodeData', 'formMode', 'editable')
+    emit('updateNodeData', 'editableFields', [])
     emit('updateNodeData', 'formVariable', '')
     emit('updateNodeData', 'hostMethods', ['setValues', 'getValues', 'validate'])
   }
@@ -226,10 +228,28 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
 
           @change="update('formMode', $event)"
         >
-          <el-radio value="edit">编辑</el-radio>
-          <el-radio value="view">只读</el-radio>
+          <el-radio value="editable">可编辑</el-radio>
+          <el-radio value="readonly">只读</el-radio>
+          <el-radio value="partial">部分编辑</el-radio>
         </el-radio-group>
       </FieldRow>
+
+      <template v-if="(node.data?.formMode as string) === 'partial'">
+        <FieldRow label="可编辑字段">
+          <el-select
+            :model-value="(node.data?.editableFields as string[]) ?? []"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="输入字段名并回车"
+            @change="update('editableFields', $event)"
+          />
+        </FieldRow>
+        <div :class="styles.hint">指定可编辑的字段名，其余字段默认只读。留空则全部只读。</div>
+      </template>
 
       <FieldRow label="数据变量名">
         <el-input

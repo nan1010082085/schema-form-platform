@@ -7,6 +7,7 @@
 
 import mongoose from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
+import { tenantPlugin } from '../../middleware/tenantPlugin.js'
 
 // ────────────────────────────────────────────
 // Interfaces
@@ -14,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 export interface IPromptTemplate {
   _id: string
+  tenantId: string
   name: string
   description: string
   category: 'schema' | 'flow' | 'general' | 'custom'
@@ -38,6 +40,7 @@ export interface IPromptTemplate {
 const promptTemplateSchema = new mongoose.Schema<IPromptTemplate>(
   {
     _id: { type: String, default: uuidv4 },
+    tenantId: { type: String, default: '000000', index: true },
     name: {
       type: String,
       required: true,
@@ -98,6 +101,8 @@ const promptTemplateSchema = new mongoose.Schema<IPromptTemplate>(
 promptTemplateSchema.index({ category: 1, usageCount: -1 })
 promptTemplateSchema.index({ tags: 1 })
 promptTemplateSchema.index({ name: 'text', description: 'text' })
+
+promptTemplateSchema.plugin(tenantPlugin)
 
 // ────────────────────────────────────────────
 // Model

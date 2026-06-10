@@ -24,6 +24,7 @@
       @toggle-right-panel="showRightPanel = !showRightPanel"
       @toggle-ai="showAiDrawer = !showAiDrawer"
       @auto-layout="onAutoLayout"
+      @save-as-template="onSaveAsTemplate"
       @update:layout-direction="layoutDirection = $event"
       @update:layout-node-sep="layoutNodeSep = $event"
       @update:layout-rank-sep="layoutRankSep = $event"
@@ -156,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
@@ -185,17 +186,19 @@ import { useFlowGraphStore } from '../stores/flowGraph.js'
 import { useFlowDefinitionStore } from '../stores/flowDefinition.js'
 import { useAutoLayout } from '../composables/useAutoLayout.js'
 import { flowApi } from '../api/flowApi.js'
+import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowDesigner.module.scss'
 
 const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()
 const graphStore = useFlowGraphStore()
 const definitionStore = useFlowDefinitionStore()
+const templateStore = useFlowTemplateStore()
 const {
   direction: layoutDirection,
   nodeSep: layoutNodeSep,
   rankSep: layoutRankSep,
-  applyLayout: runAutoLayout,
+  computeLayout,
 } = useAutoLayout()
 const router = useRouter()
 const route = useRoute()
@@ -331,7 +334,11 @@ function goBack() {
 
 /* --- Load existing flow on mount --- */
 
+// Listen for Ctrl+S from FlowCanvas
+function handleFlowSave() { onSave() }
+
 onMounted(async () => {
+  window.addEventListener('flow:save', handleFlowSave)
   if (!definitionId.value) return
   try {
     await definitionStore.fetchDefinition(definitionId.value)
@@ -362,6 +369,10 @@ onMounted(async () => {
   } catch (e) {
     ElMessage.error('加载流程失败')
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('flow:save', handleFlowSave)
 })
 
 // Socket: 监听 AI 推送事件
@@ -534,8 +545,13 @@ function onRedo() {
 /* --- Export / Import --- */
 
 function onAutoLayout() {
-  runAutoLayout()
-  setTimeout(() => canvasRef.value?.fitView(), 50)
+  // Push current state to history before layout, so the operation is undoable
+  store.pushHistory(graphStore.getSnapshot())
+  const result = computeLayout()
+  if (result) {
+    graphStore.loadGraph(result)
+    setTimeout(() => canvasRef.value?.fitView(), 50)
+  }
 }
 
 function onExportBpmn() {
@@ -549,6 +565,31 @@ function onExportBpmn() {
   a.download = `flow-${Date.now()}.bpmn`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function onSaveAsTemplate() {
+  if (!definitionId.value) {
+    ElMessage.warning('请先保存流程，再执行此操作')
+    return
+  }
+  try {
+    const { value } = await ElMessageBox.prompt('输入模板名称', '保存为模板', {
+      confirmButtonText: '保存',
+      cancelButtonText: '取消',
+      inputValue: flowSettings.name || '未命名模板',
+      inputValidator: (val) => (val?.trim() ? true : '请输入模板名称'),
+    })
+    await templateStore.saveAsTemplate(definitionId.value, {
+      name: value.trim(),
+      description: flowSettings.description,
+      category: flowSettings.category,
+    })
+    ElMessage.success('已保存为模板')
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('保存模板失败')
+    }
+  }
 }
 
 function onImportBpmn() {

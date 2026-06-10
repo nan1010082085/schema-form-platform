@@ -25,8 +25,10 @@ import { checkpointer } from './checkpointer.js'
 import { getLLM } from '../services/llmCache.js'
 import { getModelForTask } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
+import { extractAgentContext } from './contextCarrier.js'
 import { getMetadata } from '../tools/toolHandlers.js'
 import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
+import { logger } from '../../utils/logger.js'
 
 // ────────────────────────────────────────────
 // Tool nodes（带错误兜底）
@@ -35,8 +37,29 @@ import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
 const allToolNode = new ToolNode(allTools)
 
 /**
+ * 从 state 消息中提取最近一条 AIMessage 的 tool_calls 信息。
+ * 用于工具执行异常时记录失败的 tool 名称和输入参数。
+ */
+function extractPendingToolCalls(state: typeof AgentStateAnnotation.State): Array<{ id: string; name: string; args: Record<string, unknown> }> {
+  for (let i = state.messages.length - 1; i >= 0; i--) {
+    const msg = state.messages[i]
+    if (msg instanceof AIMessage && msg.tool_calls && msg.tool_calls.length > 0) {
+      return msg.tool_calls.map((tc) => ({
+        id: tc.id ?? 'unknown',
+        name: tc.name,
+        args: tc.args as Record<string, unknown>,
+      }))
+    }
+  }
+  return []
+}
+
+/**
  * 包装 ToolNode，捕获未预期的异常（如 MongoDB 断连），
  * 返回友好的 ToolMessage 而不是中断图执行。
+ *
+ * 对每个失败的 tool_call 生成独立的 ToolMessage，
+ * 并通过 `ai:thinker:error` 结构化日志记录失败详情。
  */
 async function allToolNodeWithErrorHandling(
   state: typeof AgentStateAnnotation.State,
@@ -44,15 +67,53 @@ async function allToolNodeWithErrorHandling(
   try {
     return await allToolNode.invoke(state)
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error(`[ToolNode] 工具执行异常:`, message)
-    return {
-      messages: [new ToolMessage({
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    const pendingTools = extractPendingToolCalls(state)
+
+    // 为每个待执行的 tool_call 生成错误 ToolMessage
+    const errorMessages: ToolMessage[] = []
+
+    if (pendingTools.length > 0) {
+      for (const tc of pendingTools) {
+        // 结构化日志：ai:thinker:error
+        logger.error({
+          msg: 'ai:thinker:error',
+          toolName: tc.name,
+          toolInput: tc.args,
+          error: errorMessage,
+          conversationId: state.session.conversationId,
+          agent: state.session.currentAgent,
+        })
+
+        errorMessages.push(new ToolMessage({
+          content: JSON.stringify({
+            success: false,
+            error: `工具 ${tc.name} 执行异常: ${errorMessage}`,
+            recoverable: true,
+          }),
+          tool_call_id: tc.id,
+          name: tc.name,
+        }))
+      }
+    } else {
+      // 无法确定具体 tool，记录通用错误
+      logger.error({
+        msg: 'ai:thinker:error',
+        toolName: 'unknown',
+        toolInput: {},
+        error: errorMessage,
+        conversationId: state.session.conversationId,
+        agent: state.session.currentAgent,
+      })
+
+      errorMessages.push(new ToolMessage({
         content: JSON.stringify({ success: false, error: '工具执行异常，请重试', recoverable: true }),
         tool_call_id: 'error',
         name: 'system_error',
-      })],
+      }))
     }
+
+    return { messages: errorMessages }
   }
 }
 
@@ -183,6 +244,17 @@ async function taskChainNode(
       return { interaction: { ...state.interaction, collaborationRequest: null } }
     }
 
+    // Extract context from the current agent before collaboration handoff
+    const agentContext = extractAgentContext(state)
+    const updatedChain = [...state.task.chain]
+    if (agentContext && updatedChain[currentIndex]) {
+      updatedChain[currentIndex] = {
+        ...updatedChain[currentIndex],
+        status: 'done' as const,
+        context: agentContext as unknown as Record<string, unknown>,
+      }
+    }
+
     const newStep = {
       agent: targetAgent as 'editor' | 'flow' | 'page',
       description: `协作：${description}`,
@@ -190,19 +262,17 @@ async function taskChainNode(
       context: state.interaction.collaborationRequest.context,
     }
 
-    const updatedChain = [
-      ...state.task.chain.slice(0, currentIndex + 1),
+    const finalChain = [
+      ...updatedChain.slice(0, currentIndex + 1),
       newStep,
-      ...state.task.chain.slice(currentIndex + 1),
+      ...updatedChain.slice(currentIndex + 1),
     ]
-
-    updatedChain[currentIndex] = { ...updatedChain[currentIndex], status: 'done' as const }
 
     console.log(`[taskChain] 协作请求: 插入 ${targetAgent} 步骤到位置 ${currentIndex + 1}`)
 
     return {
       session: { ...state.session, currentAgent: targetAgent as 'editor' | 'flow' | 'page' },
-      task: { ...state.task, type: 'generate_simple', chain: updatedChain, currentStepIndex: currentIndex + 1 },
+      task: { ...state.task, type: 'generate_simple', chain: finalChain, currentStepIndex: currentIndex + 1 },
       tools: { ...state.tools, needsTool: true },
       interaction: {
         ...state.interaction,
@@ -220,13 +290,43 @@ async function taskChainNode(
     return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'summarize' }, tools: { ...state.tools, needsTool: false } }
   }
 
+  // Extract context from the previous step (if any) and carry it forward
   const updatedChain = state.task.chain.map((step, i) => {
     if (i === currentIndex) return { ...step, status: 'running' as const }
     if (i < currentIndex) return { ...step, status: 'done' as const }
     return step
   })
 
+  // If transitioning from a previous step, extract its context
+  if (currentIndex > 0) {
+    const prevStep = updatedChain[currentIndex - 1]
+    if (!prevStep.context) {
+      const agentContext = extractAgentContext(state)
+      if (agentContext) {
+        updatedChain[currentIndex - 1] = {
+          ...prevStep,
+          context: agentContext as unknown as Record<string, unknown>,
+        }
+        console.log(`[taskChain] Context extracted for step ${currentIndex - 1}: ${agentContext.summary}`)
+      }
+    }
+  }
+
+  // Build context injection for the current step from all previous steps
   const currentStep = state.task.chain[currentIndex]
+  const upstreamContexts = updatedChain
+    .slice(0, currentIndex)
+    .filter((s) => s.context)
+    .map((s) => s.context)
+
+  let stepContext = currentStep.context
+  if (upstreamContexts.length > 0 && !stepContext) {
+    // Merge upstream contexts into the current step
+    stepContext = {
+      upstream: upstreamContexts,
+    } as unknown as Record<string, unknown>
+  }
+
   console.log(`[taskChain] 执行步骤 ${currentIndex}: ${currentStep.agent} - ${currentStep.description}`)
 
   return {
@@ -464,8 +564,19 @@ async function afterToolsNode(
       if (collaborationCall) {
         const targetAgent = collaborationCall.args.targetAgent as string
         if (targetAgent === 'editor' || targetAgent === 'flow' || targetAgent === 'page') {
+          // Extract context from the current agent before handing off to collaboration
+          const agentContext = extractAgentContext(state)
+          const updatedChain = [...state.task.chain]
+          if (agentContext && updatedChain[state.task.currentStepIndex]) {
+            updatedChain[state.task.currentStepIndex] = {
+              ...updatedChain[state.task.currentStepIndex],
+              context: agentContext as unknown as Record<string, unknown>,
+            }
+          }
+
           return {
             tools: { ...state.tools, toolIterationCount: state.tools.toolIterationCount + 1 },
+            task: { ...state.task, chain: updatedChain },
             interaction: {
               ...state.interaction,
               collaborationRequest: {
@@ -482,8 +593,20 @@ async function afterToolsNode(
     }
   }
 
+  // Extract context for the current task chain step (for downstream agents)
+  const agentContext = extractAgentContext(state)
+  const updatedChain = [...state.task.chain]
+  if (agentContext && updatedChain[state.task.currentStepIndex]) {
+    updatedChain[state.task.currentStepIndex] = {
+      ...updatedChain[state.task.currentStepIndex],
+      context: agentContext as unknown as Record<string, unknown>,
+    }
+    console.log(`[afterTools] Context extracted for step ${state.task.currentStepIndex}: ${agentContext.summary}`)
+  }
+
   return {
     tools: { ...state.tools, toolIterationCount: state.tools.toolIterationCount + 1 },
+    task: updatedChain.length > 0 ? { ...state.task, chain: updatedChain } : state.task,
   }
 }
 

@@ -5,9 +5,10 @@ import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
 import SchemaPreviewCard from './SchemaPreviewCard.vue'
 import FlowCard from './FlowCard.vue'
+import FlowPreviewCard from './FlowPreviewCard.vue'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
-import type { StepData, Widget } from '@/types'
+import type { StepData, Widget, FlowGraph } from '@/types'
 
 export type MessageRole = 'user' | 'assistant'
 
@@ -23,6 +24,8 @@ export interface MessageFlowCard {
   type: 'flow'
   title: string
   nodes: FlowNode[]
+  /** Full FlowGraph for Vue Flow rendering */
+  graph?: FlowGraph
   primaryAction?: string
   secondaryAction?: string
 }
@@ -58,6 +61,7 @@ const emit = defineEmits<{
   'card-primary-action': [cardIndex: number]
   'card-secondary-action': [cardIndex: number]
   'open-json-drawer': []
+  'retry-tool': [toolIndex: number]
 }>()
 
 // ---- F2: rAF-batched content for streaming ----
@@ -94,18 +98,35 @@ function toggleCodeCollapse(idx: number) {
 // ---- Tool name display map ----
 
 const TOOL_NAME_MAP: Record<string, string> = {
+  // Schema 相关
   search_schemas: '搜索表单',
   get_schema_detail: '获取表单详情',
   search_published_schemas: '搜索已发布表单',
-  get_widget_catalogue: '查询组件目录',
-  search_widgets_by_keyword: '关键词匹配搜索',
+  fuzzy_search_schemas: '模糊搜索表单',
   validate_schema: '校验 Schema',
-  rag_search: '向量语义搜索',
+  update_schema: '更新表单',
   generate_schema: '生成表单',
+  save_and_bind_schema: '保存并绑定表单',
+  validate_industry_form: '校验行业表单',
+  validate_widget_schema: '校验组件 Schema',
+  // Flow 相关
   search_flows: '搜索流程',
   get_flow_detail: '获取流程详情',
+  update_flow: '更新流程',
+  get_flow_node_schema: '获取流程节点表单',
+  bind_schema_to_flow_node: '绑定表单到流程节点',
+  find_flow_references: '查找流程引用',
+  // Widget 相关
+  get_widget_catalogue: '查询组件目录',
+  query_widgets: '查询组件',
+  // 用户/搜索
   search_users: '搜索用户',
-  validate_flow: '校验流程',
+  search_industry_templates: '搜索行业模板',
+  // RAG
+  rag_search: '智能匹配',
+  rag_index: 'RAG 索引',
+  // 协作
+  request_collaboration: '请求协作',
 }
 
 function formatToolName(name: string): string {
@@ -245,7 +266,8 @@ const steps = computed<StepData[]>(() => {
 
   // Steps: tool calls
   if (props.toolCalls && props.toolCalls.length > 0) {
-    for (const tc of props.toolCalls) {
+    for (let tcIdx = 0; tcIdx < props.toolCalls.length; tcIdx++) {
+      const tc = props.toolCalls[tcIdx]
       const hasError = !!tc.error
       const hasResult = tc.result !== undefined
       const status = hasError ? 'error' : hasResult ? 'done' : 'running'
@@ -259,6 +281,7 @@ const steps = computed<StepData[]>(() => {
         toolResult: tc.result,
         toolArguments: tc.arguments,
         error: tc.error,
+        toolCallIndex: tcIdx,
         timestamp: now,
         agent: props.agent,
       })
@@ -376,6 +399,7 @@ const steps = computed<StepData[]>(() => {
               :tool-result="step.toolResult"
               :tool-arguments="step.toolArguments"
               :error="step.error"
+              :tool-call-index="step.toolCallIndex"
               :card-type="step.cardType"
               :card-title="step.cardTitle"
               :primary-action="step.primaryAction"
@@ -385,6 +409,7 @@ const steps = computed<StepData[]>(() => {
               :is-last="idx === steps.length - 1"
               @primary-action="step.type === 'result' && emit('card-primary-action', 0)"
               @secondary-action="step.type === 'result' && emit('card-secondary-action', 0)"
+              @retry-tool="step.toolCallIndex !== undefined && emit('retry-tool', step.toolCallIndex)"
             >
               <!-- Result card slot -->
               <template v-if="step.type === 'result' && cards">
@@ -412,17 +437,28 @@ const steps = computed<StepData[]>(() => {
                     @secondary-action="emit('card-secondary-action', cIdx)"
                   />
                 </template>
-                <FlowCard
-                  v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')"
-                  :key="'f' + cIdx"
-                  :title="card.title"
-                  :nodes="card.nodes"
-                  :primary-action="card.primaryAction"
-                  :secondary-action="card.secondaryAction"
-                  compact
-                  @primary-action="emit('card-primary-action', cIdx)"
-                  @secondary-action="emit('card-secondary-action', cIdx)"
-                />
+                <template v-for="(card, cIdx) in cards.filter((c) => c.type === 'flow')" :key="'f' + cIdx">
+                  <FlowPreviewCard
+                    v-if="card.graph"
+                    :title="card.title"
+                    :graph="card.graph"
+                    :primary-action="card.primaryAction"
+                    :secondary-action="card.secondaryAction"
+                    compact
+                    @primary-action="emit('card-primary-action', cIdx)"
+                    @secondary-action="emit('card-secondary-action', cIdx)"
+                  />
+                  <FlowCard
+                    v-else
+                    :title="card.title"
+                    :nodes="card.nodes"
+                    :primary-action="card.primaryAction"
+                    :secondary-action="card.secondaryAction"
+                    compact
+                    @primary-action="emit('card-primary-action', cIdx)"
+                    @secondary-action="emit('card-secondary-action', cIdx)"
+                  />
+                </template>
               </template>
             </AiStepCard>
           </template>

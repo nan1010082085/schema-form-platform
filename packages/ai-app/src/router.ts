@@ -14,6 +14,11 @@ const routes = [
     name: 'sidebar',
     component: () => import('./views/AiSidebarView.vue'),
   },
+  {
+    path: '/rag',
+    name: 'rag',
+    component: () => import('./views/RagKnowledgeBase.vue'),
+  },
 ]
 
 export function createAiRouter() {

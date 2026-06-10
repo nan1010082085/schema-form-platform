@@ -101,6 +101,13 @@ export type MessageStatus = 'sending' | 'sent' | 'streaming' | 'received' | 'err
 
 // ---- 上下文 ----
 
+export interface SelectedWidgetInfo {
+  id: string
+  type: string
+  field?: string
+  label?: string
+}
+
 export interface ChatContext {
   source: 'editor' | 'flow' | 'page' | 'standalone'
   schemaId?: string
@@ -111,6 +118,14 @@ export interface ChatContext {
   preferences?: Record<string, unknown>
   /** 前文摘要（长对话时压缩早期消息） */
   historySummary?: string
+  /** 当前已生成的 Schema（多轮迭代时携带，供 AI 基于上次结果修改） */
+  currentSchema?: Widget[]
+  /** 当前已生成的流程（多轮迭代时携带，供 AI 基于上次结果修改） */
+  currentFlow?: FlowGraph
+  /** 当前选中的组件信息（编辑器中选中的 Widget） */
+  selectedWidget?: SelectedWidgetInfo
+  /** 编辑器当前模式 */
+  editorMode?: 'edit' | 'preview'
 }
 
 // ---- Chat Settings ----
@@ -149,6 +164,10 @@ export interface ChatRequest {
   message: string
   context: ChatContext
   mentions?: MentionReference[]
+  /** 当前已生成的 Schema（多轮迭代时携带） */
+  currentSchema?: Widget[]
+  /** 当前已生成的流程（多轮迭代时携带） */
+  currentFlow?: FlowGraph
 }
 
 // ---- SSE 事件 ----
@@ -303,6 +322,8 @@ export interface StepData {
   toolArguments?: Record<string, unknown>
   /** 错误信息 */
   error?: string
+  /** 工具调用在 toolCalls 数组中的索引（用于重试） */
+  toolCallIndex?: number
   /** 嵌入的卡片类型：schema 或 flow */
   cardType?: 'schema' | 'flow'
   /** 卡片标题 */

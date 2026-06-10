@@ -25,12 +25,24 @@ export interface AiPublishedEvent {
 
 // ---- 宿主推送到 AI 的事件 ----
 
+/** 选中组件的简要信息 */
+export interface SelectedWidgetInfo {
+  id: string
+  type: string
+  field?: string
+  label?: string
+}
+
 /** 宿主设置 AI 上下文 */
 export interface HostContextEvent {
   source: 'editor' | 'flow' | 'standalone'
   schemaId?: string
   flowId?: string
   nodeId?: string
+  /** 当前选中的组件信息 */
+  selectedWidget?: SelectedWidgetInfo
+  /** 编辑器当前模式 */
+  editorMode?: 'edit' | 'preview'
 }
 
 // ---- 协作同步事件 ----

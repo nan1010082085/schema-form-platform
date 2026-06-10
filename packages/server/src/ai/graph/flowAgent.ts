@@ -17,8 +17,11 @@ import { flowTools } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 import { searchSchemasTool } from '../tools/schemaTools.js'
 import { getSchemaDetailTool } from '../tools/editorTools.js'
-// truncateMessages removed — agent nodes now use state.messages directly
+import { ragSearchTool } from '../tools/ragTools.js'
+import { truncateMessagesForLangGraph } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
+import { buildContextInjection, type AgentContextPayload } from './contextCarrier.js'
+import { retrieveRagContext } from './ragContextRetriever.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -51,12 +54,34 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
     ? lastHumanMessage.content
     : JSON.stringify(lastHumanMessage.content)
 
-  // Inject current flow summary (not full JSON)
+  // 多轮迭代：注入当前流程概要 + 结构化详情
   if (state.context.currentFlow && state.context.currentFlow.nodes.length > 0) {
-    const nodeCount = state.context.currentFlow.nodes.length
-    const edgeCount = state.context.currentFlow.edges.length
-    const nodeTypes = state.context.currentFlow.nodes.map(n => (n.data as Record<string, unknown>)?.bpmnType ?? n.type).join(', ')
+    const flow = state.context.currentFlow
+    const nodeCount = flow.nodes.length
+    const edgeCount = flow.edges.length
+    const nodeTypes = flow.nodes.map(n => (n.data as Record<string, unknown>)?.bpmnType ?? n.type).join(', ')
     prompt += `\n\n--- 当前流程概要 ---\n共 ${nodeCount} 个节点，${edgeCount} 条连线：${nodeTypes}`
+
+    // 多轮迭代：提供节点详情 + 连线关系，帮助 AI 精准修改
+    const detailLines: string[] = []
+    for (const node of flow.nodes) {
+      const data = (node.data ?? {}) as Record<string, unknown>
+      const bpmnType = data.bpmnType as string ?? 'unknown'
+      const label = data.label as string ?? ''
+      const id = node.id as string ?? ''
+      detailLines.push(`  - [${bpmnType}] id="${id}" label="${label}"`)
+    }
+    const edgeLines: string[] = []
+    for (const edge of flow.edges) {
+      const src = (edge.source as Record<string, unknown>)?.cell as string ?? ''
+      const tgt = (edge.target as Record<string, unknown>)?.cell as string ?? ''
+      const data = (edge.data ?? {}) as Record<string, unknown>
+      const label = data.label as string ?? ''
+      edgeLines.push(`  - ${src} → ${tgt}${label ? ` (${label})` : ''}`)
+    }
+    prompt += `\n\n--- 当前流程节点 ---\n${detailLines.join('\n')}`
+    prompt += `\n\n--- 当前流程连线 ---\n${edgeLines.join('\n')}`
+    prompt += `\n\n【重要】基于以上结构修改，请使用 update_flow 工具。`
   }
 
   // Inject current schema summary (flow may reference forms)
@@ -91,8 +116,13 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
   // Inject collaboration context from the requesting agent
   const currentStep = state.task.chain[state.task.currentStepIndex]
   if (currentStep?.context && Object.keys(currentStep.context).length > 0) {
-    prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
-    prompt += JSON.stringify(currentStep.context, null, 2)
+    const ctx = currentStep.context as unknown as AgentContextPayload
+    if (ctx.sourceAgent && ctx.summary) {
+      prompt += buildContextInjection(ctx)
+    } else {
+      prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
+      prompt += JSON.stringify(currentStep.context, null, 2)
+    }
   }
 
   return prompt
@@ -112,16 +142,24 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
 export async function flowAgentNode(
   state: typeof AgentStateAnnotation.State,
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
+  // RAG: retrieve related schemas for context augmentation
+  const lastUserMsg = [...state.messages].reverse().find((m) => m.constructor.name === 'HumanMessage')
+  const userQueryText = lastUserMsg
+    ? (typeof lastUserMsg.content === 'string' ? lastUserMsg.content : JSON.stringify(lastUserMsg.content))
+    : ''
+  const ragContext = await retrieveRagContext(userQueryText)
+
   const systemPrompt = await getFlowSystemPrompt()
-  const userContent = buildContextMessage(state)
+  const userContent = buildContextMessage(state) + ragContext.context
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools, searchSchemasTool, getSchemaDetailTool])
+  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...flowTools, ...collaborationTools, searchSchemasTool, getSchemaDetailTool, ragSearchTool])
 
-  // 直接使用 state.messages + system prompt，不重建消息列表
-  // 避免 truncateMessages 截断 ToolMessage 导致 API 400 错误
+  // 截断历史消息以避免 token 超限
+  const truncatedHistory = truncateMessagesForLangGraph(state.messages)
+
   const messages = [
     new SystemMessage(systemPrompt),
-    ...state.messages,
+    ...truncatedHistory,
     new HumanMessage(userContent),
   ]
 

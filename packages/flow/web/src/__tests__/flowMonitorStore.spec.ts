@@ -27,12 +27,15 @@ describe('useFlowMonitorStore', () => {
     expect(store.stats.total).toBe(0)
     expect(store.stats.running).toBe(0)
     expect(store.stats.completed).toBe(0)
+    expect(store.stats.runningPct).toBe(0)
+    expect(store.stats.completedPct).toBe(0)
     expect(store.avgDuration).toBe(0)
     expect(store.nodeStats).toEqual([])
     expect(store.trend).toEqual([])
     expect(store.topFlows).toEqual([])
     expect(store.todayNew).toBe(0)
     expect(store.loading).toBe(false)
+    expect(store.timeRange).toEqual({ preset: 'month' })
   })
 
   describe('todayNew', () => {
@@ -53,6 +56,37 @@ describe('useFlowMonitorStore', () => {
     })
   })
 
+  describe('setTimeRange', () => {
+    it('updates timeRange and triggers fetchDashboard', async () => {
+      mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
+      mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
+      mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
+      mockFlowApi.getMonitorTrend.mockResolvedValue([])
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
+
+      const store = useFlowMonitorStore()
+      store.setTimeRange('week')
+
+      expect(store.timeRange).toEqual({ preset: 'week' })
+      // fetchDashboard is called internally
+      await vi.waitFor(() => expect(mockFlowApi.getMonitorStats).toHaveBeenCalled())
+    })
+
+    it('supports custom date range', async () => {
+      mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
+      mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
+      mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
+      mockFlowApi.getMonitorTrend.mockResolvedValue([])
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
+
+      const store = useFlowMonitorStore()
+      store.setTimeRange('custom', '2026-01-01', '2026-01-31')
+
+      expect(store.timeRange).toEqual({ preset: 'custom', startDate: '2026-01-01', endDate: '2026-01-31' })
+      await vi.waitFor(() => expect(mockFlowApi.getMonitorStats).toHaveBeenCalled())
+    })
+  })
+
   describe('fetchDashboard', () => {
     it('fetches all data and updates state', async () => {
       const mockStats = {
@@ -62,6 +96,11 @@ describe('useFlowMonitorStore', () => {
         terminated: 2,
         suspended: 1,
         failed: 2,
+        runningPct: 10,
+        completedPct: 80,
+        terminatedPct: 4,
+        suspendedPct: 2,
+        failedPct: 4,
       }
       const mockDuration = { avgDuration: 7200000 }
       const mockNodeStats = [
@@ -93,7 +132,7 @@ describe('useFlowMonitorStore', () => {
       expect(store.loading).toBe(false)
     })
 
-    it('passes days parameter to trend API', async () => {
+    it('passes timeRange to stats API', async () => {
       mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
       mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
       mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
@@ -101,22 +140,24 @@ describe('useFlowMonitorStore', () => {
       mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
 
       const store = useFlowMonitorStore()
-      await store.fetchDashboard(14)
-
-      expect(mockFlowApi.getMonitorTrend).toHaveBeenCalledWith(14)
-    })
-
-    it('passes limit=5 to topFlows API', async () => {
-      mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
-      mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
-      mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
-      mockFlowApi.getMonitorTrend.mockResolvedValue([])
-      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
-
-      const store = useFlowMonitorStore()
+      store.timeRange = { preset: 'week' }
       await store.fetchDashboard()
 
-      expect(mockFlowApi.getMonitorTopFlows).toHaveBeenCalledWith(5)
+      expect(mockFlowApi.getMonitorStats).toHaveBeenCalledWith({ preset: 'week' })
+    })
+
+    it('passes days and timeRange to trend API', async () => {
+      mockFlowApi.getMonitorStats.mockResolvedValue({} as any)
+      mockFlowApi.getMonitorAvgDuration.mockResolvedValue({ avgDuration: 0 })
+      mockFlowApi.getMonitorNodeStats.mockResolvedValue([])
+      mockFlowApi.getMonitorTrend.mockResolvedValue([])
+      mockFlowApi.getMonitorTopFlows.mockResolvedValue([])
+
+      const store = useFlowMonitorStore()
+      store.timeRange = { preset: 'month' }
+      await store.fetchDashboard(14)
+
+      expect(mockFlowApi.getMonitorTrend).toHaveBeenCalledWith(14, { preset: 'month' })
     })
 
     it('sets loading during fetch', async () => {
@@ -147,7 +188,7 @@ describe('useFlowMonitorStore', () => {
 
       expect(store.loading).toBe(true)
 
-      resolveStats!({ total: 0, running: 0, completed: 0, terminated: 0, suspended: 0, failed: 0 })
+      resolveStats!({ total: 0, running: 0, completed: 0, terminated: 0, suspended: 0, failed: 0, runningPct: 0, completedPct: 0, terminatedPct: 0, suspendedPct: 0, failedPct: 0 })
       resolveDuration!({ avgDuration: 0 })
       resolveNodes!([])
       resolveTrend!([])

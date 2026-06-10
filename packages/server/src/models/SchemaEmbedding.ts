@@ -18,9 +18,11 @@
  */
 
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface ISchemaEmbedding {
   _id: string
+  tenantId: string
   schemaId: string
   editId: string
   name: string
@@ -50,6 +52,7 @@ const metadataSchema = new mongoose.Schema(
 const schemaEmbeddingDef = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     schemaId: { type: String, required: true, index: true },
     editId: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
@@ -67,6 +70,8 @@ const schemaEmbeddingDef = new mongoose.Schema(
 schemaEmbeddingDef.index({ type: 1 })
 // Index for content hash to detect stale embeddings
 schemaEmbeddingDef.index({ contentHash: 1 })
+
+schemaEmbeddingDef.plugin(tenantPlugin)
 
 export const SchemaEmbeddingModel =
   mongoose.models.SchemaEmbedding ?? mongoose.model<ISchemaEmbedding>('SchemaEmbedding', schemaEmbeddingDef)

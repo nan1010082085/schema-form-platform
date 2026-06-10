@@ -15,12 +15,14 @@ import { ElMessageBox } from 'element-plus'
 import { useBoardStore } from '../../stores/board'
 import { useEditorStore } from '../../stores/editor'
 import EditorOverlay from './EditorOverlay.vue'
+import ZoomIndicator from './ZoomIndicator.vue'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
 import type { Widget } from '../../widgets/base/types'
-import type { DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
+import type { PartialWidget, DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
 import { triggerWidgetEvent } from '../../engine'
-import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY } from '../WidgetRenderer/types'
+import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY, FORM_GRID_LINKAGE_KEY } from '../WidgetRenderer/types'
+import { useLinkage } from '../../composables/useLinkage'
 import styles from './EditorCanvas.module.scss'
 
 const emit = defineEmits<{
@@ -155,6 +157,26 @@ const previewEventContext: EventExecutionContext = {
   },
 }
 provide(EVENT_CONTEXT_KEY, previewEventContext)
+
+// ---- 共享联动状态（编辑模式：注入给所有 SchemaNode，避免每个节点独立创建 useLinkage） ----
+
+const { stateMap: linkageStateMap } = useLinkage(
+  widgetStore.widgets as unknown as PartialWidget[],
+  computed(() => {
+    const values: Record<string, unknown> = {}
+    function walk(items: Widget[]) {
+      for (const w of items) {
+        if (w.field) values[w.field] = w.defaultValue ?? null
+        if (w.children?.length) walk(w.children as Widget[])
+      }
+    }
+    walk(widgetStore.widgets)
+    return values
+  }),
+  variablesContext,
+  exposedContext,
+)
+provide(FORM_GRID_LINKAGE_KEY, linkageStateMap)
 </script>
 
 <template>
@@ -170,6 +192,8 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
       @open-variables="emit('openVariables', $event)"
       @save-preview="emit('savePreview', $event)"
     />
+    <!-- 缩放指示器（仅编辑模式） -->
+    <ZoomIndicator v-if="!isPreview" />
   </div>
 </template>
 

@@ -37,6 +37,12 @@ const routes = [
         component: () => import('@/components/FlowMonitorDashboard.vue'),
         meta: { title: '流程监控' },
       },
+      {
+        path: 'stats',
+        name: 'flow-stats',
+        component: () => import('@/views/FlowStatsView.vue'),
+        meta: { title: '流程统计' },
+      },
     ],
   },
   {

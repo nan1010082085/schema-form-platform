@@ -32,7 +32,7 @@ describe('AiRagSearch', () => {
     const wrapper = mount(AiRagSearch, { props: defaultProps })
     const input = wrapper.find('input')
     expect(input.exists()).toBe(true)
-    expect(input.attributes('placeholder')).toContain('语义搜索')
+    expect(input.attributes('placeholder')).toContain('智能匹配')
   })
 
   it('shows hint when no search has been performed', () => {

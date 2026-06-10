@@ -1,8 +1,10 @@
 import mongoose from 'mongoose'
 import type { TaskInstanceStatus } from '@schema-form/flow-shared'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface ITaskInstance {
   _id: string
+  tenantId: string
   instanceId: string
   nodeId: string
   nodeName: string
@@ -15,6 +17,8 @@ export interface ITaskInstance {
   formPublishId?: string
   formVersion?: string
   formMode?: string
+  editableFields?: string[]
+  readonlyFields?: string[]
   hostMethods?: string[]
   outcome?: string
   dueDate?: Date
@@ -28,6 +32,7 @@ export interface ITaskInstance {
 const taskInstanceSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     instanceId: { type: String, required: true, index: true },
     nodeId: { type: String, required: true },
     nodeName: { type: String, required: true },
@@ -44,6 +49,8 @@ const taskInstanceSchema = new mongoose.Schema(
     formPublishId: { type: String, default: null },
     formVersion: { type: String, default: null },
     formMode: { type: String, default: null },
+    editableFields: { type: [String], default: null },
+    readonlyFields: { type: [String], default: null },
     hostMethods: { type: [String], default: null },
     outcome: { type: String, default: null },
     dueDate: { type: Date, default: null },
@@ -66,6 +73,8 @@ const taskInstanceSchema = new mongoose.Schema(
 taskInstanceSchema.index({ assignee: 1, status: 1 })
 taskInstanceSchema.index({ candidateUsers: 1, status: 1 })
 taskInstanceSchema.index({ instanceId: 1, nodeId: 1, status: 1 })
+
+taskInstanceSchema.plugin(tenantPlugin)
 
 export const TaskInstanceModel =
   mongoose.models.TaskInstance ??

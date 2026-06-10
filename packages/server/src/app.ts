@@ -2,7 +2,10 @@ import Koa from 'koa'
 import cors from '@koa/cors'
 import helmet from 'koa-helmet'
 import bodyParser from 'koa-bodyparser'
+import ratelimit from 'koa-ratelimit'
 import { errorHandler } from './middleware/errorHandler.js'
+import { timeoutMiddleware } from './middleware/timeout.js'
+import { tenantContextMiddleware } from './middleware/tenantContext.js'
 import healthRouter from './routes/health.js'
 import authRouter from './routes/auth.js'
 import dictRouter from './routes/dict.js'
@@ -15,6 +18,10 @@ import usersRouter from './routes/users.js'
 import rolesRouter from './routes/roles.js'
 import statsRouter from './routes/stats.js'
 import templateRouter from './routes/template.js'
+import tenantRouter from './routes/tenant.js'
+import deptsRouter from './routes/depts.js'
+import menusRouter from './routes/menus.js'
+import postsRouter from './routes/posts.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
 import flowInstanceRouter from './flow-routes/flowInstance.js'
@@ -23,9 +30,14 @@ import flowTimerRouter from './flow-routes/flowTimer.js'
 import flowApprovalRouter from './flow-routes/flowApproval.js'
 import flowBatchRouter from './flow-routes/flowBatch.js'
 import flowNotificationRouter from './flow-routes/flowNotification.js'
-import { aiRouter, monitorRouter } from './ai/index.js'
+import flowTemplateRouter from './flow-routes/flowTemplate.js'
+import flowMonitorRouter from './flow-routes/flowMonitor.js'
+import { aiRouter, monitorRouter, aiHealthRouter, ragRouter } from './ai/index.js'
 import aiPluginRouter from './ai/pluginRoutes.js'
 import mcpRouter from './routes/mcp.js'
+import configRouter from './routes/config.js'
+import auditLogRouter from './routes/auditLog.js'
+import { auditLogMiddleware } from './middleware/auditLog.js'
 import { validateApiKey } from './ai/graph/agentBase.js'
 
 // ── Startup validation ──
@@ -35,7 +47,36 @@ const app = new Koa()
 
 // --- Middleware stack ---
 app.use(errorHandler)
-app.use(helmet({ contentSecurityPolicy: false }))
+app.use(ratelimit({
+  driver: 'memory',
+  db: new Map(),
+  duration: 60_000,
+  max: 100,
+  id: (ctx) => ctx.ip,
+  headers: {
+    remaining: 'Rate-Limit-Remaining',
+    reset: 'Rate-Limit-Reset',
+    total: 'Rate-Limit-Total',
+  },
+  errorMessage: 'Too many requests, please try again later.',
+  disableHeader: false,
+}))
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      fontSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'", 'wss:', 'ws:'],
+      frameSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}))
 app.use(bodyParser())
 
 app.use(cors({
@@ -48,6 +89,10 @@ app.use(cors({
   },
   credentials: true,
 }))
+
+app.use(tenantContextMiddleware())
+app.use(timeoutMiddleware(30_000))
+app.use(auditLogMiddleware)
 
 // --- Routes ---
 app.use(healthRouter.routes())
@@ -74,6 +119,14 @@ app.use(dataRouter.routes())
 app.use(dataRouter.allowedMethods())
 app.use(templateRouter.routes())
 app.use(templateRouter.allowedMethods())
+app.use(tenantRouter.routes())
+app.use(tenantRouter.allowedMethods())
+app.use(deptsRouter.routes())
+app.use(deptsRouter.allowedMethods())
+app.use(menusRouter.routes())
+app.use(menusRouter.allowedMethods())
+app.use(postsRouter.routes())
+app.use(postsRouter.allowedMethods())
 app.use(flowRouter.routes())
 app.use(flowRouter.allowedMethods())
 app.use(flowVersionRouter.routes())
@@ -90,13 +143,25 @@ app.use(flowApprovalRouter.routes())
 app.use(flowApprovalRouter.allowedMethods())
 app.use(flowNotificationRouter.routes())
 app.use(flowNotificationRouter.allowedMethods())
+app.use(flowTemplateRouter.routes())
+app.use(flowTemplateRouter.allowedMethods())
+app.use(flowMonitorRouter.routes())
+app.use(flowMonitorRouter.allowedMethods())
 app.use(aiRouter.routes())
 app.use(aiRouter.allowedMethods())
+app.use(aiHealthRouter.routes())
+app.use(aiHealthRouter.allowedMethods())
 app.use(monitorRouter.routes())
 app.use(monitorRouter.allowedMethods())
 app.use(aiPluginRouter.routes())
 app.use(aiPluginRouter.allowedMethods())
+app.use(ragRouter.routes())
+app.use(ragRouter.allowedMethods())
 app.use(mcpRouter.routes())
 app.use(mcpRouter.allowedMethods())
+app.use(configRouter.routes())
+app.use(configRouter.allowedMethods())
+app.use(auditLogRouter.routes())
+app.use(auditLogRouter.allowedMethods())
 
 export default app

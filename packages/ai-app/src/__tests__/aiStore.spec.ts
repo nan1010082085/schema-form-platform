@@ -318,6 +318,33 @@ describe('useAiStore', () => {
       expect(store.context.historySummary).toBe('之前的对话摘要')
       expect(store.context.schemaId).toBe('s1')
     })
+
+    it('sets selectedWidget', () => {
+      const store = useAiStore()
+      store.setContext({
+        selectedWidget: { id: 'w1', type: 'input', field: 'name', label: 'Name' },
+      })
+      expect(store.context.selectedWidget).toEqual({ id: 'w1', type: 'input', field: 'name', label: 'Name' })
+    })
+
+    it('sets editorMode', () => {
+      const store = useAiStore()
+      store.setContext({ editorMode: 'edit' })
+      expect(store.context.editorMode).toBe('edit')
+    })
+
+    it('preserves selectedWidget and editorMode when merging other fields', () => {
+      const store = useAiStore()
+      store.setContext({
+        source: 'editor',
+        selectedWidget: { id: 'w1', type: 'input' },
+        editorMode: 'edit',
+      })
+      store.setContext({ schemaId: 's1' })
+      expect(store.context.selectedWidget).toEqual({ id: 'w1', type: 'input' })
+      expect(store.context.editorMode).toBe('edit')
+      expect(store.context.schemaId).toBe('s1')
+    })
   })
 
   describe('S8-10: preferences and historySummary in sendMessage', () => {
@@ -348,6 +375,35 @@ describe('useAiStore', () => {
               codeComment: 'yes',
             }),
             historySummary: '用户讨论了注册表单设计',
+          }),
+        }),
+        expect.any(AbortSignal),
+      )
+    })
+  })
+
+  describe('selectedWidget and editorMode in sendMessage', () => {
+    it('passes selectedWidget and editorMode to chat API', async () => {
+      const store = useAiStore()
+      store.setContext({
+        source: 'editor',
+        selectedWidget: { id: 'w1', type: 'input', field: 'name', label: 'Name' },
+        editorMode: 'edit',
+      })
+
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'ok' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('修改选中的组件')
+
+      expect(chat).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            source: 'editor',
+            selectedWidget: { id: 'w1', type: 'input', field: 'name', label: 'Name' },
+            editorMode: 'edit',
           }),
         }),
         expect.any(AbortSignal),
@@ -570,6 +626,189 @@ describe('useAiStore', () => {
       expect(assistant.toolCalls![0].result).toEqual({ data: [] })
       expect(assistant.toolCalls![1].name).toBe('save_widget')
       expect(assistant.toolCalls![1].result).toEqual({ error: '保存失败' })
+    })
+
+    it('matches tool_error by runId to existing calling entry', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: 'run-abc', name: 'generate_schema', arguments: { prompt: 'test' } }] },
+        { type: 'tool_error', toolName: 'generate_schema', runId: 'run-abc', content: 'Schema 校验失败' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(1)
+      expect(assistant.toolCalls![0]).toMatchObject({
+        id: 'run-abc',
+        name: 'generate_schema',
+        arguments: { prompt: 'test' },
+        error: 'Schema 校验失败',
+        result: { error: 'Schema 校验失败' },
+      })
+    })
+
+    it('creates new entry when tool_error matches name but existing entry already has result (no runId)', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'search_schemas', arguments: {} }] },
+        { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'search_schemas', result: { data: [] } }] },
+        { type: 'tool_error', content: '后续操作失败', toolName: 'search_schemas' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      // Existing successful entry is preserved, new error entry is appended
+      expect(assistant.toolCalls).toHaveLength(2)
+      expect(assistant.toolCalls![0].result).toEqual({ data: [] })
+      expect(assistant.toolCalls![0].error).toBeUndefined()
+      expect(assistant.toolCalls![1].error).toBe('后续操作失败')
+      expect(assistant.toolCalls![1].result).toEqual({ error: '后续操作失败' })
+    })
+
+    it('overwrites existing result when tool_error has matching runId', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: 'run-xyz', name: 'update_schema', arguments: {} }] },
+        { type: 'tool_call', phase: 'result', tools: [{ id: 'run-xyz', name: 'update_schema', result: { success: true } }] },
+        { type: 'tool_error', toolName: 'update_schema', runId: 'run-xyz', content: '写入失败' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(1)
+      expect(assistant.toolCalls![0]).toMatchObject({
+        id: 'run-xyz',
+        error: '写入失败',
+        result: { error: '写入失败' },
+      })
+    })
+
+    it('tool_error does not block subsequent text events', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: 'r1', name: 'save_and_bind_schema', arguments: {} }] },
+        { type: 'tool_error', toolName: 'save_and_bind_schema', runId: 'r1', content: '数据库超时' },
+        { type: 'text', content: '工具调用失败了，让我换个方式试试。' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls).toHaveLength(1)
+      expect(assistant.toolCalls![0].error).toBe('数据库超时')
+      expect(assistant.content).toBe('工具调用失败了，让我换个方式试试。')
+      expect(assistant.status).not.toBe('error')
+    })
+  })
+
+  // ---- S6-02: retryToolCall ----
+
+  describe('S6-02: retryToolCall', () => {
+    it('clears error and re-sends message on retry', async () => {
+      const store = useAiStore()
+      // First message: tool fails
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', toolName: 'save_widget', content: '数据库连接超时' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('保存组件')
+
+      const assistant = store.messages[1]
+      expect(assistant.toolCalls![0].error).toBe('数据库连接超时')
+
+      // Retry: tool succeeds
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: '已保存' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.retryToolCall(1, 0)
+
+      // Error should be cleared, message re-sent
+      expect(store.messages[1].toolCalls![0].error).toBeUndefined()
+      expect(store.messages[1].toolCalls![0].result).toBeUndefined()
+      expect(store.loading).toBe(false)
+    })
+
+    it('does nothing when messageIndex is out of range', async () => {
+      const store = useAiStore()
+      // Should not throw
+      await store.retryToolCall(99, 0)
+      expect(store.loading).toBe(false)
+    })
+
+    it('does nothing when toolCallIndex is out of range', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', toolName: 'save_widget', content: '失败' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      // Invalid tool call index
+      await store.retryToolCall(1, 99)
+      expect(store.loading).toBe(false)
+    })
+
+    it('does nothing when tool call has no error', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'get_widgets', arguments: {} }] },
+        { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'get_widgets', result: { data: [] } }] },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('test')
+
+      // Tool call succeeded, retry should be no-op
+      await store.retryToolCall(1, 0)
+      expect(store.loading).toBe(false)
+    })
+
+    it('does nothing when message is not assistant', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'ok' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('hello')
+
+      // Index 0 is user message
+      await store.retryToolCall(0, 0)
+      expect(store.loading).toBe(false)
+    })
+
+    it('re-sends the original user message content', async () => {
+      const store = useAiStore()
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'tool_error', toolName: 'gen_schema', content: '失败' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.sendMessage('生成注册表单')
+
+      vi.mocked(chat).mockReturnValue(mockSSEStream([
+        { type: 'text', content: 'ok' },
+        { type: 'done', conversationId: 'conv-1' },
+      ]))
+
+      await store.retryToolCall(1, 0)
+
+      // Should re-use the original user message
+      expect(chat).toHaveBeenLastCalledWith(
+        expect.objectContaining({ message: '生成注册表单' }),
+        expect.any(AbortSignal),
+      )
     })
   })
 })

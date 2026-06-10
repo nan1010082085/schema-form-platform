@@ -671,6 +671,7 @@ function handleVersionPublished() {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 300px));
     gap: 12px;
+    contain: layout style;
   }
 
   &__pagination {
@@ -690,8 +691,9 @@ function handleVersionPublished() {
   border: 1px solid #e4e7ed;
   border-radius: 10px;
   padding: 12px 16px;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
+  contain: layout style paint;
 
   &:hover {
     border-color: var(--el-color-primary);

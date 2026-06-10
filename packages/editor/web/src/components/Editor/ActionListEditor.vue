@@ -30,6 +30,12 @@ interface UIAction {
   navigatePath: string
   eventTarget: string
   eventName: string
+  // ---- startFlow ----
+  definitionId: string
+  flowVariables: string
+  // ---- endFlow ----
+  instanceId: string
+  reason: string
 }
 
 export interface ActionTypeOption {
@@ -89,6 +95,10 @@ function convertSchemaToUi(action: SchemaEventAction): UIAction {
     navigatePath: action.navigatePath ?? '',
     eventTarget: action.target ?? '',
     eventName: action.event ?? '',
+    definitionId: action.definitionId ?? '',
+    flowVariables: action.variables ? JSON.stringify(action.variables) : '',
+    instanceId: action.instanceId ?? '',
+    reason: action.reason ?? '',
   }
 }
 
@@ -138,6 +148,18 @@ function convertUiToSchema(a: UIAction): SchemaEventAction | null {
     // 'api' passthrough (when parent uses 'api' directly)
     case 'api':
       return { type: 'api', apiUrl: a.apiUrl, apiMethod: a.apiMethod }
+    case 'startFlow':
+      return {
+        type: 'startFlow',
+        definitionId: a.definitionId,
+        variables: a.flowVariables ? JSON.parse(a.flowVariables) : undefined,
+      }
+    case 'endFlow':
+      return {
+        type: 'endFlow',
+        instanceId: a.instanceId,
+        reason: a.reason || undefined,
+      }
     default:
       return null
   }
@@ -178,6 +200,10 @@ function addAction() {
     navigatePath: '',
     eventTarget: '',
     eventName: '',
+    definitionId: '',
+    flowVariables: '',
+    instanceId: '',
+    reason: '',
   })
   emitChange()
 }
@@ -197,6 +223,10 @@ function handleTypeChange(action: UIAction) {
   action.message = ''
   action.text = ''
   action.navigatePath = ''
+  action.definitionId = ''
+  action.flowVariables = ''
+  action.instanceId = ''
+  action.reason = ''
   emitChange()
 }
 
@@ -459,6 +489,50 @@ function handleChange() {
           <el-input
             v-model="action.text"
             placeholder="复制内容（支持 formData.xxx）"
+            style="flex: 1"
+            @update:model-value="handleChange"
+          />
+        </div>
+      </template>
+
+      <!-- startFlow: definitionId + variables -->
+      <template v-if="action.type === 'startFlow'">
+        <div :class="styles.row">
+          <label :class="styles.label">流程定义</label>
+          <el-input
+            v-model="action.definitionId"
+            placeholder="流程定义 ID"
+            style="flex: 1"
+            @update:model-value="handleChange"
+          />
+        </div>
+        <div :class="styles.row">
+          <label :class="styles.label">变量</label>
+          <el-input
+            v-model="action.flowVariables"
+            placeholder='{"key": "value"}（可选）'
+            style="flex: 1"
+            @update:model-value="handleChange"
+          />
+        </div>
+      </template>
+
+      <!-- endFlow: instanceId + reason -->
+      <template v-if="action.type === 'endFlow'">
+        <div :class="styles.row">
+          <label :class="styles.label">实例 ID</label>
+          <el-input
+            v-model="action.instanceId"
+            placeholder="流程实例 ID"
+            style="flex: 1"
+            @update:model-value="handleChange"
+          />
+        </div>
+        <div :class="styles.row">
+          <label :class="styles.label">原因</label>
+          <el-input
+            v-model="action.reason"
+            placeholder="结束原因（可选）"
             style="flex: 1"
             @update:model-value="handleChange"
           />

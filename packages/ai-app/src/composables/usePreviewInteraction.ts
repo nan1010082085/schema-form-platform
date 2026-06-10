@@ -29,6 +29,12 @@ export interface EditContext {
   data: Record<string, unknown>
 }
 
+/** 字段内联编辑补丁 */
+export interface FieldEditPatch {
+  widgetId: string
+  changes: Record<string, unknown>
+}
+
 export function usePreviewInteraction() {
   // ---- 选中状态 ----
 
@@ -55,9 +61,10 @@ export function usePreviewInteraction() {
     highlightedFieldIds.value.has(id),
   )
 
-  // ---- 字段详情 ----
+  // ---- 字段详情面板 ----
 
   const selectedFieldDetail = shallowRef<FieldDetail | null>(null)
+  const isFieldDetailVisible = ref(false)
 
   function selectField(widget: Widget) {
     selectedFieldId.value = widget.id
@@ -68,12 +75,57 @@ export function usePreviewInteraction() {
       field: widget.field,
       props: widget.props,
     }
+    isFieldDetailVisible.value = true
   }
 
   function clearFieldSelection() {
     selectedFieldId.value = null
     selectedFieldDetail.value = null
+    isFieldDetailVisible.value = false
   }
+
+  function closeFieldDetail() {
+    isFieldDetailVisible.value = false
+  }
+
+  // ---- 字段内联编辑 ----
+
+  const inlineEditWidgetId = ref<string | null>(null)
+  const inlineEditData = ref<Record<string, unknown> | null>(null)
+
+  function startInlineEdit(widget: Widget) {
+    inlineEditWidgetId.value = widget.id
+    inlineEditData.value = {
+      label: widget.label ?? '',
+      field: widget.field ?? '',
+      placeholder: (widget.props as Record<string, unknown>)?.placeholder ?? '',
+      required: (widget.props as Record<string, unknown>)?.required ?? false,
+      ...widget.props,
+    }
+  }
+
+  function updateInlineEdit(key: string, value: unknown) {
+    if (inlineEditData.value) {
+      inlineEditData.value = { ...inlineEditData.value, [key]: value }
+    }
+  }
+
+  function commitInlineEdit(): FieldEditPatch | null {
+    if (!inlineEditWidgetId.value || !inlineEditData.value) return null
+    const patch: FieldEditPatch = {
+      widgetId: inlineEditWidgetId.value,
+      changes: { ...inlineEditData.value },
+    }
+    cancelInlineEdit()
+    return patch
+  }
+
+  function cancelInlineEdit() {
+    inlineEditWidgetId.value = null
+    inlineEditData.value = null
+  }
+
+  const isInInlineEditMode = computed(() => inlineEditWidgetId.value !== null)
 
   // ---- 节点详情 ----
 
@@ -176,6 +228,7 @@ export function usePreviewInteraction() {
     clearHighlights()
     clearWidgetSelection()
     closeEditDialog()
+    cancelInlineEdit()
     nodeStatusMap.value = new Map()
   }
 
@@ -192,6 +245,19 @@ export function usePreviewInteraction() {
     setHighlightedFields,
     addHighlightedField,
     clearHighlights,
+
+    // 字段详情面板
+    isFieldDetailVisible,
+    closeFieldDetail,
+
+    // 字段内联编辑
+    inlineEditWidgetId,
+    inlineEditData,
+    isInInlineEditMode,
+    startInlineEdit,
+    updateInlineEdit,
+    commitInlineEdit,
+    cancelInlineEdit,
 
     // 字段操作
     selectField,

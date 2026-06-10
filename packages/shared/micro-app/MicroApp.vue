@@ -40,6 +40,8 @@ const mergedStyle = computed<StyleValue>(() => ({
   height: '100%',
   border: 'none',
   display: 'block',
+  // CSS containment: 防止子应用样式泄漏到宿主
+  contain: 'layout style',
   ...(props.style as Record<string, string> ?? {}),
 }))
 </script>

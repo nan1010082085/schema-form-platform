@@ -9,6 +9,20 @@ export type {
   BridgeMessage,
 } from './types.js'
 
+// ---- 事件类型 ----
+export type {
+  MicroAppEvents,
+  EventType,
+  EventMessage,
+  EventHandler,
+  CommunicationError,
+  ErrorCallback,
+  CommunicationOptions,
+  ChildAppName,
+  PortalToChildEvents,
+  ChildToPortalEvents,
+} from './events.js'
+
 // ---- 配置 ----
 export {
   APP_CONFIGS,
@@ -26,5 +40,32 @@ export { default as MicroApp } from './MicroApp.vue'
 // ---- 子应用侧 ----
 export { createChildApp } from './child.js'
 
-// ---- 通信桥 ----
+// ---- 主题守卫 ----
+export {
+  applyThemeInline,
+  installThemeWatchdog,
+  EDITOR_THEME_VARS,
+  FLOW_THEME_VARS,
+  AI_THEME_VARS,
+  type ThemeVars,
+} from './themeGuard.js'
+
+// ---- 通信桥（旧版，保留兼容） ----
 export { bridgeSend, bridgeOn, bridgeOff, bridgeDestroy } from './bridge.js'
+
+// ---- 统一通信 API ----
+export {
+  initCommunication,
+  send,
+  request,
+  respond,
+  on,
+  once,
+  off,
+  destroy,
+  sendToChild,
+  requestFromChild,
+  reportToPortal,
+  listenFromPortal,
+  respondToPortal,
+} from './communication.js'

@@ -1,0 +1,141 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 13px;
+  color: var(--el-text-color-placeholder);
+  height: 32px;
+  min-width: 180px;
+}
+
+.trigger:hover {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary-light-8);
+}
+
+.triggerText {
+  flex: 1;
+  text-align: left;
+}
+
+.shortcut {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--el-fill-color);
+  border: 1px solid var(--el-border-color-lighter);
+  color: var(--el-text-color-secondary);
+  font-family: inherit;
+}
+
+.dialog {
+  padding: 0;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.searchIcon {
+  color: var(--el-text-color-placeholder);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--el-text-color-primary);
+  background: transparent;
+  line-height: 1.5;
+}
+
+.searchInput::placeholder {
+  color: var(--el-text-color-placeholder);
+}
+
+.results {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px 0;
+  min-height: 80px;
+}
+
+.group {
+  margin-bottom: 4px;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.resultItem:hover {
+  background: var(--el-fill-color-light);
+}
+
+.resultName {
+  flex: 1;
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resultDesc {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.resultMeta {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  flex-shrink: 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+}
+
+.hint {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--el-text-color-placeholder);
+  font-size: 13px;
+}

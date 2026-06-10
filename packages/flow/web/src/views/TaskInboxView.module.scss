@@ -37,3 +37,57 @@
   gap: var(--spacing-sm);
   align-items: center;
 }
+.batchToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+}
+.batchInfo {
+  font-size: var(--font-size-14);
+  color: var(--text-color-primary);
+  font-weight: 500;
+}
+.batchResult {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+.batchResultSummary {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.batchResultDetails {
+  border-top: 1px solid var(--border-color-base);
+  padding-top: var(--spacing-sm);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.batchResultItem {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid var(--border-color-lighter);
+}
+.batchResultTaskId {
+  font-size: var(--font-size-13);
+  color: var(--text-color-secondary);
+  font-family: monospace;
+}
+.batchResultError {
+  font-size: var(--font-size-13);
+  color: var(--color-danger);
+}
+.searchBar {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.searchInput {
+  width: 280px;
+}
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}

@@ -212,6 +212,31 @@ describe('AiMessage', () => {
       expect(wrapper.text()).toContain('搜索表单')
     })
 
+    it('shows display name for all registered tools', () => {
+      setupRAFMock()
+
+      const toolNames: Array<[string, string]> = [
+        ['update_schema', '更新表单'],
+        ['update_flow', '更新流程'],
+        ['bind_schema_to_flow_node', '绑定表单到流程节点'],
+        ['query_widgets', '查询组件'],
+        ['request_collaboration', '请求协作'],
+        ['save_and_bind_schema', '保存并绑定表单'],
+      ]
+
+      for (const [name, label] of toolNames) {
+        const wrapper = mount(AiMessage, {
+          props: {
+            role: 'assistant',
+            label: 'AI',
+            toolCalls: [{ name, arguments: {} }],
+          },
+        })
+        expect(wrapper.text()).toContain(label)
+        wrapper.unmount()
+      }
+    })
+
     it('renders error card for failed tool call (expanded by default)', () => {
       setupRAFMock()
 

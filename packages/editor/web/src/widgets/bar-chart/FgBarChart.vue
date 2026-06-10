@@ -3,6 +3,7 @@ import { inject, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import { useChartOption } from '../base/useChartOption'
+import { useChartLazyInit } from '../base/useChartLazyInit'
 import { echarts, type EChartsType } from '../base/echarts'
 import styles from './style.module.scss'
 
@@ -74,6 +75,9 @@ useExposeWidget(() => ({
 const chartRef = ref<HTMLDivElement>()
 let chartInstance: EChartsType | null = null
 
+// 懒加载：仅当容器进入视口后才初始化图表
+const { isVisible } = useChartLazyInit(chartRef)
+
 function initChart() {
   if (!chartRef.value) return
   chartInstance = echarts.init(chartRef.value)
@@ -86,7 +90,15 @@ function handleResize() {
   chartInstance?.resize()
 }
 
+// 容器可见后初始化图表
+watch(isVisible, (visible) => {
+  if (visible) {
+    nextTick(() => initChart())
+  }
+})
+
 watch(chartOption, async (option) => {
+  if (!isVisible.value) return
   if (!chartInstance) {
     await nextTick()
     initChart()
@@ -97,7 +109,10 @@ watch(chartOption, async (option) => {
 })
 
 onMounted(() => {
-  initChart()
+  // 如果 IntersectionObserver 还没触发（首屏即可见），直接初始化
+  if (isVisible.value) {
+    initChart()
+  }
   window.addEventListener('resize', handleResize)
 })
 

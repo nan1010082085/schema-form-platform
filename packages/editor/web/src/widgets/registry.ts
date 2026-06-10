@@ -42,13 +42,19 @@ export function getWidgetsByGroup(group: WidgetRegistryItem['group']): WidgetReg
   return Array.from(registry.values()).filter(w => w.group === group)
 }
 
-/** 获取组件映射表（用于 SchemaRender） */
+/** Cached component map — registry is static after initialization */
+let _cachedComponentMap: Record<string, Component> | null = null
+
+/** 获取组件映射表（用于 SchemaRender），带缓存 */
 export function getComponentMap(): Record<string, Component> {
-  const map: Record<string, Component> = {}
-  for (const [type, item] of registry) {
-    map[type] = item.component
+  if (!_cachedComponentMap) {
+    const map: Record<string, Component> = {}
+    for (const [type, item] of registry) {
+      map[type] = item.component
+    }
+    _cachedComponentMap = map
   }
-  return map
+  return _cachedComponentMap
 }
 
 /** 创建 Widget 实例 */

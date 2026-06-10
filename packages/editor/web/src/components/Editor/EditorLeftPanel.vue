@@ -5,11 +5,14 @@
  * 部件库标签页 + 结构树标签页 + 模板标签页
  */
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import ComponentPanel from './ComponentPanel.vue'
 import WidgetTree from './WidgetTree.vue'
-import WidgetTemplatePanel from '@/components/WidgetTemplatePanel.vue'
+import TemplatePanel from './TemplatePanel.vue'
 import { useWidgetStore } from '@/stores/widget'
 import { useEditorStore } from '@/stores/editor'
+import { applyTemplate } from '@/utils/apiClient'
+import type { TemplateItem } from '@/utils/apiClient'
 import type { Widget } from '@/widgets/base/types'
 
 defineProps<{
@@ -22,14 +25,19 @@ const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
 
 const activeTab = ref<'components' | 'structure' | 'templates'>('components')
+const templatePanelRef = ref<InstanceType<typeof TemplatePanel>>()
 
-function handleApplyTemplate(widgets: Record<string, unknown>[]) {
-  // Append template widgets to existing canvas
-  for (const w of widgets) {
-    widgetStore.addWidget(w as unknown as Widget)
+async function handleApplyTemplate(template: TemplateItem) {
+  try {
+    const result = await applyTemplate(template.id)
+    for (const w of result.widgets) {
+      widgetStore.addWidget(w as unknown as Widget)
+    }
+    editorStore.pushHistory(widgetStore.widgets)
+    ElMessage.success(`已应用模板「${template.name}」`)
+  } catch {
+    ElMessage.error('应用模板失败')
   }
-  // Push a single history snapshot for the entire template application
-  editorStore.pushHistory(widgetStore.widgets)
 }
 </script>
 
@@ -83,10 +91,10 @@ function handleApplyTemplate(widgets: Record<string, unknown>[]) {
     <div class="left-panel__content">
       <ComponentPanel v-show="activeTab === 'components'" />
       <WidgetTree v-show="activeTab === 'structure'" />
-      <WidgetTemplatePanel
+      <TemplatePanel
         v-show="activeTab === 'templates'"
-        :current-widgets="widgetStore.widgets"
-        @apply-template="handleApplyTemplate"
+        ref="templatePanelRef"
+        @apply="handleApplyTemplate"
       />
     </div>
 

@@ -1,5 +1,7 @@
 import app from './app.js'
 import { connectDatabase, mongoose } from './config/database.js'
+import { initDefaultTenant } from './utils/initDefaultTenant.js'
+import { seedPermissions } from './utils/seedPermissions.js'
 
 let dbReady = false
 let connectionError: Error | null = null
@@ -15,6 +17,8 @@ export default async function handler(req: any, res: any) {
   try {
     if (!dbReady) {
       await connectDatabase()
+      await initDefaultTenant()
+      await seedPermissions()
       dbReady = true
       connectionError = null
     }

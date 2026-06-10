@@ -6,5 +6,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts'],
     exclude: ['dist/**', 'node_modules/**'],
+    fileParallelism: false,
+    env: {
+      SKIP_PERMISSION_CHECK: 'true',
+    },
   },
 })

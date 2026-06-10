@@ -1,122 +1,362 @@
 import Router from '@koa/router'
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
+import { DictTypeModel } from '../models/DictType.js'
+import { DictDataModel } from '../models/DictData.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { requirePermission } from '../middleware/permission.js'
+import { validate } from '../middleware/validate.js'
+import {
+  createDictTypeSchema,
+  updateDictTypeSchema,
+  createDictDataSchema,
+  updateDictDataSchema,
+} from '../schemas/dictSchemas.js'
 
+const requireAuth = authMiddleware({ required: true })
 const router = new Router({ prefix: '/api/dict' })
 
-const dictionaries: Record<string, Array<{ label: string; value: string }>> = {
-  // 城市字典（20+ 中国城市）
-  city: [
-    { label: '北京', value: 'beijing' },
-    { label: '上海', value: 'shanghai' },
-    { label: '广州', value: 'guangzhou' },
-    { label: '深圳', value: 'shenzhen' },
-    { label: '杭州', value: 'hangzhou' },
-    { label: '成都', value: 'chengdu' },
-    { label: '武汉', value: 'wuhan' },
-    { label: '南京', value: 'nanjing' },
-    { label: '重庆', value: 'chongqing' },
-    { label: '西安', value: 'xian' },
-    { label: '苏州', value: 'suzhou' },
-    { label: '天津', value: 'tianjin' },
-    { label: '长沙', value: 'changsha' },
-    { label: '郑州', value: 'zhengzhou' },
-    { label: '东莞', value: 'dongguan' },
-    { label: '青岛', value: 'qingdao' },
-    { label: '沈阳', value: 'shenyang' },
-    { label: '宁波', value: 'ningbo' },
-    { label: '昆明', value: 'kunming' },
-    { label: '大连', value: 'dalian' },
-    { label: '厦门', value: 'xiamen' },
-    { label: '合肥', value: 'hefei' },
-    { label: '福州', value: 'fuzhou' },
-    { label: '济南', value: 'jinan' },
-    { label: '温州', value: 'wenzhou' },
-  ],
-  // 性别字典
-  gender: [
-    { label: '男', value: 'male' },
-    { label: '女', value: 'female' },
-    { label: '其他', value: 'other' },
-  ],
-  // 状态字典（6+ 种状态）
-  status: [
-    { label: '启用', value: 'enabled' },
-    { label: '禁用', value: 'disabled' },
-    { label: '待审核', value: 'pending' },
-    { label: '已通过', value: 'approved' },
-    { label: '已拒绝', value: 'rejected' },
-    { label: '已归档', value: 'archived' },
-    { label: '草稿', value: 'draft' },
-    { label: '已发布', value: 'published' },
-  ],
-  // 部门字典（10+ 个部门）
-  department: [
-    { label: '技术部', value: 'tech' },
-    { label: '产品部', value: 'product' },
-    { label: '设计部', value: 'design' },
-    { label: '运营部', value: 'operations' },
-    { label: '市场部', value: 'marketing' },
-    { label: '销售部', value: 'sales' },
-    { label: '人力资源部', value: 'hr' },
-    { label: '财务部', value: 'finance' },
-    { label: '法务部', value: 'legal' },
-    { label: '行政部', value: 'admin' },
-    { label: '客服部', value: 'customer_service' },
-    { label: '质量部', value: 'quality' },
-  ],
-  // 角色字典
-  role: [
-    { label: '管理员', value: 'admin' },
-    { label: '普通用户', value: 'user' },
-    { label: '编辑', value: 'editor' },
-    { label: '审核员', value: 'reviewer' },
-    { label: '访客', value: 'guest' },
-    { label: '超级管理员', value: 'super_admin' },
-    { label: '部门主管', value: 'dept_manager' },
-    { label: '项目经理', value: 'project_manager' },
-    { label: '运维工程师', value: 'ops_engineer' },
-    { label: '数据分析师', value: 'data_analyst' },
-  ],
-  // 优先级字典
-  priority: [
-    { label: '紧急', value: 'urgent' },
-    { label: '高', value: 'high' },
-    { label: '中', value: 'medium' },
-    { label: '低', value: 'low' },
-    { label: '最低', value: 'lowest' },
-  ],
-  // 学历字典
-  education: [
-    { label: '高中及以下', value: 'high_school' },
-    { label: '大专', value: 'college' },
-    { label: '本科', value: 'bachelor' },
-    { label: '硕士', value: 'master' },
-    { label: '博士', value: 'doctor' },
-    { label: 'MBA/EMBA', value: 'mba' },
-  ],
-  // 行业字典
-  industry: [
-    { label: '互联网/IT', value: 'internet_it' },
-    { label: '金融', value: 'finance' },
-    { label: '教育', value: 'education' },
-    { label: '医疗健康', value: 'healthcare' },
-    { label: '制造业', value: 'manufacturing' },
-    { label: '零售/电商', value: 'retail_ecommerce' },
-    { label: '房地产', value: 'real_estate' },
-    { label: '传媒/文化', value: 'media_culture' },
-    { label: '物流/运输', value: 'logistics' },
-    { label: '能源/环保', value: 'energy_environment' },
-    { label: '政府/公共事业', value: 'government' },
-    { label: '咨询/法律', value: 'consulting_legal' },
-  ],
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-/**
- * GET /api/dict/:code
- */
-router.get('/:code', async (ctx) => {
+// ============================================================
+// 字典类型 CRUD
+// ============================================================
+
+// GET /api/dict/types — 字典类型列表（分页+搜索）
+router.get('/types', requireAuth, requirePermission('dict:view'), async (ctx) => {
+  const q = ctx.query.q as string
+  const status = ctx.query.status as string
+  const page = Math.max(1, parseInt(ctx.query.page as string) || 1)
+  const pageSize = Math.min(100, Math.max(1, parseInt(ctx.query.pageSize as string) || 20))
+
+  const filter: Record<string, unknown> = {}
+  if (q) {
+    filter.$or = [
+      { name: { $regex: escapeRegex(q), $options: 'i' } },
+      { code: { $regex: escapeRegex(q), $options: 'i' } },
+    ]
+  }
+  if (status && ['active', 'inactive'].includes(status)) {
+    filter.status = status
+  }
+
+  const [items, total] = await Promise.all([
+    DictTypeModel.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize),
+    DictTypeModel.countDocuments(filter),
+  ])
+
+  ctx.body = {
+    success: true,
+    data: {
+      items: items.map((t) => t.toJSON()),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  }
+})
+
+// GET /api/dict/types/:id — 获取单个字典类型
+router.get('/types/:id', requireAuth, requirePermission('dict:view'), async (ctx) => {
+  const { id } = ctx.params
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const dictType = await DictTypeModel.findById(id)
+  if (!dictType) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典类型不存在' } }
+    return
+  }
+
+  ctx.body = { success: true, data: dictType.toJSON() }
+})
+
+// POST /api/dict/types — 创建字典类型
+router.post('/types', requireAuth, requirePermission('dict:create'), validate(createDictTypeSchema), async (ctx) => {
+  const body = ctx.request.body as { name: string; code: string; status?: string; remark?: string }
+
+  const existing = await DictTypeModel.findOne({ code: body.code })
+  if (existing) {
+    ctx.status = 409
+    ctx.body = { success: false, error: { message: '字典类型编码已存在' } }
+    return
+  }
+
+  const dictType = await DictTypeModel.create({
+    _id: uuidv4(),
+    name: body.name,
+    code: body.code,
+    status: body.status ?? 'active',
+    remark: body.remark ?? '',
+  })
+
+  ctx.status = 201
+  ctx.body = { success: true, data: dictType.toJSON() }
+})
+
+// PUT /api/dict/types/:id — 更新字典类型
+router.put('/types/:id', requireAuth, requirePermission('dict:edit'), validate(updateDictTypeSchema), async (ctx) => {
+  const { id } = ctx.params
+  const body = ctx.request.body as { name?: string; code?: string; status?: string; remark?: string }
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  // Check code uniqueness if changing
+  if (body.code) {
+    const existing = await DictTypeModel.findOne({ code: body.code, _id: { $ne: id } })
+    if (existing) {
+      ctx.status = 409
+      ctx.body = { success: false, error: { message: '字典类型编码已存在' } }
+      return
+    }
+  }
+
+  const dictType = await DictTypeModel.findByIdAndUpdate(
+    id,
+    { $set: body },
+    { new: true, runValidators: true },
+  )
+
+  if (!dictType) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典类型不存在' } }
+    return
+  }
+
+  ctx.body = { success: true, data: dictType.toJSON() }
+})
+
+// DELETE /api/dict/types/:id — 删除字典类型（级联删除关联数据）
+router.delete('/types/:id', requireAuth, requirePermission('dict:delete'), async (ctx) => {
+  const { id } = ctx.params
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const dictType = await DictTypeModel.findById(id)
+  if (!dictType) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典类型不存在' } }
+    return
+  }
+
+  // Cascade delete all dict data under this type
+  await DictDataModel.deleteMany({ dictTypeId: id })
+  await DictTypeModel.findByIdAndDelete(id)
+
+  ctx.body = { success: true, data: null }
+})
+
+// ============================================================
+// 字典数据 CRUD
+// ============================================================
+
+// GET /api/dict/data — 字典数据列表（按类型筛选+分页+搜索）
+router.get('/data', requireAuth, requirePermission('dict:view'), async (ctx) => {
+  const dictTypeId = ctx.query.dictTypeId as string
+  const q = ctx.query.q as string
+  const status = ctx.query.status as string
+  const page = Math.max(1, parseInt(ctx.query.page as string) || 1)
+  const pageSize = Math.min(200, Math.max(1, parseInt(ctx.query.pageSize as string) || 20))
+
+  const filter: Record<string, unknown> = {}
+  if (dictTypeId) {
+    if (!uuidValidate(dictTypeId)) {
+      ctx.status = 400
+      ctx.body = { success: false, error: { message: 'Invalid dictTypeId UUID.' } }
+      return
+    }
+    filter.dictTypeId = dictTypeId
+  }
+  if (q) {
+    filter.$or = [
+      { label: { $regex: escapeRegex(q), $options: 'i' } },
+      { value: { $regex: escapeRegex(q), $options: 'i' } },
+    ]
+  }
+  if (status && ['active', 'inactive'].includes(status)) {
+    filter.status = status
+  }
+
+  const [items, total] = await Promise.all([
+    DictDataModel.find(filter)
+      .sort({ sort: 1, createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize),
+    DictDataModel.countDocuments(filter),
+  ])
+
+  ctx.body = {
+    success: true,
+    data: {
+      items: items.map((d) => d.toJSON()),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  }
+})
+
+// GET /api/dict/data/by-type/:code — 按字典类型编码获取数据项（兼容旧接口，返回启用项）
+router.get('/data/by-type/:code', async (ctx) => {
   const { code } = ctx.params
-  const items = dictionaries[code] ?? []
-  ctx.body = { success: true, data: items }
+
+  const dictType = await DictTypeModel.findOne({ code, status: 'active' })
+  if (!dictType) {
+    ctx.body = { success: true, data: [] }
+    return
+  }
+
+  const items = await DictDataModel.find({
+    dictTypeId: dictType._id,
+    status: 'active',
+  }).sort({ sort: 1, createdAt: -1 })
+
+  ctx.body = {
+    success: true,
+    data: items.map((d) => ({ label: d.label, value: d.value })),
+  }
+})
+
+// GET /api/dict/data/:id — 获取单个字典数据
+router.get('/data/:id', requireAuth, requirePermission('dict:view'), async (ctx) => {
+  const { id } = ctx.params
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const dictData = await DictDataModel.findById(id)
+  if (!dictData) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典数据不存在' } }
+    return
+  }
+
+  ctx.body = { success: true, data: dictData.toJSON() }
+})
+
+// POST /api/dict/data — 创建字典数据
+router.post('/data', requireAuth, requirePermission('dict:create'), validate(createDictDataSchema), async (ctx) => {
+  const body = ctx.request.body as {
+    dictTypeId: string
+    label: string
+    value: string
+    sort?: number
+    status?: string
+    remark?: string
+  }
+
+  // Validate parent type exists
+  const parentType = await DictTypeModel.findById(body.dictTypeId)
+  if (!parentType) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '关联的字典类型不存在' } }
+    return
+  }
+
+  // Check value uniqueness within same type
+  const existing = await DictDataModel.findOne({ dictTypeId: body.dictTypeId, value: body.value })
+  if (existing) {
+    ctx.status = 409
+    ctx.body = { success: false, error: { message: '同一字典类型下该值已存在' } }
+    return
+  }
+
+  const dictData = await DictDataModel.create({
+    _id: uuidv4(),
+    dictTypeId: body.dictTypeId,
+    label: body.label,
+    value: body.value,
+    sort: body.sort ?? 0,
+    status: body.status ?? 'active',
+    remark: body.remark ?? '',
+  })
+
+  ctx.status = 201
+  ctx.body = { success: true, data: dictData.toJSON() }
+})
+
+// PUT /api/dict/data/:id — 更新字典数据
+router.put('/data/:id', requireAuth, requirePermission('dict:edit'), validate(updateDictDataSchema), async (ctx) => {
+  const { id } = ctx.params
+  const body = ctx.request.body as {
+    label?: string
+    value?: string
+    sort?: number
+    status?: string
+    remark?: string
+  }
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const existing = await DictDataModel.findById(id)
+  if (!existing) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典数据不存在' } }
+    return
+  }
+
+  // Check value uniqueness within same type if changing
+  if (body.value && body.value !== existing.value) {
+    const dup = await DictDataModel.findOne({ dictTypeId: existing.dictTypeId, value: body.value, _id: { $ne: id } })
+    if (dup) {
+      ctx.status = 409
+      ctx.body = { success: false, error: { message: '同一字典类型下该值已存在' } }
+      return
+    }
+  }
+
+  const updated = await DictDataModel.findByIdAndUpdate(
+    id,
+    { $set: body },
+    { new: true, runValidators: true },
+  )
+
+  ctx.body = { success: true, data: updated!.toJSON() }
+})
+
+// DELETE /api/dict/data/:id — 删除字典数据
+router.delete('/data/:id', requireAuth, requirePermission('dict:delete'), async (ctx) => {
+  const { id } = ctx.params
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const dictData = await DictDataModel.findById(id)
+  if (!dictData) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '字典数据不存在' } }
+    return
+  }
+
+  await DictDataModel.findByIdAndDelete(id)
+  ctx.body = { success: true, data: null }
 })
 
 export default router

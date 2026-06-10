@@ -14,7 +14,7 @@
  * 这是 Widget 数据的唯一 source of truth。
  */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Widget, ContainerType } from '../widgets/base/types'
 
 /** 容器组件类型集合 — 这些组件禁止被拖入其他容器 */
@@ -81,13 +81,40 @@ export const useWidgetStore = defineStore('widget', () => {
   const widgets = ref<Widget[]>([])
 
   // ================================================================
+  // Widget 索引（O(1) 查找，避免递归 DFS）
+  // ================================================================
+
+  /** 建立 id → Widget 的平坦索引 */
+  function buildIndex(list: Widget[]): Map<string, Widget> {
+    const index = new Map<string, Widget>()
+    function walk(items: Widget[]) {
+      for (const item of items) {
+        index.set(item.id, item)
+        if (item.children?.length) {
+          walk(item.children as Widget[])
+        }
+      }
+    }
+    walk(list)
+    return index
+  }
+
+  /** Widget 索引 — 每次 widgets 引用变化时重建 */
+  const widgetIndex = computed(() => buildIndex(widgets.value))
+
+  // ================================================================
   // 树结构遍历
   // ================================================================
 
   /**
-   * 递归搜索 Widget（DFS）。
+   * 查找 Widget。优先 O(1) 索引查找，回退到递归 DFS。
    */
-  function findWidget(id: string, list: Widget[] = widgets.value): Widget | null {
+  function findWidget(id: string, list?: Widget[]): Widget | null {
+    // 快速路径：使用索引（仅当从默认 widgets 查找时）
+    if (!list) {
+      return widgetIndex.value.get(id) ?? null
+    }
+    // 指定列表时回退到递归
     for (const widget of list) {
       if (widget.id === id) return widget
       if (widget.children) {

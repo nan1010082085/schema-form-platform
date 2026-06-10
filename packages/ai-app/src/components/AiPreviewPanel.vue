@@ -77,6 +77,7 @@ const emit = defineEmits<{
   'node-click': [nodeId: string, nodeData: Record<string, unknown>]
   'field-click': [fieldId: string, fieldData: Record<string, unknown>]
   'field-edit': [fieldId: string, data: Record<string, unknown>]
+  'field-update': [fieldId: string, changes: Record<string, unknown>]
   'apply-to-editor': [widgetIds?: string[]]
   'compare': []
 }>()
@@ -141,6 +142,39 @@ function handleFieldEdit(widget: Widget) {
 function handleFieldSave(id: string, data: Record<string, unknown>) {
   emit('field-edit', id, data)
   interaction.closeEditDialog()
+}
+
+// ---- 内联编辑 ----
+
+function handleStartInlineEdit(widget: Widget) {
+  interaction.startInlineEdit(widget)
+}
+
+function handleInlineEditChange(key: string, value: unknown) {
+  interaction.updateInlineEdit(key, value)
+}
+
+function handleCommitInlineEdit() {
+  const patch = interaction.commitInlineEdit()
+  if (patch) {
+    emit('field-update', patch.widgetId, patch.changes)
+  }
+}
+
+function handleCancelInlineEdit() {
+  interaction.cancelInlineEdit()
+}
+
+function getWidgetEditableProps(w: Widget): Array<{ key: string; label: string; type: 'input' | 'switch' }> {
+  const base: Array<{ key: string; label: string; type: 'input' | 'switch' }> = [
+    { key: 'label', label: '标签', type: 'input' },
+    { key: 'field', label: '字段名', type: 'input' },
+  ]
+  if (['input', 'textarea', 'number', 'date', 'richtext'].includes(w.type)) {
+    base.push({ key: 'placeholder', label: '占位符', type: 'input' })
+  }
+  base.push({ key: 'required', label: '必填', type: 'switch' })
+  return base
 }
 
 function isFieldHighlighted(widgetId: string): boolean {
@@ -352,6 +386,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                     {
                       [$style.fieldHighlighted]: isFieldHighlighted(w.id),
                       [$style.fieldSelected]: interaction.selectedWidgetIds.value.has(w.id),
+                      [$style.fieldInlineEditing]: interaction.inlineEditWidgetId.value === w.id,
                     },
                   ]"
                   @click="handleFieldClick(w)"
@@ -366,122 +401,166 @@ function getNodeStatusColor(nodeId: string): string | undefined {
 
                   <!-- 字段内容 -->
                   <div :class="$style.fieldContent">
-                    <!-- Input / Number / Date / Textarea -->
-                    <el-form-item
-                      v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
-                      :label="w.label ?? w.field ?? w.type"
-                    >
-                      <el-input
-                        :type="w.type === 'textarea' ? 'textarea' : 'text'"
-                        :placeholder="getWidgetPlaceholder(w)"
-                        :rows="w.type === 'textarea' ? 3 : undefined"
-                        disabled
-                      />
-                    </el-form-item>
+                    <!-- 内联编辑模式 -->
+                    <template v-if="interaction.inlineEditWidgetId.value === w.id && interaction.inlineEditData.value">
+                      <div :class="$style.inlineEditHeader">
+                        <span :class="$style.inlineEditTitle">编辑组件</span>
+                        <div :class="$style.inlineEditActions">
+                          <button :class="$style.inlineEditConfirm" title="确认" @click.stop="handleCommitInlineEdit">&#x2713;</button>
+                          <button :class="$style.inlineEditCancel" title="取消" @click.stop="handleCancelInlineEdit">&times;</button>
+                        </div>
+                      </div>
+                      <div :class="$style.inlineEditFields">
+                        <div
+                          v-for="prop in getWidgetEditableProps(w)"
+                          :key="prop.key"
+                          :class="$style.inlineEditRow"
+                        >
+                          <label :class="$style.inlineEditLabel">{{ prop.label }}</label>
+                          <el-input
+                            v-if="prop.type === 'input'"
+                            :model-value="(interaction.inlineEditData.value[prop.key] as string) ?? ''"
+                            size="small"
+                            @update:model-value="handleInlineEditChange(prop.key, $event)"
+                          />
+                          <el-switch
+                            v-else-if="prop.type === 'switch'"
+                            :model-value="interaction.inlineEditData.value[prop.key] as boolean"
+                            size="small"
+                            @update:model-value="handleInlineEditChange(prop.key, $event)"
+                          />
+                        </div>
+                      </div>
+                    </template>
 
-                    <!-- Select -->
-                    <el-form-item
-                      v-else-if="w.type === 'select'"
-                      :label="w.label ?? w.field ?? 'select'"
-                    >
-                      <el-select placeholder="请选择" disabled style="width: 100%">
-                        <el-option
-                          v-for="opt in getWidgetOptions(w)"
-                          :key="opt.value"
-                          :label="opt.label"
-                          :value="opt.value"
+                    <!-- 正常预览模式 -->
+                    <template v-else>
+                      <!-- Input / Number / Date / Textarea -->
+                      <el-form-item
+                        v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
+                        :label="w.label ?? w.field ?? w.type"
+                      >
+                        <el-input
+                          :type="w.type === 'textarea' ? 'textarea' : 'text'"
+                          :placeholder="getWidgetPlaceholder(w)"
+                          :rows="w.type === 'textarea' ? 3 : undefined"
+                          disabled
                         />
-                      </el-select>
-                    </el-form-item>
+                      </el-form-item>
 
-                    <!-- Radio -->
-                    <el-form-item
-                      v-else-if="w.type === 'radio'"
-                      :label="w.label ?? w.field ?? 'radio'"
-                    >
-                      <el-radio-group disabled>
-                        <el-radio
-                          v-for="opt in getWidgetOptions(w)"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >
-                          {{ opt.label }}
-                        </el-radio>
-                      </el-radio-group>
-                    </el-form-item>
+                      <!-- Select -->
+                      <el-form-item
+                        v-else-if="w.type === 'select'"
+                        :label="w.label ?? w.field ?? 'select'"
+                      >
+                        <el-select placeholder="请选择" disabled style="width: 100%">
+                          <el-option
+                            v-for="opt in getWidgetOptions(w)"
+                            :key="opt.value"
+                            :label="opt.label"
+                            :value="opt.value"
+                          />
+                        </el-select>
+                      </el-form-item>
 
-                    <!-- Checkbox -->
-                    <el-form-item
-                      v-else-if="w.type === 'checkbox'"
-                      :label="w.label ?? w.field ?? 'checkbox'"
-                    >
-                      <el-checkbox-group disabled>
-                        <el-checkbox
-                          v-for="opt in getWidgetOptions(w)"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >
-                          {{ opt.label }}
-                        </el-checkbox>
-                      </el-checkbox-group>
-                    </el-form-item>
+                      <!-- Radio -->
+                      <el-form-item
+                        v-else-if="w.type === 'radio'"
+                        :label="w.label ?? w.field ?? 'radio'"
+                      >
+                        <el-radio-group disabled>
+                          <el-radio
+                            v-for="opt in getWidgetOptions(w)"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >
+                            {{ opt.label }}
+                          </el-radio>
+                        </el-radio-group>
+                      </el-form-item>
 
-                    <!-- Switch -->
-                    <el-form-item
-                      v-else-if="w.type === 'switch'"
-                      :label="w.label ?? w.field ?? 'switch'"
-                    >
-                      <el-switch disabled />
-                    </el-form-item>
+                      <!-- Checkbox -->
+                      <el-form-item
+                        v-else-if="w.type === 'checkbox'"
+                        :label="w.label ?? w.field ?? 'checkbox'"
+                      >
+                        <el-checkbox-group disabled>
+                          <el-checkbox
+                            v-for="opt in getWidgetOptions(w)"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >
+                            {{ opt.label }}
+                          </el-checkbox>
+                        </el-checkbox-group>
+                      </el-form-item>
 
-                    <!-- Slider -->
-                    <el-form-item
-                      v-else-if="w.type === 'slider'"
-                      :label="w.label ?? w.field ?? 'slider'"
-                    >
-                      <el-slider disabled />
-                    </el-form-item>
+                      <!-- Switch -->
+                      <el-form-item
+                        v-else-if="w.type === 'switch'"
+                        :label="w.label ?? w.field ?? 'switch'"
+                      >
+                        <el-switch disabled />
+                      </el-form-item>
 
-                    <!-- Rate -->
-                    <el-form-item
-                      v-else-if="w.type === 'rate'"
-                      :label="w.label ?? w.field ?? 'rate'"
-                    >
-                      <el-rate disabled />
-                    </el-form-item>
+                      <!-- Slider -->
+                      <el-form-item
+                        v-else-if="w.type === 'slider'"
+                        :label="w.label ?? w.field ?? 'slider'"
+                      >
+                        <el-slider disabled />
+                      </el-form-item>
 
-                    <!-- Upload -->
-                    <el-form-item
-                      v-else-if="w.type === 'upload'"
-                      :label="w.label ?? w.field ?? 'upload'"
-                    >
-                      <el-button disabled>选择文件</el-button>
-                    </el-form-item>
+                      <!-- Rate -->
+                      <el-form-item
+                        v-else-if="w.type === 'rate'"
+                        :label="w.label ?? w.field ?? 'rate'"
+                      >
+                        <el-rate disabled />
+                      </el-form-item>
 
-                    <!-- Button -->
-                    <el-form-item v-else-if="w.type === 'button'">
-                      <el-button type="primary" disabled>
-                        {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
-                      </el-button>
-                    </el-form-item>
+                      <!-- Upload -->
+                      <el-form-item
+                        v-else-if="w.type === 'upload'"
+                        :label="w.label ?? w.field ?? 'upload'"
+                      >
+                        <el-button disabled>选择文件</el-button>
+                      </el-form-item>
 
-                    <!-- Fallback: show as text field -->
-                    <el-form-item
-                      v-else
-                      :label="w.label ?? w.field ?? w.type"
-                    >
-                      <el-input placeholder="[不支持的组件类型]" disabled />
-                    </el-form-item>
+                      <!-- Button -->
+                      <el-form-item v-else-if="w.type === 'button'">
+                        <el-button type="primary" disabled>
+                          {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
+                        </el-button>
+                      </el-form-item>
+
+                      <!-- Fallback: show as text field -->
+                      <el-form-item
+                        v-else
+                        :label="w.label ?? w.field ?? w.type"
+                      >
+                        <el-input placeholder="[不支持的组件类型]" disabled />
+                      </el-form-item>
+                    </template>
                   </div>
 
-                  <!-- 编辑按钮 -->
-                  <button
-                    :class="$style.fieldEditBtn"
-                    title="编辑属性"
-                    @click.stop="handleFieldEdit(w)"
-                  >
-                    &#x270E;
-                  </button>
+                  <!-- 操作按钮组 -->
+                  <div :class="$style.fieldActionGroup">
+                    <button
+                      :class="$style.fieldEditBtn"
+                      title="内联编辑"
+                      @click.stop="handleStartInlineEdit(w)"
+                    >
+                      &#x270E;
+                    </button>
+                    <button
+                      :class="$style.fieldEditBtn"
+                      title="编辑属性"
+                      @click.stop="handleFieldEdit(w)"
+                    >
+                      &#x2699;
+                    </button>
+                  </div>
                 </div>
               </template>
             </el-form>
@@ -615,6 +694,36 @@ function getNodeStatusColor(nodeId: string): string | undefined {
           <div :class="$style.emptyText">生成内容将在此预览</div>
         </div>
       </template>
+    </div>
+
+    <!-- Field detail panel -->
+    <div v-if="interaction.isFieldDetailVisible.value && interaction.selectedFieldDetail.value && activeTab === 'schema'" :class="$style.fieldDetail">
+      <div :class="$style.fieldDetailHeader">
+        <span :class="$style.fieldDetailTitle">组件详情</span>
+        <button :class="$style.fieldDetailClose" @click="interaction.closeFieldDetail()">&times;</button>
+      </div>
+      <div :class="$style.fieldDetailBody">
+        <div :class="$style.fieldDetailRow">
+          <span :class="$style.fieldDetailLabel">类型</span>
+          <span :class="$style.fieldDetailValue">{{ interaction.selectedFieldDetail.value.type }}</span>
+        </div>
+        <div :class="$style.fieldDetailRow">
+          <span :class="$style.fieldDetailLabel">标签</span>
+          <span :class="$style.fieldDetailValue">{{ interaction.selectedFieldDetail.value.label ?? '-' }}</span>
+        </div>
+        <div :class="$style.fieldDetailRow">
+          <span :class="$style.fieldDetailLabel">字段名</span>
+          <span :class="$style.fieldDetailValue">{{ interaction.selectedFieldDetail.value.field ?? '-' }}</span>
+        </div>
+        <div :class="$style.fieldDetailRow">
+          <span :class="$style.fieldDetailLabel">ID</span>
+          <span :class="$style.fieldDetailValue">{{ interaction.selectedFieldDetail.value.id }}</span>
+        </div>
+        <div v-if="interaction.selectedFieldDetail.value.props" :class="$style.fieldDetailRow">
+          <span :class="$style.fieldDetailLabel">属性</span>
+          <pre :class="$style.fieldDetailJson">{{ JSON.stringify(interaction.selectedFieldDetail.value.props, null, 2) }}</pre>
+        </div>
+      </div>
     </div>
 
     <!-- Bottom actions -->

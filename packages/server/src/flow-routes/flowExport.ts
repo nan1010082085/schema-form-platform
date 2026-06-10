@@ -65,7 +65,44 @@ function generateCsv(rows: ApprovalLogRow[]): string {
 //   endDate   — ISO date string, filter logs <= this date
 //   format    — 'csv' (default) or 'json'
 router.get('/approval-logs', requireAuth, async (ctx) => {
-  const { flowId, startDate, endDate, format = 'csv' } = ctx.query as Record<string, string | undefined>
+  const { flowId, instanceId, startDate, endDate, format = 'csv' } = ctx.query as Record<string, string | undefined>
+
+  // Single instance export — short-circuit with direct instance filter
+  if (instanceId) {
+    const instance = await FlowInstanceModel.findOne({ _id: instanceId }).select('_id definitionId')
+    if (!instance) {
+      ctx.status = 404
+      ctx.body = { success: false, error: { message: 'Instance not found' } }
+      return
+    }
+    const logs = await ApprovalLogModel.find({ instanceId }).sort({ createdAt: -1 })
+    const def = await FlowDefinitionModel.findOne({ _id: instance.definitionId }).select('_id name')
+    const taskIds = [...new Set(logs.map((l) => l.taskId))]
+    const tasks = await TaskInstanceModel.find({ _id: { $in: taskIds } }).select('_id assignee')
+    const taskAssigneeMap = new Map(tasks.map((t) => [t._id, t.assignee ?? '']))
+
+    const rows: ApprovalLogRow[] = logs.map((log) => ({
+      flowName: def?.name ?? '',
+      instanceId: log.instanceId,
+      nodeName: log.nodeName,
+      taskAssignee: taskAssigneeMap.get(log.taskId) ?? '',
+      operator: log.operator,
+      action: log.action,
+      outcome: log.outcome ?? '',
+      comment: log.comment ?? '',
+      createdAt: new Date(log.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
+    }))
+
+    if (format === 'json') {
+      ctx.body = { success: true, data: rows }
+      return
+    }
+    const csv = generateCsv(rows)
+    ctx.set('Content-Type', 'text/csv; charset=utf-8')
+    ctx.set('Content-Disposition', `attachment; filename=approval-logs-${instanceId}.csv`)
+    ctx.body = csv
+    return
+  }
 
   // If filtering by flow, first resolve matching instance IDs
   let instanceIds: string[] | null = null

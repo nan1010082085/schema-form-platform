@@ -1,6 +1,16 @@
 .instanceDetail {
   padding: var(--spacing-lg);
 }
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
 .infoCard {
   background: var(--bg-color-white);
   border-radius: var(--border-radius-md);

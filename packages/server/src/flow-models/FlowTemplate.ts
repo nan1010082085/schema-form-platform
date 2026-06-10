@@ -1,7 +1,9 @@
 import mongoose from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IFlowTemplate {
   _id: string
+  tenantId: string
   name: string
   description: string
   category: string
@@ -12,6 +14,7 @@ export interface IFlowTemplate {
   thumbnail: string
   tags: string[]
   isBuiltin: boolean
+  useCount: number
   createdBy: string
   createdAt: Date
   updatedAt: Date
@@ -20,6 +23,7 @@ export interface IFlowTemplate {
 const flowTemplateSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
+    tenantId: { type: String, default: '000000', index: true },
     name: { type: String, required: true, maxlength: 200 },
     description: { type: String, default: '', maxlength: 1000 },
     category: { type: String, default: 'other', maxlength: 100 },
@@ -30,6 +34,7 @@ const flowTemplateSchema = new mongoose.Schema(
     thumbnail: { type: String, default: '' },
     tags: { type: [String], default: [] },
     isBuiltin: { type: Boolean, default: false },
+    useCount: { type: Number, default: 0 },
     createdBy: { type: String, default: '' },
   },
   {
@@ -47,6 +52,8 @@ const flowTemplateSchema = new mongoose.Schema(
 flowTemplateSchema.index({ category: 1 })
 flowTemplateSchema.index({ isBuiltin: 1 })
 flowTemplateSchema.index({ name: 1 })
+
+flowTemplateSchema.plugin(tenantPlugin)
 
 export const FlowTemplateModel =
   mongoose.models.FlowTemplate ??

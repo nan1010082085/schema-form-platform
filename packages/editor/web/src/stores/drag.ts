@@ -6,6 +6,8 @@
  * - 拖拽位置（当前坐标、增量）
  * - 碰撞状态（悬停的容器 ID、是否在容器内）
  * - 辅助线（对齐参考线、吸附坐标）
+ * - 放置预览线（指示插入位置）
+ * - 原始位置快照（取消拖拽时恢复）
  *
  * 变化频率最高，独立管理，与 Widget 数据和编辑器状态解耦。
  */
@@ -21,6 +23,20 @@ interface GuideLine {
   position: number
   start: number
   end: number
+}
+
+/** 放置预览线 — 指示新组件将被插入的位置 */
+export interface DropPreviewLine {
+  /** 预览线方向 */
+  orientation: 'horizontal' | 'vertical'
+  /** 预览线位置（画布坐标） */
+  position: number
+  /** 预览线起始点 */
+  start: number
+  /** 预览线结束点 */
+  end: number
+  /** 目标容器 ID（null 表示根级） */
+  targetContainerId: string | null
 }
 
 export type { GuideLine }
@@ -66,6 +82,18 @@ export const useDragStore = defineStore('drag', () => {
   const snapY = ref<number | null>(null)
 
   // ================================================================
+  // 放置预览线
+  // ================================================================
+
+  const dropPreviewLine = ref<DropPreviewLine | null>(null)
+
+  // ================================================================
+  // 原始位置快照（取消拖拽时恢复）
+  // ================================================================
+
+  const originalPosition = ref<{ x: number; y: number; parentId: string | null } | null>(null)
+
+  // ================================================================
   // 方法
   // ================================================================
 
@@ -80,7 +108,15 @@ export const useDragStore = defineStore('drag', () => {
     source: 'panel' | 'canvas',
     id?: string,
     type?: string,
-    opts?: { cursorX?: number; cursorY?: number; widgetX?: number; widgetY?: number },
+    opts?: {
+      cursorX?: number
+      cursorY?: number
+      widgetX?: number
+      widgetY?: number
+      originalX?: number
+      originalY?: number
+      originalParentId?: string | null
+    },
   ): void {
     isDragging.value = true
     dragSource.value = source
@@ -99,6 +135,10 @@ export const useDragStore = defineStore('drag', () => {
     guideLines.value = []
     snapX.value = null
     snapY.value = null
+    dropPreviewLine.value = null
+    originalPosition.value = opts?.originalX !== undefined
+      ? { x: opts.originalX, y: opts.originalY!, parentId: opts.originalParentId ?? null }
+      : null
   }
 
   /**
@@ -143,6 +183,13 @@ export const useDragStore = defineStore('drag', () => {
   }
 
   /**
+   * 更新放置预览线。
+   */
+  function updateDropPreviewLine(line: DropPreviewLine | null): void {
+    dropPreviewLine.value = line
+  }
+
+  /**
    * 结束拖拽，重置所有状态。
    */
   function endDrag(): void {
@@ -163,6 +210,8 @@ export const useDragStore = defineStore('drag', () => {
     guideLines.value = []
     snapX.value = null
     snapY.value = null
+    dropPreviewLine.value = null
+    originalPosition.value = null
   }
 
   // ================================================================
@@ -192,12 +241,17 @@ export const useDragStore = defineStore('drag', () => {
     guideLines,
     snapX,
     snapY,
+    // 放置预览线
+    dropPreviewLine,
+    // 原始位置快照
+    originalPosition,
     // 方法
     startDrag,
     updateDragPosition,
     updateCollision,
     updateGuideLines,
     updateSnap,
+    updateDropPreviewLine,
     endDrag,
   }
 })

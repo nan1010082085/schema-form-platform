@@ -51,6 +51,22 @@ const mockNodes = [
     },
   },
   {
+    id: 'pgw-1',
+    type: 'parallel-gateway',
+    data: {
+      label: '并行网关',
+      defaultFlow: '',
+    },
+  },
+  {
+    id: 'igw-1',
+    type: 'inclusive-gateway',
+    data: {
+      label: '包含网关',
+      defaultFlow: '',
+    },
+  },
+  {
     id: 'svc-1',
     type: 'service-task',
     data: {
@@ -77,6 +93,34 @@ const mockEdges = [
     target: 'node-2',
     label: '通过',
     data: { conditionExpression: '${approved}', isDefault: false },
+  },
+  {
+    id: 'gw-edge-1',
+    source: 'gw-1',
+    target: 'node-2',
+    label: '金额大于1万',
+    data: { conditionExpression: '${amount > 10000}', isDefault: false },
+  },
+  {
+    id: 'gw-edge-2',
+    source: 'gw-1',
+    target: 'node-3',
+    label: '',
+    data: { conditionExpression: '', isDefault: true },
+  },
+  {
+    id: 'pgw-edge-1',
+    source: 'pgw-1',
+    target: 'node-2',
+    label: '分支A',
+    data: { conditionExpression: '', isDefault: false },
+  },
+  {
+    id: 'pgw-edge-2',
+    source: 'pgw-1',
+    target: 'node-3',
+    label: '分支B',
+    data: { conditionExpression: '', isDefault: false },
   },
 ]
 
@@ -188,6 +232,11 @@ const elStubs = {
   },
   'el-scrollbar': {
     template: '<div><slot /></div>',
+  },
+  'el-switch': {
+    template: '<input type="checkbox" :checked="modelValue" @change="$emit(\'change\', $event.target.checked)" />',
+    props: ['modelValue'],
+    emits: ['change'],
   },
   'el-tooltip': {
     template: '<span><slot /></span>',
@@ -317,9 +366,82 @@ describe('FlowPropertyPanel', () => {
       mockSelectedEdgeId.value = null
     })
 
-    it('shows default flow field', () => {
+    it('shows gateway config section with default flow field', () => {
       const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('网关配置')
       expect(wrapper.text()).toContain('默认连线')
+    })
+
+    it('shows gateway description field', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('网关描述')
+    })
+
+    it('shows outgoing edge conditions section', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('出线条件')
+    })
+
+    it('shows condition expression for each outgoing edge', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('条件表达式')
+      expect(wrapper.text()).toContain('条件标签')
+    })
+
+    it('shows target labels for outgoing edges', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('默认')
+    })
+
+    it('shows exclusive gateway hint text', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('排他网关')
+    })
+  })
+
+  describe('parallel-gateway node', () => {
+    beforeEach(() => {
+      mockSelectedNodeId.value = 'pgw-1'
+      mockSelectedEdgeId.value = null
+    })
+
+    it('shows gateway config section', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('网关配置')
+      expect(wrapper.text()).toContain('默认连线')
+    })
+
+    it('shows outgoing edge conditions section', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('出线条件')
+    })
+
+    it('shows parallel gateway hint text', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('并行网关')
+      expect(wrapper.text()).toContain('同时执行')
+    })
+
+    it('shows edge labels for outgoing branches', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('条件标签')
+    })
+  })
+
+  describe('inclusive-gateway node', () => {
+    beforeEach(() => {
+      mockSelectedNodeId.value = 'igw-1'
+      mockSelectedEdgeId.value = null
+    })
+
+    it('shows gateway config section', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('网关配置')
+    })
+
+    it('shows inclusive gateway hint text', () => {
+      const wrapper = mountPanel()
+      expect(wrapper.text()).toContain('包含网关')
     })
   })
 

@@ -260,6 +260,12 @@ function handleHostData(data: Record<string, unknown>) {
   if (data.version) {
     store.setContext({ version: data.version as string })
   }
+  if (data.selectedWidget && typeof data.selectedWidget === 'object') {
+    store.setContext({ selectedWidget: data.selectedWidget as import('@/types').SelectedWidgetInfo })
+  }
+  if (data.editorMode && (data.editorMode === 'edit' || data.editorMode === 'preview')) {
+    store.setContext({ editorMode: data.editorMode as 'edit' | 'preview' })
+  }
 }
 </script>
 
@@ -310,6 +316,7 @@ function handleHostData(data: Record<string, unknown>) {
         :schema-widgets="msg.schema"
         @card-primary-action="handleCardAction('primary')"
         @card-secondary-action="handleCardAction('secondary')"
+        @retry-tool="(tci) => store.retryToolCall(idx, tci)"
       />
     </div>
 

@@ -15,8 +15,11 @@ import { getMetadata } from '../tools/toolHandlers.js'
 import { editorTools } from '../tools/editorTools.js'
 import { generateSchemaTool } from '../tools/flowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
-// truncateMessages removed — agent nodes now use state.messages directly
+import { ragSearchTool } from '../tools/ragTools.js'
+import { truncateMessagesForLangGraph } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
+import { buildContextInjection, extractAgentContext, type AgentContextPayload } from './contextCarrier.js'
+import { retrieveRagContext } from './ragContextRetriever.js'
 import type { AgentStateAnnotation } from './state.js'
 
 // ────────────────────────────────────────────
@@ -49,11 +52,32 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
     ? lastHumanMessage.content
     : JSON.stringify(lastHumanMessage.content)
 
-  // Inject current schema summary (not full JSON — use get_schema_detail tool for full content)
+  // 多轮迭代：注入当前 Schema 摘要 + 结构化概要
   if (state.context.currentSchema && state.context.currentSchema.length > 0) {
-    const widgetTypes = state.context.currentSchema.map(w => w.type).join(', ')
-    const widgetCount = state.context.currentSchema.length
-    prompt += `\n\n--- 当前 Schema 概要 ---\n共 ${widgetCount} 个组件：${widgetTypes}\n使用 get_schema_detail 工具查看完整内容。`
+    const widgets = state.context.currentSchema
+    const widgetTypes = widgets.map(w => w.type).join(', ')
+    const widgetCount = widgets.length
+    prompt += `\n\n--- 当前 Schema 概要 ---\n共 ${widgetCount} 个组件：${widgetTypes}`
+
+    // 多轮迭代：提供结构化摘要（字段名、标签、嵌套关系），帮助 AI 精准修改
+    const structureLines: string[] = []
+    const extractStructure = (w: Record<string, unknown>, indent: number = 0) => {
+      const prefix = '  '.repeat(indent)
+      const field = w.field as string ?? ''
+      const label = w.label as string ?? ''
+      const type = w.type as string ?? ''
+      const id = w.id as string ?? ''
+      let line = `${prefix}- [${type}] id=${id}`
+      if (field) line += ` field="${field}"`
+      if (label) line += ` label="${label}"`
+      structureLines.push(line)
+      const children = w.children as Array<Record<string, unknown>> | undefined
+      if (children) {
+        for (const child of children) extractStructure(child, indent + 1)
+      }
+    }
+    for (const w of widgets) extractStructure(w)
+    prompt += `\n\n--- 当前 Schema 结构 ---\n${structureLines.join('\n')}\n\n【重要】基于以上结构修改，请使用 update_schema 工具。`
   }
 
   // Inject conversation history summary
@@ -81,8 +105,14 @@ function buildContextMessage(state: typeof AgentStateAnnotation.State): string {
   // Inject collaboration context from the requesting agent
   const currentStep = state.task.chain[state.task.currentStepIndex]
   if (currentStep?.context && Object.keys(currentStep.context).length > 0) {
-    prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
-    prompt += JSON.stringify(currentStep.context, null, 2)
+    const ctx = currentStep.context as unknown as AgentContextPayload
+    // Use structured context injection if it's an AgentContextPayload
+    if (ctx.sourceAgent && ctx.summary) {
+      prompt += buildContextInjection(ctx)
+    } else {
+      prompt += `\n\n--- 协作上下文（来自其他专家的信息）---\n`
+      prompt += JSON.stringify(currentStep.context, null, 2)
+    }
   }
 
   return prompt
@@ -112,16 +142,25 @@ export async function editorAgentNode(
   })
   console.log(`[editorAgent] 消息序列: ${msgTypes.join(' -> ')}`)
 
+  // RAG: retrieve related schemas for context augmentation
+  const lastUserMsg = [...state.messages].reverse().find((m) => m.constructor.name === 'HumanMessage')
+  const userQueryText = lastUserMsg
+    ? (typeof lastUserMsg.content === 'string' ? lastUserMsg.content : JSON.stringify(lastUserMsg.content))
+    : ''
+  const ragContext = await retrieveRagContext(userQueryText)
+
   const systemPrompt = await getEditorSystemPrompt()
-  const userContent = buildContextMessage(state)
+  const userContent = buildContextMessage(state) + ragContext.context
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, generateSchemaTool, ...collaborationTools])
+  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, generateSchemaTool, ...collaborationTools, ragSearchTool])
 
-  // 直接使用 state.messages + system prompt，不重建消息列表
-  // 避免 truncateMessages 截断 ToolMessage 导致 API 400 错误
+  // 截断历史消息以避免 token 超限
+  // 保留 tool_calls -> ToolMessage 链完整性，保留最近 N 轮 + 首条用户消息
+  const truncatedHistory = truncateMessagesForLangGraph(state.messages)
+
   const messages = [
     new SystemMessage(systemPrompt),
-    ...state.messages,
+    ...truncatedHistory,
     new HumanMessage(userContent),
   ]
 

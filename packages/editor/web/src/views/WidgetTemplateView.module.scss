@@ -1,0 +1,295 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-color-page);
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbarIcon {
+  color: var(--color-primary);
+}
+
+.toolbarTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.countTag {
+  margin-left: 4px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchInput {
+  width: 280px;
+}
+
+/* ---- Category Bar ---- */
+.categoryBar {
+  flex-shrink: 0;
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-light);
+  padding: 0 24px;
+}
+
+.categoryList {
+  display: flex;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.categoryTag {
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+/* ---- Content ---- */
+.content {
+  flex: 1;
+  height: 0;
+  padding: 20px 24px;
+}
+
+/* ---- Loading / Error / Empty ---- */
+.loadingState,
+.errorState,
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 12px;
+  color: var(--text-color-secondary);
+}
+
+.loadingIcon {
+  color: var(--color-primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.errorText {
+  color: var(--color-danger);
+}
+
+.emptyIcon {
+  color: var(--border-color-base);
+}
+
+.emptyText {
+  font-size: 16px;
+  color: var(--text-color-primary);
+  margin: 0;
+}
+
+.emptyHint {
+  font-size: 13px;
+  color: var(--text-color-placeholder);
+  margin: 0;
+}
+
+/* ---- Card Grid ---- */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* ---- Card ---- */
+.card {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary-light-5);
+  }
+}
+
+.cardThumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background: var(--bg-color-gray-light);
+  color: var(--text-color-placeholder);
+}
+
+.thumbIcon {
+  opacity: 0.4;
+}
+
+.cardCategory {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.cardBody {
+  padding: 12px 16px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin: 0 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  margin: 0 0 8px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-color-placeholder);
+}
+
+.builtinBadge {
+  font-size: 11px;
+  color: var(--color-primary);
+  background: var(--color-primary-light-9);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 11px;
+}
+
+/* ---- Card Actions ---- */
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 12px;
+  border-top: 1px solid var(--bg-color-page);
+}
+
+.actionBtn {
+  flex-shrink: 0;
+}
+
+/* ---- Pagination ---- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 12px;
+}
+
+/* ---- Drawer Preview ---- */
+.previewContent {
+  padding: 0 4px;
+}
+
+.previewSection {
+  margin-bottom: 20px;
+}
+
+.previewLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin: 0 0 8px;
+}
+
+.previewDesc {
+  font-size: 14px;
+  color: var(--text-color-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.previewTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.previewStats {
+  font-size: 14px;
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.schemaCode {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg-color-gray-light);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: var(--text-color-primary);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.previewActions {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color-light);
+}
