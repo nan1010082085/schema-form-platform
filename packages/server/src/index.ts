@@ -6,6 +6,7 @@ import { initSocket } from './socket.js'
 import { initDefaultTenant } from './utils/initDefaultTenant.js'
 import { seedBuiltinTemplates } from './utils/seedBuiltinTemplates.js'
 import { seedPermissions } from './utils/seedPermissions.js'
+import { seedAdmin } from './utils/seedAdmin.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
@@ -14,6 +15,7 @@ async function start() {
   await initDefaultTenant()
   await seedPermissions()
   await seedBuiltinTemplates()
+  await seedAdmin()
 
   const httpServer = createServer(app.callback())
   initSocket(httpServer)
