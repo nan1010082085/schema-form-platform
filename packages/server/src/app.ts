@@ -8,6 +8,7 @@ import { timeoutMiddleware } from './middleware/timeout.js'
 import { tenantContextMiddleware } from './middleware/tenantContext.js'
 import healthRouter from './routes/health.js'
 import authRouter from './routes/auth.js'
+import ssoRouter from './routes/sso.js'
 import dictRouter from './routes/dict.js'
 import optionsRouter from './routes/options.js'
 import dataRouter from './routes/data.js'
@@ -32,12 +33,22 @@ import flowBatchRouter from './flow-routes/flowBatch.js'
 import flowNotificationRouter from './flow-routes/flowNotification.js'
 import flowTemplateRouter from './flow-routes/flowTemplate.js'
 import flowMonitorRouter from './flow-routes/flowMonitor.js'
-import { aiRouter, monitorRouter, aiHealthRouter, ragRouter } from './ai/index.js'
+import { aiRouter, monitorRouter, aiHealthRouter, ragRouter, llmProviderRouter } from './ai/index.js'
 import aiPluginRouter from './ai/pluginRoutes.js'
 import mcpRouter from './routes/mcp.js'
 import configRouter from './routes/config.js'
 import auditLogRouter from './routes/auditLog.js'
 import microAppRouter from './routes/microApp.js'
+import apiKeyRouter from './routes/apiKey.js'
+import submissionRouter from './routes/submission.js'
+import workflowRouter from './routes/workflow.js'
+import workflowInstanceRouter from './routes/workflowInstance.js'
+import workflowStatusRouter from './routes/workflowStatus.js'
+import workflowTemplateRouter from './routes/workflowTemplate.js'
+import webhookRouter from './routes/webhook.js'
+import webhookTriggerRouter from './routes/webhookTrigger.js'
+import credentialRouter from './routes/credential.js'
+import modelConfigRouter from './routes/modelConfig.js'
 import { auditLogMiddleware } from './middleware/auditLog.js'
 import { validateApiKey } from './ai/graph/agentBase.js'
 
@@ -82,7 +93,7 @@ app.use(bodyParser())
 
 app.use(cors({
   origin: (ctx) => {
-    const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:4173,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
+    const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:4100,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:5400,http://localhost:4173,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
     if (origins === '*') return ctx.get('Origin')
     const allowed = origins.split(',').map((s) => s.trim())
     const requestOrigin = ctx.get('Origin')
@@ -100,6 +111,8 @@ app.use(healthRouter.routes())
 app.use(healthRouter.allowedMethods())
 app.use(authRouter.routes())
 app.use(authRouter.allowedMethods())
+app.use(ssoRouter.routes())
+app.use(ssoRouter.allowedMethods())
 app.use(schemaRouter.routes())
 app.use(schemaRouter.allowedMethods())
 app.use(mockRouter.routes())
@@ -158,6 +171,8 @@ app.use(aiPluginRouter.routes())
 app.use(aiPluginRouter.allowedMethods())
 app.use(ragRouter.routes())
 app.use(ragRouter.allowedMethods())
+app.use(llmProviderRouter.routes())
+app.use(llmProviderRouter.allowedMethods())
 app.use(mcpRouter.routes())
 app.use(mcpRouter.allowedMethods())
 app.use(configRouter.routes())
@@ -166,5 +181,25 @@ app.use(auditLogRouter.routes())
 app.use(auditLogRouter.allowedMethods())
 app.use(microAppRouter.routes())
 app.use(microAppRouter.allowedMethods())
+app.use(apiKeyRouter.routes())
+app.use(apiKeyRouter.allowedMethods())
+app.use(submissionRouter.routes())
+app.use(submissionRouter.allowedMethods())
+app.use(workflowRouter.routes())
+app.use(workflowRouter.allowedMethods())
+app.use(workflowInstanceRouter.routes())
+app.use(workflowInstanceRouter.allowedMethods())
+app.use(workflowStatusRouter.routes())
+app.use(workflowStatusRouter.allowedMethods())
+app.use(workflowTemplateRouter.routes())
+app.use(workflowTemplateRouter.allowedMethods())
+app.use(webhookRouter.routes())
+app.use(webhookRouter.allowedMethods())
+app.use(webhookTriggerRouter.routes())
+app.use(webhookTriggerRouter.allowedMethods())
+app.use(credentialRouter.routes())
+app.use(credentialRouter.allowedMethods())
+app.use(modelConfigRouter.routes())
+app.use(modelConfigRouter.allowedMethods())
 
 export default app

@@ -141,10 +141,17 @@ async function routerNode(
   const isPage = /列表|统计|详情|仪表盘|dashboard|搜索列表|数据表格/.test(lower)
   const isForm = /表单|表|输入|填写|编辑/.test(lower)
   const isGeneral = /你好|你是谁|能做什么|帮助|介绍/.test(lower)
+  const isWorkflow = /工作流|创建.*流程|流程.*创建|workflow.*create|create.*workflow|关联.*表单|关联.*流程|配置.*规则/.test(lower)
 
   if (isGeneral) {
     console.log(`[router] 关键词匹配 -> general`)
     return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
+  }
+
+  // Workflow 请求：创建工作流、关联表单/流程、配置规则
+  if (isWorkflow && !isForm) {
+    console.log(`[router] 关键词匹配 -> flow (workflow)`)
+    return { session: { ...state.session, currentAgent: 'flow' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'flow', description: '创建工作流', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
   }
 
   // 多意图检测：同时包含页面相关和表单/流程相关关键词时，创建 chain
@@ -180,7 +187,7 @@ async function routerNode(
       ? (typeof lastHumanMessage.content === 'string' ? lastHumanMessage.content : JSON.stringify(lastHumanMessage.content))
       : ''
 
-    const model = getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
+    const model = await getLLM({ model: getModelForTask('analyze'), temperature: 0, maxTokens: 4096, jsonMode: true })
     const stream = await model.stream([
       new SystemMessage(ROUTER_SYSTEM_PROMPT),
       new HumanMessage(userContent),
@@ -355,11 +362,12 @@ function buildGeneralSystemPrompt(): string {
 
   return `你是 schema-form-platform 的 AI 助手。
 
-你有三个专家能力：
+你有四个专家能力：
 
 1. **Editor 专家**：表单/UI 生成 — 精通 ${widgetCount} 种组件（${widgetSummary}），能生成高质量的表单和页面 Schema
 2. **Page 专家**：业务页面配置 — 专精统计卡片、详情页、数据列表、搜索列表、仪表盘等业务页面
 3. **Flow 专家**：流程/BPMN 生成 — 精通 ${flowNodeCount} 种 BPMN 节点，能生成审批流程、工作流
+4. **Workflow 专家**：工作流编排 — 能创建完整的工作流，关联表单 Schema 和流程定义，配置数据更新规则
 
 请用友好、专业的语气回答用户问题。如果用户问你能做什么，引导他们描述具体需求。`
 }
@@ -367,7 +375,7 @@ function buildGeneralSystemPrompt(): string {
 async function generalAgentNode(
   state: typeof AgentStateAnnotation.State,
 ): Promise<Partial<typeof AgentStateAnnotation.State>> {
-  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
+  const model = await getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
   const systemPrompt = buildGeneralSystemPrompt()
 
   const lastUserMessage = [...state.messages]
@@ -435,7 +443,7 @@ async function summarizerNode(
     .map((step) => `✅ ${step.agent} 专家：${step.description}`)
     .join('\n')
 
-  const model = getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
+  const model = await getLLM({ model: getModelForTask('analyze'), temperature: 0.7, maxTokens: 2048 })
 
   const prompt = `${SUMMARIZER_SYSTEM_PROMPT}
 

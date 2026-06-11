@@ -6,6 +6,7 @@
  */
 
 import { computed } from 'vue'
+import { ElButton } from 'element-plus'
 import type { Widget, FlowGraph } from '@/types'
 
 export interface AiPreviewCompareProps {
@@ -282,9 +283,9 @@ function handleApplySelected() {
           修改 {{ summary.changed }}
         </span>
       </div>
-      <button :class="$style.closeBtn" @click="emit('close')">
+      <ElButton :class="$style.closeBtn" link @click="emit('close')">
         &times;
-      </button>
+      </ElButton>
     </div>
 
     <!-- Diff 列表 -->
@@ -341,12 +342,12 @@ function handleApplySelected() {
 
     <!-- Actions -->
     <div v-if="hasDiffs" :class="$style.actions">
-      <button :class="$style.btnPrimary" @click="handleApplyAll">
+      <ElButton :class="$style.btnPrimary" type="primary" @click="handleApplyAll">
         应用全部变更
-      </button>
-      <button :class="$style.btnGhost" @click="handleApplySelected">
+      </ElButton>
+      <ElButton :class="$style.btnGhost" @click="handleApplySelected">
         部分应用
-      </button>
+      </ElButton>
     </div>
   </div>
 </template>

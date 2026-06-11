@@ -44,6 +44,7 @@ const activeTask = ref<TaskInstance | null>(null)
 const formRef = ref<InstanceType<typeof MicroFormEmbed>>()
 const completing = ref(false)
 const crossNodeData = useCrossNodeData()
+const formSchemaDefaults = ref<Record<string, unknown>>({})
 
 onMounted(() => {
   fetchTasks()
@@ -270,13 +271,33 @@ function resolveEditableFields(task: TaskInstance): string[] | undefined {
 async function selectTask(task: TaskInstance) {
   if (task.status !== 'claimed') return
   activeTask.value = task
+
   // Fetch upstream node data for cross-node variable resolution
   await crossNodeData.fetchUpstreamData(task.id)
+
+  // If task has a form, fetch schema defaults for cross-node resolution
+  if (task.formPublishId) {
+    try {
+      const schema = await flowApi.getPublishedFormSchema(task.formPublishId)
+      if (schema?.json) {
+        const widgets = Array.isArray(schema.json) ? schema.json : []
+        const defaults = crossNodeData.extractSchemaDefaults(widgets as Array<Record<string, unknown>>)
+        if (crossNodeData.hasCrossNodeRefs(defaults)) {
+          // Store defaults for later use in mergeWithTaskData
+          formSchemaDefaults.value = defaults
+        }
+      }
+    } catch {
+      // Schema fetch failed — continue without defaults
+      formSchemaDefaults.value = {}
+    }
+  }
 }
 
 function closeForm() {
   activeTask.value = null
   crossNodeData.upstreamData.value = {}
+  formSchemaDefaults.value = {}
 }
 
 async function handleFormSubmit() {
@@ -290,6 +311,7 @@ async function handleFormSubmit() {
     await store.completeTask(activeTask.value.id, formData, 'completed')
     activeTask.value = null
     crossNodeData.upstreamData.value = {}
+    formSchemaDefaults.value = {}
     ElMessage.success('任务已完成')
     fetchTasks()
   } catch {
@@ -455,7 +477,7 @@ async function handleFormValidate() {
         :publish-id="activeTask.formPublishId ?? ''"
         :mode="resolveFormMode(activeTask)"
         :host-methods="activeTask.hostMethods ?? ['setValues', 'getValues', 'validate']"
-        :initial-data="crossNodeData.mergeWithTaskData(activeTask.formData)"
+        :initial-data="crossNodeData.mergeWithTaskData(activeTask.formData, formSchemaDefaults)"
         :editable-fields="resolveEditableFields(activeTask)"
         :readonly-fields="resolveReadonlyFields(activeTask)"
       />

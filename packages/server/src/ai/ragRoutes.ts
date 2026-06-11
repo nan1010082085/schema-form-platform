@@ -12,9 +12,13 @@ import Router from '@koa/router'
 import { reindexAll, indexSchema } from './services/ragService.js'
 import { FormSchemaModel } from '../models/FormSchema.js'
 import { SchemaEmbeddingModel } from '../models/SchemaEmbedding.js'
+import { authMiddleware } from '../middleware/auth.js'
 import { logger } from '../utils/logger.js'
 
 const router = new Router({ prefix: '/api/ai/rag' })
+
+// All RAG routes require authentication
+router.use(authMiddleware())
 
 // ────────────────────────────────────────────
 // POST /api/ai/rag/reindex — Batch rebuild all embeddings

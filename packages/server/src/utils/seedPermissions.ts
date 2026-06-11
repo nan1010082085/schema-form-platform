@@ -78,6 +78,26 @@ const PERMISSION_DEFINITIONS: Array<{ code: string; name: string; module: string
   { code: 'microapp:create', name: '创建微应用', module: 'microapp', description: '创建新微应用' },
   { code: 'microapp:edit', name: '编辑微应用', module: 'microapp', description: '修改微应用信息' },
   { code: 'microapp:delete', name: '删除微应用', module: 'microapp', description: '删除微应用' },
+
+  // ── ApiKey (API 密钥) ──
+  { code: 'apikey:view', name: '查看 API Key', module: 'system', description: '查看 API Key 列表和详情' },
+  { code: 'apikey:create', name: '创建 API Key', module: 'system', description: '创建新 API Key' },
+  { code: 'apikey:edit', name: '编辑 API Key', module: 'system', description: '修改 API Key 状态' },
+  { code: 'apikey:delete', name: '删除 API Key', module: 'system', description: '删除 API Key' },
+
+  // ── Webhook (Webhook) ──
+  { code: 'webhook:view', name: '查看 Webhook', module: 'webhook', description: '查看 Webhook 列表和详情' },
+  { code: 'webhook:create', name: '创建 Webhook', module: 'webhook', description: '创建新 Webhook' },
+  { code: 'webhook:edit', name: '编辑 Webhook', module: 'webhook', description: '修改 Webhook 配置' },
+  { code: 'webhook:delete', name: '删除 Webhook', module: 'webhook', description: '删除 Webhook' },
+
+  // ── Workflow (工作流) ──
+  { code: 'workflow:view', name: '查看工作流', module: 'workflow', description: '查看工作流列表和详情' },
+  { code: 'workflow:create', name: '创建工作流', module: 'workflow', description: '创建工作流设计' },
+  { code: 'workflow:edit', name: '编辑工作流', module: 'workflow', description: '修改工作流设计' },
+  { code: 'workflow:delete', name: '删除工作流', module: 'workflow', description: '删除工作流设计' },
+  { code: 'workflow:publish', name: '发布工作流', module: 'workflow', description: '发布/取消发布工作流' },
+  { code: 'workflow:start', name: '发起工作流', module: 'workflow', description: '发起工作流实例' },
 ]
 
 /**

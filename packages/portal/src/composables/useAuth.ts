@@ -14,8 +14,8 @@
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@/utils/apiClient'
-import type { LoginPayload, LoginResponse, AuthUser } from '@/types/auth'
+import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@schema-form/shared-utils/apiClient'
+import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/shared-utils/authTypes'
 
 /** 是否已注入 tokenProvider（全局只执行一次） */
 let providerInitialized = false
@@ -43,8 +43,9 @@ export function useAuth() {
     store.setLoading('login', true)
     try {
       const res = await apiClient.post<LoginResponse>('/auth/login', payload)
-      store.setToken(res.accessToken)
+      store.setToken(res.accessToken, res.refreshToken)
       store.setUser(res.user)
+      store.setUserKey(res.user.id)
       const redirect = (route.query.redirect as string) || '/'
       await router.push(redirect)
     } finally {

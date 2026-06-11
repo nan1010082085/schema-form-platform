@@ -8,6 +8,7 @@ import { UserModel } from './src/models/User.js'
 import { RoleModel } from './src/models/Role.js'
 import { PermissionModel } from './src/models/Permission.js'
 import { FormSchemaModel } from './src/models/FormSchema.js'
+import { seedModelConfigs } from './src/utils/seedModelConfigs.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // --- 权限定义 ---
@@ -118,6 +119,9 @@ async function seed() {
       console.log(`[seed] User created: ${u.username} / ${u.password} (roles: ${u.roleNames.join(', ')})`)
     }
   }
+
+  // --- Model configs ---
+  await seedModelConfigs()
 
   // --- Sample schema ---
   const existingSchema = await FormSchemaModel.findOne({ name: '示例表单' })

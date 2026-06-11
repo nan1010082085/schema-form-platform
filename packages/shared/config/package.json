@@ -5,12 +5,16 @@
   "type": "module",
   "exports": {
     "./vite": "./vite.ts",
-    "./vitest": "./vitest.ts"
+    "./vitest": "./vitest.ts",
+    "./elementPlus": "./elementPlus.ts"
   },
   "dependencies": {
     "@schema-form/micro-app": "workspace:*",
     "@vitejs/plugin-vue": "^5.2.3",
     "vite": "^6.3.0",
     "vitest": "^3.1.4"
+  },
+  "peerDependencies": {
+    "element-plus": ">=2.9.0"
   }
 }

@@ -83,8 +83,11 @@ function buildPermTree(perms: Permission[]): PermTreeNode[] {
 
   const moduleLabels: Record<string, string> = {
     flow: '流程管理',
+    workflow: '工作流管理',
     schema: '表单管理',
     system: '系统管理',
+    microapp: '微应用管理',
+    webhook: 'Webhook 管理',
   }
 
   const result: PermTreeNode[] = []

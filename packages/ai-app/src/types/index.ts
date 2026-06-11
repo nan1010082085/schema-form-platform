@@ -77,6 +77,7 @@ export interface ToolCallInfo {
 }
 
 export interface AIMessage {
+  id?: string
   role: 'user' | 'assistant' | 'system'
   content: string
   /** 消息子类型（如 interrupt 表示 HITL 确认） */
@@ -92,6 +93,8 @@ export interface AIMessage {
   timestamp: Date
   /** 消息状态（用于实时同步） */
   status?: MessageStatus
+  /** 消息反馈状态 */
+  feedback?: 'positive' | 'negative' | null
   /** 附加数据（如 interrupt 的确认信息） */
   data?: unknown
 }

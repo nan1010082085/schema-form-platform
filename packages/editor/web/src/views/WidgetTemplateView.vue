@@ -6,11 +6,16 @@
  */
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Grid, Plus, Delete, View, Document, Collection } from '@element-plus/icons-vue'
+import { Search, Grid, Plus, Delete, View, Document, Collection, Monitor, Memo } from '@element-plus/icons-vue'
 import { useTemplateStore } from '@/stores/template'
 import { useWidgetStore } from '@/stores/widget'
+import { WidgetRenderer } from '@/components/WidgetRenderer'
+import { registerAllWidgets } from '@/widgets'
 import type { TemplateItem } from '@/utils/apiClient'
+import type { PartialWidget } from '@/widgets/base/types'
 import styles from './WidgetTemplateView.module.scss'
+
+registerAllWidgets()
 
 const templateStore = useTemplateStore()
 const widgetStore = useWidgetStore()
@@ -54,13 +59,18 @@ function handlePageChange(page: number) {
 }
 
 // ---- 详情预览 ----
+type PreviewMode = 'render' | 'json'
 const previewVisible = ref(false)
 const previewTemplate = ref<TemplateItem | null>(null)
 const previewJson = ref('')
+const previewMode = ref<PreviewMode>('render')
+const previewSchema = ref<PartialWidget[]>([])
 
 function openPreview(template: TemplateItem) {
   previewTemplate.value = template
   previewJson.value = JSON.stringify(template.widgets, null, 2)
+  previewSchema.value = template.widgets as unknown as PartialWidget[]
+  previewMode.value = 'render'
   previewVisible.value = true
 }
 
@@ -285,49 +295,65 @@ onMounted(() => {
     <el-drawer
       v-model="previewVisible"
       :title="previewTemplate?.name ?? '模板预览'"
-      size="50%"
+      size="55%"
       direction="rtl"
     >
       <div v-if="previewTemplate" :class="styles.previewContent">
-        <div :class="styles.previewSection">
-          <h4 :class="styles.previewLabel">描述</h4>
-          <p :class="styles.previewDesc">{{ previewTemplate.description || '暂无描述' }}</p>
+        <!-- 模式切换 -->
+        <div :class="styles.previewModeBar">
+          <el-radio-group v-model="previewMode" size="small">
+            <el-radio-button value="render">
+              <el-icon :size="14"><Monitor /></el-icon>
+              渲染预览
+            </el-radio-button>
+            <el-radio-button value="json">
+              <el-icon :size="14"><Memo /></el-icon>
+              JSON 源码
+            </el-radio-button>
+          </el-radio-group>
         </div>
 
-        <div :class="styles.previewSection">
-          <h4 :class="styles.previewLabel">分类</h4>
-          <el-tag :type="getCategoryTagType(previewTemplate.category) as any" effect="plain">
-            {{ getCategoryLabel(previewTemplate.category) }}
-          </el-tag>
-        </div>
-
-        <div v-if="previewTemplate.tags.length > 0" :class="styles.previewSection">
-          <h4 :class="styles.previewLabel">标签</h4>
-          <div :class="styles.previewTagList">
-            <el-tag
-              v-for="tag in previewTemplate.tags"
-              :key="tag"
-              size="small"
-              type="info"
-              effect="plain"
-            >
-              {{ tag }}
+        <!-- 模板基本信息 -->
+        <div :class="styles.previewMeta">
+          <div :class="styles.previewMetaRow">
+            <span :class="styles.previewMetaLabel">分类</span>
+            <el-tag :type="getCategoryTagType(previewTemplate.category) as any" effect="plain" size="small">
+              {{ getCategoryLabel(previewTemplate.category) }}
             </el-tag>
+          </div>
+          <div :class="styles.previewMetaRow">
+            <span :class="styles.previewMetaLabel">统计</span>
+            <span :class="styles.previewMetaValue">
+              使用 {{ previewTemplate.usageCount }} 次 · 包含 {{ previewTemplate.widgets.length }} 个组件
+            </span>
+          </div>
+          <div v-if="previewTemplate.description" :class="styles.previewMetaRow">
+            <span :class="styles.previewMetaLabel">描述</span>
+            <span :class="styles.previewMetaValue">{{ previewTemplate.description }}</span>
+          </div>
+          <div v-if="previewTemplate.tags.length > 0" :class="styles.previewMetaRow">
+            <span :class="styles.previewMetaLabel">标签</span>
+            <div :class="styles.previewTagList">
+              <el-tag
+                v-for="tag in previewTemplate.tags"
+                :key="tag"
+                size="small"
+                type="info"
+                effect="plain"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
           </div>
         </div>
 
-        <div :class="styles.previewSection">
-          <h4 :class="styles.previewLabel">统计</h4>
-          <p :class="styles.previewStats">
-            使用次数: {{ previewTemplate.usageCount }} |
-            包含 {{ previewTemplate.widgets.length }} 个组件
-          </p>
+        <!-- 渲染预览 -->
+        <div v-if="previewMode === 'render'" :class="styles.previewRenderArea">
+          <WidgetRenderer :schema="previewSchema" />
         </div>
 
-        <div :class="styles.previewSection">
-          <h4 :class="styles.previewLabel">Schema 结构</h4>
-          <pre :class="styles.schemaCode"><code>{{ previewJson }}</code></pre>
-        </div>
+        <!-- JSON 源码 -->
+        <pre v-else :class="styles.schemaCode"><code>{{ previewJson }}</code></pre>
 
         <div :class="styles.previewActions">
           <el-button type="primary" @click="applyToCanvas(previewTemplate!)">

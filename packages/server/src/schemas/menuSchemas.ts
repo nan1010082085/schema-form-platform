@@ -11,6 +11,7 @@ export const createMenuSchema = z.object({
   status: z.enum(['active', 'inactive']).default('active'),
   component: z.string().max(200, '组件路径最多200个字符').default(''),
   microAppId: z.string().max(100, '微应用ID最多100个字符').nullable().default(null),
+  target: z.enum(['_self', '_blank']).default('_self'),
 }).strict()
 
 export const updateMenuSchema = z.object({
@@ -24,6 +25,7 @@ export const updateMenuSchema = z.object({
   status: z.enum(['active', 'inactive']).optional(),
   component: z.string().max(200).optional(),
   microAppId: z.string().max(100).nullable().optional(),
+  target: z.enum(['_self', '_blank']).optional(),
 }).strict().refine((data) => Object.keys(data).length > 0, {
   message: 'At least one field is required.',
 })

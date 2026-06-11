@@ -10,7 +10,7 @@
 .card {
   width: 380px;
   padding: 40px 32px;
-  background: #fff;
+  background: var(--bg-color, #fff);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
@@ -23,13 +23,13 @@
 .logo {
   font-size: 28px;
   font-weight: 700;
-  color: #1677ff;
+  color: var(--color-primary, #1677ff);
   margin: 0 0 8px;
 }
 
 .subtitle {
   font-size: 13px;
-  color: #909399;
+  color: var(--text-color-secondary, #909399);
   margin: 0;
 }
 

@@ -35,6 +35,8 @@ import { ApprovalLogModel } from '../flow-models/ApprovalLog.js'
 import { parseTimerValue } from './TimerService.js'
 import { messageQueue } from './MessageQueue.js'
 import { notificationService } from './NotificationService.js'
+import { eventBus } from '../services/eventBus.js'
+import { logNodeStart, logNodeComplete, logNodeFail } from '../services/executionLogger.js'
 import type { RejectTargetNode } from '@schema-form/flow-shared'
 
 export class FlowEngine {
@@ -480,6 +482,28 @@ export class FlowEngine {
           }
 
           case BpmnElementType.ServiceTask: {
+            await logNodeStart(instance._id, token.nodeId, node.config.label ?? 'ServiceTask', { ...instance.variables })
+
+            // Execute service task based on serviceConfig
+            const serviceConfig = node.config.serviceConfig as Record<string, unknown> | undefined
+            const serviceType = (serviceConfig?.type ?? node.config.serviceType) as string | undefined
+
+            if (serviceType === 'dataUpdate') {
+              // Data update service task: execute data update rules
+              const { executeDataUpdateRules } = await import('../services/dataUpdateEngine.js')
+              const result = await executeDataUpdateRules(instance).catch((err: unknown) => {
+                console.error('[FlowEngine] ServiceTask dataUpdate failed:', err instanceof Error ? err.message : err)
+                return { submissionId: null, rulesApplied: 0 }
+              })
+
+              // Store result in instance variables for downstream nodes
+              if (result.submissionId) {
+                instance.variables[`${node.config.label}_result`] = result
+              }
+            }
+
+            await logNodeComplete(instance._id, token.nodeId, { serviceType })
+
             token.state = 'completed'
             const outEdges = model.getOutgoing(token.nodeId)
             if (outEdges.length > 0) {
@@ -546,12 +570,17 @@ export class FlowEngine {
           }
 
           case BpmnElementType.ScriptTask: {
+            await logNodeStart(instance._id, token.nodeId, node.config.label ?? 'ScriptTask', { ...instance.variables })
+
             const scriptContent: string = node.config.scriptContent ?? ''
             const result = evaluateScript(scriptContent, instance.variables)
             if (result !== undefined) {
               const resultKey: string = node.config.label ?? `scriptResult_${token.nodeId}`
               instance.variables[resultKey] = result
             }
+
+            await logNodeComplete(instance._id, token.nodeId, { result })
+
             token.state = 'completed'
             const outEdges = model.getOutgoing(token.nodeId)
             if (outEdges.length > 0) {
@@ -568,6 +597,8 @@ export class FlowEngine {
           }
 
           case BpmnElementType.SendTask: {
+            await logNodeStart(instance._id, token.nodeId, node.config.label ?? 'SendTask', { ...instance.variables })
+
             // Message channel mode: send via MessageQueue
             const messageRef = node.config.messageRef as string | undefined
             if (messageRef) {
@@ -581,6 +612,8 @@ export class FlowEngine {
                 senderInstanceId: instance._id,
                 senderNodeId: token.nodeId,
               })
+
+              await logNodeComplete(instance._id, token.nodeId, { channel: messageRef })
 
               token.state = 'completed'
               const outEdges = model.getOutgoing(token.nodeId)
@@ -600,6 +633,8 @@ export class FlowEngine {
 
             if (!apiConfig?.url) {
               // No HTTP config — pass through (backwards compatible)
+              await logNodeComplete(instance._id, token.nodeId, { mode: 'passthrough' })
+
               token.state = 'completed'
               const outEdges = model.getOutgoing(token.nodeId)
               if (outEdges.length > 0) {
@@ -665,11 +700,15 @@ export class FlowEngine {
               }
             } catch (err) {
               clearTimeout(timeoutId)
+              const errMsg = err instanceof Error ? err.message : String(err)
+              await logNodeFail(instance._id, token.nodeId, errMsg)
               instance.status = 'failed'
               instance.completedAt = new Date()
               await instance.save()
               throw err
             }
+
+            await logNodeComplete(instance._id, token.nodeId, { url, method })
 
             token.state = 'completed'
             const outEdges = model.getOutgoing(token.nodeId)
@@ -943,6 +982,22 @@ export class FlowEngine {
       ).catch(() => { /* notification failure should not block engine */ })
     }
 
+    // Emit webhook event for flow completion
+    if (isCompleted) {
+      eventBus.emit('flow.completed', {
+        instanceId: instance._id,
+        workflowId: instance.definitionId,
+      }).catch(() => {})
+    }
+
+    // Execute data update rules when the flow completes
+    if (isCompleted) {
+      const { executeDataUpdateRules } = await import('../services/dataUpdateEngine.js')
+      await executeDataUpdateRules(instance).catch((err: unknown) => {
+        console.error('[FlowEngine] Data update rules execution failed:', err instanceof Error ? err.message : err)
+      })
+    }
+
     if (instance.status === 'completed' && instance.parentInstanceId) {
       await this.advance(instance.parentInstanceId)
     }
@@ -992,6 +1047,13 @@ export class FlowEngine {
         task.nodeName,
         operator,
       ).catch(() => { /* notification failure should not block engine */ })
+
+      // Emit webhook event for flow rejection
+      eventBus.emit('flow.rejected', {
+        instanceId: instance._id,
+        workflowId: instance.definitionId,
+        reason: `Task "${task.nodeName}" rejected by ${operator}`,
+      }).catch(() => {})
     }
 
     // Write form data to instance variables only if formVariable is configured
@@ -1081,6 +1143,7 @@ export class FlowEngine {
     const visited = new Set<string>()
     const queue = [task.nodeId]
     const upstreamUserTaskNodeIds: string[] = []
+    const hasStartEventUpstream = new Set<string>()
 
     while (queue.length > 0) {
       const nodeId = queue.shift()!
@@ -1094,6 +1157,8 @@ export class FlowEngine {
 
         if (sourceNode.bpmnType === BpmnElementType.UserTask) {
           upstreamUserTaskNodeIds.push(sourceNode.id)
+        } else if (sourceNode.bpmnType === BpmnElementType.StartEvent) {
+          hasStartEventUpstream.add(nodeId)
         }
         queue.push(edge.sourceNodeId)
       }
@@ -1117,6 +1182,12 @@ export class FlowEngine {
           nodeData[t.nodeId] = t.formData
         }
       }
+    }
+
+    // If startEvent is upstream, include instance variables as startEvent data
+    // This allows {{startEvent.fieldName}} to reference flow initiator's data
+    if (hasStartEventUpstream.size > 0 && instance.variables && Object.keys(instance.variables).length > 0) {
+      nodeData['startEvent'] = instance.variables
     }
 
     return {

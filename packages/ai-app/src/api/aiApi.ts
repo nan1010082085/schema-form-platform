@@ -701,6 +701,50 @@ export async function rollbackVersion(conversationId: string, versionId: string)
   })
 }
 
+// ---- 消息反馈 ----
+
+export type FeedbackType = 'positive' | 'negative'
+
+export interface MessageFeedback {
+  feedback: FeedbackType
+  comment?: string
+}
+
+/**
+ * 为消息提交反馈（点赞/点踩）。
+ */
+export async function submitMessageFeedback(
+  messageId: string,
+  feedback: FeedbackType,
+  comment?: string,
+): Promise<void> {
+  await request<void>(`/ai/messages/${encodeURIComponent(messageId)}/feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ feedback, comment }),
+  })
+}
+
+// ---- 模型配置 ----
+
+export interface ModelConfigItem {
+  id: string
+  name: string
+  provider: string
+  model: string
+  isDefault: boolean
+  parameters?: {
+    temperature?: number
+    maxTokens?: number
+    topP?: number
+  }
+}
+
+export async function getModelConfigs(): Promise<ModelConfigItem[]> {
+  const res = await request<{ items: ModelConfigItem[]; total: number }>('/model-configs?pageSize=100')
+  return res.items
+}
+
 // ---- AI 健康检查 ----
 
 export interface AIProviderHealth {

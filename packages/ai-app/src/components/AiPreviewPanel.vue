@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { ElButton } from 'element-plus'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -313,14 +314,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
         </span>
       </div>
       <div :class="$style.headerActions">
-        <button
+        <ElButton
           v-if="showCompareButton"
           :class="$style.headerBtn"
           title="对比模式"
+          link
           @click="emit('compare')"
         >
           &#x2194;
-        </button>
+        </ElButton>
       </div>
     </div>
 
@@ -368,13 +370,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
             <span :class="$style.previewCardTitle">{{ schemaData.title }}</span>
             <div :class="$style.previewCardActions">
               <span :class="$style.badge">{{ schemaData.fields.length }} fields</span>
-              <button
+              <ElButton
                 v-if="formWidgets.length > 0"
                 :class="$style.selectAllBtn"
+                link
+                size="small"
                 @click="handleSelectAll"
               >
                 全选
-              </button>
+              </ElButton>
             </div>
           </div>
           <div :class="$style.formPreview">
@@ -406,8 +410,8 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                       <div :class="$style.inlineEditHeader">
                         <span :class="$style.inlineEditTitle">编辑组件</span>
                         <div :class="$style.inlineEditActions">
-                          <button :class="$style.inlineEditConfirm" title="确认" @click.stop="handleCommitInlineEdit">&#x2713;</button>
-                          <button :class="$style.inlineEditCancel" title="取消" @click.stop="handleCancelInlineEdit">&times;</button>
+                          <ElButton :class="$style.inlineEditConfirm" title="确认" link size="small" @click.stop="handleCommitInlineEdit">&#x2713;</ElButton>
+                          <ElButton :class="$style.inlineEditCancel" title="取消" link size="small" @click.stop="handleCancelInlineEdit">&times;</ElButton>
                         </div>
                       </div>
                       <div :class="$style.inlineEditFields">
@@ -546,20 +550,24 @@ function getNodeStatusColor(nodeId: string): string | undefined {
 
                   <!-- 操作按钮组 -->
                   <div :class="$style.fieldActionGroup">
-                    <button
+                    <ElButton
                       :class="$style.fieldEditBtn"
                       title="内联编辑"
+                      link
+                      size="small"
                       @click.stop="handleStartInlineEdit(w)"
                     >
                       &#x270E;
-                    </button>
-                    <button
+                    </ElButton>
+                    <ElButton
                       :class="$style.fieldEditBtn"
                       title="编辑属性"
+                      link
+                      size="small"
                       @click.stop="handleFieldEdit(w)"
                     >
                       &#x2699;
-                    </button>
+                    </ElButton>
                   </div>
                 </div>
               </template>
@@ -574,9 +582,9 @@ function getNodeStatusColor(nodeId: string): string | undefined {
         <div v-if="flowData.graph" :class="$style.flowCanvasWrapper">
           <div :class="$style.flowToolbar">
             <span :class="$style.flowStats">{{ nodeCount }} 节点 / {{ edgeCount }} 连线</span>
-            <button :class="$style.fitBtn" title="适配画布" @click="handleFitView">
+            <ElButton :class="$style.fitBtn" title="适配画布" link @click="handleFitView">
               &#x26F6;
-            </button>
+            </ElButton>
           </div>
           <div :class="$style.flowCanvas">
             <VueFlow
@@ -614,12 +622,12 @@ function getNodeStatusColor(nodeId: string): string | undefined {
             <div :class="$style.nodeDetailHeader">
               <span :class="$style.nodeDetailTitle">{{ interaction.selectedNodeDetail.value.data.label }}</span>
               <div :class="$style.nodeDetailActions">
-                <button :class="$style.nodeEditBtn" title="编辑节点" @click="handleNodeEdit">
+                <ElButton :class="$style.nodeEditBtn" title="编辑节点" link @click="handleNodeEdit">
                   &#x270E;
-                </button>
-                <button :class="$style.nodeDetailClose" @click="interaction.clearNodeSelection()">
+                </ElButton>
+                <ElButton :class="$style.nodeDetailClose" link @click="interaction.clearNodeSelection()">
                   &times;
-                </button>
+                </ElButton>
               </div>
             </div>
             <div :class="$style.nodeDetailBody">
@@ -700,7 +708,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
     <div v-if="interaction.isFieldDetailVisible.value && interaction.selectedFieldDetail.value && activeTab === 'schema'" :class="$style.fieldDetail">
       <div :class="$style.fieldDetailHeader">
         <span :class="$style.fieldDetailTitle">组件详情</span>
-        <button :class="$style.fieldDetailClose" @click="interaction.closeFieldDetail()">&times;</button>
+        <ElButton :class="$style.fieldDetailClose" link @click="interaction.closeFieldDetail()">&times;</ElButton>
       </div>
       <div :class="$style.fieldDetailBody">
         <div :class="$style.fieldDetailRow">
@@ -731,15 +739,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
       v-if="(activeTab === 'schema' && schemaData) || (activeTab === 'flow' && flowData)"
       :class="$style.actions"
     >
-      <button :class="$style.btnPrimary" @click="emit('primary-action')">
+      <ElButton :class="$style.btnPrimary" type="primary" @click="emit('primary-action')">
         {{ primaryAction }}
-      </button>
-      <button :class="$style.btnApply" @click="handleApplyToEditor">
+      </ElButton>
+      <ElButton :class="$style.btnApply" @click="handleApplyToEditor">
         {{ interaction.hasSelection.value ? `应用选中 (${interaction.selectedCount.value})` : '应用到编辑器' }}
-      </button>
-      <button :class="$style.btnGhost" @click="emit('secondary-action')">
+      </ElButton>
+      <ElButton :class="$style.btnGhost" @click="emit('secondary-action')">
         {{ secondaryAction }}
-      </button>
+      </ElButton>
     </div>
 
     <!-- 字段编辑弹窗 -->

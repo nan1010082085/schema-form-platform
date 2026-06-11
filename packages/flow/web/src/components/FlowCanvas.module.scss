@@ -13,6 +13,11 @@
   }
 }
 
+// Error highlight on nodes — applied via Vue Flow's class property
+:global(.vue-flow__node.node-error) {
+  filter: drop-shadow(0 0 3px var(--el-color-danger));
+}
+
 .minimap {
   border-radius: 6px;
   border: 1px solid var(--el-border-color-lighter);

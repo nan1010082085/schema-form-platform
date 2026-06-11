@@ -58,11 +58,10 @@ vi.mock('@/composables/useListData', () => ({
   }),
 }))
 
-vi.mock('@/utils/request', () => ({
-  getRequestInstance: () => ({
-    get: vi.fn().mockResolvedValue({ code: 0, data: [] }),
-    post: vi.fn().mockResolvedValue({ code: 0, data: [] }),
-  }),
+vi.mock('@/utils/apiClient', () => ({
+  apiClient: {
+    requestRaw: vi.fn().mockResolvedValue({ code: 0, data: [] }),
+  },
 }))
 
 /** Shared mount options with ElementPlus plugin + router mock */

@@ -33,7 +33,18 @@ export enum BpmnElementType {
 }
 
 export type AssigneeType = 'user' | 'role' | 'expression'
-export type ServiceType = 'http' | 'function' | 'script'
+export type ServiceType = 'http' | 'function' | 'script' | 'dataUpdate'
+
+export interface DataServiceConfig {
+  type: 'dataUpdate'
+  workflowId?: string
+  rules?: Array<{
+    trigger: 'on-approved' | 'on-rejected' | 'on-completed'
+    sourceField: string
+    targetField: string
+    transform?: string
+  }>
+}
 export type GatewayDirection = 'converging' | 'diverging'
 export type TimerType = 'duration' | 'date' | 'cycle'
 export type ApprovalMode = 'single' | 'countersign' | 'or-sign'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElButton, ElSelect, ElOption } from 'element-plus'
 import AiMessage from './AiMessage.vue'
 import TaskChainBar from './TaskChainBar.vue'
 import AiRagSearch from './AiRagSearch.vue'
@@ -59,6 +59,9 @@ const emit = defineEmits<{
   'rag-remove': [id: string]
   'open-json-drawer': []
   'retry-tool': [messageIndex: number, toolCallIndex: number]
+  'copy-message': [messageIndex: number]
+  'regenerate-message': [messageIndex: number]
+  'message-feedback': [messageIndex: number, type: 'positive' | 'negative']
 }>()
 
 const selectedAgent = ref<AgentType>('auto')
@@ -288,26 +291,28 @@ function handleCardAction(
         </span>
       </div>
       <div :class="$style.headerActions">
-        <button
+        <ElButton
           :class="$style.actionBtn"
           title="对话设置"
+          link
           @click="emit('open-settings')"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-        </button>
-        <button
+        </ElButton>
+        <ElButton
           :class="$style.actionBtn"
           title="清空对话"
+          link
           @click="emit('clear-messages')"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
-        </button>
+        </ElButton>
       </div>
     </div>
 
@@ -326,7 +331,7 @@ function handleCardAction(
         <div :class="$style.emptyTitle">开始一段新对话</div>
         <div :class="$style.emptySub">描述你想生成的表单、页面或流程</div>
         <div :class="$style.promptGrid">
-          <button
+          <ElButton
             v-for="(prompt, idx) in starterPrompts"
             :key="idx"
             :class="$style.promptCard"
@@ -334,7 +339,7 @@ function handleCardAction(
           >
             <span :class="$style.promptIcon" v-html="prompt.icon" />
             <span :class="$style.promptText">{{ prompt.text }}</span>
-          </button>
+          </ElButton>
         </div>
       </div>
 
@@ -352,23 +357,28 @@ function handleCardAction(
         :loading="loading && msg.role === 'assistant' && !msg.content && idx === messages.length - 1"
         :cards="getDisplayCards(msg)"
         :schema-widgets="msg.schema"
+        :message-id="msg.id"
+        :feedback="msg.feedback"
         @card-primary-action="(ci) => handleCardAction('primary', idx, ci)"
         @card-secondary-action="(ci) => handleCardAction('secondary', idx, ci)"
         @open-json-drawer="emit('open-json-drawer')"
         @retry-tool="(tci) => emit('retry-tool', idx, tci)"
+        @copy="emit('copy-message', idx)"
+        @regenerate="emit('regenerate-message', idx)"
+        @feedback="(type) => emit('message-feedback', idx, type)"
       />
     </div>
 
     <!-- Retry Banner (SSE disconnected) -->
     <div v-if="sseStatus === 'disconnected'" :class="$style.retryBanner">
       <span :class="$style.retryBannerText">连接已断开，请重新发送</span>
-      <button :class="$style.retryBannerBtn" @click="emit('retry')">
+      <ElButton :class="$style.retryBannerBtn" @click="emit('retry')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10" />
           <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
         </svg>
         重试
-      </button>
+      </ElButton>
     </div>
 
     <!-- Floating Input Panel -->
@@ -401,13 +411,14 @@ function handleCardAction(
             <span v-else-if="att.status === 'error'" :class="$style.attachmentErrorText">
               {{ att.error ?? '失败' }}
             </span>
-            <button
+            <ElButton
               :class="$style.attachmentRemove"
               title="移除"
+              link
               @click="removeAttachment(idx)"
             >
               &times;
-            </button>
+            </ElButton>
           </div>
         </div>
 
@@ -445,10 +456,11 @@ function handleCardAction(
               <span :class="$style.ragCount">{{ ragContext.length }}</span>
             </span>
             <!-- RAG search toggle button -->
-            <button
+            <ElButton
               :class="[$style.ragBtn, { [$style.ragBtnActive]: ragVisible }]"
               :disabled="disabled || loading"
               title="引用 Schema（智能匹配）"
+              link
               @click="ragVisible = !ragVisible"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -456,7 +468,7 @@ function handleCardAction(
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
               </svg>
-            </button>
+            </ElButton>
             <!-- Hidden file input -->
             <input
               ref="fileInputRef"
@@ -466,39 +478,41 @@ function handleCardAction(
               @change="handleFileChange"
             />
             <!-- File upload button -->
-            <button
+            <ElButton
               :class="$style.fileBtn"
               :disabled="disabled || loading || fileUploading"
               title="上传文件（图片/PDF/文档）"
+              link
               @click="triggerFileUpload"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
               </svg>
-            </button>
-            <select
+            </ElButton>
+            <ElSelect
               v-model="selectedAgent"
               :class="$style.agentSelect"
               :disabled="disabled || loading"
+              size="small"
             >
-              <option
+              <ElOption
                 v-for="opt in agentOptions"
                 :key="opt.value"
+                :label="opt.label"
                 :value="opt.value"
-              >
-                {{ opt.label }}
-              </option>
-            </select>
-            <button
+              />
+            </ElSelect>
+            <ElButton
               v-if="loading"
               :class="$style.stopBtn"
               title="停止生成"
+              link
               @click="emit('stop')"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
-            </button>
+            </ElButton>
           </div>
         </div>
       </div>

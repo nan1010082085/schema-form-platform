@@ -14,6 +14,7 @@ export const useFlowDesignerStore = defineStore('flowDesigner', () => {
   const history = shallowRef<GraphSnapshot[]>([])
   const historyIndex = ref(-1)
   const isDirty = ref(false)
+  const errorNodeIds = ref<Set<string>>(new Set())
 
   function selectNode(id: string | null) {
     selectedNodeId.value = id
@@ -58,12 +59,21 @@ export const useFlowDesignerStore = defineStore('flowDesigner', () => {
     isDirty.value = false
   }
 
+  function setErrorNodes(ids: string[]) {
+    errorNodeIds.value = new Set(ids)
+  }
+
+  function clearErrorNodes() {
+    errorNodeIds.value = new Set()
+  }
+
   function reset() {
     selectedNodeId.value = null
     selectedEdgeId.value = null
     history.value = []
     historyIndex.value = -1
     isDirty.value = false
+    errorNodeIds.value = new Set()
   }
 
   return {
@@ -82,5 +92,8 @@ export const useFlowDesignerStore = defineStore('flowDesigner', () => {
     setMode,
     markClean,
     reset,
+    errorNodeIds,
+    setErrorNodes,
+    clearErrorNodes,
   }
 })

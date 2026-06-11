@@ -31,6 +31,7 @@ const IDS = {
   FLOW_MONITOR: 'a1b2c3d4-000e-4000-8000-00000000000e',
   FLOW_APPROVE: 'a1b2c3d4-000f-4000-8000-00000000000f',
   AI_APP:       'a1b2c3d4-0010-4000-8000-000000000010',
+  WORKFLOW:     'a1b2c3d4-0011-4000-8000-000000000011',
 } as const
 
 const MENUS: MenuSeed[] = [
@@ -55,8 +56,11 @@ const MENUS: MenuSeed[] = [
   { _id: IDS.FLOW_MONITOR,  parentId: IDS.FLOW,   name: '流程监控',  path: '/flow/monitor',    icon: 'Monitor',    type: 'menu', permission: 'flow:view',     sort: 2,  microAppId: 'flow' },
   { _id: IDS.FLOW_APPROVE,  parentId: IDS.FLOW,   name: '审批中心',  path: '/flow/approval',   icon: 'Stamp',      type: 'menu', permission: 'flow:approve',  sort: 3,  microAppId: 'flow' },
 
+  // ── 工作流 ──
+  { _id: IDS.WORKFLOW,  parentId: null,           name: '工作流',    path: '/workflow',         icon: 'SetUp',      type: 'menu', permission: '',              sort: 4,  microAppId: null },
+
   // ── AI 应用 ──
-  { _id: IDS.AI_APP,    parentId: null,           name: 'AI 应用',   path: '/ai',              icon: 'MagicStick', type: 'menu', permission: '',              sort: 4,  microAppId: 'ai-app' },
+  { _id: IDS.AI_APP,    parentId: null,           name: 'AI 应用',   path: '/ai',              icon: 'MagicStick', type: 'menu', permission: '',              sort: 5,  microAppId: 'ai-app' },
 ]
 
 /**

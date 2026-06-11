@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { RouterView, RouterLink, useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { RouterView, useRoute, useRouter } from 'vue-router'
+import { apiClient } from '@/utils/apiClient'
+import { resolveToken } from '@schema-form/micro-app/child'
 import {
   Monitor,
   Menu as MenuIcon,
@@ -13,23 +15,67 @@ import {
   Document,
 } from '@element-plus/icons-vue'
 
-const route = useRoute()
-const isCollapsed = ref(false)
+const ICON_MAP: Record<string, typeof Monitor> = {
+  Monitor,
+  Menu: MenuIcon,
+  User,
+  UserFilled,
+  OfficeBuilding,
+  Briefcase,
+  Collection,
+  Setting,
+  Document,
+}
 
-const menuItems = [
-  { name: 'micro-apps', path: '/micro-apps', label: '微应用管理', icon: Monitor },
-  { name: 'menus', path: '/menus', label: '菜单管理', icon: MenuIcon },
-  { name: 'users', path: '/users', label: '用户管理', icon: User },
-  { name: 'roles', path: '/roles', label: '角色管理', icon: UserFilled },
-  { name: 'depts', path: '/depts', label: '部门管理', icon: OfficeBuilding },
-  { name: 'posts', path: '/posts', label: '岗位管理', icon: Briefcase },
-  { name: 'dict', path: '/dict', label: '字典管理', icon: Collection },
-  { name: 'config', path: '/config', label: '参数设置', icon: Setting },
-  { name: 'logs', path: '/logs', label: '操作日志', icon: Document },
-]
+interface MenuItem {
+  id: string
+  name: string
+  path: string
+  icon: string
+  target: '_self' | '_blank'
+  children?: MenuItem[]
+}
+
+const route = useRoute()
+const router = useRouter()
+const isCollapsed = ref(false)
+const menuItems = ref<MenuItem[]>([])
 
 const activeMenu = computed(() => route.name as string)
 const pageTitle = computed(() => (route.meta?.title as string) || '系统管理')
+
+async function fetchMenus() {
+  try {
+    const data = await apiClient.get<MenuItem[]>('/menus?tree=true&type=menu&status=active')
+    menuItems.value = Array.isArray(data) ? data : []
+  } catch {
+    menuItems.value = []
+  }
+}
+
+function getMenuIcon(iconName: string) {
+  return ICON_MAP[iconName] || Monitor
+}
+
+function openPortal() {
+  window.open('/', '_blank')
+}
+
+function handleMenuClick(item: MenuItem) {
+  if (item.target === '_blank') {
+    const token = resolveToken()
+    const url = item.path.startsWith('http')
+      ? item.path
+      : `${window.location.origin}${item.path.startsWith('/') ? '' : '/'}${item.path}`
+    const separator = url.includes('?') ? '&' : '?'
+    const fullUrl = token ? `${url}${separator}token=${encodeURIComponent(token)}` : url
+    window.open(fullUrl, '_blank')
+    return
+  }
+  router.push(item.path)
+}
+
+onMounted(fetchMenus)
 </script>
 
 <template>
@@ -44,17 +90,32 @@ const pageTitle = computed(() => (route.meta?.title as string) || '系统管理'
         :default-active="activeMenu"
         :collapse="isCollapsed"
         :class="$style.menu"
-        router
       >
-        <el-menu-item
-          v-for="item in menuItems"
-          :key="item.name"
-          :index="item.name"
-          :route="{ name: item.name }"
-        >
-          <el-icon><component :is="item.icon" /></el-icon>
-          <template #title>{{ item.label }}</template>
-        </el-menu-item>
+        <template v-for="item in menuItems" :key="item.id">
+          <el-sub-menu v-if="item.children?.length" :index="item.id">
+            <template #title>
+              <el-icon><component :is="getMenuIcon(item.icon)" /></el-icon>
+              <span>{{ item.name }}</span>
+            </template>
+            <el-menu-item
+              v-for="child in item.children"
+              :key="child.id"
+              :index="child.path"
+              @click="handleMenuClick(child)"
+            >
+              <el-icon><component :is="getMenuIcon(child.icon)" /></el-icon>
+              <template #title>{{ child.name }}</template>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item
+            v-else
+            :index="item.path"
+            @click="handleMenuClick(item)"
+          >
+            <el-icon><component :is="getMenuIcon(item.icon)" /></el-icon>
+            <template #title>{{ item.name }}</template>
+          </el-menu-item>
+        </template>
       </el-menu>
     </aside>
 
@@ -80,7 +141,7 @@ const pageTitle = computed(() => (route.meta?.title as string) || '系统管理'
           <h2 :class="$style.pageTitle">{{ pageTitle }}</h2>
         </div>
         <div :class="$style.headerRight">
-          <el-button text @click="window.open('/', '_blank')">返回门户</el-button>
+          <el-button text @click="openPortal">返回门户</el-button>
         </div>
       </header>
 

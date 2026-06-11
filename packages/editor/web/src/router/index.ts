@@ -2,11 +2,34 @@ import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
 import { useAppStore } from '@/stores/app'
+import { resolveToken } from '@schema-form/micro-app/child'
+import { SSOClient } from '@schema-form/shared-utils/sso'
+
+// SSO 客户端配置
+const SSO_CLIENT_ID = 'editor'
+const TOKEN_KEY = 'sfp_access_token'
+
+function getSSOClient(): SSOClient {
+  const origin = window.location.origin
+  return new SSOClient({
+    clientId: SSO_CLIENT_ID,
+    redirectUri: `${origin}/auth/callback`,
+    ssoBaseUrl: origin,
+  })
+}
 
 // micro-app 模式下使用 memory history，避免子应用路由篡改宿主 URL
 const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
 
 const routes = [
+  // ---- SSO Callback ----
+  {
+    path: '/auth/callback',
+    name: 'auth-callback',
+    component: () => import('@/views/AuthCallbackView.vue'),
+    meta: { public: true },
+  },
+
   // ---- Redirects ----
   { path: '/', redirect: '/instances' },
   {
@@ -25,19 +48,59 @@ const routes = [
         component: () => import('@/views/InstancesView.vue'),
       },
       {
-        path: 'docs',
-        name: 'widget-docs',
-        component: () => import('@/views/WidgetDocsView.vue'),
-      },
-      {
         path: 'templates',
         name: 'widget-templates',
         component: () => import('@/views/WidgetTemplateView.vue'),
       },
       {
-        path: 'system/tenants',
-        name: 'system-tenants',
-        component: () => import('@/views/TenantListView.vue'),
+        path: 'submissions',
+        name: 'submissions',
+        component: () => import('@/views/SubmissionListView.vue'),
+      },
+      {
+        path: 'workflows',
+        name: 'workflows',
+        component: () => import('@/views/WorkflowListView.vue'),
+      },
+      {
+        path: 'workflow/templates',
+        name: 'workflow-templates',
+        component: () => import('@/views/WorkflowTemplateView.vue'),
+      },
+      {
+        path: 'workflow/create',
+        name: 'workflow-create',
+        component: () => import('@/views/WorkflowEditorView.vue'),
+      },
+      {
+        path: 'workflow/:id',
+        name: 'workflow-edit',
+        component: () => import('@/views/WorkflowEditorView.vue'),
+      },
+      {
+        path: 'workflow/:id/start',
+        name: 'workflow-start',
+        component: () => import('@/views/WorkflowStartView.vue'),
+      },
+      {
+        path: 'workflow/:id/preview',
+        name: 'workflow-preview',
+        component: () => import('@/views/WorkflowPreviewView.vue'),
+      },
+      {
+        path: 'workflow/:id/instances',
+        name: 'workflow-instances',
+        component: () => import('@/views/WorkflowInstanceView.vue'),
+      },
+      {
+        path: 'workflow/:id/instances/:instanceId',
+        name: 'workflow-instance-detail',
+        component: () => import('@/views/WorkflowInstanceView.vue'),
+      },
+      {
+        path: 'credentials',
+        name: 'credentials',
+        component: () => import('@/views/CredentialListView.vue'),
       },
     ],
   },
@@ -79,6 +142,20 @@ export function createEditorRouter() {
   const router = createRouter({
     history: isMicroApp() ? createMemoryHistory() : createWebHistory(import.meta.env.BASE_URL),
     routes,
+  })
+
+  // 路由守卫：独立访问时检查登录状态
+  router.beforeEach((to) => {
+    // 403/404/callback 页面不需要检查
+    if (to.name === 'forbidden' || to.name === 'not-found' || to.name === 'auth-callback') {
+      return true
+    }
+
+    // 微前端模式下跳过检查（宿主已处理鉴权）
+    if (!isMicroApp() && !resolveToken()) {
+      getSSOClient().login(window.location.href)
+      return false
+    }
   })
 
   // 路由守卫：权限检查

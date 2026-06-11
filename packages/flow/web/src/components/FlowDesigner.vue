@@ -9,7 +9,6 @@
       :layout-direction="layoutDirection"
       :layout-node-sep="layoutNodeSep"
       :layout-rank-sep="layoutRankSep"
-      @back="goBack"
       @save="onSave"
       @undo="onUndo"
       @redo="onRedo"
@@ -88,6 +87,7 @@
       width="520px"
       :close-on-click-modal="false"
       destroy-on-close
+      @close="store.clearErrorNodes()"
     >
       <div v-if="validationErrors.length === 0" :class="styles.noErrors">
         校验通过，没有发现错误或警告。
@@ -96,13 +96,19 @@
         <div
           v-for="(err, idx) in validationErrors"
           :key="idx"
-          :class="[styles.errorItem, err.level === 'error' ? styles.errorLevel : styles.warnLevel]"
+          :class="[
+            styles.errorItem,
+            err.level === 'error' ? styles.errorLevel : styles.warnLevel,
+            { [styles.errorItemClickable]: !!err.nodeId },
+          ]"
+          @click="onValidationErrorClick(err)"
         >
           <span :class="styles.badge">{{ err.level === 'error' ? '错误' : '警告' }}</span>
           <span :class="styles.errMsg">{{ err.message }}</span>
           <span v-if="err.nodeId || err.edgeId" :class="styles.errId">
             ({{ err.nodeId ?? err.edgeId }})
           </span>
+          <el-icon v-if="err.nodeId" :class="styles.errLocateIcon" :size="14"><Location /></el-icon>
         </div>
       </div>
       <template #footer>
@@ -160,6 +166,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Location } from '@element-plus/icons-vue'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import {
@@ -219,7 +226,7 @@ const versionLoading = ref(false)
 const showLeftPanel = ref(true)
 const showRightPanel = ref(true)
 const showAiDrawer = ref(false)
-const aiBaseUrl = import.meta.env.VITE_AI_URL || 'http://localhost:5300/ai/index-sidebar.html'
+const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
 
 const aiDrawerData = computed(() => ({
   source: 'flow',
@@ -427,7 +434,17 @@ function hasErrors(errors: ValidationError[]): boolean {
 function onValidate() {
   const errors = runValidation()
   validationErrors.value = errors
+  // Highlight error nodes
+  const errorIds = errors.filter(e => e.nodeId).map(e => e.nodeId!)
+  store.setErrorNodes(errorIds)
   validationVisible.value = true
+}
+
+function onValidationErrorClick(err: ValidationError) {
+  if (!err.nodeId) return
+  // Close dialog and navigate to node
+  validationVisible.value = false
+  canvasRef.value?.selectAndZoomToNode(err.nodeId)
 }
 
 /* --- Save / Publish --- */

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { ElButton } from 'element-plus'
 import type { ChatSettings, ReplyLanguage, ReplyStyle, CodeCommentMode, HistorySummaryMode } from '@/types'
-import { checkAIHealth, type AIHealthResponse } from '@/api/aiApi'
+import { checkAIHealth, getModelConfigs, type AIHealthResponse, type ModelConfigItem } from '@/api/aiApi'
 
 export interface AiChatSettingsProps {
   visible: boolean
@@ -18,10 +19,30 @@ const emit = defineEmits<{
 // Local copy for editing
 const localSettings = ref<ChatSettings>(JSON.parse(JSON.stringify(props.settings)))
 
+// Model config state
+const modelConfigs = ref<ModelConfigItem[]>([])
+const modelConfigsLoading = ref(false)
+const selectedModelId = ref<string>('')
+
 // AI health state
 const healthData = ref<AIHealthResponse | null>(null)
 const healthLoading = ref(false)
 const healthError = ref(false)
+
+async function fetchModelConfigs(): Promise<void> {
+  modelConfigsLoading.value = true
+  try {
+    modelConfigs.value = await getModelConfigs()
+    const defaultConfig = modelConfigs.value.find(c => c.isDefault)
+    if (!selectedModelId.value && defaultConfig) {
+      selectedModelId.value = defaultConfig.id
+    }
+  } catch {
+    modelConfigs.value = []
+  } finally {
+    modelConfigsLoading.value = false
+  }
+}
 
 async function fetchHealth(): Promise<void> {
   healthLoading.value = true
@@ -40,7 +61,9 @@ async function fetchHealth(): Promise<void> {
 watch(() => props.visible, (val) => {
   if (val) {
     localSettings.value = JSON.parse(JSON.stringify(props.settings))
+    selectedModelId.value = (props.settings as unknown as Record<string, unknown>).selectedModelId as string ?? ''
     fetchHealth()
+    fetchModelConfigs()
   }
 })
 
@@ -69,7 +92,9 @@ function handleClose(): void {
 }
 
 function handleSave(): void {
-  emit('update:settings', JSON.parse(JSON.stringify(localSettings.value)))
+  const saved = JSON.parse(JSON.stringify(localSettings.value)) as Record<string, unknown>
+  saved.selectedModelId = selectedModelId.value
+  emit('update:settings', saved as unknown as ChatSettings)
   emit('update:visible', false)
 }
 </script>
@@ -82,12 +107,12 @@ function handleSave(): void {
           <!-- Header -->
           <div :class="$style.header">
             <span :class="$style.title">对话设置</span>
-            <button :class="$style.closeBtn" @click="handleClose">
+            <ElButton :class="$style.closeBtn" link @click="handleClose">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </button>
+            </ElButton>
           </div>
 
           <!-- Body -->
@@ -124,6 +149,42 @@ function handleSave(): void {
                       <span :class="$style.providerModel">{{ p.model }}</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Model Selection -->
+            <div :class="$style.card">
+              <div :class="$style.cardTitle">模型选择</div>
+              <div :class="$style.cardBody">
+                <div v-if="modelConfigsLoading" :class="$style.statusRow">
+                  <span :class="[$style.statusDot, $style.statusChecking]" />
+                  <span :class="$style.statusText">加载模型列表...</span>
+                </div>
+                <div v-else-if="modelConfigs.length === 0" :class="$style.statusRow">
+                  <span :class="$style.statusText">暂无可用模型，请在管理后台配置</span>
+                </div>
+                <div v-else :class="$style.formItem">
+                  <el-select
+                    v-model="selectedModelId"
+                    placeholder="选择模型"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="config in modelConfigs"
+                      :key="config.id"
+                      :label="`${config.name} (${config.model})`"
+                      :value="config.id"
+                    >
+                      <div :class="$style.modelOption">
+                        <span :class="$style.modelOptionName">{{ config.name }}</span>
+                        <span :class="$style.modelOptionMeta">
+                          {{ config.provider }} / {{ config.model }}
+                          <span v-if="config.isDefault" :class="$style.defaultBadge">默认</span>
+                        </span>
+                      </div>
+                    </el-option>
+                  </el-select>
                 </div>
               </div>
             </div>
@@ -217,8 +278,8 @@ function handleSave(): void {
 
           <!-- Footer -->
           <div :class="$style.footer">
-            <button :class="$style.cancelBtn" @click="handleClose">取消</button>
-            <button :class="$style.saveBtn" @click="handleSave">保存</button>
+            <ElButton :class="$style.cancelBtn" @click="handleClose">取消</ElButton>
+            <ElButton :class="$style.saveBtn" type="primary" @click="handleSave">保存</ElButton>
           </div>
         </div>
       </div>

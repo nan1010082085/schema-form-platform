@@ -8,10 +8,11 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AuthUser, AuthLoadingState } from '@/types/auth'
+import type { AuthUser, AuthLoadingState } from '@schema-form/shared-utils/authTypes'
 
 const TOKEN_KEY = 'shell_access_token'
 const REFRESH_KEY = 'shell_refresh_token'
+const USER_KEY_KEY = 'shell_user_key'
 
 export const useAuthStore = defineStore('auth', () => {
   // ================================================================
@@ -21,6 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_KEY))
+  const userKey = ref<string | null>(localStorage.getItem(USER_KEY_KEY))
   const loading = ref<AuthLoadingState>({ login: false, fetchUser: false })
 
   // ================================================================
@@ -50,6 +52,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** 设置用户唯一标识（如 userId），用于跨 tab / 跨应用识别当前登录用户 */
+  function setUserKey(key: string | null): void {
+    userKey.value = key
+    if (key) {
+      localStorage.setItem(USER_KEY_KEY, key)
+    } else {
+      localStorage.removeItem(USER_KEY_KEY)
+    }
+  }
+
   function setUser(value: AuthUser | null): void {
     user.value = value
   }
@@ -63,8 +75,10 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     refreshToken.value = null
+    userKey.value = null
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_KEY)
+    localStorage.removeItem(USER_KEY_KEY)
     loading.value = { login: false, fetchUser: false }
   }
 
@@ -73,11 +87,13 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     token,
     refreshToken,
+    userKey,
     loading,
     // getters
     isAuthenticated,
     // actions
     setToken,
+    setUserKey,
     setUser,
     setLoading,
     reset,

@@ -64,7 +64,7 @@ const isError = computed(() => status.value === 'error')
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
+  background: var(--bg-color-page, #f5f7fa);
   z-index: 10;
 }
 
@@ -77,8 +77,8 @@ const isError = computed(() => status.value === 'error')
 .spinnerInner {
   width: 100%;
   height: 100%;
-  border: 3px solid #e0e0e0;
-  border-top-color: #1677ff;
+  border: 3px solid var(--border-color-light, #e0e0e0);
+  border-top-color: var(--color-primary, #1677ff);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -91,15 +91,15 @@ const isError = computed(() => status.value === 'error')
 
 .loadingText {
   font-size: 14px;
-  color: #666;
+  color: var(--text-color-regular, #666);
 }
 
 .errorIcon {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #f56c6c;
-  color: white;
+  background: var(--color-danger, #f56c6c);
+  color: var(--text-color-inverse, #fff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,13 +110,13 @@ const isError = computed(() => status.value === 'error')
 
 .errorText {
   font-size: 16px;
-  color: #333;
+  color: var(--text-color-primary, #333);
   font-weight: 500;
   margin-bottom: 8px;
 }
 
 .errorMessage {
   font-size: 13px;
-  color: #999;
+  color: var(--text-color-secondary, #999);
 }
 </style>

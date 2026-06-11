@@ -174,4 +174,123 @@ describe('FlowInstanceDetailView', () => {
 
     expect(wrapper.find('.el-descriptions').exists()).toBe(true)
   })
+
+  it('assigns node-running class to active nodes when instance is running', async () => {
+    mockStore.currentInstance = {
+      id: 'inst-001',
+      definitionId: 'def-001',
+      versionId: 'ver-001',
+      version: 'v20260528100000',
+      status: 'running',
+      variables: {},
+      tokens: [
+        { tokenId: 't1', nodeId: 'start', state: 'completed' },
+        { tokenId: 't2', nodeId: 'task-1', state: 'active' },
+        { tokenId: 't3', nodeId: 'task-2', state: 'waiting' },
+      ],
+      initiatedBy: 'admin',
+      startedAt: '2026-05-28T10:00:00Z',
+      createdAt: '2026-05-28T10:00:00Z',
+      updatedAt: '2026-05-28T10:00:00Z',
+    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    // Access the component instance to test getNodeClass
+    const vm = wrapper.vm as any
+    expect(vm.getNodeClass('active', 'running')).toBe('node-running')
+    expect(vm.getNodeClass('completed', 'running')).toBe('node-completed')
+    expect(vm.getNodeClass('waiting', 'running')).toBe('node-waiting')
+  })
+
+  it('assigns node-failed class to active/waiting nodes when instance failed', async () => {
+    mockStore.currentInstance = {
+      id: 'inst-001',
+      definitionId: 'def-001',
+      versionId: 'ver-001',
+      version: 'v20260528100000',
+      status: 'failed',
+      variables: {},
+      tokens: [
+        { tokenId: 't1', nodeId: 'start', state: 'completed' },
+        { tokenId: 't2', nodeId: 'task-1', state: 'active' },
+        { tokenId: 't3', nodeId: 'task-2', state: 'waiting' },
+      ],
+      initiatedBy: 'admin',
+      startedAt: '2026-05-28T10:00:00Z',
+      createdAt: '2026-05-28T10:00:00Z',
+      updatedAt: '2026-05-28T10:00:00Z',
+    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+    // Active nodes should show as failed when instance failed
+    expect(vm.getNodeClass('active', 'failed')).toBe('node-failed')
+    // Waiting nodes should show as failed when instance failed
+    expect(vm.getNodeClass('waiting', 'failed')).toBe('node-failed')
+    // Completed nodes remain completed even when instance failed
+    expect(vm.getNodeClass('completed', 'failed')).toBe('node-completed')
+  })
+
+  it('assigns edge-failed class when instance failed and edge connects to active/waiting node', async () => {
+    mockStore.currentInstance = {
+      id: 'inst-001',
+      definitionId: 'def-001',
+      versionId: 'ver-001',
+      version: 'v20260528100000',
+      status: 'failed',
+      variables: {},
+      tokens: [
+        { tokenId: 't1', nodeId: 'start', state: 'completed' },
+        { tokenId: 't2', nodeId: 'task-1', state: 'active' },
+      ],
+      initiatedBy: 'admin',
+      startedAt: '2026-05-28T10:00:00Z',
+      createdAt: '2026-05-28T10:00:00Z',
+      updatedAt: '2026-05-28T10:00:00Z',
+    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as any
+    // Edge targeting active node in failed instance should be edge-failed
+    expect(vm.resolveEdgeState('completed', 'active', 'failed')).toBe('edge-failed')
+    // Edge from active node in failed instance should be edge-failed
+    expect(vm.resolveEdgeState('active', 'completed', 'failed')).toBe('edge-failed')
+    // Edge between completed nodes should remain edge-completed
+    expect(vm.resolveEdgeState('completed', 'completed', 'failed')).toBe('edge-completed')
+  })
+
+  it('renders status icon indicators for different node states', async () => {
+    mockStore.currentInstance = {
+      id: 'inst-001',
+      definitionId: 'def-001',
+      versionId: 'ver-001',
+      version: 'v20260528100000',
+      status: 'running',
+      variables: {},
+      tokens: [
+        { tokenId: 't1', nodeId: 'start', state: 'completed' },
+        { tokenId: 't2', nodeId: 'task-1', state: 'active' },
+        { tokenId: 't3', nodeId: 'task-2', state: 'waiting' },
+      ],
+      initiatedBy: 'admin',
+      startedAt: '2026-05-28T10:00:00Z',
+      createdAt: '2026-05-28T10:00:00Z',
+      updatedAt: '2026-05-28T10:00:00Z',
+    }
+
+    const wrapper = createWrapper()
+    await wrapper.vm.$nextTick()
+
+    // Verify the node classes are applied correctly
+    const vm = wrapper.vm as any
+    expect(vm.getNodeClass('completed')).toBe('node-completed')
+    expect(vm.getNodeClass('active')).toBe('node-running')
+    expect(vm.getNodeClass('waiting')).toBe('node-waiting')
+  })
 })

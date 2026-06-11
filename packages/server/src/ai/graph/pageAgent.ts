@@ -142,7 +142,7 @@ export async function pageAgentNode(
   const systemPrompt = await getPageSystemPrompt()
   const userContent = buildContextMessage(state) + ragContext.context
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, generateSchemaTool, ...collaborationTools, ragSearchTool])
+  const model = (await getLLM({ temperature: 0.7, maxTokens: 8192 })).bindTools([...editorTools, generateSchemaTool, ...collaborationTools, ragSearchTool])
 
   // 截断历史消息以避免 token 超限
   const truncatedHistory = truncateMessagesForLangGraph(state.messages)

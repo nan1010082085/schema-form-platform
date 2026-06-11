@@ -292,42 +292,6 @@
   border-radius: var(--border-radius-sm);
 }
 
-/* ---- User Area ---- */
-
-.userArea {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--border-radius-md);
-  transition: background-color 0.2s;
-}
-
-.userArea:hover {
-  background: var(--bg-color-gray);
-}
-
-.userAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color-inverse);
-  font-weight: 600;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.userName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color-primary);
-}
-
 /* ---- Main Content ---- */
 
 .main {

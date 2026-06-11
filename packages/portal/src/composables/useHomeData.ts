@@ -14,7 +14,7 @@
 import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHomeStore } from '@/stores/home'
-import { apiClient } from '@/utils/apiClient'
+import { apiClient } from '@schema-form/shared-utils/apiClient'
 import type { DashboardStats, RecentConversation } from '@/types/home'
 
 export function useHomeData() {

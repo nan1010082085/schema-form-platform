@@ -19,12 +19,14 @@ const props = defineProps<{
 
 const authStore = useAuthStore()
 
-// 将 token 注入到 config.data 中，传递给子应用
+// 将认证数据注入到 config.data 中，传递给子应用
 const configWithData = computed<MicroAppConfig>(() => ({
   ...props.config,
   data: {
     ...props.config.data,
     token: authStore.token ?? undefined,
+    refreshToken: authStore.refreshToken ?? undefined,
+    userKey: authStore.userKey ?? undefined,
   },
 }))
 

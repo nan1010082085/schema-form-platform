@@ -2,36 +2,11 @@
 .card {
   position: relative;
   background: var(--ai-bg-white, #FFFFFF);
-  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
-  border-radius: var(--ai-radius-lg, 12px);
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: var(--ai-shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06));
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-  margin-bottom: 8px;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 14px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ai-color-info, #4581E9);
-  border: 2px solid var(--ai-bg-white, #FFFFFF);
-  z-index: 1;
-}
-
-.type_thinking::before { background: #722ED1; }
-.type_tool_call::before { background: #1890FF; }
-.type_tool_error::before { background: #FF4D4F; }
-.type_result::before { background: #52C41A; }
-.type_text::before { background: #4581E9; }
-
-.card:hover {
-  box-shadow: var(--ai-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04));
-  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.15s ease;
 }
 
 
@@ -40,23 +15,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--ai-gradient-card-header, linear-gradient(180deg, rgba(245, 247, 250, 0.8) 0%, rgba(245, 247, 250, 0.4) 100%));
+  padding: 10px 14px;
+  background: var(--ai-bg-gray, #F7F8FA);
   border-bottom: 1px solid var(--ai-border-light, #F0F2F5);
   cursor: pointer;
   user-select: none;
+  transition: background 0.15s;
 }
 
 .headerError {
-  background: var(--ai-color-danger-bg, rgba(229, 1, 19, 0.08));
+  background: var(--ai-color-danger-bg, rgba(229, 1, 19, 0.06));
 }
 
 .header:hover {
-  background: var(--ai-bg-hover, #F0F5FF);
+  background: var(--ai-bg-hover, #EFF3F8);
 }
 
 .headerError:hover {
-  background: var(--ai-color-danger-bg, rgba(229, 1, 19, 0.12));
+  background: var(--ai-color-danger-bg, rgba(229, 1, 19, 0.1));
 }
 
 .headerLeft {
@@ -200,7 +176,7 @@
 
 /* ---- Body ---- */
 .body {
-  padding: 16px;
+  padding: 12px 14px;
   max-height: 320px;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -382,11 +358,7 @@
   font-weight: 500;
 }
 
-.summaryText {
-  font-size: 13px;
-  color: var(--ai-text-secondary, #595959);
-  margin-bottom: 4px;
-}
+/* .summaryText is defined above in collapsedSummary section */
 
 .compactList {
   list-style: none;

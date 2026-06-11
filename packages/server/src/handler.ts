@@ -2,6 +2,7 @@ import app from './app.js'
 import { connectDatabase, mongoose } from './config/database.js'
 import { initDefaultTenant } from './utils/initDefaultTenant.js'
 import { seedPermissions } from './utils/seedPermissions.js'
+import { initWebhookDispatcher } from './services/webhookDispatcher.js'
 
 let dbReady = false
 let connectionError: Error | null = null
@@ -19,6 +20,7 @@ export default async function handler(req: any, res: any) {
       await connectDatabase()
       await initDefaultTenant()
       await seedPermissions()
+      initWebhookDispatcher()
       dbReady = true
       connectionError = null
     }

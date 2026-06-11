@@ -210,6 +210,10 @@ export const flowApi = {
   getPublishedForms: () =>
     request<Array<{ id: string; publishId: string; name: string }>>('/schemas/published'),
 
+  // Get single published form schema by publishId
+  getPublishedFormSchema: (publishId: string) =>
+    request<{ id: string; publishId: string; name: string; json: unknown }>(`/schemas/published/${publishId}`),
+
   // Templates
   listTemplates: (query?: FlowTemplateQuery) => {
     const params = new URLSearchParams()

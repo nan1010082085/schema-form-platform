@@ -120,13 +120,13 @@ onMounted(async () => {
             type: resolveNodeType(n),
             position: { x: n.x, y: n.y },
             data: { label: n.data?.label ?? n.id },
-            class: getNodeClass(state),
+            class: getNodeClass(state, inst.status),
           }
         })
         graphEdges.value = version.graph.edges.map((e) => {
           const sourceState = tokenMap.get(e.source.cell)
           const targetState = tokenMap.get(e.target.cell)
-          const edgeState = resolveEdgeState(sourceState, targetState)
+          const edgeState = resolveEdgeState(sourceState, targetState, inst.status)
           return {
             id: e.id,
             type: 'animated-edge',
@@ -154,7 +154,7 @@ onMounted(async () => {
       type: token.nodeId.startsWith('end') ? 'end-event' : 'user-task',
       position: { x: 0, y: 0 },
       data: { label: token.nodeId },
-      class: getNodeClass(token.state),
+      class: getNodeClass(token.state, inst.status),
     }))
     graphEdges.value = []
   }
@@ -183,14 +183,28 @@ function onTabChange(tab: string) {
   if (tab === 'logs') loadApprovalLogs()
 }
 
-function getNodeClass(state: string | undefined): string {
-  if (state === 'active') return 'node-active'
+function getNodeClass(state: string | undefined, instanceStatus?: string): string {
+  if (state === 'active') {
+    // If instance failed, active nodes should show as failed
+    if (instanceStatus === 'failed') return 'node-failed'
+    return 'node-running'
+  }
   if (state === 'completed') return 'node-completed'
-  if (state === 'waiting') return 'node-waiting'
+  if (state === 'waiting') {
+    // If instance failed, waiting nodes should show as failed
+    if (instanceStatus === 'failed') return 'node-failed'
+    return 'node-waiting'
+  }
+  if (state === 'failed') return 'node-failed'
   return ''
 }
 
-function resolveEdgeState(sourceState: string | undefined, targetState: string | undefined): string {
+function resolveEdgeState(sourceState: string | undefined, targetState: string | undefined, instanceStatus?: string): string {
+  if (instanceStatus === 'failed') {
+    // If instance failed, show edges connected to active/waiting nodes as failed
+    if (targetState === 'active' || targetState === 'waiting') return 'edge-failed'
+    if (sourceState === 'active' || sourceState === 'waiting') return 'edge-failed'
+  }
   if (targetState === 'active') return 'edge-active'
   if (sourceState === 'completed' && targetState === 'completed') return 'edge-completed'
   return 'edge-pending'
@@ -204,6 +218,7 @@ const statusType = computed(() => {
     completed: 'success',
     terminated: 'danger',
     suspended: 'warning',
+    failed: 'danger',
   }
   return map[instance.value?.status ?? ''] ?? 'info'
 })
@@ -214,6 +229,7 @@ const statusLabel = computed(() => {
     completed: '已完成',
     terminated: '已终止',
     suspended: '已挂起',
+    failed: '已失败',
   }
   return map[instance.value?.status ?? ''] ?? instance.value?.status ?? ''
 })

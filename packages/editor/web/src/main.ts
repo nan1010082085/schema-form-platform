@@ -2,6 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/tokens.css'
+
+import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
 import '@/styles/variables.scss'
 import '@/styles/theme.scss'
 import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
@@ -39,7 +42,7 @@ createChildApp({
 
     app.use(pinia)
     app.use(router)
-    app.use(ElementPlus)
+    app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
     app.directive('permission', permissionDirective)
     registerAllWidgets()
 

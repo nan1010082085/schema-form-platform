@@ -14,7 +14,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElSelect, ElOption, ElButton } from 'element-plus'
 import { connect as connectSocket, emitAiApply, emitAiPublished } from '@schema-form/socket'
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
@@ -346,29 +346,30 @@ function handleHostData(data: Record<string, unknown>) {
             </template>
           </div>
           <div :class="$style.inputActions">
-            <select
+            <ElSelect
               v-model="selectedAgent"
               :class="$style.agentSelect"
               :disabled="store.loading"
+              size="small"
             >
-              <option
+              <ElOption
                 v-for="opt in agentOptions"
                 :key="opt.value"
+                :label="opt.label"
                 :value="opt.value"
-              >
-                {{ opt.label }}
-              </option>
-            </select>
-            <button
+              />
+            </ElSelect>
+            <ElButton
               v-if="store.loading"
               :class="$style.stopBtn"
               title="停止生成"
+              link
               @click="handleStop"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
-            </button>
+            </ElButton>
           </div>
         </div>
       </div>

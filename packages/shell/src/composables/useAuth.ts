@@ -16,8 +16,8 @@ import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@/utils/apiClient'
-import type { LoginPayload, LoginResponse, AuthUser } from '@/types/auth'
+import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@schema-form/shared-utils/apiClient'
+import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/shared-utils/authTypes'
 
 /** Whether tokenProvider has been injected (once globally) */
 let providerInitialized = false
@@ -93,6 +93,7 @@ export function useAuth() {
       const res = await apiClient.post<LoginResponse>('/auth/login', payload)
       store.setToken(res.accessToken, res.refreshToken)
       store.setUser(res.user)
+      store.setUserKey(res.user.id)
       scheduleRefresh(res.expiresIn)
       const redirect = (route.query.redirect as string) || '/'
       await router.push(redirect)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessage, ElScrollbar } from 'element-plus'
+import { ElMessage, ElScrollbar, ElButton } from 'element-plus'
 import { downloadConversation } from '@/api/aiApi'
 import AiConversationSearch from './AiConversationSearch.vue'
 import type { Conversation } from '@/types'
@@ -46,7 +46,7 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
   <div :class="$style.sidebar">
     <div :class="$style.header">
       <span :class="$style.title">对话列表</span>
-      <button :class="$style.newBtn" @click="emit('new-conversation')">+</button>
+      <ElButton :class="$style.newBtn" link @click="emit('new-conversation')">+</ElButton>
     </div>
     <AiConversationSearch @select="(id) => emit('select', id)" />
     <ElScrollbar :class="$style.list">
@@ -68,13 +68,13 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
             @command="(cmd: string) => handleExport({ id: conv.id, format: cmd as ExportFormat })"
             @click.stop
           >
-            <button :class="$style.iconBtn" title="导出对话" @click.stop>
+            <ElButton :class="$style.iconBtn" title="导出对话" link @click.stop>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            </button>
+            </ElButton>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="json">导出 JSON</el-dropdown-item>
@@ -83,12 +83,12 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <button :class="$style.deleteBtn" @click.stop="emit('delete', conv.id)" title="删除对话">
+          <ElButton :class="$style.deleteBtn" link @click.stop="emit('delete', conv.id)" title="删除对话">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
+          </ElButton>
         </div>
       </div>
       <div v-if="conversations.length === 0" :class="$style.empty">

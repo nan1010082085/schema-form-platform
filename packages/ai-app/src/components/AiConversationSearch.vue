@@ -8,6 +8,7 @@
  */
 
 import { ref, watch, computed, onBeforeUnmount } from 'vue'
+import { ElInput, ElButton, ElSelect, ElOption, ElDatePicker } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import type { Conversation } from '@/types'
 import type { SearchConversationsParams } from '@/api/aiApi'
@@ -133,56 +134,61 @@ onBeforeUnmount(() => {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       </div>
-      <input
+      <ElInput
         v-model="query"
         :class="$style.searchInput"
         placeholder="搜索对话..."
-        type="text"
+        size="small"
+        clearable
+        @clear="handleClear"
       />
-      <button
+      <ElButton
         :class="[$style.filterToggle, { [$style.filterToggleActive]: hasActiveFilters || filtersExpanded }]"
         title="筛选"
+        link
+        size="small"
         @click="toggleFilters"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
-      </button>
-      <button
-        v-if="query || hasActiveFilters"
-        :class="$style.clearBtn"
-        title="清除"
-        @click="handleClear"
-      >
-        &times;
-      </button>
+      </ElButton>
     </div>
 
     <!-- Filter panel -->
     <div v-if="filtersExpanded" :class="$style.filterPanel">
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">来源</label>
-        <select v-model="sourceFilter" :class="$style.filterSelect">
-          <option v-for="opt in SOURCE_OPTIONS" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+        <ElSelect v-model="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源">
+          <ElOption
+            v-for="opt in SOURCE_OPTIONS"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </ElSelect>
       </div>
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">时间</label>
         <div :class="$style.filterDateRange">
-          <input
+          <ElDatePicker
             v-model="startDate"
             type="date"
             :class="$style.filterDate"
             placeholder="开始日期"
+            size="small"
+            value-format="YYYY-MM-DD"
+            format="YYYY-MM-DD"
           />
           <span :class="$style.filterDateSep">~</span>
-          <input
+          <ElDatePicker
             v-model="endDate"
             type="date"
             :class="$style.filterDate"
             placeholder="结束日期"
+            size="small"
+            value-format="YYYY-MM-DD"
+            format="YYYY-MM-DD"
           />
         </div>
       </div>

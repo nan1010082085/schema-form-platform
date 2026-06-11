@@ -6,6 +6,7 @@
  * 替代原来的 SchemaCard 字段列表，让用户直接看到渲染效果。
  */
 import { computed } from 'vue'
+import { ElButton } from 'element-plus'
 import type { Widget } from '@/types'
 
 export interface SchemaPreviewCardProps {
@@ -282,12 +283,12 @@ function getButtonType(w: Widget): string {
 
     <!-- 操作栏 -->
     <div v-if="!compact" :class="$style.actions">
-      <button :class="$style.btnPrimary" @click.stop="emit('primary-action')">
+      <ElButton :class="$style.btnPrimary" type="primary" @click.stop="emit('primary-action')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         确认发布
-      </button>
+      </ElButton>
     </div>
   </div>
 </template>

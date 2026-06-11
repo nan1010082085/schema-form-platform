@@ -42,11 +42,13 @@ import {
   searchConversations,
   mentionSearch,
   resumeInterrupt,
+  submitMessageFeedback,
   type LLMProviderInfo,
   type LLMAggregatedUsage,
   type MentionSearchResult,
   type MentionType,
   type SearchResult,
+  type FeedbackType,
 } from '@/api/aiApi'
 
 export const useAiStore = defineStore('ai', () => {
@@ -839,6 +841,7 @@ export const useAiStore = defineStore('ai', () => {
     const detail = await getConversationDetail(id)
     currentConversationId.value = detail.id
     messages.value = detail.messages.map((m) => ({
+      id: (m as Record<string, unknown>).id as string | undefined,
       role: m.role as AIMessage['role'],
       content: m.content,
       thinking: (m as Record<string, unknown>).thinking as string | undefined,
@@ -847,6 +850,7 @@ export const useAiStore = defineStore('ai', () => {
       schema: m.schema as Widget[] | undefined,
       flow: m.flow as FlowGraph | undefined,
       timestamp: new Date(m.timestamp),
+      feedback: (m as Record<string, unknown>).feedback as 'positive' | 'negative' | null | undefined,
     }))
     // Restore preview state from last assistant message
     const lastAssistant = [...detail.messages].reverse().find((m) => m.role === 'assistant')
@@ -989,6 +993,70 @@ export const useAiStore = defineStore('ai', () => {
     llmDefaultStrategy.value = strategy
   }
 
+  // ---- 消息操作 ----
+
+  /**
+   * 提交消息反馈（点赞/点踩）。
+   */
+  async function submitFeedback(messageIndex: number, type: FeedbackType): Promise<void> {
+    const msg = messages.value[messageIndex]
+    if (!msg) return
+
+    const messageId = msg.id
+    if (!messageId) return
+
+    // Toggle feedback
+    const newFeedback = msg.feedback === type ? null : type
+    msg.feedback = newFeedback
+
+    try {
+      await submitMessageFeedback(messageId, type)
+    } catch {
+      // Revert on error
+      msg.feedback = msg.feedback === type ? null : type
+    }
+  }
+
+  /**
+   * 重新生成指定 assistant 消息。
+   * 找到该消息之前的用户消息并重新发送。
+   */
+  async function regenerateMessage(messageIndex: number): Promise<void> {
+    const msg = messages.value[messageIndex]
+    if (!msg || msg.role !== 'assistant') return
+
+    // 找到该 assistant 消息之前的用户消息
+    let userContent = ''
+    let userMentions: MentionReference[] | undefined
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (messages.value[i].role === 'user') {
+        userContent = messages.value[i].content
+        break
+      }
+    }
+    if (!userContent) return
+
+    // 取消正在进行的请求
+    if (abortController.value) {
+      abortController.value.abort()
+    }
+
+    loading.value = true
+    error.value = null
+
+    // 重置 assistant 消息状态
+    msg.content = ''
+    msg.thinking = undefined
+    msg.tip = undefined
+    msg.toolCalls = undefined
+    msg.schema = undefined
+    msg.flow = undefined
+    msg.feedback = null
+    msg.status = 'streaming'
+
+    await _executeStream(userContent, userMentions, messageIndex)
+  }
+
   return {
     // state
     conversations,
@@ -1063,5 +1131,7 @@ export const useAiStore = defineStore('ai', () => {
     mentionSearchAction,
     clearInterrupt,
     respondInterrupt,
+    submitFeedback,
+    regenerateMessage,
   }
 })

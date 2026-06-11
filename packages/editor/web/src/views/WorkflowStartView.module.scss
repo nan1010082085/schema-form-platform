@@ -1,0 +1,109 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-color-page);
+}
+
+.scrollbar {
+  height: 100%;
+}
+
+.content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  width: 100%;
+}
+
+// 顶部 Workflow 信息
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--text-color-title);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+// 加载 / 错误状态
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 8px;
+  color: var(--el-text-color-secondary);
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+
+  p {
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+    margin: 0;
+  }
+}
+
+// 表单区域
+.formSection {
+  background: var(--el-bg-color);
+  border-radius: var(--el-border-radius-base);
+  padding: 24px;
+  border: 1px solid var(--el-border-color-lighter);
+  margin-bottom: 24px;
+}
+
+.formSectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  margin: 0 0 16px;
+}
+
+// 底部提交栏
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  gap: 12px;
+}
+
+// 提交成功状态
+.successState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--el-color-success);
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+    margin: 0;
+  }
+}

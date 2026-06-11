@@ -4,7 +4,7 @@
  */
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { SchemaAction, FormData } from '@/components/WidgetRenderer/types'
-import { getRequestInstance } from './request'
+import { apiClient } from './apiClient'
 import { useLogger } from '@/composables/useLogger'
 
 const logger = useLogger('ActionExecutor')
@@ -94,14 +94,11 @@ async function executeAction(action: SchemaAction, context: ActionContext): Prom
 
     case 'api': {
       if (!action.apiUrl) throw new Error('API 地址未配置')
-      const http = getRequestInstance()
       const method = action.apiMethod ?? 'post'
       const params = action.apiParams === 'formData'
         ? context.getFormData()
         : action.apiParams
-      const res: unknown = method === 'get'
-        ? await http.get(action.apiUrl, { params })
-        : await http.post(action.apiUrl, params)
+      const res = await apiClient.requestRaw<unknown>(method, action.apiUrl, params)
       context.emit('api-response', res)
       break
     }

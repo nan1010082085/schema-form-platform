@@ -9,8 +9,12 @@
 
 import Router from '@koa/router'
 import { AgentMetricModel } from './models/monitor.js'
+import { authMiddleware } from '../middleware/auth.js'
 
 const router = new Router({ prefix: '/api/ai/monitor' })
+
+// All monitor routes require authentication
+router.use(authMiddleware())
 
 // ────────────────────────────────────────────
 // GET /api/ai/monitor/stats — Agent performance statistics

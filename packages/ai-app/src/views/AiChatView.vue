@@ -11,7 +11,9 @@ import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
-import { ElDrawer, ElMessage } from 'element-plus'
+import { ElDrawer, ElMessage, ElButton, ElTooltip } from 'element-plus'
+import { HomeFilled } from '@element-plus/icons-vue'
+import { getAppUrl } from '@schema-form/micro-app/config'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
@@ -247,6 +249,28 @@ function handleRagRemove(id: string): void {
   store.removeRagContext(id)
 }
 
+function goToPortal(): void {
+  window.location.href = getAppUrl('portal', import.meta.env.DEV)
+}
+
+// ---- Message actions ----
+
+function handleCopyMessage(messageIndex: number): void {
+  const msg = messages.value[messageIndex]
+  if (msg?.content) {
+    navigator.clipboard.writeText(msg.content)
+    ElMessage.success('已复制到剪贴板')
+  }
+}
+
+function handleRegenerateMessage(messageIndex: number): void {
+  store.regenerateMessage(messageIndex)
+}
+
+function handleMessageFeedback(messageIndex: number, type: 'positive' | 'negative'): void {
+  store.submitFeedback(messageIndex, type)
+}
+
 // ---- Bridge ----
 
 onMounted(() => {
@@ -267,13 +291,17 @@ onMounted(() => {
     <!-- 顶栏 -->
     <div :class="$style.topbar">
       <div :class="$style.topbarLeft">
+        <ElTooltip content="返回门户首页" placement="bottom">
+          <button :class="$style.portalBtn" title="返回门户" @click="goToPortal">
+            <el-icon :size="14"><HomeFilled /></el-icon>
+          </button>
+        </ElTooltip>
+        <div :class="$style.topbarDivider" />
+        <span :class="$style.appName">AI 助手</span>
+        <div :class="$style.topbarDivider" />
         <div :class="$style.topbarLogo">
           <div :class="$style.topbarIcon">AI</div>
           <span :class="$style.topbarBrand">智能助手</span>
-        </div>
-        <div :class="$style.topbarDivider"></div>
-        <div :class="$style.topbarNav">
-          <span :class="[$style.topbarNavItem, $style.topbarNavItemActive]">对话</span>
         </div>
       </div>
       <div :class="$style.topbarRight">
@@ -324,6 +352,9 @@ onMounted(() => {
         @rag-remove="handleRagRemove"
         @open-json-drawer="handleOpenJsonDrawer"
         @retry-tool="(mi, tci) => store.retryToolCall(mi, tci)"
+        @copy-message="handleCopyMessage"
+        @regenerate-message="handleRegenerateMessage"
+        @message-feedback="handleMessageFeedback"
       />
 
       <!-- 右侧：预览面板 -->
@@ -354,9 +385,9 @@ onMounted(() => {
     </div>
 
     <!-- 折叠/展开切换按钮（放在 body 外部，避免被 overflow: hidden 裁剪） -->
-    <button :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" @click="rightPanelCollapsed = !rightPanelCollapsed">
+    <ElButton :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" link @click="rightPanelCollapsed = !rightPanelCollapsed">
       {{ rightPanelCollapsed ? '◀' : '▶' }}
-    </button>
+    </ElButton>
 
     <!-- Settings Dialog -->
     <AiChatSettings

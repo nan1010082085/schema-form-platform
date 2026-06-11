@@ -130,6 +130,13 @@ export function createViteConfig(
             })
           },
         },
+        // Socket.IO：开发环境下将 /ws 路径代理到后端，
+        // 使 socket 客户端默认同源连接也能正常工作。
+        '/ws': {
+          target: getApiProxyTarget(),
+          changeOrigin: true,
+          ws: true,
+        },
       },
     },
   }

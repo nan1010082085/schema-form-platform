@@ -152,7 +152,7 @@ export async function editorAgentNode(
   const systemPrompt = await getEditorSystemPrompt()
   const userContent = buildContextMessage(state) + ragContext.context
 
-  const model = getLLM({ temperature: 0.7, maxTokens: 8192 }).bindTools([...editorTools, generateSchemaTool, ...collaborationTools, ragSearchTool])
+  const model = (await getLLM({ temperature: 0.7, maxTokens: 8192 })).bindTools([...editorTools, generateSchemaTool, ...collaborationTools, ragSearchTool])
 
   // 截断历史消息以避免 token 超限
   // 保留 tool_calls -> ToolMessage 链完整性，保留最近 N 轮 + 首条用户消息

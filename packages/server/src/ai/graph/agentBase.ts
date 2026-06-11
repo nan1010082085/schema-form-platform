@@ -73,19 +73,60 @@ export type TaskType = 'router' | 'generate_simple' | 'generate_complex' | 'anal
 /**
  * Select model by task type.
  *
+ * Reads model names from environment variables with provider-aware defaults.
+ * When LLMManager has a registered provider, uses that provider's model list.
+ *
  * - router: intent classification, lightweight and fast
  * - generate_simple: simple generation (single form, single list)
  * - generate_complex: complex reasoning (multi-step, linkage, nested)
  * - analyze: analysis/diagnosis tasks
  */
 export function getModelForTask(taskType: TaskType): string {
-  const modelMap: Record<TaskType, string> = {
-    router: 'deepseek-chat',
-    generate_simple: 'deepseek-v4-pro',
-    generate_complex: 'deepseek-v4-pro',
-    analyze: 'deepseek-chat',
+  // Allow env var overrides for each task type
+  const envModel = process.env[`LLM_MODEL_${taskType.toUpperCase()}`]
+  if (envModel) return envModel
+
+  // Try to get defaults from LLMManager's current provider
+  try {
+    // Lazy import to avoid circular dependency at module level
+    const { llmManager } = require('../services/llmManager.js') as typeof import('../services/llmManager.js')
+    const provider = llmManager.getProvider()
+
+    // Provider-specific model mapping
+    const providerDefaults: Record<string, Record<TaskType, string>> = {
+      deepseek: {
+        router: 'deepseek-chat',
+        generate_simple: 'deepseek-v4-pro',
+        generate_complex: 'deepseek-v4-pro',
+        analyze: 'deepseek-chat',
+      },
+      openai: {
+        router: 'gpt-4o-mini',
+        generate_simple: 'gpt-4o',
+        generate_complex: 'gpt-4o',
+        analyze: 'gpt-4o-mini',
+      },
+      claude: {
+        router: 'claude-3-5-haiku-20241022',
+        generate_simple: 'claude-sonnet-4-20250514',
+        generate_complex: 'claude-sonnet-4-20250514',
+        analyze: 'claude-3-5-haiku-20241022',
+      },
+    }
+
+    const defaults = providerDefaults[provider.name]
+    if (defaults) return defaults[taskType]
+    return provider.defaultModel
+  } catch {
+    // LLMManager not available — use hardcoded DeepSeek defaults
+    const fallbackMap: Record<TaskType, string> = {
+      router: 'deepseek-chat',
+      generate_simple: 'deepseek-v4-pro',
+      generate_complex: 'deepseek-v4-pro',
+      analyze: 'deepseek-chat',
+    }
+    return fallbackMap[taskType] ?? 'deepseek-v4-pro'
   }
-  return modelMap[taskType] ?? 'deepseek-v4-pro'
 }
 
 /**

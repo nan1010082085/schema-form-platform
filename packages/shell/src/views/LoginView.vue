@@ -21,17 +21,17 @@ const errorMsg = ref<string | null>(null)
 async function handleLogin(): Promise<void> {
   errorMsg.value = null
   if (!form.username.trim()) {
-    errorMsg.value = 'Username is required'
+    errorMsg.value = '请输入用户名'
     return
   }
   if (!form.password) {
-    errorMsg.value = 'Password is required'
+    errorMsg.value = '请输入密码'
     return
   }
   try {
     await login({ username: form.username, password: form.password })
   } catch (e: unknown) {
-    errorMsg.value = e instanceof Error ? e.message : 'Login failed'
+    errorMsg.value = e instanceof Error ? e.message : '登录失败'
   }
 }
 </script>
@@ -41,7 +41,7 @@ async function handleLogin(): Promise<void> {
     <div :class="styles.card">
       <div :class="styles.header">
         <h1 :class="styles.logo">Schema Form</h1>
-        <p :class="styles.subtitle">Shell Base Container</p>
+        <p :class="styles.subtitle">基础容器</p>
       </div>
 
       <el-alert
@@ -56,7 +56,7 @@ async function handleLogin(): Promise<void> {
       <div :class="styles.form">
         <el-input
           v-model="form.username"
-          placeholder="Username"
+          placeholder="用户名"
           size="large"
           @keyup.enter="handleLogin"
         />
@@ -64,7 +64,7 @@ async function handleLogin(): Promise<void> {
         <el-input
           v-model="form.password"
           type="password"
-          placeholder="Password"
+          placeholder="密码"
           size="large"
           show-password
           @keyup.enter="handleLogin"
@@ -76,7 +76,7 @@ async function handleLogin(): Promise<void> {
           :loading="loading.login"
           @click="handleLogin"
         >
-          Sign In
+          登录
         </el-button>
       </div>
     </div>

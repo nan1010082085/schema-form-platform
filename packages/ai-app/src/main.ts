@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/tokens.css'
+import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
 import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
 import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
 import { applyThemeInline, installThemeWatchdog, AI_THEME_VARS } from '@schema-form/micro-app'
@@ -31,7 +33,7 @@ createChildApp({
     const app = createApp(App)
     app.use(createPinia())
     app.use(router)
-    app.use(ElementPlus)
+    app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
     return app
   },
   getRouter: () => router,

@@ -187,6 +187,7 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     status: string
     component: string
     microAppId: string | null
+    target: '_self' | '_blank'
   }
 
   // Validate parentId exists if not null
@@ -216,6 +217,7 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     status: body.status,
     component: body.component,
     microAppId: body.microAppId ?? null,
+    target: body.target ?? '_self',
   })
 
   ctx.status = 201
@@ -288,6 +290,7 @@ router.put('/:id', requireAuth, requirePermission('menu:edit'), validate(updateM
   if (body.status !== undefined) update.status = body.status
   if (body.component !== undefined) update.component = body.component
   if (body.microAppId !== undefined) update.microAppId = body.microAppId
+  if (body.target !== undefined) update.target = body.target
 
   const menu = await MenuModel.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true })
 

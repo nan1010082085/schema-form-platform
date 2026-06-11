@@ -9,7 +9,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Document, Connection } from '@element-plus/icons-vue'
-import { apiClient } from '@/utils/apiClient'
+import { apiClient } from '@schema-form/shared-utils/apiClient'
 import styles from './GlobalSearch.module.css'
 
 const router = useRouter()

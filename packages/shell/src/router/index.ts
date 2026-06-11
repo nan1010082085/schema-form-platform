@@ -5,10 +5,16 @@
  * - /login: standalone (no sidebar)
  * - /: with-menu layout (sidebar + breadcrumb + content)
  * - /editor, /flow, /ai: without-menu layout (full-screen micro-app)
+ *
+ * Dynamic third-party micro-apps:
+ * - Registered via /api/micro-apps (database)
+ * - Loaded through the catch-all /app/:name route
+ * - AppContainer resolves URL from useMicroAppRegistry
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
+import { useMicroAppRegistry } from '@/composables/useMicroAppRegistry'
 
 /** Routes that do not require authentication */
 const PUBLIC_ROUTES = new Set(['/login'])
@@ -53,6 +59,12 @@ const router = createRouter({
           component: () => import('@/components/AppContainer.vue'),
           meta: { title: 'Menu Management', permissions: ['menu:view'] },
         },
+        {
+          path: 'micro-apps',
+          name: 'micro-apps',
+          component: () => import('@/components/AppContainer.vue'),
+          meta: { title: 'Micro App Management', permissions: ['microapp:view'] },
+        },
       ],
     },
     // Without-menu layout (full-screen micro-app, no sidebar)
@@ -80,6 +92,14 @@ const router = createRouter({
       name: 'admin-embed',
       component: () => import('@/components/AppContainer.vue'),
       meta: { microApp: 'admin', withoutMenu: true },
+    },
+    // Dynamic third-party micro-app catch-all
+    // Matches /app/:appName/* where appName is looked up from registry
+    {
+      path: '/app/:appName/:pathMatch(.*)*',
+      name: 'dynamic-app',
+      component: () => import('@/components/AppContainer.vue'),
+      meta: { microApp: 'dynamic', withoutMenu: true },
     },
     // Catch-all redirect
     {
@@ -125,6 +145,14 @@ router.beforeEach(async (to, _from, next) => {
   if (to.path === '/login') {
     next({ path: '/' })
     return
+  }
+
+  // Pre-load micro-app registry for dynamic app routes
+  if (to.name === 'dynamic-app') {
+    const { loaded, fetchApps } = useMicroAppRegistry()
+    if (!loaded.value) {
+      await fetchApps()
+    }
   }
 
   next()

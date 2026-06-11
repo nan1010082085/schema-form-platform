@@ -17,9 +17,12 @@ import {
   Expand,
   Fold,
   HomeFilled,
+  Setting,
+  SetUp,
 } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import UserDropdown from '@schema-form/shared-components/navigation/UserDropdown.vue'
 import styles from './AppLayout.module.css'
 
 const route = useRoute()
@@ -44,13 +47,15 @@ const navItems: NavItem[] = [
   { label: '首页', icon: HomeFilled, path: '/' },
   { label: '表单编辑器', icon: Edit, path: '/editor' },
   { label: '流程引擎', icon: Connection, path: '/flow' },
+  { label: '工作流', icon: SetUp, path: '/workflow' },
   { label: 'AI 助手', icon: ChatLineSquare, path: '/ai' },
+  { label: '系统管理', icon: Setting, path: '/admin' },
   { label: '项目文档', icon: Document, href: '/docs/docs.html' },
 ]
 
 function isActive(item: NavItem): boolean {
   if (!item.path) return false
-  return route.path === item.path
+  return route.path === item.path || route.path.startsWith(item.path + '/')
 }
 
 function handleNavClick(item: NavItem): void {
@@ -112,19 +117,7 @@ function handleNavClick(item: NavItem): void {
           <GlobalSearch />
         </div>
         <div :class="styles.headerRight">
-          <el-dropdown trigger="click">
-            <div :class="styles.userArea">
-              <div :class="styles.userAvatar">
-                {{ user?.username?.charAt(0)?.toUpperCase() || 'U' }}
-              </div>
-              <span :class="styles.userName">{{ user?.username || '未登录' }}</span>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <UserDropdown :username="user?.username" @logout="logout" />
         </div>
       </header>
 

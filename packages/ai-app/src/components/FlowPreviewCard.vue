@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch, nextTick, ref } from 'vue'
+import { ElButton } from 'element-plus'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -149,9 +150,9 @@ function getNodeTypeLabel(bpmnType: string): string {
       </div>
       <div :class="$style.headRight">
         <span :class="$style.badge">{{ nodeCount }} 节点 / {{ edgeCount }} 连线</span>
-        <button :class="$style.fitBtn" title="适配画布" @click="handleFitView">
+        <ElButton :class="$style.fitBtn" title="适配画布" link @click="handleFitView">
           &#x26F6;
-        </button>
+        </ElButton>
       </div>
     </div>
 
@@ -190,7 +191,7 @@ function getNodeTypeLabel(bpmnType: string): string {
 
     <!-- Actions -->
     <div v-if="primaryAction || secondaryAction" :class="$style.actions">
-      <button
+      <ElButton
         v-if="secondaryAction"
         :class="$style.btnGhost"
         @click="emit('secondary-action')"
@@ -200,17 +201,18 @@ function getNodeTypeLabel(bpmnType: string): string {
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
         {{ secondaryAction }}
-      </button>
-      <button
+      </ElButton>
+      <ElButton
         v-if="primaryAction"
         :class="$style.btnPrimary"
+        type="primary"
         @click="emit('primary-action')"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         {{ primaryAction }}
-      </button>
+      </ElButton>
     </div>
   </div>
 </template>

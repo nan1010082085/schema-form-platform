@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { ElButton } from 'element-plus'
 import type { SchemaDiff } from '@/types'
 
 export interface SchemaDiffPanelProps {
@@ -36,12 +37,12 @@ const changeCount = computed(() =>
       <span :class="$style.title">Schema 已更新</span>
       <span :class="$style.count">{{ changeCount }} 处变更</span>
       <div :class="$style.actions">
-        <button :class="$style.undoBtn" @click="emit('undo')">
+        <ElButton :class="$style.undoBtn" link @click="emit('undo')">
           撤销
-        </button>
-        <button :class="$style.dismissBtn" @click="emit('dismiss')">
+        </ElButton>
+        <ElButton :class="$style.dismissBtn" type="primary" @click="emit('dismiss')">
           确认
-        </button>
+        </ElButton>
       </div>
     </div>
 

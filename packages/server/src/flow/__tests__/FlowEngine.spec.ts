@@ -1460,6 +1460,46 @@ describe('FlowEngine', () => {
         expect.objectContaining({ nodeId: 'task1' }),
       )
     })
+
+    it('executes dataUpdate service when serviceConfig.type is dataUpdate', async () => {
+      const mockExecuteDataUpdateRules = vi.fn().mockResolvedValue({ submissionId: 'sub1', rulesApplied: 1 })
+      vi.doMock('../../services/dataUpdateEngine.js', () => ({
+        executeDataUpdateRules: mockExecuteDataUpdateRules,
+      }))
+
+      const graph: FlowGraph = {
+        nodes: [
+          nd('start', BpmnElementType.StartEvent),
+          nd('svc', BpmnElementType.ServiceTask, {
+            label: 'dataUpdate',
+            serviceConfig: { type: 'dataUpdate' },
+          }),
+          nd('end', BpmnElementType.EndEvent),
+        ],
+        edges: [eg('e1', 'start', 'svc'), eg('e2', 'svc', 'end')],
+      }
+      setupDefinition()
+      setupVersion(graph)
+
+      const instance = mockDoc({
+        _id: 'inst1',
+        definitionId: 'def1',
+        versionId: 'v1',
+        version: '1',
+        status: 'running',
+        variables: { submissionId: 'sub1' },
+        tokens: [{ tokenId: 'tok1', nodeId: 'start', state: 'active', createdAt: new Date() }],
+        initiatedBy: 'admin',
+        startedAt: new Date(),
+      })
+      mockFlowInstanceCreate.mockResolvedValue(instance)
+      mockFlowInstanceFindById.mockResolvedValue(instance)
+
+      await engine.startFlow('def1', {}, 'admin')
+
+      expect(mockExecuteDataUpdateRules).toHaveBeenCalledWith(instance)
+      expect(instance.status).toBe('completed')
+    })
   })
 
   // ─────────────────────────────────────

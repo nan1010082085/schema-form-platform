@@ -28,6 +28,7 @@
     "@schema-form/shared-ai": "workspace:*",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "jsonwebtoken": "^9.0.3",
     "koa": "^2.15.4",
     "koa-bodyparser": "^4.4.1",

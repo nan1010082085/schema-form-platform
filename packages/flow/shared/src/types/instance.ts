@@ -1,6 +1,6 @@
 export type FlowInstanceStatus = 'running' | 'completed' | 'terminated' | 'suspended' | 'failed'
 export type TaskInstanceStatus = 'pending' | 'claimed' | 'completed' | 'cancelled' | 'delegated'
-export type FlowTokenState = 'active' | 'waiting' | 'completed'
+export type FlowTokenState = 'active' | 'waiting' | 'completed' | 'failed'
 
 export interface FlowToken {
   tokenId: string

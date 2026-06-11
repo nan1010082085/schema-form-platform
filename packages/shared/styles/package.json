@@ -5,6 +5,7 @@
   "exports": {
     "./variables": "./_variables.scss",
     "./css-variables": "./_css-variables.scss",
-    "./theme": "./_theme.scss"
+    "./theme": "./_theme.scss",
+    "./tokens.css": "./tokens.css"
   }
 }

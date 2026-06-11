@@ -23,12 +23,12 @@ let socket: Socket | null = null
 
 /**
  * 连接到 Socket 服务端
- * @param url 服务端地址，默认 http://localhost:3001
+ * @param url 服务端地址。不传时默认同源，由 nginx（生产）或 vite proxy（开发）转发到后端。
  */
 export function connect(url?: string): Socket {
   if (socket?.connected) return socket
 
-  const serverUrl = url ?? 'http://localhost:3001'
+  const serverUrl = url ?? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001')
   socket = io(serverUrl, {
     path: '/ws',
     transports: ['polling'],

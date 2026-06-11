@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ElButton } from 'element-plus'
+
 export interface FlowNode {
   label: string
   type: 'start' | 'task' | 'end'
@@ -63,7 +65,7 @@ const emit = defineEmits<{
       </template>
     </div>
     <div v-if="!compact && (primaryAction || secondaryAction)" :class="$style.actions">
-      <button
+      <ElButton
         v-if="secondaryAction"
         :class="$style.btnGhost"
         @click="emit('secondary-action')"
@@ -73,17 +75,18 @@ const emit = defineEmits<{
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
         {{ secondaryAction }}
-      </button>
-      <button
+      </ElButton>
+      <ElButton
         v-if="primaryAction"
         :class="$style.btnPrimary"
+        type="primary"
         @click="emit('primary-action')"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         {{ primaryAction }}
-      </button>
+      </ElButton>
     </div>
   </div>
 </template>

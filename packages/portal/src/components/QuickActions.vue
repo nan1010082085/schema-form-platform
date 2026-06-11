@@ -66,7 +66,7 @@ const actions: QuickAction[] = [
     icon: UserFilled,
     color: '#43e97b',
     bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    route: '/users',
+    route: '/admin/users',
   },
   {
     id: 'role-mgmt',
@@ -75,7 +75,7 @@ const actions: QuickAction[] = [
     icon: Reading,
     color: '#a18cd1',
     bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-    route: '/roles',
+    route: '/admin/roles',
   },
 ]
 

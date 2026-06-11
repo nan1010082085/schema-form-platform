@@ -18,8 +18,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: var(--bg-color, #fff);
+  border-bottom: 1px solid var(--border-color-lighter, #f0f0f0);
   flex-shrink: 0;
 }
 
@@ -38,5 +38,5 @@
 .main {
   flex: 1;
   overflow: auto;
-  background: #f5f7fa;
+  background: var(--bg-color-page, #f5f7fa);
 }

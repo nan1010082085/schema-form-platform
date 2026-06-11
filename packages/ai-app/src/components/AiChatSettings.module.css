@@ -225,6 +225,27 @@
   color: var(--ai-text-hint, #999999);
 }
 
+/* Model option */
+.modelOption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.modelOptionName {
+  font-size: 13px;
+  color: var(--ai-text-primary, #333333);
+}
+
+.modelOptionMeta {
+  font-size: 11px;
+  color: var(--ai-text-hint, #999999);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Transition */
 :global(.drawer-enter-active),
 :global(.drawer-leave-active) {

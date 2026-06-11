@@ -32,6 +32,13 @@
   flex-shrink: 0;
 }
 
+.appName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+}
+
 .title {
   font-size: 14px;
   font-weight: 600;

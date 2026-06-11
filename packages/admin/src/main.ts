@@ -2,7 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import '@schema-form/shared-styles/tokens.css'
+import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
 import { resolveToken } from '@schema-form/micro-app/child'
 import router from './router'
 import App from './App.vue'
@@ -15,6 +16,6 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus, { locale: zhCn })
+app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
 
 app.mount('#app')

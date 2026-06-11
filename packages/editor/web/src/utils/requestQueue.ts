@@ -3,7 +3,7 @@
  * 遍历 Schema 树收集 API 任务，顺序执行请求
  */
 import type { PartialWidget, DictItem } from '@/components/WidgetRenderer/types'
-import { getRequestInstance } from './request'
+import { apiClient } from './apiClient'
 import { setCachedOptions, getCachedOptions } from './optionsCache'
 import { useLogger } from '@/composables/useLogger'
 
@@ -54,8 +54,6 @@ export function collectApiTasks(schema: PartialWidget[]): QueueTask[] {
 /** 顺序执行请求队列 */
 export async function executeQueue(tasks: QueueTask[]): Promise<Map<string, DictItem[]>> {
   const results = new Map<string, DictItem[]>()
-  const http = getRequestInstance()
-
   for (const task of tasks) {
     // 查缓存
     const cached = getCachedOptions(task.url, task.params)
@@ -65,9 +63,7 @@ export async function executeQueue(tasks: QueueTask[]): Promise<Map<string, Dict
     }
 
     try {
-      const res: unknown = task.method === 'get'
-        ? await http.get(task.url, { params: task.params })
-        : await http.post(task.url, task.params)
+      const res = await apiClient.requestRaw<unknown>(task.method, task.url, task.params)
 
       let rawList: Record<string, unknown>[] = []
       if (Array.isArray(res)) {

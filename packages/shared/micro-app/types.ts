@@ -71,10 +71,3 @@ export interface ChildAppOptions extends ChildAppHooks {
   getRouter?: () => { replace: (path: string) => void } | undefined
 }
 
-// ---- Bridge 通信 ----
-
-/** postMessage 消息格式 */
-export interface BridgeMessage<T = unknown> {
-  type: string
-  payload: T
-}

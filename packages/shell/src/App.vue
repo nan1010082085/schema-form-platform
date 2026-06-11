@@ -28,9 +28,9 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  color: #303133;
-  background: #f5f7fa;
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
+  color: var(--text-color-primary, #303133);
+  background: var(--bg-color-page, #f5f7fa);
   -webkit-font-smoothing: antialiased;
 }
 

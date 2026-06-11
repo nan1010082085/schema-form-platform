@@ -1,14 +1,12 @@
 /**
  * 应用全局 Store
  *
- * 管理 qiankun 主应用注入的上下文（user / request / global）
+ * 管理应用上下文（user / request / global）
  * 以及 FormGrid 渲染所需的聚合上下文
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { UserContext, RequestContext, GlobalContext, FormGridContext } from '@/components/WidgetRenderer/types'
-import type { SchemaFormQiankunProps } from '@/types/qiankun'
-import { extractAuthToken } from '@/utils/auth'
 
 // ---- 默认值（冻结防止意外修改） ----
 
@@ -59,74 +57,6 @@ export const useAppStore = defineStore('app', () => {
   }))
 
   /**
-   * 从 qiankun props 初始化应用上下文
-   *
-   * 在 qiankun mount 生命周期中调用。
-   * 提取 user / request / global 三层上下文，并从 cookie 中提取 Sinosoft-Auth token。
-   */
-  function setQiankunProps(props: SchemaFormQiankunProps): void {
-    try {
-      // ---- 用户信息 ----
-      if (props.user) {
-        Object.assign(userContext.value, props.user)
-      }
-
-      // ---- 请求配置 ----
-      if (props.request) {
-        if (props.request.token) {
-          requestContext.value.token = props.request.token
-        }
-        if (props.request.headers) {
-          Object.assign(requestContext.value.headers, props.request.headers)
-        }
-        if (props.request.baseUrl) {
-          requestContext.value.baseUrl = props.request.baseUrl
-        }
-      }
-
-      // ---- 从 cookie 提取 Sinosoft-Auth token ----
-      if (props.cookie) {
-        const token = extractAuthToken(props.cookie)
-        if (token) {
-          requestContext.value.token = token
-          requestContext.value.headers['Sinosoft-Auth'] = token
-        }
-      }
-
-      // ---- 全局配置 ----
-      if (props.global) {
-        if (props.global.dictMap) {
-          globalContext.value.dictMap = props.global.dictMap
-        }
-        if (props.global.config) {
-          Object.assign(globalContext.value.config, props.global.config)
-        }
-      }
-
-      // ---- 全局状态变更监听 ----
-      if (props.onGlobalStateChange) {
-        props.onGlobalStateChange((state: Record<string, unknown>) => {
-          try {
-            if (state.user) {
-              Object.assign(userContext.value, state.user)
-            }
-            if (state.request) {
-              Object.assign(requestContext.value, state.request)
-            }
-            if (state.global) {
-              Object.assign(globalContext.value, state.global)
-            }
-          } catch (err) {
-            console.error('[AppStore] onGlobalStateChange handler error:', err)
-          }
-        })
-      }
-    } catch (err) {
-      console.error('[AppStore] setQiankunProps failed:', err)
-    }
-  }
-
-  /**
    * 更新请求上下文（部分更新）
    */
   function updateRequestContext(patch: Partial<RequestContext>): void {
@@ -145,7 +75,6 @@ export const useAppStore = defineStore('app', () => {
     requestContext,
     globalContext,
     formGridContext,
-    setQiankunProps,
     updateRequestContext,
     updateGlobalContext,
   }

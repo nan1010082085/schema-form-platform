@@ -18,7 +18,7 @@ async function handleLogin(): Promise<void> {
   try {
     await login({ username: form.username, password: form.password })
   } catch (e: unknown) {
-    errorMsg.value = e instanceof Error ? e.message : 'Login failed'
+    errorMsg.value = e instanceof Error ? e.message : '登录失败'
   }
 }
 </script>
@@ -28,7 +28,7 @@ async function handleLogin(): Promise<void> {
     <div :class="styles.card">
       <div :class="styles.header">
         <h1 :class="styles.logo">PyFlow</h1>
-        <p :class="styles.subtitle">Schema-Driven Form Platform</p>
+        <p :class="styles.subtitle">Schema 驱动的可视化表单平台</p>
       </div>
 
       <el-alert
@@ -43,7 +43,7 @@ async function handleLogin(): Promise<void> {
       <div :class="styles.form">
         <el-input
           v-model="form.username"
-          placeholder="Username"
+          placeholder="请输入用户名"
           size="large"
           @keyup.enter="handleLogin"
         />
@@ -51,14 +51,14 @@ async function handleLogin(): Promise<void> {
         <el-input
           v-model="form.password"
           type="password"
-          placeholder="Password"
+          placeholder="请输入密码"
           size="large"
           show-password
           @keyup.enter="handleLogin"
         />
 
         <div :class="styles.rememberRow">
-          <el-checkbox v-model="form.remember">Remember me</el-checkbox>
+          <el-checkbox v-model="form.remember">记住我</el-checkbox>
         </div>
 
         <el-button
@@ -67,7 +67,7 @@ async function handleLogin(): Promise<void> {
           :loading="loading.login"
           @click="handleLogin"
         >
-          Sign In
+          登 录
         </el-button>
       </div>
     </div>

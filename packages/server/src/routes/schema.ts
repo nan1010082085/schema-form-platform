@@ -6,6 +6,7 @@ import { authMiddleware } from '../middleware/auth.js'
 import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createSchemaSchema, updateSchemaSchema, importSchemaSchema } from '../schemas/schemaSchemas.js'
+import { eventBus } from '../services/eventBus.js'
 
 const requireAuth = authMiddleware({ required: true })
 
@@ -621,6 +622,9 @@ router.post('/:id/publish', requireAuth, requirePermission('schema:publish'), as
   )
 
   ctx.body = { success: true, data: published }
+
+  // Fire-and-forget webhook event
+  eventBus.emit('schema.published', { schemaId: draft.editId, name: draft.name }).catch(() => {})
 })
 
 // ────────────────────────────────────────────

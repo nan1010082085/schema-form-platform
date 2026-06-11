@@ -7,7 +7,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { resolveCrossNodeValues } from '@schema-form/flow-shared'
+import { resolveCrossNodeValues, collectReferencedNodeIds } from '@schema-form/flow-shared'
 import type { NodeFormDataMap } from '@schema-form/flow-shared'
 import { flowApi } from '../api/flowApi.js'
 
@@ -49,13 +49,50 @@ export function useCrossNodeData() {
   /**
    * Merge resolved cross-node values with existing task form data.
    * Existing task data takes priority (user's previous input overrides defaults).
+   *
+   * If formDefaultValues is not provided, returns taskFormData as-is.
    */
   function mergeWithTaskData(
     taskFormData?: Record<string, unknown>,
     formDefaultValues?: Record<string, unknown>,
   ): Record<string, unknown> {
+    if (!formDefaultValues) {
+      return taskFormData ?? {}
+    }
     const resolved = resolveInitialValues(formDefaultValues)
     return { ...resolved, ...(taskFormData ?? {}) }
+  }
+
+  /**
+   * Extract default values from form schema widgets.
+   * Recursively walks the widget tree and collects defaultValue fields.
+   */
+  function extractSchemaDefaults(
+    widgets: Array<Record<string, unknown>>,
+  ): Record<string, unknown> {
+    const defaults: Record<string, unknown> = {}
+
+    function walk(items: Array<Record<string, unknown>>) {
+      for (const item of items) {
+        if (item.field && item.defaultValue !== undefined) {
+          defaults[item.field as string] = item.defaultValue
+        }
+        if (item.children && Array.isArray(item.children)) {
+          walk(item.children as Array<Record<string, unknown>>)
+        }
+      }
+    }
+
+    walk(widgets)
+    return defaults
+  }
+
+  /**
+   * Check if any values contain cross-node template expressions.
+   */
+  function hasCrossNodeRefs(values: Record<string, unknown>): boolean {
+    const nodeIds = collectReferencedNodeIds(values)
+    return nodeIds.size > 0
   }
 
   const hasUpstreamData = computed(() => Object.keys(upstreamData.value).length > 0)
@@ -68,5 +105,7 @@ export function useCrossNodeData() {
     fetchUpstreamData,
     resolveInitialValues,
     mergeWithTaskData,
+    extractSchemaDefaults,
+    hasCrossNodeRefs,
   }
 }

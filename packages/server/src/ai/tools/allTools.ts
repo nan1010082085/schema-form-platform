@@ -33,6 +33,9 @@ import {
   updateFlowTool,
 } from './flowTools.js'
 
+// Workflow tools
+import { workflowTools } from './workflowTools.js'
+
 // Collaboration tools
 import { requestCollaborationTool } from './collaborationTools.js'
 
@@ -72,6 +75,9 @@ export const allTools = [
   bindSchemaToFlowNodeTool,
   getFlowNodeSchemaTool,
   updateFlowTool,
+
+  // Workflow tools
+  ...workflowTools,
 
   // Industry tools
   ...industryTools,

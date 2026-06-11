@@ -6,7 +6,6 @@ export type {
   MicroAppErrorEvent,
   ChildAppHooks,
   ChildAppOptions,
-  BridgeMessage,
 } from './types.js'
 
 // ---- 事件类型 ----
@@ -38,7 +37,14 @@ export { initMicroApp, useMicroApp, type MicroAppStatus } from './host.js'
 export { default as MicroApp } from './MicroApp.vue'
 
 // ---- 子应用侧 ----
-export { createChildApp, getMicroAppToken, resolveToken } from './child.js'
+export {
+  createChildApp,
+  getMicroAppToken,
+  getMicroAppAuthData,
+  resolveToken,
+  resolveMicroAppAuthData,
+  type MicroAppAuthData,
+} from './child.js'
 
 // ---- 主题守卫 ----
 export {
@@ -49,9 +55,6 @@ export {
   AI_THEME_VARS,
   type ThemeVars,
 } from './themeGuard.js'
-
-// ---- 通信桥（旧版，保留兼容） ----
-export { bridgeSend, bridgeOn, bridgeOff, bridgeDestroy } from './bridge.js'
 
 // ---- 统一通信 API ----
 export {

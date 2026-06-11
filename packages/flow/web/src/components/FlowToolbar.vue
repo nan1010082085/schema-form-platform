@@ -1,14 +1,16 @@
 <template>
   <div :class="[styles.toolbar, { [styles.previewBar]: isPreview }]">
-    <!-- Left: back + title -->
+    <!-- Left: portal + app name + title -->
     <div :class="styles.left">
-      <button :class="styles.iconBtn" title="返回" @click="$emit('back')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
+      <el-tooltip content="返回门户首页" placement="bottom">
+        <button :class="styles.iconBtn" title="返回门户" @click="goToPortal">
+          <el-icon :size="14"><HomeFilled /></el-icon>
+        </button>
+      </el-tooltip>
       <div :class="styles.divider" />
-      <span :class="styles.title">{{ title || '流程设计器' }}</span>
+      <span :class="styles.appName">流程设计器</span>
+      <div :class="styles.divider" />
+      <span :class="styles.title">{{ title || '未命名流程' }}</span>
     </div>
 
     <!-- Center: panel toggles + undo/redo + export/import (hidden in preview) -->
@@ -327,10 +329,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { View, EditPen } from '@element-plus/icons-vue'
+import { View, EditPen, HomeFilled } from '@element-plus/icons-vue'
 import type { SimulationSpeed } from '../composables/useSimulation.js'
 import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
+import { getAppUrl } from '@schema-form/micro-app/config'
 import NotificationBell from './NotificationBell.vue'
 import styles from './FlowToolbar.module.scss'
 
@@ -357,8 +360,11 @@ const layoutPopoverVisible = ref(false)
 
 const speedLabel = computed(() => SPEED_LABELS[props.speed ?? 'normal'])
 
+function goToPortal() {
+  window.location.href = getAppUrl('portal', import.meta.env.DEV)
+}
+
 defineEmits<{
-  back: []
   save: []
   undo: []
   redo: []

@@ -2,6 +2,9 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/tokens.css'
+import '@schema-form/shared-styles/theme'
+import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
 import { initMicroApp, preFetchApps } from '@schema-form/micro-app/host'
 import { getAppUrl } from '@schema-form/micro-app/config'
 
@@ -22,5 +25,5 @@ if (!import.meta.env.DEV) {
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus, { size: 'large' })
+app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
 app.mount('#app')

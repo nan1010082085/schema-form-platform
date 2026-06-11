@@ -28,6 +28,8 @@ import {
   deleteConversation,
   maybeGenerateSummary,
   searchConversations,
+  updateMessageFeedback,
+  AIConversationModel,
 } from './services/conversationService.js'
 import {
   createVersion,
@@ -440,6 +442,7 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   let eventCount = 0
   let lastSendTime = Date.now()
   let clientDisconnected = false
+  const graphAbort = new AbortController()
 
   const send = (event: Record<string, unknown>) => {
     if (clientDisconnected) return
@@ -461,7 +464,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   const idleCheck = setInterval(() => {
     if (clientDisconnected) return
     if (Date.now() - lastSendTime > IDLE_TIMEOUT_MS) {
-      console.log(`[SSE] Idle timeout (${IDLE_TIMEOUT_MS}ms), closing connection`)
+      console.log(`[SSE] Idle timeout (${IDLE_TIMEOUT_MS}ms), aborting graph`)
+      graphAbort.abort()
       send({ type: 'error', error: { message: '流式响应超时，请重试' } })
       send({ type: 'done', conversationId: convo._id })
       cleanup()
@@ -473,7 +477,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
   ctx.req.on('close', () => {
     if (clientDisconnected) return
     clientDisconnected = true
-    console.log(`[SSE] Client disconnected (thread=${threadId})`)
+    console.log(`[SSE] Client disconnected (thread=${threadId}), aborting graph`)
+    graphAbort.abort()
     cleanup()
     if (!stream.destroyed) stream.destroy()
   })
@@ -507,9 +512,14 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     const eventStream = graph.streamEvents(graphInput, {
       version: 'v2',
       configurable: { thread_id: threadId },
+      recursionLimit: 30,
+      signal: graphAbort.signal,
     })
 
     for await (const event of eventStream) {
+      // Break immediately when client disconnects — stop burning tokens
+      if (clientDisconnected) break
+
       switch (event.event) {
         // ── Node execution start ──
         case 'on_chain_start': {
@@ -527,8 +537,8 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
           const nodeName = event.name as string
           console.log(`[stream] on_chain_end: ${nodeName}`)
 
-          // Thinker node completed — extract task chain
-          if (nodeName === 'thinker') {
+          // Router node completed — extract task chain if one was created
+          if (nodeName === 'router') {
             const output = event.data?.output as Record<string, unknown> | undefined
             const taskGroup = output?.task as Record<string, unknown> | undefined
             if (taskGroup?.chain && Array.isArray(taskGroup.chain) && taskGroup.chain.length > 0) {
@@ -1009,6 +1019,13 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
     send({ type: 'done', conversationId: convo._id })
     doneSent = true
   } catch (err) {
+    // ── Client disconnected or graph aborted — silent exit ──
+    if (clientDisconnected) {
+      console.log(`[SSE] Graph aborted due to client disconnect (thread=${threadId})`)
+      doneSent = true
+      return
+    }
+
     // ── Detect Human-in-the-Loop interrupt ──
     if (isGraphInterrupt(err)) {
       const interruptValue = err.interrupts?.[0]?.value as Record<string, unknown> | undefined
@@ -1031,6 +1048,17 @@ router.post('/chat', validate(chatRequestSchema), async (ctx) => {
         data: interruptValue?.data,
       })
 
+      doneSent = true
+      return
+    }
+
+    // ── AbortError from graph abort (idle timeout, etc.) ──
+    const isAbortError = err instanceof Error && (
+      err.name === 'AbortError' || err.message.includes('aborted')
+    )
+    if (isAbortError) {
+      console.log(`[SSE] Graph execution aborted (thread=${threadId})`)
+      send({ type: 'error', error: { message: '请求已中断' } })
       doneSent = true
       return
     }
@@ -1116,6 +1144,7 @@ router.post('/chat/resume', async (ctx) => {
 
   let clientDisconnected = false
   let lastSendTime = Date.now()
+  const graphAbort = new AbortController()
 
   const send = (event: Record<string, unknown>) => {
     if (clientDisconnected) return
@@ -1133,7 +1162,8 @@ router.post('/chat/resume', async (ctx) => {
   const idleCheck = setInterval(() => {
     if (clientDisconnected) return
     if (Date.now() - lastSendTime > IDLE_TIMEOUT_MS) {
-      console.log(`[SSE] Resume idle timeout, closing connection`)
+      console.log(`[SSE] Resume idle timeout, aborting graph`)
+      graphAbort.abort()
       send({ type: 'error', error: { message: '流式响应超时，请重试' } })
       send({ type: 'done', conversationId: interrupted.conversationId })
       cleanup()
@@ -1145,7 +1175,8 @@ router.post('/chat/resume', async (ctx) => {
   ctx.req.on('close', () => {
     if (clientDisconnected) return
     clientDisconnected = true
-    console.log(`[SSE] Client disconnected (resume thread=${threadId})`)
+    console.log(`[SSE] Client disconnected (resume thread=${threadId}), aborting graph`)
+    graphAbort.abort()
     cleanup()
     if (!stream.destroyed) stream.destroy()
   })
@@ -1170,9 +1201,14 @@ router.post('/chat/resume', async (ctx) => {
     const eventStream = graph.streamEvents(command, {
       version: 'v2',
       configurable: { thread_id: threadId },
+      recursionLimit: 30,
+      signal: graphAbort.signal,
     })
 
     for await (const event of eventStream) {
+      // Break immediately when client disconnects
+      if (clientDisconnected) break
+
       // Forward relevant events to frontend
       if (event.event === 'on_chat_model_stream') {
         const chunk = event.data?.chunk as { content?: unknown } | undefined
@@ -1223,6 +1259,13 @@ router.post('/chat/resume', async (ctx) => {
     send({ type: 'done', conversationId: interrupted.conversationId })
     doneSent = true
   } catch (err) {
+    // ── Client disconnected or graph aborted — silent exit ──
+    if (clientDisconnected) {
+      console.log(`[SSE] Resume graph aborted due to client disconnect (thread=${threadId})`)
+      doneSent = true
+      return
+    }
+
     // Check for nested interrupt (multiple interrupts in sequence)
     if (isGraphInterrupt(err)) {
       const interruptValue = err.interrupts?.[0]?.value as Record<string, unknown> | undefined
@@ -1242,6 +1285,17 @@ router.post('/chat/resume', async (ctx) => {
         message: interruptValue?.message ?? '操作需要确认',
         data: interruptValue?.data,
       })
+      doneSent = true
+      return
+    }
+
+    // ── AbortError from graph abort (idle timeout, etc.) ──
+    const isAbortError = err instanceof Error && (
+      err.name === 'AbortError' || err.message.includes('aborted')
+    )
+    if (isAbortError) {
+      console.log(`[SSE] Resume graph execution aborted (thread=${threadId})`)
+      send({ type: 'error', error: { message: '请求已中断' } })
       doneSent = true
       return
     }
@@ -1584,6 +1638,7 @@ router.get('/conversations/:id', async (ctx) => {
       activeAgent: convo.activeAgent,
       version: convo.version,
       messages: convo.messages.map((m) => ({
+        id: m._id,
         role: m.role,
         content: m.content,
         thinking: m.thinking,
@@ -1592,6 +1647,7 @@ router.get('/conversations/:id', async (ctx) => {
         schema: m.schema,
         flow: m.flow,
         timestamp: m.timestamp,
+        feedback: m.feedback,
       })),
       createdAt: convo.createdAt,
       updatedAt: convo.updatedAt,
@@ -1614,6 +1670,42 @@ router.delete('/conversations/:id', async (ctx) => {
   ctx.body = { success: true }
 })
 
+// ────────────────────────────────────────────
+// Message Feedback API
+// ────────────────────────────────────────────
+
+/**
+ * POST /api/ai/messages/:id/feedback
+ *
+ * Submit feedback (positive/negative) for a message.
+ */
+router.post('/messages/:id/feedback', async (ctx) => {
+  const { id: messageId } = ctx.params
+  const { feedback, comment } = ctx.request.body as { feedback: 'positive' | 'negative'; comment?: string }
+
+  if (!feedback || !['positive', 'negative'].includes(feedback)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid feedback type. Must be "positive" or "negative".' } }
+    return
+  }
+
+  // Find the conversation containing this message
+  const convo = await AIConversationModel.findOne({ 'messages._id': messageId })
+  if (!convo) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Message not found.' } }
+    return
+  }
+
+  const updated = await updateMessageFeedback(convo._id, messageId, feedback, comment)
+  if (!updated) {
+    ctx.status = 500
+    ctx.body = { success: false, error: { message: 'Failed to update feedback.' } }
+    return
+  }
+
+  ctx.body = { success: true, data: { messageId, feedback, comment } }
+})
 
 // ────────────────────────────────────────────
 // Version History API

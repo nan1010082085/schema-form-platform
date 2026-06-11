@@ -16,6 +16,7 @@ interface Menu {
   status: string
   component: string
   microAppId: string | null
+  target: '_self' | '_blank'
   children?: Menu[]
 }
 
@@ -44,6 +45,7 @@ const form = ref({
   status: 'active',
   component: '',
   microAppId: null as string | null,
+  target: '_self' as '_self' | '_blank',
 })
 const editingId = ref('')
 
@@ -102,6 +104,7 @@ function openCreate(parentId: string | null = null) {
     status: 'active',
     component: '',
     microAppId: null,
+    target: '_self',
   }
   dialogVisible.value = true
 }
@@ -120,6 +123,7 @@ function openEdit(menu: Menu) {
     status: menu.status || 'active',
     component: menu.component || '',
     microAppId: menu.microAppId || null,
+    target: menu.target || '_self',
   }
   dialogVisible.value = true
 }
@@ -210,6 +214,9 @@ onMounted(async () => {
             <el-tag v-if="data.status === 'inactive'" size="small" type="warning" :class="$style.nodeTag">
               停用
             </el-tag>
+            <el-tag v-if="data.target === '_blank'" size="small" type="danger" :class="$style.nodeTag">
+              新页签
+            </el-tag>
           </div>
           <div :class="$style.nodeActions">
             <el-button text size="small" @click.stop="openCreate(data.id)">添加子菜单</el-button>
@@ -268,6 +275,12 @@ onMounted(async () => {
             :value="app.id"
           />
         </el-select>
+      </el-form-item>
+      <el-form-item label="打开方式">
+        <el-radio-group v-model="form.target">
+          <el-radio value="_self">当前窗口</el-radio>
+          <el-radio value="_blank">新页签</el-radio>
+        </el-radio-group>
       </el-form-item>
       <el-form-item label="路由路径">
         <el-input v-model="form.path" placeholder="如：/users、/roles" />

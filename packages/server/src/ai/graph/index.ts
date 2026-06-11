@@ -23,7 +23,6 @@ export { flowAgentNode } from './flowAgent.js'
 export {
   getClient,
   getModelForTask,
-  classifyTaskComplexity,
   escapeRegex,
 } from './agentBase.js'
 export type { TaskType } from './agentBase.js'

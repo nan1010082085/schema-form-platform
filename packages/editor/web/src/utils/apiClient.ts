@@ -37,7 +37,7 @@ export type ResponseInterceptor = <T>(data: T, response: Response) => T | Promis
 // ---- API 客户端类 ----
 
 export class ApiClient {
-  private baseUrl = 'http://localhost:3001/api'
+  private baseUrl = '/api'
   private getToken: (() => string) | null = null
   private useMock = false
   private requestInterceptors: RequestInterceptor[] = []
@@ -154,6 +154,49 @@ export class ApiClient {
 
   async delete<T>(path: string): Promise<T> {
     return this.buildAndSend<T>('DELETE', path)
+  }
+
+  /**
+   * 发送请求到外部 URL，不做 ApiResponse 包装解析，直接返回原始 JSON。
+   * 用于 actionExecutor / requestQueue 等调用用户配置的外部 API 场景。
+   * 会自动注入 token。
+   */
+  async requestRaw<T>(
+    method: string,
+    url: string,
+    bodyOrParams?: unknown,
+    customHeaders?: Record<string, string>,
+  ): Promise<T> {
+    const headers: Record<string, string> = {}
+    const token = this.getToken?.() ?? ''
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+      headers['Sinosoft-Auth'] = token
+    }
+
+    const isGet = method.toUpperCase() === 'GET'
+    const params = isGet ? (bodyOrParams as Record<string, unknown>) : undefined
+    const body = isGet ? undefined : bodyOrParams
+
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json'
+    }
+
+    if (customHeaders) {
+      Object.assign(headers, customHeaders)
+    }
+
+    const fullUrl = params
+      ? `${url}?${new URLSearchParams(params as Record<string, string>).toString()}`
+      : url
+
+    const response = await fetch(fullUrl, {
+      method: method.toUpperCase(),
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+
+    return response.json() as Promise<T>
   }
 
   /**
@@ -517,6 +560,344 @@ export async function logout(): Promise<null> {
 
 export async function fetchCurrentUser(): Promise<LoginResponse['user']> {
   return apiClient.get<LoginResponse['user']>('/auth/me')
+}
+
+// ---- 工作流 ----
+
+export interface DataUpdateRule {
+  trigger: string
+  targetField: string
+  sourceField: string
+  transform?: string
+}
+
+export interface WorkflowItem {
+  id: string
+  name: string
+  description: string
+  status: 'draft' | 'published' | 'archived'
+  formSchemaId: string
+  flowDefinitionId: string
+  dataUpdateRules: DataUpdateRule[]
+  publishConfig: {
+    entryUrl: string
+    permissions: { launchers: string[]; viewers: string[] }
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export async function fetchWorkflows(
+  options?: { status?: string; page?: number; pageSize?: number },
+): Promise<PaginatedResponse<WorkflowItem>> {
+  const params: Record<string, string> = {
+    page: String(options?.page ?? 1),
+    pageSize: String(options?.pageSize ?? 20),
+  }
+  if (options?.status) params.status = options.status
+  return apiClient.get<PaginatedResponse<WorkflowItem>>('/workflows', params)
+}
+
+export async function fetchWorkflowById(id: string): Promise<WorkflowItem> {
+  return apiClient.get<WorkflowItem>(`/workflows/${encodeURIComponent(id)}`)
+}
+
+export async function createWorkflow(payload: {
+  name: string
+  description?: string
+  formSchemaId: string
+  flowDefinitionId: string
+  dataUpdateRules?: DataUpdateRule[]
+  publishConfig?: WorkflowItem['publishConfig']
+}): Promise<WorkflowItem> {
+  return apiClient.post<WorkflowItem>('/workflows', payload)
+}
+
+export async function updateWorkflow(
+  id: string,
+  payload: {
+    name?: string
+    description?: string
+    formSchemaId?: string
+    flowDefinitionId?: string
+    dataUpdateRules?: DataUpdateRule[]
+    publishConfig?: WorkflowItem['publishConfig']
+  },
+): Promise<WorkflowItem> {
+  return apiClient.put<WorkflowItem>(`/workflows/${encodeURIComponent(id)}`, payload)
+}
+
+export async function deleteWorkflow(id: string): Promise<null> {
+  return apiClient.delete<null>(`/workflows/${encodeURIComponent(id)}`)
+}
+
+export async function publishWorkflow(id: string): Promise<WorkflowItem> {
+  return apiClient.post<WorkflowItem>(`/workflows/${encodeURIComponent(id)}/publish`)
+}
+
+export async function toggleWorkflowStatus(
+  id: string,
+  status: 'published' | 'archived',
+): Promise<WorkflowItem> {
+  return apiClient.put<WorkflowItem>(`/workflows/${encodeURIComponent(id)}/status`, { status })
+}
+
+export interface StartWorkflowResponse {
+  submission: SubmissionItem
+  instance: unknown
+}
+
+export async function startWorkflow(
+  id: string,
+  data: Record<string, unknown>,
+  variables?: Record<string, unknown>,
+): Promise<StartWorkflowResponse> {
+  return apiClient.post<StartWorkflowResponse>(
+    `/workflows/${encodeURIComponent(id)}/start`,
+    { data, variables },
+  )
+}
+
+// ---- 工作流模板 ----
+
+export interface WorkflowTemplateItem {
+  id: string
+  name: string
+  description: string
+  category: string
+  formSchema: unknown
+  flowDefinition: { nodes: unknown[]; edges: unknown[] }
+  dataUpdateRules: DataUpdateRule[]
+  thumbnail: string
+  tags: string[]
+  isBuiltin: boolean
+  useCount: number
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UseWorkflowTemplateResponse {
+  workflow: WorkflowItem
+  formSchema: { id: string; name: string }
+  flowDefinition: { id: string; name: string }
+}
+
+export async function fetchWorkflowTemplates(
+  options?: { search?: string; category?: string; isBuiltin?: boolean; page?: number; pageSize?: number },
+): Promise<PaginatedResponse<WorkflowTemplateItem>> {
+  const params: Record<string, string> = {
+    page: String(options?.page ?? 1),
+    pageSize: String(options?.pageSize ?? 20),
+  }
+  if (options?.search) params.search = options.search
+  if (options?.category) params.category = options.category
+  if (options?.isBuiltin !== undefined) params.isBuiltin = String(options.isBuiltin)
+  return apiClient.get<PaginatedResponse<WorkflowTemplateItem>>('/workflow-templates', params)
+}
+
+export async function fetchWorkflowTemplateById(id: string): Promise<WorkflowTemplateItem> {
+  return apiClient.get<WorkflowTemplateItem>(`/workflow-templates/${encodeURIComponent(id)}`)
+}
+
+export async function useWorkflowTemplate(
+  id: string,
+  payload?: { name?: string; description?: string },
+): Promise<UseWorkflowTemplateResponse> {
+  return apiClient.post<UseWorkflowTemplateResponse>(
+    `/workflow-templates/${encodeURIComponent(id)}/use`,
+    payload ?? {},
+  )
+}
+
+export async function seedWorkflowTemplates(): Promise<{ created: number; skipped: number }> {
+  return apiClient.post<{ created: number; skipped: number }>('/workflow-templates/seed', {})
+}
+
+// ---- 流程实例 ----
+
+export interface FlowInstanceItem {
+  id: string
+  definitionId: string
+  definitionName?: string
+  versionId: string
+  version: string
+  status: 'running' | 'completed' | 'terminated' | 'suspended' | 'failed'
+  variables: Record<string, unknown>
+  tokens: Array<{
+    tokenId: string
+    nodeId: string
+    parentTokenId: string | null
+    state: 'active' | 'waiting' | 'completed'
+    createdAt: string
+    waitingSince: string | null
+  }>
+  initiatedBy: string
+  startedAt: string
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export async function fetchFlowInstances(
+  options?: { definitionId?: string; status?: string; page?: number; pageSize?: number },
+): Promise<PaginatedResponse<FlowInstanceItem>> {
+  const params: Record<string, string> = {
+    page: String(options?.page ?? 1),
+    pageSize: String(options?.pageSize ?? 20),
+  }
+  if (options?.definitionId) params.definitionId = options.definitionId
+  if (options?.status) params.status = options.status
+  return apiClient.get<PaginatedResponse<FlowInstanceItem>>('/flow-instances', params)
+}
+
+export async function fetchFlowInstanceById(id: string): Promise<FlowInstanceItem> {
+  return apiClient.get<FlowInstanceItem>(`/flow-instances/${encodeURIComponent(id)}`)
+}
+
+// ---- 审批日志 ----
+
+export interface ApprovalLogItem {
+  id: string
+  instanceId: string
+  nodeId: string
+  nodeName: string
+  taskId: string
+  action: string
+  operator: string
+  comment: string | null
+  outcome: string | null
+  createdAt: string
+}
+
+export async function fetchApprovalLogs(instanceId: string): Promise<ApprovalLogItem[]> {
+  return apiClient.get<ApprovalLogItem[]>('/flow-approvals', { instanceId })
+}
+
+// ---- 流程定义版本（含图数据）----
+
+export interface FlowVersionItem {
+  id: string
+  definitionId: string
+  version: string
+  graph: { nodes: unknown[]; edges: unknown[] }
+  metadata: unknown
+  createdAt: string
+  updatedAt: string
+}
+
+export async function fetchLatestFlowVersion(definitionId: string): Promise<FlowVersionItem> {
+  return apiClient.get<FlowVersionItem>(
+    `/flows/${encodeURIComponent(definitionId)}/versions/latest`,
+  )
+}
+
+// ---- 表单提交数据 ----
+
+export interface SubmissionItem {
+  id: string
+  schemaId: string
+  data: Record<string, unknown>
+  submitterId: string | null
+  status: 'submitted' | 'approved' | 'rejected'
+  createdAt: string
+  updatedAt: string
+}
+
+export async function fetchSubmissions(
+  schemaId: string,
+  options?: { status?: string; page?: number; pageSize?: number },
+): Promise<PaginatedResponse<SubmissionItem>> {
+  const params: Record<string, string> = {
+    page: String(options?.page ?? 1),
+    pageSize: String(options?.pageSize ?? 20),
+  }
+  if (options?.status) params.status = options.status
+  return apiClient.get<PaginatedResponse<SubmissionItem>>(
+    `/submissions/${encodeURIComponent(schemaId)}`,
+    params,
+  )
+}
+
+export async function fetchSubmissionDetail(schemaId: string, id: string): Promise<SubmissionItem> {
+  return apiClient.get<SubmissionItem>(
+    `/submissions/${encodeURIComponent(schemaId)}/${encodeURIComponent(id)}`,
+  )
+}
+
+export async function deleteSubmission(schemaId: string, id: string): Promise<null> {
+  return apiClient.delete<null>(
+    `/submissions/${encodeURIComponent(schemaId)}/${encodeURIComponent(id)}`,
+  )
+}
+
+export async function updateSubmissionStatus(
+  schemaId: string,
+  id: string,
+  status: 'submitted' | 'approved' | 'rejected',
+): Promise<SubmissionItem> {
+  return apiClient.request<SubmissionItem>({
+    url: `${apiClient.getBaseUrl()}/submissions/${encodeURIComponent(schemaId)}/${encodeURIComponent(id)}/status`,
+    method: 'PATCH',
+    headers: (() => {
+      const h: Record<string, string> = { 'Content-Type': 'application/json' }
+      const token = (apiClient as unknown as { getToken: (() => string) | null }).getToken?.() ?? ''
+      if (token) {
+        h['Authorization'] = `Bearer ${token}`
+        h['Sinosoft-Auth'] = token
+      }
+      return h
+    })(),
+    body: { status },
+  })
+}
+
+export async function batchDeleteSubmissions(schemaId: string, ids: string[]): Promise<{ deletedCount: number }> {
+  return apiClient.post<{ deletedCount: number }>(
+    `/submissions/${encodeURIComponent(schemaId)}/batch/delete`,
+    { ids },
+  )
+}
+
+export async function batchUpdateSubmissionsStatus(
+  schemaId: string,
+  ids: string[],
+  status: 'submitted' | 'approved' | 'rejected',
+): Promise<{ modifiedCount: number }> {
+  return apiClient.post<{ modifiedCount: number }>(
+    `/submissions/${encodeURIComponent(schemaId)}/batch/status`,
+    { ids, status },
+  )
+}
+
+export type ExportFormat = 'csv' | 'xlsx'
+
+export async function exportSubmissionsCsv(schemaId: string, status?: string): Promise<Blob> {
+  return exportSubmissions(schemaId, 'csv', status)
+}
+
+export async function exportSubmissions(
+  schemaId: string,
+  format: ExportFormat,
+  status?: string,
+): Promise<Blob> {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  params.set('format', format)
+  const qs = params.toString()
+  const url = `${apiClient.getBaseUrl()}/submissions/${encodeURIComponent(schemaId)}/export?${qs}`
+  const headers: Record<string, string> = {}
+  const token = (apiClient as unknown as { getToken: (() => string) | null }).getToken?.() ?? ''
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+    headers['Sinosoft-Auth'] = token
+  }
+  const response = await fetch(url, { headers })
+  if (!response.ok) {
+    const json = await response.json().catch(() => null)
+    throw new ApiError(json?.error?.message ?? 'Export failed', response.status)
+  }
+  return response.blob()
 }
 
 // ---- 错误类型 ----

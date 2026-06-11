@@ -134,6 +134,35 @@ const readOnly = computed(() => props.readOnly ?? false)
 const designerStore = useFlowDesignerStore()
 const flowGraph = useFlowGraphStore()
 
+// Sync error highlight class onto nodes when errorNodeIds changes
+watch(
+  () => designerStore.errorNodeIds,
+  (errorIds) => {
+    const errorClass = 'node-error'
+    for (const node of flowGraph.nodes) {
+      const hasError = errorIds.has(node.id)
+      const classes: string[] = Array.isArray(node.class)
+        ? [...node.class]
+        : typeof node.class === 'string'
+          ? node.class.split(/\s+/).filter(Boolean)
+          : []
+      const idx = classes.indexOf(errorClass)
+      if (hasError && idx === -1) {
+        classes.push(errorClass)
+      } else if (!hasError && idx !== -1) {
+        classes.splice(idx, 1)
+      }
+      // Only update if changed
+      const newClass = classes.join(' ')
+      const oldClass = Array.isArray(node.class) ? node.class.join(' ') : (node.class ?? '')
+      if (newClass !== oldClass) {
+        node.class = newClass
+      }
+    }
+  },
+  { deep: true },
+)
+
 const {
   onNodeClick,
   onEdgeClick,
@@ -143,6 +172,8 @@ const {
   getEdges,
   screenToFlowCoordinate,
   fitView,
+  addSelectedNodes,
+  removeSelectedNodes,
 } = useVueFlow({ id: 'flow-canvas' })
 
 // Wire up copy/paste (Ctrl+C / Ctrl+V / Ctrl+D)
@@ -274,7 +305,24 @@ onUnmounted(() => {
   if (historyTimer) clearTimeout(historyTimer)
 })
 
+/**
+ * 选中并定位到指定节点：清除当前选中 → 选中目标节点 → fitView 聚焦到该节点
+ */
+function selectAndZoomToNode(nodeId: string) {
+  // Clear current selection
+  const allNodes = getNodes.value
+  removeSelectedNodes(allNodes)
+  // Select the target node
+  const target = allNodes.find(n => n.id === nodeId)
+  if (target) {
+    addSelectedNodes([target])
+  }
+  // Zoom and pan to the node
+  fitView({ nodes: [nodeId], padding: 0.5, duration: 500 })
+}
+
 defineExpose({
   fitView,
+  selectAndZoomToNode,
 })
 </script>

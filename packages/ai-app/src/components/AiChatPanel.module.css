@@ -5,37 +5,38 @@
   min-width: 0;
 }
 
+/* ---- Header (simplified) ---- */
 .header {
-  height: 48px;
+  height: 44px;
   padding: 0 20px;
-  border-bottom: 1px solid var(--ai-border-base, #D5DDE3);
+  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--ai-bg-gray-light, #FAFAFA);
+  background: var(--ai-bg-white, #FFFFFF);
   flex-shrink: 0;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, #1A1A1A);
 }
 
 .roleBadge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: var(--ai-radius-sm, 2px);
+  padding: 1px 6px;
+  border-radius: 4px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .roleBadge.auto {
@@ -55,81 +56,94 @@
 
 .headerActions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .actionBtn {
   width: 28px;
   height: 28px;
-  border-radius: var(--ai-radius-md, 4px);
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-radius: 6px;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--ai-text-hint, #999999);
-  font-size: 13px;
+  transition: all 0.15s;
 }
 
 .actionBtn:hover {
-  border-color: var(--ai-color-primary, #0060A2);
-  color: var(--ai-color-primary, #0060A2);
+  background: var(--ai-bg-gray, #F5F7FA);
+  color: var(--ai-text-primary, #333333);
 }
 
+/* ---- Messages ---- */
 .messages {
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
-  background: var(--ai-bg-gray, #F5F7FA);
+  background: var(--ai-bg-page, #F7F8FA);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  scroll-behavior: smooth;
 }
 
 .messages::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .messages::-webkit-scrollbar-thumb {
-  background: var(--ai-border-base, #D5DDE3);
-  border-radius: 2px;
+  background: var(--ai-border-light, #E0E3E8);
+  border-radius: 3px;
 }
 
+.messages::-webkit-scrollbar-thumb:hover {
+  background: var(--ai-border-base, #C8CDD3);
+}
+
+/* ---- Empty state ---- */
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  flex: 1;
   color: var(--ai-text-disabled, #C0C4CC);
   text-align: center;
+  padding: 40px 20px;
 }
 
 .emptyIcon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.3;
+  font-size: 40px;
+  margin-bottom: 10px;
+  opacity: 0.25;
 }
 
 .emptyTitle {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--ai-text-hint, #999999);
 }
 
 .emptySub {
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 4px;
+  color: var(--ai-text-disabled, #C0C4CC);
 }
 
-/* F3: Starter prompt grid */
+/* Starter prompt grid */
 .promptGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 24px;
-  max-width: 420px;
+  gap: 8px;
+  margin-top: 20px;
+  max-width: 400px;
   width: 100%;
 }
 
@@ -137,8 +151,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 14px;
-  border-radius: var(--ai-radius-md, 8px);
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid var(--ai-border-light, #EBEDF3);
   background: var(--ai-bg-white, #FFFFFF);
   cursor: pointer;
@@ -146,7 +160,7 @@
   font-family: inherit;
   font-size: 12.5px;
   color: var(--ai-text-primary, #333333);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
 }
 
 .promptCard:hover {
@@ -155,57 +169,42 @@
 }
 
 .promptIcon {
-  font-size: 16px;
+  font-size: 15px;
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .promptText {
   line-height: 1.4;
 }
 
-/* Floating Input Panel */
+/* ---- Input area ---- */
 .inputArea {
-  padding: 12px 20px 16px;
-  background: var(--ai-bg-gray, #F5F7FA);
+  padding: 8px 20px 16px;
+  background: var(--ai-bg-page, #F7F8FA);
   flex-shrink: 0;
 }
 
 .inputBox {
-  background: var(--ai-glass-bg, rgba(255, 255, 255, 0.72));
-  backdrop-filter: var(--ai-glass-blur, blur(16px));
-  -webkit-backdrop-filter: var(--ai-glass-blur, blur(16px));
-  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
-  border-radius: var(--ai-radius-xl, 16px);
-  padding: 12px 14px 10px;
-  box-shadow: var(--ai-shadow-float, 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06));
+  background: var(--ai-bg-white, #FFFFFF);
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  border-radius: 14px;
+  padding: 10px 14px 8px;
+  box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputBox:focus-within {
+  border-color: var(--ai-color-primary, #0060A2);
+  box-shadow: 0 -1px 8px rgba(0, 96, 162, 0.06);
 }
 
 .inputDisabled {
-  opacity: 0.6;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-.inputField {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 13.5px;
-  color: var(--ai-text-primary, #333333);
-  font-family: inherit;
-  line-height: 1.5;
-  min-height: 36px;
-  max-height: 120px;
-  resize: none;
-  background: transparent;
-}
-
-.inputField::placeholder {
-  color: var(--ai-text-disabled, #C0C4CC);
-}
-
-.inputField:disabled {
-  cursor: not-allowed;
-}
-
+/* ---- Input footer ---- */
 .inputFooter {
   display: flex;
   align-items: center;
@@ -223,18 +222,25 @@
 
 .inputHint kbd {
   padding: 1px 4px;
-  border-radius: var(--ai-radius-sm, 2px);
-  border: 1px solid var(--ai-border-base, #D5DDE3);
+  border-radius: 3px;
+  border: 1px solid var(--ai-border-light, #EBEDF3);
   background: var(--ai-bg-gray, #F5F7FA);
   font-size: 10px;
   font-family: inherit;
+  color: var(--ai-text-hint, #999);
 }
 
-/* Agent select — native select styled */
+.inputActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Agent select */
 .agentSelect {
   padding: 3px 8px;
   border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: var(--ai-radius-sm, 2px);
+  border-radius: 6px;
   font-size: 11px;
   color: var(--ai-text-hint, #999999);
   font-family: inherit;
@@ -246,17 +252,11 @@
   background-repeat: no-repeat;
   background-position: right 6px center;
   padding-right: 20px;
+  transition: border-color 0.15s;
 }
 
 .agentSelect:focus {
   border-color: var(--ai-color-primary, #0060A2);
-}
-
-/* Input actions container */
-.inputActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 /* Running indicator */
@@ -276,17 +276,9 @@
   animation: runningPulse 1.4s ease-in-out infinite;
 }
 
-.runningDot:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.runningDot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.runningDot:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.runningDot:nth-child(1) { animation-delay: 0s; }
+.runningDot:nth-child(2) { animation-delay: 0.2s; }
+.runningDot:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes runningPulse {
   0%, 80%, 100% {
@@ -299,21 +291,20 @@
   }
 }
 
-/* ---- SSE 连接状态指示器 ---- */
-
+/* ---- SSE connection status ---- */
 .connStatus {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: var(--ai-radius-sm, 2px);
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
   font-size: 10px;
   font-weight: 500;
 }
 
 .connDot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -348,23 +339,18 @@
 }
 
 @keyframes connPulse {
-  0%, 100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
-/* ---- 重试 Banner ---- */
-
+/* ---- Retry banner ---- */
 .retryBanner {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px 20px;
-  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.05));
+  gap: 10px;
+  padding: 6px 20px;
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.04));
   border-top: 1px solid var(--ai-border-light, #EBEDF3);
   flex-shrink: 0;
 }
@@ -378,15 +364,15 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--ai-radius-md, 4px);
+  padding: 3px 10px;
+  border-radius: 6px;
   border: 1px solid var(--ai-color-primary, #0060A2);
   background: var(--ai-bg-white, #FFFFFF);
   color: var(--ai-color-primary, #0060A2);
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .retryBannerBtn:hover {
@@ -397,15 +383,15 @@
 .stopBtn {
   width: 28px;
   height: 28px;
-  border-radius: var(--ai-radius-md, 4px);
+  border-radius: 6px;
   border: 1px solid var(--ai-color-danger, #E63535);
-  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.1));
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.08));
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--ai-color-danger, #E63535);
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .stopBtn:hover {
@@ -422,15 +408,15 @@
 .ragBtn {
   width: 28px;
   height: 28px;
-  border-radius: var(--ai-radius-md, 4px);
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-radius: 6px;
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--ai-text-hint, #999999);
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .ragBtn:hover:not(:disabled) {
@@ -445,7 +431,7 @@
 }
 
 .ragBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -455,7 +441,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 6px;
-  border-radius: var(--ai-radius-sm, 2px);
+  border-radius: 4px;
   background: var(--ai-color-primary-bg, #EEF5FF);
   color: var(--ai-color-primary, #0060A2);
   font-size: 10px;
@@ -472,15 +458,15 @@
 .fileBtn {
   width: 28px;
   height: 28px;
-  border-radius: var(--ai-radius-md, 4px);
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-radius: 6px;
+  border: 1px solid var(--ai-border-light, #EBEDF3);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--ai-text-hint, #999999);
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .fileBtn:hover:not(:disabled) {
@@ -489,7 +475,7 @@
 }
 
 .fileBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -497,9 +483,9 @@
 .attachmentList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
 }
 
@@ -507,19 +493,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 5px 8px;
   background: var(--ai-bg-gray, #F5F7FA);
-  border-radius: var(--ai-radius-md, 6px);
+  border-radius: 6px;
   border: 1px solid var(--ai-border-light, #EBEDF3);
 }
 
 .attachmentItem.attachmentError {
   border-color: var(--ai-color-danger, #E63535);
-  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.05));
+  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.04));
 }
 
 .attachmentIcon {
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -528,7 +514,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .attachmentName {
@@ -547,16 +533,14 @@
 .attachmentLoading {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--ai-border-base, #D5DDE3);
+  border: 2px solid var(--ai-border-light, #EBEDF3);
   border-top-color: var(--ai-color-primary, #0060A2);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .attachmentErrorText {
@@ -565,8 +549,8 @@
 }
 
 .attachmentRemove {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -575,8 +559,8 @@
   justify-content: center;
   cursor: pointer;
   color: var(--ai-text-hint, #999999);
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 13px;
+  transition: all 0.15s;
 }
 
 .attachmentRemove:hover {

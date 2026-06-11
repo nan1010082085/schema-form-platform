@@ -1,8 +1,31 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
+import { resolveToken } from '@schema-form/micro-app/child'
+import { SSOClient } from '@schema-form/shared-utils/sso'
+
+// SSO 客户端配置
+const SSO_CLIENT_ID = 'admin'
+
+function getSSOClient(): SSOClient {
+  const origin = window.location.origin
+  return new SSOClient({
+    clientId: SSO_CLIENT_ID,
+    redirectUri: `${origin}/admin/auth/callback`,
+    ssoBaseUrl: origin,
+  })
+}
+
+const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
 
 const router = createRouter({
-  history: createWebHistory('/admin/'),
+  history: isMicroApp() ? createMemoryHistory() : createWebHistory('/admin/'),
   routes: [
+    // ---- SSO Callback ----
+    {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/views/AuthCallbackView.vue'),
+      meta: { public: true },
+    },
     {
       path: '/',
       component: () => import('@/layouts/AdminLayout.vue'),
@@ -61,6 +84,12 @@ const router = createRouter({
           meta: { title: '参数设置' },
         },
         {
+          path: 'model-configs',
+          name: 'model-configs',
+          component: () => import('@/views/ModelConfigView.vue'),
+          meta: { title: '模型配置' },
+        },
+        {
           path: 'logs',
           name: 'logs',
           component: () => import('@/views/LogManageView.vue'),
@@ -69,6 +98,20 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+// 路由守卫：独立访问时检查登录状态
+router.beforeEach((to) => {
+  // callback 页面不需要检查
+  if (to.name === 'auth-callback') {
+    return true
+  }
+
+  // 微前端模式下跳过检查（宿主已处理鉴权）
+  if (!isMicroApp() && !resolveToken()) {
+    getSSOClient().login(window.location.href)
+    return false
+  }
 })
 
 export default router

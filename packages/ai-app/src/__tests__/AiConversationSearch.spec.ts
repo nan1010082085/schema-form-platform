@@ -6,6 +6,40 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import AiConversationSearch from '@/components/AiConversationSearch.vue'
 
+// Stubs for Element Plus components used in AiConversationSearch
+const ElInputStub = {
+  template: '<input :value="modelValue" :placeholder="placeholder" @input="$emit(\'update:modelValue\', $event.target.value)" @keyup.enter="$emit(\'keyup.enter\')" />',
+  props: ['modelValue', 'placeholder', 'clearable', 'size'],
+  emits: ['update:modelValue', 'keyup.enter', 'clear'],
+}
+const ElSelectStub = {
+  template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
+  props: ['modelValue', 'placeholder', 'size'],
+  emits: ['update:modelValue'],
+}
+const ElOptionStub = {
+  template: '<option :value="value">{{ label }}</option>',
+  props: ['label', 'value'],
+}
+const ElDatePickerStub = {
+  template: '<input type="date" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+  props: ['modelValue', 'type', 'placeholder', 'size', 'valueFormat', 'format'],
+  emits: ['update:modelValue'],
+}
+const ElButtonStub = {
+  template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+  props: ['type', 'size', 'link', 'disabled', 'title'],
+  emits: ['click'],
+}
+
+const globalStubs = {
+  ElInput: ElInputStub,
+  ElSelect: ElSelectStub,
+  ElOption: ElOptionStub,
+  ElDatePicker: ElDatePickerStub,
+  ElButton: ElButtonStub,
+}
+
 const mockSearchResult = {
   conversations: [
     {
@@ -45,14 +79,14 @@ describe('AiConversationSearch', () => {
   })
 
   it('renders a search input', () => {
-    const wrapper = mount(AiConversationSearch)
-    expect(wrapper.find('input[type="text"]').exists()).toBe(true)
-    expect(wrapper.find('input[type="text"]').attributes('placeholder')).toBe('搜索对话...')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    expect(wrapper.find('input').exists()).toBe(true)
+    expect(wrapper.find('input').attributes('placeholder')).toBe('搜索对话...')
   })
 
   it('shows results after typing and debounce', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -62,8 +96,8 @@ describe('AiConversationSearch', () => {
   })
 
   it('displays conversation title in results', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -75,8 +109,8 @@ describe('AiConversationSearch', () => {
   })
 
   it('displays source tags', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -87,8 +121,8 @@ describe('AiConversationSearch', () => {
   })
 
   it('emits select event when clicking a result', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -103,8 +137,8 @@ describe('AiConversationSearch', () => {
   })
 
   it('clears search after selecting a result', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -114,13 +148,13 @@ describe('AiConversationSearch', () => {
 
     await wrapper.find('[class*="resultItem"]').trigger('click')
 
-    expect(wrapper.find('input[type="text"]').element.value).toBe('')
+    expect(wrapper.find('input').element.value).toBe('')
     expect(wrapper.find('[class*="results"]').exists()).toBe(false)
   })
 
   it('hides panel when search query is cleared', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('test')
 
@@ -136,8 +170,8 @@ describe('AiConversationSearch', () => {
   })
 
   it('shows result count', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -146,24 +180,25 @@ describe('AiConversationSearch', () => {
     }, { timeout: 3000 })
   })
 
-  it('clears search when clicking clear button', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+  it('clears search when input is cleared', async () => {
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('test')
 
     await vi.waitFor(() => {
-      expect(wrapper.find('[class*="clearBtn"]').exists()).toBe(true)
+      expect(wrapper.find('[class*="results"]').exists()).toBe(true)
     }, { timeout: 3000 })
 
-    await wrapper.find('[class*="clearBtn"]').trigger('click')
+    await input.setValue('')
 
-    expect(wrapper.find('input[type="text"]').element.value).toBe('')
+    await flushPromises()
+    expect(wrapper.find('[class*="results"]').exists()).toBe(false)
   })
 
   it('calls searchConversationsAction with keyword params', async () => {
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('审批')
 
@@ -175,12 +210,12 @@ describe('AiConversationSearch', () => {
   // ---- Filter tests ----
 
   it('renders filter toggle button', () => {
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
     expect(wrapper.find('[class*="filterToggle"]').exists()).toBe(true)
   })
 
   it('shows filter panel when toggle is clicked', async () => {
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -188,7 +223,7 @@ describe('AiConversationSearch', () => {
   })
 
   it('hides filter panel when toggle is clicked again', async () => {
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
     expect(wrapper.find('[class*="filterPanel"]').exists()).toBe(true)
@@ -198,7 +233,7 @@ describe('AiConversationSearch', () => {
   })
 
   it('renders source filter select with all options', async () => {
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -213,7 +248,7 @@ describe('AiConversationSearch', () => {
   })
 
   it('renders date range inputs', async () => {
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -223,7 +258,7 @@ describe('AiConversationSearch', () => {
 
   it('searches with source filter', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -238,7 +273,7 @@ describe('AiConversationSearch', () => {
 
   it('searches with date range filter', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -257,8 +292,8 @@ describe('AiConversationSearch', () => {
 
   it('searches with keyword + source + date combined', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(AiConversationSearch)
-    const input = wrapper.find('input[type="text"]')
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
+    const input = wrapper.find('input')
 
     await input.setValue('表单')
 
@@ -283,7 +318,7 @@ describe('AiConversationSearch', () => {
 
   it('shows results when only filters are active (no keyword)', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -297,9 +332,9 @@ describe('AiConversationSearch', () => {
     vi.useRealTimers()
   })
 
-  it('clears filters when clicking clear button', async () => {
+  it('clears filters when source is reset to empty', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(AiConversationSearch)
+    const wrapper = mount(AiConversationSearch, { global: { stubs: globalStubs } })
 
     await wrapper.find('[class*="filterToggle"]').trigger('click')
 
@@ -308,11 +343,14 @@ describe('AiConversationSearch', () => {
     vi.advanceTimersByTime(400)
     await flushPromises()
 
-    expect(wrapper.find('[class*="clearBtn"]').exists()).toBe(true)
+    expect(wrapper.find('[class*="results"]').exists()).toBe(true)
 
-    await wrapper.find('[class*="clearBtn"]').trigger('click')
+    // 清除 source 筛选
+    await select.setValue('')
+    vi.advanceTimersByTime(400)
+    await flushPromises()
 
-    expect(wrapper.find('select').element.value).toBe('')
+    // 无 keyword 且无 filter，panel 应隐藏
     expect(wrapper.find('[class*="results"]').exists()).toBe(false)
     vi.useRealTimers()
   })

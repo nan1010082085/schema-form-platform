@@ -3,6 +3,7 @@ import { createServer } from 'node:http'
 import app from './app.js'
 import { connectDatabase, mongoose } from './config/database.js'
 import { initSocket } from './socket.js'
+import { initWebhookDispatcher } from './services/webhookDispatcher.js'
 import { initDefaultTenant } from './utils/initDefaultTenant.js'
 import { seedBuiltinTemplates } from './utils/seedBuiltinTemplates.js'
 import { seedPermissions } from './utils/seedPermissions.js'
@@ -10,6 +11,7 @@ import { seedAdmin } from './utils/seedAdmin.js'
 import { seedMicroApps } from './utils/seedMicroApps.js'
 import { seedMenus } from './utils/seedMenus.js'
 import { seedRoles } from './utils/seedRoles.js'
+import { seedClients } from './utils/seedClients.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
@@ -21,7 +23,10 @@ async function start() {
   await seedMenus()
   await seedRoles()
   await seedBuiltinTemplates()
+  await seedClients()
   await seedAdmin()
+
+  initWebhookDispatcher()
 
   const httpServer = createServer(app.callback())
   initSocket(httpServer)

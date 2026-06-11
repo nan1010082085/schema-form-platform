@@ -73,7 +73,7 @@ const showLogPanel = ref(false)
 const showCodePanel = ref(false)
 const showAiDrawer = ref(false)
 const showVersionCompare = ref(false)
-const aiBaseUrl = import.meta.env.VITE_AI_URL || 'http://localhost:5300/ai/index-sidebar.html'
+const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
 
 const aiDrawerData = computed(() => ({
   source: 'editor',

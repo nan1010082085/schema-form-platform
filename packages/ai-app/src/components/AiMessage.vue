@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ElButton, ElTooltip, ElMessage } from 'element-plus'
 import AiStepCard from './AiStepCard.vue'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
@@ -53,6 +54,10 @@ export interface AiMessageProps {
   cards?: MessageEmbeddedCard[]
   /** 原始 Widget 数据，用于渲染器预览卡片 */
   schemaWidgets?: Widget[]
+  /** 消息 ID，用于反馈 API */
+  messageId?: string
+  /** 当前反馈状态 */
+  feedback?: 'positive' | 'negative' | null
 }
 
 const props = defineProps<AiMessageProps>()
@@ -62,7 +67,41 @@ const emit = defineEmits<{
   'card-secondary-action': [cardIndex: number]
   'open-json-drawer': []
   'retry-tool': [toolIndex: number]
+  copy: []
+  regenerate: []
+  feedback: [type: 'positive' | 'negative']
 }>()
+
+// ---- Action menu state ----
+
+const isHovered = ref(false)
+const currentFeedback = ref<'positive' | 'negative' | null>(props.feedback ?? null)
+
+watch(() => props.feedback, (newVal) => {
+  currentFeedback.value = newVal ?? null
+})
+
+function handleCopy(): void {
+  if (props.content) {
+    navigator.clipboard.writeText(props.content)
+    ElMessage.success('已复制到剪贴板')
+  }
+  emit('copy')
+}
+
+function handleRegenerate(): void {
+  emit('regenerate')
+}
+
+function handleFeedback(type: 'positive' | 'negative'): void {
+  // Toggle off if clicking the same feedback
+  if (currentFeedback.value === type) {
+    currentFeedback.value = null
+  } else {
+    currentFeedback.value = type
+  }
+  emit('feedback', type)
+}
 
 // ---- F2: rAF-batched content for streaming ----
 
@@ -336,7 +375,11 @@ const steps = computed<StepData[]>(() => {
 </script>
 
 <template>
-  <div :class="[$style.msg, role === 'user' ? $style.msgUser : $style.msgAssistant]">
+  <div
+    :class="[$style.msg, role === 'user' ? $style.msgUser : $style.msgAssistant]"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
+  >
     <!-- Avatar -->
     <div :class="[$style.avatar, role === 'user' ? $style.avatarUser : $style.avatarAssistant]">
       <!-- User icon -->
@@ -379,7 +422,7 @@ const steps = computed<StepData[]>(() => {
                   <span :class="[$style.codeBlockArrow, { [$style.codeBlockArrowExpanded]: !codeCollapsed[idx] }]">▸</span>
                   <span :class="$style.codeBlockTitle">{{ step.title }}</span>
                 </div>
-                <button :class="$style.codeCopyBtn" @click.stop="copyCode(step.content)">复制</button>
+                <ElButton :class="$style.codeCopyBtn" link size="small" @click.stop="copyCode(step.content)">复制</ElButton>
               </div>
               <div v-if="!codeCollapsed[idx]" :class="$style.codeBlockBody">
                 <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
@@ -474,6 +517,46 @@ const steps = computed<StepData[]>(() => {
           <span :class="$style.tipText">{{ tip }}</span>
         </div>
       </template>
+
+      <!-- Action menu (hover to show) -->
+      <div v-if="role === 'assistant' && !loading && isHovered" :class="$style.actionMenu">
+        <ElTooltip content="复制" placement="top" :show-after="300">
+          <button :class="$style.actionBtn" @click="handleCopy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </ElTooltip>
+        <ElTooltip content="重新生成" placement="top" :show-after="300">
+          <button :class="$style.actionBtn" @click="handleRegenerate">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+          </button>
+        </ElTooltip>
+        <ElTooltip content="点赞" placement="top" :show-after="300">
+          <button
+            :class="[$style.actionBtn, { [$style.actionBtnActive]: currentFeedback === 'positive' }]"
+            @click="handleFeedback('positive')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+            </svg>
+          </button>
+        </ElTooltip>
+        <ElTooltip content="点踩" placement="top" :show-after="300">
+          <button
+            :class="[$style.actionBtn, { [$style.actionBtnActive]: currentFeedback === 'negative' }]"
+            @click="handleFeedback('negative')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+            </svg>
+          </button>
+        </ElTooltip>
+      </div>
     </div>
   </div>
 </template>

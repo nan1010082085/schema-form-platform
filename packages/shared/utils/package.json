@@ -1,0 +1,13 @@
+{
+  "name": "@schema-form/shared-utils",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./apiClient": "./apiClient.ts",
+    "./authTypes": "./authTypes.ts",
+    "./sso": "./sso.ts",
+    "./stores": "./stores/index.ts",
+    "./stores/authStore": "./stores/authStore.ts"
+  }
+}

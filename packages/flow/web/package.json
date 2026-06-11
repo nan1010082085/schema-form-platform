@@ -23,6 +23,8 @@
     "@micro-zoe/micro-app": "1.0.0-rc.30",
     "@schema-form/flow-shared": "workspace:*",
     "@schema-form/micro-app": "workspace:*",
+    "@schema-form/shared-styles": "workspace:*",
+    "@schema-form/shared-utils": "workspace:*",
     "@schema-form/socket": "workspace:*",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",

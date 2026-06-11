@@ -27,11 +27,13 @@ import {
   EditPen,
   Lock,
   Monitor,
+  HomeFilled,
 } from '@element-plus/icons-vue'
 import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
 import { useApiStore } from '@/stores/api'
+import { getAppUrl } from '@schema-form/micro-app/config'
 
 const props = defineProps<{
   mode: InteractionMode
@@ -202,6 +204,10 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowDown' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); handleMoveDown() }
 }
 
+function goToPortal() {
+  window.location.href = getAppUrl('portal', import.meta.env.DEV)
+}
+
 onMounted(() => { document.addEventListener('keydown', handleKeydown) })
 onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 </script>
@@ -210,11 +216,13 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   <div class="editor-toolbar">
     <!-- 左侧：返回 / 名称 / 面板切换 -->
     <div class="editor-toolbar__left">
-      <button class="editor-toolbar__icon-btn" title="返回">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 12L6 8l4-4"/>
-        </svg>
-      </button>
+      <el-tooltip content="返回门户首页" placement="bottom">
+        <button class="editor-toolbar__icon-btn" title="返回门户" @click="goToPortal">
+          <el-icon :size="14"><HomeFilled /></el-icon>
+        </button>
+      </el-tooltip>
+      <div class="editor-toolbar__divider" />
+      <span class="editor-toolbar__app-name">表单编辑器</span>
       <div class="editor-toolbar__divider" />
       <input
         :value="schemaName"
@@ -550,6 +558,14 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
+  }
+
+  &__app-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--el-text-color-secondary);
+    white-space: nowrap;
     flex-shrink: 0;
   }
 
