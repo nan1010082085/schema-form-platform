@@ -16,8 +16,9 @@ initMicroApp()
 // 生产环境预加载子应用，开发环境跳过（避免缓存旧版本）
 if (!import.meta.env.DEV) {
   preFetchApps([
-    { name: 'editor', url: getAppUrl('editor', false), iframe: true },
-    { name: 'flow',   url: getAppUrl('flow',   false), iframe: true },
+    { name: 'editor',   url: getAppUrl('editor',   false), iframe: true },
+    { name: 'flow',     url: getAppUrl('flow',     false), iframe: true },
+    { name: 'workflow', url: getAppUrl('workflow', false), iframe: true },
   ])
 }
 

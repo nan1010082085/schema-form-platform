@@ -27,6 +27,7 @@ if (!import.meta.env.DEV) {
     { name: 'editor', url: getAppUrl('editor', false), iframe: true },
     { name: 'flow', url: getAppUrl('flow', false), iframe: true },
     { name: 'ai', url: getAppUrl('ai', false), iframe: true },
+    { name: 'workflow', url: getAppUrl('workflow', false), iframe: true },
   ])
 }
 

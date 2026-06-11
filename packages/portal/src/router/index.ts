@@ -43,6 +43,11 @@ const router = createRouter({
       name: 'flow-embed',
       component: () => import('@/views/FlowView.vue'),
     },
+    {
+      path: '/workflow/:pathMatch(.*)*',
+      name: 'workflow-embed',
+      component: () => import('@/views/WorkflowView.vue'),
+    },
     // 兜底重定向
     {
       path: '/:pathMatch(.*)*',

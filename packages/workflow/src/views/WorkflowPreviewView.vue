@@ -1,0 +1,300 @@
+<script setup lang="ts">
+/**
+ * WorkflowPreviewView — 工作流预览页
+ *
+ * 左侧：表单 Schema 预览（JSON 展示）
+ * 右侧：流程图预览（VueFlow 渲染关联流程定义）
+ * 底部：数据更新规则展示
+ */
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Loading, CircleCloseFilled, ArrowRight } from '@element-plus/icons-vue'
+import { VueFlow } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
+import type { WorkflowItem } from '@schema-form/shared-utils/apiClient'
+import {
+  fetchWorkflowById,
+  fetchSchemaById,
+  fetchLatestFlowVersion,
+  type FlowVersionItem,
+} from '@schema-form/shared-utils/apiClient'
+import styles from './WorkflowPreviewView.module.scss'
+
+const route = useRoute()
+const router = useRouter()
+
+const workflowId = computed(() => route.params.id as string)
+
+// ── 状态 ──
+const workflow = ref<WorkflowItem | null>(null)
+const schema = ref<unknown>(null)
+const flowVersion = ref<FlowVersionItem | null>(null)
+const loading = ref(true)
+const error = ref('')
+const rulesExpanded = ref(true)
+
+// ── 流程图数据转换 ──
+const flowNodes = computed(() => {
+  if (!flowVersion.value?.graph?.nodes) return []
+  return flowVersion.value.graph.nodes as unknown[]
+})
+
+const flowEdges = computed(() => {
+  if (!flowVersion.value?.graph?.edges) return []
+  return flowVersion.value.graph.edges as unknown[]
+})
+
+// ── 加载数据 ──
+async function loadPreviewData(id: string) {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const wf = await fetchWorkflowById(id)
+    workflow.value = wf
+
+    const [schemaDetail, version] = await Promise.all([
+      fetchSchemaById(wf.formSchemaId),
+      fetchLatestFlowVersion(wf.flowDefinitionId).catch(() => null),
+    ])
+
+    schema.value = schemaDetail.json
+    flowVersion.value = version
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '加载工作流预览失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleBack() {
+  router.push('/workflows')
+}
+
+// ── 初始化 ──
+onMounted(() => {
+  if (workflowId.value) {
+    loadPreviewData(workflowId.value)
+  } else {
+    error.value = '缺少工作流 ID'
+    loading.value = false
+  }
+})
+</script>
+
+<template>
+  <div :class="styles.page">
+    <!-- 顶部导航 -->
+    <div :class="styles.header">
+      <div :class="styles.headerLeft">
+        <button :class="styles.backBtn" title="返回" @click="handleBack">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span :class="styles.headerTitle">
+          {{ workflow?.name ?? '工作流预览' }}
+        </span>
+        <el-tag
+          v-if="workflow"
+          :type="workflow.status === 'published' ? 'success' : 'info'"
+          size="small"
+        >
+          {{ workflow.status === 'published' ? '已发布' : workflow.status === 'archived' ? '已归档' : '草稿' }}
+        </el-tag>
+      </div>
+      <div :class="styles.headerRight">
+        <el-button size="small" @click="router.push(`/workflow/${workflowId}`)">
+          编辑工作流
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 加载中 -->
+    <div v-if="loading" :class="styles.loading">
+      <el-icon class="is-loading" :size="20"><Loading /></el-icon>
+      <span>加载中...</span>
+    </div>
+
+    <!-- 错误 -->
+    <div v-else-if="error" :class="styles.errorState">
+      <el-icon :size="48" color="var(--el-color-danger)"><CircleCloseFilled /></el-icon>
+      <p>{{ error }}</p>
+      <el-button @click="handleBack">返回工作流列表</el-button>
+    </div>
+
+    <!-- 正常预览 -->
+    <template v-else-if="workflow">
+      <div :class="styles.body">
+        <!-- 左侧：表单 Schema 预览 -->
+        <div :class="styles.leftPanel">
+          <div :class="styles.panelHeader">
+            <span :class="styles.panelTitle">表单 Schema</span>
+            <el-button
+              size="small"
+              text
+              type="primary"
+              @click="router.push(`/editor?id=${workflow.formSchemaId}`)"
+            >
+              编辑表单
+            </el-button>
+          </div>
+          <div :class="styles.panelBody">
+            <pre :class="styles.jsonPreview">{{ JSON.stringify(schema, null, 2) }}</pre>
+          </div>
+        </div>
+
+        <!-- 右侧：流程图预览 -->
+        <div :class="styles.rightPanel">
+          <div :class="styles.panelHeader">
+            <span :class="styles.panelTitle">流程图预览</span>
+            <el-tag v-if="flowVersion" size="small" type="info">
+              {{ flowVersion.version }}
+            </el-tag>
+          </div>
+          <div :class="styles.panelBody">
+            <div :class="styles.flowPreview">
+              <VueFlow
+                v-if="flowNodes.length > 0"
+                :nodes="flowNodes"
+                :edges="flowEdges"
+                :nodes-connectable="false"
+                :nodes-draggable="false"
+                :edges-updatable="false"
+                :elements-selectable="false"
+                :default-viewport="{ zoom: 0.8, x: 0, y: 0 }"
+                fit-view-on-init
+              >
+                <template #node-user-task="nodeProps">
+                  <div :class="'flow-node flow-node--task'">
+                    <span>{{ nodeProps.data?.label || '审批节点' }}</span>
+                  </div>
+                </template>
+                <template #node-service-task="nodeProps">
+                  <div :class="'flow-node flow-node--service'">
+                    <span>{{ nodeProps.data?.label || '服务节点' }}</span>
+                  </div>
+                </template>
+                <template #node-start-event="nodeProps">
+                  <div :class="'flow-node flow-node--start'">
+                    <span>{{ nodeProps.data?.label || '开始' }}</span>
+                  </div>
+                </template>
+                <template #node-end-event="nodeProps">
+                  <div :class="'flow-node flow-node--end'">
+                    <span>{{ nodeProps.data?.label || '结束' }}</span>
+                  </div>
+                </template>
+                <Background :gap="20" :size="0.8" color="#d0d5dd" />
+                <Controls />
+              </VueFlow>
+              <div v-else :class="styles.loading">
+                <span>暂无流程图数据</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部：数据更新规则 -->
+      <div :class="styles.rulesSection">
+        <div :class="styles.rulesHeader" @click="rulesExpanded = !rulesExpanded">
+          <div :class="styles.rulesHeaderLeft">
+            <span :class="styles.rulesTitle">数据更新规则</span>
+            <el-tag size="small" type="info">
+              {{ workflow.dataUpdateRules.length }} 条规则
+            </el-tag>
+          </div>
+          <span :class="[styles.rulesToggle, rulesExpanded ? styles.rulesToggle + '--open' : '']">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+        </div>
+        <div v-if="rulesExpanded" :class="styles.rulesBody">
+          <div v-if="workflow.dataUpdateRules.length === 0" :class="styles.rulesEmpty">
+            暂无数据更新规则
+          </div>
+          <template v-else>
+            <div :class="styles.rulesTableHeader">
+              <span>表单字段（源）</span>
+              <span />
+              <span>流程变量（目标）</span>
+              <span>转换规则</span>
+            </div>
+            <div
+              v-for="(rule, idx) in workflow.dataUpdateRules"
+              :key="idx"
+              :class="styles.rulesTableRow"
+            >
+              <span :class="styles.fieldValue">{{ rule.sourceField }}</span>
+              <span :class="styles.rulesArrow">
+                <el-icon><ArrowRight /></el-icon>
+              </span>
+              <span :class="styles.fieldValue">{{ rule.targetField }}</span>
+              <span :class="styles.transformValue">
+                {{ rule.transform || '-' }}
+              </span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<style>
+/* VueFlow 节点样式 — 使用全局样式因为 VueFlow 内部渲染不受 CSS Modules 作用域控制 */
+.flow-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  background: var(--el-bg-color);
+  border: 1.5px solid var(--el-border-color);
+  min-width: 80px;
+  text-align: center;
+  cursor: default;
+}
+
+.flow-node--task {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.flow-node--service {
+  border-color: var(--el-color-success);
+  background: var(--el-color-success-light-9);
+}
+
+.flow-node--start {
+  border-color: var(--el-color-success);
+  background: var(--el-color-success);
+  color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  min-width: unset;
+  padding: 0;
+}
+
+.flow-node--end {
+  border-color: var(--el-color-danger);
+  background: var(--el-color-danger);
+  color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  min-width: unset;
+  padding: 0;
+}
+</style>

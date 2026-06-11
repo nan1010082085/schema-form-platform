@@ -25,7 +25,7 @@ const authStore = useAuthStore()
 const { findByPath } = useMicroAppRegistry()
 
 /** Built-in app names that have static config in shared/micro-app/config */
-const BUILTIN_APPS = new Set<string>(['editor', 'flow', 'ai', 'admin'])
+const BUILTIN_APPS = new Set<string>(['editor', 'flow', 'ai', 'admin', 'workflow'])
 
 const microAppName = computed(() => route.meta?.microApp as string | undefined)
 

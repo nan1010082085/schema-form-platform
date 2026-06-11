@@ -93,6 +93,13 @@ const router = createRouter({
       component: () => import('@/components/AppContainer.vue'),
       meta: { microApp: 'admin', withoutMenu: true },
     },
+    // Workflow - full-screen micro-app
+    {
+      path: '/workflow/:pathMatch(.*)*',
+      name: 'workflow-embed',
+      component: () => import('@/components/AppContainer.vue'),
+      meta: { microApp: 'workflow', withoutMenu: true },
+    },
     // Dynamic third-party micro-app catch-all
     // Matches /app/:appName/* where appName is looked up from registry
     {
