@@ -66,6 +66,56 @@
   cursor: crosshair;
 }
 
+// ── 节点操作按钮 ──
+
+.nodeActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px 8px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--el-fill-color-light);
+  border-radius: var(--el-border-radius-small);
+  cursor: pointer;
+  color: var(--el-text-color-secondary);
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+  }
+}
+
+// ── AI 对话弹窗 ──
+
+.aiDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aiInput {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid var(--el-border-color);
+  border-radius: var(--el-border-radius-base);
+  font-size: 14px;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--el-color-primary);
+  }
+}
+
 // ── 节点类型颜色 ──
 
 .startNode {

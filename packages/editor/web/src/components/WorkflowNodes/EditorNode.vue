@@ -1,8 +1,11 @@
 <script setup lang="ts">
 /**
  * EditorNode — Editor 节点（表单操作）
+ *
+ * 点击"编辑"按钮跳转到 Editor 编辑器进行细化编辑
  */
 import { Handle, Position } from '@vue-flow/core'
+import { useRouter } from 'vue-router'
 import styles from './WorkflowNode.module.scss'
 
 interface Props {
@@ -19,7 +22,18 @@ interface Props {
   selected?: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+const router = useRouter()
+
+function openEditor(): void {
+  if (props.data.config.schemaId) {
+    // 跳转到 Editor 编辑器，编辑对应的 Schema
+    router.push(`/editor?id=${props.data.config.schemaId}`)
+  } else {
+    // 跳转到 Editor 创建新表单
+    router.push('/instances')
+  }
+}
 </script>
 
 <template>
@@ -36,6 +50,15 @@ defineProps<Props>()
     </div>
     <div v-if="data.config.schemaId" :class="styles.nodeContent">
       <span :class="styles.nodeHint">表单: {{ data.config.schemaId }}</span>
+    </div>
+    <div :class="styles.nodeActions">
+      <button :class="styles.actionBtn" @click.stop="openEditor" title="打开编辑器">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </button>
     </div>
     <Handle type="source" :position="Position.Bottom" :class="styles.handle" />
   </div>
