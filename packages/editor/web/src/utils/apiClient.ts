@@ -550,6 +550,17 @@ export interface LoginResponse {
   }
 }
 
+export interface CurrentUser {
+  id: string
+  username: string
+  displayName: string
+  roles: string[]
+  permissions: string[]
+  tenantId: string
+  deptId: string | null
+  avatar: string
+}
+
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   return apiClient.post<LoginResponse>('/auth/login', payload)
 }
@@ -558,8 +569,8 @@ export async function logout(): Promise<null> {
   return apiClient.post<null>('/auth/logout')
 }
 
-export async function fetchCurrentUser(): Promise<LoginResponse['user']> {
-  return apiClient.get<LoginResponse['user']>('/auth/me')
+export async function fetchCurrentUser(): Promise<CurrentUser> {
+  return apiClient.get<CurrentUser>('/auth/me')
 }
 
 // ---- 工作流 ----

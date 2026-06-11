@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import jwt from 'jsonwebtoken'
 import { UserModel } from '../models/User.js'
+import { RoleModel } from '../models/Role.js'
 import { TenantModel } from '../models/Tenant.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
@@ -155,6 +156,8 @@ router.post('/logout', async (ctx) => {
 
 /**
  * GET /api/auth/me
+ *
+ * Returns user info with resolved permissions from roles.
  */
 router.get('/me', authMiddleware({ required: true }), async (ctx) => {
   const payload = ctx.state.user as JwtPayload
@@ -166,7 +169,17 @@ router.get('/me', authMiddleware({ required: true }), async (ctx) => {
     return
   }
 
-  ctx.body = { success: true, data: user.toJSON() }
+  // Resolve permissions from user's roles
+  const roles = await RoleModel.find({ _id: { $in: user.roles } })
+  const permissions = [...new Set(roles.flatMap((r) => r.permissions))]
+
+  ctx.body = {
+    success: true,
+    data: {
+      ...user.toJSON(),
+      permissions,
+    },
+  }
 })
 
 export default router

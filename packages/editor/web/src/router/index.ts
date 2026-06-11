@@ -1,13 +1,11 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
-import { useAppStore } from '@/stores/app'
 import { resolveToken } from '@schema-form/micro-app/child'
 import { SSOClient } from '@schema-form/shared-utils/sso'
 
 // SSO 客户端配置
 const SSO_CLIENT_ID = 'editor'
-const TOKEN_KEY = 'sfp_access_token'
 
 function getSSOClient(): SSOClient {
   const origin = window.location.origin
@@ -110,7 +108,6 @@ const routes = [
     path: '/editor',
     name: 'editor',
     component: () => import('@/views/EditorView.vue'),
-    meta: { permissions: ['editor:access'] },
   },
   {
     path: '/preview',
@@ -155,24 +152,6 @@ export function createEditorRouter() {
     if (!isMicroApp() && !resolveToken()) {
       getSSOClient().login(window.location.href)
       return false
-    }
-  })
-
-  // 路由守卫：权限检查
-  router.beforeEach((to) => {
-    // 403/404 页面本身不需要权限检查
-    if (to.name === 'forbidden' || to.name === 'not-found') {
-      return true
-    }
-
-    const requiredPermissions = to.meta.permissions as string[] | undefined
-    if (requiredPermissions && requiredPermissions.length > 0) {
-      const appStore = useAppStore()
-      const userPerms = appStore.userContext.permissions ?? []
-      const hasAccess = requiredPermissions.some((code) => userPerms.includes(code))
-      if (!hasAccess) {
-        return { name: 'forbidden' }
-      }
     }
   })
 
