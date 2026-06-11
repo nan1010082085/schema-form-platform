@@ -47,8 +47,6 @@ const navItems: NavItem[] = [
   { label: '首页', icon: HomeFilled, path: '/' },
   { label: '表单编辑器', icon: Edit, path: '/editor' },
   { label: '流程引擎', icon: Connection, path: '/flow' },
-  { label: '工作流', icon: SetUp, path: '/workflow' },
-  { label: 'AI 助手', icon: ChatLineSquare, path: '/ai' },
   { label: '系统管理', icon: Setting, path: '/admin' },
   { label: '项目文档', icon: Document, href: '/docs/docs.html' },
 ]

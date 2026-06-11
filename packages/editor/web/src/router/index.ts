@@ -50,56 +50,6 @@ const routes = [
         name: 'widget-templates',
         component: () => import('@/views/WidgetTemplateView.vue'),
       },
-      {
-        path: 'submissions',
-        name: 'submissions',
-        component: () => import('@/views/SubmissionListView.vue'),
-      },
-      {
-        path: 'workflows',
-        name: 'workflows',
-        component: () => import('@/views/WorkflowListView.vue'),
-      },
-      {
-        path: 'workflow/templates',
-        name: 'workflow-templates',
-        component: () => import('@/views/WorkflowTemplateView.vue'),
-      },
-      {
-        path: 'workflow/create',
-        name: 'workflow-create',
-        component: () => import('@/views/WorkflowEditorView.vue'),
-      },
-      {
-        path: 'workflow/:id',
-        name: 'workflow-edit',
-        component: () => import('@/views/WorkflowEditorView.vue'),
-      },
-      {
-        path: 'workflow/:id/start',
-        name: 'workflow-start',
-        component: () => import('@/views/WorkflowStartView.vue'),
-      },
-      {
-        path: 'workflow/:id/preview',
-        name: 'workflow-preview',
-        component: () => import('@/views/WorkflowPreviewView.vue'),
-      },
-      {
-        path: 'workflow/:id/instances',
-        name: 'workflow-instances',
-        component: () => import('@/views/WorkflowInstanceView.vue'),
-      },
-      {
-        path: 'workflow/:id/instances/:instanceId',
-        name: 'workflow-instance-detail',
-        component: () => import('@/views/WorkflowInstanceView.vue'),
-      },
-      {
-        path: 'credentials',
-        name: 'credentials',
-        component: () => import('@/views/CredentialListView.vue'),
-      },
     ],
   },
 

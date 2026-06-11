@@ -1,8 +1,10 @@
 import Router from '@koa/router'
 import jwt from 'jsonwebtoken'
+import crypto from 'node:crypto'
 import { UserModel } from '../models/User.js'
 import { RoleModel } from '../models/Role.js'
 import { TenantModel } from '../models/Tenant.js'
+import { SSOSessionModel } from '../models/SSOSession.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { loginSchema, refreshSchema } from '../schemas/authSchemas.js'
@@ -14,6 +16,8 @@ const router = new Router({ prefix: '/api/auth' })
 /** Token expiry constants */
 const ACCESS_TOKEN_EXPIRY = '15m'
 const REFRESH_TOKEN_EXPIRY = '7d'
+const SSO_SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+const SSO_SESSION_COOKIE = 'sso_session'
 
 /**
  * POST /api/auth/login
@@ -81,6 +85,26 @@ router.post('/login', validate(loginSchema), async (ctx) => {
     JWT_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY },
   )
+
+  // 创建 SSO 会话
+  const sessionToken = crypto.randomBytes(32).toString('hex')
+  await SSOSessionModel.create({
+    userId: user._id,
+    sessionToken,
+    userAgent: ctx.get('User-Agent') || '',
+    ip: ctx.ip,
+    expiresAt: new Date(Date.now() + SSO_SESSION_EXPIRY_MS),
+  })
+
+  // 设置 SSO 会话 cookie
+  // 注意：secure 只在 HTTPS 下启用，当前服务器是 HTTP 所以关闭
+  ctx.cookies.set(SSO_SESSION_COOKIE, sessionToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+    maxAge: SSO_SESSION_EXPIRY_MS,
+    path: '/',
+  })
 
   ctx.body = {
     success: true,
@@ -151,6 +175,19 @@ router.post('/refresh', validate(refreshSchema), async (ctx) => {
  * POST /api/auth/logout
  */
 router.post('/logout', async (ctx) => {
+  // 删除 SSO 会话
+  const sessionToken = ctx.cookies.get(SSO_SESSION_COOKIE)
+  if (sessionToken) {
+    await SSOSessionModel.deleteOne({ sessionToken })
+    ctx.cookies.set(SSO_SESSION_COOKIE, '', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    })
+  }
+
   ctx.body = { success: true, data: null }
 })
 

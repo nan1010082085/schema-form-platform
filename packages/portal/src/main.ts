@@ -18,7 +18,6 @@ if (!import.meta.env.DEV) {
   preFetchApps([
     { name: 'editor', url: getAppUrl('editor', false), iframe: true },
     { name: 'flow',   url: getAppUrl('flow',   false), iframe: true },
-    { name: 'ai',     url: getAppUrl('ai',     false), iframe: true },
   ])
 }
 

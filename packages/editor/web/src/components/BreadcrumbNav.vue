@@ -18,9 +18,9 @@ interface BreadcrumbItem {
 
 const routeLabelMap: Record<string, string> = {
   instances: '实例管理',
-  'widget-docs': '部件文档',
   'widget-templates': '模板库',
-  'system-tenants': '租户管理',
+  submissions: '表单提交数据',
+  credentials: '凭证管理',
 }
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import {
   Edit,
   Connection,
-  ChatLineSquare,
   Document,
   Warning,
 } from '@element-plus/icons-vue'
@@ -58,15 +57,8 @@ const cards: NavCard[] = [
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
   },
   {
-    title: 'AI 助手',
-    desc: '对话式生成 Schema 与流程定义',
-    icon: ChatLineSquare,
-    route: '/ai',
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  },
-  {
     title: '项目文档',
-    desc: '前端、后端、流程引擎、AI 全平台技术文档',
+    desc: '前端、后端、流程引擎全平台技术文档',
     icon: Document,
     href: '/docs/docs.html',
     gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',

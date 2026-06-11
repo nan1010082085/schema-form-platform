@@ -53,7 +53,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   // 401 清除认证状态并跳转登录页
   if (response.status === 401 && path !== '/auth/login') {
     onUnauthorized?.()
-    window.location.href = '/login'
+    // 微前端模式下通知宿主处理鉴权，standalone 模式下跳转登录页
+    if (window.__MICRO_APP_ENVIRONMENT__) {
+      window.microApp?.dispatch({ type: 'auth:unauthorized' })
+    } else {
+      window.location.href = '/login'
+    }
     throw new ApiError('Authentication required', 401)
   }
 

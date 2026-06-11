@@ -5,6 +5,7 @@
     @dragover="onDragOver"
   >
     <VueFlow
+      id="flow-canvas"
       v-model:nodes="flowGraph.nodes"
       v-model:edges="flowGraph.edges"
       :class="styles.flow"

@@ -25,6 +25,11 @@ const router = createRouter({
           name: 'portal',
           component: () => import('@/views/PortalView.vue'),
         },
+        {
+          path: 'admin/:pathMatch(.*)*',
+          name: 'admin-embed',
+          component: () => import('@/views/AdminView.vue'),
+        },
       ],
     },
     // 子应用 — 独立布局，无导航栏
@@ -37,21 +42,6 @@ const router = createRouter({
       path: '/flow',
       name: 'flow-embed',
       component: () => import('@/views/FlowView.vue'),
-    },
-    {
-      path: '/ai',
-      name: 'ai-embed',
-      component: () => import('@/views/AiView.vue'),
-    },
-    {
-      path: '/workflow/:pathMatch(.*)*',
-      name: 'workflow-embed',
-      component: () => import('@/views/WorkflowView.vue'),
-    },
-    {
-      path: '/admin/:pathMatch(.*)*',
-      name: 'admin-embed',
-      component: () => import('@/views/AdminView.vue'),
     },
     // 兜底重定向
     {

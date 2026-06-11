@@ -37,11 +37,6 @@ const routes = [
         component: () => import('@/views/FlowListView.vue'),
       },
       {
-        path: 'tasks',
-        name: 'task-inbox',
-        component: () => import('@/views/TaskInboxView.vue'),
-      },
-      {
         path: 'instances',
         name: 'flow-instances',
         component: () => import('@/views/FlowInstanceListView.vue'),
@@ -58,12 +53,6 @@ const routes = [
         name: 'flow-monitor',
         component: () => import('@/components/FlowMonitorDashboard.vue'),
         meta: { title: '流程监控' },
-      },
-      {
-        path: 'stats',
-        name: 'flow-stats',
-        component: () => import('@/views/FlowStatsView.vue'),
-        meta: { title: '流程统计' },
       },
     ],
   },

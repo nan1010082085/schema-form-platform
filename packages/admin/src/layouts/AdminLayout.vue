@@ -41,6 +41,9 @@ const router = useRouter()
 const isCollapsed = ref(false)
 const menuItems = ref<MenuItem[]>([])
 
+/** 微前端模式下隐藏侧边栏，由宿主 portal 提供导航 */
+const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
+
 const activeMenu = computed(() => route.name as string)
 const pageTitle = computed(() => (route.meta?.title as string) || '系统管理')
 
@@ -79,7 +82,13 @@ onMounted(fetchMenus)
 </script>
 
 <template>
-  <div :class="$style.layout">
+  <!-- 微前端模式：只渲染内容区，侧边栏由宿主 portal 提供 -->
+  <div v-if="isMicroApp()" :class="$style.embedContent">
+    <RouterView />
+  </div>
+
+  <!-- standalone 模式：完整布局 -->
+  <div v-else :class="$style.layout">
     <!-- 侧边栏 -->
     <aside :class="[$style.sidebar, { [$style.sidebarCollapsed]: isCollapsed }]">
       <div :class="$style.logo">
@@ -154,6 +163,13 @@ onMounted(fetchMenus)
 </template>
 
 <style module>
+.embedContent {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--el-fill-color-lighter);
+}
+
 .layout {
   display: flex;
   height: 100vh;

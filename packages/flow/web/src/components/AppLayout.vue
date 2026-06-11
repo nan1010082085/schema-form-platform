@@ -10,13 +10,11 @@ const router = useRouter()
 const navItems = [
   { path: '/list', label: '流程列表', icon: Document },
   { path: '/instances', label: '流程实例', icon: Monitor },
-  { path: '/tasks', label: '我的任务', icon: List },
   { path: '/monitor', label: '流程监控', icon: DataAnalysis },
 ]
 
 const activeNav = computed(() => {
   const path = route.path
-  if (path.startsWith('/tasks')) return '/tasks'
   if (path.startsWith('/instances') || path.startsWith('/instance/')) return '/instances'
   if (path.startsWith('/monitor')) return '/monitor'
   if (path.startsWith('/list')) return '/list'
