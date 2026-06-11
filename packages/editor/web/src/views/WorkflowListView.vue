@@ -2,31 +2,38 @@
 /**
  * WorkflowListView — 工作流管理列表页
  *
- * CRUD 工作流，支持按状态筛选、分页、发布/停用、删除。
+ * 卡片/列表双视图，支持搜索、按状态筛选、分页、发布/归档、复制、删除。
  */
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Setting } from '@element-plus/icons-vue'
+import { Plus, Search, Grid, List, Setting } from '@element-plus/icons-vue'
 import {
   fetchWorkflows,
   deleteWorkflow,
   toggleWorkflowStatus,
+  duplicateWorkflow,
   type WorkflowItem,
 } from '@/utils/apiClient'
+import WorkflowCard from '@/components/WorkflowCard.vue'
 import type { PaginatedResponse } from '@/types/api'
 import styles from './WorkflowListView.module.scss'
 
 const router = useRouter()
 
-// ── 数据 ──
+// ---- 视图模式 ----
+const viewMode = ref<'card' | 'list'>('card')
+
+// ---- 数据 ----
 const workflows = ref<WorkflowItem[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
 
-// ── 筛选 ──
+// ---- 筛选 ----
+const searchInput = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 const activeStatus = ref('')
 
 const statusOptions = [
@@ -36,12 +43,13 @@ const statusOptions = [
   { label: '已归档', value: 'archived' },
 ]
 
-// ── 加载列表 ──
+// ---- 加载列表 ----
 async function loadWorkflows() {
   loading.value = true
   try {
     const res: PaginatedResponse<WorkflowItem> = await fetchWorkflows({
       status: activeStatus.value || undefined,
+      search: searchInput.value.trim() || undefined,
       page: page.value,
       pageSize: pageSize.value,
     })
@@ -56,28 +64,48 @@ async function loadWorkflows() {
 
 onMounted(loadWorkflows)
 
+function handleSearch(val: string) {
+  searchInput.value = val
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    page.value = 1
+    loadWorkflows()
+  }, 300)
+}
+
 watch(activeStatus, () => {
   page.value = 1
   loadWorkflows()
 })
 
-// ── 分页 ──
+// ---- 分页 ----
 function handlePageChange(p: number) {
   page.value = p
   loadWorkflows()
 }
 
-// ── 创建 ──
-async function handleCreate() {
+// ---- 创建 ----
+function handleCreate() {
   router.push('/workflow/create')
 }
 
-// ── 编辑 ──
+// ---- 编辑 ----
 function handleEdit(item: WorkflowItem) {
   router.push(`/workflow/${item.id}`)
 }
 
-// ── 发布/归档 ──
+// ---- 复制 ----
+async function handleDuplicate(item: WorkflowItem) {
+  try {
+    await duplicateWorkflow(item.id)
+    ElMessage.success('已复制')
+    await loadWorkflows()
+  } catch (err) {
+    ElMessage.error(err instanceof Error ? err.message : '复制失败')
+  }
+}
+
+// ---- 发布/归档 ----
 async function handleToggleStatus(item: WorkflowItem) {
   const nextStatus = item.status === 'published' ? 'archived' : 'published'
   const actionLabel = nextStatus === 'published' ? '发布' : '归档'
@@ -93,7 +121,7 @@ async function handleToggleStatus(item: WorkflowItem) {
   } catch { /* cancelled */ }
 }
 
-// ── 删除 ──
+// ---- 删除 ----
 async function handleDelete(item: WorkflowItem) {
   try {
     await ElMessageBox.confirm(
@@ -107,7 +135,7 @@ async function handleDelete(item: WorkflowItem) {
   } catch { /* cancelled */ }
 }
 
-// ── 辅助函数 ──
+// ---- 辅助函数 ----
 function formatDate(d: string): string {
   return new Date(d).toLocaleString('zh-CN')
 }
@@ -147,7 +175,16 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
         <!-- Toolbar -->
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
-            <el-select v-model="activeStatus" :class="styles.statusSelect">
+            <el-input
+              v-model="searchInput"
+              :prefix-icon="Search"
+              placeholder="搜索工作流名称..."
+              clearable
+              :class="styles.searchInput"
+              @input="handleSearch"
+              @clear="handleSearch('')"
+            />
+            <el-select v-model="activeStatus" :class="styles.statusSelect" placeholder="状态筛选">
               <el-option
                 v-for="opt in statusOptions"
                 :key="opt.value"
@@ -156,11 +193,31 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
               />
             </el-select>
           </div>
+          <div :class="styles.toolbarRight">
+            <div :class="styles.viewToggle">
+              <el-tooltip content="卡片视图" placement="top" :show-after="300">
+                <el-button
+                  :type="viewMode === 'card' ? 'primary' : 'default'"
+                  :icon="Grid"
+                  size="small"
+                  @click="viewMode = 'card'"
+                />
+              </el-tooltip>
+              <el-tooltip content="列表视图" placement="top" :show-after="300">
+                <el-button
+                  :type="viewMode === 'list' ? 'primary' : 'default'"
+                  :icon="List"
+                  size="small"
+                  @click="viewMode = 'list'"
+                />
+              </el-tooltip>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading && workflows.length === 0" :class="styles.tableWrapper">
+      <div v-if="loading && workflows.length === 0" :class="styles.content">
         <el-skeleton :rows="8" animated />
       </div>
 
@@ -171,20 +228,43 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
         </div>
         <h2 :class="styles.emptyTitle">暂无工作流</h2>
         <p :class="styles.emptyDesc">点击「创建工作流」开始构建自动化流程</p>
+        <el-button type="primary" size="large" :icon="Plus" @click="handleCreate">
+          创建工作流
+        </el-button>
       </div>
 
-      <!-- Table -->
-      <div v-else :class="styles.tableWrapper">
+      <!-- Card View -->
+      <div v-else-if="viewMode === 'card'" :class="styles.content">
+        <div :class="styles.cardGrid">
+          <WorkflowCard
+            v-for="item in workflows"
+            :key="item.id"
+            :item="item"
+            @edit="handleEdit"
+            @duplicate="handleDuplicate"
+            @publish="handleToggleStatus"
+            @delete="handleDelete"
+          />
+        </div>
+
+        <div v-if="total > 0" :class="styles.pagination">
+          <el-pagination
+            v-model:current-page="page"
+            :page-size="pageSize"
+            :total="total"
+            layout="total, prev, pager, next"
+            @current-change="handlePageChange"
+          />
+        </div>
+      </div>
+
+      <!-- List View -->
+      <div v-else :class="styles.content">
         <el-table :data="workflows" stripe style="width: 100%" v-loading="loading">
           <el-table-column prop="name" label="名称" min-width="180" show-overflow-tooltip />
-          <el-table-column label="关联表单" min-width="160" show-overflow-tooltip>
+          <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
-              {{ row.formSchemaId ?? '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column label="关联流程" min-width="160" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ row.flowDefinitionId ?? '-' }}
+              {{ row.description || '-' }}
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
@@ -199,9 +279,10 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
               {{ formatDate(row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="220" fixed="right">
             <template #default="{ row }">
               <el-button size="small" text type="primary" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" text @click="handleDuplicate(row)">复制</el-button>
               <el-button
                 size="small"
                 text
@@ -215,7 +296,6 @@ function statusTagType(status: string): '' | 'success' | 'info' | 'warning' | 'd
           </el-table-column>
         </el-table>
 
-        <!-- Pagination -->
         <div v-if="total > 0" :class="styles.pagination">
           <el-pagination
             v-model:current-page="page"

@@ -238,8 +238,9 @@ describe('WidgetTemplateView', () => {
     await previewButtons[0].trigger('click')
     await nextTick()
 
-    // Drawer should appear
-    expect(wrapper.text()).toContain('Schema 结构')
+    // Drawer should appear with preview mode toggle
+    expect(wrapper.text()).toContain('渲染预览')
+    expect(wrapper.text()).toContain('JSON 源码')
     expect(wrapper.text()).toContain('Login Form')
   })
 

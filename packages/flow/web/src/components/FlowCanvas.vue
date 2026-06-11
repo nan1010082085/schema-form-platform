@@ -55,6 +55,26 @@
         <SubProcessNode v-bind="nodeProps" />
       </template>
 
+      <!-- Workflow 节点类型 -->
+      <template #node-workflowStart="nodeProps">
+        <WorkflowStartNode v-bind="nodeProps" />
+      </template>
+      <template #node-workflowEnd="nodeProps">
+        <WorkflowEndNode v-bind="nodeProps" />
+      </template>
+      <template #node-workflowEditor="nodeProps">
+        <WorkflowEditorNode v-bind="nodeProps" />
+      </template>
+      <template #node-workflowFlow="nodeProps">
+        <WorkflowFlowNode v-bind="nodeProps" />
+      </template>
+      <template #node-workflowAI="nodeProps">
+        <WorkflowAINode v-bind="nodeProps" />
+      </template>
+      <template #node-workflowCondition="nodeProps">
+        <WorkflowConditionNode v-bind="nodeProps" />
+      </template>
+
       <template #edge-animated-edge="edgeProps">
         <AnimatedEdge v-bind="edgeProps" />
       </template>
@@ -99,7 +119,16 @@ import {
   InclusiveGatewayNode,
   SubProcessNode,
 } from './nodes/index.js'
+import {
+  StartNode as WorkflowStartNode,
+  EndNode as WorkflowEndNode,
+  EditorNode as WorkflowEditorNode,
+  FlowNode as WorkflowFlowNode,
+  AINode as WorkflowAINode,
+  ConditionNode as WorkflowConditionNode,
+} from './workflowNodes/index.js'
 import { AnimatedEdge } from './edges/index.js'
+import { useWorkflowNodes } from '../composables/useWorkflowNodes.js'
 import styles from './FlowCanvas.module.scss'
 
 import '@vue-flow/core/dist/style.css'
@@ -118,7 +147,16 @@ const BPMN_TYPE_TO_VF_TYPE: Record<string, string> = {
   'bpmn-parallel-gateway': 'parallel-gateway',
   'bpmn-inclusive-gateway': 'inclusive-gateway',
   'bpmn-sub-process': 'sub-process',
+  // Workflow 节点类型映射
+  'workflow-start': 'workflowStart',
+  'workflow-end': 'workflowEnd',
+  'workflow-editor': 'workflowEditor',
+  'workflow-flow': 'workflowFlow',
+  'workflow-ai': 'workflowAI',
+  'workflow-condition': 'workflowCondition',
 }
+
+useWorkflowNodes()
 
 const defaultEdgeOptions = {
   type: 'animated-edge' as const,
@@ -197,6 +235,13 @@ const NODE_TYPE_COLORS: Record<string, string> = {
   'parallel-gateway': '#ff85c0',
   'inclusive-gateway': '#d3adf7',
   'sub-process': '#ffc53d',
+  // Workflow 节点颜色
+  'workflowStart': '#67c23a',
+  'workflowEnd': '#f56c6c',
+  'workflowEditor': '#409eff',
+  'workflowFlow': '#e6a23c',
+  'workflowAI': '#7c3aed',
+  'workflowCondition': '#f759ab',
 }
 
 function minimapNodeColor(node: { type?: string }): string {

@@ -1,0 +1,153 @@
+.root {
+  padding: 0 4px;
+}
+
+.loading {
+  padding: 20px;
+}
+
+.overview {
+  background: var(--bg-color-page);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.overviewRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 13px;
+  color: var(--text-color-regular);
+  word-break: break-all;
+}
+
+.variables {
+  margin-top: 4px;
+}
+
+.jsonBlock {
+  background: var(--bg-color-page);
+  border: 1px solid var(--bg-color-gray-darker);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-color-regular);
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: var(--bg-color-gray-darker);
+  }
+}
+
+.timelineItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  position: relative;
+}
+
+.timelineDot {
+  flex-shrink: 0;
+  width: 18px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+  z-index: 1;
+  background: var(--bg-color-white);
+}
+
+.timelineContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.nodeName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color-title);
+}
+
+.timelineMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  margin-bottom: 8px;
+}
+
+.errorBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--color-danger-light-9);
+  border: 1px solid var(--color-danger-light-7);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-danger);
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.ioSection {
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.ioLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.emptyNodes {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-color-secondary);
+  font-size: 13px;
+}

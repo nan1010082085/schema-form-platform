@@ -599,13 +599,14 @@ export interface WorkflowItem {
 }
 
 export async function fetchWorkflows(
-  options?: { status?: string; page?: number; pageSize?: number },
+  options?: { status?: string; search?: string; page?: number; pageSize?: number },
 ): Promise<PaginatedResponse<WorkflowItem>> {
   const params: Record<string, string> = {
     page: String(options?.page ?? 1),
     pageSize: String(options?.pageSize ?? 20),
   }
   if (options?.status) params.status = options.status
+  if (options?.search) params.search = options.search
   return apiClient.get<PaginatedResponse<WorkflowItem>>('/workflows', params)
 }
 
@@ -640,6 +641,10 @@ export async function updateWorkflow(
 
 export async function deleteWorkflow(id: string): Promise<null> {
   return apiClient.delete<null>(`/workflows/${encodeURIComponent(id)}`)
+}
+
+export async function duplicateWorkflow(id: string): Promise<WorkflowItem> {
+  return apiClient.post<WorkflowItem>(`/workflows/${encodeURIComponent(id)}/duplicate`)
 }
 
 export async function publishWorkflow(id: string): Promise<WorkflowItem> {

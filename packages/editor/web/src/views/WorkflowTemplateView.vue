@@ -15,6 +15,7 @@ import {
   type WorkflowTemplateItem,
 } from '@/utils/apiClient'
 import type { PaginatedResponse } from '@/types/api'
+import WorkflowTemplateCard from '@/components/WorkflowTemplateCard.vue'
 import styles from './WorkflowTemplateView.module.scss'
 
 const router = useRouter()
@@ -267,72 +268,13 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
 
         <!-- 模板卡片网格 -->
         <div v-else :class="styles.cardGrid">
-          <div
+          <WorkflowTemplateCard
             v-for="tpl in templates"
             :key="tpl.id"
-            :class="styles.card"
-          >
-            <!-- 卡片头 -->
-            <div :class="styles.cardHeader">
-              <el-icon :size="36" :class="styles.cardHeaderIcon"><Connection /></el-icon>
-              <el-tag
-                :type="getCategoryTagType(tpl.category) as any"
-                :class="styles.cardCategory"
-                size="small"
-                effect="dark"
-              >
-                {{ getCategoryLabel(tpl.category) }}
-              </el-tag>
-            </div>
-
-            <!-- 卡片内容 -->
-            <div :class="styles.cardBody">
-              <h3 :class="styles.cardTitle">{{ tpl.name }}</h3>
-              <p :class="styles.cardDesc">{{ tpl.description || '暂无描述' }}</p>
-              <div :class="styles.cardMeta">
-                <span :class="styles.metaItem">
-                  <el-icon :size="12"><View /></el-icon>
-                  {{ tpl.useCount }} 次使用
-                </span>
-                <span v-if="tpl.isBuiltin" :class="styles.builtinBadge">内置</span>
-              </div>
-              <!-- 标签 -->
-              <div v-if="tpl.tags.length > 0" :class="styles.tagList">
-                <el-tag
-                  v-for="tag in tpl.tags"
-                  :key="tag"
-                  size="small"
-                  type="info"
-                  effect="plain"
-                  :class="styles.tag"
-                >
-                  {{ tag }}
-                </el-tag>
-              </div>
-            </div>
-
-            <!-- 卡片操作 -->
-            <div :class="styles.cardActions">
-              <el-button
-                type="primary"
-                size="small"
-                :class="styles.actionBtn"
-                @click="openUseDialog(tpl)"
-              >
-                <el-icon><Plus /></el-icon>
-                使用模板
-              </el-button>
-              <el-button
-                size="small"
-                :class="styles.actionBtn"
-                @click="openPreview(tpl)"
-                :loading="previewLoading"
-              >
-                <el-icon><View /></el-icon>
-                预览
-              </el-button>
-            </div>
-          </div>
+            :template="tpl"
+            @use="openUseDialog"
+            @preview="openPreview"
+          />
         </div>
 
         <!-- 分页 -->

@@ -159,6 +159,12 @@ const NODE_TYPE_LABELS: Record<string, string> = {
   'exclusive-gateway': '排他网关',
   'parallel-gateway': '并行网关',
   'inclusive-gateway': '包含网关',
+  // Workflow 节点
+  'editor-node': '编辑器节点',
+  'flow-node': '流程节点',
+  'ai-node': 'AI 节点',
+  'condition-node': '条件节点',
+  'notify-node': '通知节点',
 }
 
 const nodeTypeDisplayName = computed(() => {

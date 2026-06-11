@@ -68,7 +68,7 @@ router.post('/', requireAuth, validate(createWorkflowSchema), async (ctx) => {
 // 列表（分页、按 status 筛选）
 // ────────────────────────────────────────────
 router.get('/', requireAuth, async (ctx) => {
-  const { status, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
+  const { status, search, page: pageStr = '1', pageSize: pageSizeStr = '20' } = ctx.query
 
   const page = Math.max(1, parseInt(pageStr as string, 10) || 1)
   const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr as string, 10) || 20))
@@ -77,6 +77,9 @@ router.get('/', requireAuth, async (ctx) => {
   const filter: Record<string, unknown> = {}
   if (status && ['draft', 'published', 'archived'].includes(status as string)) {
     filter.status = status as WorkflowStatus
+  }
+  if (search && typeof search === 'string' && search.trim()) {
+    filter.name = { $regex: search.trim(), $options: 'i' }
   }
 
   const [items, total] = await Promise.all([
@@ -189,6 +192,44 @@ router.delete('/:id', requireAuth, async (ctx) => {
 
   ctx.status = 200
   ctx.body = { success: true, data: null }
+})
+
+// ────────────────────────────────────────────
+// POST /api/workflows/:id/duplicate
+// 复制 Workflow（新名称，状态重置为 draft）
+// ────────────────────────────────────────────
+router.post('/:id/duplicate', requireAuth, async (ctx) => {
+  const { id } = ctx.params
+
+  if (!uuidValidate(id)) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: 'Invalid UUID format.' } }
+    return
+  }
+
+  const source = await WorkflowModel.findById(id)
+  if (!source) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'Workflow not found.' } }
+    return
+  }
+
+  const userId = (ctx.state.user as JwtPayload).id
+
+  const duplicate = await WorkflowModel.create({
+    _id: uuidv4(),
+    name: `${source.name}（副本）`,
+    description: source.description,
+    status: 'draft',
+    formSchemaId: source.formSchemaId,
+    flowDefinitionId: source.flowDefinitionId,
+    dataUpdateRules: source.dataUpdateRules.map((r: { trigger: string; targetField: string; sourceField: string; transform?: string }) => ({ ...r })),
+    publishConfig: { entryUrl: '', permissions: { launchers: [], viewers: [] } },
+    createdBy: userId,
+  })
+
+  ctx.status = 201
+  ctx.body = { success: true, data: duplicate }
 })
 
 // ────────────────────────────────────────────

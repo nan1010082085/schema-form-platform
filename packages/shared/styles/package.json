@@ -6,6 +6,8 @@
     "./variables": "./_variables.scss",
     "./css-variables": "./_css-variables.scss",
     "./theme": "./_theme.scss",
-    "./tokens.css": "./tokens.css"
+    "./tokens.css": "./tokens.css",
+    "./design-tokens.css": "./design-tokens.css",
+    "./component-styles.css": "./component-styles.css"
   }
 }

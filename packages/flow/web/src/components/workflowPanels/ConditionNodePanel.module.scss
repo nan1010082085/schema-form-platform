@@ -1,0 +1,67 @@
+.branchCard {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.branchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.branchTitle {
+  font-size: var(--el-font-size-extra-small);
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
+}
+
+.deleteIcon {
+  cursor: pointer;
+  color: var(--el-text-color-placeholder);
+  font-size: 14px;
+
+  &:hover {
+    color: var(--el-color-danger);
+  }
+}
+
+.addBranchBtn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.edgeCard {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+  padding: 8px;
+  margin-bottom: 8px;
+
+  &.edgeCardDefault {
+    border-color: var(--el-color-primary-light-5);
+    background: var(--el-color-primary-light-9);
+  }
+}
+
+.edgeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.edgeTarget {
+  font-size: var(--el-font-size-extra-small);
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.defaultCheck {
+  flex-shrink: 0;
+}

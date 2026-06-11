@@ -142,4 +142,27 @@
   --spacing-xl: 32px;
   --spacing-10px: 10px;
   --spacing-20px: 20px;
+
+  /* ---------- Workflow 节点专用变量 ---------- */
+  /* 节点强调色 — 用于变量分组、节点标签、类型标识 */
+  --node-accent-trigger: #f59e0b;   /* 触发器：琥珀黄 */
+  --node-accent-editor: #10b981;    /* Editor 输出：翡翠绿 */
+  --node-accent-flow: #6366f1;      /* Flow 输出：靛蓝 */
+  --node-accent-ai: #8b5cf6;        /* AI 输出：紫罗兰 */
+  --node-accent-system: #64748b;    /* 系统：石板灰 */
+
+  /* 节点背景色 */
+  --node-bg-trigger: #fef3c7;
+  --node-bg-editor: #d1fae5;
+  --node-bg-flow: #e0e7ff;
+  --node-bg-ai: #ede9fe;
+  --node-bg-system: #f1f5f9;
+
+  /* 条件网关 */
+  --node-accent-condition: #f97316;
+  --node-bg-condition: #ffedd5;
+
+  /* 通知节点 */
+  --node-accent-notify: #ec4899;
+  --node-bg-notify: #fce7f3;
 }

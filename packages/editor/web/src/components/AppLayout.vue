@@ -6,7 +6,7 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataBoard, Collection } from '@element-plus/icons-vue'
+import { DataBoard, Collection, Monitor, SetUp } from '@element-plus/icons-vue'
 import BreadcrumbNav from './BreadcrumbNav.vue'
 import styles from './AppLayout.module.scss'
 
@@ -16,10 +16,14 @@ const router = useRouter()
 const navItems = [
   { path: '/instances', label: '实例管理', icon: DataBoard },
   { path: '/templates', label: '模板库', icon: Collection },
+  { path: '/workflows', label: '工作流管理', icon: SetUp },
+  { path: '/workflow-monitor', label: '工作流监控', icon: Monitor },
 ]
 
 const activeNav = computed(() => {
   if (route.path.startsWith('/templates')) return '/templates'
+  if (route.path.startsWith('/workflows')) return '/workflows'
+  if (route.path.startsWith('/workflow-monitor')) return '/workflow-monitor'
   return route.path
 })
 </script>

@@ -9,7 +9,13 @@
     "./feedback/EmptyState": "./feedback/EmptyState.vue",
     "./feedback/EmptyState.vue": "./feedback/EmptyState.vue",
     "./auth/AuthCallback": "./auth/AuthCallback.vue",
-    "./auth/AuthCallback.vue": "./auth/AuthCallback.vue"
+    "./auth/AuthCallback.vue": "./auth/AuthCallback.vue",
+    "./BaseButton": "./BaseButton.vue",
+    "./BaseButton.vue": "./BaseButton.vue",
+    "./BaseCard": "./BaseCard.vue",
+    "./BaseCard.vue": "./BaseCard.vue",
+    "./BaseTable": "./BaseTable.vue",
+    "./BaseTable.vue": "./BaseTable.vue"
   },
   "peerDependencies": {
     "vue": ">=3.5.0",

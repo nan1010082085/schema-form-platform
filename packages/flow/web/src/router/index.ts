@@ -54,6 +54,24 @@ const routes = [
         component: () => import('@/components/FlowMonitorDashboard.vue'),
         meta: { title: '流程监控' },
       },
+      {
+        path: 'tasks',
+        name: 'flow-tasks',
+        component: () => import('@/views/TaskInboxView.vue'),
+        meta: { title: '我的任务' },
+      },
+      {
+        path: 'templates',
+        name: 'flow-templates',
+        component: () => import('@/views/FlowTemplateView.vue'),
+        meta: { title: '流程模板' },
+      },
+      {
+        path: 'stats',
+        name: 'flow-stats',
+        component: () => import('@/views/FlowStatsView.vue'),
+        meta: { title: '流程统计' },
+      },
     ],
   },
   {

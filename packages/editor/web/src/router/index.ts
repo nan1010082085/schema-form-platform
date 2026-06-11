@@ -50,6 +50,21 @@ const routes = [
         name: 'widget-templates',
         component: () => import('@/views/WidgetTemplateView.vue'),
       },
+      {
+        path: 'workflow-monitor',
+        name: 'workflow-monitor',
+        component: () => import('@/views/WorkflowMonitorView.vue'),
+      },
+      {
+        path: 'workflow-executions',
+        name: 'workflow-executions',
+        component: () => import('@/views/WorkflowExecutionView.vue'),
+      },
+      {
+        path: 'workflows',
+        name: 'workflows',
+        component: () => import('@/views/WorkflowListView.vue'),
+      },
     ],
   },
 
@@ -58,6 +73,21 @@ const routes = [
     path: '/editor',
     name: 'editor',
     component: () => import('@/views/EditorView.vue'),
+  },
+  {
+    path: '/workflow-canvas',
+    name: 'workflow-canvas',
+    component: () => import('@/views/WorkflowCanvasView.vue'),
+  },
+  {
+    path: '/workflow/create',
+    name: 'workflow-create',
+    component: () => import('@/views/WorkflowEditorView.vue'),
+  },
+  {
+    path: '/workflow/:id',
+    name: 'workflow-edit',
+    component: () => import('@/views/WorkflowEditorView.vue'),
   },
   {
     path: '/preview',

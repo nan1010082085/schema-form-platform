@@ -11,6 +11,16 @@
       <span :class="styles.appName">流程设计器</span>
       <div :class="styles.divider" />
       <span :class="styles.title">{{ title || '未命名流程' }}</span>
+      <div :class="styles.divider" />
+      <el-segmented
+        :model-value="flowMode ?? 'bpmn'"
+        :options="[
+          { label: 'BPMN', value: 'bpmn' },
+          { label: 'Workflow', value: 'workflow' },
+        ]"
+        size="small"
+        @update:model-value="$emit('toggle-flow-mode')"
+      />
     </div>
 
     <!-- Center: panel toggles + undo/redo + export/import (hidden in preview) -->
@@ -344,6 +354,7 @@ const props = defineProps<{
   showRightPanel?: boolean
   showAiDrawer?: boolean
   saving?: boolean
+  flowMode?: 'bpmn' | 'workflow'
   // Simulation props
   isSimulating?: boolean
   currentStep?: number
@@ -378,6 +389,7 @@ defineEmits<{
   'toggle-left-panel': []
   'toggle-right-panel': []
   'toggle-ai': []
+  'toggle-flow-mode': []
   // Simulation events
   'toggle-simulation': []
   'step-forward': []

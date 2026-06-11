@@ -1,0 +1,123 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  height: var(--button-height);
+  padding: 0 var(--spacing-md);
+  border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--easing-default),
+    background-color var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default),
+    box-shadow var(--duration-fast) var(--easing-default);
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.button:focus-visible {
+  box-shadow: 0 0 0 2px rgba(0, 96, 162, 0.2);
+}
+
+/* ---- Type: primary ---- */
+.button--primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-color-inverse);
+}
+
+.button--primary:hover:not(.is-disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* ---- Type: secondary ---- */
+.button--secondary {
+  background-color: var(--bg-color-white);
+  border-color: var(--border-color-base);
+  color: var(--text-color-regular);
+}
+
+.button--secondary:hover:not(.is-disabled) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-lighter);
+}
+
+/* ---- Type: danger ---- */
+.button--danger {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--text-color-inverse);
+}
+
+.button--danger:hover:not(.is-disabled) {
+  background-color: var(--color-danger-light);
+  border-color: var(--color-danger-light);
+}
+
+/* ---- Type: text ---- */
+.button--text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-primary);
+  padding: 0;
+  height: auto;
+}
+
+.button--text:hover:not(.is-disabled) {
+  color: var(--color-primary-hover);
+}
+
+/* ---- Size: small ---- */
+.button--small {
+  height: 24px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-12);
+}
+
+.button--small.button--text {
+  padding: 0;
+}
+
+/* ---- Size: large ---- */
+.button--large {
+  height: var(--button-height-lg);
+  padding: 0 var(--spacing-lg);
+  font-size: var(--font-size-16);
+}
+
+/* ---- States ---- */
+.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.is-loading {
+  pointer-events: none;
+}
+
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  animation: spin 1s linear infinite;
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

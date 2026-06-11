@@ -6,6 +6,7 @@
       :show-right-panel="showRightPanel"
       :show-ai-drawer="showAiDrawer"
       :saving="saving"
+      :flow-mode="flowMode"
       :layout-direction="layoutDirection"
       :layout-node-sep="layoutNodeSep"
       :layout-rank-sep="layoutRankSep"
@@ -22,6 +23,7 @@
       @toggle-left-panel="showLeftPanel = !showLeftPanel"
       @toggle-right-panel="showRightPanel = !showRightPanel"
       @toggle-ai="showAiDrawer = !showAiDrawer"
+      @toggle-flow-mode="toggleFlowMode"
       @auto-layout="onAutoLayout"
       @save-as-template="onSaveAsTemplate"
       @update:layout-direction="layoutDirection = $event"
@@ -33,7 +35,7 @@
         v-if="store.mode === 'design'"
         :class="[styles.drawer, styles.drawerLeft, { [styles.drawerClosed]: !showLeftPanel }]"
       >
-        <FlowPalette />
+        <FlowPalette :mode="flowMode" />
       </div>
       <FlowCanvas ref="canvasRef" :read-only="store.mode === 'preview'" />
       <div
@@ -212,6 +214,7 @@ const route = useRoute()
 
 const definitionId = ref<string | null>((route.query.id as string) ?? null)
 const saving = ref(false)
+const flowMode = ref<'bpmn' | 'workflow'>('bpmn')
 
 // Form preview state
 const previewPublishId = ref('')
@@ -333,6 +336,10 @@ watch(() => store.selectedNodeId, (nodeId) => {
 
 function togglePreview() {
   store.setMode(store.mode === 'design' ? 'preview' : 'design')
+}
+
+function toggleFlowMode() {
+  flowMode.value = flowMode.value === 'bpmn' ? 'workflow' : 'bpmn'
 }
 
 function goBack() {

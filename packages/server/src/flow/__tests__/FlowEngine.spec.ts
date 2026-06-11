@@ -139,6 +139,25 @@ vi.mock('../../flow-services/MessageQueue.js', () => ({
   },
 }))
 
+vi.mock('../../services/executionLogger.js', () => ({
+  logNodeStart: vi.fn().mockResolvedValue({}),
+  logNodeComplete: vi.fn().mockResolvedValue(undefined),
+  logNodeFail: vi.fn().mockResolvedValue(undefined),
+  getInstanceLogs: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('../../services/eventBus.js', () => ({
+  eventBus: {
+    emit: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+    off: vi.fn(),
+  },
+}))
+
+vi.mock('../../services/dataUpdateEngine.js', () => ({
+  executeDataUpdateRules: vi.fn().mockResolvedValue({ submissionId: null, rulesApplied: 0 }),
+}))
+
 // Import after mocks are set up
 import { FlowEngine } from '../../flow-services/FlowEngine.js'
 

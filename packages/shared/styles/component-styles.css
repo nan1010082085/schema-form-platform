@@ -1,0 +1,359 @@
+/* ============================================================
+ * 统一组件样式 — 基础组件的通用样式定义
+ *
+ * 所有样式基于 design-tokens.css 中的 CSS 变量
+ * 使用方式：import '@schema-form/shared/styles/component-styles.css'
+ * ============================================================ */
+
+/* ---------- 按钮样式 ---------- */
+
+.sf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  height: var(--button-height);
+  padding: 0 var(--spacing-md);
+  border: 1px solid var(--border-color-base);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition-color), var(--transition-shadow);
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sf-button:focus-visible {
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.sf-button:disabled,
+.sf-button.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary */
+.sf-button--primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-color-inverse);
+}
+
+.sf-button--primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* Secondary */
+.sf-button--secondary {
+  background-color: var(--bg-color-white);
+  border-color: var(--border-color-base);
+  color: var(--text-color-regular);
+}
+
+.sf-button--secondary:hover:not(:disabled) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-lighter);
+}
+
+/* Danger */
+.sf-button--danger {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--text-color-inverse);
+}
+
+.sf-button--danger:hover:not(:disabled) {
+  background-color: var(--color-danger-light);
+  border-color: var(--color-danger-light);
+}
+
+/* Text */
+.sf-button--text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-primary);
+  padding: 0;
+  height: auto;
+}
+
+.sf-button--text:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+}
+
+/* Sizes */
+.sf-button--small {
+  height: 24px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-12);
+}
+
+.sf-button--large {
+  height: var(--button-height-lg);
+  padding: 0 var(--spacing-lg);
+  font-size: var(--font-size-16);
+}
+
+/* Loading */
+.sf-button.is-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* ---------- 输入框样式 ---------- */
+
+.sf-input {
+  width: 100%;
+  height: var(--input-height);
+  padding: 0 var(--spacing-sm);
+  border: 1px solid var(--input-border-default);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-14);
+  color: var(--text-color-primary);
+  background-color: var(--bg-color-white);
+  transition: var(--transition-color);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.sf-input::placeholder {
+  color: var(--text-color-placeholder);
+}
+
+.sf-input:hover {
+  border-color: var(--input-border-hover);
+}
+
+.sf-input:focus {
+  border-color: var(--input-border-focus);
+}
+
+.sf-input:disabled {
+  background-color: var(--input-bg-disabled);
+  border-color: var(--input-border-disabled);
+  color: var(--text-color-disabled);
+  cursor: not-allowed;
+}
+
+.sf-input.is-error {
+  border-color: var(--input-border-error);
+}
+
+/* ---------- 卡片样式 ---------- */
+
+.sf-card {
+  background-color: var(--bg-color-white);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-shadow);
+  overflow: hidden;
+}
+
+.sf-card--shadow {
+  box-shadow: var(--shadow-sm);
+}
+
+.sf-card--shadow-hover:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.sf-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color-light);
+  min-height: var(--detail-item-height);
+  box-sizing: border-box;
+}
+
+.sf-card__title {
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-color-title);
+  line-height: var(--line-height-tight);
+}
+
+.sf-card__subtitle {
+  font-size: var(--font-size-13);
+  color: var(--text-color-muted);
+  margin-top: var(--spacing-xs);
+}
+
+.sf-card__body {
+  padding: var(--spacing-md);
+}
+
+.sf-card__footer {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-color-light);
+  background-color: var(--bg-color-gray-light);
+}
+
+/* ---------- 表格样式 ---------- */
+
+.sf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-14);
+  color: var(--text-color-primary);
+  font-family: var(--font-family-base);
+}
+
+.sf-table th {
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color-primary);
+  background-color: var(--bg-color-gray);
+  border-bottom: 1px solid var(--border-color-base);
+  white-space: nowrap;
+}
+
+.sf-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-color-light);
+  vertical-align: middle;
+}
+
+.sf-table tr:hover td {
+  background-color: var(--bg-color-hover);
+}
+
+.sf-table__empty {
+  padding: var(--spacing-xl) 0;
+  text-align: center;
+  color: var(--text-color-muted);
+}
+
+/* ---------- 弹窗样式 ---------- */
+
+.sf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: var(--z-index-modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-modal {
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 520px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-index-modal);
+}
+
+.sf-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-md);
+  height: var(--detail-item-height);
+  background: var(--color-primary);
+  color: var(--text-color-inverse);
+  flex-shrink: 0;
+}
+
+.sf-modal__title {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+}
+
+.sf-modal__close {
+  background: none;
+  border: none;
+  color: var(--text-color-inverse);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-fast);
+}
+
+.sf-modal__close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sf-modal__body {
+  padding: var(--spacing-md);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.sf-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-10px) var(--spacing-md);
+  background: var(--color-primary-bg-light);
+  flex-shrink: 0;
+}
+
+/* ---------- 菜单样式 ---------- */
+
+.sf-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sf-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-color-regular);
+  font-size: var(--font-size-14);
+  cursor: pointer;
+  transition: var(--transition-color);
+  border-radius: var(--border-radius-sm);
+  user-select: none;
+}
+
+.sf-menu-item:hover {
+  background-color: var(--bg-color-hover);
+  color: var(--color-primary);
+}
+
+.sf-menu-item.is-active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-lighter);
+  font-weight: var(--font-weight-medium);
+}
+
+.sf-menu-item.is-disabled {
+  color: var(--text-color-disabled);
+  cursor: not-allowed;
+}
+
+.sf-menu-item.is-disabled:hover {
+  background-color: transparent;
+  color: var(--text-color-disabled);
+}
+
+.sf-menu-group__title {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-12);
+  color: var(--text-color-muted);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

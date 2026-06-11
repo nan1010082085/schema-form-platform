@@ -9,6 +9,7 @@ import TimerEventPanel from '@/components/nodePanels/TimerEventPanel.vue'
 import GatewayPanel from '@/components/nodePanels/GatewayPanel.vue'
 import GatewayConditionPanel from '@/components/panels/GatewayConditionPanel.vue'
 import SubProcessPanel from '@/components/nodePanels/SubProcessPanel.vue'
+import { WORKFLOW_PANEL_REGISTRY } from '@/components/workflowPanels/index.js'
 
 const registry = new Map<string, Component>([
   ['start-event', markRaw(DefaultNodePanel)],
@@ -23,6 +24,10 @@ const registry = new Map<string, Component>([
   ['parallel-gateway', markRaw(GatewayConditionPanel)],
   ['inclusive-gateway', markRaw(GatewayConditionPanel)],
   ['sub-process', markRaw(SubProcessPanel)],
+  // Workflow 节点面板
+  ...Object.entries(WORKFLOW_PANEL_REGISTRY).map(
+    ([type, component]): [string, Component] => [type, component],
+  ),
 ])
 
 /**

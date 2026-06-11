@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, Connection, Document, SetUp } from '@element-plus/icons-vue'
+import { Search, Connection, Document, SetUp, Timer, Edit, Cpu, Warning } from '@element-plus/icons-vue'
 import type { VariableGroup, VariableLeaf, VariableSource } from '../composables/useVariableDefinitions.js'
+import type { WorkflowVariableGroup, WorkflowVariableLeaf, WorkflowVariableSource } from '../composables/useWorkflowVariables.js'
 import styles from './VariableSelector.module.css'
+
+type AnyVariableSource = VariableSource | WorkflowVariableSource
+type AnyVariableGroup = VariableGroup | WorkflowVariableGroup
+type AnyVariableLeaf = VariableLeaf | WorkflowVariableLeaf
 
 const props = withDefaults(defineProps<{
   modelValue?: string
   /** Variable tree grouped by source */
-  groups?: VariableGroup[]
+  groups?: AnyVariableGroup[]
   placeholder?: string
   /** Insert format: 'template' produces {{path}}, 'raw' produces the path directly */
   insertMode?: 'template' | 'raw'
@@ -27,27 +32,53 @@ const searchQuery = ref('')
 
 /* --- Source icon --- */
 
-function sourceIcon(source: VariableSource) {
+function sourceIcon(source: AnyVariableSource) {
   switch (source) {
     case 'env': return SetUp
     case 'form': return Document
     case 'node': return Connection
+    case 'trigger': return Timer
+    case 'editor': return Edit
+    case 'flow': return Connection
+    case 'ai': return Cpu
+    case 'system': return Warning
   }
 }
 
-function sourceTagType(source: VariableSource): '' | 'success' | 'warning' {
+function sourceTagType(source: AnyVariableSource): '' | 'success' | 'warning' | 'danger' | 'info' {
   switch (source) {
     case 'env': return ''
     case 'form': return 'success'
     case 'node': return 'warning'
+    case 'trigger': return 'warning'
+    case 'editor': return 'success'
+    case 'flow': return 'info'
+    case 'ai': return 'danger'
+    case 'system': return ''
   }
 }
 
-function sourceLabel(source: VariableSource): string {
+function sourceLabel(source: AnyVariableSource): string {
   switch (source) {
     case 'env': return '环境'
     case 'form': return '表单'
     case 'node': return '节点'
+    case 'trigger': return '触发器'
+    case 'editor': return 'Editor'
+    case 'flow': return 'Flow'
+    case 'ai': return 'AI'
+    case 'system': return '系统'
+  }
+}
+
+function sourceColor(source: AnyVariableSource): string {
+  switch (source) {
+    case 'trigger': return 'var(--node-accent-trigger, #f59e0b)'
+    case 'editor': return 'var(--node-accent-editor, #10b981)'
+    case 'flow': return 'var(--node-accent-flow, #6366f1)'
+    case 'ai': return 'var(--node-accent-ai, #8b5cf6)'
+    case 'system': return 'var(--node-accent-system, #64748b)'
+    default: return ''
   }
 }
 
@@ -72,7 +103,7 @@ const filteredGroups = computed(() => {
 
 /* --- Selection --- */
 
-function selectVariable(variable: VariableLeaf) {
+function selectVariable(variable: AnyVariableLeaf) {
   const formatted =
     props.insertMode === 'template'
       ? `{{${variable.path}}}`
@@ -141,7 +172,10 @@ function onPopoverChange(visible: boolean) {
             :key="group.source"
             :class="styles.group"
           >
-            <div :class="styles.groupHeader">
+            <div
+              :class="styles.groupHeader"
+              :style="{ '--group-color': sourceColor(group.source) }"
+            >
               <el-icon :class="styles.groupIcon">
                 <component :is="sourceIcon(group.source)" />
               </el-icon>
@@ -159,6 +193,7 @@ function onPopoverChange(visible: boolean) {
                 :type="sourceTagType(variable.source)"
                 size="small"
                 :class="styles.sourceTag"
+                :style="sourceColor(variable.source) ? { '--el-tag-bg-color': sourceColor(variable.source) + '15', '--el-tag-text-color': sourceColor(variable.source) } : {}"
               >
                 {{ sourceLabel(variable.source) }}
               </el-tag>

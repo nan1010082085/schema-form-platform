@@ -47,6 +47,7 @@ import workflowStatusRouter from './routes/workflowStatus.js'
 import workflowTemplateRouter from './routes/workflowTemplate.js'
 import webhookRouter from './routes/webhook.js'
 import webhookTriggerRouter from './routes/webhookTrigger.js'
+import workflowExecutionRouter from './routes/workflowExecution.js'
 import credentialRouter from './routes/credential.js'
 import modelConfigRouter from './routes/modelConfig.js'
 import { auditLogMiddleware } from './middleware/auditLog.js'
@@ -197,6 +198,8 @@ app.use(webhookRouter.routes())
 app.use(webhookRouter.allowedMethods())
 app.use(webhookTriggerRouter.routes())
 app.use(webhookTriggerRouter.allowedMethods())
+app.use(workflowExecutionRouter.routes())
+app.use(workflowExecutionRouter.allowedMethods())
 app.use(credentialRouter.routes())
 app.use(credentialRouter.allowedMethods())
 app.use(modelConfigRouter.routes())
