@@ -46,3 +46,4 @@ coverage/
 # Private docs (runtime system design)
 packages/web/src/docs/runtime/
 .ai/
+CLAUDE.md
