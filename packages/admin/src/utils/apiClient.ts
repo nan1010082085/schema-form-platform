@@ -55,7 +55,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     onUnauthorized?.()
     // 微前端模式下通知宿主处理鉴权，standalone 模式下跳转登录页
     if (window.__MICRO_APP_ENVIRONMENT__) {
-      window.microApp?.dispatch({ type: 'auth:unauthorized' })
+      (window.microApp as any)?.dispatch({ type: 'auth:unauthorized' })
     } else {
       window.location.href = '/login'
     }

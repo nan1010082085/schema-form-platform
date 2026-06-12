@@ -5,7 +5,6 @@ import SectionToggle from '@/components/nodePanels/SectionToggle.vue'
 import FieldRow from '@/components/nodePanels/FieldRow.vue'
 import HintText from '@/components/nodePanels/HintText.vue'
 import { flowApi } from '@/api/flowApi.js'
-import styles from './EditorNodePanel.module.scss'
 
 const props = defineProps<{ node: Node }>()
 const emit = defineEmits<{ updateNodeData: [key: string, value: unknown] }>()

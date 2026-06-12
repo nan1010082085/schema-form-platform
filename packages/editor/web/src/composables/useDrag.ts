@@ -124,7 +124,7 @@ export function useDrag() {
    * 计算放置预览线。
    * 根据鼠标位置和最近的 widget 边缘，确定新组件的插入位置。
    */
-  function computeDropPreviewLine(canvasX: number, canvasY: number, widgetW: number, widgetH: number): DropPreviewLine | null {
+  function computeDropPreviewLine(_canvasX: number, _canvasY: number, _widgetW: number, _widgetH: number): DropPreviewLine | null {
     const PREVIEW_THRESHOLD = 20 // 在 widget 边缘 20px 内显示预览线
 
     // 在容器内：根据鼠标相对子组件的位置决定插入到上方还是下方

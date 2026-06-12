@@ -555,6 +555,15 @@ importers:
         specifier: '>=3.5.0'
         version: 3.5.34(typescript@5.7.3)
 
+  packages/shared/composables:
+    dependencies:
+      element-plus:
+        specifier: '>=2.9.0'
+        version: 2.14.0(vue@3.5.34(typescript@5.7.3))
+      vue:
+        specifier: '>=3.5.0'
+        version: 3.5.34(typescript@5.7.3)
+
   packages/shared/config:
     dependencies:
       '@schema-form/micro-app':
@@ -585,6 +594,18 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.19.19)(jsdom@26.1.0)(sass@1.99.0)(tsx@4.22.0)(yaml@2.9.0)
+
+  packages/shared/qiankun:
+    dependencies:
+      element-plus:
+        specifier: '>=2.9.0'
+        version: 2.14.0(vue@3.5.34(typescript@5.7.3))
+      pinia:
+        specifier: '>=2.3.0'
+        version: 2.3.1(typescript@5.7.3)(vue@3.5.34(typescript@5.7.3))
+      vue:
+        specifier: '>=3.5.0'
+        version: 3.5.34(typescript@5.7.3)
 
   packages/shared/socket:
     dependencies:

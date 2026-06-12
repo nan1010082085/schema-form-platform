@@ -48,7 +48,7 @@ createChildApp({
 
     configureApiClient({
       baseUrl: import.meta.env.VITE_API_BASE_URL as string | undefined,
-      getToken: () => resolveToken(),
+      getToken: () => resolveToken() ?? '',
       useMock: import.meta.env.VITE_USE_MOCK === 'true',
     })
 

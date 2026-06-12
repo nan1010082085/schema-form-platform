@@ -105,9 +105,11 @@ curl http://localhost:3001/api/health
 
 | 检查项 | 检查命令 | 预期结果 | 失败处理 |
 |--------|----------|----------|----------|
-| API 服务 | `curl http://***REMOVED***:30001/api/health` | status: ok | SSH 检查 pm2 |
-| 前端服务 | `curl http://***REMOVED***:8828` | 200 OK | 检查 nginx |
-| 数据库 | `curl http://***REMOVED***:30001/api/health` | database: connected | 检查 Docker |
+| API 服务 | `curl http://YOUR_SERVER_IP:YOUR_API_PORT/api/health` | status: ok | SSH 检查 pm2 |
+| 前端服务 | `curl http://YOUR_SERVER_IP:YOUR_FRONTEND_PORT` | 200 OK | 检查 nginx |
+| 数据库 | `curl http://YOUR_SERVER_IP:YOUR_API_PORT/api/health` | database: connected | 检查 Docker |
+
+> **注意**：生产环境地址请从 `.env.production` 或部署配置中获取，不要提交到版本控制。
 
 ---
 

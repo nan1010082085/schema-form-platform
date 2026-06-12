@@ -15,7 +15,6 @@ import type {
   EventMessage,
   EventHandler,
   CommunicationError,
-  ErrorCallback,
   CommunicationOptions,
   ChildAppName,
 } from './events.js'

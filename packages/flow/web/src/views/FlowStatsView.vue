@@ -34,7 +34,7 @@ const timeRangeOptions: Array<{ value: TimeRangePreset; label: string }> = [
   { value: 'today', label: '今日' },
   { value: 'week', label: '本周' },
   { value: 'month', label: '本月' },
-  { value: 'all', label: '全部' },
+  { value: 'all' as TimeRangePreset, label: '全部' },
 ]
 const selectedPreset = ref<TimeRangePreset>('month')
 const customDateRange = ref<[string, string] | null>(null)

@@ -22,7 +22,6 @@ import type {
   FlowTemplateData,
   FlowTemplateQuery,
   ApplyFlowTemplateDto,
-  FlowMonitorStats,
   FlowMonitorStatsWithPercent,
   FlowMonitorAvgDuration,
   FlowMonitorNodeStat,

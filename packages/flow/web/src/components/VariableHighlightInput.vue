@@ -6,8 +6,8 @@
  * 支持点击编辑/删除变量引用
  */
 
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { Connection, Edit, Delete } from '@element-plus/icons-vue'
+import { ref, computed } from 'vue'
+import { Connection, Delete } from '@element-plus/icons-vue'
 import type { WorkflowVariableLeaf, WorkflowVariableSource } from '../composables/useWorkflowVariables'
 import styles from './VariableHighlightInput.module.css'
 
@@ -120,7 +120,7 @@ function deleteVariable(index: number) {
 }
 
 /** Replace variable reference */
-function replaceVariable(index: number, newVariable: WorkflowVariableLeaf) {
+function _replaceVariable(index: number, newVariable: WorkflowVariableLeaf) {
   const newSegments = [...segments.value]
   newSegments[index] = {
     type: 'variable',

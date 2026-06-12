@@ -22,6 +22,20 @@ type EventHandler<T> = (data: T) => void
 let socket: Socket | null = null
 
 /**
+ * 获取 Socket 路径
+ *
+ * - 开发环境：/ws（由 vite proxy 代理）
+ * - 生产环境：/schema-platform/ws（由 nginx 代理）
+ */
+function getSocketPath(): string {
+  if (typeof window !== 'undefined') {
+    const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    return isProd ? '/schema-platform/ws' : '/ws'
+  }
+  return '/ws'
+}
+
+/**
  * 连接到 Socket 服务端
  * @param url 服务端地址。不传时默认同源，由 nginx（生产）或 vite proxy（开发）转发到后端。
  */
@@ -30,7 +44,7 @@ export function connect(url?: string): Socket {
 
   const serverUrl = url ?? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001')
   socket = io(serverUrl, {
-    path: '/ws',
+    path: getSocketPath(),
     transports: ['polling'],
     autoConnect: true,
     reconnection: true,

@@ -7,7 +7,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Plus, View, Document, Connection, Collection, List } from '@element-plus/icons-vue'
+import { Search, Plus, Document, Connection, List } from '@element-plus/icons-vue'
 import {
   fetchWorkflowTemplates,
   fetchWorkflowTemplateById,

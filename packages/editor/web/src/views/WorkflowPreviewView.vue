@@ -8,7 +8,6 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { Loading, CircleCloseFilled, ArrowRight } from '@element-plus/icons-vue'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -17,7 +16,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
-import type { FormData, PartialWidget } from '@/components/WidgetRenderer'
+import type { PartialWidget } from '@/components/WidgetRenderer'
 import type { WorkflowItem } from '@/utils/apiClient'
 import {
   fetchWorkflowById,
@@ -180,8 +179,8 @@ onMounted(() => {
             <div :class="styles.flowPreview">
               <VueFlow
                 v-if="flowNodes.length > 0"
-                :nodes="flowNodes"
-                :edges="flowEdges"
+                :nodes="flowNodes as any"
+                :edges="flowEdges as any"
                 :nodes-connectable="false"
                 :nodes-draggable="false"
                 :edges-updatable="false"

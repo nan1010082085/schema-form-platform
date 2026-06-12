@@ -14,7 +14,6 @@
 import { computed, type Ref } from 'vue'
 import type { Node, Edge } from '@vue-flow/core'
 import type { BpmnNodeConfig } from '@schema-form/flow-shared'
-import { BpmnElementType } from '@schema-form/flow-shared'
 
 export type WorkflowVariableSource = 'trigger' | 'editor' | 'flow' | 'ai' | 'system'
 

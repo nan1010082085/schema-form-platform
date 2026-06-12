@@ -198,4 +198,4 @@ packages/flow/
 ## 访问地址
 
 - 本地开发：http://localhost:5174/flow/
-- 线上环境：http://***REMOVED***:8828/flow/
+- 线上环境：请查看部署配置或 `.env.production`

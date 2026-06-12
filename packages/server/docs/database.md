@@ -8,9 +8,9 @@
 | ORM | Mongoose 8.x |
 | 容器 | Docker Compose |
 | 端口 | 27017 |
-| 数据库名 | `formgrid` |
-| 用户名 | `formgrid` |
-| 密码 | `formgrid` |
+| 数据库名 | `your-database` |
+| 用户名 | `your-username` |
+| 密码 | `your-password` |
 
 ## 本地启动
 
@@ -84,7 +84,7 @@ toJSON: {
 ## 连接配置
 
 ```typescript
-// 本地: mongodb://formgrid:formgrid@localhost:27017/formgrid
+// 本地: mongodb://localhost:27017/your-database
 // 生产: 通过 MONGODB_URI 环境变量指定 (MongoDB Atlas)
 await mongoose.connect(MONGODB_URI, {
   maxPoolSize: 5,

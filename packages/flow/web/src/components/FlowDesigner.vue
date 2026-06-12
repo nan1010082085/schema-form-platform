@@ -342,7 +342,7 @@ function toggleFlowMode() {
   flowMode.value = flowMode.value === 'bpmn' ? 'workflow' : 'bpmn'
 }
 
-function goBack() {
+function _goBack() {
   router.push('/list')
 }
 

@@ -251,10 +251,10 @@
       </div>
       <div class="code-block" style="margin-top:16px;">
 <span class="comment">// 本地开发</span>
-MONGODB_URI=<span class="string">mongodb://formgrid:formgrid@localhost:27017/formgrid</span>
+MONGODB_URI=<span class="string">mongodb://localhost:27017/your-database</span>
 
 <span class="comment">// 生产环境 (Atlas)</span>
-MONGODB_URI=<span class="string">mongodb+srv://user:pass@cluster.mongodb.net/formgrid</span>
+MONGODB_URI=<span class="string">mongodb+srv://user:pass@cluster.mongodb.net/your-database</span>
       </div>
     </div>
   </div>
@@ -1144,9 +1144,9 @@ services:
     ports:
       - <span class="string">"27017:27017"</span>
     environment:
-      MONGO_INITDB_ROOT_USERNAME: <span class="string">formgrid</span>
-      MONGO_INITDB_ROOT_PASSWORD: <span class="string">formgrid</span>
-      MONGO_INITDB_DATABASE: <span class="string">formgrid</span>
+      MONGO_INITDB_ROOT_USERNAME: <span class="string">your-username</span>
+      MONGO_INITDB_ROOT_PASSWORD: <span class="string">your-password</span>
+      MONGO_INITDB_DATABASE: <span class="string">your-database</span>
       </div>
     </div>
   </div>

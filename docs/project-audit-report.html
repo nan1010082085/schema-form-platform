@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schema Form Platform — 项目全面梳理报告</title>
+<style>
+  :root {
+    --primary: #0052d9;
+    --primary-light: #e8f0fe;
+    --success: #00a870;
+    --warning: #ed7b2f;
+    --danger: #e34d59;
+    --text: #1a1a1a;
+    --text-secondary: #666;
+    --bg: #f5f6fa;
+    --card: #fff;
+    --border: #e8e8e8;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--primary); text-decoration: none; }
+
+  /* Nav */
+  .nav { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { font-size: 1.1rem; font-weight: 700; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link { padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; color: var(--text-secondary); }
+  .nav-link:hover { background: #f0f2f5; }
+  .nav-link.active { background: var(--primary); color: #fff; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 40%, #0f3460 70%, #16213e 100%); color: #fff; padding: 60px 24px; text-align: center; }
+  .hero h1 { font-size: 2.4rem; margin-bottom: 8px; }
+  .hero p { font-size: 1.1rem; opacity: 0.8; }
+
+  /* Container */
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+  .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); display: inline-block; }
+  .section-desc { color: var(--text-secondary); margin-bottom: 24px; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  th { background: #f8f9fa; font-weight: 600; white-space: nowrap; }
+  tr:hover { background: #f8f9fa; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+  .tag-danger { background: #fde2e2; color: var(--danger); }
+  .tag-warning { background: #fef3e2; color: var(--warning); }
+  .tag-success { background: #e2f7e8; color: var(--success); }
+  .tag-info { background: var(--primary-light); color: var(--primary); }
+  .tag-gray { background: #f0f0f0; color: #999; }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+  /* Code */
+  code { background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+  pre { background: var(--code-bg); color: var(--code-text); padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin-bottom: 16px; }
+  pre code { background: none; padding: 0; color: inherit; }
+
+  /* Status indicators */
+  .status { display: inline-flex; align-items: center; gap: 6px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-dot-green { background: var(--success); }
+  .status-dot-yellow { background: var(--warning); }
+  .status-dot-red { background: var(--danger); }
+
+  /* TOC */
+  .toc { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 32px; }
+  .toc h3 { margin-bottom: 12px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 6px; }
+  .toc a { font-size: 0.9rem; }
+
+  /* Comparison */
+  .compare-row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .compare-item { flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .compare-item h4 { margin-bottom: 8px; font-size: 0.95rem; }
+  .compare-item ul { padding-left: 16px; font-size: 0.85rem; }
+  .compare-item li { margin-bottom: 4px; }
+
+  /* File tree */
+  .file-tree { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 0.85rem; line-height: 1.8; background: #f8f9fa; padding: 16px; border-radius: 8px; }
+  .file-tree .dir { color: var(--primary); font-weight: 600; }
+  .file-tree .file { color: var(--text-secondary); }
+  .file-tree .comment { color: #999; font-style: italic; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">Schema Form Platform</div>
+  <div class="nav-links">
+    <a href="#overview" class="nav-link active">总览</a>
+    <a href="#dead-code" class="nav-link">死代码</a>
+    <a href="#shell" class="nav-link">Shell</a>
+    <a href="#admin" class="nav-link">Admin</a>
+    <a href="#editor" class="nav-link">Editor</a>
+    <a href="#flow" class="nav-link">Flow</a>
+    <a href="#ai-app" class="nav-link">AI App</a>
+    <a href="#style" class="nav-link">样式重构</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <h1>Schema Form Platform</h1>
+  <p>产品与架构全面梳理报告 — 2026/06/12</p>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>目录</h3>
+    <ol>
+      <li><a href="#overview">项目总览与架构</a></li>
+      <li><a href="#dead-code">死代码与不可触达功能</a></li>
+      <li><a href="#shell">Shell 容器功能清单</a></li>
+      <li><a href="#admin">Admin 系统管理功能清单</a></li>
+      <li><a href="#editor">Editor 可视化编辑器功能清单</a></li>
+      <li><a href="#flow">Flow 流程设计器功能清单</a></li>
+      <li><a href="#ai-app">AI App 功能清单</a></li>
+      <li><a href="#style">界面风格一致性分析与重构方案</a></li>
+    </ol>
+  </div>
+
+  <!-- ==================== 1. 总览 ==================== -->
+  <section id="overview" class="section">
+    <h2 class="section-title">1. 项目总览与架构</h2>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="card-title">📦 包结构</div>
+        <table>
+          <tr><th>包名</th><th>端口</th><th>定位</th></tr>
+          <tr><td><code>@schema-form/shell</code></td><td>5000</td><td>qiankun 主应用容器</td></tr>
+          <tr><td><code>@schema-form/admin</code></td><td>5400</td><td>系统管理后台</td></tr>
+          <tr><td><code>@schema-form/editor-web</code></td><td>5100</td><td>可视化表单设计器</td></tr>
+          <tr><td><code>@schema-form/flow-web</code></td><td>5200</td><td>BPMN 流程设计器</td></tr>
+          <tr><td><code>@schema-form/ai-app</code></td><td>5300</td><td>AI 对话应用</td></tr>
+          <tr><td><code>@schema-form/server</code></td><td>3001</td><td>Koa.js 后端</td></tr>
+          <tr><td><code>@schema-form/ai</code></td><td>—</td><td>AI 能力层（壳包）</td></tr>
+          <tr><td><code>@schema-form/ai-sdk</code></td><td>—</td><td>Agent SDK</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔗 共享包</div>
+        <table>
+          <tr><th>包名</th><th>用途</th></tr>
+          <tr><td><code>shared/styles</code></td><td>设计令牌 + 主题</td></tr>
+          <tr><td><code>shared/components</code></td><td>公共组件</td></tr>
+          <tr><td><code>shared/composables</code></td><td>组合式函数</td></tr>
+          <tr><td><code>shared/utils</code></td><td>apiClient / SSO</td></tr>
+          <tr><td><code>shared/config</code></td><td>Vite / Element Plus</td></tr>
+          <tr><td><code>shared/qiankun</code></td><td>微前端工厂</td></tr>
+          <tr><td><code>shared/socket</code></td><td>WebSocket 通信</td></tr>
+          <tr><td><code>shared/ai</code></td><td>AI 知识库</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏗️ 微前端架构</div>
+        <pre><code>Shell (qiankun host)
+├── /editor  → editor-web
+├── /flow    → flow-web
+├── /ai      → ai-app
+└── /admin   → admin
+
+通信方式：
+- useQiankun() 全局状态
+- useQiankunEvent() 事件总线
+- localStorage token 共享</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 2. 死代码 ==================== -->
+  <section id="dead-code" class="section">
+    <h2 class="section-title">2. 死代码与不可触达功能</h2>
+    <p class="section-desc">以下代码已不存在、不可触发或功能废弃</p>
+
+    <table>
+      <tr>
+        <th>位置</th>
+        <th>问题</th>
+        <th>严重度</th>
+        <th>建议</th>
+      </tr>
+      <tr>
+        <td><code>packages/portal</code></td>
+        <td>目录已删除，但 CLAUDE.md 仍引用 <code>packages/portal</code></td>
+        <td><span class="tag tag-warning">中</span></td>
+        <td>更新 CLAUDE.md 移除 portal 引用</td>
+      </tr>
+      <tr>
+        <td><code>packages/ai/package.json</code></td>
+        <td>仅有 package.json，exports 指向 <code>../server/src/ai/*</code>，无独立源码</td>
+        <td><span class="tag tag-info">低</span></td>
+        <td>确认是否需要保留，或合并到 server</td>
+      </tr>
+      <tr>
+        <td><code>shell/src/stores/microAppRegistry.ts</code></td>
+        <td>已定义 <code>MicroAppRecord</code> 接口和 store，但 <code>main.ts</code> 中 qiankun 注册仍用硬编码数组</td>
+        <td><span class="tag tag-warning">中</span></td>
+        <td>接入 API 驱动的动态注册，或删除未使用代码</td>
+      </tr>
+      <tr>
+        <td><code>editor/src/composables/useEditorLayout.ts</code></td>
+        <td>仅 696 字节，可能已被 <code>EditorView.vue</code> 内联替代</td>
+        <td><span class="tag tag-info">低</span></td>
+        <td>检查引用，无引用则删除</td>
+      </tr>
+      <tr>
+        <td><code>flow/src/views/FlowMonitor.vue</code></td>
+        <td>仅 160 字节，只是 <code>FlowMonitorDashboard</code> 的透传包装</td>
+        <td><span class="tag tag-gray">可优化</span></td>
+        <td>路由直接指向 <code>FlowMonitorDashboard</code></td>
+      </tr>
+      <tr>
+        <td><code>server/src/ai/ARCHITECTURE_PLAN.md</code><br><code>server/src/ai/AUDIT_REPAIR_PLAN.md</code><br><code>server/src/ai/PRODUCTION_FIX.md</code></td>
+        <td>51KB + 24KB + 18KB 的计划文档放在源码目录中</td>
+        <td><span class="tag tag-info">低</span></td>
+        <td>移至 <code>docs/</code> 或删除已完成的计划</td>
+      </tr>
+      <tr>
+        <td><code>docs/</code> 目录</td>
+        <td><code>phase6-summary.md</code> / <code>monitoring-checklist.md</code> / <code>monitoring-dashboard.md</code> / <code>product-regression-loop.md</code> 为临时性文档</td>
+        <td><span class="tag tag-gray">可清理</span></td>
+        <td>归档或删除过时文档</td>
+      </tr>
+      <tr>
+        <td><code>editor/src/widgets/base/types.ts:28</code></td>
+        <td><code>rate</code> 在 BasicType 中重复出现两次</td>
+        <td><span class="tag tag-info">低</span></td>
+        <td>删除重复项</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ==================== 3. Shell ==================== -->
+  <section id="shell" class="section">
+    <h2 class="section-title">3. Shell 容器功能清单</h2>
+    <p class="section-desc">qiankun 主应用，提供认证、导航、子应用容器</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">📄 路由</div>
+        <table>
+          <tr><th>路径</th><th>组件</th><th>说明</th></tr>
+          <tr><td><code>/login</code></td><td>LoginView</td><td>登录页（无侧边栏）</td></tr>
+          <tr><td><code>/</code></td><td>ShellView → HomeView</td><td>首页 4 卡片导航</td></tr>
+          <tr><td><code>/editor/*</code></td><td>ShellView（占位）</td><td>qiankun 接管</td></tr>
+          <tr><td><code>/flow/*</code></td><td>ShellView（占位）</td><td>qiankun 接管</td></tr>
+          <tr><td><code>/ai/*</code></td><td>ShellView（占位）</td><td>qiankun 接管</td></tr>
+          <tr><td><code>/admin/*</code></td><td>ShellView（占位）</td><td>qiankun 接管</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🧩 核心模块</div>
+        <table>
+          <tr><th>模块</th><th>文件</th><th>职责</th></tr>
+          <tr><td>认证</td><td><code>composables/useAuth.ts</code></td><td>登录/登出/Token刷新</td></tr>
+          <tr><td>菜单</td><td><code>composables/useMenu.ts</code></td><td>API 动态菜单树</td></tr>
+          <tr><td>布局</td><td><code>views/ShellView.vue</code></td><td>侧边栏 + 面包屑 + 用户下拉</td></tr>
+          <tr><td>微应用注册</td><td><code>stores/microAppRegistry.ts</code></td><td>API 驱动注册（未接入）</td></tr>
+          <tr><td>Token 共享</td><td><code>stores/auth.ts</code></td><td>localStorage 注入子应用</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎨 布局模式</div>
+      <div class="compare-row">
+        <div class="compare-item">
+          <h4>模式 A — 子应用路由</h4>
+          <p>路径以 <code>/editor</code> <code>/flow</code> <code>/ai</code> <code>/admin</code> 开头</p>
+          <ul>
+            <li>全屏布局，无侧边栏</li>
+            <li>仅渲染 qiankun 容器</li>
+          </ul>
+        </div>
+        <div class="compare-item">
+          <h4>模式 B — Shell 自有路由</h4>
+          <p>路径为 <code>/</code> 或 <code>/home</code></p>
+          <ul>
+            <li>左侧深色侧边栏（<code>#001529</code>）</li>
+            <li>顶部面包屑 + 用户下拉</li>
+            <li>内容区 + router-view</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 4. Admin ==================== -->
+  <section id="admin" class="section">
+    <h2 class="section-title">4. Admin 系统管理功能清单</h2>
+    <p class="section-desc">独立子应用，qiankun 模式下由 Shell 提供导航</p>
+
+    <div class="card">
+      <div class="card-title">📋 功能模块（9 个）</div>
+      <table>
+        <tr><th>路由</th><th>视图</th><th>功能</th><th>说明</th></tr>
+        <tr>
+          <td><code>/micro-apps</code></td>
+          <td>MicroAppManageView</td>
+          <td>微应用管理</td>
+          <td>注册、编辑、启停微前端子应用</td>
+        </tr>
+        <tr>
+          <td><code>/menus</code></td>
+          <td>MenuManageView</td>
+          <td>菜单管理</td>
+          <td>树形菜单 CRUD，支持 menu/button 类型</td>
+        </tr>
+        <tr>
+          <td><code>/users</code></td>
+          <td>UserManageView</td>
+          <td>用户管理</td>
+          <td>用户 CRUD、角色分配</td>
+        </tr>
+        <tr>
+          <td><code>/roles</code></td>
+          <td>RoleManageView</td>
+          <td>角色管理</td>
+          <td>角色 CRUD、数据权限范围</td>
+        </tr>
+        <tr>
+          <td><code>/depts</code></td>
+          <td>DeptManageView</td>
+          <td>部门管理</td>
+          <td>组织架构树形管理</td>
+        </tr>
+        <tr>
+          <td><code>/posts</code></td>
+          <td>PostManageView</td>
+          <td>岗位管理</td>
+          <td>岗位 CRUD</td>
+        </tr>
+        <tr>
+          <td><code>/dict</code></td>
+          <td>DictManageView</td>
+          <td>字典管理</td>
+          <td>字典类型 + 字典数据</td>
+        </tr>
+        <tr>
+          <td><code>/config</code></td>
+          <td>ConfigManageView</td>
+          <td>参数设置</td>
+          <td>系统级配置参数</td>
+        </tr>
+        <tr>
+          <td><code>/model-configs</code></td>
+          <td>ModelConfigView</td>
+          <td>模型配置</td>
+          <td>AI LLM 模型配置管理</td>
+        </tr>
+        <tr>
+          <td><code>/logs</code></td>
+          <td>LogManageView</td>
+          <td>操作日志</td>
+          <td>审计日志查看</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 认证方式</div>
+      <p>独立访问时使用 SSO 客户端（<code>clientId: 'admin'</code>）跳转登录；qiankun 模式下由 Shell 注入 token。</p>
+    </div>
+  </section>
+
+  <!-- ==================== 5. Editor ==================== -->
+  <section id="editor" class="section">
+    <h2 class="section-title">5. Editor 可视化编辑器功能清单</h2>
+    <p class="section-desc">Schema 驱动的表单设计器，49 个 Widget</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">📄 路由</div>
+        <table>
+          <tr><th>路径</th><th>功能</th></tr>
+          <tr><td><code>/instances</code></td><td>Schema 实例列表（默认页）</td></tr>
+          <tr><td><code>/templates</code></td><td>Widget 模板库</td></tr>
+          <tr><td><code>/docs</code></td><td>Widget 文档</td></tr>
+          <tr><td><code>/credentials</code></td><td>凭据管理</td></tr>
+          <tr><td><code>/submissions</code></td><td>表单提交记录</td></tr>
+          <tr><td><code>/tenants</code></td><td>租户管理</td></tr>
+          <tr><td><code>/schema/:id</code></td><td>设计器画布</td></tr>
+          <tr><td><code>/publish/:id</code></td><td>发布预览</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏗️ 核心架构</div>
+        <table>
+          <tr><th>模块</th><th>职责</th></tr>
+          <tr><td>Widget Registry</td><td>49 组件注册表</td></tr>
+          <tr><td>Rendering Engine</td><td>Schema → Vue 组件渲染</td></tr>
+          <tr><td>Event Engine</td><td>14 种事件动作类型</td></tr>
+          <tr><td>Property Panel</td><td>右侧属性配置面板</td></tr>
+          <tr><td>Component Panel</td><td>左侧组件面板（分组折叠）</td></tr>
+          <tr><td>7 个 Pinia Store</td><td>widget / editor / schema / drag / board / app / request</td></tr>
+          <tr><td>32 个 Composables</td><td>拖拽/联动/历史/数据/选项等</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧩 Widget 分类体系（8 组，49 个）</div>
+      <p style="margin-bottom: 12px;">Widget 通过 <code>group</code> 字段分类，组件面板按分组折叠展示，<strong>不使用 tag 标签</strong>。</p>
+      <table>
+        <tr><th>分组</th><th>key</th><th>数量</th><th>组件</th></tr>
+        <tr>
+          <td><span class="tag tag-info">布局部件</span></td>
+          <td><code>layout</code></td>
+          <td>8</td>
+          <td>Card, Tabs, SingleCol, DoubleCol, TripleCol, QuadCol, Divider, Spacer</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-info">容器部件</span></td>
+          <td><code>container</code></td>
+          <td>2</td>
+          <td>Form, Dialog</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-success">表单部件</span></td>
+          <td><code>form</code></td>
+          <td>11</td>
+          <td>Input, Number, Select, Radio, Checkbox, Date, Textarea, Richtext, Upload, Switch, Slider, Rate, TimePicker, Cascader, ColorPicker, TagInput, Autocomplete</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-warning">表格部件</span></td>
+          <td><code>table</code></td>
+          <td>3</td>
+          <td>Table, SearchList, EditableTable</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-danger">操作部件</span></td>
+          <td><code>action</code></td>
+          <td>2</td>
+          <td>Button, ToolbarButtons</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-gray">静态部件</span></td>
+          <td><code>static</code></td>
+          <td>3</td>
+          <td>Title, Banner, Statistic</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-warning">业务部件</span></td>
+          <td><code>business</code></td>
+          <td>4</td>
+          <td>FileList, Transfer, TreeLayout, Descriptions</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-danger">图表部件</span></td>
+          <td><code>chart</code></td>
+          <td>9</td>
+          <td>BarChart, LineChart, PieChart, ScatterChart, Radar, Gauge, Heatmap, Funnel, Candlestick</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 InstancesView 中的 Tag 使用</div>
+      <p>在 Schema 实例列表中，<code>el-tag</code> 用于显示：</p>
+      <ul style="padding-left: 20px; margin-top: 8px;">
+        <li><code>type</code> 字段：表单（默认色）/ 搜索列表（success 色）</li>
+        <li><code>publishId</code> 字段：已发布（success 色）</li>
+      </ul>
+      <p style="margin-top: 8px; color: var(--text-secondary);">Tag 仅用于状态标识，不用于分类导航。</p>
+    </div>
+  </section>
+
+  <!-- ==================== 6. Flow ==================== -->
+  <section id="flow" class="section">
+    <h2 class="section-title">6. Flow 流程设计器功能清单</h2>
+    <p class="section-desc">BPMN 标准流程设计器 + 工作流 Agent</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">📄 路由</div>
+        <table>
+          <tr><th>路径</th><th>功能</th></tr>
+          <tr><td><code>/list</code></td><td>流程列表（默认页）</td></tr>
+          <tr><td><code>/instances</code></td><td>流程实例列表</td></tr>
+          <tr><td><code>/instance/:id</code></td><td>实例详情</td></tr>
+          <tr><td><code>/monitor</code></td><td>流程监控仪表盘</td></tr>
+          <tr><td><code>/tasks</code></td><td>我的任务（待办）</td></tr>
+          <tr><td><code>/templates</code></td><td>流程模板库</td></tr>
+          <tr><td><code>/stats</code></td><td>流程统计</td></tr>
+          <tr><td><code>/designer</code></td><td>流程设计器画布</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🧩 两套节点系统</div>
+        <table>
+          <tr><th>系统</th><th>节点数</th><th>说明</th></tr>
+          <tr>
+            <td><strong>BPMN 标准节点</strong></td>
+            <td>25</td>
+            <td>StartEvent, EndEvent, UserTask, ServiceTask, ScriptTask, SendTask, ReceiveTask, ManualTask, BusinessRuleTask, ExclusiveGateway, InclusiveGateway, ParallelGateway, EventBasedGateway, ComplexGateway, SubProcess, CallActivity, Transaction, AdHocSubProcess, TimerEvent, MessageEvent, SignalEvent, ErrorEvent, EscalationEvent, CompensationEvent, ConditionalEvent</td>
+          </tr>
+          <tr>
+            <td><strong>工作流 Agent 节点</strong></td>
+            <td>7</td>
+            <td>StartNode, EndNode, EditorNode, FlowNode, AINode, AgentNode, ConditionNode</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ 核心模块</div>
+      <div class="grid grid-3">
+        <div>
+          <h4 style="margin-bottom: 8px;">前端</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>FlowDesigner — 主设计器</li>
+            <li>FlowCanvas — 画布（Vue Flow）</li>
+            <li>FlowToolbar — 工具栏</li>
+            <li>FlowPropertyPanel — 属性面板</li>
+            <li>FlowPalette — 节点面板</li>
+            <li>7 个 Store + 11 个 Composable</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 8px;">共享层</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>BpmnParser / XmlImporter / Exporter</li>
+            <li>ExpressionEvaluator</li>
+            <li>FlowValidator</li>
+            <li>CrossNodeResolver</li>
+            <li>ExecutableModel</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 8px;">后端</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>FlowEngine — 执行引擎</li>
+            <li>9 个数据模型</li>
+            <li>13 个 API 路由模块</li>
+            <li>Workflow 执行引擎</li>
+            <li>7 种节点执行器</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 7. AI App ==================== -->
+  <section id="ai-app" class="section">
+    <h2 class="section-title">7. AI App 功能清单</h2>
+    <p class="section-desc">AI 对话式应用，支持表单/流程生成</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">📄 路由</div>
+        <table>
+          <tr><th>路径</th><th>功能</th></tr>
+          <tr><td><code>/sidebar</code></td><td>AI 对话主界面（默认页）</td></tr>
+          <tr><td><code>/rag</code></td><td>RAG 知识库管理</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🧩 核心模块</div>
+        <table>
+          <tr><th>模块</th><th>说明</th></tr>
+          <tr><td>AiSidebarView</td><td>对话主界面</td></tr>
+          <tr><td>RagKnowledgeBase</td><td>知识库管理</td></tr>
+          <tr><td>AiMonitorView</td><td>AI 监控面板</td></tr>
+          <tr><td>11 个 Store 模块</td><td>conversation / flow / llm / rag / schema / settings / sse / task / version / interrupt</td></tr>
+          <tr><td>4 个 Composable</td><td>useChatContext / useFlowPreview / usePreviewInteraction / useRealtimeSync</td></tr>
+          <tr><td>Bridge</td><td>与 Editor/Flow 的通信桥接</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🤖 后端 AI 能力</div>
+      <div class="grid grid-3">
+        <div>
+          <h4 style="margin-bottom: 8px;">LangGraph Agent</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>graph.ts — 主状态图</li>
+            <li>editorAgent / flowAgent / pageAgent</li>
+            <li>agentBase.ts — Agent 基类</li>
+            <li>state.ts — 状态定义</li>
+            <li>contextCarrier.ts — 上下文传递</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 8px;">LLM 服务</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>llmManager / llmRouter / llmCache</li>
+            <li>openaiProvider / deepseekProvider / claudeProvider</li>
+            <li>promptOptimizer</li>
+            <li>embeddingService</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 8px;">集成</h4>
+          <ul style="padding-left: 16px; font-size: 0.9rem;">
+            <li>MCP Server（Schema/Flow/Widget）</li>
+            <li>ragService — RAG 检索</li>
+            <li>schemaAdapter / flowAdapter</li>
+            <li>conversationService</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 8. 样式重构 ==================== -->
+  <section id="style" class="section">
+    <h2 class="section-title">8. 界面风格一致性分析与重构方案</h2>
+
+    <div class="card" style="border-left: 4px solid var(--danger);">
+      <div class="card-title">🚨 核心问题</div>
+      <p>各项目样式定义分散、变量命名不统一、主题覆盖方式各异，导致视觉风格不一致。</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 现状分析</div>
+      <table>
+        <tr><th>项目</th><th>样式入口</th><th>主色变量</th><th>主题覆盖方式</th><th>问题</th></tr>
+        <tr>
+          <td>Shell</td>
+          <td><code>tokens.css</code></td>
+          <td><code>--color-primary: #0060A2</code></td>
+          <td>CSS 变量 + Element Plus 默认</td>
+          <td><span class="tag tag-success">OK</span></td>
+        </tr>
+        <tr>
+          <td>Admin</td>
+          <td><code>tokens.css</code></td>
+          <td><code>--color-primary: #0060A2</code></td>
+          <td>CSS 变量 + Element Plus 默认</td>
+          <td><span class="tag tag-success">OK</span></td>
+        </tr>
+        <tr>
+          <td>AI App</td>
+          <td><code>tokens.css</code></td>
+          <td><code>--color-primary: #0060A2</code></td>
+          <td>CSS 变量 + Element Plus 默认</td>
+          <td><span class="tag tag-success">OK</span></td>
+        </tr>
+        <tr>
+          <td>Editor</td>
+          <td><code>tokens.css</code> + <code>styles/theme.scss</code> + <code>styles/variables.scss</code></td>
+          <td><code>$fg-color-primary: #0060A2</code><br><code>$color-primary: #0060A2</code></td>
+          <td>SCSS 变量 → Element Plus CSS 变量覆盖</td>
+          <td><span class="tag tag-warning">重复定义</span></td>
+        </tr>
+        <tr>
+          <td>Flow</td>
+          <td><code>tokens.css</code> + <code>styles/theme.scss</code>（引用 shared）</td>
+          <td><code>$color-primary: #0060A2</code></td>
+          <td>引用 shared/_theme → Element Plus 覆盖</td>
+          <td><span class="tag tag-warning">两层覆盖</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔍 具体问题</div>
+      <table>
+        <tr><th>#</th><th>问题</th><th>影响</th></tr>
+        <tr>
+          <td>1</td>
+          <td>Editor 有独立的 <code>variables.scss</code>（<code>$fg-color-primary</code>）与 shared 的 <code>_variables.scss</code>（<code>$color-primary</code>）重复</td>
+          <td>改一处忘改另一处，颜色不一致</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Editor 的 <code>theme.scss</code> 和 shared 的 <code>_theme.scss</code> 都覆盖 Element Plus 变量</td>
+          <td>两层覆盖，优先级混乱</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Shell 侧边栏深色（<code>#001529</code>），Admin 侧边栏浅色（白色）</td>
+          <td>切换应用时视觉跳脱</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Flow 的 <code>theme.scss</code> 用 <code>@use '../../../../shared/styles/theme'</code> 相对路径</td>
+          <td>路径脆弱，移动目录即报错</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><code>component-styles.css</code> 定义了 <code>.sf-button</code> 等类，但各项目未统一使用</td>
+          <td>公共样式形同虚设</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--primary);">
+      <div class="card-title">🎯 重构方案：统一到 TDesign 设计体系</div>
+      <p style="margin-bottom: 16px;">参考资源：</p>
+      <ul style="padding-left: 20px; margin-bottom: 16px;">
+        <li>Figma 设计稿：<a href="https://www.figma.com/design/6gLYgutaFo0X7zoiRXS2hL/TDesign-for-web--Community-?node-id=22709-32187" target="_blank">TDesign for Web Community</a></li>
+        <li>组件库：<a href="https://tdesign.tencent.com/vue/overview" target="_blank">TDesign Vue Next</a></li>
+      </ul>
+
+      <h4 style="margin-bottom: 12px;">Phase 1：统一设计令牌（shared/styles）</h4>
+      <pre><code>packages/shared/styles/
+├── tokens.css              # CSS 变量（所有项目引用）
+│   ├── --td-brand-color    # TDesign 主色
+│   ├── --td-brand-color-hover
+│   ├── --td-brand-color-light
+│   ├── --td-font-family
+│   ├── --td-font-size-*
+│   ├── --td-spacing-*
+│   ├── --td-radius-*
+│   └── ...
+├── element-plus-override.scss  # Element Plus → TDesign 变量映射
+└── index.css               # 统一入口</code></pre>
+
+      <h4 style="margin: 16px 0 12px;">Phase 2：删除各项目重复定义</h4>
+      <ul style="padding-left: 20px;">
+        <li>删除 <code>editor/web/src/styles/variables.scss</code>（合并到 shared）</li>
+        <li>删除 <code>editor/web/src/styles/theme.scss</code>（统一到 shared）</li>
+        <li>简化 <code>flow/web/src/styles/theme.scss</code>（只保留 flow 特有覆盖）</li>
+        <li>统一侧边栏风格（Shell + Admin 都用深色或都用浅色）</li>
+      </ul>
+
+      <h4 style="margin: 16px 0 12px;">Phase 3：引入 TDesign 组件（可选）</h4>
+      <p>评估 Element Plus → TDesign Vue 的迁移成本，或仅采用 TDesign 的设计令牌映射到 Element Plus。</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📐 TDesign 设计令牌映射</div>
+      <table>
+        <tr><th>Token</th><th>TDesign 值</th><th>当前值</th><th>差异</th></tr>
+        <tr>
+          <td>品牌主色</td>
+          <td><code>#0052D9</code></td>
+          <td><code>#0060A2</code></td>
+          <td><span class="tag tag-warning">不同</span></td>
+        </tr>
+        <tr>
+          <td>成功色</td>
+          <td><code>#00A870</code></td>
+          <td><code>#26A036</code></td>
+          <td><span class="tag tag-warning">不同</span></td>
+        </tr>
+        <tr>
+          <td>警告色</td>
+          <td><code>#ED7B2F</code></td>
+          <td><code>#E6A23C</code></td>
+          <td><span class="tag tag-warning">接近</span></td>
+        </tr>
+        <tr>
+          <td>错误色</td>
+          <td><code>#E34D59</code></td>
+          <td><code>#F56C6C</code></td>
+          <td><span class="tag tag-warning">不同</span></td>
+        </tr>
+        <tr>
+          <td>字体</td>
+          <td>系统字体栈</td>
+          <td>微软雅黑为主</td>
+          <td><span class="tag tag-info">需对齐</span></td>
+        </tr>
+        <tr>
+          <td>圆角</td>
+          <td><code>3px / 6px / 9px / 12px</code></td>
+          <td><code>2px / 4px</code></td>
+          <td><span class="tag tag-info">需对齐</span></td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer style="text-align: center; padding: 32px; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid var(--border);">
+  Schema Form Platform — 项目梳理报告 — 生成时间：2026/06/12
+</footer>
+
+</body>
+</html>

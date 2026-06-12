@@ -4,7 +4,6 @@ import { SSOClient } from '@schema-form/shared-utils/sso'
 
 // SSO 客户端配置
 const SSO_CLIENT_ID = 'flow'
-const TOKEN_KEY = 'sfp_access_token'
 
 function getSSOClient(): SSOClient {
   const origin = window.location.origin

@@ -19,8 +19,11 @@ import { useMicroAppRegistry } from '@/composables/useMicroAppRegistry'
 /** Routes that do not require authentication */
 const PUBLIC_ROUTES = new Set(['/login'])
 
+// 生产环境使用 /schema-platform/ 前缀
+const base = import.meta.env.PROD ? '/schema-platform/' : '/'
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(base),
   routes: [
     // Login -- standalone layout
     {
