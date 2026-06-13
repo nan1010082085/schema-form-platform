@@ -54,14 +54,14 @@ async function handleLogin(): Promise<void> {
 
       <div :class="styles.form">
         <t-input
-          v-model="form.username"
+          v-model:value="form.username"
           placeholder="用户名"
           size="large"
           @keyup.enter="handleLogin"
         />
 
         <t-input
-          v-model="form.password"
+          v-model:value="form.password"
           type="password"
           placeholder="密码"
           size="large"
