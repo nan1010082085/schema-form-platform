@@ -22,6 +22,8 @@ packages/*/.env.*
 packages/**/.env
 packages/**/.env.*
 deploy/output/
+deploy/nginx-*.conf
+deploy/nginx.conf
 
 # IDE
 .idea/
@@ -48,3 +50,5 @@ packages/web/src/docs/runtime/
 .ai/
 CLAUDE.md
 deploy/output/
+deploy/nginx-*.conf
+deploy/nginx.conf
