@@ -21,10 +21,10 @@
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",
     "dompurify": "^3.4.7",
-    "tdesign-vue-next": "^1.20.1",
-    "tdesign-icons-vue-next": "^0.4.4",
     "marked": "^18.0.4",
     "pinia": "^2.3.0",
+    "tdesign-icons-vue-next": "^0.4.4",
+    "tdesign-vue-next": "^1.20.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
@@ -36,6 +36,7 @@
     "jsdom": "^26.1.0",
     "typescript": "~5.7.3",
     "vite": "^6.3.2",
+    "vite-plugin-qiankun": "^1.0.15",
     "vitest": "^3.1.4",
     "vue-tsc": "^2.2.8"
   }
