@@ -362,7 +362,7 @@ const taskTableColumns = [
       <h2>我的任务</h2>
     </div>
 
-    <t-tabs v-model="activeTab" @change="handleTabChange">
+    <t-tabs v-model:value="activeTab" @change="handleTabChange">
       <t-tab-panel label="待处理" value="pending" />
       <t-tab-panel label="已认领" value="claimed" />
       <t-tab-panel label="已完成" value="completed" />

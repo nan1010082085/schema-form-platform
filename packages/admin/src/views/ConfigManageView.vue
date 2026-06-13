@@ -156,11 +156,11 @@ onMounted(fetchConfigs)
           clearable
           :style="{ width: '240px' }"
         />
-        <t-select v-model="typeFilter" placeholder="参数类型" clearable :style="{ width: '120px' }">
+        <t-select v-model:value="typeFilter" placeholder="参数类型" clearable :style="{ width: '120px' }">
           <t-option label="系统参数" value="system" />
           <t-option label="业务参数" value="business" />
         </t-select>
-        <t-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
+        <t-select v-model:value="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
@@ -219,28 +219,28 @@ onMounted(fetchConfigs)
     >
       <t-form label-width="80px">
         <t-form-item label="参数名称">
-          <t-input v-model="form.name" placeholder="请输入参数名称" />
+          <t-input v-model:value="form.name" placeholder="请输入参数名称" />
         </t-form-item>
         <t-form-item label="参数键名">
-          <t-input v-model="form.key" placeholder="如 sys.upload.maxSize" :disabled="dialogMode === 'edit'" />
+          <t-input v-model:value="form.key" placeholder="如 sys.upload.maxSize" :disabled="dialogMode === 'edit'" />
         </t-form-item>
         <t-form-item label="参数值">
-          <t-input v-model="form.value" placeholder="请输入参数值" />
+          <t-input v-model:value="form.value" placeholder="请输入参数值" />
         </t-form-item>
         <t-form-item label="参数类型">
-          <t-select v-model="form.type" :style="{ width: '100%' }">
+          <t-select v-model:value="form.type" :style="{ width: '100%' }">
             <t-option label="系统参数" value="system" />
             <t-option label="业务参数" value="business" />
           </t-select>
         </t-form-item>
         <t-form-item label="状态">
-          <t-select v-model="form.status" :style="{ width: '100%' }">
+          <t-select v-model:value="form.status" :style="{ width: '100%' }">
             <t-option label="启用" value="active" />
             <t-option label="停用" value="inactive" />
           </t-select>
         </t-form-item>
         <t-form-item label="备注">
-          <t-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+          <t-input v-model:value="form.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
         </t-form-item>
       </t-form>
       <template #footer>

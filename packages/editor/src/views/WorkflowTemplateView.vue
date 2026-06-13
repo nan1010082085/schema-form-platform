@@ -395,7 +395,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
         </p>
         <t-form label-width="80px">
           <t-form-item label="工作流名称">
-            <t-input v-model="useName" placeholder="请输入工作流名称" maxlength="200" />
+            <t-input v-model:value="useName" placeholder="请输入工作流名称" maxlength="200" />
           </t-form-item>
         </t-form>
       </div>

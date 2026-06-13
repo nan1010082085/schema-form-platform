@@ -81,7 +81,7 @@ async function handleSave() {
   >
     <t-form ref="formRef" label-width="70px" label-align="left">
       <t-form-item label="名称" required>
-        <t-input v-model="name" placeholder="输入模板名称" maxlength="100" show-word-limit />
+        <t-input v-model:value="name" placeholder="输入模板名称" maxlength="100" show-word-limit />
       </t-form-item>
 
       <t-form-item label="描述">
@@ -95,7 +95,7 @@ async function handleSave() {
       </t-form-item>
 
       <t-form-item label="分类">
-        <t-select v-model="category" style="width: 100%">
+        <t-select v-model:value="category" style="width: 100%">
           <t-option label="表单" value="form" />
           <t-option label="报表" value="report" />
           <t-option label="布局" value="layout" />
@@ -104,7 +104,7 @@ async function handleSave() {
       </t-form-item>
 
       <t-form-item label="标签">
-        <t-input v-model="tagsInput" placeholder="多个标签用逗号分隔" />
+        <t-input v-model:value="tagsInput" placeholder="多个标签用逗号分隔" />
       </t-form-item>
     </t-form>
 

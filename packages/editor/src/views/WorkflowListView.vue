@@ -190,7 +190,7 @@ function statusTagTheme(status: string): 'default' | 'success' | 'warning' {
             >
               <template #prefix-icon><SearchIcon /></template>
             </t-input>
-            <t-select v-model="activeStatus" :class="styles.statusSelect" placeholder="状态筛选">
+            <t-select v-model:value="activeStatus" :class="styles.statusSelect" placeholder="状态筛选">
               <t-option
                 v-for="opt in statusOptions"
                 :key="opt.value"

@@ -311,7 +311,7 @@ function formatDate(d: string | null): string {
         >
           <template #prefix-icon><SearchIcon /></template>
         </t-input>
-        <t-select v-model="activeStatus" :class="styles.statusFilter">
+        <t-select v-model:value="activeStatus" :class="styles.statusFilter">
           <t-option
             v-for="opt in statusOptions"
             :key="opt.value"

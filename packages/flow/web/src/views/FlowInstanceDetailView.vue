@@ -339,7 +339,7 @@ const logColumns = [
       </div>
 
       <!-- Tabbed content -->
-      <t-tabs v-model="activeTab" @change="onTabChange">
+      <t-tabs v-model:value="activeTab" @change="onTabChange">
         <t-tab-panel label="流程图" value="graph">
           <div :class="styles.graphContainer">
             <VueFlow

@@ -343,7 +343,7 @@ onMounted(fetchTypes)
             size="small"
             :class="$style.searchInput"
           />
-          <t-select v-model="dataStatusFilter" placeholder="状态筛选" clearable size="small" :style="{ width: '100px' }">
+          <t-select v-model:value="dataStatusFilter" placeholder="状态筛选" clearable size="small" :style="{ width: '100px' }">
             <t-option label="启用" value="active" />
             <t-option label="停用" value="inactive" />
           </t-select>
@@ -398,19 +398,19 @@ onMounted(fetchTypes)
   >
     <t-form label-width="80px">
       <t-form-item label="名称">
-        <t-input v-model="typeForm.name" placeholder="请输入字典类型名称" />
+        <t-input v-model:value="typeForm.name" placeholder="请输入字典类型名称" />
       </t-form-item>
       <t-form-item label="编码">
-        <t-input v-model="typeForm.code" placeholder="如 city、gender、status" />
+        <t-input v-model:value="typeForm.code" placeholder="如 city、gender、status" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="typeForm.status" :style="{ width: '100%' }">
+        <t-select v-model:value="typeForm.status" :style="{ width: '100%' }">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
       </t-form-item>
       <t-form-item label="备注">
-        <t-input v-model="typeForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+        <t-input v-model:value="typeForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
       </t-form-item>
     </t-form>
     <template #footer>
@@ -428,22 +428,22 @@ onMounted(fetchTypes)
   >
     <t-form label-width="80px">
       <t-form-item label="标签">
-        <t-input v-model="dataForm.label" placeholder="显示文本，如：北京" />
+        <t-input v-model:value="dataForm.label" placeholder="显示文本，如：北京" />
       </t-form-item>
       <t-form-item label="值">
-        <t-input v-model="dataForm.value" placeholder="存储值，如：beijing" />
+        <t-input v-model:value="dataForm.value" placeholder="存储值，如：beijing" />
       </t-form-item>
       <t-form-item label="排序">
-        <t-input-number v-model="dataForm.sort" :min="0" :max="9999" />
+        <t-input-number v-model:value="dataForm.sort" :min="0" :max="9999" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="dataForm.status" :style="{ width: '100%' }">
+        <t-select v-model:value="dataForm.status" :style="{ width: '100%' }">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
       </t-form-item>
       <t-form-item label="备注">
-        <t-input v-model="dataForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+        <t-input v-model:value="dataForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
       </t-form-item>
     </t-form>
     <template #footer>

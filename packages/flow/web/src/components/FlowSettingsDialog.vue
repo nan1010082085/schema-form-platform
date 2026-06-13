@@ -88,17 +88,17 @@ function onSave() {
     <div :class="styles.settingsForm">
       <div :class="styles.field">
         <label :class="styles.fieldLabel">流程名称</label>
-        <t-input v-model="form.name" placeholder="输入流程名称" />
+        <t-input v-model:value="form.name" placeholder="输入流程名称" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">描述</label>
-        <t-input v-model="form.description" type="textarea" :rows="3" placeholder="流程描述" />
+        <t-input v-model:value="form.description" type="textarea" :rows="3" placeholder="流程描述" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">分类</label>
-        <t-input v-model="form.category" placeholder="输入流程分类" />
+        <t-input v-model:value="form.category" placeholder="输入流程分类" />
       </div>
 
       <t-divider />
@@ -137,7 +137,7 @@ function onSave() {
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">默认驳回策略</label>
-        <t-radio-group v-model="form.defaultRejectPolicy">
+        <t-radio-group v-model:value="form.defaultRejectPolicy">
           <t-radio value="reject-on-all">全部驳回才驳回</t-radio>
           <t-radio value="reject-on-any">一票驳回即驳回</t-radio>
         </t-radio-group>

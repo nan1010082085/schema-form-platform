@@ -329,7 +329,7 @@ onMounted(() => {
           />
         </t-form-item>
         <t-form-item label="分类">
-          <t-select v-model="saveForm.category" style="width: 100%">
+          <t-select v-model:value="saveForm.category" style="width: 100%">
             <t-option
               v-for="opt in categoryOptions.filter(o => o.value)"
               :key="opt.value"

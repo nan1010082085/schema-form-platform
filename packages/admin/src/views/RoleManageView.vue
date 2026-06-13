@@ -269,13 +269,13 @@ onMounted(async () => {
   >
     <t-form label-width="80px">
       <t-form-item label="角色名称">
-        <t-input v-model="form.name" placeholder="请输入角色名称（如：管理员、部门经理）" />
+        <t-input v-model:value="form.name" placeholder="请输入角色名称（如：管理员、部门经理）" />
       </t-form-item>
       <t-form-item label="描述">
-        <t-input v-model="form.description" type="textarea" :rows="2" placeholder="角色描述（可选）" />
+        <t-input v-model:value="form.description" type="textarea" :rows="2" placeholder="角色描述（可选）" />
       </t-form-item>
       <t-form-item label="数据范围">
-        <t-select v-model="form.data_scope" :style="{ width: '100%' }">
+        <t-select v-model:value="form.data_scope" :style="{ width: '100%' }">
           <t-option
             v-for="opt in dataScopeOptions"
             :key="opt.value"

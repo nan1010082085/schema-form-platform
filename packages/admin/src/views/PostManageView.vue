@@ -186,22 +186,22 @@ onMounted(fetchPosts)
   >
     <t-form label-width="80px">
       <t-form-item label="岗位编码">
-        <t-input v-model="form.postCode" placeholder="请输入岗位编码（如：ceo、hr）" />
+        <t-input v-model:value="form.postCode" placeholder="请输入岗位编码（如：ceo、hr）" />
       </t-form-item>
       <t-form-item label="岗位名称">
-        <t-input v-model="form.postName" placeholder="请输入岗位名称（如：首席执行官）" />
+        <t-input v-model:value="form.postName" placeholder="请输入岗位名称（如：首席执行官）" />
       </t-form-item>
       <t-form-item label="排序">
-        <t-input-number v-model="form.sort" :min="0" :max="9999" />
+        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="form.status" :style="{ width: '100%' }">
+        <t-select v-model:value="form.status" :style="{ width: '100%' }">
           <t-option label="正常" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
       </t-form-item>
       <t-form-item label="备注">
-        <t-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
+        <t-input v-model:value="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
       </t-form-item>
     </t-form>
     <template #footer>

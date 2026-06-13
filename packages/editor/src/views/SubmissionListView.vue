@@ -275,7 +275,7 @@ function dataKeys(item: SubmissionItem): string[] {
                 :value="s.id"
               />
             </t-select>
-            <t-select v-model="activeStatus" :class="styles.statusSelect">
+            <t-select v-model:value="activeStatus" :class="styles.statusSelect">
               <t-option
                 v-for="opt in statusOptions"
                 :key="opt.value"

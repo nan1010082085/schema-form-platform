@@ -155,10 +155,10 @@ onMounted(() => {
           clearable
           :style="{ width: '120px' }"
         />
-        <t-select v-model="moduleFilter" placeholder="模块" clearable :style="{ width: '120px' }">
+        <t-select v-model:value="moduleFilter" placeholder="模块" clearable :style="{ width: '120px' }">
           <t-option v-for="m in modules" :key="m" :label="m" :value="m" />
         </t-select>
-        <t-select v-model="actionFilter" placeholder="操作类型" clearable :style="{ width: '110px' }">
+        <t-select v-model:value="actionFilter" placeholder="操作类型" clearable :style="{ width: '110px' }">
           <t-option label="新增" value="create" />
           <t-option label="修改" value="update" />
           <t-option label="删除" value="delete" />
@@ -168,7 +168,7 @@ onMounted(() => {
           <t-option label="导入" value="import" />
           <t-option label="其他" value="other" />
         </t-select>
-        <t-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
+        <t-select v-model:value="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
           <t-option label="成功" value="success" />
           <t-option label="失败" value="fail" />
         </t-select>

@@ -71,7 +71,7 @@ async function handleExport() {
         </t-form-item>
 
         <t-form-item label="导出格式">
-          <t-radio-group v-model="exportForm.format">
+          <t-radio-group v-model:value="exportForm.format">
             <t-radio value="csv">CSV</t-radio>
             <t-radio value="json">JSON</t-radio>
           </t-radio-group>

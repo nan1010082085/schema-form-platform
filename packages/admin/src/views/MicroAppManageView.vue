@@ -184,7 +184,7 @@ onMounted(fetchApps)
           @clear="handleSearch"
           @keyup.enter="handleSearch"
         />
-        <t-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }" @change="handleSearch">
+        <t-select v-model:value="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }" @change="handleSearch">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
@@ -247,16 +247,16 @@ onMounted(fetchApps)
   >
     <t-form label-width="100px">
       <t-form-item label="应用名称">
-        <t-input v-model="form.name" placeholder="请输入应用名称（如：表单编辑器）" />
+        <t-input v-model:value="form.name" placeholder="请输入应用名称（如：表单编辑器）" />
       </t-form-item>
       <t-form-item label="应用 URL">
-        <t-input v-model="form.url" placeholder="如：http://localhost:5100/editor/" />
+        <t-input v-model:value="form.url" placeholder="如：http://localhost:5100/editor/" />
       </t-form-item>
       <t-form-item label="图标">
-        <t-input v-model="form.icon" placeholder="图标名称或 URL（可选）" />
+        <t-input v-model:value="form.icon" placeholder="图标名称或 URL（可选）" />
       </t-form-item>
       <t-form-item label="布局方式">
-        <t-radio-group v-model="form.layout">
+        <t-radio-group v-model:value="form.layout">
           <t-radio v-for="opt in layoutOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </t-radio>
@@ -266,22 +266,22 @@ onMounted(fetchApps)
         </div>
       </t-form-item>
       <t-form-item label="激活规则">
-        <t-input v-model="form.activateRule" placeholder="URL 匹配规则，如：^/editor/" />
+        <t-input v-model:value="form.activateRule" placeholder="URL 匹配规则，如：^/editor/" />
       </t-form-item>
       <t-form-item label="所需权限">
-        <t-input v-model="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />
+        <t-input v-model:value="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />
       </t-form-item>
       <t-form-item label="排序">
-        <t-input-number v-model="form.sort" :min="0" :max="9999" />
+        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="form.status" :style="{ width: '100%' }">
+        <t-select v-model:value="form.status" :style="{ width: '100%' }">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>
       </t-form-item>
       <t-form-item label="备注">
-        <t-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
+        <t-input v-model:value="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
       </t-form-item>
     </t-form>
     <template #footer>

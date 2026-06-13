@@ -146,7 +146,7 @@ function typeTagTheme(type: CredentialType): 'success' | 'default' | 'warning' {
             >
               <template #prefix-icon><SearchIcon /></template>
             </t-input>
-            <t-select v-model="activeType" :class="styles.typeSelect">
+            <t-select v-model:value="activeType" :class="styles.typeSelect">
               <t-option
                 v-for="opt in typeOptions"
                 :key="opt.value"

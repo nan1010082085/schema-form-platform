@@ -249,7 +249,7 @@ onMounted(async () => {
   >
     <t-form label-width="80px">
       <t-form-item label="菜单名称">
-        <t-input v-model="form.name" placeholder="请输入菜单名称" />
+        <t-input v-model:value="form.name" placeholder="请输入菜单名称" />
       </t-form-item>
       <t-form-item label="上级菜单">
         <t-tree-select
@@ -263,7 +263,7 @@ onMounted(async () => {
         />
       </t-form-item>
       <t-form-item label="菜单类型">
-        <t-radio-group v-model="form.type">
+        <t-radio-group v-model:value="form.type">
           <t-radio value="menu">菜单</t-radio>
           <t-radio value="button">按钮</t-radio>
         </t-radio-group>
@@ -284,28 +284,28 @@ onMounted(async () => {
         </t-select>
       </t-form-item>
       <t-form-item label="打开方式">
-        <t-radio-group v-model="form.target">
+        <t-radio-group v-model:value="form.target">
           <t-radio value="_self">当前窗口</t-radio>
           <t-radio value="_blank">新页签</t-radio>
         </t-radio-group>
       </t-form-item>
       <t-form-item label="路由路径">
-        <t-input v-model="form.path" placeholder="如：/users、/roles" />
+        <t-input v-model:value="form.path" placeholder="如：/users、/roles" />
       </t-form-item>
       <t-form-item label="组件路径">
-        <t-input v-model="form.component" placeholder="如：views/UserManageView" />
+        <t-input v-model:value="form.component" placeholder="如：views/UserManageView" />
       </t-form-item>
       <t-form-item label="图标">
-        <t-input v-model="form.icon" placeholder="图标名称（可选）" />
+        <t-input v-model:value="form.icon" placeholder="图标名称（可选）" />
       </t-form-item>
       <t-form-item label="权限编码">
-        <t-input v-model="form.permission" placeholder="如：system:user:list" />
+        <t-input v-model:value="form.permission" placeholder="如：system:user:list" />
       </t-form-item>
       <t-form-item label="排序">
-        <t-input-number v-model="form.sort" :min="0" :max="9999" />
+        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="form.status" :style="{ width: '100%' }">
+        <t-select v-model:value="form.status" :style="{ width: '100%' }">
           <t-option label="正常" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>

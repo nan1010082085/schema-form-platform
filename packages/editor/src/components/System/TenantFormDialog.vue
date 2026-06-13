@@ -163,7 +163,7 @@ function handleClose() {
       </t-form-item>
 
       <t-form-item label="状态">
-        <t-select v-model="form.status" :class="styles.fullWidth">
+        <t-select v-model:value="form.status" :class="styles.fullWidth">
           <t-option label="启用" value="active" />
           <t-option label="停用" value="inactive" />
           <t-option label="冻结" value="suspended" />

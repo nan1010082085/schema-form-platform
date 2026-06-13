@@ -339,10 +339,10 @@ onMounted(async () => {
             @clear="page = 1; fetchUsers()"
             @keyup.enter="page = 1; fetchUsers()"
           />
-          <t-select v-model="filterRoleId" placeholder="角色筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
+          <t-select v-model:value="filterRoleId" placeholder="角色筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
             <t-option v-for="role in roles" :key="role.id" :label="role.name" :value="role.id" />
           </t-select>
-          <t-select v-model="filterStatus" placeholder="状态筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
+          <t-select v-model:value="filterStatus" placeholder="状态筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
             <t-option label="正常" value="active" />
             <t-option label="停用" value="inactive" />
             <t-option label="禁用" value="disabled" />
@@ -443,19 +443,19 @@ onMounted(async () => {
         />
       </t-form-item>
       <t-form-item v-if="dialogMode === 'create'" label="密码">
-        <t-input v-model="form.password" type="password" placeholder="请输入密码（至少8位）" />
+        <t-input v-model:value="form.password" type="password" placeholder="请输入密码（至少8位）" />
       </t-form-item>
       <t-form-item label="显示名">
-        <t-input v-model="form.displayName" placeholder="请输入显示名" />
+        <t-input v-model:value="form.displayName" placeholder="请输入显示名" />
       </t-form-item>
       <t-form-item label="邮箱">
-        <t-input v-model="form.email" placeholder="请输入邮箱地址" />
+        <t-input v-model:value="form.email" placeholder="请输入邮箱地址" />
       </t-form-item>
       <t-form-item label="手机号">
-        <t-input v-model="form.phone" placeholder="请输入手机号" />
+        <t-input v-model:value="form.phone" placeholder="请输入手机号" />
       </t-form-item>
       <t-form-item label="头像URL">
-        <t-input v-model="form.avatar" placeholder="头像链接地址（可选）" />
+        <t-input v-model:value="form.avatar" placeholder="头像链接地址（可选）" />
       </t-form-item>
       <t-form-item label="所属部门">
         <t-tree-select
@@ -469,7 +469,7 @@ onMounted(async () => {
         />
       </t-form-item>
       <t-form-item label="角色">
-        <t-select v-model="form.roles" multiple placeholder="选择角色" :style="{ width: '100%' }">
+        <t-select v-model:value="form.roles" multiple placeholder="选择角色" :style="{ width: '100%' }">
           <t-option
             v-for="role in roles"
             :key="role.id"
@@ -479,7 +479,7 @@ onMounted(async () => {
         </t-select>
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="form.status" :style="{ width: '100%' }">
+        <t-select v-model:value="form.status" :style="{ width: '100%' }">
           <t-option label="正常" value="active" />
           <t-option label="停用" value="inactive" />
           <t-option label="禁用" value="disabled" />
@@ -496,7 +496,7 @@ onMounted(async () => {
   <t-dialog v-model:visible="resetPwdVisible" header="重置密码" width="400px" destroy-on-close>
     <t-form label-width="70px">
       <t-form-item label="新密码">
-        <t-input v-model="resetPwdForm.password" type="password" placeholder="请输入新密码（至少8位）" />
+        <t-input v-model:value="resetPwdForm.password" type="password" placeholder="请输入新密码（至少8位）" />
       </t-form-item>
     </t-form>
     <template #footer>

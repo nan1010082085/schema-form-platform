@@ -164,7 +164,7 @@ function handleClose() {
       </t-form-item>
 
       <t-form-item label="Type" required-mark>
-        <t-select v-model="form.type" :class="styles.fullWidth" :disabled="isEditing">
+        <t-select v-model:value="form.type" :class="styles.fullWidth" :disabled="isEditing">
           <t-option
             v-for="opt in typeOptions"
             :key="opt.value"

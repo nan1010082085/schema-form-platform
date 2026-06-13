@@ -213,7 +213,7 @@ function formatDate(dateStr: string | Date) {
     >
       <t-form :data="applyForm" label-width="80px">
         <t-form-item label="流程名称" required>
-          <t-input v-model="applyForm.name" placeholder="输入流程名称" maxlength="200" />
+          <t-input v-model:value="applyForm.name" placeholder="输入流程名称" maxlength="200" />
         </t-form-item>
         <t-form-item label="描述">
           <t-textarea

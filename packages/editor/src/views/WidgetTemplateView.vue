@@ -297,7 +297,7 @@ onMounted(() => {
       <div v-if="previewTemplate" :class="styles.previewContent">
         <!-- 模式切换 -->
         <div :class="styles.previewModeBar">
-          <t-radio-group v-model="previewMode" size="small">
+          <t-radio-group v-model:value="previewMode" size="small">
             <t-radio-button value="render">
               <DesktopIcon :size="14" />
               渲染预览

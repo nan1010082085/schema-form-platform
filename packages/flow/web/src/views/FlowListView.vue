@@ -205,13 +205,13 @@ const tableColumns = [
     >
       <t-form :data="createForm" label-width="80px">
         <t-form-item label="流程名称" required>
-          <t-input v-model="createForm.name" placeholder="输入流程名称" maxlength="50" />
+          <t-input v-model:value="createForm.name" placeholder="输入流程名称" maxlength="50" />
         </t-form-item>
         <t-form-item label="描述">
-          <t-textarea v-model="createForm.description" :rows="3" placeholder="流程描述（可选）" />
+          <t-textarea v-model:value="createForm.description" :rows="3" placeholder="流程描述（可选）" />
         </t-form-item>
         <t-form-item label="分类">
-          <t-input v-model="createForm.category" placeholder="流程分类（可选）" />
+          <t-input v-model:value="createForm.category" placeholder="流程分类（可选）" />
         </t-form-item>
       </t-form>
       <template #footer>

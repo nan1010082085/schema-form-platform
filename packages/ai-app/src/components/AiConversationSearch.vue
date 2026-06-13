@@ -158,7 +158,7 @@ onBeforeUnmount(() => {
     <div v-if="filtersExpanded" :class="$style.filterPanel">
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">来源</label>
-        <t-select v-model="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源" :options="SOURCE_OPTIONS" />
+        <t-select v-model:value="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源" :options="SOURCE_OPTIONS" />
       </div>
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">时间</label>

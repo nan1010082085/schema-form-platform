@@ -159,7 +159,7 @@ function renderBarChart(data: StatsData) {
     <!-- Period selector -->
     <div :class="styles.periodBar">
       <span :class="styles.periodLabel">统计周期：</span>
-      <t-radio-group v-model="days" size="small" @change="handleDaysChange">
+      <t-radio-group v-model:value="days" size="small" @change="handleDaysChange">
         <t-radio-button :value="7">近 7 天</t-radio-button>
         <t-radio-button :value="14">近 14 天</t-radio-button>
         <t-radio-button :value="30">近 30 天</t-radio-button>

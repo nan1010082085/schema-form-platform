@@ -192,7 +192,7 @@ onMounted(fetchDepts)
   >
     <t-form label-width="80px">
       <t-form-item label="部门名称">
-        <t-input v-model="form.name" placeholder="请输入部门名称" />
+        <t-input v-model:value="form.name" placeholder="请输入部门名称" />
       </t-form-item>
       <t-form-item label="上级部门">
         <t-tree-select
@@ -206,13 +206,13 @@ onMounted(fetchDepts)
         />
       </t-form-item>
       <t-form-item label="负责人">
-        <t-input v-model="form.leader" placeholder="部门负责人（可选）" />
+        <t-input v-model:value="form.leader" placeholder="部门负责人（可选）" />
       </t-form-item>
       <t-form-item label="排序">
-        <t-input-number v-model="form.sort" :min="0" :max="9999" />
+        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
       </t-form-item>
       <t-form-item label="状态">
-        <t-select v-model="form.status" :style="{ width: '100%' }">
+        <t-select v-model:value="form.status" :style="{ width: '100%' }">
           <t-option label="正常" value="active" />
           <t-option label="停用" value="inactive" />
         </t-select>

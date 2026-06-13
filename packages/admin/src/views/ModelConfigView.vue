@@ -255,7 +255,7 @@ onMounted(fetchConfigs)
           clearable
           :style="{ width: '240px' }"
         />
-        <t-select v-model="providerFilter" placeholder="Provider" clearable :style="{ width: '140px' }">
+        <t-select v-model:value="providerFilter" placeholder="Provider" clearable :style="{ width: '140px' }">
           <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
         </t-select>
       </div>
@@ -322,10 +322,10 @@ onMounted(fetchConfigs)
     >
       <t-form label-width="100px">
         <t-form-item label="配置名称">
-          <t-input v-model="form.name" placeholder="如 DeepSeek Chat 生产环境" />
+          <t-input v-model:value="form.name" placeholder="如 DeepSeek Chat 生产环境" />
         </t-form-item>
         <t-form-item label="Provider">
-          <t-select v-model="form.provider" :style="{ width: '100%' }">
+          <t-select v-model:value="form.provider" :style="{ width: '100%' }">
             <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
           </t-select>
         </t-form-item>
@@ -338,22 +338,22 @@ onMounted(fetchConfigs)
           />
         </t-form-item>
         <t-form-item label="API Key">
-          <t-input v-model="form.apiKey" type="password" placeholder="留空表示不需要认证" />
+          <t-input v-model:value="form.apiKey" type="password" placeholder="留空表示不需要认证" />
         </t-form-item>
         <t-form-item label="Base URL">
-          <t-input v-model="form.baseUrl" placeholder="留空使用默认地址" />
+          <t-input v-model:value="form.baseUrl" placeholder="留空使用默认地址" />
         </t-form-item>
         <t-form-item label="Temperature">
-          <t-slider v-model="form.temperature" :min="0" :max="2" :step="0.1" :show-input="true" />
+          <t-slider v-model:value="form.temperature" :min="0" :max="2" :step="0.1" :show-input="true" />
         </t-form-item>
         <t-form-item label="Max Tokens">
-          <t-input-number v-model="form.maxTokens" :min="1" :max="128000" :step="256" :style="{ width: '100%' }" />
+          <t-input-number v-model:value="form.maxTokens" :min="1" :max="128000" :step="256" :style="{ width: '100%' }" />
         </t-form-item>
         <t-form-item label="Top P">
-          <t-slider v-model="form.topP" :min="0" :max="1" :step="0.05" :show-input="true" />
+          <t-slider v-model:value="form.topP" :min="0" :max="1" :step="0.05" :show-input="true" />
         </t-form-item>
         <t-form-item label="设为默认">
-          <t-switch v-model="form.isDefault" />
+          <t-switch v-model:value="form.isDefault" />
         </t-form-item>
       </t-form>
       <template #footer>

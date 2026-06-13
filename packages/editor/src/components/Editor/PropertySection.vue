@@ -20,7 +20,7 @@ watch(() => props.defaultOpen, (val) => {
 </script>
 
 <template>
-  <t-collapse v-model="activeNames" class="property-section">
+  <t-collapse v-model:value="activeNames" class="property-section">
     <t-collapse-panel value="section">
       <template #header>
         <span class="property-section__title">{{ title }}</span>

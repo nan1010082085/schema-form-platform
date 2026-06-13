@@ -18,7 +18,7 @@ function toggleSearch(): void {
   <div :class="$style.searchWrapper">
     <t-input
       v-if="isExpanded"
-      v-model="searchQuery"
+      v-model:value="searchQuery"
       placeholder="Search..."
       :class="$style.searchInput"
       size="small"

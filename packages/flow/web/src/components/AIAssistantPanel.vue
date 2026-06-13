@@ -10,7 +10,7 @@
       </t-button>
     </div>
 
-    <t-tabs v-model="activeTab" :class="$style.tabs">
+    <t-tabs v-model:value="activeTab" :class="$style.tabs">
       <t-tab-panel label="生成流程" value="generate">
         <AIFlowGenerator @apply="handleApplyFlow" />
       </t-tab-panel>

@@ -486,7 +486,7 @@ function handleVersionPublished() {
           />
         </t-form-item>
         <t-form-item label="类型">
-          <t-select v-model="createType" style="width:100%">
+          <t-select v-model:value="createType" style="width:100%">
             <t-option label="表单 (Form)" value="form" />
             <t-option label="搜索列表 (Search List)" value="search-list" />
           </t-select>
