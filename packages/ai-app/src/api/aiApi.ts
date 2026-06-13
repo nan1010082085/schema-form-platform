@@ -29,7 +29,7 @@ export class AiApiError extends Error {
 
 // ---- 基础请求 ----
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api'
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? '/schema-platform/api'
 
 /** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合微前端框架 */
 let tokenProvider: (() => string | null) | null = null

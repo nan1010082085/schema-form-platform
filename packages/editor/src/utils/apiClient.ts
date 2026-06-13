@@ -37,7 +37,7 @@ export type ResponseInterceptor = <T>(data: T, response: Response) => T | Promis
 // ---- API 客户端类 ----
 
 export class ApiClient {
-  private baseUrl = '/api'
+  private baseUrl = '/schema-platform/api'
   private getToken: (() => string) | null = null
   private useMock = false
   private requestInterceptors: RequestInterceptor[] = []

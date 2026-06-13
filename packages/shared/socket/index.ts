@@ -38,7 +38,7 @@ const listeners = new Map<string, Set<(data: unknown) => void>>()
 function getWsUrl(): string {
   if (typeof window === 'undefined') return ''
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}/ws`
+  return `${protocol}//${window.location.host}/schema-platform/ws`
 }
 
 // ---- 公共 API ----

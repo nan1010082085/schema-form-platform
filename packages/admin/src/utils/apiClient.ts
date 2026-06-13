@@ -17,7 +17,7 @@ export interface ApiResponse<T> {
   error?: { message: string; details?: unknown }
 }
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/schema-platform/api'
 
 /** Token 提供者，由 useAuth 注入，避免 apiClient 直接耦合 store */
 let tokenProvider: (() => string | null) | null = null
