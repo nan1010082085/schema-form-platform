@@ -6,7 +6,7 @@
  */
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLayoutStore } from '@schema-form/shared-stores/layout'
 import SideMenu from '@/components/SideMenu.vue'
