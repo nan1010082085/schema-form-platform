@@ -49,7 +49,7 @@ async function handleLogin(): Promise<void> {
         :class="styles.errorAlert"
         :message="errorMsg"
         theme="error"
-        close
+        :close="true"
       />
 
       <div :class="styles.form">
