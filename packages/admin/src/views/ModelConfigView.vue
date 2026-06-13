@@ -331,7 +331,7 @@ onMounted(fetchConfigs)
         </t-form-item>
         <t-form-item label="模型">
           <t-auto-complete
-            v-model="form.model"
+            v-model:value="form.model"
             :options="modelSuggestions.map(m => ({ value: m }))"
             placeholder="如 deepseek-chat"
             :style="{ width: '100%' }"
