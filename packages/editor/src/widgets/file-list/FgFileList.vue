@@ -43,9 +43,9 @@ function handleRemove(index: number) {
           <span :class="styles.remove" @click="handleRemove(i)">×</span>
         </div>
       </div>
-      <el-button type="primary" :class="styles.uploadBtn" @click="handleUpload">
+      <t-button type="primary" :class="styles.uploadBtn" @click="handleUpload">
         {{ (widgetData.props?.buttonText as string) || '上传文件' }}
-      </el-button>
+      </t-button>
     </div>
   </div>
 </template>

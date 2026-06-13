@@ -111,12 +111,12 @@ function formatDate(item: DescriptionItemConfig): string {
       >
         <!-- tag 类型 -->
         <template v-if="item.type === 'tag'">
-          <el-tag
+          <t-tag
             :type="(getTagConfig(item)?.color as 'success' | 'warning' | 'danger' | 'info') || undefined"
             size="small"
           >
             {{ getTagConfig(item)?.label }}
-          </el-tag>
+          </t-tag>
         </template>
 
         <!-- link 类型 -->

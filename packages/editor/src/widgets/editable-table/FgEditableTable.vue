@@ -13,10 +13,10 @@ useExposeWidget(() => ({
   <div :class="styles.container">
     <div :class="styles.header">
       <span :class="styles.title">{{ (widgetData.props?.title as string) || '可编辑表格' }}</span>
-      <el-button v-if="widgetData.props?.showAddButton" type="primary" size="small">
+      <t-button v-if="widgetData.props?.showAddButton" type="primary" size="small">
         {{ (widgetData.props?.addButtonText as string) || '添加行' }}
-      </el-button>
+      </t-button>
     </div>
-    <el-table :data="[]" border />
+    <t-table :data="[]" border />
   </div>
 </template>

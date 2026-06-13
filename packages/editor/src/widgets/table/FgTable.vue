@@ -139,7 +139,7 @@ defineExpose({
 
 <template>
   <div :class="styles.container">
-    <el-table
+    <t-table
       v-loading="loading"
       :data="tableData"
       :stripe="stripe"
@@ -152,7 +152,7 @@ defineExpose({
       @selection-change="handleSelectionChange"
     >
       <!-- Selection column -->
-      <el-table-column
+      <t-table-column
         v-if="selectionConfig.enabled"
         type="selection"
         width="50"
@@ -160,7 +160,7 @@ defineExpose({
       />
 
       <!-- Data columns -->
-      <el-table-column
+      <t-table-column
         v-for="col in columns"
         :key="col.prop"
         :prop="col.prop"
@@ -171,7 +171,7 @@ defineExpose({
         :filters="col.filters"
         :filter-method="col.filters ? (col.filterMethod ?? defaultFilterMethod(col.prop)) : undefined"
       />
-    </el-table>
+    </t-table>
 
     <!-- Pagination -->
     <el-pagination

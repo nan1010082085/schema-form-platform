@@ -35,7 +35,7 @@ async function handleClick() {
 </script>
 
 <template>
-  <el-button
+  <t-button
     :style="dynamicStyle"
     :type="buttonType as 'primary' | 'success' | 'warning' | 'danger' | 'info' | ''"
     :size="buttonSize as 'large' | 'default' | 'small'"
@@ -46,7 +46,7 @@ async function handleClick() {
     @click="handleClick"
   >
     {{ buttonText }}
-  </el-button>
+  </t-button>
 </template>
 
 <style scoped>

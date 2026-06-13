@@ -29,7 +29,7 @@ async function handleClick(idx: number) {
 
 <template>
   <div :style="dynamicStyle">
-    <el-button
+    <t-button
       v-for="(btn, idx) in buttons"
       :key="idx"
       :type="(btn.type as 'primary' | 'success' | 'warning' | 'danger' | 'info' | '') || ''"
@@ -37,7 +37,7 @@ async function handleClick(idx: number) {
       @click="handleClick(idx)"
     >
       {{ btn.text }}
-    </el-button>
+    </t-button>
   </div>
 </template>
 

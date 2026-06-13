@@ -36,7 +36,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <el-select
+  <t-select
     ref="selectRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
@@ -48,13 +48,13 @@ function forwardNativeChange() {
     :loading="loading"
     @change="forwardNativeChange"
   >
-    <el-option
+    <t-option
       v-for="opt in resolvedOptions"
       :key="opt.value"
       :label="opt.label"
       :value="opt.value"
     />
-  </el-select>
+  </t-select>
 </template>
 
 <style scoped>

@@ -18,7 +18,7 @@ const dynamicStyle = computed(() => ({
 </script>
 
 <template>
-  <el-switch
+  <t-switch
     v-model="widgetData.defaultValue as boolean"
     :style="dynamicStyle"
     :disabled="isDisabled"

@@ -36,21 +36,21 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <el-radio-group
+  <t-radio-group
     ref="groupRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
     :disabled="isDisabled"
     @change="forwardNativeChange"
   >
-    <el-radio
+    <t-radio
       v-for="opt in resolvedOptions"
       :key="opt.value"
       :value="opt.value"
     >
       {{ opt.label }}
-    </el-radio>
-  </el-radio-group>
+    </t-radio>
+  </t-radio-group>
 </template>
 
 <style scoped>

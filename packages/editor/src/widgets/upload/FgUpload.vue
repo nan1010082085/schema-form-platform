@@ -11,7 +11,7 @@ useExposeWidget((wd) => ({
 </script>
 <template>
   <el-upload action="#" :accept="(widgetData.props?.accept as string)" :multiple="widgetData.props?.multiple" :limit="(widgetData.props?.limit as number)">
-    <el-button type="primary">{{ (widgetData.props?.buttonText as string) || '点击上传' }}</el-button>
+    <t-button type="primary">{{ (widgetData.props?.buttonText as string) || '点击上传' }}</t-button>
   </el-upload>
 </template>
 <style scoped>

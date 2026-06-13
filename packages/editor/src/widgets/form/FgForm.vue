@@ -137,7 +137,7 @@ defineExpose({
 </script>
 
 <template>
-  <el-form
+  <t-form
     ref="formRef"
     :model="formModel"
     :class="styles.formContainer"
@@ -145,5 +145,5 @@ defineExpose({
     :label-position="(widgetData.props?.labelPosition as 'left' | 'right' | 'top') || 'right'"
   >
     <slot />
-  </el-form>
+  </t-form>
 </template>

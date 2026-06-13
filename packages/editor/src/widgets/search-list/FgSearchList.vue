@@ -183,7 +183,7 @@ defineExpose({
       <template v-for="field in searchFields" :key="field.field">
         <div :class="styles.searchItem">
           <span v-if="field.label" :class="styles.searchLabel">{{ field.label }}</span>
-          <el-input
+          <t-input
             v-if="field.type === 'input'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请输入'"
@@ -191,7 +191,7 @@ defineExpose({
             size="default"
             @keyup.enter="handleSearch"
           />
-          <el-input-number
+          <t-input-number
             v-else-if="field.type === 'number'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请输入'"
@@ -201,20 +201,20 @@ defineExpose({
             controls-position="right"
             size="default"
           />
-          <el-select
+          <t-select
             v-else-if="field.type === 'select'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请选择'"
             clearable
             size="default"
           >
-            <el-option
+            <t-option
               v-for="opt in (field.options || [])"
               :key="String(opt.value)"
               :label="opt.label"
               :value="opt.value"
             />
-          </el-select>
+          </t-select>
           <el-cascader
             v-else-if="field.type === 'cascader'"
             v-model="searchModel[field.field]"
@@ -230,18 +230,18 @@ defineExpose({
             clearable
             size="default"
           />
-          <el-checkbox-group
+          <t-checkbox-group
             v-else-if="field.type === 'checkbox'"
             v-model="searchModel[field.field]"
             size="default"
           >
-            <el-checkbox
+            <t-checkbox
               v-for="opt in (field.options || [])"
               :key="String(opt.value)"
               :label="opt.label"
               :value="opt.value"
             />
-          </el-checkbox-group>
+          </t-checkbox-group>
           <el-date-picker
             v-else-if="field.type === 'date'"
             v-model="searchModel[field.field]"
@@ -265,27 +265,27 @@ defineExpose({
         </div>
       </template>
       <div :class="styles.searchActions">
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
+        <t-button type="primary" @click="handleSearch">搜索</t-button>
+        <t-button @click="handleReset">重置</t-button>
       </div>
     </div>
 
     <!-- 批量操作栏 -->
     <div v-if="selectionEnabled && selectedRows.length > 0" :class="styles.batchBar">
       <span :class="styles.batchInfo">已选 {{ selectedRows.length }} 项</span>
-      <el-button
+      <t-button
         v-for="action in batchActions"
         :key="action.action"
         size="small"
         @click="handleBatchAction(action.action)"
       >
         {{ action.label }}
-      </el-button>
-      <el-button size="small" @click="clearSelection">取消选择</el-button>
+      </t-button>
+      <t-button size="small" @click="clearSelection">取消选择</t-button>
     </div>
 
     <!-- 数据表格 -->
-    <el-table
+    <t-table
       v-loading="loading"
       :data="tableData"
       :stripe="widgetData.props?.stripe !== false"
@@ -294,13 +294,13 @@ defineExpose({
       @selection-change="onSelectionChange"
       @sort-change="onSortChange"
     >
-      <el-table-column
+      <t-table-column
         v-if="selectionEnabled"
         type="selection"
         width="50"
         fixed="left"
       />
-      <el-table-column
+      <t-table-column
         v-for="col in columns"
         :key="col.field"
         :prop="col.field"
@@ -308,7 +308,7 @@ defineExpose({
         :width="col.width"
         :sortable="(sortable || col.sortable) ? 'custom' : false"
       />
-    </el-table>
+    </t-table>
 
     <!-- 分页 -->
     <el-pagination

@@ -25,7 +25,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <el-input-number
+  <t-input-number
     ref="numberRef"
     v-model="widgetData.defaultValue as number"
     :style="dynamicStyle"

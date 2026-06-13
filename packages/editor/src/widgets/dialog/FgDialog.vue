@@ -156,8 +156,8 @@ async function handleCancel() {
       />
       <template v-if="widgetData.props?.showFooter !== false" #footer>
         <div :class="styles.footer">
-          <el-button @click="handleCancel">{{ (widgetData.props?.cancelText as string) || '取消' }}</el-button>
-          <el-button type="primary" @click="handleConfirm">{{ (widgetData.props?.confirmText as string) || '确定' }}</el-button>
+          <t-button @click="handleCancel">{{ (widgetData.props?.cancelText as string) || '取消' }}</t-button>
+          <t-button type="primary" @click="handleConfirm">{{ (widgetData.props?.confirmText as string) || '确定' }}</t-button>
         </div>
       </template>
     </EnhancedDialog>

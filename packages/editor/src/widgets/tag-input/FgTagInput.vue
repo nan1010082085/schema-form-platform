@@ -45,7 +45,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 <template>
   <div :class="styles.tagInput" :style="dynamicStyle">
-    <el-tag
+    <t-tag
       v-for="tag in tags"
       :key="tag"
       :closable="(widgetData.props?.closable as boolean) ?? true"
@@ -54,8 +54,8 @@ function handleKeydown(e: KeyboardEvent) {
       @close="removeTag(tag)"
     >
       {{ tag }}
-    </el-tag>
-    <el-input
+    </t-tag>
+    <t-input
       v-if="tags.length < ((widgetData.props?.maxTags as number) || 10)"
       v-model="inputValue"
       size="small"
