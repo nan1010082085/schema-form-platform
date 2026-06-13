@@ -1,4 +1,4 @@
-import 'tdesign-vue-next/esm/style/index.css'
+import 'tdesign-vue-next/dist/tdesign.css'
 import '@schema-form/shared-styles/tokens.css'
 import './styles/variables.scss'
 import './styles/theme.scss'

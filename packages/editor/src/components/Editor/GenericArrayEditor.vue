@@ -5,7 +5,7 @@
  * 根据 fields 声明动态渲染每个数组项的字段。
  * 支持 text / select / number / switch 四种字段类型。
  */
-import { AddIcon, DeleteIcon, UpIcon, DownIcon } from 'tdesign-icons-vue-next'
+import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { ArrayFieldSchema } from '../../widgets/base/types'
 import styles from './GenericArrayEditor.module.scss'
 
@@ -88,7 +88,7 @@ function getItemTitle(item: unknown, index: number): string {
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <UpIcon />
+            <ChevronUpIcon />
           </t-button>
           <t-button
             size="small"
@@ -96,7 +96,7 @@ function getItemTitle(item: unknown, index: number): string {
             :disabled="idx === value.length - 1"
             @click="moveDown(idx)"
           >
-            <DownIcon />
+            <ChevronDownIcon />
           </t-button>
           <t-button
             theme="danger"

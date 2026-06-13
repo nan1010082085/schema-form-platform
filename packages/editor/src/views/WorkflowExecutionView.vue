@@ -9,7 +9,7 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import {
   SearchIcon,
   TimeIcon,
-  ListIcon,
+  OrderListIcon,
   ChartIcon,
   BrowseIcon,
   LoadingIcon,
@@ -236,7 +236,7 @@ function formatDate(d: string | null): string {
           :class="[styles.tab, activeTab === 'list' && styles.tabActive]"
           @click="activeTab = 'list'"
         >
-          <ListIcon />
+          <OrderListIcon />
           执行记录
         </button>
         <button
@@ -260,7 +260,7 @@ function formatDate(d: string | null): string {
       <div :class="styles.statsGrid">
         <div :class="styles.statCard">
           <div :class="[styles.statIcon, styles.statIconTotal]">
-            <ListIcon :size="24" />
+            <OrderListIcon :size="24" />
           </div>
           <div :class="styles.statBody">
             <div :class="styles.statValue">{{ stats?.total ?? '-' }}</div>

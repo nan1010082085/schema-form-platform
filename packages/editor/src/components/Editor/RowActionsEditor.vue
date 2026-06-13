@@ -5,7 +5,7 @@
  * List-based editor for search-list row operation buttons.
  * Conditional fields shown based on action type (emit/api/navigate/dialog).
  */
-import { AddIcon, DeleteIcon, UpIcon, DownIcon } from 'tdesign-icons-vue-next'
+import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SearchListRowAction } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
@@ -113,7 +113,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <UpIcon />
+            <ChevronUpIcon />
           </t-button>
           <t-button
             size="small"
@@ -121,7 +121,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             :disabled="idx === rowActions.length - 1"
             @click="moveDown(idx)"
           >
-            <DownIcon />
+            <ChevronDownIcon />
           </t-button>
           <t-button
             theme="danger"

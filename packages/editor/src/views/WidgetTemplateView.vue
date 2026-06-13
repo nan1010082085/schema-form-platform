@@ -6,7 +6,7 @@
  */
 import { onMounted, ref } from 'vue'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon, GridIcon, AddIcon, DeleteIcon, BrowseIcon, FileIcon, AppIcon, DesktopIcon } from 'tdesign-icons-vue-next'
+import { SearchIcon, GridViewIcon, AddIcon, DeleteIcon, BrowseIcon, FileIcon, AppIcon, DesktopIcon } from 'tdesign-icons-vue-next'
 import { useTemplateStore } from '@/stores/template'
 import { useWidgetStore } from '@/stores/widget'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
@@ -181,7 +181,7 @@ onMounted(() => {
     <div :class="styles.content">
       <!-- 加载中 -->
       <div v-if="templateStore.loading" :class="styles.loadingState">
-        <GridIcon :size="32" :class="styles.loadingIcon" />
+        <GridViewIcon :size="32" :class="styles.loadingIcon" />
         <span>加载中...</span>
       </div>
 
@@ -207,7 +207,7 @@ onMounted(() => {
         >
           <!-- 缩略图占位 -->
           <div :class="styles.cardThumb">
-            <GridIcon :size="32" :class="styles.thumbIcon" />
+            <GridViewIcon :size="32" :class="styles.thumbIcon" />
             <t-tag
               :theme="getCategoryTagTheme(tpl.category)"
               :class="styles.cardCategory"

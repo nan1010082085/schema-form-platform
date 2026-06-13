@@ -7,7 +7,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon, GridIcon, ListIcon, SettingIcon } from 'tdesign-icons-vue-next'
+import { AddIcon, SearchIcon, GridViewIcon, OrderListIcon, SettingIcon } from 'tdesign-icons-vue-next'
 import {
   fetchWorkflows,
   deleteWorkflow,
@@ -207,7 +207,7 @@ function statusTagTheme(status: string): 'default' | 'success' | 'warning' {
                   size="small"
                   @click="viewMode = 'card'"
                 >
-                  <template #icon><GridIcon /></template>
+                  <template #icon><GridViewIcon /></template>
                 </t-button>
               </t-popup>
               <t-popup content="列表视图" placement="top" :show-after="300">
@@ -216,7 +216,7 @@ function statusTagTheme(status: string): 'default' | 'success' | 'warning' {
                   size="small"
                   @click="viewMode = 'list'"
                 >
-                  <template #icon><ListIcon /></template>
+                  <template #icon><OrderListIcon /></template>
                 </t-button>
               </t-popup>
             </div>

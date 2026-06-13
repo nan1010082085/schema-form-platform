@@ -6,7 +6,7 @@
 import { createApp, type App, type Component } from 'vue'
 import { createPinia } from 'pinia'
 import TDesign from 'tdesign-vue-next'
-import 'tdesign-vue-next/esm/style/index.css'
+import 'tdesign-vue-next/dist/tdesign.css'
 
 export interface CreateQiankunAppOptions {
   /** 应用名称 */

@@ -6,7 +6,7 @@
  * Each field has add/remove/reorder with conditional options display
  * and full API configuration (url, method, params, dataPath, labelKey, valueKey).
  */
-import { AddIcon, DeleteIcon, UpIcon, DownIcon } from 'tdesign-icons-vue-next'
+import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SearchFieldSchema, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 
 const props = defineProps<{
@@ -143,7 +143,7 @@ function handleParamsChange(idx: number, text: string) {
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <UpIcon />
+            <ChevronUpIcon />
           </t-button>
           <t-button
             size="small"
@@ -151,7 +151,7 @@ function handleParamsChange(idx: number, text: string) {
             :disabled="idx === searchFields.length - 1"
             @click="moveDown(idx)"
           >
-            <DownIcon />
+            <ChevronDownIcon />
           </t-button>
           <t-button
             theme="danger"

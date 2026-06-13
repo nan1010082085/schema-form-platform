@@ -178,6 +178,7 @@ export function createEditorRouter() {
             if (!isQiankunSubApp()) {
               window.history.pushState(null, '', router.resolve(from.fullPath).href)
             }
+          },
         })
         return false
       }

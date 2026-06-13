@@ -12,10 +12,10 @@ import {
   RefreshIcon,
   CopyIcon,
   DeleteIcon,
-  UpIcon,
-  DownIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
   FolderAddIcon,
-  FolderReduceIcon,
+  FolderMinusIcon,
   CheckCircleFilledIcon,
   ErrorCircleFilledIcon,
   BrowseIcon,
@@ -283,12 +283,12 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         </t-popup>
         <t-popup content="上移 (Ctrl+Up)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isFirstItem" @click="handleMoveUp">
-            <UpIcon />
+            <ChevronUpIcon />
           </button>
         </t-popup>
         <t-popup content="下移 (Ctrl+Down)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isLastItem" @click="handleMoveDown">
-            <DownIcon />
+            <ChevronDownIcon />
           </button>
         </t-popup>
       </div>
@@ -322,7 +322,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         </t-dropdown>
         <t-popup content="取消分组" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!canUngroup" @click="handleUngroup">
-            <FolderReduceIcon />
+            <FolderMinusIcon />
           </button>
         </t-popup>
       </div>

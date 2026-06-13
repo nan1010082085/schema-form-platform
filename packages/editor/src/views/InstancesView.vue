@@ -8,7 +8,7 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon, AddIcon, DeleteIcon, EditIcon, BrowseIcon, SendIcon, ListIcon, FileIcon, SortIcon, DownloadIcon, UploadIcon, TimeIcon } from 'tdesign-icons-vue-next'
+import { SearchIcon, AddIcon, DeleteIcon, EditIcon, BrowseIcon, SendIcon, OrderListIcon, FileIcon, FilterSortIcon, DownloadIcon, UploadIcon, TimeIcon } from 'tdesign-icons-vue-next'
 import { useApiStore } from '@/stores/api'
 import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
 import { importSchema } from '@/utils/apiClient'
@@ -337,7 +337,7 @@ function handleVersionPublished() {
             </t-input>
             <t-dropdown :options="sortOptions.map(s => ({ content: s.label, value: s.value }))" @click="(data: any) => sortBy = data.value">
               <t-button size="small">
-                <template #icon><SortIcon /></template>
+                <template #icon><FilterSortIcon /></template>
                 {{ sortOptions.find(s => s.value === sortBy)?.label }}
               </t-button>
             </t-dropdown>
@@ -346,7 +346,7 @@ function handleVersionPublished() {
               size="small"
               :theme="bulkMode ? 'danger' : 'default'"
               @click="toggleBulkMode"
-            ><template #icon><ListIcon /></template>{{ bulkMode ? '取消' : '批量操作' }}</t-button>
+            ><template #icon><OrderListIcon /></template>{{ bulkMode ? '取消' : '批量操作' }}</t-button>
 
             <t-button
               v-if="bulkMode && selectedIds.size > 0"

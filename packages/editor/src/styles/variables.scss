@@ -553,8 +553,8 @@ $calendar-cell-width: 40px;
   // ========== 按钮样式（TDesign 主题变量） ==========
   // TDesign 通过 --td-brand-color 等全局变量控制按钮样式
   // 此处保留项目特定的按钮高度/圆角变量
-  --btn-height: #{$fg-btn-height-primary};
-  --btn-radius: #{$fg-btn-radius};
+  --btn-height: 32px;
+  --btn-radius: 2px;
 
   // ========== 对话框样式 ==========
   --dialog-header-height: #{$detail-item-height}; // 对话框头部高度

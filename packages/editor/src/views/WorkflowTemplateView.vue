@@ -7,7 +7,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
-import { SearchIcon, AddIcon, FileIcon, ConnectIcon, ListIcon } from 'tdesign-icons-vue-next'
+import { SearchIcon, AddIcon, FileIcon, LinkIcon, OrderListIcon } from 'tdesign-icons-vue-next'
 import {
   fetchWorkflowTemplates,
   fetchWorkflowTemplateById,
@@ -208,7 +208,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
     <!-- 顶栏：搜索 + 标题 -->
     <div :class="styles.toolbar">
       <div :class="styles.toolbarLeft">
-        <ConnectIcon :size="20" :class="styles.toolbarIcon" />
+        <LinkIcon :size="20" :class="styles.toolbarIcon" />
         <span :class="styles.toolbarTitle">工作流模板库</span>
         <t-tag :class="styles.countTag" size="small">
           {{ total }} 个模板
@@ -252,7 +252,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
       <div style="overflow: auto; height: 100%;">
         <!-- 加载中 -->
         <div v-if="loading && templates.length === 0" :class="styles.loadingState">
-          <ConnectIcon :size="32" :class="styles.loadingIcon" />
+          <LinkIcon :size="32" :class="styles.loadingIcon" />
           <span>加载中...</span>
         </div>
 
@@ -336,7 +336,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
         <!-- 流程节点预览 -->
         <div :class="styles.previewSection">
           <h4 :class="styles.previewSectionTitle">
-            <ConnectIcon />
+            <LinkIcon />
             流程节点（{{ totalFlowNodes }} 个）
           </h4>
           <div :class="styles.previewFlowArea">
@@ -355,7 +355,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
         <!-- 表单字段预览 -->
         <div :class="styles.previewSection">
           <h4 :class="styles.previewSectionTitle">
-            <ListIcon />
+            <OrderListIcon />
             表单字段（{{ totalFormFields }} 个）
           </h4>
           <div :class="styles.previewFormArea">

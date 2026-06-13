@@ -5,7 +5,7 @@
  * Simplified column editor for the Table widget.
  * Each column row has: prop, label, width, fixed.
  */
-import { AddIcon, DeleteIcon, UpIcon, DownIcon } from 'tdesign-icons-vue-next'
+import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { TableColumn } from '../../widgets/table/config'
 import styles from './TableColumnsEditor.module.scss'
 
@@ -79,7 +79,7 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <UpIcon />
+            <ChevronUpIcon />
           </t-button>
           <t-button
             size="small"
@@ -87,7 +87,7 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
             :disabled="idx === columns.length - 1"
             @click="moveDown(idx)"
           >
-            <DownIcon />
+            <ChevronDownIcon />
           </t-button>
           <t-button
             theme="danger"

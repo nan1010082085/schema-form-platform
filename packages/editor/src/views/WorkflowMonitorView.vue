@@ -6,7 +6,7 @@
  */
 import { onMounted, ref, watch } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
-import { SearchIcon, TimeIcon, TrendIcon, ListIcon, BrowseIcon } from 'tdesign-icons-vue-next'
+import { SearchIcon, TimeIcon, TrendingUpIcon, OrderListIcon, BrowseIcon } from 'tdesign-icons-vue-next'
 import { apiClient } from '@/utils/apiClient'
 import WorkflowStats from '@/components/WorkflowStats.vue'
 import WorkflowExecutionDetail from '@/components/WorkflowExecutionDetail.vue'
@@ -162,14 +162,14 @@ function formatDate(d: string): string {
           :class="[styles.tab, activeTab === 'list' && styles.tabActive]"
           @click="activeTab = 'list'"
         >
-          <ListIcon />
+          <OrderListIcon />
           执行记录
         </button>
         <button
           :class="[styles.tab, activeTab === 'stats' && styles.tabActive]"
           @click="activeTab = 'stats'"
         >
-          <TrendIcon />
+          <TrendingUpIcon />
           统计分析
         </button>
       </div>
