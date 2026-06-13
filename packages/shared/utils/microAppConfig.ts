@@ -5,13 +5,15 @@
  * 宿主和子应用都应从这里读取配置，避免散落在各自的 .env 和 vite.config.ts 中。
  *
  * 此文件为纯配置 + 纯工具函数，不依赖任何微前端运行时。
+ *
+ * @deprecated 请使用 @schema-form/shared-qiankun/config 中的同名导出，此文件保留仅为向后兼容。
  */
 
 // 浏览器环境声明（构建时 window 可能不存在）
 declare const window: { location: { hostname: string; port: string } } | undefined
 
 /** 应用名称（含宿主） */
-export type AppName = 'editor' | 'flow' | 'ai' | 'portal' | 'admin' | 'workflow'
+export type AppName = 'shell' | 'editor' | 'flow' | 'ai' | 'admin'
 
 /** 单个子应用的配置 */
 export interface AppConfig {
@@ -29,12 +31,11 @@ export interface AppConfig {
  * 新增子应用只需在此添加一条记录。
  */
 export const APP_CONFIGS: Record<AppName, AppConfig> = {
-  editor:   { name: 'editor',   basePath: '/editor/',   devPort: 5100 },
-  flow:     { name: 'flow',     basePath: '/flow/',     devPort: 5200 },
-  ai:       { name: 'ai',       basePath: '/ai/',       devPort: 5300 },
-  portal:   { name: 'portal',   basePath: '/',          devPort: 4000 },
-  admin:    { name: 'admin',    basePath: '/admin/',    devPort: 5400 },
-  workflow: { name: 'workflow', basePath: '/workflow/', devPort: 5500 },
+  shell:    { name: 'shell',    basePath: '/schema-platform/',          devPort: 5000 },
+  editor:   { name: 'editor',   basePath: '/schema-platform/editor/',   devPort: 5100 },
+  flow:     { name: 'flow',     basePath: '/schema-platform/flow/',     devPort: 5200 },
+  ai:       { name: 'ai',       basePath: '/schema-platform/ai/',       devPort: 5300 },
+  admin:    { name: 'admin',    basePath: '/schema-platform/admin/',    devPort: 5400 },
 }
 
 /** API 服务端口 */

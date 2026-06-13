@@ -44,40 +44,38 @@ async function handleLogin(): Promise<void> {
         <p :class="styles.subtitle">基础容器</p>
       </div>
 
-      <el-alert
+      <t-alert
         v-if="errorMsg"
         :class="styles.errorAlert"
-        :title="errorMsg"
-        type="error"
-        show-icon
-        :closable="false"
+        :message="errorMsg"
+        theme="error"
+        close
       />
 
       <div :class="styles.form">
-        <el-input
+        <t-input
           v-model="form.username"
           placeholder="用户名"
           size="large"
           @keyup.enter="handleLogin"
         />
 
-        <el-input
+        <t-input
           v-model="form.password"
           type="password"
           placeholder="密码"
           size="large"
-          show-password
           @keyup.enter="handleLogin"
         />
 
-        <el-button
-          type="primary"
+        <t-button
+          theme="primary"
           size="large"
           :loading="loading.login"
           @click="handleLogin"
         >
           登录
-        </el-button>
+        </t-button>
       </div>
     </div>
   </div>

@@ -1,16 +1,18 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { DialogPlugin } from 'tdesign-vue-next'
 import { useEditorStore } from '@/stores/editor'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import { SSOClient } from '@schema-form/shared-utils/sso'
 
 // SSO 客户端配置
 const SSO_CLIENT_ID = 'editor'
+const APP_BASE = APP_CONFIGS.editor.basePath
 
 function getSSOClient(): SSOClient {
   const origin = window.location.origin
   return new SSOClient({
     clientId: SSO_CLIENT_ID,
-    redirectUri: `${origin}/auth/callback`,
+    redirectUri: `${origin}${APP_BASE}auth/callback`,
     ssoBaseUrl: origin,
   })
 }

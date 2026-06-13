@@ -10,14 +10,14 @@
  * Dynamic third-party apps are registered via useMicroAppRegistry.
  */
 import { createRouter, createWebHistory } from 'vue-router'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
 
 /** Routes that do not require authentication */
 const PUBLIC_ROUTES = new Set(['/login'])
 
-// 生产环境使用 /schema-platform/ 前缀
-const base = import.meta.env.PROD ? '/schema-platform/' : '/'
+const base = APP_CONFIGS.shell.basePath
 
 const router = createRouter({
   history: createWebHistory(base),
@@ -92,13 +92,6 @@ const router = createRouter({
       name: 'admin-embed',
       component: () => import('@/components/AppContainer.vue'),
       meta: { microApp: 'admin', withoutMenu: true },
-    },
-    // Workflow - full-screen micro-app
-    {
-      path: '/workflow/:pathMatch(.*)*',
-      name: 'workflow-embed',
-      component: () => import('@/components/AppContainer.vue'),
-      meta: { microApp: 'workflow', withoutMenu: true },
     },
     // Catch-all redirect
     {

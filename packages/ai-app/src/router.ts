@@ -1,16 +1,18 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { useQiankun } from '@schema-form/shared-qiankun'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import { SSOClient } from '@schema-form/shared-utils/sso'
 
 // SSO 客户端配置
 const SSO_CLIENT_ID = 'ai'
 const TOKEN_KEY = 'sfp_access_token'
+const APP_BASE = APP_CONFIGS.ai.basePath
 
 function getSSOClient(): SSOClient {
   const origin = window.location.origin
   return new SSOClient({
     clientId: SSO_CLIENT_ID,
-    redirectUri: `${origin}/auth/callback`,
+    redirectUri: `${origin}${APP_BASE}auth/callback`,
     ssoBaseUrl: origin,
   })
 }
@@ -45,7 +47,7 @@ const routes = [
 
 export function createAiRouter() {
   const router = createRouter({
-    history: isQiankun() ? createMemoryHistory() : createWebHistory('/ai/'),
+    history: isQiankun() ? createMemoryHistory() : createWebHistory(APP_BASE),
     routes,
   })
 

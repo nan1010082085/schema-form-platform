@@ -9,7 +9,7 @@
 declare const window: { location: { hostname: string; port: string } } | undefined
 
 /** 应用名称（含宿主） */
-export type AppName = 'editor' | 'flow' | 'ai' | 'portal' | 'admin' | 'workflow'
+export type AppName = 'shell' | 'editor' | 'flow' | 'ai' | 'admin'
 
 /** 单个子应用的配置 */
 export interface AppConfig {
@@ -27,11 +27,11 @@ export interface AppConfig {
  * 新增子应用只需在此添加一条记录。
  */
 export const APP_CONFIGS: Record<AppName, AppConfig> = {
-  editor:   { name: 'editor',   basePath: '/editor/',   devPort: 5100 },
-  flow:     { name: 'flow',     basePath: '/flow/',     devPort: 5200 },
-  ai:       { name: 'ai',       basePath: '/ai/',       devPort: 5300 },
-  admin:    { name: 'admin',    basePath: '/admin/',    devPort: 5400 },
-  workflow: { name: 'workflow', basePath: '/workflow/', devPort: 5500 },
+  shell:    { name: 'shell',    basePath: '/schema-platform/',          devPort: 5000 },
+  editor:   { name: 'editor',   basePath: '/schema-platform/editor/',   devPort: 5100 },
+  flow:     { name: 'flow',     basePath: '/schema-platform/flow/',     devPort: 5200 },
+  ai:       { name: 'ai',       basePath: '/schema-platform/ai/',       devPort: 5300 },
+  admin:    { name: 'admin',    basePath: '/schema-platform/admin/',    devPort: 5400 },
 }
 
 /** API 服务端口 */

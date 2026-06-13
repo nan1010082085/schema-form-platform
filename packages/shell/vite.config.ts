@@ -1,7 +1,6 @@
 import { createViteConfig } from '@schema-form/shared-config/vite'
 
-export default createViteConfig('portal', import.meta.url, {
-  base: '/schema-platform/',
+export default createViteConfig('shell', import.meta.url, {
   server: {
     port: 5000,
   },
