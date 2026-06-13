@@ -30,8 +30,8 @@ const microApps = Object.values(APP_CONFIGS)
   .map((config) => ({
     name: config.name,
     entry: isDev
-      ? `//localhost:${config.devPort}`
-      : `//${window.location.hostname}:${window.location.port}`,
+      ? `//localhost:${config.devPort}${config.basePath}`
+      : `//${window.location.host}${config.basePath}`,
     container: '#micro-container',
     activeRule: config.basePath,
   }))
