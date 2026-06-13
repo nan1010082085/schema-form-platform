@@ -11,7 +11,7 @@
  */
 
 import { ref, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { message, confirmDanger } from '@schema-form/shared-utils/message'
 import {
   getRagStatus,
   reindexAllRag,
@@ -78,8 +78,8 @@ async function handleBulkReindex() {
     }
   }
   bulkProcessing.value = false
-  if (fail === 0) ElMessage.success(`批量索引完成: ${success} 个`)
-  else ElMessage.warning(`索引 ${success} 个成功，${fail} 个失败`)
+  if (fail === 0) message.success(`批量索引完成: ${success} 个`)
+  else message.warning(`索引 ${success} 个成功，${fail} 个失败`)
   selectedIds.value.clear()
   bulkMode.value = false
   await loadStatus()
@@ -88,11 +88,7 @@ async function handleBulkReindex() {
 async function handleBulkDeleteEmbedding() {
   if (selectedIds.value.size === 0) return
   try {
-    await ElMessageBox.confirm(
-      `确认删除选中的 ${selectedIds.value.size} 个索引？`,
-      '批量删除',
-      { type: 'warning', confirmButtonText: '删除', confirmButtonClass: 'el-button--danger' },
-    )
+    await confirmDanger('批量删除', `确认删除选中的 ${selectedIds.value.size} 个索引？`)
   } catch { return }
 
   bulkProcessing.value = true
@@ -107,8 +103,8 @@ async function handleBulkDeleteEmbedding() {
     }
   }
   bulkProcessing.value = false
-  if (fail === 0) ElMessage.success(`已删除 ${success} 个索引`)
-  else ElMessage.warning(`删除 ${success} 个成功，${fail} 个失败`)
+  if (fail === 0) message.success(`已删除 ${success} 个索引`)
+  else message.warning(`删除 ${success} 个成功，${fail} 个失败`)
   selectedIds.value.clear()
   bulkMode.value = false
   await loadStatus()
@@ -141,7 +137,7 @@ async function loadStatus(): Promise<void> {
   try {
     status.value = await getRagStatus()
   } catch {
-    ElMessage.error('加载 RAG 状态失败')
+    message.error('加载 RAG 状态失败')
   } finally {
     loading.value = false
   }
@@ -153,10 +149,10 @@ async function handleReindexAll(): Promise<void> {
   reindexing.value = true
   try {
     lastReindexResult.value = await reindexAllRag()
-    ElMessage.success('批量重建索引完成')
+    message.success('批量重建索引完成')
     await loadStatus()
   } catch {
-    ElMessage.error('批量重建索引失败')
+    message.error('批量重建索引失败')
   } finally {
     reindexing.value = false
   }
@@ -165,20 +161,20 @@ async function handleReindexAll(): Promise<void> {
 async function handleReindexSingle(schemaId: string): Promise<void> {
   try {
     await reindexSingleRag(schemaId)
-    ElMessage.success('索引重建成功')
+    message.success('索引重建成功')
     await loadStatus()
   } catch {
-    ElMessage.error('索引重建失败')
+    message.error('索引重建失败')
   }
 }
 
 async function handleDeleteEmbedding(schemaId: string): Promise<void> {
   try {
     await deleteRagEmbedding(schemaId)
-    ElMessage.success('索引已删除')
+    message.success('索引已删除')
     await loadStatus()
   } catch {
-    ElMessage.error('删除索引失败')
+    message.error('删除索引失败')
   }
 }
 
@@ -194,7 +190,7 @@ async function handleSearch(): Promise<void> {
     const result = await searchRag({ query, limit: 10 })
     searchResults.value = result.schemas
   } catch {
-    ElMessage.error('搜索失败')
+    message.error('搜索失败')
     searchResults.value = []
   } finally {
     searchLoading.value = false
@@ -235,21 +231,21 @@ onMounted(() => {
         </div>
       </div>
       <div :class="$style.topbarRight">
-        <el-button
-          type="primary"
+        <t-button
+          theme="primary"
           size="small"
           :loading="reindexing"
           @click="handleReindexAll"
         >
           {{ reindexing ? '索引中...' : '批量重建索引' }}
-        </el-button>
-        <el-button
+        </t-button>
+        <t-button
           size="small"
           :loading="loading"
           @click="loadStatus"
         >
           刷新状态
-        </el-button>
+        </t-button>
       </div>
     </div>
 
@@ -294,77 +290,76 @@ onMounted(() => {
         <div :class="$style.sectionHeader">
           <h3 :class="$style.sectionTitle">未索引 Schema</h3>
           <div :class="$style.bulkActions">
-            <el-button
+            <t-button
               size="small"
-              :type="bulkMode ? 'danger' : 'default'"
+              :theme="bulkMode ? 'danger' : 'default'"
               @click="toggleBulkMode"
             >
               {{ bulkMode ? '取消' : '批量操作' }}
-            </el-button>
+            </t-button>
             <template v-if="bulkMode">
-              <el-button
+              <t-button
                 size="small"
-                type="primary"
+                theme="primary"
                 :disabled="selectedIds.size === 0"
                 :loading="bulkProcessing"
                 @click="handleBulkReindex"
               >
                 批量索引 ({{ selectedIds.size }})
-              </el-button>
-              <el-button
+              </t-button>
+              <t-button
                 size="small"
-                type="danger"
+                theme="danger"
                 :disabled="selectedIds.size === 0"
                 :loading="bulkProcessing"
                 @click="handleBulkDeleteEmbedding"
               >
                 批量删除索引 ({{ selectedIds.size }})
-              </el-button>
+              </t-button>
             </template>
           </div>
         </div>
-        <el-table
+        <t-table
           :data="status?.unindexedSchemas ?? []"
           :class="$style.table"
           stripe
           size="small"
           empty-text="所有 Schema 均已索引"
+          :columns="[
+            ...(bulkMode ? [{ colKey: 'select', title: '', width: 48 }] : []),
+            { colKey: 'name', title: '名称', minWidth: 200 },
+            { colKey: 'type', title: '类型', width: 120 },
+            { colKey: 'action', title: '操作', width: 160, fixed: 'right' },
+          ]"
         >
-          <el-table-column v-if="bulkMode" width="48">
-            <template #header>
-              <el-checkbox
-                :model-value="allSelected"
-                @change="toggleSelectAll"
-              />
-            </template>
-            <template #default="{ row }">
-              <el-checkbox
-                :model-value="selectedIds.has(row.id)"
-                @change="toggleSelect(row.id)"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column prop="name" label="名称" min-width="200" />
-          <el-table-column prop="type" label="类型" width="120">
-            <template #default="{ row }">
-              <el-tag size="small" :type="row.type === 'form' ? 'primary' : 'success'">
-                {{ getSchemaTypeLabel(row.type) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right">
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                link
-                size="small"
-                @click="handleReindexSingle(row.id)"
-              >
-                建立索引
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+          <template #select="{ row }">
+            <t-checkbox
+              :checked="selectedIds.has(row.id)"
+              @change="toggleSelect(row.id)"
+            />
+          </template>
+          <template #header-select>
+            <t-checkbox
+              :checked="allSelected"
+              @change="toggleSelectAll"
+            />
+          </template>
+          <template #type="{ row }">
+            <t-tag size="small" :theme="row.type === 'form' ? 'primary' : 'success'">
+              {{ getSchemaTypeLabel(row.type) }}
+            </t-tag>
+          </template>
+          <template #action="{ row }">
+            <t-button
+              theme="primary"
+              variant="text"
+              size="small"
+              @click="handleReindexSingle(row.id)"
+            >
+              建立索引
+            </t-button>
+          </template>
+        </t-table>
       </div>
 
       <!-- Search test -->
@@ -373,20 +368,20 @@ onMounted(() => {
           <h3 :class="$style.sectionTitle">语义搜索测试</h3>
         </div>
         <div :class="$style.searchArea">
-          <el-input
+          <t-input
             v-model="searchQuery"
             :class="$style.searchInput"
             placeholder="输入自然语言描述，如：用户注册表单"
             clearable
             @keyup.enter="handleSearch"
           />
-          <el-button
-            type="primary"
+          <t-button
+            theme="primary"
             :loading="searchLoading"
             @click="handleSearch"
           >
             搜索
-          </el-button>
+          </t-button>
         </div>
 
         <div :class="$style.searchResults">

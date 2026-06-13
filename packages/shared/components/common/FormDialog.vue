@@ -8,20 +8,20 @@
     @confirm="handleConfirm"
     @cancel="handleCancel"
   >
-    <el-form
+    <t-form
       ref="formRef"
-      :model="formData"
+      :data="formData"
       :rules="rules"
       :label-width="labelWidth"
     >
       <slot :form="formData" />
-    </el-form>
+    </t-form>
   </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstanceFunctions, FormRules } from 'tdesign-vue-next'
 import AppDialog from './AppDialog.vue'
 
 const props = withDefaults(defineProps<{
@@ -45,7 +45,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const formRef = ref<FormInstance>()
+const formRef = ref<FormInstanceFunctions>()
 
 async function handleConfirm() {
   if (!formRef.value) return

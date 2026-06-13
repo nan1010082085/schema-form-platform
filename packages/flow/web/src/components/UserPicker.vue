@@ -159,39 +159,39 @@ watch(() => props.modelValue, (val) => {
 </script>
 
 <template>
-  <el-select
+  <t-select
     :model-value="modelValue"
     multiple
     filterable
-    remote
+    :filter="() => true"
     reserve-keyword
     :placeholder="placeholder"
-    :remote-method="onSearch"
     :loading="loading"
     @change="onChange"
-    @visible-change="onVisibleChange"
+    @search="onSearch"
+    @popup-visible-change="onVisibleChange"
   >
-    <div :class="styles.optionList" @scroll="onScroll">
-      <el-option
-        v-for="item in options"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value"
-      >
-        <div :class="styles.optionItem">
-          <el-tag
-            :type="item.type === 'user' ? '' : 'warning'"
-            size="small"
-            :class="styles.typeTag"
-          >
-            {{ item.type === 'user' ? '用户' : '角色' }}
-          </el-tag>
-          <span :class="styles.optionLabel">{{ item.label }}</span>
-        </div>
-      </el-option>
+    <t-option
+      v-for="item in options"
+      :key="item.value"
+      :label="item.label"
+      :value="item.value"
+    >
+      <div :class="styles.optionItem">
+        <t-tag
+          :theme="item.type === 'user' ? 'default' : 'warning'"
+          size="small"
+          :class="styles.typeTag"
+        >
+          {{ item.type === 'user' ? '用户' : '角色' }}
+        </t-tag>
+        <span :class="styles.optionLabel">{{ item.label }}</span>
+      </div>
+    </t-option>
+    <template #panelBottomContent>
       <div v-if="loading" :class="styles.loading">加载中...</div>
       <div v-if="!hasMore && options.length > 0" :class="styles.noMore">没有更多了</div>
       <div v-if="!loading && options.length === 0" :class="styles.empty">暂无数据</div>
-    </div>
-  </el-select>
+    </template>
+  </t-select>
 </template>

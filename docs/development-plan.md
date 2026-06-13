@@ -57,7 +57,7 @@
 interface MicroAppConfig {
   id: string                    // 应用 ID (如 'editor', 'flow', 'admin')
   name: string                  // 应用名称 (如 '表单设计器')
-  url: string                   // 应用 URL (如 'http://localhost:5173')
+  url: string                   // 应用 URL (如 'http://localhost:5100')
   icon: string                  // 应用图标
   layout: 'with-menu' | 'without-menu'  // 布局方式
   activeRule: string            // 激活规则 (如 '/editor')
@@ -103,7 +103,7 @@ interface MicroAppConfig {
 
 **目录**: `packages/shell/`
 
-**技术栈**: Vue 3 + Vite + Element Plus + micro-app
+**技术栈**: Vue 3 + Vite + TDesign Vue Next + qiankun
 
 **核心功能**:
 - 统一登录页面
@@ -148,7 +148,7 @@ packages/shell/
 
 **目录**: `packages/admin/`
 
-**技术栈**: Vue 3 + Vite + Element Plus
+**技术栈**: Vue 3 + Vite + TDesign Vue Next
 
 **核心功能**:
 - 微应用注册管理
@@ -279,7 +279,7 @@ GET  /api/micro-apps           # 获取微应用配置
 
 | 任务 | 角色 | 工作量 | 状态 | 说明 |
 |------|------|--------|------|------|
-| shell 项目初始化 | 前端架构师 | 0.5 天 | ✅ | Vue 3 + Vite + Element Plus，端口 4100 |
+| shell 项目初始化 | 前端架构师 | 0.5 天 | ✅ | Vue 3 + Vite + TDesign Vue Next，端口 5000 |
 | 登录页面 | 组件工程师 | 0.5 天 | ✅ | LoginView + useAuth + /api/auth/login |
 | 鉴权逻辑（useAuth） | 前端架构师 | 1 天 | ✅ | token 管理、自动刷新（到期前 60s） |
 | 动态菜单渲染 | 组件工程师 | 1 天 | ✅ | useMenu + SideMenu，从 /api/menus/route 获取 |
@@ -290,7 +290,7 @@ GET  /api/micro-apps           # 获取微应用配置
 
 | 任务 | 角色 | 工作量 | 状态 | 说明 |
 |------|------|--------|------|------|
-| admin 项目初始化 | 前端架构师 | 0.5 天 | ✅ | Vue 3 + Vite + Element Plus，端口 5400 |
+| admin 项目初始化 | 前端架构师 | 0.5 天 | ✅ | Vue 3 + Vite + TDesign Vue Next，端口 5400 |
 | 微应用管理页面 | 组件工程师 | 1 天 | ✅ | MicroAppManageView，列表、表单、CRUD |
 | 菜单管理页面（改造） | 组件工程师 | 1 天 | ✅ | MenuManageView，支持 microAppId 关联微应用 |
 | 用户管理页面（迁移） | 组件工程师 | 0.5 天 | ✅ | 从 portal 迁移 |
@@ -464,3 +464,32 @@ Phase 6 (测试和优化)
 **文档版本历史**:
 - v5.1 (2026/06/10)：Phase 6 完成，端到端测试通过，监控机制建立
 - v5.0 (2026/06/10)：架构重构，新增 shell 基座和 admin 系统管理
+
+
+## 当前架构（2026-06-13 更新）
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Shell (主宿主, qiankun)                       │
+│                    端口: 5000                                    │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  registerMicroApps() + start()                           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+        │           │           │           │           │
+        ▼           ▼           ▼           ▼           ▼
+   ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
+   │ editor │  │  flow  │  │ ai-app │  │ admin  │  │portal  │
+   │ :5100  │  │ :5200  │  │ :5300  │  │ :5400  │  │ :4000  │
+   └────────┘  └────────┘  └────────┘  └────────┘  └────────┘
+        │           │           │           │           │
+        └───────────┴───────────┴───────────┴───────────┘
+                            │
+                            ▼
+                    ┌──────────────┐
+                    │   server     │
+                    │   :3001      │
+                    │  (Koa.js)    │
+                    └──────────────┘
+```
+

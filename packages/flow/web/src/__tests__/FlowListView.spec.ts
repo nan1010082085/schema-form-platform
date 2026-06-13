@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
+import TDesign from 'tdesign-vue-next'
 import FlowListView from '../views/FlowListView.vue'
 
 vi.mock('vue-router', () => ({
@@ -31,7 +31,7 @@ describe('FlowListView', () => {
   function createWrapper() {
     return mount(FlowListView, {
       global: {
-        plugins: [ElementPlus],
+        plugins: [TDesign],
         directives: {
           loading: () => {},
         },
@@ -46,7 +46,7 @@ describe('FlowListView', () => {
 
   it('displays flow list table', () => {
     const wrapper = createWrapper()
-    expect(wrapper.find('.el-table').exists()).toBe(true)
+    expect(wrapper.find('.t-table').exists()).toBe(true)
   })
 
   it('has create button', () => {

@@ -15,11 +15,11 @@
 
 // Error highlight on nodes — applied via Vue Flow's class property
 :global(.vue-flow__node.node-error) {
-  filter: drop-shadow(0 0 3px var(--el-color-danger));
+  filter: drop-shadow(0 0 3px var(--color-danger));
 }
 
 .minimap {
   border-radius: 6px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElButton } from 'element-plus'
+/* TDesign migration: components registered globally */
 
 export interface SchemaField {
   icon: string
@@ -72,7 +72,7 @@ const emit = defineEmits<{
       </div>
     </div>
     <div v-if="!compact && (primaryAction || secondaryAction)" :class="$style.actions">
-      <ElButton
+      <t-button
         v-if="secondaryAction"
         :class="$style.btnGhost"
         @click="emit('secondary-action')"
@@ -82,18 +82,18 @@ const emit = defineEmits<{
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
         {{ secondaryAction }}
-      </ElButton>
-      <ElButton
+      </t-button>
+      <t-button
         v-if="primaryAction"
         :class="$style.btnPrimary"
-        type="primary"
+        theme="primary"
         @click="emit('primary-action')"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         {{ primaryAction }}
-      </ElButton>
+      </t-button>
     </div>
   </div>
 </template>

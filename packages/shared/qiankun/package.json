@@ -8,11 +8,13 @@
     "./useQiankun": "./useQiankun.ts",
     "./useQiankunEvent": "./useQiankunEvent.ts",
     "./createQiankunApp": "./createQiankunApp.ts",
-    "./types": "./types.ts"
+    "./config": "./config.ts",
+    "./types": "./types.ts",
+    "./themeGuard": "./themeGuard.ts"
   },
   "peerDependencies": {
     "vue": ">=3.5.0",
-    "element-plus": ">=2.9.0",
+    "tdesign-vue-next": ">=1.20.0",
     "pinia": ">=2.3.0"
   }
 }

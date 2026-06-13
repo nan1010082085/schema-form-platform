@@ -4,29 +4,29 @@
       <!-- Schema 选择 -->
       <FieldRow label="绑定表单">
         <div :class="$style.schemaSelector">
-          <el-input
-            :model-value="schemaName"
+          <t-input
+            :value="schemaName"
             placeholder="点击选择表单"
             readonly
             @click="showSchemaSelector = true"
           >
             <template #append>
-              <el-button @click="showSchemaSelector = true">选择</el-button>
+              <t-button @click="showSchemaSelector = true">选择</t-button>
             </template>
-          </el-input>
+          </t-input>
         </div>
       </FieldRow>
 
       <FieldRow v-if="formSchemaId" label="表单模式">
-        <el-select
-          :model-value="formMode"
+        <t-select
+          :value="formMode"
           @change="update('formMode', $event)"
         >
-          <el-option label="新建（create）" value="create" />
-          <el-option label="查看（view）" value="view" />
-          <el-option label="编辑（edit）" value="edit" />
-          <el-option label="审批（approve）" value="approve" />
-        </el-select>
+          <t-option label="新建（create）" value="create" />
+          <t-option label="查看（view）" value="view" />
+          <t-option label="编辑（edit）" value="edit" />
+          <t-option label="审批（approve）" value="approve" />
+        </t-select>
       </FieldRow>
 
       <HintText v-if="formSchemaId">
@@ -53,9 +53,9 @@
     </SectionToggle>
 
     <!-- Schema 选择弹窗 -->
-    <el-dialog
-      v-model="showSchemaSelector"
-      title="选择表单"
+    <t-dialog
+      v-model:visible="showSchemaSelector"
+      header="选择表单"
       width="800px"
       destroy-on-close
     >
@@ -63,7 +63,7 @@
         :selected-id="formSchemaId"
         @select="handleSchemaSelect"
       />
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>
 
@@ -118,26 +118,26 @@ function handleSchemaSelect(schema: { id: string; name: string; publishId?: stri
 .eventInfo {
   margin-top: 16px;
   padding: 12px;
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 8px;
 }
 
 .eventTitle {
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 8px;
 }
 
 .eventDesc {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   line-height: 1.8;
 }
 
 .eventDesc code {
-  background: var(--el-color-primary-light-9);
+  background: var(--color-primary-light);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
 }
 </style>

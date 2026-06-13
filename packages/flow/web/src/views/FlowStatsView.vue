@@ -9,7 +9,7 @@
  */
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import * as echarts from 'echarts'
-import { Refresh } from '@element-plus/icons-vue'
+import { RefreshIcon } from 'tdesign-icons-vue-next'
 import { useFlowMonitorStore } from '../stores/flowMonitor.js'
 import type { TimeRangePreset } from '@schema-form/flow-shared'
 import styles from './FlowStatsView.module.scss'
@@ -102,8 +102,6 @@ function updateTrendChart() {
   const dates = displayData.map((p) => p.date)
   const counts = displayData.map((p) => p.count)
 
-  // 完成量趋势 = 已完成实例按日/周聚合 (用 store.stats.completed 作为总量展示)
-  // 这里展示启动量趋势 (已完成后端 /trend 接口返回的是新建实例数)
   trendChart.setOption({
     tooltip: {
       trigger: 'axis',
@@ -255,21 +253,21 @@ onBeforeUnmount(() => {
       <h2 :class="styles.title">流程统计</h2>
       <div :class="styles.headerActions">
         <div :class="styles.timeRangeGroup">
-          <el-radio-group
+          <t-radio-group
             v-model="selectedPreset"
             size="small"
             @change="handlePresetChange"
           >
-            <el-radio-button
+            <t-radio-button
               v-for="opt in timeRangeOptions"
               :key="opt.value"
               :value="opt.value"
             >
               {{ opt.label }}
-            </el-radio-button>
-            <el-radio-button value="custom">自定义</el-radio-button>
-          </el-radio-group>
-          <el-date-picker
+            </t-radio-button>
+            <t-radio-button value="custom">自定义</t-radio-button>
+          </t-radio-group>
+          <t-date-picker
             v-if="isCustomRange"
             v-model="customDateRange"
             type="daterange"
@@ -282,84 +280,86 @@ onBeforeUnmount(() => {
             @change="handleCustomDateChange"
           />
         </div>
-        <el-button
-          :icon="Refresh"
-          circle
+        <t-button
+          variant="outline"
+          shape="circle"
           :loading="store.loading"
           data-test="stats-refresh-btn"
           @click="store.fetchDashboard()"
-        />
+        >
+          <RefreshIcon />
+        </t-button>
       </div>
     </div>
 
     <!-- 核心指标卡片 -->
-    <el-row :gutter="16" :class="styles.metricsRow">
-      <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" :class="styles.metricCard">
+    <t-row :gutter="16" :class="styles.metricsRow">
+      <t-col :xs="12" :sm="6">
+        <t-card hover-shadow :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricTotal]">
               {{ store.stats.total }}
             </div>
             <div :class="styles.metricLabel">总流程数</div>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" :class="styles.metricCard">
+        </t-card>
+      </t-col>
+      <t-col :xs="12" :sm="6">
+        <t-card hover-shadow :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricRunning]">
               {{ store.stats.running }}
             </div>
             <div :class="styles.metricLabel">运行中实例</div>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" :class="styles.metricCard">
+        </t-card>
+      </t-col>
+      <t-col :xs="12" :sm="6">
+        <t-card hover-shadow :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricCompleted]">
               {{ store.stats.completed }}
             </div>
             <div :class="styles.metricLabel">已完成实例</div>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <el-card shadow="hover" :class="styles.metricCard">
+        </t-card>
+      </t-col>
+      <t-col :xs="12" :sm="6">
+        <t-card hover-shadow :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricDuration]">
               {{ formatDuration(store.avgDuration) }}
             </div>
             <div :class="styles.metricLabel">平均完成时长</div>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </t-card>
+      </t-col>
+    </t-row>
 
     <!-- 趋势图 -->
-    <el-card shadow="hover" :class="styles.chartCard">
+    <t-card hover-shadow :class="styles.chartCard">
       <template #header>
         <div :class="styles.chartHeader">
           <span>流程启动量趋势</span>
-          <el-radio-group
+          <t-radio-group
             v-model="trendGranularity"
             size="small"
             data-test="trend-granularity"
           >
-            <el-radio-button value="day">按日</el-radio-button>
-            <el-radio-button value="week">按周</el-radio-button>
-          </el-radio-group>
+            <t-radio-button value="day">按日</t-radio-button>
+            <t-radio-button value="week">按周</t-radio-button>
+          </t-radio-group>
         </div>
       </template>
       <div ref="trendChartRef" :class="styles.chart"></div>
-    </el-card>
+    </t-card>
 
     <!-- 节点耗时 Top 10 -->
-    <el-card shadow="hover" :class="styles.chartCard">
+    <t-card hover-shadow :class="styles.chartCard">
       <template #header>
         <span>节点耗时排行 Top 10</span>
       </template>
       <div ref="nodeChartRef" :class="styles.chart"></div>
-    </el-card>
+    </t-card>
   </div>
 </template>

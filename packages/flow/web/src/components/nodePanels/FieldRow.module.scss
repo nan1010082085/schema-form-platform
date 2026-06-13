@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   margin-bottom: 8px;
-  min-height: var(--el-component-size);
+  min-height: var(--size-md);
 }
 
 .field-row:last-child {
@@ -16,10 +16,10 @@
 .field-row__label {
   width: 80px;
   flex-shrink: 0;
-  font-size: var(--el-font-size-extra-small);
-  color: var(--el-text-color-regular);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
   font-weight: 500;
-  line-height: var(--el-component-size);
+  line-height: var(--size-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -33,7 +33,7 @@
 .field-row__control {
   flex: 1;
   min-width: 0;
-  height: var(--el-component-size);
+  height: var(--size-md);
   display: flex;
   align-items: center;
 }
@@ -43,52 +43,18 @@
   align-items: flex-start;
 }
 
-/* Element Plus 组件高度覆盖 */
-.field-row__control :deep(.el-input),
-.field-row__control :deep(.el-select),
-.field-row__control :deep(.el-input-number) {
+/* TDesign 组件高度覆盖 */
+.field-row__control :deep(.t-input),
+.field-row__control :deep(.t-select),
+.field-row__control :deep(.t-input-number) {
   width: 100%;
 }
 
-.field-row__control :deep(.el-input .el-input__wrapper) {
-  height: var(--el-component-size);
-  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
+.field-row__control :deep(.t-input) {
+  height: var(--size-md);
 }
 
-.field-row__control :deep(.el-input .el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-}
-
-.field-row__control :deep(.el-input .el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-}
-
-.field-row__control :deep(.el-select .el-input__wrapper) {
-  height: var(--el-component-size);
-  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
-}
-
-.field-row__control :deep(.el-select .el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-}
-
-.field-row__control :deep(.el-select .el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-}
-
-.field-row__control :deep(.el-input-number .el-input__wrapper) {
-  height: var(--el-component-size);
+.field-row__control :deep(.t-input-number) {
+  height: var(--size-md);
   min-height: 0;
-}
-
-.field-row__control :deep(.el-textarea .el-textarea__inner) {
-  box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
-}
-
-.field-row__control :deep(.el-textarea .el-textarea__inner:hover) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
-}
-
-.field-row__control :deep(.el-textarea .el-textarea__inner:focus) {
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }

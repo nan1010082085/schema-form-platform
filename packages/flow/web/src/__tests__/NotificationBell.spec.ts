@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
+import TDesign from 'tdesign-vue-next'
 import NotificationBell from '../components/NotificationBell.vue'
 
 vi.mock('../api/flowApi', () => ({
@@ -31,7 +31,7 @@ describe('NotificationBell', () => {
   function createWrapper() {
     return mount(NotificationBell, {
       global: {
-        plugins: [ElementPlus],
+        plugins: [TDesign],
       },
     })
   }
@@ -43,7 +43,7 @@ describe('NotificationBell', () => {
 
   it('displays bell icon', () => {
     const wrapper = createWrapper()
-    expect(wrapper.find('.el-icon').exists()).toBe(true)
+    expect(wrapper.find('svg').exists()).toBe(true)
   })
 
   it('fetches unread count on mount', () => {
@@ -57,7 +57,7 @@ describe('NotificationBell', () => {
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
 
-    const badge = wrapper.find('.el-badge__content')
+    const badge = wrapper.find('.t-badge__count')
     expect(badge.exists()).toBe(true)
   })
 
@@ -67,7 +67,7 @@ describe('NotificationBell', () => {
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
 
-    const badge = wrapper.find('.el-badge__content')
+    const badge = wrapper.find('.t-badge__count')
     expect(badge.exists()).toBe(false)
   })
 })

@@ -2,7 +2,7 @@
   <div :class="$style.container">
     <SectionToggle title="Agent 配置" :count="4">
       <FieldRow label="Agent 名称">
-        <el-input
+        <t-input
           :model-value="name"
           placeholder="输入 Agent 名称"
           @input="update('name', $event)"
@@ -10,36 +10,36 @@
       </FieldRow>
 
       <FieldRow label="Agent 类型">
-        <el-select
+        <t-select
           :model-value="agentType"
           placeholder="选择 Agent 类型"
           @change="update('agentType', $event)"
         >
-          <el-option label="LLM Agent" value="llm" />
-          <el-option label="Tool Agent" value="tool" />
-          <el-option label="Collaborator" value="collaborator" />
-          <el-option label="Supervisor" value="supervisor" />
-        </el-select>
+          <t-option label="LLM Agent" value="llm" />
+          <t-option label="Tool Agent" value="tool" />
+          <t-option label="Collaborator" value="collaborator" />
+          <t-option label="Supervisor" value="supervisor" />
+        </t-select>
       </FieldRow>
 
       <FieldRow label="模型">
-        <el-select
+        <t-select
           :model-value="model"
           filterable
           placeholder="选择模型"
           @change="update('model', $event)"
         >
-          <el-option
+          <t-option
             v-for="opt in modelOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </el-select>
+        </t-select>
       </FieldRow>
 
       <FieldRow label="系统提示词" textarea>
-        <el-input
+        <t-input
           type="textarea"
           :model-value="systemPrompt"
           :rows="4"
@@ -51,20 +51,20 @@
 
     <SectionToggle title="工具配置" :count="1">
       <FieldRow label="可用工具">
-        <el-select
+        <t-select
           :model-value="tools"
           multiple
           filterable
           placeholder="选择可用工具"
           @change="update('tools', $event)"
         >
-          <el-option
+          <t-option
             v-for="tool in availableTools"
             :key="tool"
             :label="tool"
             :value="tool"
           />
-        </el-select>
+        </t-select>
       </FieldRow>
     </SectionToggle>
   </div>

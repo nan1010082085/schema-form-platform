@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ArrowDown, ArrowRight } from '@element-plus/icons-vue'
+import { ChevronDownIcon, ChevronRightIcon } from 'tdesign-icons-vue-next'
 import styles from './SectionToggle.module.scss'
 
 const props = withDefaults(defineProps<{
@@ -21,10 +21,8 @@ function toggle() {
 <template>
   <div :class="styles.section">
     <div :class="styles.header" @click="toggle">
-      <el-icon :size="12" :class="styles.arrow">
-        <ArrowDown v-if="isOpen" />
-        <ArrowRight v-else />
-      </el-icon>
+      <ChevronDownIcon v-if="isOpen" :class="styles.arrow" :size="12" />
+      <ChevronRightIcon v-else :class="styles.arrow" :size="12" />
       <span :class="styles.label">{{ title }}</span>
       <span v-if="count !== undefined" :class="styles.count">{{ count }}</span>
     </div>

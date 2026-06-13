@@ -9,8 +9,8 @@ vi.mock('../api/flowApi.js', () => ({
   },
 }))
 
-vi.mock('element-plus', () => ({
-  ElMessage: {
+vi.mock('tdesign-vue-next', () => ({
+  MessagePlugin: {
     success: vi.fn(),
     error: vi.fn(),
     warning: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('element-plus', () => ({
 }))
 
 import { flowApi } from '../api/flowApi.js'
-import { ElMessage } from 'element-plus'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 // Mock URL.createObjectURL / revokeObjectURL
 const mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
@@ -52,7 +52,7 @@ describe('useFlowExport', () => {
     expect(flowApi.exportInstanceCsv).toHaveBeenCalledWith('inst-001')
     expect(mockCreateObjectURL).toHaveBeenCalledWith(mockBlob)
     expect(mockClick).toHaveBeenCalled()
-    expect(ElMessage.success).toHaveBeenCalledWith('导出成功')
+    expect(MessagePlugin.success).toHaveBeenCalledWith('导出成功')
     expect(exporting.value).toBe(false)
   })
 
@@ -62,7 +62,7 @@ describe('useFlowExport', () => {
     const { exportInstance } = useFlowExport()
     await exportInstance('inst-001')
 
-    expect(ElMessage.error).toHaveBeenCalledWith('导出失败')
+    expect(MessagePlugin.error).toHaveBeenCalledWith('导出失败')
   })
 
   it('exports multiple instances in batch', async () => {
@@ -73,14 +73,14 @@ describe('useFlowExport', () => {
     await exportBatch(['inst-001', 'inst-002', 'inst-003'])
 
     expect(flowApi.exportInstanceCsv).toHaveBeenCalledTimes(3)
-    expect(ElMessage.success).toHaveBeenCalledWith('已导出 3 个实例')
+    expect(MessagePlugin.success).toHaveBeenCalledWith('已导出 3 个实例')
   })
 
   it('shows warning when batch export has no selection', async () => {
     const { exportBatch } = useFlowExport()
     await exportBatch([])
 
-    expect(ElMessage.warning).toHaveBeenCalledWith('请选择要导出的实例')
+    expect(MessagePlugin.warning).toHaveBeenCalledWith('请选择要导出的实例')
     expect(flowApi.exportInstanceCsv).not.toHaveBeenCalled()
   })
 
@@ -90,7 +90,7 @@ describe('useFlowExport', () => {
     const { exportBatch } = useFlowExport()
     await exportBatch(['inst-001'])
 
-    expect(ElMessage.error).toHaveBeenCalledWith('批量导出失败')
+    expect(MessagePlugin.error).toHaveBeenCalledWith('批量导出失败')
   })
 
   it('exports filtered approval logs', async () => {
@@ -101,7 +101,7 @@ describe('useFlowExport', () => {
     await exportFiltered({ flowId: 'flow-1', format: 'csv' })
 
     expect(flowApi.exportApprovalLogs).toHaveBeenCalledWith({ flowId: 'flow-1', format: 'csv' })
-    expect(ElMessage.success).toHaveBeenCalledWith('导出成功')
+    expect(MessagePlugin.success).toHaveBeenCalledWith('导出成功')
   })
 
   it('exports filtered logs as JSON', async () => {
@@ -112,6 +112,6 @@ describe('useFlowExport', () => {
     await exportFiltered({ format: 'json' })
 
     expect(flowApi.exportApprovalLogs).toHaveBeenCalledWith({ format: 'json' })
-    expect(ElMessage.success).toHaveBeenCalledWith('导出成功')
+    expect(MessagePlugin.success).toHaveBeenCalledWith('导出成功')
   })
 })

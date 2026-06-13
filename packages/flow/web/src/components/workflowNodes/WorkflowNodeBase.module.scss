@@ -5,9 +5,9 @@
   max-width: 100%;
   min-height: 80px;
   background: var(--bg-color-white, #fff);
-  border: 1px solid var(--el-border-color-lighter);
-  border-left: 4px solid var(--el-border-color-lighter);
-  border-radius: var(--el-border-radius-base);
+  border: 1px solid var(--border-color-lighter);
+  border-left: 4px solid var(--border-color-lighter);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   cursor: grab;
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 6px;
   padding: 10px 12px 6px;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--border-color-light);
 }
 
 .icon {
@@ -136,8 +136,8 @@
 .handle {
   width: 10px;
   height: 10px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-color-primary);
+  background: var(--bg-color);
+  border: 1px solid var(--color-primary);
   transition: all 0.15s ease;
 }
 

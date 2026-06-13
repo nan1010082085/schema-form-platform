@@ -8,7 +8,7 @@
  */
 
 import { computed } from 'vue'
-import { Loading } from '@element-plus/icons-vue'
+import { LoadingIcon } from 'tdesign-icons-vue-next'
 import styles from './BaseButton.module.css'
 
 const props = withDefaults(defineProps<{
@@ -59,7 +59,7 @@ function handleClick(event: MouseEvent) {
     @click="handleClick"
   >
     <span v-if="loading" :class="styles.spinner">
-      <el-icon><Loading /></el-icon>
+      <LoadingIcon />
     </span>
     <slot v-if="iconPosition === 'left' && !loading" name="icon" />
     <span v-if="$slots.default" :class="styles.content">

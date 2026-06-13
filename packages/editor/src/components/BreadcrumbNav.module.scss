@@ -1,0 +1,27 @@
+.breadcrumb {
+  padding: 12px 24px 0;
+  flex-shrink: 0;
+}
+
+.item {
+  font-size: 13px;
+  color: var(--td-text-color-placeholder);
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--td-brand-color);
+  }
+}
+
+.separator {
+  margin: 0 6px;
+  color: var(--td-text-color-placeholder);
+  font-size: 12px;
+}
+
+.current {
+  font-size: 13px;
+  color: var(--td-text-color-primary);
+  font-weight: 500;
+}

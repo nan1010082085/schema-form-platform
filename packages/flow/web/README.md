@@ -52,7 +52,7 @@ Schema Form Platform 的流程引擎前端，基于 Vue Flow 可视化编排 BPM
 ### 扩展
 
 - SSO 单点登录（OAuth2 授权码模式）
-- 微前端嵌入（micro-app memory history）
+- 微前端嵌入（qiankun memory history）
 
 ## 常用命令
 

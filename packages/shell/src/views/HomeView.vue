@@ -41,13 +41,13 @@
 .title {
   font-size: 32px;
   font-weight: 700;
-  color: var(--el-text-color-primary);
+  color: var(--td-text-color-primary);
   margin: 0 0 8px 0;
 }
 
 .subtitle {
   font-size: 16px;
-  color: var(--el-text-color-secondary);
+  color: var(--td-text-color-secondary);
   margin: 0 0 40px 0;
 }
 
@@ -58,8 +58,8 @@
 }
 
 .card {
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
+  background: var(--td-bg-color-container);
+  border: 1px solid var(--td-border-level-2-color);
   border-radius: 12px;
   padding: 24px;
   text-decoration: none;
@@ -70,7 +70,7 @@
 .card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-  border-color: var(--el-color-primary);
+  border-color: var(--td-brand-color);
 }
 
 .icon {
@@ -81,13 +81,13 @@
 .cardTitle {
   font-size: 18px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--td-text-color-primary);
   margin: 0 0 8px 0;
 }
 
 .cardDesc {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--td-text-color-secondary);
   margin: 0;
   line-height: 1.6;
 }

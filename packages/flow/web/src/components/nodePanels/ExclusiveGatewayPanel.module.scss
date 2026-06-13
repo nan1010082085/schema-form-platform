@@ -1,6 +1,6 @@
 .edgeCard {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--el-border-radius-base);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: var(--radius-md);
   padding: 8px;
   margin-bottom: 8px;
 
@@ -18,8 +18,8 @@
 
 .edgeTarget {
   font-size: 11px;
-  color: var(--el-text-color-placeholder);
-  font-family: var(--el-font-family-monospace, monospace);
+  color: var(--text-color-placeholder);
+  font-family: var(--font-family), monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

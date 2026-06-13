@@ -2,16 +2,16 @@
   <div :class="$style.container">
     <!-- 搜索 -->
     <div :class="$style.search">
-      <el-input
+      <t-input
         v-model="searchQuery"
         placeholder="搜索表单"
         clearable
         @input="handleSearch"
       >
         <template #prefix>
-          <el-icon><Search /></el-icon>
+          <SearchIcon />
         </template>
-      </el-input>
+      </t-input>
     </div>
 
     <!-- 列表 -->
@@ -29,16 +29,18 @@
         </div>
       </div>
 
-      <el-empty v-if="!loading && schemas.length === 0" description="暂无表单" />
+      <t-empty v-if="!loading && schemas.length === 0" description="暂无表单" />
     </div>
 
     <!-- 分页 -->
     <div :class="$style.pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
+      <t-pagination
+        v-model:current="currentPage"
         :page-size="pageSize"
         :total="total"
-        layout="total, prev, pager, next"
+        show-total
+        show-prev-and-next-btn
+        show-page-number
         @current-change="fetchSchemas"
       />
     </div>
@@ -47,7 +49,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { SearchIcon } from 'tdesign-icons-vue-next'
 
 interface SchemaItem {
   id: string
@@ -127,7 +129,7 @@ onMounted(fetchSchemas)
 
 .item {
   padding: 12px 16px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
   border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
@@ -135,18 +137,18 @@ onMounted(fetchSchemas)
 }
 
 .item:hover {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .item.selected {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-8);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light-3);
 }
 
 .itemName {
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 4px;
 }
 
@@ -154,17 +156,17 @@ onMounted(fetchSchemas)
   display: flex;
   gap: 8px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .itemType {
-  background: var(--el-fill-color-light);
+  background: var(--bg-color-secondary);
   padding: 2px 6px;
   border-radius: 4px;
 }
 
 .itemStatus {
-  color: var(--el-color-success);
+  color: var(--color-success);
 }
 
 .pagination {

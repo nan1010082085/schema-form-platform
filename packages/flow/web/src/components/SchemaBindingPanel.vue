@@ -8,32 +8,32 @@
     <div :class="$style.field">
       <label :class="$style.label">绑定表单</label>
       <div :class="$style.selector">
-        <el-input
+        <t-input
           :model-value="schemaName"
           placeholder="点击选择表单"
           readonly
           @click="showSelector = true"
         >
-          <template #append>
-            <el-button @click="showSelector = true">选择</el-button>
+          <template #suffix>
+            <t-button variant="text" @click="showSelector = true">选择</t-button>
           </template>
-        </el-input>
+        </t-input>
       </div>
     </div>
 
     <!-- 表单模式 -->
     <div v-if="formSchemaId" :class="$style.field">
       <label :class="$style.label">表单模式</label>
-      <el-select
+      <t-select
         :model-value="formMode"
         style="width: 100%"
         @change="update('formMode', $event)"
       >
-        <el-option label="新建（create）" value="create" />
-        <el-option label="查看（view）" value="view" />
-        <el-option label="编辑（edit）" value="edit" />
-        <el-option label="审批（approve）" value="approve" />
-      </el-select>
+        <t-option label="新建（create）" value="create" />
+        <t-option label="查看（view）" value="view" />
+        <t-option label="编辑（edit）" value="edit" />
+        <t-option label="审批（approve）" value="approve" />
+      </t-select>
     </div>
 
     <!-- 说明 -->
@@ -54,9 +54,9 @@
     </div>
 
     <!-- Schema 选择弹窗 -->
-    <el-dialog
-      v-model="showSelector"
-      title="选择表单"
+    <t-dialog
+      v-model:visible="showSelector"
+      header="选择表单"
       width="800px"
       destroy-on-close
     >
@@ -64,7 +64,7 @@
         :selected-id="formSchemaId"
         @select="handleSelect"
       />
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>
 
@@ -112,7 +112,7 @@ function handleSelect(schema: { id: string; name: string; publishId?: string }) 
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .field {
@@ -122,7 +122,7 @@ function handleSelect(schema: { id: string; name: string; publishId?: string }) 
 .label {
   display: block;
   font-size: 13px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin-bottom: 8px;
 }
 
@@ -131,11 +131,11 @@ function handleSelect(schema: { id: string; name: string; publishId?: string }) 
 }
 
 .hint {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 8px;
   padding: 12px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   line-height: 1.8;
 }
 
@@ -153,9 +153,9 @@ function handleSelect(schema: { id: string; name: string; publishId?: string }) 
 }
 
 .hint code {
-  background: var(--el-color-primary-light-9);
+  background: var(--color-primary-light);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
 }
 </style>

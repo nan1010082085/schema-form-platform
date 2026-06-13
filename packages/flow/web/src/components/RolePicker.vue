@@ -117,7 +117,7 @@ watch(() => props.modelValue, (val) => {
 </script>
 
 <template>
-  <el-select
+  <t-select
     :model-value="modelValue"
     multiple
     filterable
@@ -130,22 +130,22 @@ watch(() => props.modelValue, (val) => {
     @visible-change="onVisibleChange"
   >
     <div :class="styles.optionList" @scroll="onScroll">
-      <el-option
+      <t-option
         v-for="item in options"
         :key="item.value"
         :label="item.label"
         :value="item.value"
       >
         <div :class="styles.optionItem">
-          <el-tag type="warning" size="small" :class="styles.typeTag">
+          <t-tag theme="warning" size="small" :class="styles.typeTag">
             角色
-          </el-tag>
+          </t-tag>
           <span :class="styles.optionLabel">{{ item.label }}</span>
         </div>
-      </el-option>
+      </t-option>
       <div v-if="loading" :class="styles.loading">加载中...</div>
       <div v-if="!hasMore && options.length > 0" :class="styles.noMore">没有更多了</div>
       <div v-if="!loading && options.length === 0" :class="styles.empty">暂无数据</div>
     </div>
-  </el-select>
+  </t-select>
 </template>

@@ -160,7 +160,7 @@ useWorkflowNodes()
 
 const defaultEdgeOptions = {
   type: 'animated-edge' as const,
-  style: { stroke: 'var(--el-border-color)', strokeWidth: 1.5 },
+  style: { stroke: 'var(--border-color)', strokeWidth: 1.5 },
   markerEnd: { type: MarkerType.ArrowClosed },
 }
 

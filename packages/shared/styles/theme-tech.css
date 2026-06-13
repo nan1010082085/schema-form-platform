@@ -1,0 +1,334 @@
+/**
+ * 科技感主题设计系统
+ *
+ * 基于 TDesign Design Token，打造未来科技感视觉风格
+ * 适用于 editor、flow、AI 对话、admin、shell
+ */
+
+:root {
+  /* ================================================================
+   * 品牌色系 - 科技蓝
+   * ================================================================ */
+  --td-brand-color: #00d4ff;
+  --td-brand-color-hover: #33ddff;
+  --td-brand-color-focus: #00b8e6;
+  --td-brand-color-active: #009fcc;
+  --td-brand-color-disabled: #66e3ff;
+  --td-brand-color-light: rgba(0, 212, 255, 0.1);
+  --td-brand-color-light-hover: rgba(0, 212, 255, 0.15);
+
+  /* ================================================================
+   * 功能色
+   * ================================================================ */
+  --td-success-color: #00e676;
+  --td-success-color-hover: #33eb91;
+  --td-success-color-focus: #00cc6a;
+  --td-success-color-light: rgba(0, 230, 118, 0.1);
+
+  --td-warning-color: #ffab40;
+  --td-warning-color-hover: #ffbb66;
+  --td-warning-color-focus: #ff9800;
+  --td-warning-color-light: rgba(255, 171, 64, 0.1);
+
+  --td-error-color: #ff5252;
+  --td-error-color-hover: #ff7575;
+  --td-error-color-focus: #ff3333;
+  --td-error-color-light: rgba(255, 82, 82, 0.1);
+
+  /* ================================================================
+   * 中性色 - 深色系
+   * ================================================================ */
+  --td-text-color-primary: rgba(255, 255, 255, 0.95);
+  --td-text-color-secondary: rgba(255, 255, 255, 0.65);
+  --td-text-color-placeholder: rgba(255, 255, 255, 0.35);
+  --td-text-color-disabled: rgba(255, 255, 255, 0.2);
+  --td-text-color-anti: #000;
+
+  /* ================================================================
+   * 背景色 - 深色主题
+   * ================================================================ */
+  --td-bg-color-page: #0a0e14;
+  --td-bg-color-container: #111820;
+  --td-bg-color-container-hover: #1a2230;
+  --td-bg-color-container-active: #222d3a;
+  --td-bg-color-secondarycontainer: #161d26;
+  --td-bg-color-secondarycontainer-hover: #1e2733;
+  --td-bg-color-mask: rgba(0, 0, 0, 0.7);
+
+  /* ================================================================
+   * 边框 - 发光边框
+   * ================================================================ */
+  --td-border-level-1-color: rgba(0, 212, 255, 0.15);
+  --td-border-level-2-color: rgba(0, 212, 255, 0.08);
+  --td-border-level-3-color: rgba(0, 212, 255, 0.05);
+
+  /* ================================================================
+   * 阴影 - 霓虹发光效果
+   * ================================================================ */
+  --td-shadow-1: 0 0 10px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 212, 255, 0.05);
+  --td-shadow-2: 0 0 15px rgba(0, 212, 255, 0.15), 0 0 30px rgba(0, 212, 255, 0.08);
+  --td-shadow-3: 0 0 20px rgba(0, 212, 255, 0.2), 0 0 40px rgba(0, 212, 255, 0.1);
+
+  /* ================================================================
+   * 圆角 - 现代感
+   * ================================================================ */
+  --td-radius-small: 4px;
+  --td-radius-default: 8px;
+  --td-radius-large: 12px;
+  --td-radius-extraLarge: 16px;
+  --td-radius-round: 999px;
+
+  /* ================================================================
+   * 字体
+   * ================================================================ */
+  --td-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --td-font-size-body-small: 12px;
+  --td-font-size-body-medium: 14px;
+  --td-font-size-body-large: 16px;
+  --td-font-size-headline-small: 20px;
+  --td-font-size-headline-medium: 24px;
+  --td-font-size-headline-large: 28px;
+
+  /* ================================================================
+   * 间距
+   * ================================================================ */
+  --td-comp-margin-s: 4px;
+  --td-comp-margin-m: 8px;
+  --td-comp-margin-l: 16px;
+  --td-comp-margin-xl: 20px;
+  --td-comp-margin-xxl: 24px;
+  --td-comp-margin-xxxl: 32px;
+
+  --td-comp-padding-s: 4px;
+  --td-comp-padding-m: 8px;
+  --td-comp-padding-l: 16px;
+  --td-comp-padding-xl: 20px;
+  --td-comp-padding-xxl: 24px;
+
+  /* ================================================================
+   * 组件尺寸
+   * ================================================================ */
+  --td-comp-size-xs: 24px;
+  --td-comp-size-s: 28px;
+  --td-comp-size-m: 32px;
+  --td-comp-size-l: 36px;
+  --td-comp-size-xl: 40px;
+
+  /* ================================================================
+   * 动画
+   * ================================================================ */
+  --td-anim-duration-fast: 0.15s;
+  --td-anim-duration-normal: 0.25s;
+  --td-anim-duration-slow: 0.35s;
+  --td-anim-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --td-anim-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --td-anim-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ================================================================
+   * 层级
+   * ================================================================ */
+  --td-z-index-dropdown: 1000;
+  --td-z-index-sticky: 1020;
+  --td-z-index-fixed: 1030;
+  --td-z-index-modal: 1050;
+  --td-z-index-popover: 1060;
+  --td-z-index-tooltip: 1070;
+
+  /* ================================================================
+   * 科技感特效变量 (自定义扩展)
+   * ================================================================ */
+
+  /* 发光效果 */
+  --glow-primary: 0 0 10px rgba(0, 212, 255, 0.3), 0 0 20px rgba(0, 212, 255, 0.15);
+  --glow-success: 0 0 10px rgba(0, 230, 118, 0.3), 0 0 20px rgba(0, 230, 118, 0.15);
+  --glow-warning: 0 0 10px rgba(255, 171, 64, 0.3), 0 0 20px rgba(255, 171, 64, 0.15);
+  --glow-danger: 0 0 10px rgba(255, 82, 82, 0.3), 0 0 20px rgba(255, 82, 82, 0.15);
+
+  /* 玻璃拟态 */
+  --glass-bg: rgba(17, 24, 32, 0.8);
+  --glass-border: rgba(0, 212, 255, 0.1);
+  --glass-blur: blur(20px);
+
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
+  --gradient-dark: linear-gradient(135deg, #111820 0%, #0a0e14 100%);
+  --gradient-card: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 212, 255, 0.02) 100%);
+
+  /* 扫描线效果 */
+  --scanline-opacity: 0.03;
+  --scanline-size: 2px;
+
+  /* 网格背景 */
+  --grid-color: rgba(0, 212, 255, 0.05);
+  --grid-size: 20px;
+
+  /* ================================================================
+   * 侧边栏 - Shell 布局
+   * ================================================================ */
+  --sidebar-bg: #0d1117;
+  --sidebar-text-color: rgba(255, 255, 255, 0.65);
+  --sidebar-text-color-active: #00d4ff;
+  --sidebar-bg-hover: rgba(0, 212, 255, 0.05);
+  --sidebar-bg-active: rgba(0, 212, 255, 0.1);
+  --sidebar-border-color: rgba(0, 212, 255, 0.1);
+
+  /* 顶部导航栏 */
+  --topnav-bg: rgba(17, 24, 32, 0.95);
+  --topnav-text-color: rgba(255, 255, 255, 0.65);
+  --topnav-text-color-active: #00d4ff;
+  --topnav-border-color: rgba(0, 212, 255, 0.1);
+
+  /* ================================================================
+   * 编辑器专用
+   * ================================================================ */
+  --editor-canvas-bg: #0a0e14;
+  --editor-grid-color: rgba(0, 212, 255, 0.03);
+  --editor-selection-color: rgba(0, 212, 255, 0.2);
+  --editor-handle-color: #00d4ff;
+
+  /* ================================================================
+   * AI 对话专用
+   * ================================================================ */
+  --ai-bubble-user: rgba(0, 212, 255, 0.1);
+  --ai-bubble-ai: rgba(255, 255, 255, 0.05);
+  --ai-typing-color: #00d4ff;
+  --ai-code-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* ================================================================
+ * 全局基础样式
+ * ================================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.2);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.3);
+}
+
+/* 选择文本 */
+::selection {
+  background: rgba(0, 212, 255, 0.3);
+  color: #fff;
+}
+
+/* ================================================================
+ * 玻璃拟态卡片
+ * ================================================================ */
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--td-radius-large);
+}
+
+/* ================================================================
+ * 发光边框
+ * ================================================================ */
+
+.glow-border {
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  box-shadow: var(--glow-primary);
+}
+
+.glow-border:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+/* ================================================================
+ * 扫描线效果
+ * ================================================================ */
+
+.scanline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent var(--scanline-size),
+    rgba(0, 212, 255, var(--scanline-opacity)) var(--scanline-size),
+    rgba(0, 212, 255, var(--scanline-opacity)) calc(var(--scanline-size) * 2)
+  );
+  pointer-events: none;
+}
+
+/* ================================================================
+ * 网格背景
+ * ================================================================ */
+
+.grid-bg {
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+/* ================================================================
+ * 霓虹文字
+ * ================================================================ */
+
+.neon-text {
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+/* ================================================================
+ * 脉冲动画
+ * ================================================================ */
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.2);
+  }
+}
+
+.pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ================================================================
+ * 渐变边框
+ * ================================================================ */
+
+.gradient-border {
+  position: relative;
+  border: none;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-primary);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}

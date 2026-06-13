@@ -3,15 +3,15 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 /* ------------------------------------------------------------------ */
-/*  Mock @element-plus/icons-vue                                       */
+/*  Mock tdesign-icons-vue-next                                        */
 /* ------------------------------------------------------------------ */
 
-vi.mock('@element-plus/icons-vue', () => ({
-  ArrowRight: { template: '<span />' },
-  ArrowDown: { template: '<span />' },
-  Plus: { template: '<span />' },
-  Delete: { template: '<span />' },
-  Search: { template: '<span />' },
+vi.mock('tdesign-icons-vue-next', () => ({
+  ChevronRightIcon: { template: '<span />' },
+  ChevronDownIcon: { template: '<span />' },
+  AddIcon: { template: '<span />' },
+  DeleteIcon: { template: '<span />' },
+  SearchIcon: { template: '<span />' },
 }))
 
 /* ------------------------------------------------------------------ */
@@ -39,11 +39,11 @@ vi.mock('../api/flowApi.ts', () => ({
 import SubProcessPanel from '../components/nodePanels/SubProcessPanel.vue'
 
 /* ------------------------------------------------------------------ */
-/*  Element Plus stubs                                                 */
+/*  TDesign stubs                                                      */
 /* ------------------------------------------------------------------ */
 
-const elStubs = {
-  'el-input': {
+const tStubs = {
+  't-input': {
     template: `
       <textarea
         v-if="type === 'textarea'"
@@ -68,11 +68,25 @@ const elStubs = {
       },
     },
   },
-  'el-icon': {
-    template: '<span><slot /></span>',
-    props: ['size'],
+  't-textarea': {
+    template: `
+      <textarea
+        :value="modelValue"
+        :placeholder="placeholder"
+        @input="handleInput($event)"
+      />
+    `,
+    props: ['modelValue', 'placeholder', 'rows', 'size'],
+    emits: ['update:modelValue', 'input'],
+    methods: {
+      handleInput(e: Event) {
+        const val = (e.target as HTMLTextAreaElement).value
+        this.$emit('update:modelValue', val)
+        this.$emit('input', val)
+      },
+    },
   },
-  'el-select': {
+  't-select': {
     template: `
       <select :value="modelValue" @change="handleChange($event)">
         <slot />
@@ -88,23 +102,23 @@ const elStubs = {
       },
     },
   },
-  'el-option': {
+  't-option': {
     template: '<option :value="value">{{ label }}</option>',
     props: ['label', 'value'],
   },
-  'el-radio-group': {
+  't-radio-group': {
     template: '<div><slot /></div>',
     props: ['modelValue', 'size'],
     emits: ['update:modelValue', 'change'],
   },
-  'el-radio-button': {
+  't-radio-button': {
     template: `<label><input type="radio" :value="value" @change="$emit('change', $event.target.value)" /><slot /></label>`,
     props: ['value', 'label'],
     emits: ['change'],
   },
-  'el-button': {
-    template: '<button @click="$emit(\'click\')"><slot /></button>',
-    props: ['size', 'text', 'type'],
+  't-button': {
+    template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+    props: ['size', 'variant', 'theme', 'disabled'],
     emits: ['click'],
   },
 }
@@ -143,7 +157,7 @@ describe('SubProcessPanel', () => {
   function mountPanel(nodeData: Record<string, unknown> = {}) {
     return mount(SubProcessPanel, {
       props: { node: createNode(nodeData) },
-      global: { stubs: elStubs },
+      global: { stubs: tStubs },
     })
   }
 

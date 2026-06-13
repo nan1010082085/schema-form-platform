@@ -3,15 +3,15 @@
     <!-- 基本信息 -->
     <SectionToggle title="基本信息" :count="2">
       <FieldRow label="节点名称">
-        <el-input
-          :model-value="label"
+        <t-input
+          :value="label"
           placeholder="输入节点名称"
           @input="update('label', $event)"
         />
       </FieldRow>
       <FieldRow label="节点描述">
-        <el-input
-          :model-value="description"
+        <t-input
+          :value="description"
           type="textarea"
           :rows="2"
           placeholder="节点描述（可选）"
@@ -34,26 +34,26 @@
     <!-- 审批人配置 -->
     <SectionToggle title="审批人配置" :count="assigneeCount">
       <FieldRow label="审批类型">
-        <el-select
-          :model-value="approvalMode"
+        <t-select
+          :value="approvalMode"
           @change="update('approvalMode', $event)"
         >
-          <el-option label="单一审批" value="single" />
-          <el-option label="会签（所有人审批）" value="countersign" />
-          <el-option label="或签（一人审批即可）" value="or-sign" />
-        </el-select>
+          <t-option label="单一审批" value="single" />
+          <t-option label="会签（所有人审批）" value="countersign" />
+          <t-option label="或签（一人审批即可）" value="or-sign" />
+        </t-select>
       </FieldRow>
 
       <FieldRow label="审批人类型">
-        <el-select
-          :model-value="assigneeType"
+        <t-select
+          :value="assigneeType"
           @change="update('assigneeType', $event)"
         >
-          <el-option label="指定用户" value="user" />
-          <el-option label="指定角色" value="role" />
-          <el-option label="上级用户" value="superior" />
-          <el-option label="部门经理" value="manager" />
-        </el-select>
+          <t-option label="指定用户" value="user" />
+          <t-option label="指定角色" value="role" />
+          <t-option label="上级用户" value="superior" />
+          <t-option label="部门经理" value="manager" />
+        </t-select>
       </FieldRow>
 
       <FieldRow v-if="assigneeType === 'user'" label="审批人">

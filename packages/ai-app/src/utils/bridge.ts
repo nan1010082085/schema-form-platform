@@ -1,9 +1,7 @@
 /**
  * AI 侧边栏通信桥
  *
- * 支持两种模式：
- * 1. micro-app 模式：通过 window.microApp.dispatch/getData 通信
- * 2. standalone 模式：通过 postMessage 通信（开发调试用）
+ * 统一使用 postMessage 通信，支持 qiankun 和 standalone 两种模式。
  *
  * 发送事件（ai-app -> 宿主）：
  *   ai:preview-schema  — 请求宿主预览 Schema
@@ -40,51 +38,19 @@ type BridgeEventHandler<T> = (payload: T) => void
 
 const listeners = new Map<string, Set<BridgeEventHandler<unknown>>>()
 
-// ---- micro-app 类型声明 ----
-
-declare global {
-  interface Window {
-    __MICRO_APP_ENVIRONMENT__?: boolean
-    microApp?: MicroAppInstance
-  }
-}
-
-interface MicroAppInstance {
-  dispatch(data: Record<string, unknown>): void
-  getData(): Record<string, unknown> | undefined
-  addDataListener(handler: (data: Record<string, unknown>) => void): void
-  removeDataListener(handler: (data: Record<string, unknown>) => void): void
-  addEventListener(event: string, callback: (data: Record<string, unknown>) => void): void
-  removeEventListener(event: string, callback: (data: Record<string, unknown>) => void): void
-}
-
-// Lazy getter: sandbox 模式下 __MICRO_APP_ENVIRONMENT__ 在脚本执行前才设置，
-// 模块加载时求值会拿到 false，必须延迟到调用时读取。
-const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
-
 /**
- * 向宿主发送消息。
- *
- * micro-app 模式：通过 window.microApp.dispatch()
- * standalone 模式：通过 window.parent.postMessage()
+ * 向宿主发送消息（统一 postMessage）。
  */
 function send<K extends keyof BridgeOutgoingEvents>(
   type: K,
   payload: BridgeOutgoingEvents[K]['payload'],
 ): void {
-  if (isMicroApp() && window.microApp) {
-    window.microApp.dispatch({ type, payload })
-  } else {
-    window.parent.postMessage({ type, payload }, '*')
-  }
+  window.parent.postMessage({ type, payload }, '*')
 }
 
 /**
- * 监听宿主发来的消息。
+ * 监听宿主发来的消息（统一 postMessage）。
  * 返回取消监听函数。
- *
- * micro-app 模式：监听 datachange 事件
- * standalone 模式：监听 postMessage
  */
 function on<K extends keyof BridgeIncomingEvents>(
   type: K,
@@ -93,37 +59,18 @@ function on<K extends keyof BridgeIncomingEvents>(
   if (!listeners.has(type)) {
     listeners.set(type, new Set())
 
-    if (isMicroApp() && window.microApp) {
-      // micro-app 模式：通过 addDataListener 监听宿主数据变化
-      const dataChangeHandler = (data: Record<string, unknown>) => {
-        if (data?.type && typeof data.type === 'string') {
-          const handlers = listeners.get(data.type)
-          if (handlers) {
-            for (const h of handlers) {
-              h(data.payload)
-            }
-          }
-        }
-      }
-      if (typeof window.microApp.addEventListener === 'function') {
-        window.microApp.addEventListener('datachange', dataChangeHandler)
-      } else if (typeof window.microApp.addDataListener === 'function') {
-        window.microApp.addDataListener(dataChangeHandler)
-      }
-    } else {
-      // standalone 模式：监听 postMessage
-      window.addEventListener('message', (event: MessageEvent) => {
-        const data = event.data as { type?: string; payload?: unknown } | undefined
-        if (!data?.type) return
+    // 注册全局消息监听（只注册一次）
+    window.addEventListener('message', (event: MessageEvent) => {
+      const data = event.data as { type?: string; payload?: unknown } | undefined
+      if (!data?.type) return
 
-        const handlers = listeners.get(data.type)
-        if (handlers) {
-          for (const handler of handlers) {
-            handler(data.payload)
-          }
+      const handlers = listeners.get(data.type)
+      if (handlers) {
+        for (const handler of handlers) {
+          handler(data.payload)
         }
-      })
-    }
+      }
+    })
   }
 
   const set = listeners.get(type)!

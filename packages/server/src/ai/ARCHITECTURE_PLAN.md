@@ -60,7 +60,7 @@ schema-form-platform/
 ├── packages/
 │   ├── editor/web/          # @schema-form/editor-web — 可视化设计器
 │   ├── flow/                # @schema-form/flow — 流程设计器 + 引擎
-│   ├── portal/              # @schema-form/portal — 主入口
+│   ├── shell/ — 主宿主
 │   ├── ai/                  # @schema-form/ai — AI 能力层（新建）
 │   │   ├── server/          # AI Agent 服务（从 server/ai/ 独立）
 │   │   ├── mcp/             # MCP Server 定义（内部专有）

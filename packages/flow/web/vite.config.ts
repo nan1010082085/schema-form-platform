@@ -1,5 +1,5 @@
 import { createViteConfig } from '@schema-form/shared-config/vite'
-import { APP_CONFIGS } from '@schema-form/micro-app/config'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 
 const appConfig = APP_CONFIGS.flow
 

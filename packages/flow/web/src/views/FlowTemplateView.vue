@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Folder, Collection, View } from '@element-plus/icons-vue'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { SearchIcon, FolderIcon, AppIcon, BrowseIcon } from 'tdesign-icons-vue-next'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowTemplateView.module.scss'
 
@@ -50,7 +50,7 @@ function handleApply(templateId: string, templateName: string) {
 async function handleApplyConfirm() {
   if (!applyingTemplateId.value) return
   if (!applyForm.name.trim()) {
-    ElMessage.warning('请输入流程名称')
+    MessagePlugin.warning('请输入流程名称')
     return
   }
   try {
@@ -59,10 +59,10 @@ async function handleApplyConfirm() {
       description: applyForm.description.trim(),
     })
     applyDialogVisible.value = false
-    ElMessage.success('已从模板创建流程')
+    MessagePlugin.success('已从模板创建流程')
     router.push({ name: 'flow-designer', query: { id: definition.id } })
   } catch {
-    ElMessage.error('创建失败')
+    MessagePlugin.error('创建失败')
   }
 }
 
@@ -72,16 +72,23 @@ function handlePreview(templateId: string) {
 }
 
 async function handleDelete(id: string, name: string) {
-  await ElMessageBox.confirm(`确定删除模板「${name}」？`, '确认删除', {
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+  const confirmed = await new Promise<boolean>((resolve) => {
+    const dialog = DialogPlugin.confirm({
+      header: '确认删除',
+      body: `确定删除模板「${name}」？`,
+      confirmBtn: '删除',
+      cancelBtn: '取消',
+      theme: 'warning',
+      onConfirm: () => { dialog.destroy(); resolve(true) },
+      onCancel: () => { dialog.destroy(); resolve(false) },
+    })
   })
+  if (!confirmed) return
   try {
     await store.deleteTemplate(id)
-    ElMessage.success('删除成功')
+    MessagePlugin.success('删除成功')
   } catch {
-    ElMessage.error('删除失败')
+    MessagePlugin.error('删除失败')
   }
 }
 
@@ -97,30 +104,30 @@ function formatDate(dateStr: string | Date) {
     </div>
 
     <div :class="styles.toolbar">
-      <el-input
+      <t-input
         v-model="searchQuery"
         placeholder="搜索模板名称..."
         clearable
-        :prefix-icon="Search"
+        :prefix-icon="SearchIcon"
         :class="styles.searchInput"
         @keyup.enter="handleSearch"
         @clear="handleSearch"
       />
-      <el-select
+      <t-select
         v-model="categoryFilter"
         placeholder="按分类筛选"
         clearable
         :class="styles.categorySelect"
         @change="handleSearch"
       >
-        <el-option
+        <t-option
           v-for="cat in categories"
           :key="cat"
           :label="cat"
           :value="cat"
         />
-      </el-select>
-      <el-button @click="handleResetFilters">重置</el-button>
+      </t-select>
+      <t-button @click="handleResetFilters">重置</t-button>
     </div>
 
     <div v-loading="store.loading" :class="styles.grid">
@@ -134,7 +141,7 @@ function formatDate(dateStr: string | Date) {
             <img :src="tpl.thumbnail" :alt="tpl.name" />
           </div>
           <div v-else :class="styles.thumbnailPlaceholder">
-            <el-icon :size="32"><Collection /></el-icon>
+            <AppIcon :size="32" />
             <span>流程预览</span>
           </div>
         </div>
@@ -143,99 +150,98 @@ function formatDate(dateStr: string | Date) {
           <div :class="styles.cardMeta">
             <h3 :class="styles.cardTitle">{{ tpl.name }}</h3>
             <div :class="styles.cardCategory">
-              <el-icon :size="12"><Folder /></el-icon>
+              <FolderIcon :size="12" />
               <span>{{ tpl.category || '未分类' }}</span>
             </div>
           </div>
-          <el-tag v-if="tpl.isBuiltin" size="small" type="success">内置</el-tag>
+          <t-tag v-if="tpl.isBuiltin" size="small" theme="success">内置</t-tag>
         </div>
 
         <p :class="styles.cardDesc">{{ tpl.description || '暂无描述' }}</p>
 
         <div v-if="tpl.tags && tpl.tags.length > 0" :class="styles.cardTags">
-          <el-tag
+          <t-tag
             v-for="tag in tpl.tags"
             :key="tag"
             size="small"
-            type="info"
-            effect="plain"
+            theme="default"
+            variant="light"
           >
             {{ tag }}
-          </el-tag>
+          </t-tag>
         </div>
 
         <div :class="styles.cardFooter">
           <div :class="styles.cardStats">
             <span :class="styles.cardDate">{{ formatDate(tpl.createdAt) }}</span>
             <span :class="styles.cardUseCount">
-              <el-icon :size="12"><View /></el-icon>
+              <BrowseIcon :size="12" />
               {{ tpl.useCount ?? 0 }} 次使用
             </span>
           </div>
           <div :class="styles.cardActions">
-            <el-button size="small" @click="handlePreview(tpl.id)">
+            <t-button size="small" @click="handlePreview(tpl.id)">
               预览
-            </el-button>
-            <el-button size="small" type="primary" @click="handleApply(tpl.id, tpl.name)">
+            </t-button>
+            <t-button size="small" theme="primary" @click="handleApply(tpl.id, tpl.name)">
               使用模板
-            </el-button>
-            <el-button
+            </t-button>
+            <t-button
               v-if="!tpl.isBuiltin"
               size="small"
-              type="danger"
+              theme="danger"
               @click="handleDelete(tpl.id, tpl.name)"
             >
               删除
-            </el-button>
+            </t-button>
           </div>
         </div>
       </div>
 
       <div v-if="!store.loading && store.templates.length === 0" :class="styles.empty">
-        <el-empty description="暂无模板" />
+        <t-empty description="暂无模板" />
       </div>
     </div>
 
     <!-- Apply template dialog -->
-    <el-dialog
-      v-model="applyDialogVisible"
-      title="从模板创建流程"
+    <t-dialog
+      v-model:visible="applyDialogVisible"
+      header="从模板创建流程"
       width="480px"
-      :close-on-click-modal="false"
+      :close-on-overlay-click="false"
       destroy-on-close
     >
-      <el-form :model="applyForm" label-width="80px">
-        <el-form-item label="流程名称" required>
-          <el-input v-model="applyForm.name" placeholder="输入流程名称" maxlength="200" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input
+      <t-form :data="applyForm" label-width="80px">
+        <t-form-item label="流程名称" required>
+          <t-input v-model="applyForm.name" placeholder="输入流程名称" maxlength="200" />
+        </t-form-item>
+        <t-form-item label="描述">
+          <t-textarea
             v-model="applyForm.description"
-            type="textarea"
             :rows="3"
             placeholder="流程描述（可选）"
           />
-        </el-form-item>
-      </el-form>
+        </t-form-item>
+      </t-form>
       <template #footer>
-        <el-button @click="applyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleApplyConfirm">创建并编辑</el-button>
+        <t-button @click="applyDialogVisible = false">取消</t-button>
+        <t-button theme="primary" @click="handleApplyConfirm">创建并编辑</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
 
     <!-- Preview template dialog -->
-    <el-dialog
-      v-model="previewDialogVisible"
-      title="模板预览"
+    <t-dialog
+      v-model:visible="previewDialogVisible"
+      header="模板预览"
       width="720px"
       destroy-on-close
     >
       <div :class="styles.previewContainer">
-        <el-empty description="流程图预览功能开发中" />
+        <t-empty description="流程图预览功能开发中" />
       </div>
       <template #footer>
-        <el-button @click="previewDialogVisible = false">关闭</el-button>
+        <t-button @click="previewDialogVisible = false">关闭</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>

@@ -32,7 +32,7 @@ const registry = new Map<string, Component>([
 /**
  * Fields in node panels that support variable reference insertion.
  * Each entry maps to the node panel(s) and field key(s) where
- * VariableSelector should appear instead of a plain el-input.
+ * VariableSelector should appear instead of a plain t-input.
  */
 const VARIABLE_AWARE_FIELDS: Array<{
   nodeType: string

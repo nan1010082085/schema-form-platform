@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { SearchIcon } from 'tdesign-icons-vue-next'
 import { flowApi } from '../api/flowApi.js'
 import styles from './SubProcessSelector.module.scss'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
@@ -91,24 +91,30 @@ defineExpose({ open })
 </script>
 
 <template>
-  <el-dialog
-    v-model="visible"
-    title="选择子流程"
+  <t-dialog
+    v-model:visible="visible"
+    header="选择子流程"
     width="600px"
-    :close-on-click-modal="false"
+    :close-on-overlay-click="false"
     destroy-on-close
     @close="onCancel"
   >
     <!-- 搜索栏 -->
     <div :class="styles.toolbar">
-      <el-input
+      <t-input
         v-model="searchQuery"
         placeholder="搜索流程名称或描述"
         clearable
-        :prefix-icon="Search"
         :class="styles.searchInput"
-      />
-      <el-button :icon="Search" @click="loadFlows" :loading="loading">刷新</el-button>
+      >
+        <template #prefix>
+          <SearchIcon />
+        </template>
+      </t-input>
+      <t-button :loading="loading" @click="loadFlows">
+        <template #icon><SearchIcon /></template>
+        刷新
+      </t-button>
     </div>
 
     <!-- 流程列表 -->
@@ -144,10 +150,10 @@ defineExpose({ open })
         </span>
         <span v-else :class="styles.footerHint">请选择一个流程</span>
         <div :class="styles.footerActions">
-          <el-button @click="onCancel">取消</el-button>
-          <el-button type="primary" :disabled="!selectedFlow" @click="onConfirm">确认</el-button>
+          <t-button @click="onCancel">取消</t-button>
+          <t-button theme="primary" :disabled="!selectedFlow" @click="onConfirm">确认</t-button>
         </div>
       </div>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>

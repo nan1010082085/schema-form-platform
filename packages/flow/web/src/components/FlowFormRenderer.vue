@@ -2,24 +2,24 @@
   <div :class="$style.container">
     <!-- 加载状态 -->
     <div v-if="loading" :class="$style.loading">
-      <el-icon :class="['is-loading', $style.loadingIcon]"><Loading /></el-icon>
+      <LoadingIcon :class="$style.loadingIcon" />
       <span>加载表单中...</span>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" :class="$style.error">
-      <el-icon :class="$style.errorIcon"><WarningFilled /></el-icon>
+      <WarningFilledIcon :class="$style.errorIcon" />
       <span>{{ error }}</span>
-      <el-button size="small" @click="loadSchema">重试</el-button>
+      <t-button size="small" @click="loadSchema">重试</t-button>
     </div>
 
     <!-- 表单渲染 -->
     <div v-else-if="schema" :class="$style.form">
       <div :class="$style.formHeader">
         <h3 :class="$style.formTitle">{{ schemaName }}</h3>
-        <el-tag v-if="formMode" :type="getModeType(formMode)" size="small">
+        <t-tag v-if="formMode" :theme="getModeTheme(formMode)" size="small">
           {{ getModeLabel(formMode) }}
-        </el-tag>
+        </t-tag>
       </div>
       <div :class="$style.formContent">
         <!-- 这里需要集成 Editor 的 SchemaRender 组件 -->
@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { Loading, WarningFilled } from '@element-plus/icons-vue'
+import { LoadingIcon, WarningFilledIcon } from 'tdesign-icons-vue-next'
 
 const props = defineProps<{
   schemaId?: string
@@ -91,14 +91,14 @@ async function loadSchema() {
   }
 }
 
-function getModeType(mode: string) {
+function getModeTheme(mode: string) {
   const map: Record<string, string> = {
     create: 'primary',
-    view: 'info',
+    view: 'default',
     edit: 'warning',
     approve: 'success',
   }
-  return map[mode] || 'info'
+  return map[mode] || 'default'
 }
 
 function getModeLabel(mode: string) {
@@ -143,7 +143,7 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
   padding: 40px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .loadingIcon {
@@ -157,7 +157,7 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
   padding: 40px;
-  color: var(--el-color-danger);
+  color: var(--color-danger);
 }
 
 .errorIcon {
@@ -165,9 +165,9 @@ onMounted(() => {
 }
 
 .form {
-  background: var(--el-bg-color);
+  background: var(--bg-color);
   border-radius: 8px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
 }
 
 .formHeader {
@@ -175,7 +175,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--border-color-lighter);
 }
 
 .formTitle {
@@ -189,7 +189,7 @@ onMounted(() => {
 }
 
 .formData {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 8px;
   padding: 16px;
   font-size: 12px;

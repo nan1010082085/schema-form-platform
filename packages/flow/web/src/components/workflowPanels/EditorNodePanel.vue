@@ -59,41 +59,39 @@ const timeout = computed(() => (props.node.data?.timeout as number | undefined) 
   <!-- 表单配置 -->
   <SectionToggle title="表单配置" :count="3">
     <FieldRow label="Schema 选择">
-      <el-select
-        :model-value="(node.data?.formPublishId as string) ?? ''"
+      <t-select
+        :value="(node.data?.formPublishId as string) ?? ''"
         filterable
         placeholder="搜索并选择已发布的表单"
         @change="onSchemaSelect"
       >
-        <el-option
+        <t-option
           v-for="form in publishedForms"
           :key="form.id"
           :label="form.name"
           :value="form.publishId"
         />
-      </el-select>
+      </t-select>
     </FieldRow>
 
     <FieldRow label="表单模式">
-      <el-radio-group
-        :model-value="formMode"
+      <t-radio-group
+        :value="formMode"
         @change="update('formMode', $event)"
       >
-        <el-radio value="editable">编辑</el-radio>
-        <el-radio value="readonly">只读</el-radio>
-      </el-radio-group>
+        <t-radio value="editable">编辑</t-radio>
+        <t-radio value="readonly">只读</t-radio>
+      </t-radio-group>
     </FieldRow>
 
     <template v-if="formMode === 'editable'">
       <FieldRow label="可编辑字段">
-        <el-select
-          :model-value="(node.data?.editableFields as string[]) ?? []"
+        <t-select
+          :value="(node.data?.editableFields as string[]) ?? []"
           multiple
           filterable
-          allow-create
-          default-first-option
-          collapse-tags
-          collapse-tags-tooltip
+          creatable
+          min-collapsed-num="1"
           placeholder="输入字段名并回车"
           @change="update('editableFields', $event)"
         />
@@ -105,8 +103,8 @@ const timeout = computed(() => (props.node.data?.timeout as number | undefined) 
   <!-- 数据绑定 -->
   <SectionToggle title="数据绑定" :count="1">
     <FieldRow label="输出变量">
-      <el-input
-        :model-value="outputVariable"
+      <t-input
+        :value="outputVariable"
         placeholder="例: editorResult"
         @input="update('outputVariable', $event)"
       />
@@ -117,11 +115,10 @@ const timeout = computed(() => (props.node.data?.timeout as number | undefined) 
   <!-- 高级设置 -->
   <SectionToggle title="高级设置" :count="2" :default-open="false">
     <FieldRow label="超时时间">
-      <el-input-number
-        :model-value="timeout"
+      <t-input-number
+        :value="timeout"
         :min="0"
         :step="5"
-        controls-position="right"
         placeholder="分钟"
         @change="update('timeout', $event)"
       />
@@ -129,14 +126,14 @@ const timeout = computed(() => (props.node.data?.timeout as number | undefined) 
     <HintText>留空表示不设超时限制。单位：分钟。</HintText>
 
     <FieldRow label="失败策略">
-      <el-radio-group
-        :model-value="failureStrategy"
+      <t-radio-group
+        :value="failureStrategy"
         @change="update('failureStrategy', $event)"
       >
-        <el-radio value="abort">终止流程</el-radio>
-        <el-radio value="skip">跳过继续</el-radio>
-        <el-radio value="retry">自动重试</el-radio>
-      </el-radio-group>
+        <t-radio value="abort">终止流程</t-radio>
+        <t-radio value="skip">跳过继续</t-radio>
+        <t-radio value="retry">自动重试</t-radio>
+      </t-radio-group>
     </FieldRow>
   </SectionToggle>
 </template>

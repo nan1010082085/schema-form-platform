@@ -239,9 +239,9 @@ function getStatusLabel(status: string): string {
   <div :class="$style.compare">
     <div :class="$style.header">
       <span :class="$style.title">版本对比</span>
-      <el-button :class="$style.closeBtn" @click="emit('close')">
-        <el-icon><i class="el-icon-close" /></el-icon>
-      </el-button>
+      <t-button :class="$style.closeBtn" @click="emit('close')">
+        &times;
+      </t-button>
     </div>
 
     <!-- Summary -->
@@ -261,7 +261,7 @@ function getStatusLabel(status: string): string {
     </div>
 
     <!-- Diff table -->
-    <el-scrollbar :class="$style.scrollbar">
+    <t-scrollbar :class="$style.scrollbar">
       <div v-if="!hasDiffs" :class="$style.noDiff" data-testid="no-diff">
         <span>两个版本完全相同</span>
       </div>
@@ -322,7 +322,7 @@ function getStatusLabel(status: string): string {
           </template>
         </tbody>
       </table>
-    </el-scrollbar>
+    </t-scrollbar>
   </div>
 </template>
 

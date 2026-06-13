@@ -1,0 +1,421 @@
+/**
+ * Admin 科技感主题
+ *
+ * 导入共享设计令牌，覆盖 TDesign 组件默认样式
+ * 深色背景 + 发光边框 + 玻璃拟态
+ */
+
+@import '@schema-form/shared-styles/theme-tech.css';
+
+/* ================================================================
+ * TDesign 组件深度覆盖
+ * ================================================================ */
+
+/* ── 全局基础 ──────────────────────────────────────────── */
+body {
+  background: var(--td-bg-color-page);
+  color: var(--td-text-color-primary);
+}
+
+/* ── 表格 ──────────────────────────────────────────────── */
+.t-table {
+  background: var(--td-bg-color-container) !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-table th.t-table__th {
+  background: var(--td-bg-color-secondarycontainer) !important;
+  color: var(--td-text-color-primary) !important;
+  border-bottom-color: var(--td-border-level-1-color) !important;
+}
+
+.t-table td.t-table__td {
+  border-bottom-color: var(--td-border-level-2-color) !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-table .t-table__row:hover td,
+.t-table .t-table__row--hover td {
+  background: var(--td-bg-color-container-hover) !important;
+}
+
+.t-table .t-table__row--selected td {
+  background: var(--td-brand-color-light) !important;
+}
+
+.t-table .t-table__empty {
+  color: var(--td-text-color-placeholder) !important;
+}
+
+.t-table .t-table__bordered {
+  border-color: var(--td-border-level-1-color) !important;
+}
+
+/* 表格边框发光 */
+.t-table--bordered {
+  border-color: rgba(0, 212, 255, 0.15) !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.05), 0 0 20px rgba(0, 212, 255, 0.03);
+}
+
+/* 固定列表格阴影 */
+.t-table__affixed-header {
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.1) !important;
+}
+
+/* ── 分页 ──────────────────────────────────────────────── */
+.t-pagination {
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-pagination .t-pagination__number {
+  background: var(--td-bg-color-secondarycontainer) !important;
+  color: var(--td-text-color-secondary) !important;
+  border-color: var(--td-border-level-2-color) !important;
+}
+
+.t-pagination .t-pagination__number:hover {
+  color: var(--td-brand-color) !important;
+  border-color: var(--td-brand-color) !important;
+}
+
+.t-pagination .t-is-current .t-pagination__number,
+.t-pagination .t-pagination__number--current {
+  background: var(--td-brand-color) !important;
+  color: #000 !important;
+  border-color: var(--td-brand-color) !important;
+  box-shadow: var(--glow-primary);
+}
+
+.t-pagination .t-pagination__total,
+.t-pagination .t-pagination__jump {
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-pagination .t-pagination__select .t-input__inner {
+  background: var(--td-bg-color-secondarycontainer) !important;
+  color: var(--td-text-color-primary) !important;
+  border-color: var(--td-border-level-2-color) !important;
+}
+
+/* ── 表单输入 ──────────────────────────────────────────── */
+.t-input,
+.t-textarea,
+.t-select,
+.t-auto-complete {
+  background: var(--td-bg-color-secondarycontainer) !important;
+}
+
+.t-input .t-input__inner,
+.t-textarea .t-textarea__inner,
+.t-select .t-input__inner,
+.t-auto-complete .t-input__inner {
+  background: transparent !important;
+  color: var(--td-text-color-primary) !important;
+  border-color: var(--td-border-level-2-color) !important;
+}
+
+.t-input .t-input__inner::placeholder,
+.t-textarea .t-textarea__inner::placeholder {
+  color: var(--td-text-color-placeholder) !important;
+}
+
+/* 焦点发光边框 */
+.t-input.t-is-focus .t-input__inner,
+.t-textarea.t-is-focus .t-textarea__inner,
+.t-select.t-is-focus .t-input__inner,
+.t-input--focused .t-input__inner,
+.t-textarea--focused .t-textarea__inner {
+  border-color: var(--td-brand-color) !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3), 0 0 16px rgba(0, 212, 255, 0.1) !important;
+}
+
+.t-input .t-input__inner:hover,
+.t-textarea .t-textarea__inner:hover,
+.t-select .t-input__inner:hover {
+  border-color: rgba(0, 212, 255, 0.4) !important;
+}
+
+/* 输入框前后缀图标 */
+.t-input .t-input__prefix-icon,
+.t-input .t-input__suffix-icon,
+.t-input .t-input__suffix {
+  color: var(--td-text-color-placeholder) !important;
+}
+
+/* 数字输入框 */
+.t-input-number .t-input__inner {
+  color: var(--td-text-color-primary) !important;
+}
+
+/* ── 选择器下拉面板 ────────────────────────────────────── */
+.t-select__dropdown,
+.t-popup__content {
+  background: var(--td-bg-color-container) !important;
+  border-color: var(--td-border-level-1-color) !important;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.1), 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.t-select-option {
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-select-option:hover,
+.t-select-option.t-is-hover {
+  background: var(--td-bg-color-container-hover) !important;
+}
+
+.t-select-option.t-is-selected {
+  color: var(--td-brand-color) !important;
+  background: var(--td-brand-color-light) !important;
+}
+
+.t-select__dropdown-empty {
+  color: var(--td-text-color-placeholder) !important;
+}
+
+/* ── 对话框 - 玻璃拟态 ─────────────────────────────────── */
+.t-dialog__ctx .t-dialog {
+  background: rgba(17, 24, 32, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.2) !important;
+  border: 1px solid rgba(0, 212, 255, 0.15) !important;
+  border-radius: var(--td-radius-large) !important;
+  box-shadow:
+    0 0 20px rgba(0, 212, 255, 0.1),
+    0 0 40px rgba(0, 212, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+.t-dialog__ctx .t-dialog__header {
+  color: var(--td-text-color-primary) !important;
+  border-bottom-color: var(--td-border-level-2-color) !important;
+}
+
+.t-dialog__ctx .t-dialog__body {
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-dialog__ctx .t-dialog__footer {
+  border-top-color: var(--td-border-level-2-color) !important;
+}
+
+.t-dialog__ctx .t-dialog__close-btn {
+  color: var(--td-text-color-placeholder) !important;
+}
+
+.t-dialog__ctx .t-dialog__close-btn:hover {
+  color: var(--td-brand-color) !important;
+}
+
+/* 对话框遮罩 */
+.t-dialog__ctx .t-dialog__mask {
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* ── 表单标签 ──────────────────────────────────────────── */
+.t-form .t-form__label {
+  color: var(--td-text-color-secondary) !important;
+}
+
+/* ── 按钮 ──────────────────────────────────────────────── */
+.t-button--variant-outline,
+.t-button--variant-base {
+  border-color: var(--td-border-level-1-color) !important;
+}
+
+.t-button--variant-outline:hover {
+  border-color: var(--td-brand-color) !important;
+  color: var(--td-brand-color) !important;
+}
+
+.t-button--theme-primary {
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.t-button--theme-primary:hover {
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.35);
+}
+
+.t-button--variant-text {
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-button--variant-text:hover {
+  color: var(--td-brand-color) !important;
+}
+
+.t-button--theme-danger.t-button--variant-text {
+  color: var(--td-error-color) !important;
+}
+
+/* ── 标签 ──────────────────────────────────────────────── */
+.t-tag {
+  border-color: transparent !important;
+}
+
+.t-tag--theme-default {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-tag--theme-primary {
+  background: rgba(0, 212, 255, 0.15) !important;
+  color: #00d4ff !important;
+}
+
+.t-tag--theme-success {
+  background: rgba(0, 230, 118, 0.15) !important;
+  color: #00e676 !important;
+}
+
+.t-tag--theme-warning {
+  background: rgba(255, 171, 64, 0.15) !important;
+  color: #ffab40 !important;
+}
+
+.t-tag--theme-danger {
+  background: rgba(255, 82, 82, 0.15) !important;
+  color: #ff5252 !important;
+}
+
+/* ── 树组件 ────────────────────────────────────────────── */
+.t-tree {
+  background: transparent !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-tree .t-tree__item:hover {
+  background: var(--td-bg-color-container-hover) !important;
+}
+
+.t-tree .t-tree__item.t-is-active .t-tree__label {
+  color: var(--td-brand-color) !important;
+}
+
+.t-tree .t-tree__line .t-tree__line-icon {
+  border-color: var(--td-border-level-2-color) !important;
+}
+
+/* ── 菜单 ──────────────────────────────────────────────── */
+.t-menu {
+  background: transparent !important;
+}
+
+.t-menu .t-menu__item {
+  color: var(--td-text-color-secondary) !important;
+}
+
+.t-menu .t-menu__item:hover {
+  background: var(--td-brand-color-light) !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-menu .t-is-active .t-menu__item,
+.t-menu .t-menu__item.t-is-active {
+  color: var(--td-brand-color) !important;
+  background: var(--td-brand-color-light) !important;
+}
+
+.t-menu .t-submenu .t-menu__sub {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ── 描述列表 ──────────────────────────────────────────── */
+.t-descriptions {
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-descriptions .t-descriptions__label {
+  color: var(--td-text-color-secondary) !important;
+  background: var(--td-bg-color-secondarycontainer) !important;
+}
+
+.t-descriptions .t-descriptions__content {
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-descriptions--bordered .t-descriptions__item {
+  border-color: var(--td-border-level-2-color) !important;
+}
+
+/* ── 加载 ──────────────────────────────────────────────── */
+.t-loading__parent {
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-loading .t-loading__gradient .t-loading__spinner {
+  border-color: rgba(0, 212, 255, 0.2) !important;
+  border-top-color: var(--td-brand-color) !important;
+}
+
+/* ── 开关 ──────────────────────────────────────────────── */
+.t-switch.t-is-checked {
+  background: var(--td-brand-color) !important;
+}
+
+/* ── 单选 / 多选 ───────────────────────────────────────── */
+.t-radio .t-radio__label {
+  color: var(--td-text-color-primary) !important;
+}
+
+.t-radio.t-is-checked .t-radio__label {
+  color: var(--td-brand-color) !important;
+}
+
+.t-checkbox .t-checkbox__label {
+  color: var(--td-text-color-primary) !important;
+}
+
+/* ── 日期选择器 ────────────────────────────────────────── */
+.t-date-picker .t-input__inner {
+  color: var(--td-text-color-primary) !important;
+}
+
+/* ── Slider ────────────────────────────────────────────── */
+.t-slider__track {
+  background: var(--td-border-level-2-color) !important;
+}
+
+.t-slider__track-fill {
+  background: var(--td-brand-color) !important;
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.3);
+}
+
+.t-slider__button {
+  border-color: var(--td-brand-color) !important;
+  background: var(--td-bg-color-container) !important;
+}
+
+.t-slider__button:hover {
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
+/* ── Loading / Message / Notification ──────────────────── */
+.t-message {
+  background: var(--td-bg-color-container) !important;
+  border-color: var(--td-border-level-1-color) !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+/* ── Tooltip ───────────────────────────────────────────── */
+.t-popup__content.t-tooltip {
+  background: var(--td-bg-color-container) !important;
+  border: 1px solid var(--td-border-level-1-color) !important;
+  color: var(--td-text-color-primary) !important;
+}
+
+/* ── 滚动条 ────────────────────────────────────────────── */
+.t-table__content::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.15);
+  border-radius: 3px;
+}
+
+.t-table__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.t-table__content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}

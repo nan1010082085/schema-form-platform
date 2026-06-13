@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessage, ElScrollbar, ElButton } from 'element-plus'
+import { message } from '@schema-form/shared-utils/message'
 import { downloadConversation } from '@/api/aiApi'
 import AiConversationSearch from './AiConversationSearch.vue'
 import type { Conversation } from '@/types'
@@ -35,9 +35,9 @@ function formatTime(date: Date | string): string {
 async function handleExport(command: { id: string; format: ExportFormat }): Promise<void> {
   try {
     await downloadConversation(command.id, command.format)
-    ElMessage.success('导出成功')
+    message.success('导出成功')
   } catch {
-    ElMessage.error('导出失败')
+    message.error('导出失败')
   }
 }
 </script>
@@ -46,10 +46,10 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
   <div :class="$style.sidebar">
     <div :class="$style.header">
       <span :class="$style.title">对话列表</span>
-      <ElButton :class="$style.newBtn" link @click="emit('new-conversation')">+</ElButton>
+      <t-button :class="$style.newBtn" variant="text" @click="emit('new-conversation')">+</t-button>
     </div>
     <AiConversationSearch @select="(id) => emit('select', id)" />
-    <ElScrollbar :class="$style.list">
+    <t-scrollbar :class="$style.list">
       <div
         v-for="conv in conversations"
         :key="conv.id"
@@ -62,39 +62,37 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
             {{ conv.activeAgent === 'editor' ? 'Editor' : 'Flow' }}
           </span>
           <span :class="$style.itemTime">{{ formatTime(conv.updatedAt) }}</span>
-          <el-dropdown
+          <t-dropdown
             :class="$style.exportBtn"
             trigger="click"
-            @command="(cmd: string) => handleExport({ id: conv.id, format: cmd as ExportFormat })"
+            :options="[
+              { content: '导出 JSON', value: 'json' },
+              { content: '导出 Markdown', value: 'markdown' },
+              { content: '导出 HTML', value: 'html' },
+            ]"
             @click.stop
+            @click-command="(cmd: string) => handleExport({ id: conv.id, format: cmd as ExportFormat })"
           >
-            <ElButton :class="$style.iconBtn" title="导出对话" link @click.stop>
+            <t-button :class="$style.iconBtn" title="导出对话" variant="text" @click.stop>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            </ElButton>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="json">导出 JSON</el-dropdown-item>
-                <el-dropdown-item command="markdown">导出 Markdown</el-dropdown-item>
-                <el-dropdown-item command="html">导出 HTML</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <ElButton :class="$style.deleteBtn" link @click.stop="emit('delete', conv.id)" title="删除对话">
+            </t-button>
+          </t-dropdown>
+          <t-button :class="$style.deleteBtn" variant="text" @click.stop="emit('delete', conv.id)" title="删除对话">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </ElButton>
+          </t-button>
         </div>
       </div>
       <div v-if="conversations.length === 0" :class="$style.empty">
         暂无对话
       </div>
-    </ElScrollbar>
+    </t-scrollbar>
   </div>
 </template>
 

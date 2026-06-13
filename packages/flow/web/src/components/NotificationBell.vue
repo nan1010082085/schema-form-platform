@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { Bell } from '@element-plus/icons-vue'
-import { ElBadge, ElPopover, ElButton, ElEmpty, ElTag, ElIcon } from 'element-plus'
+import { NotificationIcon } from 'tdesign-icons-vue-next'
 import { useNotificationStore } from '../stores/notification.js'
 import styles from './NotificationBell.module.scss'
 
@@ -10,13 +9,13 @@ const store = useNotificationStore()
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 function notificationTypeTag(type: string) {
-  const map: Record<string, { label: string; type: string }> = {
-    task_created: { label: '新任务', type: 'primary' },
-    task_timeout: { label: '即将超时', type: 'warning' },
-    task_completed: { label: '已完成', type: 'success' },
-    task_delegated: { label: '已委派', type: 'info' },
+  const map: Record<string, { label: string; theme: string }> = {
+    task_created: { label: '新任务', theme: 'primary' },
+    task_timeout: { label: '即将超时', theme: 'warning' },
+    task_completed: { label: '已完成', theme: 'success' },
+    task_delegated: { label: '已委派', theme: 'default' },
   }
-  return map[type] ?? { label: type, type: 'info' }
+  return map[type] ?? { label: type, theme: 'default' }
 }
 
 function formatTime(dateStr: string) {
@@ -49,56 +48,54 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <el-popover
-    placement="bottom-end"
-    :width="360"
+  <t-popup
+    placement="bottom-right"
+    :overlay-style="{ width: '360px' }"
     trigger="click"
-    @show="handleOpen"
+    @visible-change="(visible: boolean) => { if (visible) handleOpen() }"
   >
-    <template #reference>
-      <el-badge :value="store.unreadCount" :hidden="store.unreadCount === 0" :max="99">
-        <el-icon :size="20" :class="styles.bellIcon">
-          <Bell />
-        </el-icon>
-      </el-badge>
+    <template #content>
+      <div :class="styles.header">
+        <span :class="styles.title">通知</span>
+        <t-button
+          v-if="store.unreadCount > 0"
+          theme="primary"
+          variant="text"
+          size="small"
+          @click="store.markAllAsRead()"
+        >
+          全部已读
+        </t-button>
+      </div>
+
+      <div :class="styles.list" v-loading="store.loading">
+        <template v-if="store.notifications.length > 0">
+          <div
+            v-for="item in store.notifications"
+            :key="item.id"
+            :class="[styles.item, { [styles.itemUnread]: !item.isRead }]"
+          >
+            <div :class="styles.itemHeader">
+              <t-tag :theme="notificationTypeTag(item.type).theme as any" size="small" variant="light">
+                {{ notificationTypeTag(item.type).label }}
+              </t-tag>
+              <span :class="styles.itemTime">{{ formatTime(item.createdAt) }}</span>
+            </div>
+            <div :class="styles.itemTitle">{{ item.title }}</div>
+            <div v-if="item.content" :class="styles.itemContent">{{ item.content }}</div>
+            <div v-if="!item.isRead" :class="styles.itemActions">
+              <t-button theme="primary" variant="text" size="small" @click="store.markAsRead(item.id)">
+                标为已读
+              </t-button>
+            </div>
+          </div>
+        </template>
+        <t-empty v-else description="暂无通知" />
+      </div>
     </template>
 
-    <div :class="styles.header">
-      <span :class="styles.title">通知</span>
-      <el-button
-        v-if="store.unreadCount > 0"
-        type="primary"
-        link
-        size="small"
-        @click="store.markAllAsRead()"
-      >
-        全部已读
-      </el-button>
-    </div>
-
-    <div :class="styles.list" v-loading="store.loading">
-      <template v-if="store.notifications.length > 0">
-        <div
-          v-for="item in store.notifications"
-          :key="item.id"
-          :class="[styles.item, { [styles.itemUnread]: !item.isRead }]"
-        >
-          <div :class="styles.itemHeader">
-            <el-tag :type="notificationTypeTag(item.type).type as any" size="small" effect="plain">
-              {{ notificationTypeTag(item.type).label }}
-            </el-tag>
-            <span :class="styles.itemTime">{{ formatTime(item.createdAt) }}</span>
-          </div>
-          <div :class="styles.itemTitle">{{ item.title }}</div>
-          <div v-if="item.content" :class="styles.itemContent">{{ item.content }}</div>
-          <div v-if="!item.isRead" :class="styles.itemActions">
-            <el-button type="primary" link size="small" @click="store.markAsRead(item.id)">
-              标为已读
-            </el-button>
-          </div>
-        </div>
-      </template>
-      <el-empty v-else description="暂无通知" :image-size="60" />
-    </div>
-  </el-popover>
+    <t-badge :count="store.unreadCount" :hidden="store.unreadCount === 0" :max-count="99">
+      <NotificationIcon :size="20" :class="styles.bellIcon" />
+    </t-badge>
+  </t-popup>
 </template>

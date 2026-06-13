@@ -13,9 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.2",
-    "@micro-zoe/micro-app": "1.0.0-rc.30",
-    "@schema-form/micro-app": "workspace:*",
+    "@schema-form/shared-qiankun": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
     "@schema-form/socket": "workspace:*",
@@ -23,7 +21,8 @@
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",
     "dompurify": "^3.4.7",
-    "element-plus": "^2.9.7",
+    "tdesign-vue-next": "^1.20.1",
+    "tdesign-icons-vue-next": "^0.4.4",
     "marked": "^18.0.4",
     "pinia": "^2.3.0",
     "vue": "^3.5.13",

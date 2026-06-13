@@ -4,17 +4,17 @@ import { ref, computed } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 /* ------------------------------------------------------------------ */
-/*  Mocks — element-plus                                               */
+/*  Mocks — tdesign-vue-next                                           */
 /* ------------------------------------------------------------------ */
 
-vi.mock('element-plus', () => ({
-  ElMessage: { success: vi.fn(), error: vi.fn() },
+vi.mock('tdesign-vue-next', () => ({
+  MessagePlugin: { success: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('@element-plus/icons-vue', () => ({
-  ArrowRight: { template: '<span />' },
-  ArrowDown: { template: '<span />' },
-  CopyDocument: { template: '<span />' },
+vi.mock('tdesign-icons-vue-next', () => ({
+  ChevronRightIcon: { template: '<span />' },
+  ChevronDownIcon: { template: '<span />' },
+  CopyIcon: { template: '<span />' },
 }))
 
 /* ------------------------------------------------------------------ */

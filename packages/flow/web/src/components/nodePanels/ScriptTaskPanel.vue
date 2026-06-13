@@ -18,19 +18,19 @@ const scriptContent = computed(() => (props.node.data?.scriptContent as string) 
 <template>
   <SectionToggle title="节点配置" :count="2">
     <FieldRow label="脚本语言">
-      <el-select
+      <t-select
         :model-value="scriptLanguage"
 
         @change="update('scriptLanguage', $event)"
       >
-        <el-option label="JavaScript" value="javascript" />
-        <el-option label="Groovy" value="groovy" />
-        <el-option label="Python" value="python" />
-      </el-select>
+        <t-option label="JavaScript" value="javascript" />
+        <t-option label="Groovy" value="groovy" />
+        <t-option label="Python" value="python" />
+      </t-select>
     </FieldRow>
 
     <FieldRow label="脚本内容" textarea>
-      <el-input
+      <t-input
         type="textarea"
         :model-value="scriptContent"
         placeholder="// 脚本代码"

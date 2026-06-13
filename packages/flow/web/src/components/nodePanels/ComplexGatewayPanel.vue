@@ -14,7 +14,7 @@ function update(key: string, value: unknown) {
 <template>
   <SectionToggle title="复杂网关配置" :count="1">
     <FieldRow label="复杂条件">
-      <el-input
+      <t-input
         :model-value="(node.data?.complexCondition as string) ?? ''"
         placeholder="条件表达式"
         @input="update('complexCondition', $event)"

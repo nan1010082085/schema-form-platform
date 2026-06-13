@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
+import TDesign from 'tdesign-vue-next'
 import FlowTemplateView from '../views/FlowTemplateView.vue'
 
 vi.mock('vue-router', () => ({
@@ -66,7 +66,7 @@ describe('FlowTemplateView', () => {
   function createWrapper() {
     return mount(FlowTemplateView, {
       global: {
-        plugins: [ElementPlus],
+        plugins: [TDesign],
         directives: {
           loading: () => {},
         },
@@ -96,13 +96,13 @@ describe('FlowTemplateView', () => {
   it('has search input', async () => {
     const wrapper = createWrapper()
     await flushPromises()
-    expect(wrapper.find('.el-input').exists()).toBe(true)
+    expect(wrapper.find('.t-input').exists()).toBe(true)
   })
 
   it('has category filter select', async () => {
     const wrapper = createWrapper()
     await flushPromises()
-    expect(wrapper.find('.el-select').exists()).toBe(true)
+    expect(wrapper.find('.t-select').exists()).toBe(true)
   })
 
   it('displays template cards with use count', async () => {
@@ -116,7 +116,7 @@ describe('FlowTemplateView', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    const cards = wrapper.findAll('.el-card, [class*="card"]')
+    const cards = wrapper.findAll('.t-card, [class*="card"]')
     expect(cards.length).toBeGreaterThanOrEqual(2)
 
     // Check use count is displayed
@@ -166,7 +166,7 @@ describe('FlowTemplateView', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    const builtinTags = wrapper.findAll('.el-tag--success')
+    const builtinTags = wrapper.findAll('.t-tag--success')
     expect(builtinTags.length).toBe(1)
   })
 
@@ -174,7 +174,7 @@ describe('FlowTemplateView', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    expect(wrapper.find('.el-empty').exists()).toBe(true)
+    expect(wrapper.find('.t-empty').exists()).toBe(true)
   })
 
   it('displays category information', async () => {

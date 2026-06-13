@@ -14,7 +14,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
-import { ElMessage, ElSelect, ElOption, ElButton } from 'element-plus'
+import { useQiankun } from '@schema-form/shared-qiankun'
+import { message } from '@schema-form/shared-utils/message'
 import { connect as connectSocket, emitAiApply, emitAiPublished } from '@schema-form/socket'
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
@@ -154,7 +155,7 @@ async function handleOpenInEditor(): Promise<void> {
   try {
     const result = await store.publishCurrent()
     if (!result) {
-      ElMessage.warning('没有可发布的内容')
+      message.warning('没有可发布的内容')
       return
     }
 
@@ -172,7 +173,7 @@ async function handleOpenInEditor(): Promise<void> {
     })
     bridge.send('ai:open-in-editor', payload)
   } catch {
-    ElMessage.error('发布失败，请稍后重试')
+    message.error('发布失败，请稍后重试')
   }
 }
 
@@ -191,7 +192,7 @@ async function handleApply() {
     // 同时发布到服务端
     const result = await store.publishCurrent()
     if (result) {
-      ElMessage.success(isSchema ? '表单已应用到画布并发布成功' : '流程已应用到画布并发布成功')
+      message.success(isSchema ? '表单已应用到画布并发布成功' : '流程已应用到画布并发布成功')
       emitAiPublished({
         type: result.type,
         id: result.id,
@@ -204,10 +205,10 @@ async function handleApply() {
         type: result.type,
       })
     } else {
-      ElMessage.warning('没有可发布的内容')
+      message.warning('没有可发布的内容')
     }
   } catch {
-    ElMessage.error('应用失败，请稍后重试')
+    message.error('应用失败，请稍后重试')
   }
 }
 
@@ -227,14 +228,16 @@ onMounted(() => {
     store.setCurrentSchema(payload)
   })
 
-  // micro-app 模式：读取初始数据 + 监听 datachange
-  // sandbox 模式下 __MICRO_APP_ENVIRONMENT__ 在脚本执行前才设置，延迟检测
-  if (window.__MICRO_APP_ENVIRONMENT__ && window.microApp) {
-    const initialData = window.microApp.getData()
-    if (initialData) {
-      handleHostData(initialData)
+  // qiankun 模式：从全局状态读取初始数据
+  if (window.__POWERED_BY_QIANKUN__) {
+    const { getGlobalState, onGlobalStateChange } = useQiankun()
+    const state = getGlobalState()
+    if (Object.keys(state).length > 0) {
+      handleHostData(state)
     }
-    window.microApp.addDataListener(handleHostData)
+    onGlobalStateChange((newState) => {
+      handleHostData(newState)
+    })
   }
 })
 
@@ -346,30 +349,24 @@ function handleHostData(data: Record<string, unknown>) {
             </template>
           </div>
           <div :class="$style.inputActions">
-            <ElSelect
+            <t-select
               v-model="selectedAgent"
               :class="$style.agentSelect"
               :disabled="store.loading"
               size="small"
-            >
-              <ElOption
-                v-for="opt in agentOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </ElSelect>
-            <ElButton
+              :options="agentOptions"
+            />
+            <t-button
               v-if="store.loading"
               :class="$style.stopBtn"
               title="停止生成"
-              link
+              variant="text"
               @click="handleStop"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
-            </ElButton>
+            </t-button>
           </div>
         </div>
       </div>

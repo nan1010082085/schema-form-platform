@@ -1,0 +1,122 @@
+// ============================================================
+// FormGrid 样式隔离层
+// 通用重置已迁移至 src/styles/theme.scss（全局生效）
+// 此文件仅保留 FormGrid 容器内的隔离逻辑
+// ============================================================
+@use './variables' as *;
+
+// ---- 根容器隔离（防止宿主页面继承样式） ----
+.fg {
+  font-family: $fg-font-family;
+  font-size: $fg-font-size-body;
+  line-height: $fg-line-height;
+  color: $fg-text-primary;
+  box-sizing: border-box;
+  text-align: left;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+  text-indent: 0;
+  text-decoration: none;
+  white-space: normal;
+  vertical-align: baseline;
+  direction: ltr;
+
+  // 阻断列表样式继承
+  list-style: none;
+
+  // 表格样式重置（防止宿主 table 样式影响）
+  border-collapse: separate;
+  border-spacing: 0;
+
+  // 定位上下文（z-index 隔离）
+  position: relative;
+  z-index: 0;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
+  // 段落/标题重置
+  p, h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+  }
+
+  // 链接重置
+  a {
+    color: $fg-color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // 图片重置
+  img {
+    border: 0;
+    vertical-align: middle;
+  }
+
+  // 表单元素重置
+  input, button, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+
+  // 表格重置
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+  }
+
+  th, td {
+    padding: 0;
+    font-weight: normal;
+    text-align: left;
+  }
+}
+
+// ============================================================
+// z-index 层级管理
+// ============================================================
+.fg {
+  // 基础层：表格、表单
+  &-grid-row,
+  &-grid-col,
+  &-cell {
+    z-index: auto;
+  }
+
+  // 弹窗层
+  &-dialog {
+    z-index: 2000;
+  }
+
+  // 下拉层
+  .t-popup,
+  .t-select-dropdown,
+  .t-picker-panel {
+    z-index: 3000;
+  }
+
+  // 消息提示层
+  .t-message {
+    z-index: 9999;
+  }
+}

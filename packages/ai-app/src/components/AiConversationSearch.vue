@@ -8,7 +8,6 @@
  */
 
 import { ref, watch, computed, onBeforeUnmount } from 'vue'
-import { ElInput, ElButton, ElSelect, ElOption, ElDatePicker } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import type { Conversation } from '@/types'
 import type { SearchConversationsParams } from '@/api/aiApi'
@@ -134,7 +133,7 @@ onBeforeUnmount(() => {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       </div>
-      <ElInput
+      <t-input
         v-model="query"
         :class="$style.searchInput"
         placeholder="搜索对话..."
@@ -142,52 +141,41 @@ onBeforeUnmount(() => {
         clearable
         @clear="handleClear"
       />
-      <ElButton
+      <t-button
         :class="[$style.filterToggle, { [$style.filterToggleActive]: hasActiveFilters || filtersExpanded }]"
         title="筛选"
-        link
+        variant="text"
         size="small"
         @click="toggleFilters"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
-      </ElButton>
+      </t-button>
     </div>
 
     <!-- Filter panel -->
     <div v-if="filtersExpanded" :class="$style.filterPanel">
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">来源</label>
-        <ElSelect v-model="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源">
-          <ElOption
-            v-for="opt in SOURCE_OPTIONS"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
+        <t-select v-model="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源" :options="SOURCE_OPTIONS" />
       </div>
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">时间</label>
         <div :class="$style.filterDateRange">
-          <ElDatePicker
+          <t-date-picker
             v-model="startDate"
-            type="date"
             :class="$style.filterDate"
             placeholder="开始日期"
             size="small"
-            value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
           />
           <span :class="$style.filterDateSep">~</span>
-          <ElDatePicker
+          <t-date-picker
             v-model="endDate"
-            type="date"
             :class="$style.filterDate"
             placeholder="结束日期"
             size="small"
-            value-format="YYYY-MM-DD"
             format="YYYY-MM-DD"
           />
         </div>

@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 
 /* ------------------------------------------------------------------ */
-/*  Mock @element-plus/icons-vue                                       */
+/*  Mock tdesign-icons-vue-next                                        */
 /* ------------------------------------------------------------------ */
 
-vi.mock('@element-plus/icons-vue', () => ({
-  Search: { template: '<span />' },
+vi.mock('tdesign-icons-vue-next', () => ({
+  SearchIcon: { template: '<span />' },
 }))
 
 /* ------------------------------------------------------------------ */
@@ -34,22 +34,22 @@ vi.mock('../api/flowApi.ts', () => ({
 import SubProcessSelector from '../components/SubProcessSelector.vue'
 
 /* ------------------------------------------------------------------ */
-/*  Element Plus stubs                                                 */
+/*  TDesign stubs                                                      */
 /* ------------------------------------------------------------------ */
 
-const elStubs = {
-  'el-dialog': {
+const tStubs = {
+  't-dialog': {
     template: `
-      <div v-if="modelValue" class="dialog-mock">
-        <div class="dialog-title">{{ title }}</div>
+      <div v-if="visible" class="dialog-mock">
+        <div class="dialog-title">{{ header }}</div>
         <div class="dialog-body"><slot /></div>
         <div class="dialog-footer"><slot name="footer" /></div>
       </div>
     `,
-    props: ['modelValue', 'title', 'width', 'closeOnClickModal', 'destroyOnClose'],
-    emits: ['update:modelValue', 'close'],
+    props: ['visible', 'header', 'width', 'closeOnOverlayClick', 'destroyOnClose'],
+    emits: ['update:visible', 'close'],
   },
-  'el-input': {
+  't-input': {
     template: `
       <input
         :value="modelValue"
@@ -67,14 +67,10 @@ const elStubs = {
       },
     },
   },
-  'el-button': {
+  't-button': {
     template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
-    props: ['type', 'disabled', 'loading', 'icon', 'size'],
+    props: ['theme', 'disabled', 'loading', 'size', 'variant'],
     emits: ['click'],
-  },
-  'el-icon': {
-    template: '<span><slot /></span>',
-    props: ['size'],
   },
 }
 
@@ -101,7 +97,7 @@ describe('SubProcessSelector', () => {
   function mountSelector(props: Record<string, unknown> = {}) {
     return mount(SubProcessSelector, {
       props,
-      global: { stubs: elStubs },
+      global: { stubs: tStubs },
     })
   }
 

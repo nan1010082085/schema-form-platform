@@ -54,8 +54,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (response.status === 401 && path !== '/auth/login') {
     onUnauthorized?.()
     // 微前端模式下通知宿主处理鉴权，standalone 模式下跳转登录页
-    if (window.__MICRO_APP_ENVIRONMENT__) {
-      (window.microApp as any)?.dispatch({ type: 'auth:unauthorized' })
+    if (window.__POWERED_BY_QIANKUN__) {
+      window.parent.postMessage({ type: 'auth:unauthorized' }, '*')
     } else {
       window.location.href = '/login'
     }

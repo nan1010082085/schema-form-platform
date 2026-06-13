@@ -18,7 +18,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <el-dropdown trigger="click">
+  <t-dropdown trigger="click">
     <div :class="styles.userArea">
       <div :class="styles.userAvatar">
         {{ username?.charAt(0)?.toUpperCase() || 'U' }}
@@ -26,11 +26,11 @@ const emit = defineEmits<{
       <span :class="styles.userName">{{ username || 'Guest' }}</span>
     </div>
     <template #dropdown>
-      <el-dropdown-menu>
+      <t-dropdown-menu>
         <slot name="menu-prefix" />
-        <el-dropdown-item @click="emit('logout')">退出登录</el-dropdown-item>
+        <t-dropdown-item @click="emit('logout')">退出登录</t-dropdown-item>
         <slot name="menu-suffix" />
-      </el-dropdown-menu>
+      </t-dropdown-menu>
     </template>
-  </el-dropdown>
+  </t-dropdown>
 </template>

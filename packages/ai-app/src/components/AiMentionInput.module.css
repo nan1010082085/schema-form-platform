@@ -8,10 +8,10 @@
   top: -20px;
   left: 0;
   font-size: 10px;
-  color: var(--ai-color-primary, #0060A2);
-  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #00d4ff);
+  background: rgba(0, 212, 255, 0.1);
   padding: 1px 6px;
-  border-radius: var(--ai-radius-sm, 3px);
+  border-radius: var(--ai-radius-sm, 6px);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s;
@@ -28,10 +28,10 @@
   left: 0;
   right: 0;
   max-height: 320px;
-  background: var(--ai-bg-white, #FFFFFF);
-  border: 1px solid var(--ai-border-light, #EBEDF3);
+  background: var(--ai-bg-white, #111820);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
   border-radius: var(--ai-radius-md, 8px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.12), 0 4px 16px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -42,39 +42,40 @@
 /* Search input inside panel */
 .panelSearch {
   padding: 8px 10px;
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
   flex-shrink: 0;
 }
 
 .panelInput {
   width: 100%;
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  border-radius: var(--ai-radius-sm, 4px);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
+  border-radius: var(--ai-radius-sm, 6px);
   padding: 6px 8px;
   font-size: 12px;
   font-family: inherit;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
   outline: none;
-  background: var(--ai-bg-gray, #F5F7FA);
+  background: var(--ai-bg-gray, #161d26);
   transition: border-color 0.15s;
 }
 
 .panelInput:focus {
-  border-color: var(--ai-color-primary, #0060A2);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-color: rgba(0, 212, 255, 0.35);
+  background: var(--ai-bg-white, #111820);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.12);
 }
 
 .panelInput::placeholder {
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: var(--ai-text-disabled, rgba(255, 255, 255, 0.2));
 }
 
-/* Textarea — matches design: no border, transparent bg */
+/* Textarea */
 .textarea {
   width: 100%;
   border: none;
   outline: none;
   font-size: 13.5px;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
   font-family: inherit;
   line-height: 1.5;
   min-height: 36px;
@@ -85,7 +86,7 @@
 }
 
 .textarea::placeholder {
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: var(--ai-text-disabled, rgba(255, 255, 255, 0.2));
 }
 
 .textarea:disabled {
@@ -97,7 +98,7 @@
   display: flex;
   gap: 0;
   padding: 0 10px;
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
   flex-shrink: 0;
 }
 
@@ -105,7 +106,7 @@
   padding: 6px 12px;
   font-size: 11px;
   font-weight: 500;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -116,12 +117,12 @@
 }
 
 .tab:hover {
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
 }
 
 .tab.active {
-  color: var(--ai-color-primary, #0060A2);
-  border-bottom-color: var(--ai-color-primary, #0060A2);
+  color: var(--ai-color-primary, #00d4ff);
+  border-bottom-color: var(--ai-color-primary, #00d4ff);
 }
 
 /* Results list */
@@ -136,7 +137,7 @@
 }
 
 .results::-webkit-scrollbar-thumb {
-  background: var(--ai-border-base, #D5DDE3);
+  background: rgba(0, 212, 255, 0.15);
   border-radius: 2px;
 }
 
@@ -146,21 +147,21 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: var(--ai-radius-sm, 4px);
+  border-radius: var(--ai-radius-sm, 6px);
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .resultItem:hover,
 .resultItem.highlighted {
-  background: var(--ai-color-primary-bg, #EEF5FF);
+  background: var(--ai-bg-hover, rgba(0, 212, 255, 0.04));
 }
 
 /* Type icon badge */
 .typeBadge {
   width: 28px;
   height: 28px;
-  border-radius: var(--ai-radius-sm, 4px);
+  border-radius: var(--ai-radius-sm, 6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,18 +171,18 @@
 }
 
 .typeBadge.schema {
-  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
-  color: var(--ai-color-success, #26A036);
+  background: rgba(0, 230, 118, 0.1);
+  color: #00e676;
 }
 
 .typeBadge.flow {
-  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
-  color: var(--ai-color-info, #4581E9);
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff;
 }
 
 .typeBadge.widget {
-  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
-  color: var(--ai-color-warning, #D48806);
+  background: rgba(255, 171, 64, 0.1);
+  color: #ffab40;
 }
 
 /* Result info */
@@ -193,7 +194,7 @@
 .resultName {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,7 +203,7 @@
 
 .resultMeta {
   font-size: 10px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -215,14 +216,14 @@
   text-align: center;
   padding: 24px 0;
   font-size: 12px;
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: var(--ai-text-disabled, rgba(255, 255, 255, 0.2));
 }
 
 .loading {
   text-align: center;
   padding: 16px 0;
   font-size: 12px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
 }
 
 .loadingDot {
@@ -230,7 +231,8 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--ai-color-primary, #0060A2);
+  background: var(--ai-color-primary, #00d4ff);
+  box-shadow: 0 0 4px rgba(0, 212, 255, 0.4);
   margin: 0 2px;
   animation: loadPulse 1.2s ease-in-out infinite;
 }
@@ -252,13 +254,13 @@
   }
 }
 
-/* Mention tag rendered in textarea or message */
+/* Mention tag */
 .mentionTag {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   padding: 1px 6px;
-  border-radius: var(--ai-radius-sm, 3px);
+  border-radius: var(--ai-radius-sm, 6px);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -266,21 +268,21 @@
 }
 
 .mentionTag.schema {
-  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
-  color: var(--ai-color-success, #26A036);
+  background: rgba(0, 230, 118, 0.1);
+  color: #00e676;
 }
 
 .mentionTag.flow {
-  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
-  color: var(--ai-color-info, #4581E9);
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff;
 }
 
 .mentionTag.widget {
-  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
-  color: var(--ai-color-warning, #D48806);
+  background: rgba(255, 171, 64, 0.1);
+  color: #ffab40;
 }
 
-/* Selected mention chips below textarea */
+/* Selected mention chips */
 .mentionChips {
   display: flex;
   flex-wrap: wrap;
@@ -293,12 +295,12 @@
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: var(--ai-radius-sm, 4px);
+  border-radius: var(--ai-radius-sm, 6px);
   font-size: 11px;
   font-weight: 500;
-  background: var(--ai-bg-gray, #F5F7FA);
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  color: var(--ai-text-primary, #333333);
+  background: var(--ai-bg-gray, #161d26);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
 }
 
 .chipIcon {
@@ -311,7 +313,7 @@
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -323,6 +325,6 @@
 }
 
 .chipRemove:hover {
-  background: var(--ai-color-danger-bg, rgba(230, 53, 53, 0.1));
-  color: var(--ai-color-danger, #E63535);
+  background: rgba(255, 82, 82, 0.1);
+  color: var(--ai-color-danger, #ff5252);
 }

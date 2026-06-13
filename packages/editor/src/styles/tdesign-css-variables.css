@@ -1,0 +1,203 @@
+/* ============================================================
+ * TDesign CSS 自定义属性 (CSS Custom Properties)
+ * 基于 TDesign for Web Community 设计系统
+ * ============================================================ */
+
+:root {
+  /* ----------------------------------------------------------
+   * 1. 颜色系统 (Color System)
+   * ---------------------------------------------------------- */
+
+  /* 1.1 品牌色 */
+  --td-brand-color: #0052D9;
+  --td-brand-color-hover: #266FE8;
+  --td-brand-color-active: #0043B2;
+  --td-brand-color-focus: #0052D9;
+  --td-brand-color-light: #E8F0FE;
+  --td-brand-color-lighter: #F2F7FF;
+
+  /* 1.2 功能色 */
+  /* 成功 */
+  --td-success-color: #00A870;
+  --td-success-color-hover: #23C48E;
+  --td-success-color-active: #008C5E;
+  --td-success-color-light: #E8FFF5;
+
+  /* 警告 */
+  --td-warning-color: #ED7B2F;
+  --td-warning-color-hover: #FF9A51;
+  --td-warning-color-active: #DC6A1E;
+  --td-warning-color-light: #FFF3E8;
+
+  /* 错误 */
+  --td-error-color: #E34D59;
+  --td-error-color-hover: #ED6B75;
+  --td-error-color-active: #CD3A44;
+  --td-error-color-light: #FFF0F0;
+
+  /* 信息 */
+  --td-info-color: #0052D9;
+  --td-info-color-light: #E8F0FE;
+
+  /* 1.3 中性色 */
+  /* 文字 */
+  --td-text-primary: #1A1A1A;
+  --td-text-secondary: #555555;
+  --td-text-tertiary: #888888;
+  --td-text-disabled: #BBBBBB;
+  --td-text-anti: #FFFFFF;
+
+  /* 背景 */
+  --td-bg-primary: #FFFFFF;
+  --td-bg-secondary: #F5F5F5;
+  --td-bg-tertiary: #EEEEEE;
+  --td-bg-surface: #FAFAFA;
+  --td-bg-mask: rgba(0, 0, 0, 0.4);
+  --td-bg-hover: #F5F5F5;
+
+  /* 边框 */
+  --td-border-level-1: #E7E7E7;
+  --td-border-level-2: #D9D9D9;
+  --td-border-level-3: #BBBBBB;
+
+  /* ----------------------------------------------------------
+   * 2. 字体系统 (Typography)
+   * ---------------------------------------------------------- */
+
+  /* 2.1 字体族 */
+  --td-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --td-font-family-code: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* 2.2 字体大小 */
+  --td-font-size-xs: 12px;
+  --td-font-size-sm: 12px;
+  --td-font-size-base: 14px;
+  --td-font-size-md: 14px;
+  --td-font-size-lg: 16px;
+  --td-font-size-xl: 18px;
+  --td-font-size-xxl: 20px;
+  --td-font-size-display: 24px;
+
+  /* 2.3 字重 */
+  --td-font-weight-regular: 400;
+  --td-font-weight-medium: 500;
+  --td-font-weight-semibold: 600;
+  --td-font-weight-bold: 700;
+
+  /* 2.4 行高 */
+  --td-line-height-xs: 20px;
+  --td-line-height-sm: 22px;
+  --td-line-height-base: 22px;
+  --td-line-height-lg: 24px;
+  --td-line-height-xl: 28px;
+
+  /* ----------------------------------------------------------
+   * 3. 间距系统 (Spacing)
+   * ---------------------------------------------------------- */
+
+  --td-space-1: 4px;
+  --td-space-2: 8px;
+  --td-space-3: 12px;
+  --td-space-4: 16px;
+  --td-space-5: 20px;
+  --td-space-6: 24px;
+  --td-space-8: 32px;
+  --td-space-10: 40px;
+  --td-space-12: 48px;
+
+  /* 组件间距 */
+  --td-comp-margin-xs: 4px;
+  --td-comp-margin-s: 8px;
+  --td-comp-margin-m: 16px;
+  --td-comp-margin-l: 24px;
+
+  /* ----------------------------------------------------------
+   * 4. 圆角系统 (Border Radius)
+   * ---------------------------------------------------------- */
+
+  --td-radius-none: 0;
+  --td-radius-small: 2px;
+  --td-radius-default: 3px;
+  --td-radius-medium: 6px;
+  --td-radius-large: 9px;
+  --td-radius-round: 999px;
+
+  /* ----------------------------------------------------------
+   * 5. 阴影系统 (Shadow)
+   * ---------------------------------------------------------- */
+
+  --td-shadow-1: 0 1px 10px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --td-shadow-2: 0 3px 10px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --td-shadow-3: 0 6px 30px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  /* ----------------------------------------------------------
+   * 6. 图标尺寸 (Icon Size)
+   * ---------------------------------------------------------- */
+
+  --td-icon-size-xs: 12px;
+  --td-icon-size-sm: 14px;
+  --td-icon-size-default: 16px;
+  --td-icon-size-md: 20px;
+  --td-icon-size-lg: 24px;
+
+  /* ----------------------------------------------------------
+   * 7. 动画规范 (Animation)
+   * ---------------------------------------------------------- */
+
+  /* 过渡时间 */
+  --td-anim-duration-base: 0.2s;
+  --td-anim-duration-slow: 0.3s;
+  --td-anim-duration-fast: 0.1s;
+
+  /* 缓动函数 */
+  --td-anim-ease-default: cubic-bezier(0.2, 0, 0, 1);
+  --td-anim-ease-in: cubic-bezier(0.2, 0, 1, 0.8);
+  --td-anim-ease-out: cubic-bezier(0, 0.2, 0.8, 1);
+
+  /* ----------------------------------------------------------
+   * 8. 响应式断点 (Breakpoints)
+   * ---------------------------------------------------------- */
+
+  --td-breakpoint-xs: 320px;
+  --td-breakpoint-sm: 576px;
+  --td-breakpoint-md: 768px;
+  --td-breakpoint-lg: 992px;
+  --td-breakpoint-xl: 1200px;
+  --td-breakpoint-xxl: 1600px;
+
+  /* ----------------------------------------------------------
+   * 9. 组件规范 (Component Specs)
+   * ---------------------------------------------------------- */
+
+  /* 按钮 */
+  --td-btn-height-sm: 24px;
+  --td-btn-height-md: 32px;
+  --td-btn-height-lg: 40px;
+  --td-btn-padding-sm: 0 12px;
+  --td-btn-padding-md: 0 16px;
+  --td-btn-padding-lg: 0 24px;
+  --td-btn-icon-gap: 8px;
+  --td-btn-group-gap: 12px;
+
+  /* 输入框 */
+  --td-input-height-sm: 24px;
+  --td-input-height-md: 32px;
+  --td-input-height-lg: 40px;
+  --td-input-padding-sm: 0 8px;
+  --td-input-padding-md: 0 12px;
+  --td-input-padding-lg: 0 16px;
+
+  /* 表格 */
+  --td-table-header-bg: #FAFAFA;
+  --td-table-header-font-weight: 600;
+  --td-table-row-height: 48px;
+  --td-table-cell-padding: 12px 16px;
+  --td-table-stripe-bg: #FAFAFA;
+
+  /* 对话框 */
+  --td-dialog-min-width: 400px;
+  --td-dialog-max-width: 800px;
+  --td-dialog-header-height: 56px;
+  --td-dialog-padding: 24px;
+  --td-dialog-border-radius: 6px;
+}

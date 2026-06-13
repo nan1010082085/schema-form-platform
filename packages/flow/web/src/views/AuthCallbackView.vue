@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.callback">
-    <el-icon :class="$style.spinner" :size="32"><Loading /></el-icon>
+    <LoadingIcon :class="$style.spinner" :size="32" />
     <p :class="$style.text">正在完成登录...</p>
   </div>
 </template>
@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Loading } from '@element-plus/icons-vue'
+import { LoadingIcon } from 'tdesign-icons-vue-next'
 import { SSOClient } from '@schema-form/shared-utils/sso'
 
 const router = useRouter()
@@ -60,7 +60,7 @@ onMounted(async () => {
 }
 
 .text {
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   font-size: 14px;
 }
 </style>

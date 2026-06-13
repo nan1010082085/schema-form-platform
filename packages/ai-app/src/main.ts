@@ -1,40 +1,32 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import '@schema-form/shared-styles/tokens.css'
-import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
-import { createChildApp, resolveToken } from '@schema-form/micro-app/child'
-import { initMicroApp, installStyleGuard } from '@schema-form/micro-app/host'
-import { applyThemeInline, installThemeWatchdog, AI_THEME_VARS } from '@schema-form/micro-app'
+import { createQiankunApp } from '@schema-form/shared-qiankun/createQiankunApp'
+import { useQiankun } from '@schema-form/shared-qiankun'
+import zhCN from 'tdesign-vue-next/esm/locale/zh_CN'
 
 import App from './App.vue'
 import { createAiRouter } from './router'
 import { setTokenProvider } from './api/aiApi'
 
-// 注入 token 提供者：优先 localStorage（standalone），其次 micro-app data（微前端）
-setTokenProvider(() => resolveToken())
-
-// 独立运行时初始化 micro-app 引擎（作为子应用嵌入宿主时宿主已初始化）
-if (window.__MICRO_APP_ENVIRONMENT__) {
-  installStyleGuard()
-} else {
-  initMicroApp()
-}
-
-applyThemeInline(AI_THEME_VARS)
-installThemeWatchdog(AI_THEME_VARS)
-
-let router: ReturnType<typeof createAiRouter>
-
-createChildApp({
-  createApp: () => {
-    router = createAiRouter()
-    const app = createApp(App)
-    app.use(createPinia())
-    app.use(router)
-    app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
-    return app
-  },
-  getRouter: () => router,
+// 设置 token 提供者：从 qiankun 全局状态读取
+const { getGlobalState } = useQiankun()
+setTokenProvider(() => {
+  const state = getGlobalState()
+  return (state.token as string) || localStorage.getItem('sfp_access_token')
 })
+
+const router = createAiRouter()
+
+const { bootstrap, mount, unmount } = createQiankunApp({
+  name: 'ai',
+  rootComponent: App,
+  plugins: [router],
+  tdesignConfig: {
+    locale: zhCN,
+    globalConfig: { size: 'medium' },
+  },
+  getToken: () => {
+    const state = getGlobalState()
+    return (state.token as string) || null
+  },
+})
+
+export { bootstrap, mount, unmount }

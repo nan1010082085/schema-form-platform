@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import type { Node } from '@vue-flow/core'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import SectionToggle from '@/components/nodePanels/SectionToggle.vue'
 import FieldRow from '@/components/nodePanels/FieldRow.vue'
 import HintText from '@/components/nodePanels/HintText.vue'
@@ -79,27 +79,27 @@ function updateFlowNode(index: number, key: keyof FlowNodeConfig, value: string)
   <!-- 流程配置 -->
   <SectionToggle title="流程配置" :count="1">
     <FieldRow label="流程定义">
-      <el-select
-        :model-value="flowDefinitionId"
+      <t-select
+        :value="flowDefinitionId"
         filterable
         placeholder="选择子流程定义"
         @change="onFlowSelect"
       >
-        <el-option
+        <t-option
           v-for="def in flowDefinitions"
           :key="def.id"
           :label="def.name"
           :value="def.id"
         >
           <span>{{ def.name }}</span>
-          <el-tag
+          <t-tag
             v-if="def.status === 'published'"
             size="small"
-            type="success"
+            theme="success"
             :class="styles.statusTag"
-          >已发布</el-tag>
-        </el-option>
-      </el-select>
+          >已发布</t-tag>
+        </t-option>
+      </t-select>
     </FieldRow>
     <HintText>选择一个已发布的流程定义作为子流程执行</HintText>
   </SectionToggle>
@@ -113,33 +113,31 @@ function updateFlowNode(index: number, key: keyof FlowNodeConfig, value: string)
     >
       <div :class="styles.nodeCardHeader">
         <span :class="styles.nodeCardTitle">节点 {{ index + 1 }}</span>
-        <el-icon
+        <DeleteIcon
           :class="styles.deleteIcon"
           @click="removeFlowNode(index)"
-        >
-          <Delete />
-        </el-icon>
+        />
       </div>
 
       <FieldRow label="节点引用">
-        <el-input
-          :model-value="node.nodeRef"
+        <t-input
+          :value="node.nodeRef"
           placeholder="目标节点 ID"
           @input="updateFlowNode(index, 'nodeRef', $event)"
         />
       </FieldRow>
 
       <FieldRow label="节点标签">
-        <el-input
-          :model-value="node.label"
+        <t-input
+          :value="node.label"
           placeholder="显示名称"
           @input="updateFlowNode(index, 'label', $event)"
         />
       </FieldRow>
 
       <FieldRow label="输入映射">
-        <el-input
-          :model-value="node.inputMapping"
+        <t-input
+          :value="node.inputMapping"
           type="textarea"
           :rows="2"
           placeholder='例: {"key": "${variables.value}"}'
@@ -148,13 +146,13 @@ function updateFlowNode(index: number, key: keyof FlowNodeConfig, value: string)
       </FieldRow>
     </div>
 
-    <el-button
+    <t-button
       :class="styles.addNodeBtn"
-      :icon="Plus"
+      :icon="AddIcon"
       @click="addFlowNode"
     >
       添加节点
-    </el-button>
+    </t-button>
 
     <HintText v-if="flowNodes.length === 0">
       配置子流程中需要调用的节点及其输入映射关系

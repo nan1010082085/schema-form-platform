@@ -111,15 +111,15 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
   <!-- 节点配置 -->
   <SectionToggle title="节点配置" :count="7">
     <FieldRow label="指派方式">
-      <el-radio-group
+      <t-radio-group
         :model-value="assigneeType"
 
         @change="update('assigneeType', $event)"
       >
-        <el-radio value="user">指定用户</el-radio>
-        <el-radio value="role">指定角色</el-radio>
-        <el-radio value="expression">表达式</el-radio>
-      </el-radio-group>
+        <t-radio value="user">指定用户</t-radio>
+        <t-radio value="role">指定角色</t-radio>
+        <t-radio value="expression">表达式</t-radio>
+      </t-radio-group>
     </FieldRow>
 
     <FieldRow v-if="assigneeType === 'user'" label="审批用户">
@@ -140,7 +140,7 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
     </FieldRow>
 
     <FieldRow v-if="assigneeType === 'expression'" label="审批人表达式">
-      <el-input
+      <t-input
         :model-value="(node.data?.assignee as string) ?? ''"
         placeholder="例: ${variables.manager}"
 
@@ -149,30 +149,29 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
     </FieldRow>
 
     <FieldRow label="审批模式">
-      <el-radio-group
+      <t-radio-group
         :model-value="approvalMode"
 
         @change="update('approvalMode', $event)"
       >
-        <el-radio value="single">单人审批</el-radio>
-        <el-radio value="countersign">会签</el-radio>
-        <el-radio value="or-sign">或签</el-radio>
-      </el-radio-group>
+        <t-radio value="single">单人审批</t-radio>
+        <t-radio value="countersign">会签</t-radio>
+        <t-radio value="or-sign">或签</t-radio>
+      </t-radio-group>
     </FieldRow>
 
     <FieldRow v-if="approvalMode === 'countersign'" label="最少通过人数">
-      <el-input-number
+      <t-input-number
         :model-value="(node.data?.minApprovalCount as number | undefined) ?? undefined"
         :min="1"
 
-        controls-position="right"
         @change="update('minApprovalCount', $event)"
       />
     </FieldRow>
 
     <template v-if="approvalMode === 'countersign' || approvalMode === 'or-sign'">
       <FieldRow label="审批人集合变量">
-        <el-input
+        <t-input
           :model-value="(node.data?.assigneeCollection as string) ?? ''"
           placeholder="例: approvers"
 
@@ -183,60 +182,60 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
     </template>
 
     <FieldRow label="驳回策略">
-      <el-radio-group
+      <t-radio-group
         :model-value="rejectPolicy"
 
         @change="update('rejectPolicy', $event)"
       >
-        <el-radio value="follow-global">跟随流程</el-radio>
-        <el-radio value="reject-on-all">全部驳回才驳回</el-radio>
-        <el-radio value="reject-on-any">一票驳回即驳回</el-radio>
-      </el-radio-group>
+        <t-radio value="follow-global">跟随流程</t-radio>
+        <t-radio value="reject-on-all">全部驳回才驳回</t-radio>
+        <t-radio value="reject-on-any">一票驳回即驳回</t-radio>
+      </t-radio-group>
     </FieldRow>
   </SectionToggle>
 
   <!-- 高级配置 -->
   <SectionToggle title="高级配置">
     <FieldRow label="关联表单">
-      <el-checkbox
+      <t-checkbox
         :model-value="showFormFields"
         @change="toggleForm"
-      >启用</el-checkbox>
+      >启用</t-checkbox>
     </FieldRow>
 
     <template v-if="showFormFields">
       <FieldRow label="选择表单">
-        <el-select
+        <t-select
           :model-value="(node.data?.formPublishId as string) ?? ''"
           filterable
 
           placeholder="搜索并选择已发布的表单"
           @change="onFormSelect"
         >
-          <el-option
+          <t-option
             v-for="form in publishedForms"
             :key="form.id"
             :label="form.name"
             :value="form.publishId"
           />
-        </el-select>
+        </t-select>
       </FieldRow>
 
       <FieldRow label="表单模式">
-        <el-radio-group
+        <t-radio-group
           :model-value="(node.data?.formMode as string) ?? 'edit'"
 
           @change="update('formMode', $event)"
         >
-          <el-radio value="editable">可编辑</el-radio>
-          <el-radio value="readonly">只读</el-radio>
-          <el-radio value="partial">部分编辑</el-radio>
-        </el-radio-group>
+          <t-radio value="editable">可编辑</t-radio>
+          <t-radio value="readonly">只读</t-radio>
+          <t-radio value="partial">部分编辑</t-radio>
+        </t-radio-group>
       </FieldRow>
 
       <template v-if="(node.data?.formMode as string) === 'partial'">
         <FieldRow label="可编辑字段">
-          <el-select
+          <t-select
             :model-value="(node.data?.editableFields as string[]) ?? []"
             multiple
             filterable
@@ -252,7 +251,7 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       </template>
 
       <FieldRow label="数据变量名">
-        <el-input
+        <t-input
           :model-value="(node.data?.formVariable as string) ?? ''"
           placeholder="例: formData"
 
@@ -262,7 +261,7 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       <div :class="styles.hint">表单数据写入流程变量的名称</div>
 
       <FieldRow label="宿主方法">
-        <el-select
+        <t-select
           :model-value="(node.data?.hostMethods as string[]) ?? ['setValues', 'getValues', 'validate']"
           multiple
           collapse-tags
@@ -270,11 +269,11 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
           placeholder="选择宿主方法"
           @change="update('hostMethods', $event)"
         >
-          <el-option value="setValues" label="setValues" />
-          <el-option value="getValues" label="getValues" />
-          <el-option value="validate" label="validate" />
-          <el-option value="submit" label="submit" />
-        </el-select>
+          <t-option value="setValues" label="setValues" />
+          <t-option value="getValues" label="getValues" />
+          <t-option value="validate" label="validate" />
+          <t-option value="submit" label="submit" />
+        </t-select>
       </FieldRow>
       <div :class="styles.hint">允许宿主调用的表单方法</div>
     </template>
@@ -283,20 +282,20 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
   <!-- 多实例 -->
   <SectionToggle title="多实例">
     <FieldRow label="多实例类型">
-      <el-select
+      <t-select
         :model-value="multiInstanceType"
 
         @change="onMultiInstanceTypeChange"
       >
-        <el-option label="无" value="none" />
-        <el-option label="顺序" value="sequential" />
-        <el-option label="并行" value="parallel" />
-      </el-select>
+        <t-option label="无" value="none" />
+        <t-option label="顺序" value="sequential" />
+        <t-option label="并行" value="parallel" />
+      </t-select>
     </FieldRow>
 
     <template v-if="multiInstanceType !== 'none'">
       <FieldRow label="集合变量">
-        <el-input
+        <t-input
           :model-value="(node.data?.multiInstance?.collection as string) ?? ''"
           placeholder="流程变量中的集合名称"
 
@@ -305,7 +304,7 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       </FieldRow>
 
       <FieldRow label="元素变量">
-        <el-input
+        <t-input
           :model-value="(node.data?.multiInstance?.elementVariable as string) ?? ''"
           placeholder="遍历元素的变量名"
 
@@ -314,7 +313,7 @@ const showFormFields = computed(() => props.node.data?.formSchemaId !== undefine
       </FieldRow>
 
       <FieldRow label="完成条件">
-        <el-input
+        <t-input
           :model-value="(node.data?.multiInstance?.completionCondition as string) ?? ''"
           placeholder="例: ${nrOfCompletedInstances / nrOfInstances >= 0.5}"
 

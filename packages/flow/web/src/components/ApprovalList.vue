@@ -2,7 +2,7 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">审批记录</h3>
-      <el-button size="small" @click="refresh">刷新</el-button>
+      <t-button size="small" @click="refresh">刷新</t-button>
     </div>
 
     <div v-loading="loading" :class="$style.list">
@@ -13,9 +13,9 @@
       >
         <div :class="$style.itemHeader">
           <span :class="$style.nodeName">{{ task.nodeName }}</span>
-          <el-tag :type="getStatusType(task.status)" size="small">
+          <t-tag :theme="getStatusTheme(task.status)" size="small" variant="light">
             {{ getStatusLabel(task.status) }}
-          </el-tag>
+          </t-tag>
         </div>
 
         <div :class="$style.itemBody">
@@ -25,9 +25,9 @@
           </div>
           <div v-if="task.outcome" :class="$style.outcome">
             <span :class="$style.label">结果：</span>
-            <el-tag :type="getOutcomeType(task.outcome)" size="small">
+            <t-tag :theme="getOutcomeTheme(task.outcome)" size="small" variant="light">
               {{ getOutcomeLabel(task.outcome) }}
-            </el-tag>
+            </t-tag>
           </div>
           <div v-if="task.updatedAt" :class="$style.time">
             <span :class="$style.label">时间：</span>
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <el-empty v-if="!loading && tasks.length === 0" description="暂无审批记录" />
+      <t-empty v-if="!loading && tasks.length === 0" description="暂无审批记录" />
     </div>
   </div>
 </template>
@@ -89,14 +89,14 @@ function refresh() {
   fetchApprovalList()
 }
 
-function getStatusType(status: string) {
+function getStatusTheme(status: string) {
   const map: Record<string, string> = {
     pending: 'warning',
-    claimed: 'info',
+    claimed: 'default',
     completed: 'success',
     cancelled: 'danger',
   }
-  return map[status] || 'info'
+  return map[status] || 'default'
 }
 
 function getStatusLabel(status: string) {
@@ -109,13 +109,13 @@ function getStatusLabel(status: string) {
   return map[status] || status
 }
 
-function getOutcomeType(outcome: string) {
+function getOutcomeTheme(outcome: string) {
   const map: Record<string, string> = {
     approved: 'success',
     rejected: 'danger',
     submitted: 'primary',
   }
-  return map[outcome] || 'info'
+  return map[outcome] || 'default'
 }
 
 function getOutcomeLabel(outcome: string) {
@@ -147,9 +147,9 @@ onMounted(() => {
 
 <style module>
 .container {
-  background: var(--el-bg-color);
+  background: var(--bg-color);
   border-radius: 8px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
 }
 
 .header {
@@ -157,7 +157,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--border-color-lighter);
 }
 
 .title {
@@ -173,7 +173,7 @@ onMounted(() => {
 
 .item {
   padding: 12px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
   border-radius: 8px;
   margin-bottom: 12px;
 }
@@ -183,15 +183,15 @@ onMounted(() => {
 }
 
 .item.pending {
-  border-left: 3px solid var(--el-color-warning);
+  border-left: 3px solid var(--color-warning);
 }
 
 .item.completed {
-  border-left: 3px solid var(--el-color-success);
+  border-left: 3px solid var(--color-success);
 }
 
 .item.cancelled {
-  border-left: 3px solid var(--el-color-danger);
+  border-left: 3px solid var(--color-danger);
 }
 
 .itemHeader {
@@ -203,7 +203,7 @@ onMounted(() => {
 
 .nodeName {
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .itemBody {
@@ -211,7 +211,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .assignee,
@@ -223,7 +223,7 @@ onMounted(() => {
 }
 
 .label {
-  color: var(--el-text-color-placeholder);
+  color: var(--text-color-placeholder);
   min-width: 60px;
 }
 </style>

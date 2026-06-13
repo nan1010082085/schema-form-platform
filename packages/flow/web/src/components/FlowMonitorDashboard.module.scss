@@ -65,52 +65,52 @@
 }
 
 .statTotal {
-  color: var(--el-color-primary, #409eff);
+  color: var(--color-primary, #409eff);
 }
 
 .statRunning {
-  color: var(--el-color-info, #909399);
+  color: var(--color-info, #909399);
 }
 
 .statCompleted {
-  color: var(--el-color-success, #67c23a);
+  color: var(--color-success, #67c23a);
 }
 
 .statFailed {
-  color: var(--el-color-danger, #f56c6c);
+  color: var(--color-danger, #f56c6c);
 }
 
 .statTerminated {
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--text-color-secondary, #909399);
 }
 
 .statSuspended {
-  color: var(--el-color-warning, #e6a23c);
+  color: var(--color-warning, #e6a23c);
 }
 
 .statToday {
-  color: var(--el-color-warning, #e6a23c);
+  color: var(--color-warning, #e6a23c);
 }
 
 .statDuration {
   font-size: 20px;
-  color: var(--el-color-success, #67c23a);
+  color: var(--color-success, #67c23a);
 }
 
 .statLabel {
   margin-top: var(--spacing-xs, 4px);
-  font-size: var(--el-font-size-base, 14px);
-  color: var(--el-text-color-secondary, #909399);
+  font-size: var(--font-size-base, 14px);
+  color: var(--text-color-secondary, #909399);
 }
 
 .statPct {
   margin-top: 2px;
   font-size: 12px;
-  color: var(--el-text-color-placeholder, #c0c4cc);
+  color: var(--text-color-placeholder, #c0c4cc);
 }
 
 .statPctFailed {
-  color: var(--el-color-danger, #f56c6c);
+  color: var(--color-danger, #f56c6c);
   font-weight: 500;
 }
 

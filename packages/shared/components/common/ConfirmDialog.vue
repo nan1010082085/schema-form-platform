@@ -8,22 +8,16 @@
     @confirm="handleConfirm"
   >
     <div :class="$style.content">
-      <el-icon v-if="type === 'warning'" :class="$style.icon" color="var(--el-color-warning)">
-        <WarningFilled />
-      </el-icon>
-      <el-icon v-else-if="type === 'danger'" :class="$style.icon" color="var(--el-color-danger)">
-        <CircleCloseFilled />
-      </el-icon>
-      <el-icon v-else :class="$style.icon" color="var(--el-color-primary)">
-        <InfoFilled />
-      </el-icon>
+      <InfoCircleFilledIcon v-if="type === 'warning'" :class="$style.icon" :style="{ color: 'var(--td-warning-color)' }" />
+      <ErrorCircleFilledIcon v-else-if="type === 'danger'" :class="$style.icon" :style="{ color: 'var(--td-error-color)' }" />
+      <InfoCircleFilledIcon v-else :class="$style.icon" :style="{ color: 'var(--td-brand-color)' }" />
       <p :class="$style.message">{{ message }}</p>
     </div>
   </AppDialog>
 </template>
 
 <script setup lang="ts">
-import { WarningFilled, CircleCloseFilled, InfoFilled } from '@element-plus/icons-vue'
+import { InfoCircleFilledIcon, ErrorCircleFilledIcon } from 'tdesign-icons-vue-next'
 import AppDialog from './AppDialog.vue'
 
 withDefaults(defineProps<{
@@ -64,7 +58,7 @@ function handleConfirm() {
 
 .message {
   margin: 0;
-  color: var(--el-text-color-regular);
+  color: var(--td-text-color-secondary);
   line-height: 1.6;
 }
 </style>

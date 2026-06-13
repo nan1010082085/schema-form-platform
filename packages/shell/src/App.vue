@@ -44,15 +44,4 @@ body {
   flex-direction: column;
 }
 
-/* Element Plus overrides scoped to shell */
-.shell-root .el-input,
-.shell-root .el-select,
-.shell-root .el-date-editor,
-.shell-root .el-input-number {
-  width: 100%;
-}
-
-.shell-root .el-form-item {
-  margin-bottom: 0;
-}
 </style>

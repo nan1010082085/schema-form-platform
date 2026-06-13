@@ -40,8 +40,8 @@
 .handle {
   width: 10px;
   height: 10px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-color-primary);
+  background: var(--bg-color);
+  border: 1px solid var(--color-primary);
   transition: all 0.15s ease;
 }
 
@@ -68,10 +68,10 @@
   font-size: 10px;
   line-height: 1.3;
   padding: 1px 5px;
-  border-radius: var(--el-border-radius-base);
-  background: var(--el-color-success-light-9);
-  color: var(--el-color-success-dark-2);
-  border: 1px solid var(--el-color-success-light-5);
+  border-radius: var(--radius-md);
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -79,9 +79,9 @@
 }
 
 .condDefault {
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  border-color: var(--el-color-primary-light-5);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary-light);
 }
 
 .condLabel {

@@ -7,7 +7,7 @@ declare module '*.vue' {
 }
 
 interface Window {
-  __MICRO_APP_ENVIRONMENT__?: boolean
+  __POWERED_BY_QIANKUN__?: boolean
   __FLOW_FORM_HOST__?: {
     onResponse?: (data: unknown) => void
     onEvent?: (data: unknown) => void

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElInput, ElButton } from 'element-plus'
+/* TDesign migration: components registered globally */
 import type { RagSearchResult } from '@/types'
 
 export interface AiRagSearchProps {
@@ -67,7 +67,7 @@ function getScoreClass(score: number): string {
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
-      <ElInput
+      <t-input
         v-model="searchQuery"
         :class="$style.searchInput"
         placeholder="智能匹配 Schema，如：用户注册表单..."
@@ -85,15 +85,15 @@ function getScoreClass(score: number): string {
         :class="$style.contextChip"
       >
         <span :class="$style.chipName">{{ item.name }}</span>
-        <ElButton
+        <t-button
           :class="$style.chipRemove"
           title="移除"
-          link
+          variant="text"
           size="small"
           @click="handleRemove(item.id)"
         >
           &times;
-        </ElButton>
+        </t-button>
       </span>
     </div>
 
@@ -142,7 +142,7 @@ function getScoreClass(score: number): string {
     <!-- Footer -->
     <div :class="$style.panelFooter">
       <span>{{ selectedContext.length > 0 ? `已选 ${selectedContext.length} 个 Schema 作为上下文` : '选择 Schema 注入对话上下文' }}</span>
-      <ElButton :class="$style.closeBtn" @click="emit('close')">关闭</ElButton>
+      <t-button :class="$style.closeBtn" @click="emit('close')">关闭</t-button>
     </div>
   </div>
 </template>

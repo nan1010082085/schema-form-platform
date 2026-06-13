@@ -1,49 +1,32 @@
 <script setup lang="ts">
 /**
- * MicroAppLoader -- wraps <micro-app> with loading/error overlays
+ * MicroAppLoader -- qiankun micro-app container
  *
- * micro-app must always render (cannot be display:none), otherwise it
- * cannot initialize. Loading/error states use overlay layers instead.
+ * Provides the #micro-container div where qiankun mounts child apps.
+ * Shows loading state while qiankun is initializing.
  */
-import { computed } from 'vue'
-import { useMicroApp } from '@schema-form/micro-app/host'
-import type { MicroAppConfig } from '@schema-form/micro-app/types'
+import { ref, onMounted } from 'vue'
 
-const props = defineProps<{
-  config: MicroAppConfig
-}>()
+const isReady = ref(false)
 
-const { status, error } = useMicroApp(props.config)
-
-const isLoading = computed(() => status.value === 'loading')
-const isError = computed(() => status.value === 'error')
+onMounted(() => {
+  // Qiankun will mount to #micro-container when route matches
+  isReady.value = true
+})
 </script>
 
 <template>
   <div :class="$style.container">
-    <!-- Loading overlay -->
-    <div v-if="isLoading" :class="$style.overlay">
+    <!-- Loading overlay (shown briefly during initial mount) -->
+    <div v-if="!isReady" :class="$style.overlay">
       <div :class="$style.spinner">
         <div :class="$style.spinnerInner"></div>
       </div>
       <div :class="$style.loadingText">Loading...</div>
     </div>
 
-    <!-- Error overlay -->
-    <div v-if="isError" :class="$style.overlay">
-      <div :class="$style.errorIcon">!</div>
-      <div :class="$style.errorText">Failed to load</div>
-      <div :class="$style.errorMessage">{{ error?.message }}</div>
-    </div>
-
-    <!-- Child app always renders -->
-    <micro-app
-      :name="config.name"
-      :url="config.url"
-      :data="config.data ?? {}"
-      destroy
-      iframe
-    />
+    <!-- Qiankun mounts child apps here -->
+    <div id="micro-container" :class="$style.microContainer"></div>
   </div>
 </template>
 
@@ -94,29 +77,8 @@ const isError = computed(() => status.value === 'error')
   color: var(--text-color-regular, #666);
 }
 
-.errorIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--color-danger, #f56c6c);
-  color: var(--text-color-inverse, #fff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-.errorText {
-  font-size: 16px;
-  color: var(--text-color-primary, #333);
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.errorMessage {
-  font-size: 13px;
-  color: var(--text-color-secondary, #999);
+.microContainer {
+  width: 100%;
+  height: 100%;
 }
 </style>

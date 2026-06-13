@@ -2,22 +2,19 @@
   <div :class="styles.wrapper">
     <div v-if="!publishId" :class="styles.empty">未绑定表单</div>
     <div v-else :class="styles.container">
-      <micro-app
+      <iframe
+        ref="iframeRef"
         :key="publishId"
-        :name="appName"
-        :url="microAppUrl"
-        :data="microAppData"
-        iframe
-        @created="onCreated"
-        @unmount="onUnmount"
-        @error="onError"
+        :src="iframeSrc"
+        :class="styles.iframe"
+        @load="onIframeLoad"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import styles from './MicroFormEmbed.module.scss'
 
 const props = defineProps<{
@@ -39,25 +36,20 @@ const emit = defineEmits<{
   validationError: [errors: unknown]
 }>()
 
-const appName = computed(() => `flow-form-${props.publishId ?? 'none'}`)
+const iframeRef = ref<HTMLIFrameElement>()
 
 const editorBaseUrl = computed(() => {
   const base = import.meta.env.VITE_EDITOR_BASE_URL as string | undefined
   return base || window.location.origin
 })
 
-const microAppUrl = computed(() => {
+const iframeSrc = computed(() => {
   if (!props.publishId) return ''
-  return `${editorBaseUrl.value}/view?id=${props.publishId}`
+  const url = new URL(`${editorBaseUrl.value}/view`)
+  url.searchParams.set('id', props.publishId)
+  url.searchParams.set('mode', props.mode ?? 'edit')
+  return url.toString()
 })
-
-const microAppData = computed(() => ({
-  mode: props.mode ?? 'edit',
-  hostMethods: props.hostMethods ?? ['setValues', 'getValues', 'validate'],
-  initialData: props.initialData,
-  editableFields: props.editableFields,
-  readonlyFields: props.readonlyFields,
-}))
 
 // Pending request callbacks for command-response pattern
 type PendingRequest = {
@@ -70,16 +62,9 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Find the child iframe created by micro-app
-function getChildIframe(): HTMLIFrameElement | null {
-  const el = document.querySelector(`micro-app[name="${appName.value}"]`)
-  return el?.querySelector('iframe') as HTMLIFrameElement | null
-}
-
 // Send command to child iframe via postMessage
 function sendToChild(msg: Record<string, unknown>) {
-  const iframe = getChildIframe()
-  iframe?.contentWindow?.postMessage(msg, '*')
+  iframeRef.value?.contentWindow?.postMessage(msg, '*')
 }
 
 // Host message handler — receives responses from child via postMessage
@@ -115,7 +100,7 @@ function handleHostMessage(event: MessageEvent) {
   }
 }
 
-function onCreated() {
+function onIframeLoad() {
   window.addEventListener('message', handleHostMessage)
   emit('ready')
 
@@ -139,14 +124,6 @@ function onCreated() {
       })
     }
   })
-}
-
-function onUnmount() {
-  window.removeEventListener('message', handleHostMessage)
-}
-
-function onError(err: unknown) {
-  console.error('[MicroFormEmbed] micro-app error:', err)
 }
 
 function sendCommand(type: string, payload?: unknown): Promise<unknown> {

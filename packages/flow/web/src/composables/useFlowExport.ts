@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { MessagePlugin } from 'tdesign-vue-next'
 import { flowApi } from '../api/flowApi.js'
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -19,9 +19,9 @@ export function useFlowExport() {
     try {
       const blob = await flowApi.exportInstanceCsv(instanceId)
       triggerDownload(blob, `approval-logs-${instanceId}.csv`)
-      ElMessage.success('导出成功')
+      MessagePlugin.success('导出成功')
     } catch {
-      ElMessage.error('导出失败')
+      MessagePlugin.error('导出失败')
     } finally {
       exporting.value = false
     }
@@ -29,7 +29,7 @@ export function useFlowExport() {
 
   async function exportBatch(instanceIds: string[]) {
     if (instanceIds.length === 0) {
-      ElMessage.warning('请选择要导出的实例')
+      MessagePlugin.warning('请选择要导出的实例')
       return
     }
     exporting.value = true
@@ -39,9 +39,9 @@ export function useFlowExport() {
         const blob = await flowApi.exportInstanceCsv(id)
         triggerDownload(blob, `approval-logs-${id}.csv`)
       }
-      ElMessage.success(`已导出 ${instanceIds.length} 个实例`)
+      MessagePlugin.success(`已导出 ${instanceIds.length} 个实例`)
     } catch {
-      ElMessage.error('批量导出失败')
+      MessagePlugin.error('批量导出失败')
     } finally {
       exporting.value = false
     }
@@ -53,9 +53,9 @@ export function useFlowExport() {
       const blob = await flowApi.exportApprovalLogs(params)
       const ext = params.format === 'json' ? 'json' : 'csv'
       triggerDownload(blob, `approval-logs.${ext}`)
-      ElMessage.success('导出成功')
+      MessagePlugin.success('导出成功')
     } catch {
-      ElMessage.error('导出失败')
+      MessagePlugin.error('导出失败')
     } finally {
       exporting.value = false
     }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Connection, CircleCheck } from '@element-plus/icons-vue'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { AddIcon, SearchIcon, LinkIcon, CheckCircleFilledIcon } from 'tdesign-icons-vue-next'
 
 interface ModelParameters {
   temperature: number
@@ -87,13 +87,6 @@ function updateModelSuggestions() {
   modelSuggestions.value = DEFAULT_MODELS[form.value.provider] ?? []
 }
 
-function fetchModelSuggestions(query: string, cb: (v: Array<{ value: string }>) => void) {
-  const results = modelSuggestions.value
-    .filter(m => !query || m.toLowerCase().includes(query.toLowerCase()))
-    .map(m => ({ value: m }))
-  cb(results)
-}
-
 async function fetchConfigs() {
   loading.value = true
   try {
@@ -148,11 +141,11 @@ function openEdit(config: ModelConfig) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    ElMessage.warning('请输入配置名称')
+    MessagePlugin.warning('请输入配置名称')
     return
   }
   if (!form.value.model.trim()) {
-    ElMessage.warning('请输入模型名称')
+    MessagePlugin.warning('请输入模型名称')
     return
   }
 
@@ -172,29 +165,36 @@ async function handleSubmit() {
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/model-configs', body)
-    ElMessage.success('模型配置创建成功')
+    MessagePlugin.success('模型配置创建成功')
   } else {
     await apiClient.put(`/model-configs/${editingId.value}`, body)
-    ElMessage.success('模型配置更新成功')
+    MessagePlugin.success('模型配置更新成功')
   }
   dialogVisible.value = false
   fetchConfigs()
 }
 
 async function handleDelete(config: ModelConfig) {
-  await ElMessageBox.confirm(
-    `确认删除模型配置「${config.name}」（${PROVIDER_LABELS[config.provider]} / ${config.model}）？`,
-    '删除确认',
-    { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
-  )
-  await apiClient.delete(`/model-configs/${config.id}`)
-  ElMessage.success('模型配置已删除')
-  fetchConfigs()
+  const confirmDia = DialogPlugin.confirm({
+    header: '删除确认',
+    body: `确认删除模型配置「${config.name}」（${PROVIDER_LABELS[config.provider]} / ${config.model}）？`,
+    confirmBtn: '删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await apiClient.delete(`/model-configs/${config.id}`)
+      MessagePlugin.success('模型配置已删除')
+      fetchConfigs()
+      confirmDia.destroy()
+    },
+    onClose: () => {
+      confirmDia.destroy()
+    },
+  })
 }
 
 async function handleSetDefault(config: ModelConfig) {
   await apiClient.put(`/model-configs/${config.id}`, { isDefault: true })
-  ElMessage.success(`已将「${config.name}」设为 ${PROVIDER_LABELS[config.provider]} 默认模型`)
+  MessagePlugin.success(`已将「${config.name}」设为 ${PROVIDER_LABELS[config.provider]} 默认模型`)
   fetchConfigs()
 }
 
@@ -248,137 +248,136 @@ onMounted(fetchConfigs)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
-        <el-input
+        <t-input
           v-model="searchQuery"
           placeholder="搜索配置名称"
-          :prefix-icon="Search"
+          :prefix-icon="SearchIcon"
           clearable
-          style="width: 240px"
+          :style="{ width: '240px' }"
         />
-        <el-select v-model="providerFilter" placeholder="Provider" clearable style="width: 140px">
-          <el-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
-        </el-select>
+        <t-select v-model="providerFilter" placeholder="Provider" clearable :style="{ width: '140px' }">
+          <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
+        </t-select>
       </div>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新增配置</el-button>
+      <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增配置</t-button>
     </div>
 
-    <el-table :data="configs" v-loading="loading" :class="$style.table">
-      <el-table-column prop="name" label="配置名称" min-width="160" show-overflow-tooltip />
-      <el-table-column label="Provider" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag size="small" type="info" disable-transitions>
+    <t-table :data="configs" :loading="loading" :class="$style.table">
+      <t-col prop="name" label="配置名称" :min-width="160" />
+      <t-col label="Provider" :width="120" align="center">
+        <template #cell="{ row }">
+          <t-tag size="small" theme="default">
             {{ PROVIDER_LABELS[row.provider] ?? row.provider }}
-          </el-tag>
+          </t-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="model" label="模型" min-width="180" show-overflow-tooltip />
-      <el-table-column label="默认" width="80" align="center">
-        <template #default="{ row }">
-          <el-tag v-if="row.isDefault" size="small" type="success" disable-transitions>默认</el-tag>
+      </t-col>
+      <t-col prop="model" label="模型" :min-width="180" />
+      <t-col label="默认" :width="80" align="center">
+        <template #cell="{ row }">
+          <t-tag v-if="row.isDefault" size="small" theme="success">默认</t-tag>
         </template>
-      </el-table-column>
-      <el-table-column label="参数" min-width="200">
-        <template #default="{ row }">
+      </t-col>
+      <t-col label="参数" :min-width="200">
+        <template #cell="{ row }">
           <span :class="$style.paramText">
             T={{ row.parameters?.temperature ?? '-' }}, Max={{ row.parameters?.maxTokens ?? '-' }}, P={{ row.parameters?.topP ?? '-' }}
           </span>
         </template>
-      </el-table-column>
-      <el-table-column label="操作" width="260" fixed="right">
-        <template #default="{ row }">
+      </t-col>
+      <t-col label="操作" :width="260" fixed="right">
+        <template #cell="{ row }">
           <div :class="$style.actions">
-            <el-button text size="small" :icon="Connection" @click="openTestDialog(row)">测试</el-button>
-            <el-button
+            <t-button variant="text" size="small" :icon="LinkIcon" @click="openTestDialog(row)">测试</t-button>
+            <t-button
               v-if="!row.isDefault"
-              text
+              variant="text"
               size="small"
-              :icon="CircleCheck"
+              :icon="CheckCircleFilledIcon"
               @click="handleSetDefault(row)"
             >
               设为默认
-            </el-button>
-            <el-button text size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button text size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </t-button>
+            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
           </div>
         </template>
-      </el-table-column>
-    </el-table>
+      </t-col>
+    </t-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">
-      <el-pagination
-        layout="total, prev, pager, next"
+      <t-pagination
         :total="total"
         :page-size="pageSize"
-        :current-page="page"
+        :current="page"
         @current-change="handlePageChange"
       />
     </div>
 
     <!-- 创建/编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogMode === 'create' ? '新增模型配置' : '编辑模型配置'"
+    <t-dialog
+      v-model:visible="dialogVisible"
+      :header="dialogMode === 'create' ? '新增模型配置' : '编辑模型配置'"
       width="560px"
       destroy-on-close
     >
-      <el-form label-width="100px">
-        <el-form-item label="配置名称">
-          <el-input v-model="form.name" placeholder="如 DeepSeek Chat 生产环境" />
-        </el-form-item>
-        <el-form-item label="Provider">
-          <el-select v-model="form.provider" style="width: 100%">
-            <el-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="模型">
-          <el-autocomplete
+      <t-form label-width="100px">
+        <t-form-item label="配置名称">
+          <t-input v-model="form.name" placeholder="如 DeepSeek Chat 生产环境" />
+        </t-form-item>
+        <t-form-item label="Provider">
+          <t-select v-model="form.provider" :style="{ width: '100%' }">
+            <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
+          </t-select>
+        </t-form-item>
+        <t-form-item label="模型">
+          <t-auto-complete
             v-model="form.model"
-            :fetch-suggestions="fetchModelSuggestions"
+            :options="modelSuggestions.map(m => ({ value: m }))"
             placeholder="如 deepseek-chat"
-            style="width: 100%"
+            :style="{ width: '100%' }"
           />
-        </el-form-item>
-        <el-form-item label="API Key">
-          <el-input v-model="form.apiKey" type="password" show-password placeholder="留空表示不需要认证" />
-        </el-form-item>
-        <el-form-item label="Base URL">
-          <el-input v-model="form.baseUrl" placeholder="留空使用默认地址" />
-        </el-form-item>
-        <el-form-item label="Temperature">
-          <el-slider v-model="form.temperature" :min="0" :max="2" :step="0.1" show-input />
-        </el-form-item>
-        <el-form-item label="Max Tokens">
-          <el-input-number v-model="form.maxTokens" :min="1" :max="128000" :step="256" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="Top P">
-          <el-slider v-model="form.topP" :min="0" :max="1" :step="0.05" show-input />
-        </el-form-item>
-        <el-form-item label="设为默认">
-          <el-switch v-model="form.isDefault" />
-        </el-form-item>
-      </el-form>
+        </t-form-item>
+        <t-form-item label="API Key">
+          <t-input v-model="form.apiKey" type="password" placeholder="留空表示不需要认证" />
+        </t-form-item>
+        <t-form-item label="Base URL">
+          <t-input v-model="form.baseUrl" placeholder="留空使用默认地址" />
+        </t-form-item>
+        <t-form-item label="Temperature">
+          <t-slider v-model="form.temperature" :min="0" :max="2" :step="0.1" :show-input="true" />
+        </t-form-item>
+        <t-form-item label="Max Tokens">
+          <t-input-number v-model="form.maxTokens" :min="1" :max="128000" :step="256" :style="{ width: '100%' }" />
+        </t-form-item>
+        <t-form-item label="Top P">
+          <t-slider v-model="form.topP" :min="0" :max="1" :step="0.05" :show-input="true" />
+        </t-form-item>
+        <t-form-item label="设为默认">
+          <t-switch v-model="form.isDefault" />
+        </t-form-item>
+      </t-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <t-button @click="dialogVisible = false">取消</t-button>
+        <t-button theme="primary" @click="handleSubmit">确定</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
 
     <!-- 测试连接对话框 -->
-    <el-dialog
-      v-model="testDialogVisible"
-      title="测试模型连接"
+    <t-dialog
+      v-model:visible="testDialogVisible"
+      header="测试模型连接"
       width="480px"
       destroy-on-close
     >
       <div :class="$style.testBody">
-        <el-button
-          type="primary"
+        <t-button
+          theme="primary"
           :loading="testLoading"
           @click="handleTestConnection"
           :class="$style.testBtn"
         >
           {{ testLoading ? '测试中...' : '发送测试请求' }}
-        </el-button>
+        </t-button>
 
         <div v-if="testResult" :class="$style.testSuccess">
           <div :class="$style.testLabel">模型回复：</div>
@@ -394,9 +393,9 @@ onMounted(fetchConfigs)
         </div>
       </div>
       <template #footer>
-        <el-button @click="testDialogVisible = false">关闭</el-button>
+        <t-button @click="testDialogVisible = false">关闭</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>
 
@@ -426,7 +425,7 @@ onMounted(fetchConfigs)
 
 .paramText {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--td-text-color-secondary);
   font-family: monospace;
 }
 
@@ -454,21 +453,21 @@ onMounted(fetchConfigs)
 
 .testSuccess {
   padding: 12px;
-  background: var(--el-color-success-light-9);
-  border: 1px solid var(--el-color-success-light-5);
+  background: var(--td-success-color-1);
+  border: 1px solid var(--td-success-color-3);
   border-radius: 6px;
 }
 
 .testLabel {
   font-size: 13px;
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--td-text-color-primary);
   margin-bottom: 8px;
 }
 
 .testReply {
   font-size: 14px;
-  color: var(--el-text-color-regular);
+  color: var(--td-text-color-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;
@@ -479,15 +478,15 @@ onMounted(fetchConfigs)
   gap: 16px;
   margin-top: 8px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--td-text-color-placeholder);
 }
 
 .testError {
   padding: 12px;
-  background: var(--el-color-danger-light-9);
-  border: 1px solid var(--el-color-danger-light-5);
+  background: var(--td-error-color-1);
+  border: 1px solid var(--td-error-color-3);
   border-radius: 6px;
-  color: var(--el-color-danger);
+  color: var(--td-error-color);
   font-size: 13px;
 }
 </style>

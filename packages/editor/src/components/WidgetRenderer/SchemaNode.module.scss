@@ -1,0 +1,37 @@
+.nodeWrapper {
+  box-sizing: border-box;
+  overflow: visible;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 强制所有直接子元素（widget 根元素）填满容器 */
+.nodeWrapper > * {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 容器内部子部件的渲染容器 */
+.childrenLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.nodeWrapperEdit {
+  outline: 1px dashed rgba(0, 212, 255, 0.15);
+  outline-offset: -1px;
+
+  &:hover {
+    outline-color: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.08);
+  }
+}
+
+/* 交互式容器：wrapper 作为 elementFromPoint 的回退目标，接收合成 click 事件 */
+.interactiveContainer {
+  pointer-events: auto;
+}

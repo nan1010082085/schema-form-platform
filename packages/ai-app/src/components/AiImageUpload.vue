@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage, ElButton } from 'element-plus'
+import { message } from '@schema-form/shared-utils/message'
 import { analyzeImage } from '@/api/aiApi'
 
 const emit = defineEmits<{
@@ -43,13 +43,13 @@ function handleDragOver(event: DragEvent): void {
 function processFile(file: File): void {
   // Validate file type
   if (!ALLOWED_TYPES.includes(file.type)) {
-    ElMessage.error('只支持 PNG、JPG、GIF、WebP 格式')
+    message.error('只支持 PNG、JPG、GIF、WebP 格式')
     return
   }
 
   // Validate file size
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-    ElMessage.error(`图片大小不能超过 ${MAX_SIZE_MB}MB`)
+    message.error(`图片大小不能超过 ${MAX_SIZE_MB}MB`)
     return
   }
 
@@ -71,7 +71,7 @@ async function uploadAndAnalyze(base64Image: string): Promise<void> {
     emit('analyzed', result.description)
   } catch (err) {
     const msg = err instanceof Error ? err.message : '图片分析失败'
-    ElMessage.error(msg)
+    message.error(msg)
   } finally {
     loading.value = false
   }
@@ -117,18 +117,18 @@ function clearPreview(): void {
         <div :class="$style.spinner" />
         <span :class="$style.loadingText">正在识别表单结构...</span>
       </div>
-      <ElButton
+      <t-button
         v-if="!loading"
         :class="$style.clearBtn"
         title="清除"
-        link
+        variant="text"
         @click="clearPreview"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
-      </ElButton>
+      </t-button>
     </div>
   </div>
 </template>

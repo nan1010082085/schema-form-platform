@@ -78,30 +78,30 @@ function onSave() {
 </script>
 
 <template>
-  <el-dialog
-    title="流程设置"
-    :model-value="visible"
+  <t-dialog
+    header="流程设置"
+    :visible="visible"
     width="560px"
-    :close-on-click-modal="false"
+    :close-on-overlay-click="false"
     @close="onCancel"
   >
     <div :class="styles.settingsForm">
       <div :class="styles.field">
         <label :class="styles.fieldLabel">流程名称</label>
-        <el-input v-model="form.name" placeholder="输入流程名称" />
+        <t-input v-model="form.name" placeholder="输入流程名称" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">描述</label>
-        <el-input v-model="form.description" type="textarea" :rows="3" placeholder="流程描述" />
+        <t-input v-model="form.description" type="textarea" :rows="3" placeholder="流程描述" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">分类</label>
-        <el-input v-model="form.category" placeholder="输入流程分类" />
+        <t-input v-model="form.category" placeholder="输入流程分类" />
       </div>
 
-      <el-divider />
+      <t-divider />
 
       <div :class="styles.sectionHeader">流程权限</div>
 
@@ -133,20 +133,20 @@ function onSave() {
         />
       </div>
 
-      <el-divider />
+      <t-divider />
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">默认驳回策略</label>
-        <el-radio-group v-model="form.defaultRejectPolicy">
-          <el-radio value="reject-on-all">全部驳回才驳回</el-radio>
-          <el-radio value="reject-on-any">一票驳回即驳回</el-radio>
-        </el-radio-group>
+        <t-radio-group v-model="form.defaultRejectPolicy">
+          <t-radio value="reject-on-all">全部驳回才驳回</t-radio>
+          <t-radio value="reject-on-any">一票驳回即驳回</t-radio>
+        </t-radio-group>
       </div>
     </div>
 
     <template #footer>
-      <el-button @click="onCancel">取消</el-button>
-      <el-button type="primary" @click="onSave">保存</el-button>
+      <t-button @click="onCancel">取消</t-button>
+      <t-button theme="primary" @click="onSave">保存</t-button>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>

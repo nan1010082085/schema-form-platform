@@ -31,18 +31,18 @@ function updateServiceConfig(key: string, value: unknown) {
 <template>
   <SectionToggle title="节点配置" :count="4">
     <FieldRow label="服务类型">
-      <el-radio-group
+      <t-radio-group
         :model-value="serviceType"
 
         @change="update('serviceType', $event)"
       >
-        <el-radio value="http">HTTP 请求</el-radio>
-        <el-radio value="function">函数调用</el-radio>
-      </el-radio-group>
+        <t-radio value="http">HTTP 请求</t-radio>
+        <t-radio value="function">函数调用</t-radio>
+      </t-radio-group>
     </FieldRow>
 
     <FieldRow label="消息类型">
-      <el-input
+      <t-input
         :model-value="messageType"
         placeholder="例: notification、email"
 
@@ -51,7 +51,7 @@ function updateServiceConfig(key: string, value: unknown) {
     </FieldRow>
 
     <FieldRow label="目标地址">
-      <el-input
+      <t-input
         :model-value="targetUrl"
         placeholder="https://api.example.com/send"
 
@@ -60,7 +60,7 @@ function updateServiceConfig(key: string, value: unknown) {
     </FieldRow>
 
     <FieldRow label="消息内容模板" textarea>
-      <el-input
+      <t-input
         type="textarea"
         :model-value="messageTemplate"
         :rows="4"

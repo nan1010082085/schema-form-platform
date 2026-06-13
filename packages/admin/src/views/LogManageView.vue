@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { SearchIcon, RefreshIcon } from 'tdesign-icons-vue-next'
 
 interface AuditLog {
   id: string
@@ -60,15 +60,15 @@ const ACTION_LABELS: Record<string, string> = {
   other: '其他',
 }
 
-const ACTION_TYPES: Record<string, string> = {
+const ACTION_THEMES: Record<string, string> = {
   create: 'success',
   update: 'primary',
   delete: 'danger',
-  login: 'info',
-  logout: 'info',
+  login: 'default',
+  logout: 'default',
   export: 'warning',
   import: 'warning',
-  other: '',
+  other: 'default',
 }
 
 async function fetchLogs() {
@@ -142,146 +142,143 @@ onMounted(() => {
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <div :class="$style.filters">
-        <el-input
+        <t-input
           v-model="searchQuery"
           placeholder="搜索用户/模块/目标"
-          :prefix-icon="Search"
+          :prefix-icon="SearchIcon"
           clearable
-          style="width: 200px"
+          :style="{ width: '200px' }"
         />
-        <el-input
+        <t-input
           v-model="usernameFilter"
           placeholder="用户名"
           clearable
-          style="width: 120px"
+          :style="{ width: '120px' }"
         />
-        <el-select v-model="moduleFilter" placeholder="模块" clearable style="width: 120px">
-          <el-option v-for="m in modules" :key="m" :label="m" :value="m" />
-        </el-select>
-        <el-select v-model="actionFilter" placeholder="操作类型" clearable style="width: 110px">
-          <el-option label="新增" value="create" />
-          <el-option label="修改" value="update" />
-          <el-option label="删除" value="delete" />
-          <el-option label="登录" value="login" />
-          <el-option label="登出" value="logout" />
-          <el-option label="导出" value="export" />
-          <el-option label="导入" value="import" />
-          <el-option label="其他" value="other" />
-        </el-select>
-        <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 100px">
-          <el-option label="成功" value="success" />
-          <el-option label="失败" value="fail" />
-        </el-select>
-        <el-date-picker
+        <t-select v-model="moduleFilter" placeholder="模块" clearable :style="{ width: '120px' }">
+          <t-option v-for="m in modules" :key="m" :label="m" :value="m" />
+        </t-select>
+        <t-select v-model="actionFilter" placeholder="操作类型" clearable :style="{ width: '110px' }">
+          <t-option label="新增" value="create" />
+          <t-option label="修改" value="update" />
+          <t-option label="删除" value="delete" />
+          <t-option label="登录" value="login" />
+          <t-option label="登出" value="logout" />
+          <t-option label="导出" value="export" />
+          <t-option label="导入" value="import" />
+          <t-option label="其他" value="other" />
+        </t-select>
+        <t-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
+          <t-option label="成功" value="success" />
+          <t-option label="失败" value="fail" />
+        </t-select>
+        <t-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-          value-format="YYYY-MM-DD"
-          style="width: 240px"
+          :style="{ width: '240px' }"
         />
-        <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+        <t-button :icon="RefreshIcon" @click="handleReset">重置</t-button>
       </div>
     </div>
 
-    <el-table :data="logs" v-loading="loading" :class="$style.table">
-      <el-table-column prop="username" label="操作人" width="100" show-overflow-tooltip />
-      <el-table-column prop="module" label="模块" width="100">
-        <template #default="{ row }">
-          <el-tag size="small" type="info" disable-transitions>{{ row.module }}</el-tag>
+    <t-table :data="logs" :loading="loading" :class="$style.table">
+      <t-col prop="username" label="操作人" :width="100" />
+      <t-col prop="module" label="模块" :width="100">
+        <template #cell="{ row }">
+          <t-tag size="small" theme="default">{{ row.module }}</t-tag>
         </template>
-      </el-table-column>
-      <el-table-column label="操作类型" width="90" align="center">
-        <template #default="{ row }">
-          <el-tag :type="(ACTION_TYPES[row.action] as '' | 'success' | 'primary' | 'danger' | 'info' | 'warning')" size="small" disable-transitions>
+      </t-col>
+      <t-col label="操作类型" :width="90" align="center">
+        <template #cell="{ row }">
+          <t-tag :theme="(ACTION_THEMES[row.action] as any)" size="small">
             {{ ACTION_LABELS[row.action] || row.action }}
-          </el-tag>
+          </t-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="targetName" label="操作目标" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="method" label="请求方法" width="80" align="center">
-        <template #default="{ row }">
-          <el-tag
-            :type="row.method === 'DELETE' ? 'danger' : row.method === 'POST' ? 'success' : row.method === 'PUT' ? 'warning' : 'info'"
+      </t-col>
+      <t-col prop="targetName" label="操作目标" :min-width="140" />
+      <t-col prop="method" label="请求方法" :width="80" align="center">
+        <template #cell="{ row }">
+          <t-tag
+            :theme="row.method === 'DELETE' ? 'danger' : row.method === 'POST' ? 'success' : row.method === 'PUT' ? 'warning' : 'default'"
             size="small"
-            disable-transitions
           >
             {{ row.method }}
-          </el-tag>
+          </t-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="url" label="请求路径" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="ip" label="IP 地址" width="130" />
-      <el-table-column label="状态" width="70" align="center">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 'success' ? 'success' : 'danger'" size="small" disable-transitions>
+      </t-col>
+      <t-col prop="url" label="请求路径" :min-width="200" />
+      <t-col prop="ip" label="IP 地址" :width="130" />
+      <t-col label="状态" :width="70" align="center">
+        <template #cell="{ row }">
+          <t-tag :theme="row.status === 'success' ? 'success' : 'danger'" size="small">
             {{ row.status === 'success' ? '成功' : '失败' }}
-          </el-tag>
+          </t-tag>
         </template>
-      </el-table-column>
-      <el-table-column label="耗时" width="80" align="center">
-        <template #default="{ row }">
+      </t-col>
+      <t-col label="耗时" :width="80" align="center">
+        <template #cell="{ row }">
           {{ formatDuration(row.duration) }}
         </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="操作时间" width="170">
-        <template #default="{ row }">
+      </t-col>
+      <t-col prop="createdAt" label="操作时间" :width="170">
+        <template #cell="{ row }">
           {{ new Date(row.createdAt).toLocaleString() }}
         </template>
-      </el-table-column>
-      <el-table-column label="操作" width="80" fixed="right">
-        <template #default="{ row }">
-          <el-button text size="small" @click="showDetail(row)">详情</el-button>
+      </t-col>
+      <t-col label="操作" :width="80" fixed="right">
+        <template #cell="{ row }">
+          <t-button variant="text" size="small" @click="showDetail(row)">详情</t-button>
         </template>
-      </el-table-column>
-    </el-table>
+      </t-col>
+    </t-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">
-      <el-pagination
-        layout="total, prev, pager, next"
+      <t-pagination
         :total="total"
         :page-size="pageSize"
-        :current-page="page"
+        :current="page"
         @current-change="handlePageChange"
       />
     </div>
 
     <!-- 详情对话框 -->
-    <el-dialog
-      v-model="detailVisible"
-      title="操作日志详情"
+    <t-dialog
+      v-model:visible="detailVisible"
+      header="操作日志详情"
       width="640px"
       destroy-on-close
     >
       <template v-if="detailData">
-        <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="操作人">{{ detailData.username }}</el-descriptions-item>
-          <el-descriptions-item label="模块">{{ detailData.module }}</el-descriptions-item>
-          <el-descriptions-item label="操作类型">{{ ACTION_LABELS[detailData.action] || detailData.action }}</el-descriptions-item>
-          <el-descriptions-item label="操作目标">{{ detailData.targetName || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="请求方法">{{ detailData.method }}</el-descriptions-item>
-          <el-descriptions-item label="请求路径" :span="2">{{ detailData.url }}</el-descriptions-item>
-          <el-descriptions-item label="IP 地址">{{ detailData.ip }}</el-descriptions-item>
-          <el-descriptions-item label="耗时">{{ formatDuration(detailData.duration) }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="detailData.status === 'success' ? 'success' : 'danger'" size="small">
+        <t-descriptions :column="2" bordered size="small">
+          <t-descriptions-item label="操作人">{{ detailData.username }}</t-descriptions-item>
+          <t-descriptions-item label="模块">{{ detailData.module }}</t-descriptions-item>
+          <t-descriptions-item label="操作类型">{{ ACTION_LABELS[detailData.action] || detailData.action }}</t-descriptions-item>
+          <t-descriptions-item label="操作目标">{{ detailData.targetName || '-' }}</t-descriptions-item>
+          <t-descriptions-item label="请求方法">{{ detailData.method }}</t-descriptions-item>
+          <t-descriptions-item label="请求路径" :span="2">{{ detailData.url }}</t-descriptions-item>
+          <t-descriptions-item label="IP 地址">{{ detailData.ip }}</t-descriptions-item>
+          <t-descriptions-item label="耗时">{{ formatDuration(detailData.duration) }}</t-descriptions-item>
+          <t-descriptions-item label="状态">
+            <t-tag :theme="detailData.status === 'success' ? 'success' : 'danger'" size="small">
               {{ detailData.status === 'success' ? '成功' : '失败' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="操作时间">{{ new Date(detailData.createdAt).toLocaleString() }}</el-descriptions-item>
-          <el-descriptions-item v-if="detailData.errorMsg" label="错误信息" :span="2">
-            <span style="color: var(--el-color-danger)">{{ detailData.errorMsg }}</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="User-Agent" :span="2">{{ detailData.userAgent || '-' }}</el-descriptions-item>
-        </el-descriptions>
+            </t-tag>
+          </t-descriptions-item>
+          <t-descriptions-item label="操作时间">{{ new Date(detailData.createdAt).toLocaleString() }}</t-descriptions-item>
+          <t-descriptions-item v-if="detailData.errorMsg" label="错误信息" :span="2">
+            <span style="color: var(--td-error-color)">{{ detailData.errorMsg }}</span>
+          </t-descriptions-item>
+          <t-descriptions-item label="User-Agent" :span="2">{{ detailData.userAgent || '-' }}</t-descriptions-item>
+        </t-descriptions>
 
         <div v-if="detailData.requestBody" :class="$style.requestBodySection">
           <h4 :class="$style.requestBodyTitle">请求体</h4>
           <pre :class="$style.requestBody">{{ JSON.stringify(detailData.requestBody, null, 2) }}</pre>
         </div>
       </template>
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>
 
@@ -321,12 +318,12 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   margin: 0 0 8px;
-  color: var(--el-text-color-primary);
+  color: var(--td-text-color-primary);
 }
 
 .requestBody {
-  background: var(--el-fill-color-light);
-  border: 1px solid var(--el-border-color-lighter);
+  background: var(--td-bg-color-container-hover);
+  border: 1px solid var(--td-border-level-2-color);
   border-radius: 4px;
   padding: 12px;
   font-size: 12px;

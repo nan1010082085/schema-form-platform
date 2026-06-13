@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { SearchIcon } from 'tdesign-icons-vue-next'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
 import type { TaskInstance } from '../stores/flowInstance.js'
 import type { RejectTargetNode, BatchResult } from '@schema-form/flow-shared'
@@ -87,7 +87,7 @@ function handleTabChange() {
 // Backend filters by status, so store.tasks already contains the correct filtered set
 const displayTasks = computed(() => store.tasks)
 
-function taskStatusType(status: string) {
+function taskStatusTheme(status: string) {
   const map: Record<string, string> = {
     pending: 'warning',
     claimed: 'primary',
@@ -95,7 +95,7 @@ function taskStatusType(status: string) {
     approved: 'success',
     rejected: 'danger',
   }
-  return map[status] ?? 'info'
+  return map[status] ?? 'default'
 }
 
 function taskStatusLabel(status: string) {
@@ -115,18 +115,25 @@ function formatDate(dateStr: string) {
 
 async function handleClaim(taskId: string) {
   await store.claimTask(taskId)
-  ElMessage.success('认领成功')
+  MessagePlugin.success('认领成功')
   fetchTasks()
 }
 
 async function handleComplete(taskId: string) {
-  await ElMessageBox.confirm('确认完成此任务？', '确认', {
-    confirmButtonText: '确认完成',
-    cancelButtonText: '取消',
-    type: 'info',
+  const confirmed = await new Promise<boolean>((resolve) => {
+    const dialog = DialogPlugin.confirm({
+      header: '确认',
+      body: '确认完成此任务？',
+      confirmBtn: '确认完成',
+      cancelBtn: '取消',
+      theme: 'info',
+      onConfirm: () => { dialog.destroy(); resolve(true) },
+      onCancel: () => { dialog.destroy(); resolve(false) },
+    })
   })
+  if (!confirmed) return
   await store.completeTask(taskId, {}, 'completed')
-  ElMessage.success('任务已完成')
+  MessagePlugin.success('任务已完成')
   fetchTasks()
 }
 
@@ -138,13 +145,13 @@ function openDelegate(taskId: string) {
 
 async function confirmDelegate() {
   if (delegateTarget.value.length === 0) {
-    ElMessage.warning('请选择委派目标')
+    MessagePlugin.warning('请选择委派目标')
     return
   }
   await flowApi.delegateTask(delegateTaskId.value, { targetUserId: delegateTarget.value[0] })
   delegateVisible.value = false
   await store.fetchMyTasks()
-  ElMessage.success('委派成功')
+  MessagePlugin.success('委派成功')
 }
 
 async function openReject(taskId: string) {
@@ -156,11 +163,11 @@ async function openReject(taskId: string) {
   try {
     rejectTargets.value = await store.getRejectTargets(taskId)
     if (rejectTargets.value.length === 0) {
-      ElMessage.warning('没有可驳回的目标节点')
+      MessagePlugin.warning('没有可驳回的目标节点')
       rejectVisible.value = false
     }
   } catch {
-    ElMessage.error('获取驳回目标失败')
+    MessagePlugin.error('获取驳回目标失败')
     rejectVisible.value = false
   } finally {
     rejectLoading.value = false
@@ -169,7 +176,7 @@ async function openReject(taskId: string) {
 
 async function confirmReject() {
   if (!rejectTargetNodeId.value) {
-    ElMessage.warning('请选择驳回目标节点')
+    MessagePlugin.warning('请选择驳回目标节点')
     return
   }
   rejectLoading.value = true
@@ -177,9 +184,9 @@ async function confirmReject() {
     await store.rejectToNode(rejectTaskId.value, rejectTargetNodeId.value, rejectComment.value || undefined)
     rejectVisible.value = false
     await store.fetchMyTasks()
-    ElMessage.success('已驳回到指定节点')
+    MessagePlugin.success('已驳回到指定节点')
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : '驳回失败')
+    MessagePlugin.error(e instanceof Error ? e.message : '驳回失败')
   } finally {
     rejectLoading.value = false
   }
@@ -187,23 +194,30 @@ async function confirmReject() {
 
 // ── Batch operations ──
 
-function handleSelectionChange(rows: TaskInstance[]) {
-  selectedTaskIds.value = rows.map((r) => r.id)
+function handleSelectionChange(keys: string[]) {
+  selectedTaskIds.value = keys
 }
 
 async function confirmBatchApprove() {
-  await ElMessageBox.confirm(
-    `确认批量通过已选的 ${selectedTaskIds.value.length} 个任务？`,
-    '批量通过',
-    { confirmButtonText: '确认通过', cancelButtonText: '取消', type: 'info' },
-  )
+  const confirmed = await new Promise<boolean>((resolve) => {
+    const dialog = DialogPlugin.confirm({
+      header: '批量通过',
+      body: `确认批量通过已选的 ${selectedTaskIds.value.length} 个任务？`,
+      confirmBtn: '确认通过',
+      cancelBtn: '取消',
+      theme: 'info',
+      onConfirm: () => { dialog.destroy(); resolve(true) },
+      onCancel: () => { dialog.destroy(); resolve(false) },
+    })
+  })
+  if (!confirmed) return
   batchLoading.value = true
   try {
     batchResult.value = await store.batchApprove(selectedTaskIds.value)
     selectedTaskIds.value = []
     batchResultVisible.value = true
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : '批量通过失败')
+    MessagePlugin.error(e instanceof Error ? e.message : '批量通过失败')
   } finally {
     batchLoading.value = false
   }
@@ -225,7 +239,7 @@ async function confirmBatchReject() {
     batchRejectVisible.value = false
     batchResultVisible.value = true
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : '批量驳回失败')
+    MessagePlugin.error(e instanceof Error ? e.message : '批量驳回失败')
   } finally {
     batchLoading.value = false
   }
@@ -258,8 +272,6 @@ function resolveFormMode(task: TaskInstance): 'edit' | 'view' | 'partial' {
 function resolveReadonlyFields(task: TaskInstance): string[] | undefined {
   if (task.formMode !== 'partial') return undefined
   if (task.readonlyFields?.length) return task.readonlyFields
-  // editableFields 配置时，需要从表单 schema 中排除这些字段
-  // 由于此处无法获取完整 schema，通过 MicroFormEmbed 传入 editableFields 让渲染器处理
   return undefined
 }
 
@@ -283,12 +295,10 @@ async function selectTask(task: TaskInstance) {
         const widgets = Array.isArray(schema.json) ? schema.json : []
         const defaults = crossNodeData.extractSchemaDefaults(widgets as Array<Record<string, unknown>>)
         if (crossNodeData.hasCrossNodeRefs(defaults)) {
-          // Store defaults for later use in mergeWithTaskData
           formSchemaDefaults.value = defaults
         }
       }
     } catch {
-      // Schema fetch failed — continue without defaults
       formSchemaDefaults.value = {}
     }
   }
@@ -312,10 +322,10 @@ async function handleFormSubmit() {
     activeTask.value = null
     crossNodeData.upstreamData.value = {}
     formSchemaDefaults.value = {}
-    ElMessage.success('任务已完成')
+    MessagePlugin.success('任务已完成')
     fetchTasks()
   } catch {
-    ElMessage.error('提交失败')
+    MessagePlugin.error('提交失败')
   } finally {
     completing.value = false
   }
@@ -326,14 +336,24 @@ async function handleFormValidate() {
   try {
     const valid = await formRef.value.validate()
     if (valid) {
-      ElMessage.success('表单校验通过')
+      MessagePlugin.success('表单校验通过')
     } else {
-      ElMessage.warning('表单校验未通过')
+      MessagePlugin.warning('表单校验未通过')
     }
   } catch {
-    ElMessage.warning('表单校验未通过')
+    MessagePlugin.warning('表单校验未通过')
   }
 }
+
+const taskTableColumns = [
+  { colKey: 'row-select', type: 'selection', width: 50 },
+  { colKey: 'nodeName', title: '任务名称', minWidth: 160 },
+  { colKey: 'instanceId', title: '流程实例', minWidth: 200, ellipsis: true },
+  { colKey: 'status', title: '状态', width: 100 },
+  { colKey: 'priority', title: '优先级', width: 80 },
+  { colKey: 'createdAt', title: '创建时间', width: 180 },
+  { colKey: 'actions', title: '操作', width: 300, fixed: 'right' },
+]
 </script>
 
 <template>
@@ -342,18 +362,18 @@ async function handleFormValidate() {
       <h2>我的任务</h2>
     </div>
 
-    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-      <el-tab-pane label="待处理" name="pending" />
-      <el-tab-pane label="已认领" name="claimed" />
-      <el-tab-pane label="已完成" name="completed" />
-    </el-tabs>
+    <t-tabs v-model="activeTab" @change="handleTabChange">
+      <t-tab-panel label="待处理" value="pending" />
+      <t-tab-panel label="已认领" value="claimed" />
+      <t-tab-panel label="已完成" value="completed" />
+    </t-tabs>
 
     <!-- Search bar -->
     <div :class="styles.searchBar">
-      <el-input
+      <t-input
         v-model="searchQuery"
         placeholder="搜索任务名称"
-        :prefix-icon="Search"
+        :prefix-icon="SearchIcon"
         clearable
         :class="styles.searchInput"
         @clear="handleSearch"
@@ -364,101 +384,93 @@ async function handleFormValidate() {
     <!-- Batch action toolbar -->
     <div v-if="selectedTaskIds.length > 0" :class="styles.batchToolbar">
       <span :class="styles.batchInfo">已选 {{ selectedTaskIds.length }} 项</span>
-      <el-button
-        type="success"
+      <t-button
+        theme="success"
         size="small"
         :loading="batchLoading"
         @click="confirmBatchApprove"
       >
         批量通过
-      </el-button>
-      <el-button
-        type="danger"
+      </t-button>
+      <t-button
+        theme="danger"
         size="small"
         :loading="batchLoading"
         @click="openBatchReject"
       >
         批量驳回
-      </el-button>
-      <el-button size="small" text @click="selectedTaskIds = []">取消选择</el-button>
+      </t-button>
+      <t-button size="small" variant="text" @click="selectedTaskIds = []">取消选择</t-button>
     </div>
 
-    <el-table
-      ref="tableRef"
+    <t-table
       :data="displayTasks"
-      v-loading="store.loading"
+      :loading="store.loading"
       stripe
-      @selection-change="handleSelectionChange"
+      :columns="taskTableColumns"
+      row-key="id"
+      :selected-row-keys="selectedTaskIds"
+      @select-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="nodeName" label="任务名称" min-width="160" />
-      <el-table-column prop="instanceId" label="流程实例" min-width="200" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-link type="primary" @click="viewInstance(row.instanceId)">
-            {{ row.instanceId }}
-          </el-link>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="taskStatusType(row.status)" size="small">
-            {{ taskStatusLabel(row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="priority" label="优先级" width="80" />
-      <el-table-column label="创建时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.createdAt) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
-        <template #default="{ row }">
-          <el-button
-            v-if="row.status === 'pending'"
-            size="small"
-            type="primary"
-            @click="handleClaim(row.id)"
-          >
-            签收
-          </el-button>
-          <el-button
-            v-if="row.status === 'claimed'"
-            size="small"
-            type="success"
-            @click="row.formPublishId ? selectTask(row) : handleComplete(row.id)"
-          >
-            完成
-          </el-button>
-          <el-button
-            v-if="row.status === 'claimed'"
-            size="small"
-            type="danger"
-            @click="openReject(row.id)"
-          >
-            驳回
-          </el-button>
-          <el-button
-            v-if="row.status === 'claimed'"
-            size="small"
-            @click="openDelegate(row.id)"
-          >
-            委派
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <template #instanceId="{ row }">
+        <t-link theme="primary" @click="viewInstance(row.instanceId)">
+          {{ row.instanceId }}
+        </t-link>
+      </template>
+      <template #status="{ row }">
+        <t-tag :theme="taskStatusTheme(row.status)" size="small">
+          {{ taskStatusLabel(row.status) }}
+        </t-tag>
+      </template>
+      <template #createdAt="{ row }">
+        {{ formatDate(row.createdAt) }}
+      </template>
+      <template #actions="{ row }">
+        <t-button
+          v-if="row.status === 'pending'"
+          size="small"
+          theme="primary"
+          @click="handleClaim(row.id)"
+        >
+          签收
+        </t-button>
+        <t-button
+          v-if="row.status === 'claimed'"
+          size="small"
+          theme="success"
+          @click="row.formPublishId ? selectTask(row) : handleComplete(row.id)"
+        >
+          完成
+        </t-button>
+        <t-button
+          v-if="row.status === 'claimed'"
+          size="small"
+          theme="danger"
+          @click="openReject(row.id)"
+        >
+          驳回
+        </t-button>
+        <t-button
+          v-if="row.status === 'claimed'"
+          size="small"
+          @click="openDelegate(row.id)"
+        >
+          委派
+        </t-button>
+      </template>
+    </t-table>
 
     <!-- Pagination -->
     <div :class="styles.pagination">
-      <el-pagination
-        v-model:current-page="page"
+      <t-pagination
+        v-model:current="page"
         v-model:page-size="pageSize"
         :total="store.tasksTotal"
         :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next"
+        show-total
+        show-page-size
         @current-change="handlePageChange"
-        @size-change="handleSizeChange"
+        @page-size-change="handleSizeChange"
       />
     </div>
 
@@ -467,9 +479,9 @@ async function handleFormValidate() {
       <div :class="styles.formPanelHeader">
         <span :class="styles.formPanelTitle">{{ activeTask.nodeName }} — 审批表单</span>
         <div :class="styles.formPanelActions">
-          <el-button size="small" @click="handleFormValidate">校验</el-button>
-          <el-button size="small" type="primary" :loading="completing" @click="handleFormSubmit">提交并完成</el-button>
-          <el-button size="small" text @click="closeForm">关闭</el-button>
+          <t-button size="small" @click="handleFormValidate">校验</t-button>
+          <t-button size="small" theme="primary" :loading="completing" @click="handleFormSubmit">提交并完成</t-button>
+          <t-button size="small" variant="text" @click="closeForm">关闭</t-button>
         </div>
       </div>
       <MicroFormEmbed
@@ -483,81 +495,77 @@ async function handleFormValidate() {
       />
     </div>
 
-    <el-dialog v-model="delegateVisible" title="委派任务" width="400px">
+    <t-dialog v-model:visible="delegateVisible" header="委派任务" width="400px">
       <UserPicker v-model="delegateTarget" placeholder="搜索并选择委派目标" />
       <template #footer>
-        <el-button @click="delegateVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmDelegate">确认委派</el-button>
+        <t-button @click="delegateVisible = false">取消</t-button>
+        <t-button theme="primary" @click="confirmDelegate">确认委派</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
 
-    <el-dialog v-model="rejectVisible" title="驳回到指定节点" width="480px" :close-on-click-modal="false">
+    <t-dialog v-model:visible="rejectVisible" header="驳回到指定节点" width="480px" :close-on-overlay-click="false">
       <div v-loading="rejectLoading">
-        <el-form label-position="top">
-          <el-form-item label="选择驳回目标节点">
-            <el-select
+        <t-form label-position="top">
+          <t-form-item label="选择驳回目标节点">
+            <t-select
               v-model="rejectTargetNodeId"
               placeholder="请选择要驳回到的节点"
               style="width: 100%"
               :disabled="rejectTargets.length === 0"
             >
-              <el-option
+              <t-option
                 v-for="target in rejectTargets"
                 :key="target.nodeId"
                 :label="target.nodeName"
                 :value="target.nodeId"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="驳回原因（可选）">
-            <el-input
+            </t-select>
+          </t-form-item>
+          <t-form-item label="驳回原因（可选）">
+            <t-textarea
               v-model="rejectComment"
-              type="textarea"
               :rows="3"
               placeholder="请输入驳回原因"
               maxlength="1000"
-              show-word-limit
             />
-          </el-form-item>
-        </el-form>
+          </t-form-item>
+        </t-form>
       </div>
       <template #footer>
-        <el-button @click="rejectVisible = false">取消</el-button>
-        <el-button type="danger" :loading="rejectLoading" @click="confirmReject">确认驳回</el-button>
+        <t-button @click="rejectVisible = false">取消</t-button>
+        <t-button theme="danger" :loading="rejectLoading" @click="confirmReject">确认驳回</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
 
     <!-- Batch reject dialog -->
-    <el-dialog v-model="batchRejectVisible" title="批量驳回" width="480px" :close-on-click-modal="false">
-      <el-form label-position="top">
-        <el-form-item label="驳回原因（可选）">
-          <el-input
+    <t-dialog v-model:visible="batchRejectVisible" header="批量驳回" width="480px" :close-on-overlay-click="false">
+      <t-form label-position="top">
+        <t-form-item label="驳回原因（可选）">
+          <t-textarea
             v-model="batchRejectReason"
-            type="textarea"
             :rows="3"
             placeholder="请输入驳回原因"
             maxlength="1000"
-            show-word-limit
           />
-        </el-form-item>
-      </el-form>
+        </t-form-item>
+      </t-form>
       <template #footer>
-        <el-button @click="batchRejectVisible = false">取消</el-button>
-        <el-button type="danger" :loading="batchLoading" @click="confirmBatchReject">
+        <t-button @click="batchRejectVisible = false">取消</t-button>
+        <t-button theme="danger" :loading="batchLoading" @click="confirmBatchReject">
           确认驳回 {{ selectedTaskIds.length }} 项
-        </el-button>
+        </t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
 
     <!-- Batch result dialog -->
-    <el-dialog v-model="batchResultVisible" title="批量操作结果" width="480px">
+    <t-dialog v-model:visible="batchResultVisible" header="批量操作结果" width="480px">
       <div v-if="batchResult" :class="styles.batchResult">
         <div :class="styles.batchResultSummary">
-          <el-tag type="info" size="large">共 {{ batchResult.summary.total }} 项</el-tag>
-          <el-tag type="success" size="large">成功 {{ batchResult.summary.success }} 项</el-tag>
-          <el-tag v-if="batchResult.summary.failed > 0" type="danger" size="large">
+          <t-tag theme="default" size="large">共 {{ batchResult.summary.total }} 项</t-tag>
+          <t-tag theme="success" size="large">成功 {{ batchResult.summary.success }} 项</t-tag>
+          <t-tag v-if="batchResult.summary.failed > 0" theme="danger" size="large">
             失败 {{ batchResult.summary.failed }} 项
-          </el-tag>
+          </t-tag>
         </div>
         <div v-if="batchResult.summary.failed > 0" :class="styles.batchResultDetails">
           <div
@@ -571,8 +579,8 @@ async function handleFormValidate() {
         </div>
       </div>
       <template #footer>
-        <el-button type="primary" @click="batchResultVisible = false">确定</el-button>
+        <t-button theme="primary" @click="batchResultVisible = false">确定</t-button>
       </template>
-    </el-dialog>
+    </t-dialog>
   </div>
 </template>

@@ -5,7 +5,7 @@
  * 用于列表为空、搜索无结果等场景。
  * 支持自定义图标、标题、描述和操作按钮。
  */
-import { InfoFilled } from '@element-plus/icons-vue'
+import { InfoCircleFilledIcon } from 'tdesign-icons-vue-next'
 import styles from './EmptyState.module.css'
 
 withDefaults(defineProps<{
@@ -22,7 +22,7 @@ withDefaults(defineProps<{
   <div :class="styles.empty">
     <div :class="styles.icon">
       <slot name="icon">
-        <el-icon><InfoFilled /></el-icon>
+        <InfoCircleFilledIcon />
       </slot>
     </div>
     <div :class="styles.title">{{ title }}</div>

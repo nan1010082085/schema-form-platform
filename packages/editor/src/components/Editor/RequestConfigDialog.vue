@@ -1,0 +1,205 @@
+<script setup lang="ts">
+/**
+ * RequestConfigDialog -- API 请求配置对话框
+ *
+ * 用于配置 Table 等组件的 API 数据源。
+ * 支持 URL、Method、Headers、Response Data Path 配置。
+ */
+import { ref, watch } from 'vue'
+import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
+import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import styles from './RequestConfigDialog.module.scss'
+
+interface RequestConfig {
+  apiUrl: string
+  apiMethod: string
+  apiHeaders: Record<string, string>
+  responseDataPath: string
+}
+
+const props = defineProps<{
+  visible: boolean
+  config: RequestConfig
+}>()
+
+const emit = defineEmits<{
+  'update:visible': [val: boolean]
+  'update:config': [config: RequestConfig]
+  save: [config: RequestConfig]
+  cancel: []
+}>()
+
+// ---- 本地编辑副本 ----
+
+const localConfig = ref<RequestConfig>({
+  apiUrl: '',
+  apiMethod: 'get',
+  apiHeaders: {},
+  responseDataPath: '',
+})
+
+// Header 键值对编辑状态
+interface HeaderEntry {
+  key: string
+  value: string
+}
+
+const headerEntries = ref<HeaderEntry[]>([])
+
+watch(
+  () => props.visible,
+  (open) => {
+    if (open) {
+      localConfig.value = JSON.parse(JSON.stringify(props.config))
+      // 将 headers 对象转为键值对数组
+      headerEntries.value = Object.entries(localConfig.value.apiHeaders).map(
+        ([key, value]) => ({ key, value }),
+      )
+      // 确保至少有一行
+      if (headerEntries.value.length === 0) {
+        headerEntries.value.push({ key: '', value: '' })
+      }
+    }
+  },
+)
+
+// ---- Header CRUD ----
+
+function addHeader() {
+  headerEntries.value.push({ key: '', value: '' })
+}
+
+function removeHeader(index: number) {
+  headerEntries.value.splice(index, 1)
+}
+
+function syncHeaders() {
+  const headers: Record<string, string> = {}
+  for (const entry of headerEntries.value) {
+    if (entry.key.trim()) {
+      headers[entry.key.trim()] = entry.value
+    }
+  }
+  localConfig.value.apiHeaders = headers
+}
+
+// ---- 方法选项 ----
+
+const methodOptions = [
+  { label: 'GET', value: 'get' },
+  { label: 'POST', value: 'post' },
+  { label: 'PUT', value: 'put' },
+  { label: 'DELETE', value: 'delete' },
+]
+
+// ---- 保存 / 关闭 ----
+
+function handleSave() {
+  syncHeaders()
+  emit('save', { ...localConfig.value })
+  emit('update:config', { ...localConfig.value })
+  emit('update:visible', false)
+}
+
+function handleClose() {
+  emit('cancel')
+  emit('update:visible', false)
+}
+</script>
+
+<template>
+  <EnhancedDialog
+    :model-value="visible"
+    title="API 请求配置"
+    width="560px"
+    @update:model-value="emit('update:visible', $event)"
+  >
+    <div :class="styles.body">
+      <!-- URL -->
+      <!-- URL -->
+      <div :class="styles.row">
+        <label :class="styles.label">请求地址</label>
+        <t-input
+          v-model="localConfig.apiUrl"
+          size="small"
+          placeholder="/api/data"
+        />
+      </div>
+
+      <!-- Method -->
+      <div :class="styles.row">
+        <label :class="styles.label">请求方法</label>
+        <t-select
+          v-model="localConfig.apiMethod"
+          size="small"
+          style="flex: 1"
+        >
+          <t-option
+            v-for="opt in methodOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </t-select>
+      </div>
+
+      <!-- Headers -->
+      <div :class="styles.section">
+        <div :class="styles.sectionHeader">
+          <span :class="styles.sectionTitle">请求头 (Headers)</span>
+          <t-button
+            theme="primary"
+            variant="text"
+            size="small"
+            @click="addHeader"
+          >
+            <AddIcon />
+            添加
+          </t-button>
+        </div>
+
+        <div
+          v-for="(entry, idx) in headerEntries"
+          :key="idx"
+          :class="styles.headerRow"
+        >
+          <t-input
+            v-model="entry.key"
+            size="small"
+            placeholder="Header Name"
+            @change="syncHeaders"
+          />
+          <t-input
+            v-model="entry.value"
+            size="small"
+            placeholder="Header Value"
+            @change="syncHeaders"
+          />
+          <t-button
+            theme="danger"
+            variant="text"
+            size="small"
+            @click="removeHeader(idx)"
+          >
+            <DeleteIcon />
+          </t-button>
+        </div>
+      </div>
+
+      <!-- Response Data Path -->
+      <div :class="styles.row">
+        <label :class="styles.label">数据路径</label>
+        <t-input
+          v-model="localConfig.responseDataPath"
+          size="small"
+          placeholder="data.list (点号分隔)"
+        />
+      </div>
+    </div>
+
+    <template #footer>
+      <t-button size="small" @click="handleClose">取消</t-button>
+      <t-button theme="primary" size="small" @click="handleSave">保存</t-button>
+    </template>
+  </EnhancedDialog>
+</template>

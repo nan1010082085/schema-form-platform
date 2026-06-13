@@ -12,7 +12,7 @@
   min-height: 200px;
   max-height: 400px;
   overflow-y: auto;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
   border-radius: 6px;
 }
 
@@ -21,14 +21,14 @@
   align-items: center;
   justify-content: center;
   height: 120px;
-  color: var(--el-text-color-placeholder);
+  color: var(--text-color-placeholder);
   font-size: 14px;
 }
 
 .item {
   padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--border-color-light);
   transition: background-color 0.15s;
 
   &:last-child {
@@ -36,15 +36,15 @@
   }
 
   &:hover {
-    background: var(--el-fill-color-light);
+    background: var(--bg-color-secondary);
   }
 }
 
 .itemActive {
-  background: var(--el-color-primary-light-9);
+  background: var(--color-primary-light);
 
   &:hover {
-    background: var(--el-color-primary-light-8);
+    background: var(--color-primary-light);
   }
 }
 
@@ -56,27 +56,27 @@
 
 .itemName {
   font-size: 14px;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   font-weight: 500;
 }
 
 .itemDesc {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }
 
 .itemMeta {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin-top: 2px;
   display: flex;
   gap: 4px;
 }
 
 .metaLabel {
-  color: var(--el-text-color-placeholder);
+  color: var(--text-color-placeholder);
 }
 
 .statusTag {
@@ -87,18 +87,18 @@
   line-height: 18px;
 
   &.status-published {
-    color: var(--el-color-success);
-    background: var(--el-color-success-light-9);
+    color: var(--color-success);
+    background: var(--color-success-light);
   }
 
   &.status-draft {
-    color: var(--el-color-info);
-    background: var(--el-color-info-light-9);
+    color: var(--color-info);
+    background: var(--color-primary-light);
   }
 
   &.status-archived {
-    color: var(--el-text-color-placeholder);
-    background: var(--el-fill-color-light);
+    color: var(--text-color-placeholder);
+    background: var(--bg-color-secondary);
   }
 }
 
@@ -110,7 +110,7 @@
 
 .footerHint {
   font-size: 13px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .footerActions {

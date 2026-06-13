@@ -7,11 +7,11 @@ const DEFAULT_CLIENTS = [
   {
     clientId: 'shell',
     name: 'Shell 应用',
-    redirectUris: ['http://localhost:4100/auth/callback', `${PROD_ORIGIN}/auth/callback`],
+    redirectUris: ['http://localhost:5000/auth/callback', `${PROD_ORIGIN}/auth/callback`],
     type: 'public' as const,
   },
   {
-    clientId: 'portal',
+    clientId: 'shell',
     name: '门户',
     redirectUris: ['http://localhost:4000/auth/callback', `${PROD_ORIGIN}/auth/callback`],
     type: 'public' as const,

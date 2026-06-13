@@ -1,7 +1,7 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    :title="title"
+  <t-dialog
+    v-model:visible="visible"
+    :header="title"
     :width="width"
     :destroy-on-close="destroyOnClose"
     @close="handleClose"
@@ -9,11 +9,11 @@
     <slot />
     <template #footer>
       <slot name="footer">
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
+        <t-button @click="handleCancel">取消</t-button>
+        <t-button theme="primary" :loading="loading" @click="handleConfirm">确定</t-button>
       </slot>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>
 
 <script setup lang="ts">

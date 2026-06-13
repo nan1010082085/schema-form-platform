@@ -11,9 +11,9 @@ import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
-import { ElDrawer, ElMessage, ElButton, ElTooltip } from 'element-plus'
-import { HomeFilled } from '@element-plus/icons-vue'
-import { getAppUrl } from '@schema-form/micro-app/config'
+import { message } from '@schema-form/shared-utils/message'
+import { HomeIcon } from 'tdesign-icons-vue-next'
+import { getAppUrl } from '@schema-form/shared-qiankun/config'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
 import AiPreviewPanel from '@/components/AiPreviewPanel.vue'
@@ -110,11 +110,11 @@ const jsonString = computed(() => {
 
 // ---- Event handlers ----
 
-async function handleSend(message: string, agent: AgentType, mentions?: MentionReference[]): Promise<void> {
+async function handleSend(msg: string, agent: AgentType, mentions?: MentionReference[]): Promise<void> {
   if (agent !== activeAgent.value) {
     store.switchAgent(agent)
   }
-  await store.sendMessage(message, mentions)
+  await store.sendMessage(msg, mentions)
 }
 
 function handleStop(): void {
@@ -159,12 +159,12 @@ async function handleSecondaryAction(): Promise<void> {
   try {
     const result = await store.publishCurrent()
     if (!result) {
-      ElMessage.warning('没有可发布的内容')
+      message.warning('没有可发布的内容')
       return
     }
 
-    // micro-app 嵌入模式：通过 bridge 通知宿主
-    if (window.__MICRO_APP_ENVIRONMENT__) {
+    // qiankun 嵌入模式：通过 bridge 通知宿主
+    if (window.__POWERED_BY_QIANKUN__) {
       bridge.send('ai:open-in-editor', {
         schema: currentSchema.value,
         flow: currentFlow.value,
@@ -180,7 +180,7 @@ async function handleSecondaryAction(): Promise<void> {
       : `/editor/?id=${result.id}`
     window.open(url, '_blank')
   } catch {
-    ElMessage.error('发布失败，请稍后重试')
+    message.error('发布失败，请稍后重试')
   } finally {
     isPublishing.value = false
   }
@@ -192,17 +192,17 @@ async function handlePublish(): Promise<void> {
   try {
     const result = await store.publishCurrent()
     if (result) {
-      ElMessage.success(result.type === 'schema' ? '表单发布成功' : '流程发布成功')
+      message.success(result.type === 'schema' ? '表单发布成功' : '流程发布成功')
       bridge.send('ai:published', {
         id: result.id,
         publishId: result.publishId,
         type: result.type,
       })
     } else {
-      ElMessage.warning('没有可发布的内容')
+      message.warning('没有可发布的内容')
     }
   } catch {
-    ElMessage.error('发布失败，请稍后重试')
+    message.error('发布失败，请稍后重试')
   } finally {
     isPublishing.value = false
   }
@@ -214,7 +214,7 @@ async function handleApplyToEditor(widgetIds?: string[]): Promise<void> {
   try {
     const result = await store.publishCurrent()
     if (result) {
-      ElMessage.success('已应用到编辑器')
+      message.success('已应用到编辑器')
       bridge.send('ai:open-in-editor', {
         id: result.id,
         publishId: result.publishId,
@@ -227,7 +227,7 @@ async function handleApplyToEditor(widgetIds?: string[]): Promise<void> {
       window.open(url, '_blank')
     }
   } catch {
-    ElMessage.error('应用失败，请稍后重试')
+    message.error('应用失败，请稍后重试')
   } finally {
     isPublishing.value = false
   }
@@ -237,7 +237,7 @@ async function handleApplyToEditor(widgetIds?: string[]): Promise<void> {
 
 function handleRagSearch(query: string): void {
   store.searchRagAction(query).catch(() => {
-    ElMessage.error('RAG 搜索失败，请稍后重试')
+    message.error('RAG 搜索失败，请稍后重试')
   })
 }
 
@@ -250,7 +250,7 @@ function handleRagRemove(id: string): void {
 }
 
 function goToPortal(): void {
-  window.location.href = getAppUrl('portal', import.meta.env.DEV)
+  window.location.href = getAppUrl('shell', import.meta.env.DEV)
 }
 
 // ---- Message actions ----
@@ -259,7 +259,7 @@ function handleCopyMessage(messageIndex: number): void {
   const msg = messages.value[messageIndex]
   if (msg?.content) {
     navigator.clipboard.writeText(msg.content)
-    ElMessage.success('已复制到剪贴板')
+    message.success('已复制到剪贴板')
   }
 }
 
@@ -291,11 +291,11 @@ onMounted(() => {
     <!-- 顶栏 -->
     <div :class="$style.topbar">
       <div :class="$style.topbarLeft">
-        <ElTooltip content="返回门户首页" placement="bottom">
-          <button :class="$style.portalBtn" title="返回门户" @click="goToPortal">
-            <el-icon :size="14"><HomeFilled /></el-icon>
+        <t-tooltip content="返回主应用首页" placement="bottom">
+          <button :class="$style.homeBtn" title="返回主应用" @click="goToPortal">
+            <HomeIcon size="14" />
           </button>
-        </ElTooltip>
+        </t-tooltip>
         <div :class="$style.topbarDivider" />
         <span :class="$style.appName">AI 助手</span>
         <div :class="$style.topbarDivider" />
@@ -309,9 +309,9 @@ onMounted(() => {
           <span :class="$style.modelDot"></span>
           <span :class="$style.modelName">DeepSeek</span>
         </div>
-        <el-button type="primary" size="small" @click="handleNewConversation">
+        <t-button theme="primary" size="small" @click="handleNewConversation">
           + 新对话
-        </el-button>
+        </t-button>
       </div>
     </div>
 
@@ -385,9 +385,9 @@ onMounted(() => {
     </div>
 
     <!-- 折叠/展开切换按钮（放在 body 外部，避免被 overflow: hidden 裁剪） -->
-    <ElButton :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" link @click="rightPanelCollapsed = !rightPanelCollapsed">
+    <t-button :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" variant="text" @click="rightPanelCollapsed = !rightPanelCollapsed">
       {{ rightPanelCollapsed ? '◀' : '▶' }}
-    </ElButton>
+    </t-button>
 
     <!-- Settings Dialog -->
     <AiChatSettings
@@ -398,17 +398,17 @@ onMounted(() => {
     />
 
     <!-- JSON 结构抽屉 -->
-    <ElDrawer
-      v-model="jsonDrawerVisible"
+    <t-drawer
+      v-model:visible="jsonDrawerVisible"
       :title="jsonDrawerTitle"
-      direction="rtl"
+      placement="right"
       size="420px"
       :z-index="2000"
     >
       <div :class="$style.jsonDrawer">
         <pre :class="$style.jsonContent">{{ jsonDrawerContent }}</pre>
       </div>
-    </ElDrawer>
+    </t-drawer>
   </div>
 </template>
 

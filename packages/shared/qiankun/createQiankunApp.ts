@@ -5,16 +5,16 @@
  */
 import { createApp, type App, type Component } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
+import TDesign from 'tdesign-vue-next'
+import 'tdesign-vue-next/esm/style/index.css'
 
 export interface CreateQiankunAppOptions {
   /** 应用名称 */
   name: string
   /** 根组件 */
   rootComponent: Component
-  /** Element Plus 配置 */
-  elementPlusConfig?: Record<string, unknown>
+  /** TDesign 配置 */
+  tdesignConfig?: Record<string, unknown>
   /** 额外的插件 */
   plugins?: Array<{ install: (app: App) => void }>
   /** Token 提供者 */
@@ -28,7 +28,7 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
   const {
     name,
     rootComponent,
-    elementPlusConfig = {},
+    tdesignConfig = {},
     plugins = [],
     getToken,
   } = options
@@ -51,8 +51,8 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     // 注册 Pinia
     app.use(createPinia())
 
-    // 注册 Element Plus
-    app.use(ElementPlus, elementPlusConfig)
+    // 注册 TDesign
+    app.use(TDesign, tdesignConfig)
 
     // 注册额外插件
     for (const plugin of plugins) {

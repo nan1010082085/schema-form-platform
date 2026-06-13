@@ -14,7 +14,7 @@ function update(key: string, value: unknown) {
 <template>
   <SectionToggle title="错误配置" :count="1">
     <FieldRow label="错误代码">
-      <el-input
+      <t-input
         :model-value="(node.data?.errorCode as string) ?? ''"
         placeholder="错误标识符"
         @input="update('errorCode', $event)"

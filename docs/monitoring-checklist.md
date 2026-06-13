@@ -97,8 +97,8 @@ curl http://localhost:3001/api/health
 |--------|----------|----------|----------|
 | API 服务 | `curl http://localhost:3001/api/health` | status: ok | 重启服务 |
 | 数据库连接 | `curl http://localhost:3001/api/health` | database: connected | 检查 MongoDB |
-| 前端服务 | `curl http://localhost:5173` | 200 OK | 重启 Vite |
-| Shell 服务 | `curl http://localhost:4100` | 200 OK | 重启 Shell |
+| 前端服务 | `curl http://localhost:5100` | 200 OK | 重启 Vite |
+| Shell 服务 | `curl http://localhost:5000` | 200 OK | 重启 Shell |
 | Admin 服务 | `curl http://localhost:5400` | 200 OK | 重启 Admin |
 
 ### 3.3 生产环境监控
@@ -171,7 +171,7 @@ curl -s http://localhost:3001/api/health | grep -q '"status":"ok"' || exit 1
 
 # 2. 检查前端服务
 echo "2. 检查前端服务..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:4100 | grep -q "200" || exit 1
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 | grep -q "200" || exit 1
 
 # 3. 测试登录 API
 echo "3. 测试登录 API..."

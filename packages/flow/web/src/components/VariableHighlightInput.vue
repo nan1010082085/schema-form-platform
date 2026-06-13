@@ -7,7 +7,7 @@
  */
 
 import { ref, computed } from 'vue'
-import { Connection, Delete } from '@element-plus/icons-vue'
+import { LinkIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import type { WorkflowVariableLeaf, WorkflowVariableSource } from '../composables/useWorkflowVariables'
 import styles from './VariableHighlightInput.module.css'
 
@@ -89,7 +89,7 @@ function getSourceColor(source?: WorkflowVariableSource): string {
     case 'flow': return 'var(--node-accent-flow, #6366f1)'
     case 'ai': return 'var(--node-accent-ai, #8b5cf6)'
     case 'system': return 'var(--node-accent-system, #64748b)'
-    default: return 'var(--el-color-primary)'
+    default: return 'var(--color-primary)'
   }
 }
 
@@ -163,7 +163,7 @@ function closePopover() {
           :style="{ '--tag-color': getSourceColor(segment.source) }"
           @click="handleVariableClick(index, $event)"
         >
-          <el-icon :class="styles.variableIcon"><Connection /></el-icon>
+          <LinkIcon :class="styles.variableIcon" />
           {{ segment.label }}
         </span>
       </template>
@@ -182,19 +182,17 @@ function closePopover() {
       >
         <div :class="styles.popoverHeader">
           <span :class="styles.popoverTitle">变量操作</span>
-          <el-icon :class="styles.popoverClose" @click="closePopover">
-            <Delete />
-          </el-icon>
+          <DeleteIcon :class="styles.popoverClose" @click="closePopover" />
         </div>
         <div :class="styles.popoverBody">
           <div :class="styles.popoverPath">
             {{ segments[editingIndex]?.path }}
           </div>
           <div :class="styles.popoverActions">
-            <el-button size="small" @click="deleteVariable(editingIndex)">
-              <el-icon><Delete /></el-icon>
+            <t-button size="small" @click="deleteVariable(editingIndex)">
+              <DeleteIcon />
               删除
-            </el-button>
+            </t-button>
           </div>
         </div>
       </div>

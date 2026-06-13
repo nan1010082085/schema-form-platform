@@ -12,13 +12,7 @@
  */
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  Document,
-  Expand,
-  Fold,
-  HomeFilled,
-  Loading,
-} from '@element-plus/icons-vue'
+// TDesign icons are used via <t-icon name="xxx" /> — no imports needed
 import { useMenu } from '@/composables/useMenu'
 import type { MenuTreeNode } from '@/types/menu'
 import styles from './SideMenu.module.css'
@@ -37,12 +31,6 @@ const { menuTree, loading: menuLoading, error: menuError, fetchMenus, reset: res
 
 // Fetch menus on mount
 fetchMenus()
-
-// Icon name to component mapping
-const iconMap: Record<string, typeof Document> = {
-  HomeFilled,
-  Document,
-}
 
 /** Check if a menu node matches the current route */
 function isActive(node: MenuTreeNode): boolean {
@@ -112,14 +100,14 @@ defineExpose({ resetMenu })
     <nav :class="styles.menuNav">
       <!-- Loading -->
       <div v-if="menuLoading" :class="styles.menuLoading">
-        <el-icon :size="20" :class="styles.spinIcon"><Loading /></el-icon>
+        <t-icon name="loading" :size="20" :class="styles.spinIcon" />
         <span v-show="!collapsed" :class="styles.menuLoadingText">Loading...</span>
       </div>
 
       <!-- Error -->
       <div v-else-if="menuError" :class="styles.menuError">
         <span v-show="!collapsed" :class="styles.menuErrorText">{{ menuError }}</span>
-        <el-button link size="small" @click="fetchMenus">Retry</el-button>
+        <t-button variant="text" size="small" @click="fetchMenus">Retry</t-button>
       </div>
 
       <!-- Home entry -->
@@ -128,7 +116,7 @@ defineExpose({ resetMenu })
         :class="[styles.menuItem, { [styles.menuItemActive]: route.path === '/' }]"
         @click="router.push('/')"
       >
-        <el-icon :size="18"><HomeFilled /></el-icon>
+        <t-icon name="home-filled" :size="18" />
         <span v-show="!collapsed" :class="styles.menuLabel">Home</span>
       </div>
 
@@ -147,19 +135,14 @@ defineExpose({ resetMenu })
             :title="collapsed ? node.name : undefined"
             @click="handleMenuClick(node)"
           >
-            <el-icon :size="18">
-              <component :is="iconMap[node.icon] || 'Document'" />
-            </el-icon>
+            <t-icon :name="node.icon || 'file'" :size="18" />
             <span v-show="!collapsed" :class="styles.menuLabel">{{ node.name }}</span>
-            <el-icon
+            <t-icon
               v-if="node.children?.length && !collapsed"
+              name="chevron-right"
               :class="[styles.menuArrow, { [styles.menuArrowOpen]: isSubmenuOpen(node.id) }]"
               :size="12"
-            >
-              <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path d="M384 192l256 320-256 320z" />
-              </svg>
-            </el-icon>
+            />
           </div>
 
           <!-- Level 2 submenu (expanded) -->
@@ -182,10 +165,8 @@ defineExpose({ resetMenu })
 
     <!-- Collapse button -->
     <div :class="styles.sidebarFooter" @click="emit('toggleCollapse')">
-      <el-icon :size="16">
-        <Expand v-if="collapsed" />
-        <Fold v-else />
-      </el-icon>
+      <t-icon v-if="collapsed" name="menu-unfold" :size="16" />
+      <t-icon v-else name="menu-fold" :size="16" />
       <span v-show="!collapsed" :class="styles.collapseText">Collapse</span>
     </div>
   </aside>

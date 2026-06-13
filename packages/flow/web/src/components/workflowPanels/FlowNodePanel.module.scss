@@ -1,6 +1,6 @@
 .nodeCard {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--el-border-radius-base);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 6px;
   padding: 8px;
   margin-bottom: 8px;
 }
@@ -13,18 +13,18 @@
 }
 
 .nodeCardTitle {
-  font-size: var(--el-font-size-extra-small);
+  font-size: 12px;
   font-weight: 500;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .deleteIcon {
   cursor: pointer;
-  color: var(--el-text-color-placeholder);
+  color: var(--text-color-placeholder);
   font-size: 14px;
 
   &:hover {
-    color: var(--el-color-danger);
+    color: var(--color-danger);
   }
 }
 

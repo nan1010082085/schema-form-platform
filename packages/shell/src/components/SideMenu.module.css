@@ -1,12 +1,13 @@
 .sidebar {
   width: 240px;
   height: 100vh;
-  background: var(--sidebar-bg, #001529);
+  background: #0d1117;
   display: flex;
   flex-direction: column;
-  transition: width 0.2s ease;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   flex-shrink: 0;
+  border-right: 1px solid rgba(0, 212, 255, 0.1);
 }
 
 .sidebarCollapsed {
@@ -18,7 +19,7 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
-  border-bottom: 1px solid var(--sidebar-border-color, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid rgba(0, 212, 255, 0.08);
   flex-shrink: 0;
 }
 
@@ -34,20 +35,21 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: var(--color-primary, #1677ff);
-  color: var(--text-color-inverse, #fff);
+  background: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
 }
 
 .logoText {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-color-inverse, #fff);
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
 }
 
@@ -63,8 +65,12 @@
 }
 
 .menuNav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 212, 255, 0.15);
   border-radius: 2px;
+}
+
+.menuNav::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.25);
 }
 
 .menuLoading,
@@ -74,7 +80,7 @@
   justify-content: center;
   gap: 8px;
   padding: 16px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 13px;
 }
 
@@ -85,6 +91,7 @@
 
 .spinIcon {
   animation: spin 1s linear infinite;
+  color: #00d4ff;
 }
 
 @keyframes spin {
@@ -101,25 +108,40 @@
   padding: 0 16px;
   margin: 2px 8px;
   border-radius: 6px;
-  color: var(--sidebar-text-color, rgba(255, 255, 255, 0.65));
+  color: rgba(255, 255, 255, 0.55);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   overflow: hidden;
+  position: relative;
 }
 
 .menuItem:hover {
-  color: var(--sidebar-text-color-active, #fff);
-  background: var(--sidebar-bg-hover, rgba(255, 255, 255, 0.06));
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.06);
 }
 
 .menuItemActive {
-  color: var(--sidebar-text-color-active, #fff);
-  background: var(--sidebar-bg-active, #1677ff);
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.menuItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #00d4ff;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
 }
 
 .menuItemActive:hover {
-  background: var(--sidebar-bg-active, #1677ff);
+  background: rgba(0, 212, 255, 0.12);
 }
 
 .menuLabel {
@@ -131,11 +153,12 @@
 .menuArrow {
   flex-shrink: 0;
   transition: transform 0.2s ease;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .menuArrowOpen {
   transform: rotate(90deg);
+  color: rgba(0, 212, 255, 0.5);
 }
 
 .submenu {
@@ -149,20 +172,21 @@
   padding: 0 16px 0 42px;
   margin: 2px 8px;
   border-radius: 6px;
-  color: var(--sidebar-text-color, rgba(255, 255, 255, 0.55));
+  color: rgba(255, 255, 255, 0.45);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
 .submenuItem:hover {
-  color: var(--sidebar-text-color-active, #fff);
-  background: var(--sidebar-bg-hover, rgba(255, 255, 255, 0.06));
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.05);
 }
 
 .submenuItemActive {
-  color: var(--sidebar-text-color-active, #fff);
-  background: var(--sidebar-bg-active, rgba(22, 119, 255, 0.7));
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.08);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
 }
 
 .submenuLabel {
@@ -176,15 +200,16 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--sidebar-text-color, rgba(255, 255, 255, 0.45));
+  color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  border-top: 1px solid var(--sidebar-border-color, rgba(255, 255, 255, 0.08));
+  border-top: 1px solid rgba(0, 212, 255, 0.08);
   flex-shrink: 0;
-  transition: color 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .sidebarFooter:hover {
-  color: var(--sidebar-text-color-active, rgba(255, 255, 255, 0.75));
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.05);
 }
 
 .collapseText {

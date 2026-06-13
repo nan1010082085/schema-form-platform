@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { ElButton } from 'element-plus'
 import type { ChatSettings, ReplyLanguage, ReplyStyle, CodeCommentMode, HistorySummaryMode } from '@/types'
 import { checkAIHealth, getModelConfigs, type AIHealthResponse, type ModelConfigItem } from '@/api/aiApi'
 
@@ -107,12 +106,12 @@ function handleSave(): void {
           <!-- Header -->
           <div :class="$style.header">
             <span :class="$style.title">对话设置</span>
-            <ElButton :class="$style.closeBtn" link @click="handleClose">
+            <t-button :class="$style.closeBtn" variant="text" @click="handleClose">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </ElButton>
+            </t-button>
           </div>
 
           <!-- Body -->
@@ -165,26 +164,15 @@ function handleSave(): void {
                   <span :class="$style.statusText">暂无可用模型，请在管理后台配置</span>
                 </div>
                 <div v-else :class="$style.formItem">
-                  <el-select
+                  <t-select
                     v-model="selectedModelId"
                     placeholder="选择模型"
                     style="width: 100%"
-                  >
-                    <el-option
-                      v-for="config in modelConfigs"
-                      :key="config.id"
-                      :label="`${config.name} (${config.model})`"
-                      :value="config.id"
-                    >
-                      <div :class="$style.modelOption">
-                        <span :class="$style.modelOptionName">{{ config.name }}</span>
-                        <span :class="$style.modelOptionMeta">
-                          {{ config.provider }} / {{ config.model }}
-                          <span v-if="config.isDefault" :class="$style.defaultBadge">默认</span>
-                        </span>
-                      </div>
-                    </el-option>
-                  </el-select>
+                    :options="modelConfigs.map(config => ({
+                      label: `${config.name} (${config.model})`,
+                      value: config.id,
+                    }))"
+                  />
                 </div>
               </div>
             </div>
@@ -195,50 +183,50 @@ function handleSave(): void {
               <div :class="$style.cardBody">
                 <div :class="$style.formItem">
                   <label :class="$style.label">回复语言</label>
-                  <el-radio-group
+                  <t-radio-group
                     v-model="localSettings.preferences.replyLanguage"
                     :class="$style.radioGroup"
                   >
-                    <el-radio-button
+                    <t-radio-button
                       v-for="opt in languageOptions"
                       :key="opt.value"
                       :value="opt.value"
                     >
                       {{ opt.label }}
-                    </el-radio-button>
-                  </el-radio-group>
+                    </t-radio-button>
+                  </t-radio-group>
                 </div>
 
                 <div :class="$style.formItem">
                   <label :class="$style.label">回复风格</label>
-                  <el-radio-group
+                  <t-radio-group
                     v-model="localSettings.preferences.replyStyle"
                     :class="$style.radioGroup"
                   >
-                    <el-radio-button
+                    <t-radio-button
                       v-for="opt in styleOptions"
                       :key="opt.value"
                       :value="opt.value"
                     >
                       {{ opt.label }}
-                    </el-radio-button>
-                  </el-radio-group>
+                    </t-radio-button>
+                  </t-radio-group>
                 </div>
 
                 <div :class="$style.formItem">
                   <label :class="$style.label">代码注释</label>
-                  <el-radio-group
+                  <t-radio-group
                     v-model="localSettings.preferences.codeComment"
                     :class="$style.radioGroup"
                   >
-                    <el-radio-button
+                    <t-radio-button
                       v-for="opt in codeCommentOptions"
                       :key="opt.value"
                       :value="opt.value"
                     >
                       {{ opt.label }}
-                    </el-radio-button>
-                  </el-radio-group>
+                    </t-radio-button>
+                  </t-radio-group>
                 </div>
               </div>
             </div>
@@ -249,25 +237,24 @@ function handleSave(): void {
               <div :class="$style.cardBody">
                 <div :class="$style.formItem">
                   <label :class="$style.label">生成方式</label>
-                  <el-radio-group
+                  <t-radio-group
                     v-model="localSettings.historySummary.mode"
                     :class="$style.radioGroup"
                   >
-                    <el-radio-button
+                    <t-radio-button
                       v-for="opt in historyModeOptions"
                       :key="opt.value"
                       :value="opt.value"
                     >
                       {{ opt.label }}
-                    </el-radio-button>
-                  </el-radio-group>
+                    </t-radio-button>
+                  </t-radio-group>
                 </div>
 
                 <div v-if="localSettings.historySummary.mode === 'manual'" :class="$style.formItem">
                   <label :class="$style.label">手动摘要</label>
-                  <el-input
+                  <t-textarea
                     v-model="localSettings.historySummary.manualSummary"
-                    type="textarea"
                     :rows="3"
                     placeholder="输入对话历史摘要..."
                   />
@@ -278,8 +265,8 @@ function handleSave(): void {
 
           <!-- Footer -->
           <div :class="$style.footer">
-            <ElButton :class="$style.cancelBtn" @click="handleClose">取消</ElButton>
-            <ElButton :class="$style.saveBtn" type="primary" @click="handleSave">保存</ElButton>
+            <t-button :class="$style.cancelBtn" @click="handleClose">取消</t-button>
+            <t-button :class="$style.saveBtn" theme="primary" @click="handleSave">保存</t-button>
           </div>
         </div>
       </div>

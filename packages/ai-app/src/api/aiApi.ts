@@ -31,7 +31,7 @@ export class AiApiError extends Error {
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? '/api'
 
-/** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合 micro-app */
+/** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合微前端框架 */
 let tokenProvider: (() => string | null) | null = null
 
 export function setTokenProvider(provider: () => string | null): void {

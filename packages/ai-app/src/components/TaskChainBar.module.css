@@ -3,8 +3,8 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: var(--ai-bg-subtle, #F0F5FF);
-  border-bottom: 1px solid var(--ai-border-light, #E8E8E8);
+  background: rgba(0, 212, 255, 0.04);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
   font-size: 12px;
 }
 
@@ -13,18 +13,22 @@
   min-width: 0;
 }
 
-.scrollWrap :deep(.el-scrollbar__bar.is-horizontal) {
+.scrollWrap {
+  overflow-x: auto;
+}
+
+.scrollWrap::-webkit-scrollbar {
   height: 4px;
 }
 
-.scrollWrap :deep(.el-scrollbar__thumb) {
-  background: var(--ai-border-base, #D5DDE3);
+.scrollWrap::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.15);
   border-radius: 2px;
 }
 
 .label {
   font-weight: 600;
-  color: var(--ai-text-muted, #909399);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   flex-shrink: 0;
   font-size: 11px;
   text-transform: uppercase;
@@ -42,14 +46,17 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: var(--ai-radius-sm, 3px);
-  background: var(--ai-bg-page, #F5F6FA);
+  border-radius: var(--ai-radius-sm, 6px);
+  background: var(--ai-bg-gray, #161d26);
   white-space: nowrap;
+  color: var(--ai-text-secondary, rgba(255, 255, 255, 0.65));
 }
 
 .step.current {
-  background: var(--ai-color-primary, #0060A2);
-  color: #fff;
+  background: var(--ai-gradient-primary, linear-gradient(135deg, #00d4ff 0%, #009fcc 100%));
+  color: #0a0e14;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
 .step.done {
@@ -57,8 +64,9 @@
 }
 
 .step.running {
-  background: var(--ai-color-primary-light, #E6F4FF);
-  border: 1px solid var(--ai-color-primary, #0060A2);
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: var(--ai-color-primary, #00d4ff);
 }
 
 .stepIcon {
@@ -87,6 +95,6 @@
 }
 
 .arrow {
-  color: var(--ai-text-muted, #909399);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.3));
   font-size: 12px;
 }

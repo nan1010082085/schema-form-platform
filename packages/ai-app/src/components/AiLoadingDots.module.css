@@ -9,7 +9,8 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--ai-text-disabled, #C0C4CC);
+  background: var(--ai-color-primary, #00d4ff);
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
   animation: ai-pulse 1.2s ease-in-out infinite;
 }
 
@@ -25,9 +26,11 @@
   0%, 60%, 100% {
     opacity: 0.3;
     transform: scale(0.8);
+    box-shadow: 0 0 2px rgba(0, 212, 255, 0.2);
   }
   30% {
     opacity: 1;
     transform: scale(1);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
   }
 }

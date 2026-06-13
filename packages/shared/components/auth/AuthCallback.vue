@@ -1,7 +1,7 @@
 <template>
   <div :class="$style.root">
-    <el-icon :class="$style.spinner" :size="48">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div :class="$style.spinner">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25" />
         <path
           d="M12 2a10 10 0 0 1 10 10"
@@ -10,7 +10,7 @@
           stroke-linecap="round"
         />
       </svg>
-    </el-icon>
+    </div>
     <p :class="$style.text">{{ statusText }}</p>
   </div>
 </template>
@@ -24,7 +24,6 @@
  * 成功后重定向到首页（或 state 中指定的路径）。
  */
 import { ref, onMounted } from 'vue'
-import { ElIcon } from 'element-plus'
 import { SSOClient, SSOError } from '../../utils/sso.js'
 import { useAuthStore } from '../../utils/stores/authStore.js'
 
@@ -72,7 +71,7 @@ onMounted(async () => {
 
 .spinner {
   animation: spin 1s linear infinite;
-  color: var(--el-color-primary, #409eff);
+  color: var(--color-primary, #409eff);
 }
 
 @keyframes spin {
@@ -82,7 +81,7 @@ onMounted(async () => {
 
 .text {
   font-size: 16px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--text-color-secondary, #606266);
   margin: 0;
 }
 </style>

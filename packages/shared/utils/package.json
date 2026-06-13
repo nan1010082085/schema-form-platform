@@ -8,6 +8,11 @@
     "./authTypes": "./authTypes.ts",
     "./sso": "./sso.ts",
     "./stores": "./stores/index.ts",
-    "./stores/authStore": "./stores/authStore.ts"
+    "./stores/authStore": "./stores/authStore.ts",
+    "./message": "./message.ts",
+    "./microAppConfig": "./microAppConfig.ts"
+  },
+  "peerDependencies": {
+    "tdesign-vue-next": ">=1.20.0"
   }
 }

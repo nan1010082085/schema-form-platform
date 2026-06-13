@@ -1,52 +1,52 @@
 // ============================================================
-// Flow 主题 — Element Plus 覆盖
+// Flow 主题 — TDesign 覆盖
 // ============================================================
 
 @use '../../../../shared/styles/theme';
 
 :root {
   // ---- 高度 ----
-  --el-component-size: 32px;
-  --el-component-size-small: 24px;
+  --td-comp-size-m: 32px;
+  --td-comp-size-s: 24px;
 }
 
 // ---- 通用组件宽度 ----
-.el-input,
-.el-select,
-.el-input-number {
+.t-input,
+.t-select,
+.t-input-number {
   width: 100%;
 }
 
 // ---- InputNumber ----
-.el-input-number {
+.t-input-number {
   border: 1px solid var(--border-color-light);
-  border-radius: var(--el-border-radius-base, 4px);
+  border-radius: var(--radius-md, 6px);
   box-sizing: border-box;
 
   &:hover,
-  &.is-focus {
+  &.t-input-number--focused {
     border-color: var(--color-primary);
   }
 
-  .el-input__wrapper {
+  .t-input__wrap {
     min-height: 0;
     box-shadow: none;
     border: none;
     border-radius: 0;
   }
 
-  .el-input-number__decrease,
-  .el-input-number__increase {
+  .t-input-number__decrease,
+  .t-input-number__increase {
     height: 50% !important;
     line-height: 1 !important;
     top: 0 !important;
   }
 
-  .el-input-number__increase {
+  .t-input-number__increase {
     top: 0 !important;
   }
 
-  .el-input-number__decrease {
+  .t-input-number__decrease {
     top: 50% !important;
   }
 }

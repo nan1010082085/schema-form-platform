@@ -7,7 +7,6 @@
  */
 
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { ElInput, ElButton } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import type { MentionReference } from '@/types'
 import type { MentionSearchResult, MentionType } from '@/api/aiApi'
@@ -222,7 +221,7 @@ function typeIcon(type: string): string {
     <div v-if="panelVisible" :class="$style.panel">
       <!-- Search input -->
       <div :class="$style.panelSearch">
-        <ElInput
+        <t-input
           v-model="searchQuery"
           :class="$style.panelInput"
           placeholder="搜索引用..."
@@ -233,7 +232,7 @@ function typeIcon(type: string): string {
 
       <!-- Category tabs -->
       <div :class="$style.tabs">
-        <ElButton
+        <t-button
           v-for="tab in TABS"
           :key="tab.key"
           :class="[$style.tab, { [$style.active]: activeTab === tab.key }]"
@@ -241,7 +240,7 @@ function typeIcon(type: string): string {
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
-        </ElButton>
+        </t-button>
       </div>
 
       <!-- Results -->
@@ -283,7 +282,7 @@ function typeIcon(type: string): string {
       >
         <span :class="$style.chipIcon">{{ typeIcon(m.type) }}</span>
         <span>{{ m.label }}</span>
-        <ElButton :class="$style.chipRemove" link size="small" @click="removeMention(idx)">&times;</ElButton>
+        <t-button :class="$style.chipRemove" variant="text" size="small" @click="removeMention(idx)">&times;</t-button>
       </div>
     </div>
 

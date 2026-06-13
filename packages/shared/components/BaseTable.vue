@@ -7,7 +7,7 @@
  */
 
 import { computed, ref } from 'vue'
-import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import { ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import styles from './BaseTable.module.css'
 
 /** 列定义 */
@@ -195,18 +195,14 @@ const slots = defineSlots<{
               <span :class="styles.thContent">
                 <span>{{ col.title }}</span>
                 <span v-if="col.sortable" :class="styles.sortIcons">
-                  <el-icon
+                  <ChevronUpIcon
                     :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'asc' ? styles.sortActive : '']"
                     :size="12"
-                  >
-                    <ArrowUp />
-                  </el-icon>
-                  <el-icon
+                  />
+                  <ChevronDownIcon
                     :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'desc' ? styles.sortActive : '']"
                     :size="12"
-                  >
-                    <ArrowDown />
-                  </el-icon>
+                  />
                 </span>
               </span>
             </th>

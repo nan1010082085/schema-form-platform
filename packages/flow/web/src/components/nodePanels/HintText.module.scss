@@ -1,13 +1,13 @@
 .hint {
-  font-size: var(--el-font-size-extra-small);
-  color: var(--el-text-color-placeholder);
+  font-size: var(--font-size-xs);
+  color: var(--text-color-placeholder);
   line-height: 1.5;
   margin-bottom: var(--spacing-sm);
 
   code {
-    font-family: var(--el-font-family-monospace, monospace);
+    font-family: var(--font-family), monospace;
     font-size: 11px;
-    background: var(--el-fill-color-light);
+    background: var(--bg-color-secondary);
     padding: 1px 4px;
     border-radius: 3px;
   }

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
-import { resolveToken } from '@schema-form/micro-app/child'
+import { useQiankun } from '@schema-form/shared-qiankun'
 import { SSOClient } from '@schema-form/shared-utils/sso'
 
 // SSO 客户端配置
@@ -14,10 +14,10 @@ function getSSOClient(): SSOClient {
   })
 }
 
-const isMicroApp = () => !!window.__MICRO_APP_ENVIRONMENT__
+const isQiankun = () => !!window.__POWERED_BY_QIANKUN__
 
 const router = createRouter({
-  history: isMicroApp() ? createMemoryHistory() : createWebHistory('/admin/'),
+  history: isQiankun() ? createMemoryHistory() : createWebHistory('/admin/'),
   routes: [
     // ---- SSO Callback ----
     {
@@ -108,9 +108,14 @@ router.beforeEach((to) => {
   }
 
   // 微前端模式下跳过检查（宿主已处理鉴权）
-  if (!isMicroApp() && !resolveToken()) {
-    getSSOClient().login(window.location.href)
-    return false
+  if (!isQiankun()) {
+    const { getGlobalState } = useQiankun()
+    const state = getGlobalState()
+    const token = (state.token as string) || localStorage.getItem('sfp_access_token')
+    if (!token) {
+      getSSOClient().login(window.location.href)
+      return false
+    }
   }
 })
 

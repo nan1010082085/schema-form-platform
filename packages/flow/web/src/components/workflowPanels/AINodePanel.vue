@@ -57,24 +57,24 @@ const outputFormatOptions = [
   <!-- 模型配置 -->
   <SectionToggle title="模型配置" :count="3">
     <FieldRow label="AI 模型">
-      <el-select
-        :model-value="model"
+      <t-select
+        :value="model"
         filterable
         placeholder="选择 AI 模型"
         @change="update('aiModel', $event)"
       >
-        <el-option
+        <t-option
           v-for="opt in modelOptions"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
         />
-      </el-select>
+      </t-select>
     </FieldRow>
 
     <FieldRow label="温度">
-      <el-slider
-        :model-value="temperature"
+      <t-slider
+        :value="temperature"
         :min="0"
         :max="2"
         :step="0.1"
@@ -86,12 +86,11 @@ const outputFormatOptions = [
     <HintText>值越低输出越确定，值越高输出越随机。推荐 0.3-0.9。</HintText>
 
     <FieldRow label="最大 Token">
-      <el-input-number
-        :model-value="maxTokens"
+      <t-input-number
+        :value="maxTokens"
         :min="1"
         :max="128000"
         :step="256"
-        controls-position="right"
         @change="update('maxTokens', $event)"
       />
     </FieldRow>
@@ -100,9 +99,9 @@ const outputFormatOptions = [
   <!-- 提示词 -->
   <SectionToggle title="提示词" :count="2">
     <FieldRow label="系统提示" textarea>
-      <el-input
+      <t-input
         type="textarea"
-        :model-value="systemPrompt"
+        :value="systemPrompt"
         placeholder="定义 AI 的角色和行为规则"
         :rows="3"
         @input="update('systemPrompt', $event)"
@@ -110,9 +109,9 @@ const outputFormatOptions = [
     </FieldRow>
 
     <FieldRow label="用户提示" textarea>
-      <el-input
+      <t-input
         type="textarea"
-        :model-value="userPrompt"
+        :value="userPrompt"
         placeholder="用户的具体请求，支持 ${变量} 引用"
         :rows="4"
         @input="update('userPrompt', $event)"
@@ -124,8 +123,8 @@ const outputFormatOptions = [
   <!-- 输出配置 -->
   <SectionToggle title="输出配置" :count="2">
     <FieldRow label="输出变量">
-      <el-input
-        :model-value="outputVariable"
+      <t-input
+        :value="outputVariable"
         placeholder="例: aiResult"
         @input="update('outputVariable', $event)"
       />
@@ -133,17 +132,17 @@ const outputFormatOptions = [
     <HintText>AI 响应将写入该流程变量名</HintText>
 
     <FieldRow label="输出格式">
-      <el-select
-        :model-value="outputFormat"
+      <t-select
+        :value="outputFormat"
         @change="update('outputFormat', $event)"
       >
-        <el-option
+        <t-option
           v-for="opt in outputFormatOptions"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
         />
-      </el-select>
+      </t-select>
     </FieldRow>
   </SectionToggle>
 </template>

@@ -1,0 +1,197 @@
+.node {
+  min-width: 180px;
+  background: var(--td-bg-color-container);
+  border: 2px solid var(--td-border-level-1-color);
+  border-radius: var(--td-radius-default);
+  box-shadow: var(--td-shadow-1);
+  cursor: grab;
+  transition: box-shadow 0.2s, border-color 0.2s;
+
+  &:hover {
+    box-shadow: var(--td-shadow-1);
+  }
+}
+
+.selected {
+  border-color: var(--td-brand-color);
+  box-shadow: 0 0 0 3px var(--td-brand-color-light);
+}
+
+.nodeHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.nodeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--td-radius-small);
+  flex-shrink: 0;
+}
+
+.nodeLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--td-text-color-primary);
+}
+
+.nodeContent {
+  padding: 0 12px 8px;
+}
+
+.nodeHint {
+  font-size: 11px;
+  color: var(--td-text-color-placeholder);
+}
+
+.nodeTag {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--td-bg-color-secondarycontainer);
+  color: var(--td-text-color-placeholder);
+  border-radius: var(--td-radius-small);
+}
+
+.handle {
+  width: 10px;
+  height: 10px;
+  background: var(--td-brand-color);
+  border: 2px solid var(--td-bg-color-container);
+  cursor: crosshair;
+}
+
+// ── 节点操作按钮 ──
+
+.nodeActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px 8px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--td-bg-color-secondarycontainer);
+  border-radius: var(--td-radius-small);
+  cursor: pointer;
+  color: var(--td-text-color-placeholder);
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--td-brand-color-light);
+    color: var(--td-brand-color);
+  }
+}
+
+// ── AI 对话弹窗 ──
+
+.aiDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aiInput {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid var(--td-border-level-1-color);
+  border-radius: var(--td-radius-default);
+  font-size: 14px;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--td-brand-color);
+  }
+}
+
+.aiResponse {
+  background: var(--td-bg-color-secondarycontainer);
+  border-radius: var(--td-radius-default);
+  padding: 12px;
+}
+
+.aiResponseLabel {
+  font-size: 12px;
+  color: var(--td-text-color-placeholder);
+  margin-bottom: 8px;
+}
+
+.aiResponseContent {
+  font-size: 13px;
+  color: var(--td-text-color-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+// ── 节点类型颜色 ──
+
+.startNode {
+  border-color: var(--td-success-color);
+  .nodeIcon { background: var(--td-success-color-light); color: var(--td-success-color); }
+}
+
+.endNode {
+  border-color: var(--td-error-color);
+  .nodeIcon { background: var(--td-error-color-light); color: var(--td-error-color); }
+}
+
+.editorNode {
+  border-color: var(--td-brand-color);
+  .nodeIcon { background: var(--td-brand-color-light); color: var(--td-brand-color); }
+}
+
+.flowNode {
+  border-color: var(--td-warning-color);
+  .nodeIcon { background: var(--td-warning-color-light); color: var(--td-warning-color); }
+}
+
+.aiNode {
+  border-color: var(--td-brand-color);
+  .nodeIcon { background: var(--td-brand-color-light); color: var(--td-brand-color); }
+}
+
+.conditionNode {
+  border-color: #8b5cf6;
+  .nodeIcon { background: #f3f0ff; color: #8b5cf6; }
+}
+
+// ── 条件分支 ──
+
+.conditionBranches {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 12px 12px;
+}
+
+.branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.branchLabel {
+  font-size: 11px;
+  color: var(--td-text-color-placeholder);
+}
+
+.handleTrue {
+  background: var(--td-success-color);
+}
+
+.handleFalse {
+  background: var(--td-error-color);
+}

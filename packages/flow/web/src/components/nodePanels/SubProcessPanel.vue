@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import type { Node } from '@vue-flow/core'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
 import HintText from './HintText.vue'
@@ -219,7 +219,7 @@ function statusLabel(status: string): string {
   <SectionToggle title="子流程配置" :count="2">
     <FieldRow label="选择子流程">
       <div :class="styles['flow-select-row']">
-        <el-select
+        <t-select
           :model-value="selectedFlowId"
           filterable
           :filter-method="(q: string) => { flowSearch = q }"
@@ -229,7 +229,7 @@ function statusLabel(status: string): string {
           :class="styles['flow-select']"
           @change="onFlowSelect"
         >
-          <el-option
+          <t-option
             v-for="flow in filteredFlows"
             :key="flow.id"
             :label="flow.name"
@@ -239,9 +239,9 @@ function statusLabel(status: string): string {
             <span v-if="flow.description" :class="styles['option-desc']">
               {{ flow.description }}
             </span>
-          </el-option>
-        </el-select>
-        <el-button size="small" @click="openSelector">浏览</el-button>
+          </t-option>
+        </t-select>
+        <t-button size="small" @click="openSelector">浏览</t-button>
       </div>
     </FieldRow>
 
@@ -274,15 +274,15 @@ function statusLabel(status: string): string {
   <!-- 参数映射 -->
   <SectionToggle title="参数映射">
     <div :class="styles['mapping-header']">
-      <el-radio-group
+      <t-radio-group
         :model-value="mappingMode"
         size="small"
         :class="styles['mapping-mode-switch']"
         @change="onMappingModeChange"
       >
-        <el-radio-button value="kv">键值对</el-radio-button>
-        <el-radio-button value="json">JSON</el-radio-button>
-      </el-radio-group>
+        <t-radio-button value="kv">键值对</t-radio-button>
+        <t-radio-button value="json">JSON</t-radio-button>
+      </t-radio-group>
     </div>
 
     <!-- KV mode -->
@@ -294,34 +294,32 @@ function statusLabel(status: string): string {
             :key="i"
             :class="styles['mapping-row']"
           >
-            <el-input
+            <t-input
               :model-value="entry.key"
               placeholder="子流程变量"
               size="small"
               :class="styles['mapping-key']"
               @input="updateInputKey(i, $event)"
             />
-            <el-input
+            <t-input
               :model-value="entry.value"
               placeholder="${parentVar}"
               size="small"
               :class="styles['mapping-value']"
               @input="updateInputValue(i, $event)"
             />
-            <el-icon :class="styles['mapping-remove']" @click="removeInputEntry(i)">
-              <Delete />
-            </el-icon>
+            <DeleteIcon :class="styles['mapping-remove']" @click="removeInputEntry(i)" />
           </div>
-          <el-button
+          <t-button
             :class="styles['mapping-add']"
             size="small"
-            text
-            type="primary"
+            variant="text"
+            theme="primary"
             @click="addInputEntry"
           >
-            <el-icon><Plus /></el-icon>
+            <AddIcon />
             添加映射
-          </el-button>
+          </t-button>
         </div>
       </FieldRow>
 
@@ -332,34 +330,32 @@ function statusLabel(status: string): string {
             :key="i"
             :class="styles['mapping-row']"
           >
-            <el-input
+            <t-input
               :model-value="entry.key"
               placeholder="父流程变量"
               size="small"
               :class="styles['mapping-key']"
               @input="updateOutputKey(i, $event)"
             />
-            <el-input
+            <t-input
               :model-value="entry.value"
               placeholder="${childOutput}"
               size="small"
               :class="styles['mapping-value']"
               @input="updateOutputValue(i, $event)"
             />
-            <el-icon :class="styles['mapping-remove']" @click="removeOutputEntry(i)">
-              <Delete />
-            </el-icon>
+            <DeleteIcon :class="styles['mapping-remove']" @click="removeOutputEntry(i)" />
           </div>
-          <el-button
+          <t-button
             :class="styles['mapping-add']"
             size="small"
-            text
-            type="primary"
+            variant="text"
+            theme="primary"
             @click="addOutputEntry"
           >
-            <el-icon><Plus /></el-icon>
+            <AddIcon />
             添加映射
-          </el-button>
+          </t-button>
         </div>
       </FieldRow>
     </template>
@@ -367,7 +363,7 @@ function statusLabel(status: string): string {
     <!-- JSON mode -->
     <template v-else>
       <FieldRow label="输入变量映射" textarea>
-        <el-input
+        <t-input
           type="textarea"
           :model-value="inputMappingJson"
           :rows="3"
@@ -378,7 +374,7 @@ function statusLabel(status: string): string {
       </FieldRow>
 
       <FieldRow label="输出变量映射" textarea>
-        <el-input
+        <t-input
           type="textarea"
           :model-value="outputMappingJson"
           :rows="3"

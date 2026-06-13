@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ElButton } from 'element-plus'
+/* TDesign migration: components registered globally */
 import type { SchemaDiff } from '@/types'
 
 export interface SchemaDiffPanelProps {
@@ -37,12 +37,12 @@ const changeCount = computed(() =>
       <span :class="$style.title">Schema 已更新</span>
       <span :class="$style.count">{{ changeCount }} 处变更</span>
       <div :class="$style.actions">
-        <ElButton :class="$style.undoBtn" link @click="emit('undo')">
+        <t-button :class="$style.undoBtn" variant="text" @click="emit('undo')">
           撤销
-        </ElButton>
-        <ElButton :class="$style.dismissBtn" type="primary" @click="emit('dismiss')">
+        </t-button>
+        <t-button :class="$style.dismissBtn" theme="primary" @click="emit('dismiss')">
           确认
-        </ElButton>
+        </t-button>
       </div>
     </div>
 

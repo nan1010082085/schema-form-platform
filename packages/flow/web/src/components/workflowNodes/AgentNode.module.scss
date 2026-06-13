@@ -9,18 +9,18 @@
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .agentType {
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .model {
   font-size: 11px;
-  color: var(--el-text-color-placeholder);
-  background: var(--el-fill-color-light);
+  color: var(--text-color-placeholder);
+  background: var(--bg-color-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   display: inline-block;

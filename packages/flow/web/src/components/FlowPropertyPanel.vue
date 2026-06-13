@@ -14,18 +14,16 @@
     <template v-if="selectedNode">
       <div :class="styles.widgetNameRow">
         <span :class="styles.widgetType">{{ nodeTypeDisplayName }}</span>
-        <el-tooltip content="复制节点 ID" placement="top" :show-after="500">
-          <el-icon :class="styles.copyIdIcon" @click="copyNodeId">
-            <CopyDocument />
-          </el-icon>
-        </el-tooltip>
+        <t-tooltip content="复制节点 ID" placement="top" :show-after="500">
+          <CopyIcon :class="styles.copyIdIcon" @click="copyNodeId" />
+        </t-tooltip>
       </div>
 
-      <el-scrollbar :class="styles.scroll">
+      <t-scrollbar :class="styles.scroll">
         <!-- 基础属性 -->
         <SectionToggle title="基础属性" :count="2">
           <FieldRow label="节点名称">
-            <el-input
+            <t-input
               :model-value="selectedNode.data?.label ?? ''"
               placeholder="节点名称"
 
@@ -33,7 +31,7 @@
             />
           </FieldRow>
           <FieldRow label="节点说明" textarea>
-            <el-input
+            <t-input
               type="textarea"
               :model-value="selectedNode.data?.documentation ?? ''"
               placeholder="节点说明（可选）"
@@ -66,24 +64,22 @@
             <span :class="styles.edgeTarget">→ {{ edge.target }}</span>
           </div>
         </SectionToggle>
-      </el-scrollbar>
+      </t-scrollbar>
     </template>
 
     <!-- ===== Edge selected ===== -->
     <template v-else-if="selectedEdge">
       <div :class="styles.widgetNameRow">
         <span :class="styles.widgetType">连线</span>
-        <el-tooltip content="复制连线 ID" placement="top" :show-after="500">
-          <el-icon :class="styles.copyIdIcon" @click="copyEdgeId">
-            <CopyDocument />
-          </el-icon>
-        </el-tooltip>
+        <t-tooltip content="复制连线 ID" placement="top" :show-after="500">
+          <CopyIcon :class="styles.copyIdIcon" @click="copyEdgeId" />
+        </t-tooltip>
       </div>
 
-      <el-scrollbar :class="styles.scroll">
+      <t-scrollbar :class="styles.scroll">
         <SectionToggle title="连线属性" :count="3">
           <FieldRow label="连线标签">
-            <el-input
+            <t-input
               :model-value="(selectedEdge.label as string) ?? ''"
               placeholder="连线标签"
 
@@ -91,7 +87,7 @@
             />
           </FieldRow>
           <FieldRow label="条件表达式">
-            <el-input
+            <t-input
               :model-value="selectedEdge.data?.conditionExpression ?? ''"
               placeholder="${amount > 10000}"
 
@@ -99,13 +95,13 @@
             />
           </FieldRow>
           <FieldRow label="默认连线">
-            <el-switch
+            <t-switch
               :model-value="selectedEdge.data?.isDefault ?? false"
               @change="updateEdgeData('isDefault', $event)"
             />
           </FieldRow>
         </SectionToggle>
-      </el-scrollbar>
+      </t-scrollbar>
     </template>
 
     <!-- ===== Nothing selected ===== -->
@@ -118,8 +114,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Edge } from '@vue-flow/core'
-import { CopyDocument } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { CopyIcon } from 'tdesign-icons-vue-next'
+import { MessagePlugin } from 'tdesign-vue-next'
 import { storeToRefs } from 'pinia'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { useFlowGraphStore } from '../stores/flowGraph.js'
@@ -208,13 +204,13 @@ function updateEdgeData(key: string, value: unknown) {
 function copyNodeId() {
   if (!selectedNode.value) return
   navigator.clipboard.writeText(selectedNode.value.id)
-  ElMessage.success('已复制节点 ID')
+  MessagePlugin.success('已复制节点 ID')
 }
 
 function copyEdgeId() {
   if (!selectedEdge.value) return
   navigator.clipboard.writeText(selectedEdge.value.id)
-  ElMessage.success('已复制连线 ID')
+  MessagePlugin.success('已复制连线 ID')
 }
 
 function selectEdge(edgeId: string) {

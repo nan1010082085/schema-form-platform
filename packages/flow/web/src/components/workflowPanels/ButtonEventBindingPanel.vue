@@ -9,56 +9,56 @@
         >
           <div :class="$style.bindingHeader">
             <span :class="$style.bindingName">{{ binding.buttonField }}</span>
-            <el-button
-              type="danger"
-              text
+            <t-button
+              theme="danger"
+              variant="text"
               size="small"
               @click="removeBinding(index)"
             >
               删除
-            </el-button>
+            </t-button>
           </div>
 
           <FieldRow label="流程动作">
-            <el-select
-              :model-value="binding.action"
+            <t-select
+              :value="binding.action"
               @change="updateBinding(index, 'action', $event)"
             >
-              <el-option label="提交" value="submit" />
-              <el-option label="审批通过" value="approve" />
-              <el-option label="审批拒绝" value="reject" />
-              <el-option label="下一步" value="next" />
-              <el-option label="终止" value="terminate" />
-            </el-select>
+              <t-option label="提交" value="submit" />
+              <t-option label="审批通过" value="approve" />
+              <t-option label="审批拒绝" value="reject" />
+              <t-option label="下一步" value="next" />
+              <t-option label="终止" value="terminate" />
+            </t-select>
           </FieldRow>
 
           <FieldRow v-if="binding.action === 'next'" label="目标节点">
-            <el-select
-              :model-value="binding.targetNodeId"
+            <t-select
+              :value="binding.targetNodeId"
               placeholder="选择目标节点"
               @change="updateBinding(index, 'targetNodeId', $event)"
             >
-              <el-option
+              <t-option
                 v-for="node in availableNodes"
                 :key="node.id"
                 :label="node.data?.label || node.id"
                 :value="node.id"
               />
-            </el-select>
+            </t-select>
           </FieldRow>
 
           <FieldRow label="确认提示">
-            <el-input
-              :model-value="binding.confirmMessage"
+            <t-input
+              :value="binding.confirmMessage"
               placeholder="操作前的确认提示（可选）"
               @input="updateBinding(index, 'confirmMessage', $event)"
             />
           </FieldRow>
         </div>
 
-        <el-button :class="$style.addBtn" @click="addBinding">
+        <t-button :class="$style.addBtn" @click="addBinding">
           + 添加按钮绑定
-        </el-button>
+        </t-button>
       </div>
     </SectionToggle>
   </div>
@@ -141,7 +141,7 @@ function updateBinding(index: number, key: string, value: unknown) {
 }
 
 .bindingItem {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 8px;
   padding: 12px;
 }
@@ -155,7 +155,7 @@ function updateBinding(index: number, key: string, value: unknown) {
 
 .bindingName {
   font-weight: 500;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .addBtn {

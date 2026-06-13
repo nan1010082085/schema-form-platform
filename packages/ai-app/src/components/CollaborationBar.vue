@@ -7,7 +7,7 @@
  */
 
 import { computed } from 'vue'
-import { ElButton } from 'element-plus'
+/* TDesign migration: components registered globally */
 
 interface Props {
   /** 参与者 ID 列表 */
@@ -72,23 +72,23 @@ function handleLeave(): void {
 
     <!-- 操作按钮 -->
     <div :class="$style.actions">
-      <ElButton
+      <t-button
         v-if="conversationId"
         :class="$style.btn"
         title="复制邀请链接"
-        link
+        variant="text"
         @click="handleCopyInvite"
       >
         <svg :class="$style.icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
-      </ElButton>
-      <ElButton
+      </t-button>
+      <t-button
         v-if="isCollaborating"
         :class="[$style.btn, $style.btnLeave]"
         title="离开协作"
-        link
+        variant="text"
         @click="handleLeave"
       >
         <svg :class="$style.icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,7 +96,7 @@ function handleLeave(): void {
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
-      </ElButton>
+      </t-button>
     </div>
   </div>
 </template>

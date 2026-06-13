@@ -1,45 +1,48 @@
 <template>
-  <el-dialog
-    v-model="visible"
+  <t-dialog
+    v-model:visible="visible"
     :title="title"
     :width="width"
     :destroy-on-close="destroyOnClose"
     :draggable="draggable"
     :fullscreen="isFullscreen"
+    :footer="false"
     @close="handleClose"
   >
-    <template #header="{ close, titleId, titleClass }">
+    <template #header>
       <div
         :class="$style.header"
         @mousedown="handleDragStart"
       >
-        <span :id="titleId" :class="titleClass">{{ title }}</span>
+        <span>{{ title }}</span>
         <div :class="$style.headerActions">
-          <el-button text size="small" @click="toggleFullscreen">
-            <el-icon>
-              <FullScreen v-if="!isFullscreen" />
-              <CopyDocument v-else />
-            </el-icon>
-          </el-button>
-          <el-button text size="small" @click="close">
-            <el-icon><Close /></el-icon>
-          </el-button>
+          <t-button theme="default" variant="text" size="small" @click="toggleFullscreen">
+            <template #icon>
+              <FullscreenExitIcon v-if="isFullscreen" />
+              <FullscreenIcon v-else />
+            </template>
+          </t-button>
+          <t-button theme="default" variant="text" size="small" @click="handleClose">
+            <template #icon>
+              <CloseIcon />
+            </template>
+          </t-button>
         </div>
       </div>
     </template>
     <slot />
     <template #footer>
       <slot name="footer">
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
+        <t-button theme="default" @click="handleCancel">取消</t-button>
+        <t-button theme="primary" :loading="loading" @click="handleConfirm">确定</t-button>
       </slot>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { FullScreen, CopyDocument, Close } from '@element-plus/icons-vue'
+import { FullscreenIcon, FullscreenExitIcon, CloseIcon } from 'tdesign-icons-vue-next'
 
 const props = withDefaults(defineProps<{
   modelValue: boolean
@@ -88,7 +91,7 @@ function handleClose() {
 }
 
 function handleDragStart(e: MouseEvent) {
-  // Element Plus 的 draggable 已内置，这里可以添加额外的拖拽逻辑
+  // TDesign 的 draggable 已内置，这里可以添加额外的拖拽逻辑
   e.preventDefault()
 }
 </script>

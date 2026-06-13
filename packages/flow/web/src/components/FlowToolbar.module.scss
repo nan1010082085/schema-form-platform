@@ -3,8 +3,8 @@
   align-items: center;
   height: 44px;
   padding: 0 8px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color-lighter);
   flex-shrink: 0;
   gap: 4px;
   z-index: 100;
@@ -35,21 +35,21 @@
 .appName {
   font-size: 13px;
   font-weight: 500;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   white-space: nowrap;
 }
 
 .title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   white-space: nowrap;
 }
 
 .divider {
   width: 1px;
   height: 20px;
-  background: var(--el-border-color-lighter);
+  background: var(--border-color-lighter);
   flex-shrink: 0;
   margin: 0 2px;
 }
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 0;
   padding: 2px 3px;
-  background: var(--el-fill-color-light);
+  background: var(--bg-color-secondary);
   border-radius: 6px;
 }
 
@@ -72,17 +72,17 @@
   height: 28px;
   border: none;
   background: transparent;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   cursor: pointer;
-  border-radius: var(--el-border-radius-small);
+  border-radius: var(--radius-small);
   transition: all 0.15s;
   flex-shrink: 0;
   padding: 0;
 }
 
 .iconBtn:hover {
-  background: var(--el-fill-color-light);
-  color: var(--el-text-color-primary);
+  background: var(--bg-color-secondary);
+  color: var(--text-color-primary);
 }
 
 .iconBtn:disabled {
@@ -91,23 +91,23 @@
 }
 
 .iconBtnOutline {
-  border: 1px solid var(--el-border-color);
-  color: var(--el-text-color-regular);
-  border-radius: var(--el-border-radius-small);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-secondary);
+  border-radius: var(--radius-small);
 }
 
 .iconBtnOutline:hover {
-  border-color: var(--el-border-color-hover);
-  background: var(--el-fill-color-lighter);
+  border-color: var(--border-color-hover);
+  background: var(--bg-color-secondary);
 }
 
 .iconBtnActive {
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .iconBtnActive:hover {
-  background: var(--el-color-primary-light-8);
+  background: var(--color-primary-light-3);
 }
 
 .btn {
@@ -115,8 +115,8 @@
   align-items: center;
   gap: 4px;
   padding: 5px 12px;
-  font-size: var(--el-font-size-small);
-  border-radius: var(--el-border-radius-small);
+  font-size: var(--font-size-small);
+  border-radius: var(--radius-small);
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -124,39 +124,39 @@
 }
 
 .btnOutline {
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color);
-  color: var(--el-text-color-regular);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color-secondary);
 }
 
 .btnOutline:hover {
-  border-color: var(--el-border-color-hover);
-  background: var(--el-fill-color-lighter);
+  border-color: var(--border-color-hover);
+  background: var(--bg-color-secondary);
 }
 
 .btnPrimary {
-  background: var(--el-color-primary);
-  border: 1px solid var(--el-color-primary);
-  color: var(--el-color-white);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-white, #fff);
 }
 
 .btnPrimary:hover {
-  background: var(--el-color-primary-light-3);
-  border-color: var(--el-color-primary-light-3);
+  background: var(--color-primary-light-3);
+  border-color: var(--color-primary-light-3);
 }
 
 .previewBar {
-  background: var(--el-color-primary-light-9);
-  border-bottom-color: var(--el-color-primary-light-5);
+  background: var(--color-primary-light);
+  border-bottom-color: var(--color-primary-light-3);
 }
 
 .previewLabel {
   font-size: 13px;
   font-weight: 500;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
   padding: 3px 10px;
-  background: var(--el-color-primary-light-8);
-  border-radius: var(--el-border-radius-small);
+  background: var(--color-primary-light-3);
+  border-radius: var(--radius-small);
 }
 
 .aiBtn {
@@ -172,8 +172,8 @@
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: var(--el-color-primary);
-  color: var(--el-color-white);
+  background: var(--color-primary);
+  color: var(--color-white, #fff);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -181,8 +181,8 @@
 }
 
 .iconBtnActive .aiLabel {
-  background: var(--el-color-primary);
-  box-shadow: 0 0 0 2px var(--el-color-primary-light-5);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light-3);
 }
 
 .layoutPopover {
@@ -199,7 +199,7 @@
 
 .layoutLabel {
   font-size: 12px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   flex-shrink: 0;
   width: 56px;
 }
@@ -218,9 +218,9 @@
 .shortcutsTitle {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--border-color-lighter);
   margin-bottom: 4px;
 }
 
@@ -233,7 +233,7 @@
 
 .shortcutLabel {
   font-size: 13px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
 }
 
 .shortcutKeys {
@@ -241,7 +241,7 @@
   align-items: center;
   gap: 3px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 
   kbd {
     display: inline-flex;
@@ -252,10 +252,10 @@
     padding: 0 5px;
     font-size: 11px;
     font-family: inherit;
-    color: var(--el-text-color-primary);
-    background: var(--el-fill-color-light);
-    border: 1px solid var(--el-border-color);
+    color: var(--text-color-primary);
+    background: var(--bg-color-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
-    box-shadow: 0 1px 0 var(--el-border-color);
+    box-shadow: 0 1px 0 var(--border-color);
   }
 }

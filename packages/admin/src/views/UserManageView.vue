@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
 
 // ── Types ──────────────────────────────────────────────
 interface Dept {
@@ -208,7 +208,7 @@ function openEdit(user: User) {
 async function handleSubmit() {
   if (dialogMode.value === 'create') {
     if (!form.value.username || !form.value.password || !form.value.displayName) {
-      ElMessage.warning('请填写完整信息')
+      MessagePlugin.warning('请填写完整信息')
       return
     }
     await apiClient.post('/users', {
@@ -222,7 +222,7 @@ async function handleSubmit() {
       avatar: form.value.avatar || '',
       status: form.value.status,
     })
-    ElMessage.success('用户创建成功')
+    MessagePlugin.success('用户创建成功')
   } else {
     await apiClient.put(`/users/${editingId.value}`, {
       displayName: form.value.displayName,
@@ -233,21 +233,28 @@ async function handleSubmit() {
       avatar: form.value.avatar || '',
       status: form.value.status,
     })
-    ElMessage.success('用户更新成功')
+    MessagePlugin.success('用户更新成功')
   }
   dialogVisible.value = false
   fetchUsers()
 }
 
 async function handleDelete(user: User) {
-  await ElMessageBox.confirm(`确认删除用户「${user.displayName}」？`, '删除确认', {
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    type: 'warning',
+  const confirmDia = DialogPlugin.confirm({
+    header: '删除确认',
+    body: `确认删除用户「${user.displayName}」？`,
+    confirmBtn: '删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await apiClient.delete(`/users/${user.id}`)
+      MessagePlugin.success('用户已删除')
+      fetchUsers()
+      confirmDia.destroy()
+    },
+    onClose: () => {
+      confirmDia.destroy()
+    },
   })
-  await apiClient.delete(`/users/${user.id}`)
-  ElMessage.success('用户已删除')
-  fetchUsers()
 }
 
 function openResetPassword(user: User) {
@@ -258,11 +265,11 @@ function openResetPassword(user: User) {
 
 async function handleResetPassword() {
   if (resetPwdForm.value.password.length < 8) {
-    ElMessage.warning('密码至少 8 个字符')
+    MessagePlugin.warning('密码至少 8 个字符')
     return
   }
   await apiClient.put(`/users/${resetPwdUserId.value}/password`, resetPwdForm.value)
-  ElMessage.success('密码已重置')
+  MessagePlugin.success('密码已重置')
   resetPwdVisible.value = false
 }
 
@@ -298,31 +305,24 @@ onMounted(async () => {
       <div :class="$style.deptHeader">
         <span :class="$style.deptTitle">部门</span>
       </div>
-      <el-input
+      <t-input
         v-model="deptSearch"
         placeholder="搜索部门"
         clearable
         size="small"
-        :prefix-icon="Search"
+        :prefix-icon="SearchIcon"
         :class="$style.deptSearch"
       />
-      <el-tree
+      <t-tree
         :data="filteredDeptTree"
-        node-key="id"
-        :props="{ label: 'name', children: 'children' }"
-        :default-expanded-keys="expandedDeptIds"
+        :keys="{ label: 'name', children: 'children', value: 'id' }"
+        :default-expanded="expandedDeptIds"
         :expand-on-click-node="false"
-        highlight-current
-        :current-node-key="filterDeptId"
+        activable
+        :value="filterDeptId ? [filterDeptId] : []"
         :class="$style.deptTree"
-        @node-click="(data: Dept) => selectDept(data.id)"
-      >
-        <template #default="{ data }">
-          <span :class="[$style.deptNode, filterDeptId === data.id && $style.deptNodeActive]">
-            {{ data.name }}
-          </span>
-        </template>
-      </el-tree>
+        @click="(node: any) => selectDept(node.value)"
+      />
     </aside>
 
     <!-- Right: User list -->
@@ -330,181 +330,180 @@ onMounted(async () => {
       <!-- Toolbar -->
       <div :class="$style.toolbar">
         <div :class="$style.filters">
-          <el-input
+          <t-input
             v-model="searchQuery"
             placeholder="搜索用户名或显示名"
-            :prefix-icon="Search"
+            :prefix-icon="SearchIcon"
             clearable
             :class="$style.search"
             @clear="page = 1; fetchUsers()"
             @keyup.enter="page = 1; fetchUsers()"
           />
-          <el-select v-model="filterRoleId" placeholder="角色筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
-            <el-option v-for="role in roles" :key="role.id" :label="role.name" :value="role.id" />
-          </el-select>
-          <el-select v-model="filterStatus" placeholder="状态筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
-            <el-option label="正常" value="active" />
-            <el-option label="停用" value="inactive" />
-            <el-option label="禁用" value="disabled" />
-          </el-select>
-          <el-button text @click="clearFilters">重置</el-button>
+          <t-select v-model="filterRoleId" placeholder="角色筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
+            <t-option v-for="role in roles" :key="role.id" :label="role.name" :value="role.id" />
+          </t-select>
+          <t-select v-model="filterStatus" placeholder="状态筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
+            <t-option label="正常" value="active" />
+            <t-option label="停用" value="inactive" />
+            <t-option label="禁用" value="disabled" />
+          </t-select>
+          <t-button variant="text" @click="clearFilters">重置</t-button>
         </div>
-        <el-button type="primary" :icon="Plus" @click="openCreate">
+        <t-button theme="primary" :icon="AddIcon" @click="openCreate">
           新增用户
-        </el-button>
+        </t-button>
       </div>
 
       <!-- Active filter tags -->
       <div v-if="filterDeptId" :class="$style.activeFilter">
-        <el-tag closable @close="selectDept(filterDeptId)">
+        <t-tag closable @close="selectDept(filterDeptId)">
           部门: {{ getDeptName(filterDeptId) }}
-        </el-tag>
+        </t-tag>
       </div>
 
       <!-- Table -->
-      <el-table :data="users" v-loading="loading" :class="$style.table" empty-text="暂无数据">
-        <el-table-column prop="username" label="用户名" min-width="100" />
-        <el-table-column prop="displayName" label="显示名" min-width="100" />
-        <el-table-column label="邮箱" min-width="140">
-          <template #default="{ row }">
+      <t-table :data="users" :loading="loading" :class="$style.table" empty="暂无数据">
+        <t-col prop="username" label="用户名" :min-width="100" />
+        <t-col prop="displayName" label="显示名" :min-width="100" />
+        <t-col label="邮箱" :min-width="140">
+          <template #cell="{ row }">
             <span>{{ row.email || '-' }}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="手机" min-width="120">
-          <template #default="{ row }">
+        </t-col>
+        <t-col label="手机" :min-width="120">
+          <template #cell="{ row }">
             <span>{{ row.phone || '-' }}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="所属部门" min-width="100">
-          <template #default="{ row }">
+        </t-col>
+        <t-col label="所属部门" :min-width="100">
+          <template #cell="{ row }">
             <span>{{ getDeptName(row.deptId) || '未分配' }}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="角色" min-width="150">
-          <template #default="{ row }">
-            <el-tag
+        </t-col>
+        <t-col label="角色" :min-width="150">
+          <template #cell="{ row }">
+            <t-tag
               v-for="roleName in getRoleNames(row.roles)"
               :key="roleName"
               size="small"
               :class="$style.roleTag"
-              disable-transitions
             >
               {{ roleName }}
-            </el-tag>
+            </t-tag>
             <span v-if="!row.roles || row.roles.length === 0" :class="$style.noRole">未分配</span>
           </template>
-        </el-table-column>
-        <el-table-column label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : row.status === 'disabled' ? 'danger' : 'info'" size="small">
+        </t-col>
+        <t-col label="状态" :width="80">
+          <template #cell="{ row }">
+            <t-tag :theme="row.status === 'active' ? 'success' : row.status === 'disabled' ? 'danger' : 'warning'" size="small">
               {{ row.status === 'active' ? '正常' : row.status === 'disabled' ? '禁用' : '停用' }}
-            </el-tag>
+            </t-tag>
           </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
+        </t-col>
+        <t-col label="操作" :width="220" fixed="right">
+          <template #cell="{ row }">
             <div :class="$style.actions">
-              <el-button text size="small" @click="openEdit(row)">编辑</el-button>
-              <el-button text size="small" @click="openResetPassword(row)">重置密码</el-button>
-              <el-button text size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+              <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+              <t-button variant="text" size="small" @click="openResetPassword(row)">重置密码</t-button>
+              <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
             </div>
           </template>
-        </el-table-column>
-      </el-table>
+        </t-col>
+      </t-table>
 
       <!-- Pagination -->
       <div :class="$style.pagination">
-        <el-pagination
-          v-model:current-page="page"
+        <t-pagination
+          v-model:current="page"
           v-model:page-size="pageSize"
           :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
+          :page-size-options="[10, 20, 50, 100]"
+          show-total
+          show-page-size
           @current-change="handlePageChange"
-          @size-change="handleSizeChange"
+          @page-size-change="handleSizeChange"
         />
       </div>
     </div>
   </div>
 
   <!-- Create/Edit Dialog -->
-  <el-dialog
-    v-model="dialogVisible"
-    :title="dialogMode === 'create' ? '新增用户' : '编辑用户'"
+  <t-dialog
+    v-model:visible="dialogVisible"
+    :header="dialogMode === 'create' ? '新增用户' : '编辑用户'"
     width="540px"
     destroy-on-close
   >
-    <el-form label-width="80px">
-      <el-form-item label="用户名">
-        <el-input
+    <t-form label-width="80px">
+      <t-form-item label="用户名">
+        <t-input
           v-model="form.username"
           :disabled="dialogMode === 'edit'"
           placeholder="请输入用户名"
         />
-      </el-form-item>
-      <el-form-item v-if="dialogMode === 'create'" label="密码">
-        <el-input v-model="form.password" type="password" show-password placeholder="请输入密码（至少8位）" />
-      </el-form-item>
-      <el-form-item label="显示名">
-        <el-input v-model="form.displayName" placeholder="请输入显示名" />
-      </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="form.email" placeholder="请输入邮箱地址" />
-      </el-form-item>
-      <el-form-item label="手机号">
-        <el-input v-model="form.phone" placeholder="请输入手机号" />
-      </el-form-item>
-      <el-form-item label="头像URL">
-        <el-input v-model="form.avatar" placeholder="头像链接地址（可选）" />
-      </el-form-item>
-      <el-form-item label="所属部门">
-        <el-tree-select
+      </t-form-item>
+      <t-form-item v-if="dialogMode === 'create'" label="密码">
+        <t-input v-model="form.password" type="password" placeholder="请输入密码（至少8位）" />
+      </t-form-item>
+      <t-form-item label="显示名">
+        <t-input v-model="form.displayName" placeholder="请输入显示名" />
+      </t-form-item>
+      <t-form-item label="邮箱">
+        <t-input v-model="form.email" placeholder="请输入邮箱地址" />
+      </t-form-item>
+      <t-form-item label="手机号">
+        <t-input v-model="form.phone" placeholder="请输入手机号" />
+      </t-form-item>
+      <t-form-item label="头像URL">
+        <t-input v-model="form.avatar" placeholder="头像链接地址（可选）" />
+      </t-form-item>
+      <t-form-item label="所属部门">
+        <t-tree-select
           v-model="form.deptId"
           :data="deptTree"
-          :props="{ label: 'name', children: 'children', value: 'id' }"
+          :keys="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择部门"
           clearable
           check-strictly
-          :render-after-expand="false"
-          style="width: 100%"
+          :style="{ width: '100%' }"
         />
-      </el-form-item>
-      <el-form-item label="角色">
-        <el-select v-model="form.roles" multiple placeholder="选择角色" style="width: 100%">
-          <el-option
+      </t-form-item>
+      <t-form-item label="角色">
+        <t-select v-model="form.roles" multiple placeholder="选择角色" :style="{ width: '100%' }">
+          <t-option
             v-for="role in roles"
             :key="role.id"
             :label="getRoleScopeDesc(role)"
             :value="role.id"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="状态">
-        <el-select v-model="form.status" style="width: 100%">
-          <el-option label="正常" value="active" />
-          <el-option label="停用" value="inactive" />
-          <el-option label="禁用" value="disabled" />
-        </el-select>
-      </el-form-item>
-    </el-form>
+        </t-select>
+      </t-form-item>
+      <t-form-item label="状态">
+        <t-select v-model="form.status" :style="{ width: '100%' }">
+          <t-option label="正常" value="active" />
+          <t-option label="停用" value="inactive" />
+          <t-option label="禁用" value="disabled" />
+        </t-select>
+      </t-form-item>
+    </t-form>
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleSubmit">确定</el-button>
+      <t-button @click="dialogVisible = false">取消</t-button>
+      <t-button theme="primary" @click="handleSubmit">确定</t-button>
     </template>
-  </el-dialog>
+  </t-dialog>
 
   <!-- Reset Password Dialog -->
-  <el-dialog v-model="resetPwdVisible" title="重置密码" width="400px" destroy-on-close>
-    <el-form label-width="70px">
-      <el-form-item label="新密码">
-        <el-input v-model="resetPwdForm.password" type="password" show-password placeholder="请输入新密码（至少8位）" />
-      </el-form-item>
-    </el-form>
+  <t-dialog v-model:visible="resetPwdVisible" header="重置密码" width="400px" destroy-on-close>
+    <t-form label-width="70px">
+      <t-form-item label="新密码">
+        <t-input v-model="resetPwdForm.password" type="password" placeholder="请输入新密码（至少8位）" />
+      </t-form-item>
+    </t-form>
     <template #footer>
-      <el-button @click="resetPwdVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleResetPassword">确定</el-button>
+      <t-button @click="resetPwdVisible = false">取消</t-button>
+      <t-button theme="primary" @click="handleResetPassword">确定</t-button>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>
 
 <style module>
@@ -519,10 +518,10 @@ onMounted(async () => {
 .deptPanel {
   width: 220px;
   flex-shrink: 0;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--td-border-level-2-color);
   border-radius: 8px;
   padding: 12px;
-  background: var(--el-bg-color);
+  background: var(--td-bg-color-container);
 }
 
 .deptHeader {
@@ -535,7 +534,7 @@ onMounted(async () => {
 .deptTitle {
   font-size: 14px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--td-text-color-primary);
 }
 
 .deptSearch {
@@ -552,7 +551,7 @@ onMounted(async () => {
 }
 
 .deptNodeActive {
-  color: var(--el-color-primary);
+  color: var(--td-brand-color);
   font-weight: 600;
 }
 
@@ -606,7 +605,7 @@ onMounted(async () => {
 }
 
 .noRole {
-  color: var(--el-text-color-placeholder);
+  color: var(--td-text-color-placeholder);
   font-size: 13px;
 }
 

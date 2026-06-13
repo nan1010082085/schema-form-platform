@@ -23,14 +23,14 @@
               </span>
               <span v-if="msg.flowData.nodes.length > 5"> ...</span>
             </div>
-            <el-button
+            <t-button
               size="small"
-              type="primary"
+              theme="primary"
               :class="$style.applyBtn"
               @click="handleApplyFlow(msg.flowData)"
             >
               应用到画布
-            </el-button>
+            </t-button>
           </div>
         </div>
       </div>
@@ -48,7 +48,7 @@
     </div>
 
     <div :class="$style.inputArea">
-      <el-input
+      <t-input
         v-model="inputText"
         type="textarea"
         :rows="3"
@@ -58,14 +58,14 @@
       />
       <div :class="$style.inputActions">
         <span :class="$style.hint">Ctrl + Enter 发送</span>
-        <el-button
-          type="primary"
+        <t-button
+          theme="primary"
           :loading="loading"
           :disabled="!inputText.trim()"
           @click="handleSend"
         >
           发送
-        </el-button>
+        </t-button>
       </div>
     </div>
   </div>
@@ -305,21 +305,21 @@ function handleApplyFlow(flowData: { nodes: FlowNode[]; edges: FlowEdge[] }) {
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
 }
 
 .message.user .messageAvatar {
-  background: var(--el-color-primary-light-9);
+  background: var(--color-primary-light);
 }
 
 .messageContent {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 12px;
   padding: 12px 16px;
 }
 
 .message.user .messageContent {
-  background: var(--el-color-primary);
+  background: var(--color-primary);
   color: white;
 }
 
@@ -334,19 +334,19 @@ function handleApplyFlow(flowData: { nodes: FlowNode[]; edges: FlowEdge[] }) {
   background: white;
   border-radius: 8px;
   padding: 12px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--border-color-lighter);
 }
 
 .flowPreviewHeader {
   font-size: 12px;
   font-weight: 600;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin-bottom: 8px;
 }
 
 .flowPreviewNodes {
   font-size: 14px;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 12px;
   line-height: 1.6;
 }
@@ -365,7 +365,7 @@ function handleApplyFlow(flowData: { nodes: FlowNode[]; edges: FlowEdge[] }) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--el-text-color-secondary);
+  background: var(--text-color-secondary);
   animation: typing 1.4s infinite ease-in-out both;
 }
 
@@ -394,8 +394,8 @@ function handleApplyFlow(flowData: { nodes: FlowNode[]; edges: FlowEdge[] }) {
 
 .inputArea {
   padding: 16px;
-  border-top: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-lighter);
+  border-top: 1px solid var(--border-color-light);
+  background: var(--bg-color-secondary);
 }
 
 .inputActions {
@@ -407,6 +407,6 @@ function handleApplyFlow(flowData: { nodes: FlowNode[]; edges: FlowEdge[] }) {
 
 .hint {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 </style>

@@ -5,36 +5,36 @@
         <span :class="$style.icon">🤖</span>
         AI 助手
       </h3>
-      <el-button :class="$style.closeBtn" text @click="$emit('close')">
-        <el-icon><Close /></el-icon>
-      </el-button>
+      <t-button :class="$style.closeBtn" variant="text" @click="$emit('close')">
+        <CloseIcon style="font-size: 20px;" />
+      </t-button>
     </div>
 
-    <el-tabs v-model="activeTab" :class="$style.tabs">
-      <el-tab-pane label="生成流程" name="generate">
+    <t-tabs v-model="activeTab" :class="$style.tabs">
+      <t-tab-panel label="生成流程" value="generate">
         <AIFlowGenerator @apply="handleApplyFlow" />
-      </el-tab-pane>
-      <el-tab-pane label="优化分析" name="optimize">
+      </t-tab-panel>
+      <t-tab-panel label="优化分析" value="optimize">
         <AIFlowOptimizer
           :nodes="nodes"
           :edges="edges"
           @apply-suggestion="handleApplySuggestion"
         />
-      </el-tab-pane>
-      <el-tab-pane label="AI 对话" name="chat">
+      </t-tab-panel>
+      <t-tab-panel label="AI 对话" value="chat">
         <AIChat
           :nodes="nodes"
           :edges="edges"
           @update-flow="handleUpdateFlow"
         />
-      </el-tab-pane>
-    </el-tabs>
+      </t-tab-panel>
+    </t-tabs>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Close } from '@element-plus/icons-vue'
+import { CloseIcon } from 'tdesign-icons-vue-next'
 import AIFlowGenerator from './AIFlowGenerator.vue'
 import AIFlowOptimizer from './AIFlowOptimizer.vue'
 import AIChat from './AIChat.vue'
@@ -92,8 +92,8 @@ function handleUpdateFlow(updates: { nodes?: FlowNode[]; edges?: FlowEdge[] }) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--el-bg-color);
-  border-left: 1px solid var(--el-border-color-light);
+  background: var(--bg-color);
+  border-left: 1px solid var(--border-color-light);
 }
 
 .header {
@@ -101,14 +101,14 @@ function handleUpdateFlow(updates: { nodes?: FlowNode[]; edges?: FlowEdge[] }) {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-lighter);
+  border-bottom: 1px solid var(--border-color-light);
+  background: var(--bg-color-secondary);
 }
 
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -121,7 +121,7 @@ function handleUpdateFlow(updates: { nodes?: FlowNode[]; edges?: FlowEdge[] }) {
 
 .closeBtn {
   font-size: 20px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .tabs {
@@ -129,15 +129,5 @@ function handleUpdateFlow(updates: { nodes?: FlowNode[]; edges?: FlowEdge[] }) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.tabs :global(.el-tabs__content) {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-}
-
-.tabs :global(.el-tab-pane) {
-  height: 100%;
 }
 </style>

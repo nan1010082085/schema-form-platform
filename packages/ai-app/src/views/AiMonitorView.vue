@@ -10,7 +10,7 @@
  */
 
 import { ref, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { message } from '@schema-form/shared-utils/message'
 import {
   getMonitorSummary,
   getMonitorStats,
@@ -143,7 +143,7 @@ async function loadData(): Promise<void> {
     recentMetrics.value = recentData
     alerts.value = alertsData
   } catch (err) {
-    ElMessage.error('加载监控数据失败')
+    message.error('加载监控数据失败')
     console.error('Failed to load monitor data:', err)
   } finally {
     loading.value = false
@@ -152,12 +152,12 @@ async function loadData(): Promise<void> {
 
 async function handleRefresh(): Promise<void> {
   await loadData()
-  ElMessage.success('数据已刷新')
+  message.success('数据已刷新')
 }
 
-function handleTimeRangeChange(hours: number): void {
-  selectedHours.value = hours
-  getMonitorSummary(hours).then((data) => {
+function handleTimeRangeChange(val: string | number | boolean): void {
+  selectedHours.value = val as number
+  getMonitorSummary(val as number).then((data) => {
     summary.value = data
   })
 }
@@ -180,42 +180,30 @@ onMounted(() => {
         </div>
       </div>
       <div :class="$style.topbarRight">
-        <el-select
+        <t-select
           v-model="selectedAgent"
           placeholder="所有 Agent"
           clearable
           size="small"
           :class="$style.filterSelect"
-        >
-          <el-option
-            v-for="name in agentNames"
-            :key="name"
-            :label="getAgentLabel(name)"
-            :value="name"
-          />
-        </el-select>
-        <el-select
+          :options="agentNames.map(name => ({ label: getAgentLabel(name), value: name }))"
+        />
+        <t-select
           v-model="selectedOperation"
           placeholder="所有操作"
           clearable
           size="small"
           :class="$style.filterSelect"
-        >
-          <el-option
-            v-for="op in operations"
-            :key="op"
-            :label="getOperationLabel(op)"
-            :value="op"
-          />
-        </el-select>
-        <el-button
-          type="primary"
+          :options="operations.map(op => ({ label: getOperationLabel(op), value: op }))"
+        />
+        <t-button
+          theme="primary"
           size="small"
           :loading="loading"
           @click="handleRefresh"
         >
           刷新
-        </el-button>
+        </t-button>
       </div>
     </div>
 
@@ -224,17 +212,17 @@ onMounted(() => {
       <!-- 时间范围选择 -->
       <div :class="$style.timeRange">
         <span :class="$style.timeLabel">时间范围：</span>
-        <el-radio-group
+        <t-radio-group
           v-model="selectedHours"
           size="small"
           @change="handleTimeRangeChange"
         >
-          <el-radio-button :value="1">1 小时</el-radio-button>
-          <el-radio-button :value="6">6 小时</el-radio-button>
-          <el-radio-button :value="24">24 小时</el-radio-button>
-          <el-radio-button :value="72">3 天</el-radio-button>
-          <el-radio-button :value="168">7 天</el-radio-button>
-        </el-radio-group>
+          <t-radio-button :value="1">1 小时</t-radio-button>
+          <t-radio-button :value="6">6 小时</t-radio-button>
+          <t-radio-button :value="24">24 小时</t-radio-button>
+          <t-radio-button :value="72">3 天</t-radio-button>
+          <t-radio-button :value="168">7 天</t-radio-button>
+        </t-radio-group>
       </div>
 
       <!-- 总览卡片 -->
@@ -272,53 +260,48 @@ onMounted(() => {
       <!-- 详细统计表格 -->
       <div :class="$style.section">
         <h3 :class="$style.sectionTitle">Agent 统计</h3>
-        <el-table
+        <t-table
           :data="filteredStats"
           :class="$style.table"
           stripe
           size="small"
+          :columns="[
+            { colKey: 'agentName', title: 'Agent', width: 100 },
+            { colKey: 'operation', title: '操作', width: 80 },
+            { colKey: 'totalCalls', title: '调用次数', width: 100, sorter: true },
+            { colKey: 'successRate', title: '成功率', width: 100, sorter: true },
+            { colKey: 'avgDuration', title: '平均耗时', width: 120, sorter: true },
+            { colKey: 'p95Duration', title: 'P95 耗时', width: 120, sorter: true },
+            { colKey: 'maxDuration', title: '最大耗时', width: 120, sorter: true },
+            { colKey: 'totalTokens', title: 'Token 消耗', width: 120, sorter: true },
+          ]"
         >
-          <el-table-column prop="agentName" label="Agent" width="100">
-            <template #default="{ row }">
-              <el-tag size="small" :type="row.agentName === 'editor' ? 'primary' : row.agentName === 'flow' ? 'success' : 'info'">
-                {{ getAgentLabel(row.agentName) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="operation" label="操作" width="80">
-            <template #default="{ row }">
-              {{ getOperationLabel(row.operation) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="totalCalls" label="调用次数" width="100" sortable />
-          <el-table-column prop="successRate" label="成功率" width="100" sortable>
-            <template #default="{ row }">
-              <span :class="row.successRate >= 95 ? $style.success : $style.warning">
-                {{ row.successRate }}%
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="avgDuration" label="平均耗时" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatDuration(row.avgDuration) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="p95Duration" label="P95 耗时" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatDuration(row.p95Duration) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="maxDuration" label="最大耗时" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatDuration(row.maxDuration) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="totalTokens" label="Token 消耗" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatTokens(row.totalTokens) }}
-            </template>
-          </el-table-column>
-        </el-table>
+          <template #agentName="{ row }">
+            <t-tag size="small" :theme="row.agentName === 'editor' ? 'primary' : row.agentName === 'flow' ? 'success' : 'default'">
+              {{ getAgentLabel(row.agentName) }}
+            </t-tag>
+          </template>
+          <template #operation="{ row }">
+            {{ getOperationLabel(row.operation) }}
+          </template>
+          <template #successRate="{ row }">
+            <span :class="row.successRate >= 95 ? $style.success : $style.warning">
+              {{ row.successRate }}%
+            </span>
+          </template>
+          <template #avgDuration="{ row }">
+            {{ formatDuration(row.avgDuration) }}
+          </template>
+          <template #p95Duration="{ row }">
+            {{ formatDuration(row.p95Duration) }}
+          </template>
+          <template #maxDuration="{ row }">
+            {{ formatDuration(row.maxDuration) }}
+          </template>
+          <template #totalTokens="{ row }">
+            {{ formatTokens(row.totalTokens) }}
+          </template>
+        </t-table>
       </div>
 
       <!-- 性能告警 -->
@@ -331,13 +314,13 @@ onMounted(() => {
             :class="$style.alertItem"
           >
             <div :class="$style.alertHeader">
-              <el-tag
+              <t-tag
                 size="small"
-                :color="getAlertTypeColor(alert.alertType)"
-                effect="dark"
+                :style="{ background: getAlertTypeColor(alert.alertType), color: '#fff' }"
+                variant="dark"
               >
                 {{ getAlertTypeLabel(alert.alertType) }}
-              </el-tag>
+              </t-tag>
               <span :class="$style.alertAgent">{{ getAgentLabel(alert.agentName) }}</span>
               <span :class="$style.alertTime">{{ formatTime(alert.createdAt) }}</span>
             </div>
@@ -358,47 +341,43 @@ onMounted(() => {
       <!-- 最近调用记录 -->
       <div :class="$style.section">
         <h3 :class="$style.sectionTitle">最近调用</h3>
-        <el-table
+        <t-table
           :data="filteredRecent"
           :class="$style.table"
           stripe
           size="small"
           max-height="400"
+          :columns="[
+            { colKey: 'createdAt', title: '时间', width: 100 },
+            { colKey: 'agentName', title: 'Agent', width: 80 },
+            { colKey: 'operation', title: '操作', width: 80 },
+            { colKey: 'duration', title: '耗时', width: 100, sorter: true },
+            { colKey: 'success', title: '状态', width: 80 },
+            { colKey: 'error', title: '错误', minWidth: 200 },
+          ]"
         >
-          <el-table-column prop="createdAt" label="时间" width="100">
-            <template #default="{ row }">
-              {{ formatTime(row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="agentName" label="Agent" width="80">
-            <template #default="{ row }">
-              {{ getAgentLabel(row.agentName) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="operation" label="操作" width="80">
-            <template #default="{ row }">
-              {{ getOperationLabel(row.operation) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="duration" label="耗时" width="100" sortable>
-            <template #default="{ row }">
-              {{ formatDuration(row.duration) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="success" label="状态" width="80">
-            <template #default="{ row }">
-              <el-tag :type="row.success ? 'success' : 'danger'" size="small">
-                {{ row.success ? '成功' : '失败' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="error" label="错误" min-width="200">
-            <template #default="{ row }">
-              <span v-if="row.error" :class="$style.errorText">{{ row.error }}</span>
-              <span v-else :class="$style.mutedText">-</span>
-            </template>
-          </el-table-column>
-        </el-table>
+          <template #createdAt="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+          <template #agentName="{ row }">
+            {{ getAgentLabel(row.agentName) }}
+          </template>
+          <template #operation="{ row }">
+            {{ getOperationLabel(row.operation) }}
+          </template>
+          <template #duration="{ row }">
+            {{ formatDuration(row.duration) }}
+          </template>
+          <template #success="{ row }">
+            <t-tag :theme="row.success ? 'success' : 'danger'" size="small">
+              {{ row.success ? '成功' : '失败' }}
+            </t-tag>
+          </template>
+          <template #error="{ row }">
+            <span v-if="row.error" :class="$style.errorText">{{ row.error }}</span>
+            <span v-else :class="$style.mutedText">-</span>
+          </template>
+        </t-table>
       </div>
     </div>
   </div>
@@ -409,7 +388,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--el-bg-color-page, #f5f7fa);
+  background: var(--td-bg-color-page, #f5f7fa);
 }
 
 .topbar {
@@ -417,8 +396,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: var(--el-bg-color, #fff);
-  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--td-bg-color-container, #fff);
+  border-bottom: 1px solid var(--td-border-level-2-color, #e4e7ed);
 }
 
 .topbarLeft {
@@ -440,7 +419,7 @@ onMounted(() => {
 .topbarBrand {
   font-size: 16px;
   font-weight: 600;
-  color: var(--el-text-color-primary, #303133);
+  color: var(--td-text-color-primary, #303133);
 }
 
 .topbarRight {
@@ -468,7 +447,7 @@ onMounted(() => {
 
 .timeLabel {
   font-size: 14px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--td-text-color-secondary, #606266);
 }
 
 .summaryGrid {
@@ -479,44 +458,44 @@ onMounted(() => {
 }
 
 .summaryCard {
-  background: var(--el-bg-color, #fff);
+  background: var(--td-bg-color-container, #fff);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: var(--el-box-shadow-lighter, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
+  box-shadow: var(--td-shadow-1, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
 }
 
 .summaryLabel {
   font-size: 12px;
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--td-text-color-placeholder, #909399);
   margin-bottom: 8px;
 }
 
 .summaryValue {
   font-size: 24px;
   font-weight: 600;
-  color: var(--el-text-color-primary, #303133);
+  color: var(--td-text-color-primary, #303133);
 }
 
 .success {
-  color: var(--el-color-success, #67c23a);
+  color: var(--td-success-color, #67c23a);
 }
 
 .warning {
-  color: var(--el-color-warning, #e6a23c);
+  color: var(--td-warning-color, #e6a23c);
 }
 
 .section {
-  background: var(--el-bg-color, #fff);
+  background: var(--td-bg-color-container, #fff);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: var(--el-box-shadow-lighter, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
+  box-shadow: var(--td-shadow-1, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
 }
 
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: var(--el-text-color-primary, #303133);
+  color: var(--td-text-color-primary, #303133);
   margin: 0 0 16px 0;
 }
 
@@ -531,10 +510,10 @@ onMounted(() => {
 }
 
 .alertItem {
-  background: var(--el-fill-color-lighter, #fafafa);
+  background: var(--td-bg-color-secondarycontainer, #fafafa);
   border-radius: 6px;
   padding: 12px;
-  border-left: 3px solid var(--el-color-warning, #e6a23c);
+  border-left: 3px solid var(--td-warning-color, #e6a23c);
 }
 
 .alertHeader {
@@ -546,13 +525,13 @@ onMounted(() => {
 
 .alertAgent {
   font-weight: 500;
-  color: var(--el-text-color-primary, #303133);
+  color: var(--td-text-color-primary, #303133);
 }
 
 .alertTime {
   margin-left: auto;
   font-size: 12px;
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--td-text-color-placeholder, #909399);
 }
 
 .alertDetail {
@@ -560,19 +539,19 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 16px;
   font-size: 13px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--td-text-color-secondary, #606266);
 }
 
 .alertError {
-  color: var(--el-color-danger, #f56c6c);
+  color: var(--td-error-color, #f56c6c);
 }
 
 .errorText {
-  color: var(--el-color-danger, #f56c6c);
+  color: var(--td-error-color, #f56c6c);
   font-size: 12px;
 }
 
 .mutedText {
-  color: var(--el-text-color-placeholder, #c0c4cc);
+  color: var(--td-text-color-placeholder, #c0c4cc);
 }
 </style>

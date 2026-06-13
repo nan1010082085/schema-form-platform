@@ -1,22 +1,22 @@
 .card {
-  border: 1px solid var(--ai-glass-border, rgba(255, 255, 255, 0.18));
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
   border-radius: var(--ai-radius-lg, 12px);
   overflow: hidden;
-  background: var(--ai-bg-white, #FFFFFF);
-  box-shadow: var(--ai-shadow-card, 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06));
+  background: var(--ai-bg-white, #111820);
+  box-shadow: var(--ai-shadow-card, 0 0 12px rgba(0, 212, 255, 0.08));
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: var(--ai-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04));
+  box-shadow: var(--ai-shadow-md, 0 0 15px rgba(0, 212, 255, 0.12));
   transform: translateY(-1px);
 }
 
 /* ---- Header ---- */
 .head {
   padding: 10px 14px;
-  background: var(--ai-gradient-card-header, linear-gradient(180deg, rgba(245, 247, 250, 0.8) 0%, rgba(245, 247, 250, 0.4) 100%));
-  border-bottom: 1px solid var(--ai-border-light, #F0F2F5);
+  background: var(--ai-gradient-card-header, linear-gradient(180deg, rgba(22, 29, 38, 0.8) 0%, rgba(22, 29, 38, 0.4) 100%));
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.06));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,15 +41,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ai-color-warning-bg, rgba(230, 162, 60, 0.1));
-  color: var(--ai-color-warning, #E6A23C);
+  background: rgba(255, 171, 64, 0.1);
+  color: #ffab40;
   flex-shrink: 0;
 }
 
 .title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ai-text-primary, #1A1A1A);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
 }
 
 .badge {
@@ -57,33 +57,34 @@
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
-  color: var(--ai-color-info, #4581E9);
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff;
 }
 
 .fitBtn {
   width: 24px;
   height: 24px;
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: var(--ai-radius-sm, 2px);
-  background: var(--ai-bg-white, #FFFFFF);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
+  border-radius: var(--ai-radius-sm, 6px);
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--ai-text-secondary, #666666);
+  color: var(--ai-text-secondary, rgba(255, 255, 255, 0.65));
+  transition: all 0.15s;
 }
 
 .fitBtn:hover {
-  border-color: var(--ai-color-primary, #0060A2);
-  color: var(--ai-color-primary, #0060A2);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: var(--ai-color-primary, #00d4ff);
 }
 
 /* ---- Canvas ---- */
 .canvasWrapper {
   height: 280px;
-  background: var(--ai-bg-gray, #F5F7FA);
+  background: var(--ai-bg-gray, #161d26);
 }
 
 /* Override Vue Flow styles for preview context */
@@ -92,33 +93,33 @@
 }
 
 .canvasWrapper :deep(.vue-flow__node.selected) {
-  box-shadow: 0 0 0 2px var(--ai-color-primary, #0060A2);
+  box-shadow: 0 0 0 2px var(--ai-color-primary, #00d4ff), 0 0 10px rgba(0, 212, 255, 0.2);
   border-radius: 4px;
 }
 
 .canvasWrapper :deep(.vue-flow__edge-path) {
-  stroke: var(--ai-color-info, #4581e9);
+  stroke: var(--ai-color-info, #00d4ff);
 }
 
 .canvasWrapper :deep(.vue-flow__controls) {
   box-shadow: none;
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: var(--ai-radius-sm, 2px);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
+  border-radius: var(--ai-radius-sm, 6px);
 }
 
 .canvasWrapper :deep(.vue-flow__controls-button) {
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.06));
+  background: var(--ai-bg-white, #111820);
 }
 
 .canvasWrapper :deep(.vue-flow__controls-button:hover) {
-  background: var(--ai-bg-gray, #F5F7FA);
+  background: var(--ai-bg-hover, rgba(0, 212, 255, 0.04));
 }
 
 /* ---- Actions ---- */
 .actions {
   padding: 10px 14px;
-  border-top: 1px solid var(--ai-border-light, #F0F2F5);
+  border-top: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.06));
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -136,13 +137,13 @@
   cursor: pointer;
   transition: all 0.15s ease;
   border: none;
-  background: var(--ai-color-primary, #0060A2);
-  color: #FFFFFF;
+  background: var(--ai-gradient-primary, linear-gradient(135deg, #00d4ff 0%, #009fcc 100%));
+  color: #0a0e14;
   font-family: inherit;
 }
 
 .btnPrimary:hover {
-  background: var(--ai-color-primary-hover, #035B9C);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
 }
 
 .btnGhost {
@@ -155,15 +156,16 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  background: var(--ai-bg-white, #FFFFFF);
-  color: var(--ai-text-secondary, #666666);
-  border: 1px solid var(--ai-border-base, #E0E4EA);
+  background: transparent;
+  color: var(--ai-text-secondary, rgba(255, 255, 255, 0.65));
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
   font-family: inherit;
 }
 
 .btnGhost:hover {
-  background: var(--ai-bg-gray, #F7F8FA);
-  border-color: var(--ai-text-hint, #999999);
+  background: var(--ai-bg-hover, rgba(0, 212, 255, 0.04));
+  border-color: rgba(0, 212, 255, 0.25);
+  color: var(--ai-color-primary, #00d4ff);
 }
 
 /* ---- Compact mode ---- */

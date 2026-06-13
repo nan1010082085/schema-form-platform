@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
 
 interface MicroApp {
   id: string
@@ -108,40 +108,47 @@ function openEdit(app: MicroApp) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    ElMessage.warning('请输入应用名称')
+    MessagePlugin.warning('请输入应用名称')
     return
   }
   if (!form.value.url.trim()) {
-    ElMessage.warning('请输入应用 URL')
+    MessagePlugin.warning('请输入应用 URL')
     return
   }
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/micro-apps', form.value)
-    ElMessage.success('微应用创建成功')
+    MessagePlugin.success('微应用创建成功')
   } else {
     await apiClient.put(`/micro-apps/${editingId.value}`, form.value)
-    ElMessage.success('微应用更新成功')
+    MessagePlugin.success('微应用更新成功')
   }
   dialogVisible.value = false
   fetchApps()
 }
 
 async function handleDelete(app: MicroApp) {
-  await ElMessageBox.confirm(
-    `确认删除微应用「${app.name}」？关联的菜单配置将失效。`,
-    '删除确认',
-    { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
-  )
-  await apiClient.delete(`/micro-apps/${app.id}`)
-  ElMessage.success('微应用已删除')
-  fetchApps()
+  const confirmDia = DialogPlugin.confirm({
+    header: '删除确认',
+    body: `确认删除微应用「${app.name}」？关联的菜单配置将失效。`,
+    confirmBtn: '删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await apiClient.delete(`/micro-apps/${app.id}`)
+      MessagePlugin.success('微应用已删除')
+      fetchApps()
+      confirmDia.destroy()
+    },
+    onClose: () => {
+      confirmDia.destroy()
+    },
+  })
 }
 
 async function handleToggleStatus(app: MicroApp) {
   const newStatus = app.status === 'active' ? 'inactive' : 'active'
   await apiClient.put(`/micro-apps/${app.id}`, { status: newStatus })
-  ElMessage.success(`微应用已${newStatus === 'active' ? '启用' : '停用'}`)
+  MessagePlugin.success(`微应用已${newStatus === 'active' ? '启用' : '停用'}`)
   fetchApps()
 }
 
@@ -168,119 +175,120 @@ onMounted(fetchApps)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
-        <el-input
+        <t-input
           v-model="searchQuery"
           placeholder="搜索应用名称"
-          :prefix-icon="Search"
+          :prefix-icon="SearchIcon"
           clearable
-          style="width: 240px"
+          :style="{ width: '240px' }"
           @clear="handleSearch"
           @keyup.enter="handleSearch"
         />
-        <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 100px" @change="handleSearch">
-          <el-option label="启用" value="active" />
-          <el-option label="停用" value="inactive" />
-        </el-select>
+        <t-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }" @change="handleSearch">
+          <t-option label="启用" value="active" />
+          <t-option label="停用" value="inactive" />
+        </t-select>
       </div>
-      <el-button type="primary" :icon="Plus" @click="openCreate">新增微应用</el-button>
+      <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增微应用</t-button>
     </div>
 
-    <el-table :data="apps" v-loading="loading" :class="$style.table">
-      <el-table-column prop="name" label="应用名称" min-width="120" />
-      <el-table-column prop="url" label="应用 URL" min-width="200" show-overflow-tooltip />
-      <el-table-column label="布局方式" width="100" align="center">
-        <template #default="{ row }">
-          <el-tag size="small" :type="row.layout === 'iframe' ? 'warning' : row.layout === 'blank' ? 'info' : ''">
+    <t-table :data="apps" :loading="loading" :class="$style.table">
+      <t-col prop="name" label="应用名称" :min-width="120" />
+      <t-col prop="url" label="应用 URL" :min-width="200" />
+      <t-col label="布局方式" :width="100" align="center">
+        <template #cell="{ row }">
+          <t-tag size="small" :theme="row.layout === 'iframe' ? 'warning' : row.layout === 'blank' ? 'default' : 'primary'">
             {{ row.layout === 'default' ? '默认' : row.layout === 'blank' ? '空白' : 'iframe' }}
-          </el-tag>
+          </t-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="activateRule" label="激活规则" min-width="160" show-overflow-tooltip />
-      <el-table-column label="状态" width="80" align="center">
-        <template #default="{ row }">
-          <el-switch
-            :model-value="row.status === 'active'"
+      </t-col>
+      <t-col prop="activateRule" label="激活规则" :min-width="160" />
+      <t-col label="状态" :width="80" align="center">
+        <template #cell="{ row }">
+          <t-switch
+            :value="row.status === 'active'"
             size="small"
             @change="handleToggleStatus(row)"
           />
         </template>
-      </el-table-column>
-      <el-table-column prop="sort" label="排序" width="70" align="center" />
-      <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
-      <el-table-column label="操作" width="140" fixed="right">
-        <template #default="{ row }">
+      </t-col>
+      <t-col prop="sort" label="排序" :width="70" align="center" />
+      <t-col prop="remark" label="备注" :min-width="140" />
+      <t-col label="操作" :width="140" fixed="right">
+        <template #cell="{ row }">
           <div :class="$style.actions">
-            <el-button text size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button text size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
           </div>
         </template>
-      </el-table-column>
-    </el-table>
+      </t-col>
+    </t-table>
 
     <div :class="$style.pagination">
-      <el-pagination
-        v-model:current-page="page"
+      <t-pagination
+        v-model:current="page"
         v-model:page-size="pageSize"
         :total="total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next"
+        :page-size-options="[10, 20, 50]"
+        show-total
+        show-page-size
         @current-change="handlePageChange"
-        @size-change="handleSizeChange"
+        @page-size-change="handleSizeChange"
       />
     </div>
   </div>
 
   <!-- Create/Edit Dialog -->
-  <el-dialog
-    v-model="dialogVisible"
-    :title="dialogMode === 'create' ? '新增微应用' : '编辑微应用'"
+  <t-dialog
+    v-model:visible="dialogVisible"
+    :header="dialogMode === 'create' ? '新增微应用' : '编辑微应用'"
     width="580px"
     destroy-on-close
   >
-    <el-form label-width="100px">
-      <el-form-item label="应用名称">
-        <el-input v-model="form.name" placeholder="请输入应用名称（如：表单编辑器）" />
-      </el-form-item>
-      <el-form-item label="应用 URL">
-        <el-input v-model="form.url" placeholder="如：http://localhost:5100/editor/" />
-      </el-form-item>
-      <el-form-item label="图标">
-        <el-input v-model="form.icon" placeholder="图标名称或 URL（可选）" />
-      </el-form-item>
-      <el-form-item label="布局方式">
-        <el-radio-group v-model="form.layout">
-          <el-radio v-for="opt in layoutOptions" :key="opt.value" :value="opt.value">
+    <t-form label-width="100px">
+      <t-form-item label="应用名称">
+        <t-input v-model="form.name" placeholder="请输入应用名称（如：表单编辑器）" />
+      </t-form-item>
+      <t-form-item label="应用 URL">
+        <t-input v-model="form.url" placeholder="如：http://localhost:5100/editor/" />
+      </t-form-item>
+      <t-form-item label="图标">
+        <t-input v-model="form.icon" placeholder="图标名称或 URL（可选）" />
+      </t-form-item>
+      <t-form-item label="布局方式">
+        <t-radio-group v-model="form.layout">
+          <t-radio v-for="opt in layoutOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
-          </el-radio>
-        </el-radio-group>
+          </t-radio>
+        </t-radio-group>
         <div :class="$style.layoutDesc">
           {{ layoutOptions.find(o => o.value === form.layout)?.description }}
         </div>
-      </el-form-item>
-      <el-form-item label="激活规则">
-        <el-input v-model="form.activateRule" placeholder="URL 匹配规则，如：^/editor/" />
-      </el-form-item>
-      <el-form-item label="所需权限">
-        <el-input v-model="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />
-      </el-form-item>
-      <el-form-item label="排序">
-        <el-input-number v-model="form.sort" :min="0" :max="9999" />
-      </el-form-item>
-      <el-form-item label="状态">
-        <el-select v-model="form.status" style="width: 100%">
-          <el-option label="启用" value="active" />
-          <el-option label="停用" value="inactive" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
-      </el-form-item>
-    </el-form>
+      </t-form-item>
+      <t-form-item label="激活规则">
+        <t-input v-model="form.activateRule" placeholder="URL 匹配规则，如：^/editor/" />
+      </t-form-item>
+      <t-form-item label="所需权限">
+        <t-input v-model="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />
+      </t-form-item>
+      <t-form-item label="排序">
+        <t-input-number v-model="form.sort" :min="0" :max="9999" />
+      </t-form-item>
+      <t-form-item label="状态">
+        <t-select v-model="form.status" :style="{ width: '100%' }">
+          <t-option label="启用" value="active" />
+          <t-option label="停用" value="inactive" />
+        </t-select>
+      </t-form-item>
+      <t-form-item label="备注">
+        <t-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
+      </t-form-item>
+    </t-form>
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleSubmit">确定</el-button>
+      <t-button @click="dialogVisible = false">取消</t-button>
+      <t-button theme="primary" @click="handleSubmit">确定</t-button>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>
 
 <style module>
@@ -321,7 +329,7 @@ onMounted(fetchApps)
 
 .layoutDesc {
   font-size: 12px;
-  color: var(--el-text-color-placeholder);
+  color: var(--td-text-color-placeholder);
   margin-top: 4px;
 }
 </style>

@@ -9,22 +9,21 @@
     </div>
 
     <div :class="$style.inputSection">
-      <el-input
+      <t-input
         v-model="flowName"
         placeholder="输入流程名称，例如：请假审批流程"
         :class="$style.nameInput"
         size="large"
       />
-      <el-input
+      <t-textarea
         v-model="flowDescription"
-        type="textarea"
         :rows="6"
         placeholder="描述流程需求，例如：&#10;1. 员工提交请假申请&#10;2. 直属主管审批&#10;3. 如果超过3天，需要部门经理审批&#10;4. HR备案&#10;5. 通知员工结果"
         :class="$style.descInput"
       />
       <div :class="$style.actions">
-        <el-button
-          type="primary"
+        <t-button
+          theme="primary"
           size="large"
           :loading="generating"
           :disabled="!flowDescription.trim()"
@@ -32,8 +31,8 @@
         >
           <span v-if="!generating">🤖 AI 生成流程</span>
           <span v-else>生成中...</span>
-        </el-button>
-        <el-button size="large" @click="handleClear">清空</el-button>
+        </t-button>
+        <t-button size="large" @click="handleClear">清空</t-button>
       </div>
     </div>
 
@@ -41,10 +40,10 @@
       <div :class="$style.previewHeader">
         <h4 :class="$style.previewTitle">生成的流程</h4>
         <div :class="$style.previewActions">
-          <el-button type="success" @click="handleApply">
+          <t-button theme="success" @click="handleApply">
             ✨ 应用到画布
-          </el-button>
-          <el-button @click="handleRegenerate">重新生成</el-button>
+          </t-button>
+          <t-button @click="handleRegenerate">重新生成</t-button>
         </div>
       </div>
 
@@ -69,14 +68,14 @@
     </div>
 
     <div v-if="error" :class="$style.error">
-      <el-alert :title="error" type="error" show-icon @close="error = ''" />
+      <t-alert :title="error" theme="error" closeable @close="error = ''" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 interface FlowNode {
   id: string
@@ -258,7 +257,7 @@ function parseResponse(response: string) {
 function handleApply() {
   if (generatedFlow.value) {
     emit('apply', generatedFlow.value)
-    ElMessage.success('流程已应用到画布')
+    MessagePlugin.success('流程已应用到画布')
   }
 }
 
@@ -290,7 +289,7 @@ function handleClear() {
 .title {
   font-size: 24px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
@@ -304,7 +303,7 @@ function handleClear() {
 
 .subtitle {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin: 0;
 }
 
@@ -326,7 +325,7 @@ function handleClear() {
 }
 
 .previewSection {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
@@ -342,7 +341,7 @@ function handleClear() {
 .previewTitle {
   font-size: 18px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin: 0;
 }
 
@@ -377,18 +376,18 @@ function handleClear() {
 }
 
 .nodeLabel {
-  background: var(--el-color-primary-light-9);
-  border: 2px solid var(--el-color-primary);
+  background: var(--color-primary-light);
+  border: 2px solid var(--color-primary);
   border-radius: 8px;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
 }
 
 .nodeArrow {
   font-size: 24px;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
 }
 
 .aiMessage {
@@ -399,10 +398,10 @@ function handleClear() {
 }
 
 .messageHeader {
-  background: var(--el-color-primary-light-9);
+  background: var(--color-primary-light);
   padding: 12px 16px;
   font-weight: 600;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
   font-size: 14px;
 }
 
@@ -410,7 +409,7 @@ function handleClear() {
   padding: 16px;
   font-size: 14px;
   line-height: 1.8;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   white-space: pre-wrap;
 }
 

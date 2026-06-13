@@ -2,37 +2,65 @@
  * Shell main entry
  *
  * Initializes:
- * 1. micro-app engine (for child app loading)
- * 2. Vue app with Pinia + Router + Element Plus
- * 3. Pre-fetches child apps in production
+ * 1. Vue app with Pinia + Router + TDesign
+ * 2. Qiankun micro-frontend (register + start)
  */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
+import TDesign from 'tdesign-vue-next'
+import 'tdesign-vue-next/dist/tdesign.css'
 import '@schema-form/shared-styles/tokens.css'
-import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
-import { initMicroApp, preFetchApps } from '@schema-form/micro-app/host'
-import { getAppUrl } from '@schema-form/micro-app/config'
+import { registerMicroApps, start } from 'qiankun'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 
 import App from './App.vue'
 import router from './router'
 
-// Initialize micro-app engine (start + style guard)
-initMicroApp()
-
-// Pre-fetch child apps in production (skip in dev to avoid stale cache)
-if (!import.meta.env.DEV) {
-  preFetchApps([
-    { name: 'editor', url: getAppUrl('editor', false), iframe: true },
-    { name: 'flow', url: getAppUrl('flow', false), iframe: true },
-    { name: 'ai', url: getAppUrl('ai', false), iframe: true },
-    { name: 'workflow', url: getAppUrl('workflow', false), iframe: true },
-  ])
-}
-
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
+app.use(TDesign)
 app.mount('#app')
+
+// Register micro-apps after Vue app is mounted
+const isDev = import.meta.env.DEV
+
+const microApps = Object.values(APP_CONFIGS)
+  .filter((config) => config.name !== 'shell') // Exclude shell (it's the host itself)
+  .map((config) => ({
+    name: config.name,
+    entry: isDev
+      ? `//localhost:${config.devPort}`
+      : `//${window.location.hostname}:${window.location.port}`,
+    container: '#micro-container',
+    activeRule: config.basePath,
+  }))
+
+registerMicroApps(microApps, {
+  beforeLoad: [
+    (app) => {
+      console.log(`[shell] before load ${app.name}`)
+      return Promise.resolve()
+    },
+  ],
+  beforeMount: [
+    (app) => {
+      console.log(`[shell] before mount ${app.name}`)
+      return Promise.resolve()
+    },
+  ],
+  afterMount: [
+    (app) => {
+      console.log(`[shell] after mount ${app.name}`)
+      return Promise.resolve()
+    },
+  ],
+})
+
+start({
+  sandbox: {
+    strictStyleIsolation: true,
+    experimentalStyleIsolation: false,
+  },
+  prefetch: 'all',
+})

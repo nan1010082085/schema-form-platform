@@ -6,7 +6,7 @@
  */
 
 import { computed } from 'vue'
-import { ElButton } from 'element-plus'
+/* TDesign migration: no direct import needed, components registered globally */
 import type { Widget, FlowGraph } from '@/types'
 
 export interface AiPreviewCompareProps {
@@ -283,9 +283,9 @@ function handleApplySelected() {
           修改 {{ summary.changed }}
         </span>
       </div>
-      <ElButton :class="$style.closeBtn" link @click="emit('close')">
+      <t-button :class="$style.closeBtn" variant="text" @click="emit('close')">
         &times;
-      </ElButton>
+      </t-button>
     </div>
 
     <!-- Diff 列表 -->
@@ -342,12 +342,12 @@ function handleApplySelected() {
 
     <!-- Actions -->
     <div v-if="hasDiffs" :class="$style.actions">
-      <ElButton :class="$style.btnPrimary" type="primary" @click="handleApplyAll">
+      <t-button :class="$style.btnPrimary" theme="primary" @click="handleApplyAll">
         应用全部变更
-      </ElButton>
-      <ElButton :class="$style.btnGhost" @click="handleApplySelected">
+      </t-button>
+      <t-button :class="$style.btnGhost" @click="handleApplySelected">
         部分应用
-      </ElButton>
+      </t-button>
     </div>
   </div>
 </template>

@@ -19,10 +19,10 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
-    "@element-plus/icons-vue": "^2.3.2",
-    "@micro-zoe/micro-app": "1.0.0-rc.30",
+    "tdesign-icons-vue-next": "^0.4.4",
+    "tdesign-vue-next": "^1.20.0",
     "@schema-form/flow-shared": "workspace:*",
-    "@schema-form/micro-app": "workspace:*",
+    "@schema-form/shared-qiankun": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
     "@schema-form/socket": "workspace:*",
@@ -31,7 +31,6 @@
     "@vue-flow/core": "^1.48.2",
     "@vue-flow/minimap": "^1.5.4",
     "echarts": "^6.1.0",
-    "element-plus": "^2.9.7",
     "pinia": "^2.3.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

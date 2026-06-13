@@ -1,10 +1,12 @@
+> ✅ 状态：已实现
+
 # SSO 单点登录方案设计
 
 ## 一、现状分析
 
 **当前问题**：
 1. portal 和 shell 各自维护独立的 localStorage key，登录态不互通
-2. 子应用通过 micro-app data 属性接收 token，是手动传递而非标准协议
+2. 子应用通过 qiankun data 属性接收 token，是手动传递而非标准协议
 3. 没有 clientId 概念，无法区分不同客户端应用
 4. portal 的 useAuth 没有 refreshToken 机制，只有 shell 有自动刷新
 5. 子应用独立访问时需要自行处理认证，缺乏统一入口
@@ -161,7 +163,7 @@ POST /api/auth/sso/token
   "grant_type": "authorization_code",
   "code": "xxx",
   "clientId": "shell",
-  "redirect_uri": "http://localhost:4100/auth/callback"
+  "redirect_uri": "http://localhost:5000/auth/callback"
 }
 ```
 
@@ -245,7 +247,7 @@ POST /api/auth/sso/logout
 - Editor/Flow/AI/Admin 独立模式
 
 ### Phase 4：微前端 Token 传递优化（~2h）
-- micro-app data 统一格式
+- qiankun data 统一格式
 - 子应用 token 同步
 - Token 过期联动
 

@@ -1,0 +1,12 @@
+{
+  "name": "@schema-form/shared-stores",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./layout": "./layout.ts"
+  },
+  "peerDependencies": {
+    "pinia": ">=2.3.0"
+  }
+}

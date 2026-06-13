@@ -19,7 +19,7 @@ const description = computed(() => (props.node.data?.description as string) ?? '
 <template>
   <SectionToggle title="节点配置" :count="2">
     <FieldRow label="默认连线">
-      <el-input
+      <t-input
         :model-value="defaultFlow"
         placeholder="默认连线 ID（可选）"
 
@@ -28,7 +28,7 @@ const description = computed(() => (props.node.data?.description as string) ?? '
     </FieldRow>
 
     <FieldRow label="网关描述">
-      <el-input
+      <t-input
         :model-value="description"
         placeholder="网关描述（可选）"
 

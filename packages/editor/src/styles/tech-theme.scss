@@ -1,0 +1,334 @@
+// ============================================================
+// 科技感主题 — 覆盖编辑器 CSS 变量
+// 基于 packages/shared/styles/theme-tech.css 设计令牌
+// ============================================================
+
+:root {
+  // ---- 品牌色 ----
+  --td-brand-color: #00d4ff;
+  --td-brand-color-hover: #33ddff;
+  --td-brand-color-focus: #00b8e6;
+  --td-brand-color-active: #009fcc;
+  --td-brand-color-disabled: #66e3ff;
+  --td-brand-color-light: rgba(0, 212, 255, 0.1);
+  --td-brand-color-light-hover: rgba(0, 212, 255, 0.15);
+
+  // ---- 功能色 ----
+  --td-success-color: #00e676;
+  --td-success-color-hover: #33eb91;
+  --td-success-color-light: rgba(0, 230, 118, 0.1);
+
+  --td-warning-color: #ffab40;
+  --td-warning-color-hover: #ffbb66;
+  --td-warning-color-light: rgba(255, 171, 64, 0.1);
+
+  --td-error-color: #ff5252;
+  --td-error-color-hover: #ff7575;
+  --td-error-color-light: rgba(255, 82, 82, 0.1);
+
+  // ---- 文字 ----
+  --td-text-color-primary: rgba(255, 255, 255, 0.95);
+  --td-text-color-secondary: rgba(255, 255, 255, 0.65);
+  --td-text-color-placeholder: rgba(255, 255, 255, 0.35);
+  --td-text-color-disabled: rgba(255, 255, 255, 0.2);
+
+  // ---- 背景 ----
+  --td-bg-color-page: #0a0e14;
+  --td-bg-color-container: #111820;
+  --td-bg-color-container-hover: #1a2230;
+  --td-bg-color-container-active: #222d3a;
+  --td-bg-color-secondarycontainer: #161d26;
+  --td-bg-color-secondarycontainer-hover: #1e2733;
+  --td-bg-color-mask: rgba(0, 0, 0, 0.7);
+
+  // ---- 边框 ----
+  --td-border-level-1-color: rgba(0, 212, 255, 0.15);
+  --td-border-level-2-color: rgba(0, 212, 255, 0.08);
+  --td-border-level-3-color: rgba(0, 212, 255, 0.05);
+
+  // ---- 阴影 ----
+  --td-shadow-1: 0 0 10px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 212, 255, 0.05);
+  --td-shadow-2: 0 0 15px rgba(0, 212, 255, 0.15), 0 0 30px rgba(0, 212, 255, 0.08);
+  --td-shadow-3: 0 0 20px rgba(0, 212, 255, 0.2), 0 0 40px rgba(0, 212, 255, 0.1);
+
+  // ---- 科技感扩展变量 ----
+  --glow-primary: 0 0 10px rgba(0, 212, 255, 0.3), 0 0 20px rgba(0, 212, 255, 0.15);
+  --glass-bg: rgba(17, 24, 32, 0.8);
+  --glass-border: rgba(0, 212, 255, 0.1);
+  --glass-blur: blur(20px);
+  --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
+  --grid-color: rgba(0, 212, 255, 0.05);
+  --grid-size: 20px;
+
+  // ---- 编辑器专用 ----
+  --editor-canvas-bg: #0a0e14;
+  --editor-grid-color: rgba(0, 212, 255, 0.03);
+  --editor-selection-color: rgba(0, 212, 255, 0.2);
+  --editor-handle-color: #00d4ff;
+
+  // ---- 项目内部变量覆盖（variables.scss 中定义的） ----
+  --color-primary: #00d4ff;
+  --color-primary-hover: #33ddff;
+  --color-primary-light: rgba(0, 212, 255, 0.2);
+  --color-primary-lighter: rgba(0, 212, 255, 0.08);
+  --color-primary-dark: #009fcc;
+  --color-primary-bg-light: rgba(0, 212, 255, 0.06);
+  --color-primary-dialog-header: #111820;
+  --color-primary-active: #00d4ff;
+
+  --text-color-title: rgba(255, 255, 255, 0.95);
+  --text-color-primary: rgba(255, 255, 255, 0.9);
+  --text-color-regular: rgba(255, 255, 255, 0.7);
+  --text-color-secondary: rgba(255, 255, 255, 0.55);
+  --text-color-muted: rgba(255, 255, 255, 0.4);
+  --text-color-placeholder: rgba(255, 255, 255, 0.3);
+  --text-color-disabled: rgba(255, 255, 255, 0.2);
+  --text-color-inverse: #000;
+
+  --main-bg-color: #0a0e14;
+  --sub-main-bg-content: #161d26;
+  --bg-color-white: #111820;
+  --bg-color-page: #0a0e14;
+  --bg-color-gray-light: #161d26;
+  --bg-color-gray: #1a2230;
+  --bg-color-gray-dark: #222d3a;
+  --bg-color-surface: #111820;
+  --bg-color-canvas-dot: rgba(0, 212, 255, 0.12);
+  --bg-color-blue-light: rgba(0, 212, 255, 0.06);
+  --bg-color-blue-lighter: rgba(0, 212, 255, 0.04);
+  --bg-color-hover: rgba(0, 212, 255, 0.08);
+  --bg-color-stripe: rgba(0, 212, 255, 0.03);
+
+  --border-color-base: rgba(0, 212, 255, 0.12);
+  --border-color-light: rgba(0, 212, 255, 0.08);
+  --border-color-light-alt: rgba(0, 212, 255, 0.08);
+  --border-color-medium: rgba(0, 212, 255, 0.25);
+  --border-color-dark: rgba(0, 212, 255, 0.15);
+
+  --input-border-default: rgba(0, 212, 255, 0.1);
+  --input-border-hover: rgba(0, 212, 255, 0.3);
+  --input-border-focus: #00d4ff;
+  --input-bg-disabled: rgba(255, 255, 255, 0.05);
+
+  --shadow-sm: 0 0 8px rgba(0, 212, 255, 0.08);
+  --shadow-md: 0 0 12px rgba(0, 212, 255, 0.12);
+  --shadow-lg: 0 0 20px rgba(0, 212, 255, 0.18);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  --shadow-overlay: rgba(0, 0, 0, 0.7);
+
+  --menu-hover-bg: rgba(0, 212, 255, 0.08);
+  --scrollbar-thumb-color: rgba(0, 212, 255, 0.2);
+  --scrollbar-track-color: transparent;
+
+  // ---- 按钮 ----
+  --btn-height: 32px;
+  --btn-radius: 6px;
+
+  // ---- Element Plus 变量覆盖 ----
+  --el-color-primary: #00d4ff;
+  --el-color-primary-light-3: #33ddff;
+  --el-color-primary-light-5: #66e3ff;
+  --el-color-primary-light-7: #99ecff;
+  --el-color-primary-light-8: #b3f0ff;
+  --el-color-primary-light-9: #e6f9ff;
+  --el-color-primary-dark-2: #00b8e6;
+
+  --el-color-warning: #ffab40;
+  --el-color-danger: #ff5252;
+  --el-color-success: #00e676;
+
+  --el-text-color-primary: rgba(255, 255, 255, 0.95);
+  --el-text-color-regular: rgba(255, 255, 255, 0.7);
+  --el-text-color-placeholder: rgba(255, 255, 255, 0.35);
+  --el-text-color-disabled: rgba(255, 255, 255, 0.2);
+
+  --el-border-color: rgba(0, 212, 255, 0.12);
+  --el-border-color-light: rgba(0, 212, 255, 0.08);
+  --el-border-color-lighter: rgba(0, 212, 255, 0.06);
+  --el-border-color-extra-light: rgba(0, 212, 255, 0.04);
+  --el-border-color-dark: rgba(0, 212, 255, 0.15);
+  --el-border-color-hover: #00d4ff;
+  --el-border-color-focus: #00d4ff;
+
+  --el-fill-color: rgba(0, 0, 0, 0.2);
+  --el-fill-color-light: rgba(0, 0, 0, 0.15);
+  --el-fill-color-lighter: rgba(0, 0, 0, 0.1);
+  --el-fill-color-blank: #111820;
+
+  --el-bg-color: #111820;
+  --el-bg-color-page: #0a0e14;
+  --el-bg-color-overlay: #161d26;
+
+  --el-mask-color: rgba(0, 0, 0, 0.7);
+
+  --el-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+// ---- 滚动条 ----
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.2);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.3);
+}
+
+::selection {
+  background: rgba(0, 212, 255, 0.3);
+  color: #fff;
+}
+
+// ---- TDesign 组件深色适配 ----
+
+// Input
+.t-input .t-input__inner {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 212, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.t-input .t-input__inner:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.t-input--disabled .t-input__inner {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.2);
+}
+
+// Select
+.t-select-input {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 212, 255, 0.1);
+}
+
+// Textarea
+.t-textarea .t-textarea__inner {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 212, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+// Dialog
+.t-dialog {
+  .t-dialog__header {
+    background: #111820;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+
+    .t-dialog__header-content {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .t-dialog__close {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .t-dialog__body {
+    background: #111820;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .t-dialog__footer {
+    background: rgba(0, 212, 255, 0.03);
+    border-top: 1px solid rgba(0, 212, 255, 0.08);
+  }
+}
+
+// Table
+.t-table {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+
+  th, td {
+    border-color: rgba(0, 212, 255, 0.06);
+  }
+}
+
+.t-table__header th {
+  background: rgba(0, 212, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.t-table__body td {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.t-table__body tr:hover td {
+  background: rgba(0, 212, 255, 0.04);
+}
+
+// Tag
+.t-tag {
+  border-radius: 4px;
+}
+
+// Dropdown
+.t-dropdown__menu {
+  background: #111820;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.t-dropdown__item {
+  color: rgba(255, 255, 255, 0.7);
+
+  &:hover {
+    background: rgba(0, 212, 255, 0.08);
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+// Popup
+.t-popup__content {
+  background: #111820;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+// Pagination
+.t-pagination {
+  .t-pagination__btn,
+  .t-pagination__number {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(0, 212, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+
+    &:hover {
+      border-color: rgba(0, 212, 255, 0.3);
+      color: #00d4ff;
+    }
+
+    &.t-is-current {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+  }
+}
+
+// Switch
+.t-switch.t-switch--on {
+  background-color: #00d4ff;
+}
+
+// Loading
+.t-loading__parent {
+  color: rgba(255, 255, 255, 0.8);
+}

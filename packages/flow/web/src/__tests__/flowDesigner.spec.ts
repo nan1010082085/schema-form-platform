@@ -119,12 +119,16 @@ vi.mock('vue-router', () => ({
 }))
 
 /* ------------------------------------------------------------------ */
-/*  Mocks — element-plus                                               */
+/*  Mocks — tdesign-vue-next                                           */
 /* ------------------------------------------------------------------ */
 
-vi.mock('element-plus', () => ({
-  ElMessage: { success: vi.fn(), error: vi.fn() },
-  ElMessageBox: { confirm: vi.fn(() => Promise.resolve()) },
+vi.mock('tdesign-vue-next', () => ({
+  MessagePlugin: { success: vi.fn(), error: vi.fn() },
+  DialogPlugin: { confirm: vi.fn(() => ({ destroy: vi.fn() })) },
+}))
+
+vi.mock('tdesign-icons-vue-next', () => ({
+  LocationIcon: { template: '<span />' },
 }))
 
 /* ------------------------------------------------------------------ */

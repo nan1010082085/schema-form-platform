@@ -1,8 +1,8 @@
 .node {
   width: 40px;
   height: 40px;
-  background: var(--el-color-warning-light-9);
-  border: 2px solid var(--el-color-warning);
+  background: var(--color-warning-light);
+  border: 2px solid var(--color-warning);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -19,13 +19,13 @@
 
 .selected {
   box-shadow: var(--shadow-node-selected);
-  border-color: var(--el-color-warning);
+  border-color: var(--color-warning);
 }
 
 .icon {
   width: 18px;
   height: 18px;
-  color: var(--el-color-warning);
+  color: var(--color-warning);
   flex-shrink: 0;
   pointer-events: none;
   user-select: none;
@@ -34,8 +34,8 @@
 .handle {
   width: 10px;
   height: 10px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-color-primary);
+  background: var(--bg-color);
+  border: 1px solid var(--color-primary);
   transition: all 0.15s ease;
 }
 

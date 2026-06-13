@@ -5,30 +5,31 @@
 /* Search input bar */
 .searchBar {
   padding: 8px 10px;
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
   flex-shrink: 0;
 }
 
 .searchInput {
   width: 100%;
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  border-radius: var(--ai-radius-sm, 4px);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
+  border-radius: var(--ai-radius-sm, 6px);
   padding: 6px 8px 6px 28px;
   font-size: 12px;
   font-family: inherit;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
   outline: none;
-  background: var(--ai-bg-gray, #F5F7FA);
+  background: var(--ai-bg-gray, #161d26);
   transition: border-color 0.15s, background 0.15s;
 }
 
 .searchInput:focus {
-  border-color: var(--ai-color-primary, #0060A2);
-  background: var(--ai-bg-white, #FFFFFF);
+  border-color: rgba(0, 212, 255, 0.35);
+  background: var(--ai-bg-white, #111820);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.12);
 }
 
 .searchInput::placeholder {
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: var(--ai-text-disabled, rgba(255, 255, 255, 0.2));
 }
 
 /* Search icon inside input */
@@ -37,7 +38,7 @@
   top: 50%;
   left: 18px;
   transform: translateY(-50%);
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -50,10 +51,10 @@
   left: 0;
   right: 0;
   max-height: 360px;
-  background: var(--ai-bg-white, #FFFFFF);
-  border: 1px solid var(--ai-border-light, #EBEDF3);
+  background: var(--ai-bg-white, #111820);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
   border-radius: 0 0 var(--ai-radius-md, 8px) var(--ai-radius-md, 8px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.12), 0 4px 16px rgba(0, 0, 0, 0.3);
   z-index: 100;
   overflow-y: auto;
 }
@@ -63,7 +64,7 @@
 }
 
 .results::-webkit-scrollbar-thumb {
-  background: var(--ai-border-base, #D5DDE3);
+  background: rgba(0, 212, 255, 0.15);
   border-radius: 2px;
 }
 
@@ -74,7 +75,7 @@
   gap: 3px;
   padding: 10px 12px;
   cursor: pointer;
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.06));
   transition: background 0.1s;
 }
 
@@ -83,7 +84,7 @@
 }
 
 .resultItem:hover {
-  background: var(--ai-color-primary-bg, #EEF5FF);
+  background: var(--ai-bg-hover, rgba(0, 212, 255, 0.04));
 }
 
 /* Result header: title + source tag */
@@ -96,7 +97,7 @@
 .resultTitle {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ai-text-primary, #333333);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,7 +107,7 @@
 
 .sourceTag {
   padding: 1px 6px;
-  border-radius: var(--ai-radius-sm, 3px);
+  border-radius: var(--ai-radius-sm, 6px);
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -114,24 +115,24 @@
 }
 
 .sourceTag.editor {
-  background: var(--ai-color-success-bg, rgba(82, 196, 26, 0.1));
-  color: var(--ai-color-success, #26A036);
+  background: rgba(0, 230, 118, 0.1);
+  color: #00e676;
 }
 
 .sourceTag.flow {
-  background: var(--ai-color-info-bg, rgba(22, 119, 255, 0.08));
-  color: var(--ai-color-info, #4581E9);
+  background: rgba(0, 212, 255, 0.08);
+  color: #00d4ff;
 }
 
 .sourceTag.standalone {
-  background: var(--ai-color-warning-bg, rgba(250, 173, 20, 0.1));
-  color: var(--ai-color-warning, #D48806);
+  background: rgba(255, 171, 64, 0.1);
+  color: #ffab40;
 }
 
 /* Result content preview */
 .resultContent {
   font-size: 11px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -141,7 +142,7 @@
 /* Result time */
 .resultTime {
   font-size: 10px;
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: rgba(255, 255, 255, 0.2);
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   letter-spacing: 0.3px;
 }
@@ -151,7 +152,7 @@
   text-align: center;
   padding: 24px 0;
   font-size: 12px;
-  color: var(--ai-text-disabled, #C0C4CC);
+  color: var(--ai-text-disabled, rgba(255, 255, 255, 0.2));
 }
 
 /* Loading state */
@@ -159,16 +160,16 @@
   text-align: center;
   padding: 16px 0;
   font-size: 12px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
 }
 
 /* Result count header */
 .resultCount {
   padding: 6px 12px;
   font-size: 10px;
-  color: var(--ai-text-hint, #999999);
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
-  background: var(--ai-bg-gray, #F5F7FA);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.06));
+  background: var(--ai-bg-gray, #161d26);
 }
 
 /* Clear button */
@@ -181,8 +182,8 @@
   height: 16px;
   border-radius: 50%;
   border: none;
-  background: var(--ai-border-base, #D5DDE3);
-  color: var(--ai-bg-white, #FFFFFF);
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--ai-bg-white, #111820);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,7 +195,8 @@
 }
 
 .clearBtn:hover {
-  background: var(--ai-text-hint, #999999);
+  background: rgba(0, 212, 255, 0.3);
+  color: #0a0e14;
 }
 
 /* Filter toggle button */
@@ -205,10 +207,10 @@
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  border-radius: var(--ai-radius-sm, 3px);
+  border-radius: var(--ai-radius-sm, 6px);
   border: none;
   background: transparent;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,20 +220,20 @@
 }
 
 .filterToggle:hover {
-  color: var(--ai-text-primary, #333333);
-  background: var(--ai-bg-gray, #F5F7FA);
+  color: var(--ai-color-primary, #00d4ff);
+  background: var(--ai-bg-hover, rgba(0, 212, 255, 0.04));
 }
 
 .filterToggleActive {
-  color: var(--ai-color-primary, #0060A2);
-  background: var(--ai-color-primary-bg, #EEF5FF);
+  color: var(--ai-color-primary, #00d4ff);
+  background: rgba(0, 212, 255, 0.1);
 }
 
 /* Filter panel */
 .filterPanel {
   padding: 8px 12px;
-  border-bottom: 1px solid var(--ai-border-light, #EBEDF3);
-  background: var(--ai-bg-gray, #F5F7FA);
+  border-bottom: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.08));
+  background: var(--ai-bg-gray, #161d26);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -245,26 +247,26 @@
 
 .filterLabel {
   font-size: 11px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   flex-shrink: 0;
   width: 32px;
 }
 
 .filterSelect {
   flex: 1;
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  border-radius: var(--ai-radius-sm, 4px);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
+  border-radius: var(--ai-radius-sm, 6px);
   padding: 4px 6px;
   font-size: 11px;
   font-family: inherit;
-  color: var(--ai-text-primary, #333333);
-  background: var(--ai-bg-white, #FFFFFF);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
+  background: var(--ai-bg-white, #111820);
   outline: none;
   cursor: pointer;
 }
 
 .filterSelect:focus {
-  border-color: var(--ai-color-primary, #0060A2);
+  border-color: rgba(0, 212, 255, 0.35);
 }
 
 .filterDateRange {
@@ -276,23 +278,23 @@
 
 .filterDate {
   flex: 1;
-  border: 1px solid var(--ai-border-base, #D5DDE3);
-  border-radius: var(--ai-radius-sm, 4px);
+  border: 1px solid var(--ai-border-light, rgba(0, 212, 255, 0.1));
+  border-radius: var(--ai-radius-sm, 6px);
   padding: 4px 6px;
   font-size: 11px;
   font-family: inherit;
-  color: var(--ai-text-primary, #333333);
-  background: var(--ai-bg-white, #FFFFFF);
+  color: var(--ai-text-primary, rgba(255, 255, 255, 0.95));
+  background: var(--ai-bg-white, #111820);
   outline: none;
   min-width: 0;
 }
 
 .filterDate:focus {
-  border-color: var(--ai-color-primary, #0060A2);
+  border-color: rgba(0, 212, 255, 0.35);
 }
 
 .filterDateSep {
   font-size: 11px;
-  color: var(--ai-text-hint, #999999);
+  color: var(--ai-text-hint, rgba(255, 255, 255, 0.4));
   flex-shrink: 0;
 }

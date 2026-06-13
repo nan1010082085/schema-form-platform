@@ -88,49 +88,43 @@ function handleCancel() {
 </script>
 
 <template>
-  <el-dialog
-    :model-value="visible"
-    title="编辑属性"
+  <t-dialog
+    :visible="visible"
+    header="编辑属性"
     width="400px"
-    :close-on-click-modal="false"
-    @update:model-value="handleClose"
+    :close-on-overlay-click="false"
+    @close="handleClose"
   >
     <div v-if="context" :class="$style.editor">
-      <el-form label-position="top" size="default">
-        <el-form-item
+      <t-form label-align="top" size="medium">
+        <t-form-item
           v-for="field in formFields"
           :key="field.key"
           :label="field.label"
         >
           <!-- Input -->
-          <el-input
+          <t-input
             v-if="field.type === 'input'"
             v-model="formData[field.key]"
             :placeholder="field.placeholder"
           />
 
           <!-- Select -->
-          <el-select
+          <t-select
             v-else-if="field.type === 'select'"
             v-model="formData[field.key]"
             placeholder="请选择"
             style="width: 100%"
-          >
-            <el-option
-              v-for="opt in field.options"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
+            :options="field.options"
+          />
 
           <!-- Switch -->
-          <el-switch
+          <t-switch
             v-else-if="field.type === 'switch'"
             v-model="formData[field.key]"
           />
-        </el-form-item>
-      </el-form>
+        </t-form-item>
+      </t-form>
 
       <!-- 类型信息 -->
       <div :class="$style.typeInfo">
@@ -141,11 +135,11 @@ function handleCancel() {
 
     <template #footer>
       <div :class="$style.footer">
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <t-button @click="handleCancel">取消</t-button>
+        <t-button theme="primary" @click="handleSave">保存</t-button>
       </div>
     </template>
-  </el-dialog>
+  </t-dialog>
 </template>
 
 <style module>

@@ -2,12 +2,12 @@
   <div :class="styles.palette">
     <div :class="styles.title">流程元素</div>
     <div :class="styles.searchWrap">
-      <el-input
+      <t-input
         v-model="searchQuery"
         size="small"
         placeholder="搜索节点..."
         clearable
-        :prefix-icon="Search"
+        :prefix-icon="SearchIcon"
       />
     </div>
     <div v-if="showWorkflowNodes" :class="styles.group">
@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { SearchIcon } from 'tdesign-icons-vue-next'
 import { BpmnElementType, DEFAULT_NODE_CONFIGS, DEFAULT_NODE_SIZES } from '@schema-form/flow-shared'
 import { useWorkflowNodes } from '../composables/useWorkflowNodes.js'
 import type { WorkflowNodeType } from '../composables/useWorkflowNodes.js'

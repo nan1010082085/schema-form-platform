@@ -62,7 +62,7 @@ function targetLabel(edge: Edge): string {
 <template>
   <SectionToggle title="网关配置" :count="2">
     <FieldRow label="默认连线">
-      <el-input
+      <t-input
         :model-value="defaultFlow"
         placeholder="默认连线 ID（可选）"
         @input="update('defaultFlow', $event)"
@@ -70,7 +70,7 @@ function targetLabel(edge: Edge): string {
     </FieldRow>
 
     <FieldRow label="网关描述">
-      <el-input
+      <t-input
         :model-value="description"
         placeholder="网关描述（可选）"
         @input="update('description', $event)"
@@ -105,17 +105,17 @@ function targetLabel(edge: Edge): string {
         <span :class="styles.edgeTarget" :title="edge.target">
           → {{ targetLabel(edge) }}
         </span>
-        <el-checkbox
-          :model-value="edge.data?.isDefault ?? false"
+        <t-checkbox
+          :checked="edge.data?.isDefault ?? false"
           :class="styles.defaultCheck"
           @change="toggleEdgeDefault(edge, $event)"
         >
           默认
-        </el-checkbox>
+        </t-checkbox>
       </div>
 
       <FieldRow label="条件标签">
-        <el-input
+        <t-input
           :model-value="(edge.label as string) ?? ''"
           placeholder="条件标签"
           @input="updateEdgeLabel(edge, $event)"
@@ -123,7 +123,7 @@ function targetLabel(edge: Edge): string {
       </FieldRow>
 
       <FieldRow label="条件表达式">
-        <el-input
+        <t-input
           :model-value="edge.data?.conditionExpression ?? ''"
           :placeholder="conditionPlaceholder"
           @input="updateEdgeCondition(edge, $event)"

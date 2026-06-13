@@ -15,10 +15,15 @@
     "./BaseCard": "./BaseCard.vue",
     "./BaseCard.vue": "./BaseCard.vue",
     "./BaseTable": "./BaseTable.vue",
-    "./BaseTable.vue": "./BaseTable.vue"
+    "./BaseTable.vue": "./BaseTable.vue",
+    "./LayoutSwitcher": "./LayoutSwitcher.vue",
+    "./LayoutSwitcher.vue": "./LayoutSwitcher.vue"
+  },
+  "dependencies": {
+    "@schema-form/shared-stores": "workspace:*"
   },
   "peerDependencies": {
     "vue": ">=3.5.0",
-    "element-plus": ">=2.9.0"
+    "tdesign-vue-next": ">=1.20.0"
   }
 }

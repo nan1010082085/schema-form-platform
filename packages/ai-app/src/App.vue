@@ -1,91 +1,84 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
 </script>
 
 <template>
-  <el-config-provider :locale="zhCn" size="default">
+  <div style="height: 100%">
     <RouterView />
-  </el-config-provider>
+  </div>
 </template>
 
 <style>
 :root {
-  /* 全局令牌（无前缀，供 view 层使用） */
-  --color-primary: #0060A2;
-  --color-primary-hover: #035B9C;
-  --color-primary-bg: #EEF5FF;
-  --color-success: #26A036;
-  --color-success-bg: rgba(82, 196, 26, 0.1);
-  --color-info: #4581E9;
-  --color-info-bg: rgba(22, 119, 255, 0.08);
-  --color-warning: #F09700;
-  --color-danger: #E50113;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-hint: #999999;
-  --text-disabled: #C0C4CC;
-  --text-inverse: #FFFFFF;
-  --border-base: #D5DDE3;
-  --border-light: #EBEDF3;
-  --bg-white: #FFFFFF;
-  --bg-page: #F5F6FA;
-  --bg-gray: #F5F7FA;
-  --bg-gray-light: #FAFAFA;
-  --bg-hover: #E5EFF6;
-  --font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', sans-serif;
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  /* 全局令牌 - 科技感深色主题 */
+  --color-primary: #00d4ff;
+  --color-primary-hover: #33ddff;
+  --color-primary-bg: rgba(0, 212, 255, 0.1);
+  --color-success: #00e676;
+  --color-success-bg: rgba(0, 230, 118, 0.1);
+  --color-info: #00d4ff;
+  --color-info-bg: rgba(0, 212, 255, 0.08);
+  --color-warning: #ffab40;
+  --color-danger: #ff5252;
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-hint: rgba(255, 255, 255, 0.4);
+  --text-disabled: rgba(255, 255, 255, 0.2);
+  --text-inverse: #0a0e14;
+  --border-base: rgba(0, 212, 255, 0.15);
+  --border-light: rgba(0, 212, 255, 0.08);
+  --bg-white: #111820;
+  --bg-page: #0a0e14;
+  --bg-gray: #161d26;
+  --bg-gray-light: #1a2230;
+  --bg-hover: rgba(0, 212, 255, 0.06);
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 8px;
 
-  /* Element Plus 主题覆盖 — 与 shared/styles/_theme.scss 保持一致 */
-  --el-color-primary: #0060A2;
-  --el-color-primary-light-3: #4d8fbe;
-  --el-color-primary-light-5: #80b0d1;
-  --el-color-primary-light-7: #b3d0e4;
-  --el-color-primary-light-8: #cce0ee;
-  --el-color-primary-light-9: #e6f0f7;
-  --el-color-primary-dark-2: #004c82;
-  --el-color-warning: #F09700;
-  --el-color-danger: #E50113;
-  --el-color-success: #26A036;
-  --el-text-color-primary: #333333;
-  --el-text-color-regular: #666666;
-  --el-text-color-placeholder: #999999;
-  --el-border-color: #D5DDE3;
-  --el-border-color-light: #EBEDF3;
-  --el-border-color-lighter: #EBEDF3;
-  --el-border-color-extra-light: #EBEDF3;
-  --el-border-radius-base: 2px;
-  --el-border-radius-small: 2px;
-  --el-font-family: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', sans-serif;
+  /* TDesign 主题覆盖 */
+  --td-brand-color: #00d4ff;
+  --td-brand-color-light: rgba(0, 212, 255, 0.1);
+  --td-brand-color-focus: #00b8e6;
+  --td-warning-color: #ffab40;
+  --td-error-color: #ff5252;
+  --td-success-color: #00e676;
+  --td-text-color-primary: rgba(255, 255, 255, 0.95);
+  --td-text-color-secondary: rgba(255, 255, 255, 0.65);
+  --td-text-color-placeholder: rgba(255, 255, 255, 0.35);
+  --td-border-level-1-color: rgba(0, 212, 255, 0.15);
+  --td-border-level-2-color: rgba(0, 212, 255, 0.08);
+  --td-radius-default: 8px;
+  --td-radius-small: 4px;
+  --td-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* 组件层令牌（--ai- 前缀，与组件 fallback 值一致） */
-  --ai-color-primary: #0060A2;
-  --ai-color-primary-hover: #035B9C;
-  --ai-color-primary-bg: #EEF5FF;
-  --ai-color-success: #26A036;
-  --ai-color-success-bg: rgba(82, 196, 26, 0.1);
-  --ai-color-info: #4581E9;
-  --ai-color-info-bg: rgba(22, 119, 255, 0.08);
-  --ai-color-danger: #E50113;
-  --ai-color-danger-bg: rgba(229, 1, 19, 0.08);
-  --ai-color-purple: #7C3AED;
-  --ai-color-purple-bg: rgba(124, 58, 237, 0.08);
-  --ai-color-warning: #E6A23C;
-  --ai-color-warning-bg: rgba(230, 162, 60, 0.1);
-  --ai-color-primary-light: rgba(0, 96, 162, 0.08);
-  --ai-text-primary: #1A1A1A;
-  --ai-text-secondary: #666666;
-  --ai-text-hint: #999999;
-  --ai-text-disabled: #C0C4CC;
-  --ai-text-inverse: #FFFFFF;
-  --ai-border-base: #E0E4EA;
-  --ai-border-light: #F0F2F5;
-  --ai-bg-white: #FFFFFF;
-  --ai-bg-page: #F5F6FA;
-  --ai-bg-gray: #F7F8FA;
-  --ai-bg-gray-light: #FAFAFA;
-  --ai-bg-hover: #F0F5FF;
+  /* 组件层令牌（--ai- 前缀） - 科技感深色主题 */
+  --ai-color-primary: #00d4ff;
+  --ai-color-primary-hover: #33ddff;
+  --ai-color-primary-bg: rgba(0, 212, 255, 0.1);
+  --ai-color-success: #00e676;
+  --ai-color-success-bg: rgba(0, 230, 118, 0.1);
+  --ai-color-info: #00d4ff;
+  --ai-color-info-bg: rgba(0, 212, 255, 0.08);
+  --ai-color-danger: #ff5252;
+  --ai-color-danger-bg: rgba(255, 82, 82, 0.1);
+  --ai-color-purple: #bb86fc;
+  --ai-color-purple-bg: rgba(187, 134, 252, 0.1);
+  --ai-color-warning: #ffab40;
+  --ai-color-warning-bg: rgba(255, 171, 64, 0.1);
+  --ai-color-primary-light: rgba(0, 212, 255, 0.08);
+  --ai-text-primary: rgba(255, 255, 255, 0.95);
+  --ai-text-secondary: rgba(255, 255, 255, 0.65);
+  --ai-text-hint: rgba(255, 255, 255, 0.4);
+  --ai-text-disabled: rgba(255, 255, 255, 0.2);
+  --ai-text-inverse: #0a0e14;
+  --ai-border-base: rgba(0, 212, 255, 0.15);
+  --ai-border-light: rgba(0, 212, 255, 0.08);
+  --ai-bg-white: #111820;
+  --ai-bg-page: #0a0e14;
+  --ai-bg-gray: #161d26;
+  --ai-bg-gray-light: #1a2230;
+  --ai-bg-hover: rgba(0, 212, 255, 0.06);
   --ai-radius-sm: 6px;
   --ai-radius-md: 8px;
   --ai-radius-lg: 12px;
@@ -99,23 +92,23 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
   --ai-spacing-lg: 24px;
   --ai-spacing-xl: 32px;
 
-  /* 阴影 */
-  --ai-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --ai-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --ai-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
-  --ai-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.06);
-  --ai-shadow-float: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+  /* 阴影 - 霓虹发光 */
+  --ai-shadow-sm: 0 0 8px rgba(0, 212, 255, 0.08);
+  --ai-shadow-md: 0 0 15px rgba(0, 212, 255, 0.12), 0 0 30px rgba(0, 212, 255, 0.06);
+  --ai-shadow-lg: 0 0 20px rgba(0, 212, 255, 0.18), 0 0 40px rgba(0, 212, 255, 0.08);
+  --ai-shadow-card: 0 0 12px rgba(0, 212, 255, 0.1), 0 0 1px rgba(0, 212, 255, 0.15);
+  --ai-shadow-float: 0 0 30px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.08);
 
-  /* 毛玻璃 */
-  --ai-glass-bg: rgba(255, 255, 255, 0.72);
-  --ai-glass-blur: blur(16px);
-  --ai-glass-border: rgba(255, 255, 255, 0.18);
+  /* 毛玻璃 - 深色玻璃拟态 */
+  --ai-glass-bg: rgba(17, 24, 32, 0.85);
+  --ai-glass-blur: blur(20px);
+  --ai-glass-border: rgba(0, 212, 255, 0.1);
 
   /* 渐变 */
-  --ai-gradient-primary: linear-gradient(135deg, #0060A2 0%, #0078D4 100%);
-  --ai-gradient-user: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --ai-gradient-subtle: linear-gradient(135deg, rgba(0, 96, 162, 0.04) 0%, rgba(0, 120, 212, 0.02) 100%);
-  --ai-gradient-card-header: linear-gradient(180deg, rgba(245, 247, 250, 0.8) 0%, rgba(245, 247, 250, 0.4) 100%);
+  --ai-gradient-primary: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
+  --ai-gradient-user: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+  --ai-gradient-subtle: linear-gradient(135deg, rgba(0, 212, 255, 0.04) 0%, rgba(0, 212, 255, 0.02) 100%);
+  --ai-gradient-card-header: linear-gradient(180deg, rgba(22, 29, 38, 0.8) 0%, rgba(22, 29, 38, 0.4) 100%);
 }
 
 html,
@@ -130,7 +123,7 @@ body {
   height: 100%;
 }
 
-/* el-config-provider 是 RouterView 的直接父容器，必须撑满 */
+/* RouterView 的直接父容器必须撑满 */
 #app > :first-child {
   height: 100%;
 }

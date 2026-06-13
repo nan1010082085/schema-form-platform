@@ -1,21 +1,20 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import '@schema-form/shared-styles/tokens.css'
-import { elementPlusConfig, elementPlusSize } from '@schema-form/shared-config/elementPlus'
-import { resolveToken } from '@schema-form/micro-app/child'
-import router from './router'
+import { createQiankunApp } from '@schema-form/shared-qiankun/createQiankunApp'
+import { useQiankun } from '@schema-form/shared-qiankun'
 import App from './App.vue'
+import router from './router'
 import { setTokenProvider } from './utils/apiClient'
 
-// 注入 token 提供者：优先 localStorage（standalone），其次 micro-app data（微前端）
-setTokenProvider(() => resolveToken())
+// 设置 token 提供者：从 qiankun 全局状态读取
+const { getGlobalState } = useQiankun()
+setTokenProvider(() => {
+  const state = getGlobalState()
+  return (state.token as string) || localStorage.getItem('sfp_access_token')
+})
 
-const app = createApp(App)
+const { bootstrap, mount, unmount } = createQiankunApp({
+  name: 'admin',
+  rootComponent: App,
+  plugins: [router],
+})
 
-app.use(createPinia())
-app.use(router)
-app.use(ElementPlus, { ...elementPlusConfig, size: elementPlusSize })
-
-app.mount('#app')
+export { bootstrap, mount, unmount }

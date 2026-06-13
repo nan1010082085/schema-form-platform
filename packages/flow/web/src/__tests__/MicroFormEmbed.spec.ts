@@ -8,32 +8,32 @@ vi.mock('../components/MicroFormEmbed.module.scss', () => ({
     wrapper: 'wrapper',
     container: 'container',
     empty: 'empty',
+    iframe: 'iframe',
   },
 }))
 
-// Track postMessage calls for assertions on fg:set-mode
+// Track postMessage calls for assertions
 const postMessageSpy = vi.fn()
 
-// Stub micro-app as a Vue component that emits 'created' on mount
-const microAppStub = {
-  name: 'micro-app',
-  template: '<div class="micro-app-stub"><slot /></div>',
-  props: ['name', 'url', 'data', 'iframe'],
-  emits: ['created', 'unmount', 'error'],
-  mounted() {
-    this.$emit('created')
-  },
-}
-
 function createWrapper(props: Record<string, unknown> = {}) {
-  return mount(MicroFormEmbed, {
+  const wrapper = mount(MicroFormEmbed, {
     props,
-    global: {
-      stubs: {
-        'micro-app': microAppStub,
-      },
-    },
+    attachTo: document.body,
   })
+
+  // Mock contentWindow.postMessage on the real iframe element
+  const iframeWrapper = wrapper.find('iframe')
+  if (iframeWrapper.exists()) {
+    const iframeEl = iframeWrapper.element as HTMLIFrameElement
+    Object.defineProperty(iframeEl, 'contentWindow', {
+      value: { postMessage: postMessageSpy },
+      configurable: true,
+    })
+    // Trigger the load event manually since jsdom doesn't load iframes
+    iframeEl.dispatchEvent(new Event('load'))
+  }
+
+  return wrapper
 }
 
 describe('MicroFormEmbed', () => {
@@ -51,76 +51,48 @@ describe('MicroFormEmbed', () => {
   it('shows empty state when publishId is not provided', () => {
     const wrapper = createWrapper()
     expect(wrapper.text()).toContain('未绑定表单')
-    expect(wrapper.find('.micro-app-stub').exists()).toBe(false)
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    wrapper.unmount()
   })
 
   it('shows empty state when publishId is empty string', () => {
     const wrapper = createWrapper({ publishId: '' })
     expect(wrapper.text()).toContain('未绑定表单')
-    expect(wrapper.find('.micro-app-stub').exists()).toBe(false)
+    expect(wrapper.find('iframe').exists()).toBe(false)
+    wrapper.unmount()
   })
 
-  // ── Test 2: Renders micro-app with correct props ──
-  it('renders micro-app element when publishId is provided', () => {
+  // ── Test 2: Renders iframe with correct src ──
+  it('renders iframe element when publishId is provided', () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
-    expect(wrapper.find('.micro-app-stub').exists()).toBe(true)
+    expect(wrapper.find('iframe').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('未绑定表单')
+    wrapper.unmount()
   })
 
-  it('passes correct url with publishId', () => {
+  it('passes correct src with publishId', () => {
     const wrapper = createWrapper({ publishId: 'pub-abc' })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    expect(app.props('url')).toContain('id=pub-abc')
+    const iframe = wrapper.find('iframe')
+    expect(iframe.attributes('src')).toContain('id=pub-abc')
+    wrapper.unmount()
   })
 
-  it('passes data with default mode edit and default hostMethods', () => {
+  it('includes mode in iframe src', () => {
+    const wrapper = createWrapper({ publishId: 'pub-123', mode: 'view' })
+    const iframe = wrapper.find('iframe')
+    expect(iframe.attributes('src')).toContain('mode=view')
+    wrapper.unmount()
+  })
+
+  it('defaults mode to edit in iframe src', () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    const data = app.props('data')
-    expect(data.mode).toBe('edit')
-    expect(data.hostMethods).toEqual(['setValues', 'getValues', 'validate'])
+    const iframe = wrapper.find('iframe')
+    expect(iframe.attributes('src')).toContain('mode=edit')
+    wrapper.unmount()
   })
 
-  it('passes custom mode and hostMethods in data', () => {
-    const wrapper = createWrapper({
-      publishId: 'pub-123',
-      mode: 'view',
-      hostMethods: ['setValues'],
-    })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    const data = app.props('data')
-    expect(data.mode).toBe('view')
-    expect(data.hostMethods).toEqual(['setValues'])
-  })
-
-  it('includes initialData in microAppData when provided', () => {
-    const initialData = { name: 'test', age: 25 }
-    const wrapper = createWrapper({ publishId: 'pub-123', initialData })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    const data = app.props('data')
-    expect(data.initialData).toEqual(initialData)
-  })
-
-  it('includes editableFields and readonlyFields in microAppData', () => {
-    const wrapper = createWrapper({
-      publishId: 'pub-123',
-      mode: 'partial',
-      editableFields: ['comment', 'amount'],
-      readonlyFields: ['name'],
-    })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    const data = app.props('data')
-    expect(data.mode).toBe('partial')
-    expect(data.editableFields).toEqual(['comment', 'amount'])
-    expect(data.readonlyFields).toEqual(['name'])
-  })
-
-  // ── Test: fg:set-mode sent on created ──
-  it('sends fg:set-mode message to child iframe after created', async () => {
-    const mockIframe = { contentWindow: { postMessage: postMessageSpy } }
-    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
-    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
-
+  // ── Test: fg:set-mode sent on iframe load ──
+  it('sends fg:set-mode message to child iframe after load', async () => {
     createWrapper({ publishId: 'pub-123', mode: 'partial', editableFields: ['comment'] })
 
     // requestAnimationFrame needs timer advancement to flush
@@ -136,11 +108,7 @@ describe('MicroFormEmbed', () => {
     expect(msg.editableFields).toEqual(['comment'])
   })
 
-  it('sends fg:set-data with initialData after created', async () => {
-    const mockIframe = { contentWindow: { postMessage: postMessageSpy } }
-    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
-    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
-
+  it('sends fg:set-data with initialData after load', async () => {
     const initialData = { name: 'test' }
     createWrapper({ publishId: 'pub-123', initialData })
 
@@ -163,14 +131,15 @@ describe('MicroFormEmbed', () => {
     expect(typeof vm.validate).toBe('function')
     expect(typeof vm.submit).toBe('function')
     expect(typeof vm.sendCommand).toBe('function')
+    wrapper.unmount()
   })
 
   // ── Test 4: postMessage event handling ──
-  it('emits ready when micro-app triggers created event', () => {
-    // The stub auto-emits 'created' on mount, so 'ready' should already be emitted
+  it('emits ready when iframe triggers load event', () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
     expect(wrapper.emitted('ready')).toBeTruthy()
     expect(wrapper.emitted('ready')!.length).toBe(1)
+    wrapper.unmount()
   })
 
   it('emits valueChange when receiving fg:data-response message', async () => {
@@ -184,6 +153,7 @@ describe('MicroFormEmbed', () => {
 
     expect(wrapper.emitted('valueChange')).toBeTruthy()
     expect(wrapper.emitted('valueChange')![0]).toEqual([testData])
+    wrapper.unmount()
   })
 
   it('emits submitSuccess when receiving fg:submit message', async () => {
@@ -197,6 +167,7 @@ describe('MicroFormEmbed', () => {
 
     expect(wrapper.emitted('submitSuccess')).toBeTruthy()
     expect(wrapper.emitted('submitSuccess')![0]).toEqual([submitData])
+    wrapper.unmount()
   })
 
   it('ignores messages without type field', async () => {
@@ -206,9 +177,9 @@ describe('MicroFormEmbed', () => {
     await vi.advanceTimersByTimeAsync(0)
     await wrapper.vm.$nextTick()
 
-    // ready is emitted from micro-app mount, but no valueChange/submitSuccess
     expect(wrapper.emitted('valueChange')).toBeFalsy()
     expect(wrapper.emitted('submitSuccess')).toBeFalsy()
+    wrapper.unmount()
   })
 
   it('ignores primitive message data (non-object)', async () => {
@@ -220,25 +191,19 @@ describe('MicroFormEmbed', () => {
 
     expect(wrapper.emitted('valueChange')).toBeFalsy()
     expect(wrapper.emitted('submitSuccess')).toBeFalsy()
+    wrapper.unmount()
   })
 
   it('resolves pending request when receiving requestId response', async () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
     const vm = wrapper.vm as any
 
-    // Mock getChildIframe: document.querySelector → micro-app element → querySelector → iframe
-    const mockIframe = {
-      contentWindow: { postMessage: vi.fn() },
-    }
-    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
-    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
-
     // Start a getValues call — posts a message with requestId
     const valuesPromise = vm.getValues()
 
     // Verify a message was posted
-    expect(mockIframe.contentWindow.postMessage).toHaveBeenCalledTimes(1)
-    const postedMsg = mockIframe.contentWindow.postMessage.mock.calls[0][0] as Record<string, unknown>
+    expect(postMessageSpy).toHaveBeenCalledTimes(1)
+    const postedMsg = postMessageSpy.mock.calls[0][0] as Record<string, unknown>
     const requestId = postedMsg.requestId as string
     expect(requestId).toBeTruthy()
 
@@ -249,27 +214,24 @@ describe('MicroFormEmbed', () => {
 
     const result = await valuesPromise
     expect(result).toEqual(payload)
+    wrapper.unmount()
   })
 
   it('rejects pending request when receiving error response', async () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
     const vm = wrapper.vm as any
 
-    const mockIframe = { contentWindow: { postMessage: vi.fn() } }
-    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
-    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
-
     const valuesPromise = vm.getValues()
-    // Prevent unhandled rejection warning — rejection fires during timer advancement
     valuesPromise.catch(() => {})
 
-    const postedMsg = mockIframe.contentWindow.postMessage.mock.calls[0][0] as Record<string, unknown>
+    const postedMsg = postMessageSpy.mock.calls[0][0] as Record<string, unknown>
     const requestId = postedMsg.requestId as string
 
     window.postMessage({ requestId, action: 'error', payload: 'Validation failed' }, '*')
     await vi.advanceTimersByTimeAsync(0)
 
     await expect(valuesPromise).rejects.toThrow('Validation failed')
+    wrapper.unmount()
   })
 
   // ── Test 5: sendCommand timeout ──
@@ -277,18 +239,13 @@ describe('MicroFormEmbed', () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
     const vm = wrapper.vm as any
 
-    const mockIframe = { contentWindow: { postMessage: vi.fn() } }
-    const mockMicroApp = { querySelector: vi.fn().mockReturnValue(mockIframe) }
-    vi.spyOn(document, 'querySelector').mockReturnValue(mockMicroApp as any)
-
     const promise = vm.sendCommand('fg:get-data')
-    // Prevent unhandled rejection warning — timeout fires during timer advancement
     promise.catch(() => {})
 
-    // Advance past the 10s timeout
     await vi.advanceTimersByTimeAsync(10_000)
 
     await expect(promise).rejects.toThrow('Command "fg:get-data" timed out')
+    wrapper.unmount()
   })
 
   // ── Method restriction tests ──
@@ -299,6 +256,7 @@ describe('MicroFormEmbed', () => {
     })
     const vm = wrapper.vm as any
     await expect(vm.getValues()).rejects.toThrow('getValues not allowed')
+    wrapper.unmount()
   })
 
   it('throws when calling setValues if not in hostMethods', async () => {
@@ -308,29 +266,26 @@ describe('MicroFormEmbed', () => {
     })
     const vm = wrapper.vm as any
     await expect(vm.setValues({ foo: 'bar' })).rejects.toThrow('setValues not allowed')
+    wrapper.unmount()
   })
 
   it('allows methods when hostMethods includes them', async () => {
     const wrapper = createWrapper({ publishId: 'pub-123' })
     const vm = wrapper.vm as any
-    // Default hostMethods includes getValues, setValues, validate
-    // The promise should NOT reject with "getValues not allowed"
     const promise = vm.getValues()
-    promise.catch(() => {}) // prevent unhandled rejection
-    // Advance timers to trigger the 10s sendCommand timeout
+    promise.catch(() => {})
     await vi.advanceTimersByTimeAsync(10_000)
     const error = await promise.catch((e: Error) => e)
     expect(error?.message).not.toBe('getValues not allowed')
+    wrapper.unmount()
   })
 
-  // ── Micro-app key binding ──
-  it('uses publishId as key for micro-app re-rendering', () => {
+  // ── Iframe src includes publishId ──
+  it('uses publishId in iframe src URL', () => {
     const wrapper = createWrapper({ publishId: 'pub-aaa' })
-    const app = wrapper.findComponent({ name: 'micro-app' })
-    // The :key="publishId" is set on the component, verify via props or element attribute
-    // In Vue test utils, key is not directly accessible via props, but we can verify
-    // the component re-creates by checking the name prop which includes publishId
-    expect(app.props('name')).toContain('pub-aaa')
+    const iframe = wrapper.find('iframe')
+    expect(iframe.attributes('src')).toContain('id=pub-aaa')
+    wrapper.unmount()
   })
 
   // ── Unmount cleanup ──

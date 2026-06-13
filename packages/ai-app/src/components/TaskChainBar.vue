@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
-import { ElScrollbar } from 'element-plus'
 import type { TaskChainStep } from '@/types'
 
 const props = defineProps<{
@@ -8,7 +7,7 @@ const props = defineProps<{
   currentIndex: number
 }>()
 
-const scrollbarRef = ref<InstanceType<typeof ElScrollbar>>()
+const scrollbarRef = ref<HTMLElement>()
 
 function getStepIcon(status: TaskChainStep['status']): string {
   switch (status) {
@@ -28,7 +27,7 @@ function getAgentLabel(agent: 'editor' | 'flow' | 'page'): string {
 // 自动滚动到当前步骤
 watch(() => props.currentIndex, () => {
   nextTick(() => {
-    const wrap = scrollbarRef.value?.wrapRef
+    const wrap = scrollbarRef.value
     if (!wrap) return
     const stepEls = wrap.querySelectorAll<HTMLElement>('[data-step]')
     const current = stepEls[props.currentIndex]
@@ -42,7 +41,7 @@ watch(() => props.currentIndex, () => {
 <template>
   <div :class="$style.bar">
     <div :class="$style.label">任务链</div>
-    <ElScrollbar ref="scrollbarRef" :class="$style.scrollWrap" :wrap-style="{ overflowX: 'auto' }">
+    <div ref="scrollbarRef" :class="$style.scrollWrap">
       <div :class="$style.steps">
         <template v-for="(step, idx) in steps" :key="idx">
           <div
@@ -60,7 +59,7 @@ watch(() => props.currentIndex, () => {
           <div v-if="idx < steps.length - 1" :class="$style.arrow">→</div>
         </template>
       </div>
-    </ElScrollbar>
+    </div>
   </div>
 </template>
 

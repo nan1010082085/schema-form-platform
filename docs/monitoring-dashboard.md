@@ -1,3 +1,5 @@
+> 📋 状态：未来规划（当前基于 pm2 + nginx）
+
 # Schema Form Platform 监控仪表盘配置
 
 > 创建日期：2026/06/10

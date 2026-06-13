@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, List, Monitor, DataAnalysis } from '@element-plus/icons-vue'
+import { FileIcon, ListIcon, DesktopIcon, DataIcon } from 'tdesign-icons-vue-next'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
 const router = useRouter()
 
 const navItems = [
-  { path: '/list', label: '流程列表', icon: Document },
-  { path: '/instances', label: '流程实例', icon: Monitor },
-  { path: '/tasks', label: '我的任务', icon: List },
-  { path: '/monitor', label: '流程监控', icon: DataAnalysis },
+  { path: '/list', label: '流程列表', icon: FileIcon },
+  { path: '/instances', label: '流程实例', icon: DesktopIcon },
+  { path: '/tasks', label: '我的任务', icon: ListIcon },
+  { path: '/monitor', label: '流程监控', icon: DataIcon },
 ]
 
 const activeNav = computed(() => {
@@ -37,7 +37,7 @@ const activeNav = computed(() => {
           :to="item.path"
           :class="[styles.navItem, { [styles.navItemActive]: activeNav === item.path }]"
         >
-          <el-icon :size="18"><component :is="item.icon" /></el-icon>
+          <component :is="item.icon" style="font-size: 18px;" />
           <span>{{ item.label }}</span>
         </router-link>
       </nav>

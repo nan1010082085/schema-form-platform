@@ -14,7 +14,7 @@
     margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: var(--el-text-color-primary);
+    color: var(--text-color-primary);
   }
 }
 
@@ -41,8 +41,8 @@
 }
 
 .card {
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color-lighter);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -50,7 +50,7 @@
   transition: box-shadow 0.2s, border-color 0.2s;
 
   &:hover {
-    border-color: var(--el-color-primary-light-5);
+    border-color: var(--color-primary-light);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   }
 }
@@ -58,7 +58,7 @@
 .cardThumbnail {
   height: 140px;
   overflow: hidden;
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
 }
 
 .thumbnailImg {
@@ -80,8 +80,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--el-text-color-placeholder);
-  background: linear-gradient(135deg, var(--el-fill-color-light) 0%, var(--el-fill-color-lighter) 100%);
+  color: var(--text-color-placeholder);
+  background: linear-gradient(135deg, var(--bg-color-secondary) 0%, var(--bg-color-secondary) 100%);
 
   span {
     font-size: 12px;
@@ -104,7 +104,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -116,14 +116,14 @@
   gap: 4px;
   margin-top: 4px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .cardDesc {
   margin: 0;
   padding: 0 16px;
   font-size: 13px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -144,7 +144,7 @@
   justify-content: space-between;
   margin-top: auto;
   padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-extra-light);
+  border-top: 1px solid var(--border-color-light);
 }
 
 .cardStats {
@@ -155,7 +155,7 @@
 
 .cardDate {
   font-size: 12px;
-  color: var(--el-text-color-placeholder);
+  color: var(--text-color-placeholder);
 }
 
 .cardUseCount {
@@ -163,7 +163,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .cardActions {

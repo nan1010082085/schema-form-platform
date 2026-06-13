@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, Connection, Document, SetUp, Timer, Edit, Cpu, Warning } from '@element-plus/icons-vue'
+import { SearchIcon, LinkIcon, FileIcon, SettingIcon, EditIcon, WarningIcon, TimeIcon, DeviceIcon } from 'tdesign-icons-vue-next'
 import type { VariableGroup, VariableLeaf, VariableSource } from '../composables/useVariableDefinitions.js'
 import type { WorkflowVariableGroup, WorkflowVariableLeaf, WorkflowVariableSource } from '../composables/useWorkflowVariables.js'
 import styles from './VariableSelector.module.css'
@@ -34,27 +34,27 @@ const searchQuery = ref('')
 
 function sourceIcon(source: AnyVariableSource) {
   switch (source) {
-    case 'env': return SetUp
-    case 'form': return Document
-    case 'node': return Connection
-    case 'trigger': return Timer
-    case 'editor': return Edit
-    case 'flow': return Connection
-    case 'ai': return Cpu
-    case 'system': return Warning
+    case 'env': return SettingIcon
+    case 'form': return FileIcon
+    case 'node': return LinkIcon
+    case 'trigger': return TimeIcon
+    case 'editor': return EditIcon
+    case 'flow': return LinkIcon
+    case 'ai': return DeviceIcon
+    case 'system': return WarningIcon
   }
 }
 
-function sourceTagType(source: AnyVariableSource): '' | 'success' | 'warning' | 'danger' | 'info' {
+function sourceTagType(source: AnyVariableSource): 'default' | 'primary' | 'success' | 'warning' | 'danger' {
   switch (source) {
-    case 'env': return ''
+    case 'env': return 'default'
     case 'form': return 'success'
     case 'node': return 'warning'
     case 'trigger': return 'warning'
     case 'editor': return 'success'
-    case 'flow': return 'info'
+    case 'flow': return 'primary'
     case 'ai': return 'danger'
-    case 'system': return ''
+    case 'system': return 'default'
   }
 }
 
@@ -127,84 +127,82 @@ function onPopoverChange(visible: boolean) {
 
 <template>
   <div :class="styles.wrapper">
-    <el-input
+    <t-input
       :model-value="modelValue"
       :placeholder="placeholder"
       :class="styles.input"
       @input="onInputChange"
     />
-    <el-popover
-      :visible="popoverVisible"
+    <t-popup
+      v-model:visible="popoverVisible"
       placement="bottom-end"
-      :width="280"
       trigger="click"
       :show-arrow="false"
-      :offset="4"
-      :popper-class="styles.popover"
-      @update:visible="popoverVisible = $event"
-      @change="onPopoverChange"
+      :overlay-inner-style="{ width: '280px' }"
+      :overlay-class="styles.popover"
+      @visible-change="onPopoverChange"
     >
-      <template #reference>
-        <el-tooltip content="插入变量" placement="top" :show-after="300">
-          <el-icon :class="styles.trigger" @click="popoverVisible = !popoverVisible">
-            <Connection />
-          </el-icon>
-        </el-tooltip>
+      <template #content>
+        <!-- Search -->
+        <div :class="styles.searchBox">
+          <t-input
+            v-model="searchQuery"
+            :class="styles.searchInput"
+            placeholder="搜索变量..."
+            size="small"
+            clearable
+          >
+            <template #prefix>
+              <SearchIcon />
+            </template>
+          </t-input>
+        </div>
+
+        <!-- Variable tree -->
+        <div :class="styles.treeContainer">
+          <template v-if="filteredGroups.length > 0">
+            <div
+              v-for="group in filteredGroups"
+              :key="group.source"
+              :class="styles.group"
+            >
+              <div
+                :class="styles.groupHeader"
+                :style="{ '--group-color': sourceColor(group.source) }"
+              >
+                <component :is="sourceIcon(group.source)" :class="styles.groupIcon" />
+                <span>{{ group.label }}</span>
+              </div>
+
+              <div
+                v-for="variable in group.children"
+                :key="variable.path"
+                :class="styles.leafItem"
+                @click="selectVariable(variable)"
+              >
+                <span :class="styles.leafLabel">{{ variable.label }}</span>
+                <t-tag
+                  :theme="sourceTagType(variable.source)"
+                  size="small"
+                  :class="styles.sourceTag"
+                  :style="sourceColor(variable.source) ? { background: sourceColor(variable.source) + '15', color: sourceColor(variable.source) } : {}"
+                >
+                  {{ sourceLabel(variable.source) }}
+                </t-tag>
+              </div>
+            </div>
+          </template>
+
+          <div v-else :class="styles.emptyState">
+            {{ searchQuery ? '无匹配变量' : '暂无可用变量' }}
+          </div>
+        </div>
       </template>
 
-      <!-- Search -->
-      <div :class="styles.searchBox">
-        <el-input
-          v-model="searchQuery"
-          :class="styles.searchInput"
-          placeholder="搜索变量..."
-          :prefix-icon="Search"
-          size="small"
-          clearable
-        />
-      </div>
-
-      <!-- Variable tree -->
-      <div :class="styles.treeContainer">
-        <template v-if="filteredGroups.length > 0">
-          <div
-            v-for="group in filteredGroups"
-            :key="group.source"
-            :class="styles.group"
-          >
-            <div
-              :class="styles.groupHeader"
-              :style="{ '--group-color': sourceColor(group.source) }"
-            >
-              <el-icon :class="styles.groupIcon">
-                <component :is="sourceIcon(group.source)" />
-              </el-icon>
-              <span>{{ group.label }}</span>
-            </div>
-
-            <div
-              v-for="variable in group.children"
-              :key="variable.path"
-              :class="styles.leafItem"
-              @click="selectVariable(variable)"
-            >
-              <span :class="styles.leafLabel">{{ variable.label }}</span>
-              <el-tag
-                :type="sourceTagType(variable.source)"
-                size="small"
-                :class="styles.sourceTag"
-                :style="sourceColor(variable.source) ? { '--el-tag-bg-color': sourceColor(variable.source) + '15', '--el-tag-text-color': sourceColor(variable.source) } : {}"
-              >
-                {{ sourceLabel(variable.source) }}
-              </el-tag>
-            </div>
-          </div>
-        </template>
-
-        <div v-else :class="styles.emptyState">
-          {{ searchQuery ? '无匹配变量' : '暂无可用变量' }}
-        </div>
-      </div>
-    </el-popover>
+      <!-- Trigger -->
+      <t-tooltip content="插入变量" placement="top" :delay="300">
+        <LinkIcon :class="styles.trigger" @click="popoverVisible = !popoverVisible" />
+      </t-tooltip>
+    </t-popup>
   </div>
 </template>

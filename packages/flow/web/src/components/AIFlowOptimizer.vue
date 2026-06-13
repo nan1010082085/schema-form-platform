@@ -9,8 +9,8 @@
     </div>
 
     <div :class="$style.actions">
-      <el-button
-        type="primary"
+      <t-button
+        theme="primary"
         size="large"
         :loading="analyzing"
         :disabled="!hasFlow"
@@ -18,11 +18,11 @@
       >
         <span v-if="!analyzing">📊 分析流程</span>
         <span v-else>分析中...</span>
-      </el-button>
+      </t-button>
     </div>
 
     <div v-if="!hasFlow" :class="$style.emptyState">
-      <el-empty description="请先在画布中创建流程" />
+      <t-empty description="请先在画布中创建流程" />
     </div>
 
     <div v-if="analysisResult" :class="$style.resultSection">
@@ -83,15 +83,15 @@
             </div>
             <div :class="$style.suggestionTitle">{{ suggestion.title }}</div>
             <div :class="$style.suggestionDesc">{{ suggestion.description }}</div>
-            <el-button
+            <t-button
               v-if="suggestion.applicable"
               size="small"
-              type="primary"
+              theme="primary"
               :class="$style.applyBtn"
               @click="handleApplySuggestion(suggestion)"
             >
               应用建议
-            </el-button>
+            </t-button>
           </div>
         </div>
       </div>
@@ -104,14 +104,14 @@
     </div>
 
     <div v-if="error" :class="$style.error">
-      <el-alert :title="error" type="error" show-icon @close="error = ''" />
+      <t-alert :title="error" theme="error" closeable @close="error = ''" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 interface FlowNode {
   id: string
@@ -343,7 +343,7 @@ function parseAnalysisResult(response: string) {
 
 function handleApplySuggestion(suggestion: Suggestion) {
   emit('applySuggestion', suggestion)
-  ElMessage.success('建议已应用')
+  MessagePlugin.success('建议已应用')
 }
 </script>
 
@@ -360,7 +360,7 @@ function handleApplySuggestion(suggestion: Suggestion) {
 .title {
   font-size: 24px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
@@ -374,7 +374,7 @@ function handleApplySuggestion(suggestion: Suggestion) {
 
 .subtitle {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
   margin: 0;
 }
 
@@ -388,7 +388,7 @@ function handleApplySuggestion(suggestion: Suggestion) {
 }
 
 .resultSection {
-  background: var(--el-fill-color-lighter);
+  background: var(--bg-color-secondary);
   border-radius: 12px;
   padding: 24px;
 }
@@ -416,13 +416,13 @@ function handleApplySuggestion(suggestion: Suggestion) {
 .metricValue {
   font-size: 24px;
   font-weight: 700;
-  color: var(--el-color-primary);
+  color: var(--color-primary);
   margin-bottom: 4px;
 }
 
 .metricLabel {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .section {
@@ -435,7 +435,7 @@ function handleApplySuggestion(suggestion: Suggestion) {
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin: 0 0 16px 0;
 }
 
@@ -450,9 +450,9 @@ function handleApplySuggestion(suggestion: Suggestion) {
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: var(--el-color-warning-light-9);
+  background: var(--color-warning-light);
   border-radius: 8px;
-  border-left: 4px solid var(--el-color-warning);
+  border-left: 4px solid var(--color-warning);
 }
 
 .bottleneckIcon {
@@ -462,13 +462,13 @@ function handleApplySuggestion(suggestion: Suggestion) {
 
 .bottleneckTitle {
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 4px;
 }
 
 .bottleneckDesc {
   font-size: 14px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   line-height: 1.6;
 }
 
@@ -481,22 +481,22 @@ function handleApplySuggestion(suggestion: Suggestion) {
 .suggestionItem {
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid var(--el-color-info);
+  border-left: 4px solid var(--color-info);
 }
 
 .suggestionItem.priority-high {
-  background: var(--el-color-danger-light-9);
-  border-left-color: var(--el-color-danger);
+  background: var(--color-danger-light);
+  border-left-color: var(--color-danger);
 }
 
 .suggestionItem.priority-medium {
-  background: var(--el-color-warning-light-9);
-  border-left-color: var(--el-color-warning);
+  background: var(--color-warning-light);
+  border-left-color: var(--color-warning);
 }
 
 .suggestionItem.priority-low {
-  background: var(--el-color-success-light-9);
-  border-left-color: var(--el-color-success);
+  background: var(--color-success-light);
+  border-left-color: var(--color-success);
 }
 
 .suggestionHeader {
@@ -511,25 +511,25 @@ function handleApplySuggestion(suggestion: Suggestion) {
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 4px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .suggestionImpact {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 
 .suggestionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 8px;
 }
 
 .suggestionDesc {
   font-size: 14px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   line-height: 1.6;
   margin-bottom: 12px;
 }
@@ -540,7 +540,7 @@ function handleApplySuggestion(suggestion: Suggestion) {
 
 .reportContent {
   font-size: 14px;
-  color: var(--el-text-color-regular);
+  color: var(--text-color-secondary);
   line-height: 1.8;
   white-space: pre-wrap;
 }

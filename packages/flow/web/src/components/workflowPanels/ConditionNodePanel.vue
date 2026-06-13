@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Node, Edge } from '@vue-flow/core'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { useFlowGraphStore } from '@/stores/flowGraph.js'
 import SectionToggle from '@/components/nodePanels/SectionToggle.vue'
 import FieldRow from '@/components/nodePanels/FieldRow.vue'
@@ -105,36 +105,34 @@ const operatorOptions = [
     >
       <div :class="styles.branchHeader">
         <span :class="styles.branchTitle">分支 {{ index + 1 }}</span>
-        <el-icon
+        <DeleteIcon
           :class="styles.deleteIcon"
           @click="removeBranch(index)"
-        >
-          <Delete />
-        </el-icon>
+        />
       </div>
 
       <FieldRow label="分支标签">
-        <el-input
-          :model-value="branch.label"
+        <t-input
+          :value="branch.label"
           placeholder="例: 金额大于 10000"
           @input="updateBranch(index, 'label', $event)"
         />
       </FieldRow>
 
       <FieldRow label="条件方式">
-        <el-radio-group
-          :model-value="branch.conditionType"
+        <t-radio-group
+          :value="branch.conditionType"
           @change="updateBranch(index, 'conditionType', $event)"
         >
-          <el-radio value="expression">表达式</el-radio>
-          <el-radio value="variable">可视化</el-radio>
-        </el-radio-group>
+          <t-radio value="expression">表达式</t-radio>
+          <t-radio value="variable">可视化</t-radio>
+        </t-radio-group>
       </FieldRow>
 
       <template v-if="branch.conditionType === 'expression'">
         <FieldRow label="条件表达式">
-          <el-input
-            :model-value="branch.conditionExpression"
+          <t-input
+            :value="branch.conditionExpression"
             placeholder="${amount > 10000}"
             @input="updateBranch(index, 'conditionExpression', $event)"
           />
@@ -143,33 +141,33 @@ const operatorOptions = [
 
       <template v-else>
         <FieldRow label="变量名">
-          <el-input
-            :model-value="branch.variableName"
+          <t-input
+            :value="branch.variableName"
             placeholder="例: amount"
             @input="updateBranch(index, 'variableName', $event)"
           />
         </FieldRow>
 
         <FieldRow label="运算符">
-          <el-select
-            :model-value="branch.operator"
+          <t-select
+            :value="branch.operator"
             @change="updateBranch(index, 'operator', $event)"
           >
-            <el-option
+            <t-option
               v-for="opt in operatorOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </el-select>
+          </t-select>
         </FieldRow>
 
         <FieldRow
           v-if="branch.operator !== 'empty' && branch.operator !== 'not_empty'"
           label="比较值"
         >
-          <el-input
-            :model-value="branch.compareValue"
+          <t-input
+            :value="branch.compareValue"
             placeholder="比较的值"
             @input="updateBranch(index, 'compareValue', $event)"
           />
@@ -177,13 +175,13 @@ const operatorOptions = [
       </template>
     </div>
 
-    <el-button
+    <t-button
       :class="styles.addBranchBtn"
-      :icon="Plus"
+      :icon="AddIcon"
       @click="addBranch"
     >
       添加分支
-    </el-button>
+    </t-button>
 
     <HintText v-if="branches.length === 0">
       配置条件分支，支持表达式或可视化条件编辑。每个分支对应一条出线。
@@ -203,26 +201,26 @@ const operatorOptions = [
     >
       <div :class="styles.edgeHeader">
         <span :class="styles.edgeTarget">-> {{ targetLabel(edge) }}</span>
-        <el-checkbox
-          :model-value="edge.data?.isDefault ?? false"
+        <t-checkbox
+          :checked="edge.data?.isDefault ?? false"
           :class="styles.defaultCheck"
           @change="toggleEdgeDefault(edge, $event)"
         >
           默认
-        </el-checkbox>
+        </t-checkbox>
       </div>
 
       <FieldRow label="条件标签">
-        <el-input
-          :model-value="(edge.label as string) ?? ''"
+        <t-input
+          :value="(edge.label as string) ?? ''"
           placeholder="条件标签"
           @input="updateEdgeLabel(edge, $event)"
         />
       </FieldRow>
 
       <FieldRow label="条件表达式">
-        <el-input
-          :model-value="edge.data?.conditionExpression ?? ''"
+        <t-input
+          :value="edge.data?.conditionExpression ?? ''"
           placeholder="${amount > 10000}"
           @input="updateEdgeCondition(edge, $event)"
         />
