@@ -217,7 +217,7 @@ async function handleDebug() {
           </svg>
         </t-button>
         <t-input
-          v-model="workflow.name"
+          v-model:value="workflow.name"
           :class="styles.nameInput"
           placeholder="工作流名称"
         />

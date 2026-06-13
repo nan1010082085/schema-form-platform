@@ -3,7 +3,7 @@
     <!-- 搜索 -->
     <div :class="$style.search">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索表单"
         clearable
         @input="handleSearch"

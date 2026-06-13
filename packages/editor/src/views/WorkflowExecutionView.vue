@@ -302,7 +302,7 @@ function formatDate(d: string | null): string {
       <!-- Toolbar -->
       <div :class="styles.toolbar">
         <t-input
-          v-model="searchInput"
+          v-model:value="searchInput"
           placeholder="搜索工作流名称..."
           clearable
           :class="styles.search"
@@ -379,7 +379,7 @@ function formatDate(d: string | null): string {
       <!-- Pagination -->
       <div v-if="total > 0" :class="styles.pagination">
         <t-pagination
-          v-model="page"
+          v-model:value="page"
           :page-size="pageSize"
           :total="total"
           @current-change="handlePageChange"

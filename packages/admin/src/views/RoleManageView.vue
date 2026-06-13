@@ -222,7 +222,7 @@ onMounted(async () => {
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索角色名称或描述"
         :prefix-icon="SearchIcon"
         clearable
@@ -286,7 +286,7 @@ onMounted(async () => {
       </t-form-item>
       <t-form-item v-if="form.data_scope === 'custom'" label="自定义部门">
         <t-tree-select
-          v-model="form.dept_ids"
+          v-model:value="form.dept_ids"
           :data="deptTree"
           :keys="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择部门"

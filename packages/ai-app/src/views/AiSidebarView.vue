@@ -350,7 +350,7 @@ function handleHostData(data: Record<string, unknown>) {
           </div>
           <div :class="$style.inputActions">
             <t-select
-              v-model="selectedAgent"
+              v-model:value="selectedAgent"
               :class="$style.agentSelect"
               :disabled="store.loading"
               size="small"

@@ -162,7 +162,7 @@ const tableColumns = [
 
     <div :class="styles.filters">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索流程名称或发起人"
         :prefix-icon="SearchIcon"
         clearable
@@ -171,7 +171,7 @@ const tableColumns = [
         @keyup.enter="handleFilter"
       />
       <t-select
-        v-model="statusFilter"
+        v-model:value="statusFilter"
         placeholder="状态筛选"
         clearable
         style="width: 160px"

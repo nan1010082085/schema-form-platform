@@ -105,14 +105,14 @@ function handleCancel() {
           <!-- Input -->
           <t-input
             v-if="field.type === 'input'"
-            v-model="formData[field.key]"
+            v-model:value="formData[field.key]"
             :placeholder="field.placeholder"
           />
 
           <!-- Select -->
           <t-select
             v-else-if="field.type === 'select'"
-            v-model="formData[field.key]"
+            v-model:value="formData[field.key]"
             placeholder="请选择"
             style="width: 100%"
             :options="field.options"
@@ -121,7 +121,7 @@ function handleCancel() {
           <!-- Switch -->
           <t-switch
             v-else-if="field.type === 'switch'"
-            v-model="formData[field.key]"
+            v-model:value="formData[field.key]"
           />
         </t-form-item>
       </t-form>

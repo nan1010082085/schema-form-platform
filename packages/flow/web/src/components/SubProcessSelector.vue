@@ -102,7 +102,7 @@ defineExpose({ open })
     <!-- 搜索栏 -->
     <div :class="styles.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索流程名称或描述"
         clearable
         :class="styles.searchInput"

@@ -490,7 +490,7 @@ function handleCardAction(
               </svg>
             </t-button>
             <t-select
-              v-model="selectedAgent"
+              v-model:value="selectedAgent"
               :class="$style.agentSelect"
               :disabled="disabled || loading"
               size="small"

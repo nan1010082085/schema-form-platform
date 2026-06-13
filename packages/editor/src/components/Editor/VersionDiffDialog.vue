@@ -145,7 +145,7 @@ watch(
     <div :class="styles['version-selectors']">
       <span :class="styles['version-selectors__label']">旧版本</span>
       <t-select
-        v-model="leftVersion"
+        v-model:value="leftVersion"
         placeholder="选择旧版本"
         :loading="versionLoading"
         size="small"
@@ -162,7 +162,7 @@ watch(
       <span :class="styles['version-selectors__arrow']">→</span>
       <span :class="styles['version-selectors__label']">新版本</span>
       <t-select
-        v-model="rightVersion"
+        v-model:value="rightVersion"
         placeholder="选择新版本"
         :loading="versionLoading"
         size="small"

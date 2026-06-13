@@ -306,7 +306,7 @@ onMounted(async () => {
         <span :class="$style.deptTitle">部门</span>
       </div>
       <t-input
-        v-model="deptSearch"
+        v-model:value="deptSearch"
         placeholder="搜索部门"
         clearable
         size="small"
@@ -331,7 +331,7 @@ onMounted(async () => {
       <div :class="$style.toolbar">
         <div :class="$style.filters">
           <t-input
-            v-model="searchQuery"
+            v-model:value="searchQuery"
             placeholder="搜索用户名或显示名"
             :prefix-icon="SearchIcon"
             clearable
@@ -437,7 +437,7 @@ onMounted(async () => {
     <t-form label-width="80px">
       <t-form-item label="用户名">
         <t-input
-          v-model="form.username"
+          v-model:value="form.username"
           :disabled="dialogMode === 'edit'"
           placeholder="请输入用户名"
         />
@@ -459,7 +459,7 @@ onMounted(async () => {
       </t-form-item>
       <t-form-item label="所属部门">
         <t-tree-select
-          v-model="form.deptId"
+          v-model:value="form.deptId"
           :data="deptTree"
           :keys="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择部门"

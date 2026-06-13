@@ -151,7 +151,7 @@ function statusTagTheme(status: TenantStatus): 'success' | 'default' | 'warning'
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
             <t-input
-              v-model="searchInput"
+              v-model:value="searchInput"
               placeholder="搜索名称或编码..."
               clearable
               :class="styles.searchInput"
@@ -252,7 +252,7 @@ function statusTagTheme(status: TenantStatus): 'success' | 'default' | 'warning'
         <!-- Pagination -->
         <div v-if="tenantStore.pagination.total > 0" :class="styles.pagination">
           <t-pagination
-            v-model="tenantStore.pagination.page"
+            v-model:value="tenantStore.pagination.page"
             :page-size="tenantStore.pagination.pageSize"
             :total="tenantStore.pagination.total"
             @current-change="handlePageChange"

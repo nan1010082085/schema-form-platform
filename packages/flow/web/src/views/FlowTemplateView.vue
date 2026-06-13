@@ -105,7 +105,7 @@ function formatDate(dateStr: string | Date) {
 
     <div :class="styles.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索模板名称..."
         clearable
         :prefix-icon="SearchIcon"
@@ -114,7 +114,7 @@ function formatDate(dateStr: string | Date) {
         @clear="handleSearch"
       />
       <t-select
-        v-model="categoryFilter"
+        v-model:value="categoryFilter"
         placeholder="按分类筛选"
         clearable
         :class="styles.categorySelect"
@@ -217,7 +217,7 @@ function formatDate(dateStr: string | Date) {
         </t-form-item>
         <t-form-item label="描述">
           <t-textarea
-            v-model="applyForm.description"
+            v-model:value="applyForm.description"
             :rows="3"
             placeholder="流程描述（可选）"
           />

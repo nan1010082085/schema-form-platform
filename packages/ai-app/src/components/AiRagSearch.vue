@@ -68,7 +68,7 @@ function getScoreClass(score: number): string {
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         :class="$style.searchInput"
         placeholder="智能匹配 Schema，如：用户注册表单..."
         size="small"

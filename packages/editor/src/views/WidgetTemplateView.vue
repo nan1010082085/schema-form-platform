@@ -150,7 +150,7 @@ onMounted(() => {
       </div>
       <div :class="styles.toolbarRight">
         <t-input
-          v-model="searchInput"
+          v-model:value="searchInput"
           placeholder="搜索模板名称或描述"
           clearable
           :class="styles.searchInput"

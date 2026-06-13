@@ -120,7 +120,7 @@ function handleClose() {
       <div :class="styles.row">
         <label :class="styles.label">请求地址</label>
         <t-input
-          v-model="localConfig.apiUrl"
+          v-model:value="localConfig.apiUrl"
           size="small"
           placeholder="/api/data"
         />
@@ -130,7 +130,7 @@ function handleClose() {
       <div :class="styles.row">
         <label :class="styles.label">请求方法</label>
         <t-select
-          v-model="localConfig.apiMethod"
+          v-model:value="localConfig.apiMethod"
           size="small"
           style="flex: 1"
         >
@@ -164,13 +164,13 @@ function handleClose() {
           :class="styles.headerRow"
         >
           <t-input
-            v-model="entry.key"
+            v-model:value="entry.key"
             size="small"
             placeholder="Header Name"
             @change="syncHeaders"
           />
           <t-input
-            v-model="entry.value"
+            v-model:value="entry.value"
             size="small"
             placeholder="Header Value"
             @change="syncHeaders"
@@ -190,7 +190,7 @@ function handleClose() {
       <div :class="styles.row">
         <label :class="styles.label">数据路径</label>
         <t-input
-          v-model="localConfig.responseDataPath"
+          v-model:value="localConfig.responseDataPath"
           size="small"
           placeholder="data.list (点号分隔)"
         />

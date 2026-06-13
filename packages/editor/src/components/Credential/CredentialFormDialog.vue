@@ -156,7 +156,7 @@ function handleClose() {
     <t-form label-align="top" @submit.prevent="handleSubmit">
       <t-form-item label="Name" required-mark>
         <t-input
-          v-model="form.name"
+          v-model:value="form.name"
           placeholder="e.g. Production API Key"
           maxlength="100"
           show-word-limit
@@ -177,7 +177,7 @@ function handleClose() {
       <template v-for="field in currentFields" :key="field">
         <t-form-item :label="getFieldLabel(field)" required-mark>
           <t-input
-            v-model="form.data[field]"
+            v-model:value="form.data[field]"
             :type="isPasswordField(field) ? 'password' : 'text'"
             :placeholder="`Enter ${getFieldLabel(field)}`"
           />

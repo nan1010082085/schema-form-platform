@@ -324,7 +324,7 @@ function handleVersionPublished() {
 
           <div class="fg-instances__toolbar-right">
             <t-input
-              v-model="searchInput"
+              v-model:value="searchInput"
               placeholder="搜索名称..."
               clearable
               class="fg-instances__search"
@@ -457,7 +457,7 @@ function handleVersionPublished() {
         <!-- Pagination -->
         <div v-if="store.pagination.total > 0" class="fg-instances__pagination">
           <t-pagination
-            v-model="store.pagination.page"
+            v-model:value="store.pagination.page"
             :page-size="store.pagination.pageSize"
             :total="store.pagination.total"
             :show-total="true"
@@ -478,7 +478,7 @@ function handleVersionPublished() {
       <t-form @submit.prevent="confirmCreate">
         <t-form-item label="实例名称">
           <t-input
-            v-model="createName"
+            v-model:value="createName"
             placeholder="请输入实例名称"
             maxlength="100"
             show-word-limit

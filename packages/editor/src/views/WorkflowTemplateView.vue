@@ -216,7 +216,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
       </div>
       <div :class="styles.toolbarRight">
         <t-input
-          v-model="searchInput"
+          v-model:value="searchInput"
           placeholder="搜索模板名称或描述"
           clearable
           :class="styles.searchInput"
@@ -283,7 +283,7 @@ const totalFormFields = computed(() => getFormFields(previewTemplate.value as Wo
         <!-- 分页 -->
         <div v-if="Math.ceil(total / pageSize) > 1" :class="styles.pagination">
           <t-pagination
-            v-model="page"
+            v-model:value="page"
             :page-size="pageSize"
             :total="total"
             @current-change="handlePageChange"

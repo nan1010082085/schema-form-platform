@@ -293,7 +293,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
           <t-select
-            v-model="action.target"
+            v-model:value="action.target"
             filterable
             :placeholder="action.type === 'open-dialog' ? '选择弹窗组件' : action.type === 'hide' ? '选择要隐藏的组件' : action.type === 'visible' ? '选择要显示的组件' : action.type === 'disabled' ? '选择要禁用的组件' : '选择目标组件'"
             style="flex: 1"
@@ -313,7 +313,7 @@ function handleChange() {
       <div v-if="action.type === 'switch-tab'" :class="styles.row">
         <label :class="styles.label">标签</label>
         <t-input
-          v-model="action.value"
+          v-model:value="action.value"
           placeholder="标签 key"
           style="flex: 1"
           @update:model-value="handleChange"
@@ -325,7 +325,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
           <t-select
-            v-model="action.target"
+            v-model:value="action.target"
             filterable
             placeholder="选择要设置值的字段"
             style="flex: 1"
@@ -342,7 +342,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">值</label>
           <t-input
-            v-model="action.value"
+            v-model:value="action.value"
             placeholder="要设置的值"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -355,7 +355,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">URL</label>
           <t-input
-            v-model="action.apiUrl"
+            v-model:value="action.apiUrl"
             placeholder="/api/data"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -364,7 +364,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">方法</label>
           <t-select
-            v-model="action.apiMethod"
+            v-model:value="action.apiMethod"
             style="width: 120px"
             @update:model-value="handleChange"
           >
@@ -381,7 +381,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">变量</label>
           <t-input
-            v-model="action.variable"
+            v-model:value="action.variable"
             placeholder="变量名"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -390,7 +390,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">值</label>
           <t-input
-            v-model="action.value"
+            v-model:value="action.value"
             placeholder="要设置的值"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -403,7 +403,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
           <t-select
-            v-model="action.eventTarget"
+            v-model:value="action.eventTarget"
             filterable
             placeholder="选择目标组件"
             style="flex: 1"
@@ -421,7 +421,7 @@ function handleChange() {
           <label :class="styles.label">事件</label>
           <t-select
             v-if="action.eventTarget && getReceivableEvents(action.eventTarget).length > 0"
-            v-model="action.eventName"
+            v-model:value="action.eventName"
             filterable
             placeholder="选择事件"
             style="flex: 1"
@@ -436,7 +436,7 @@ function handleChange() {
           </t-select>
           <t-input
             v-else
-            v-model="action.eventName"
+            v-model:value="action.eventName"
             placeholder="事件名（如 click）"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -449,7 +449,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">路径</label>
           <t-input
-            v-model="action.value"
+            v-model:value="action.value"
             placeholder="/path"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -462,7 +462,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">值</label>
           <t-input
-            v-model="action.value"
+            v-model:value="action.value"
             placeholder="事件 payload"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -475,7 +475,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">消息</label>
           <t-input
-            v-model="action.message"
+            v-model:value="action.message"
             placeholder='{"type":"save"}'
             style="flex: 1"
             @update:model-value="handleChange"
@@ -488,7 +488,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">内容</label>
           <t-input
-            v-model="action.text"
+            v-model:value="action.text"
             placeholder="复制内容（支持 formData.xxx）"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -501,7 +501,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">流程定义</label>
           <t-input
-            v-model="action.definitionId"
+            v-model:value="action.definitionId"
             placeholder="流程定义 ID"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -510,7 +510,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">变量</label>
           <t-input
-            v-model="action.flowVariables"
+            v-model:value="action.flowVariables"
             placeholder='{"key": "value"}（可选）'
             style="flex: 1"
             @update:model-value="handleChange"
@@ -523,7 +523,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">实例 ID</label>
           <t-input
-            v-model="action.instanceId"
+            v-model:value="action.instanceId"
             placeholder="流程实例 ID"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -532,7 +532,7 @@ function handleChange() {
         <div :class="styles.row">
           <label :class="styles.label">原因</label>
           <t-input
-            v-model="action.reason"
+            v-model:value="action.reason"
             placeholder="结束原因（可选）"
             style="flex: 1"
             @update:model-value="handleChange"

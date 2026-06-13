@@ -182,7 +182,7 @@ onMounted(async () => {
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索菜单名称"
         :prefix-icon="SearchIcon"
         clearable
@@ -253,7 +253,7 @@ onMounted(async () => {
       </t-form-item>
       <t-form-item label="上级菜单">
         <t-tree-select
-          v-model="form.parentId"
+          v-model:value="form.parentId"
           :data="menuTree"
           :keys="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择上级菜单（留空为顶级）"
@@ -270,7 +270,7 @@ onMounted(async () => {
       </t-form-item>
       <t-form-item label="关联微应用">
         <t-select
-          v-model="form.microAppId"
+          v-model:value="form.microAppId"
           placeholder="选择微应用（可选）"
           clearable
           :style="{ width: '100%' }"

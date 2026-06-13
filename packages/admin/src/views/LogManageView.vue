@@ -143,14 +143,14 @@ onMounted(() => {
     <div :class="$style.toolbar">
       <div :class="$style.filters">
         <t-input
-          v-model="searchQuery"
+          v-model:value="searchQuery"
           placeholder="搜索用户/模块/目标"
           :prefix-icon="SearchIcon"
           clearable
           :style="{ width: '200px' }"
         />
         <t-input
-          v-model="usernameFilter"
+          v-model:value="usernameFilter"
           placeholder="用户名"
           clearable
           :style="{ width: '120px' }"
@@ -173,7 +173,7 @@ onMounted(() => {
           <t-option label="失败" value="fail" />
         </t-select>
         <t-date-picker
-          v-model="dateRange"
+          v-model:value="dateRange"
           type="daterange"
           range-separator="至"
           start-placeholder="开始日期"

@@ -278,7 +278,7 @@ onMounted(fetchTypes)
 
       <div :class="$style.panelSearch">
         <t-input
-          v-model="typeSearchQuery"
+          v-model:value="typeSearchQuery"
           placeholder="搜索名称或编码"
           :prefix-icon="SearchIcon"
           clearable
@@ -336,7 +336,7 @@ onMounted(fetchTypes)
 
         <div :class="$style.panelSearch">
           <t-input
-            v-model="dataSearchQuery"
+            v-model:value="dataSearchQuery"
             placeholder="搜索标签或值"
             :prefix-icon="SearchIcon"
             clearable

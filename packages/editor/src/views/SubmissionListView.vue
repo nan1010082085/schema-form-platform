@@ -263,7 +263,7 @@ function dataKeys(item: SubmissionItem): string[] {
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
             <t-select
-              v-model="selectedSchemaId"
+              v-model:value="selectedSchemaId"
               placeholder="选择表单"
               filterable
               :class="styles.schemaSelect"
@@ -354,7 +354,7 @@ function dataKeys(item: SubmissionItem): string[] {
         <!-- Pagination -->
         <div v-if="total > 0" :class="styles.pagination">
           <t-pagination
-            v-model="page"
+            v-model:value="page"
             :page-size="pageSize"
             :total="total"
             @current-change="handlePageChange"

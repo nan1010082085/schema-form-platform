@@ -331,7 +331,7 @@ onMounted(async () => {
           </svg>
         </button>
         <t-input
-          v-model="workflowName"
+          v-model:value="workflowName"
           :class="styles.nameInput"
           placeholder="工作流名称"
         />
@@ -384,7 +384,7 @@ onMounted(async () => {
               <p :class="styles.sectionDesc">选择一个已有的表单 Schema，或前往编辑器创建新表单</p>
               <div :class="styles.selectRow">
                 <t-select
-                  v-model="selectedSchemaId"
+                  v-model:value="selectedSchemaId"
                   :class="styles.selectFlex"
                   placeholder="请选择表单"
                   filterable
@@ -445,7 +445,7 @@ onMounted(async () => {
               <p :class="styles.sectionDesc">选择一个已有的流程定义，或前往流程设计器创建新流程</p>
               <div :class="styles.selectRow">
                 <t-select
-                  v-model="selectedFlowId"
+                  v-model:value="selectedFlowId"
                   :class="styles.selectFlex"
                   placeholder="请选择流程"
                   filterable
@@ -529,7 +529,7 @@ onMounted(async () => {
                     :class="styles.fieldMapRow"
                   >
                     <t-select
-                      v-model="rule.sourceField"
+                      v-model:value="rule.sourceField"
                       :class="styles.ruleSelect"
                       placeholder="选择表单字段"
                       filterable
@@ -546,7 +546,7 @@ onMounted(async () => {
                       <ChevronRightIcon />
                     </div>
                     <t-select
-                      v-model="rule.targetField"
+                      v-model:value="rule.targetField"
                       :class="styles.ruleSelect"
                       placeholder="选择流程变量"
                       filterable

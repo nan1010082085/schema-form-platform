@@ -128,7 +128,7 @@ onMounted(fetchPosts)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索岗位名称或编码"
         :prefix-icon="SearchIcon"
         clearable

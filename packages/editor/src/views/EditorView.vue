@@ -677,7 +677,7 @@ function handleClearCanvas() {
                 </div>
                 <div v-if="versionTotal > versionPageSize" class="editor-view__version-pagination">
                   <t-pagination
-                    v-model="versionPage"
+                    v-model:value="versionPage"
                     :page-size="versionPageSize"
                     :total="versionTotal"
                     size="small"

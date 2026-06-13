@@ -222,7 +222,7 @@ const flowItems = computed<FlowItem[]>(() =>
               :class="styles.watchRow"
             >
               <t-select
-                v-model="w.source"
+                v-model:value="w.source"
                 filterable
                 placeholder="选择要监听的字段"
                 style="flex: 1"

@@ -137,7 +137,7 @@ function typeTagTheme(type: CredentialType): 'success' | 'default' | 'warning' {
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
             <t-input
-              v-model="searchInput"
+              v-model:value="searchInput"
               placeholder="Search by name..."
               clearable
               :class="styles.searchInput"
@@ -208,7 +208,7 @@ function typeTagTheme(type: CredentialType): 'success' | 'default' | 'warning' {
         <!-- Pagination -->
         <div v-if="credentialStore.pagination.total > 0" :class="styles.pagination">
           <t-pagination
-            v-model="credentialStore.pagination.page"
+            v-model:value="credentialStore.pagination.page"
             :page-size="credentialStore.pagination.pageSize"
             :total="credentialStore.pagination.total"
             @current-change="handlePageChange"

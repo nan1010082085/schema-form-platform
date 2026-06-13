@@ -201,7 +201,7 @@ const flowItems = computed<FlowItem[]>(() =>
         <div :class="styles.row">
           <label :class="styles.label">触发</label>
           <t-select
-            v-model="evt.trigger"
+            v-model:value="evt.trigger"
             style="flex: 1"
           >
             <t-option
@@ -217,7 +217,7 @@ const flowItems = computed<FlowItem[]>(() =>
         <div v-if="eventTargets?.length" :class="styles.row">
           <label :class="styles.label">目标</label>
           <t-select
-            v-model="evt.eventTarget"
+            v-model:value="evt.eventTarget"
             style="flex: 1"
             clearable
             placeholder="整个部件"
@@ -246,7 +246,7 @@ const flowItems = computed<FlowItem[]>(() =>
         <div :class="styles.row">
           <label :class="styles.label">确认</label>
           <t-input
-            v-model="evt.confirm"
+            v-model:value="evt.confirm"
             placeholder="可选，执行前弹出的确认提示"
           />
         </div>

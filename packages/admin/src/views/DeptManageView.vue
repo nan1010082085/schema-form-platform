@@ -135,7 +135,7 @@ onMounted(fetchDepts)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索部门名称"
         :prefix-icon="SearchIcon"
         clearable
@@ -196,7 +196,7 @@ onMounted(fetchDepts)
       </t-form-item>
       <t-form-item label="上级部门">
         <t-tree-select
-          v-model="form.parentId"
+          v-model:value="form.parentId"
           :data="deptTree"
           :keys="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择上级部门（留空为顶级）"

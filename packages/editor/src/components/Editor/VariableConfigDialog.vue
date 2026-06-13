@@ -130,7 +130,7 @@ function handleClose() {
         <div :class="styles.row">
           <label :class="styles.label">名称</label>
           <t-input
-            v-model="v.name"
+            v-model:value="v.name"
             placeholder="变量名（如 isAdmin）"
             style="flex: 1"
           />
@@ -139,7 +139,7 @@ function handleClose() {
         <div :class="styles.row">
           <label :class="styles.label">类型</label>
           <t-select
-            v-model="v.type"
+            v-model:value="v.type"
             style="width: 120px"
             @update:model-value="v.defaultValue = $event === 'boolean' ? false : $event === 'number' ? 0 : $event === 'object' ? {} : $event === 'array' ? [] : ''"
           >
@@ -154,16 +154,16 @@ function handleClose() {
           <label :class="styles.label" style="margin-left: 8px">默认值</label>
           <t-switch
             v-if="v.type === 'boolean'"
-            v-model="v.defaultValue"
+            v-model:value="v.defaultValue"
           />
           <t-input-number
             v-else-if="v.type === 'number'"
-            v-model="v.defaultValue as number"
+            v-model:value="v.defaultValue as number"
             controls-position="right"
           />
           <t-input
             v-else-if="v.type === 'string'"
-            v-model="v.defaultValue as string"
+            v-model:value="v.defaultValue as string"
             placeholder="默认值"
             style="flex: 1"
           />
@@ -180,7 +180,7 @@ function handleClose() {
         <div :class="styles.row">
           <label :class="styles.label">描述</label>
           <t-input
-            v-model="v.description"
+            v-model:value="v.description"
             placeholder="可选，变量用途说明"
             style="flex: 1"
           />

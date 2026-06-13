@@ -222,7 +222,7 @@ function typeIcon(type: string): string {
       <!-- Search input -->
       <div :class="$style.panelSearch">
         <t-input
-          v-model="searchQuery"
+          v-model:value="searchQuery"
           :class="$style.panelInput"
           placeholder="搜索引用..."
           autofocus

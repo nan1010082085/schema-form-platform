@@ -369,7 +369,7 @@ onMounted(() => {
         </div>
         <div :class="$style.searchArea">
           <t-input
-            v-model="searchQuery"
+            v-model:value="searchQuery"
             :class="$style.searchInput"
             placeholder="输入自然语言描述，如：用户注册表单"
             clearable

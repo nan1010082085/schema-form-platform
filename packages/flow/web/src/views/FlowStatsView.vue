@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
       <div :class="styles.headerActions">
         <div :class="styles.timeRangeGroup">
           <t-radio-group
-            v-model="selectedPreset"
+            v-model:value="selectedPreset"
             size="small"
             @change="handlePresetChange"
           >
@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
           </t-radio-group>
           <t-date-picker
             v-if="isCustomRange"
-            v-model="customDateRange"
+            v-model:value="customDateRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -342,7 +342,7 @@ onBeforeUnmount(() => {
         <div :class="styles.chartHeader">
           <span>流程启动量趋势</span>
           <t-radio-group
-            v-model="trendGranularity"
+            v-model:value="trendGranularity"
             size="small"
             data-test="trend-granularity"
           >

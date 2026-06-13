@@ -181,7 +181,7 @@ onMounted(() => {
       </div>
       <div :class="$style.topbarRight">
         <t-select
-          v-model="selectedAgent"
+          v-model:value="selectedAgent"
           placeholder="所有 Agent"
           clearable
           size="small"
@@ -189,7 +189,7 @@ onMounted(() => {
           :options="agentNames.map(name => ({ label: getAgentLabel(name), value: name }))"
         />
         <t-select
-          v-model="selectedOperation"
+          v-model:value="selectedOperation"
           placeholder="所有操作"
           clearable
           size="small"
@@ -213,7 +213,7 @@ onMounted(() => {
       <div :class="$style.timeRange">
         <span :class="$style.timeLabel">时间范围：</span>
         <t-radio-group
-          v-model="selectedHours"
+          v-model:value="selectedHours"
           size="small"
           @change="handleTimeRangeChange"
         >

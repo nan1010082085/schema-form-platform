@@ -249,7 +249,7 @@ onMounted(fetchConfigs)
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
         <t-input
-          v-model="searchQuery"
+          v-model:value="searchQuery"
           placeholder="搜索配置名称"
           :prefix-icon="SearchIcon"
           clearable

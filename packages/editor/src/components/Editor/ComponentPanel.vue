@@ -283,7 +283,7 @@ function isGroupExpanded(groupKey: string): boolean {
   <div :class="styles.panel">
     <div :class="styles.search">
       <t-input
-        v-model="searchInput"
+        v-model:value="searchInput"
         size="small"
         placeholder="搜索部件（支持拼音）..."
         clearable

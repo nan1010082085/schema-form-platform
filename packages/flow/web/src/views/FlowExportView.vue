@@ -44,7 +44,7 @@ async function handleExport() {
       <t-form :data="exportForm" label-width="100px" label-align="right">
         <t-form-item label="流程筛选">
           <t-select
-            v-model="exportForm.flowId"
+            v-model:value="exportForm.flowId"
             placeholder="全部流程"
             clearable
             filterable
@@ -61,7 +61,7 @@ async function handleExport() {
 
         <t-form-item label="时间范围">
           <t-date-picker
-            v-model="exportForm.dateRange"
+            v-model:value="exportForm.dateRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"

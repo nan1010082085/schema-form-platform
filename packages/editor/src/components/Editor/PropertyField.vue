@@ -126,7 +126,7 @@ function onJsonBlur() {
       <!-- JSON 编辑器 -->
       <div v-else-if="type === 'json'" :class="styles.jsonWrap">
         <t-textarea
-          v-model="jsonText"
+          v-model:value="jsonText"
           :rows="6"
           size="small"
           placeholder="输入 JSON 数据"

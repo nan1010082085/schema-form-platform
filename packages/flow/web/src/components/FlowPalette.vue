@@ -3,7 +3,7 @@
     <div :class="styles.title">流程元素</div>
     <div :class="styles.searchWrap">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         size="small"
         placeholder="搜索节点..."
         clearable

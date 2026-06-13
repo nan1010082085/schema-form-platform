@@ -176,7 +176,7 @@ onMounted(fetchApps)
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
         <t-input
-          v-model="searchQuery"
+          v-model:value="searchQuery"
           placeholder="搜索应用名称"
           :prefix-icon="SearchIcon"
           clearable

@@ -10,13 +10,13 @@
 
     <div :class="$style.inputSection">
       <t-input
-        v-model="flowName"
+        v-model:value="flowName"
         placeholder="输入流程名称，例如：请假审批流程"
         :class="$style.nameInput"
         size="large"
       />
       <t-textarea
-        v-model="flowDescription"
+        v-model:value="flowDescription"
         :rows="6"
         placeholder="描述流程需求，例如：&#10;1. 员工提交请假申请&#10;2. 直属主管审批&#10;3. 如果超过3天，需要部门经理审批&#10;4. HR备案&#10;5. 通知员工结果"
         :class="$style.descInput"

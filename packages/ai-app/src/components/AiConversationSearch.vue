@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
         </svg>
       </div>
       <t-input
-        v-model="query"
+        v-model:value="query"
         :class="$style.searchInput"
         placeholder="搜索对话..."
         size="small"
@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
         <label :class="$style.filterLabel">时间</label>
         <div :class="$style.filterDateRange">
           <t-date-picker
-            v-model="startDate"
+            v-model:value="startDate"
             :class="$style.filterDate"
             placeholder="开始日期"
             size="small"
@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
           />
           <span :class="$style.filterDateSep">~</span>
           <t-date-picker
-            v-model="endDate"
+            v-model:value="endDate"
             :class="$style.filterDate"
             placeholder="结束日期"
             size="small"

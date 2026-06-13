@@ -172,7 +172,7 @@ defineExpose({ open })
       <!-- Paste mode -->
       <template v-if="inputMode === 'paste'">
         <t-textarea
-          v-model="jsonText"
+          v-model:value="jsonText"
           :rows="14"
           placeholder='在此粘贴 API 响应 JSON, 例如:
 {
@@ -190,7 +190,7 @@ defineExpose({ open })
         <div class="json-importer__url-section">
           <div class="json-importer__url-row">
             <t-input
-              v-model="fetchUrl"
+              v-model:value="fetchUrl"
               size="small"
               placeholder="/api/list 或 https://example.com/api/data"
               @keyup.enter="handleFetchFromUrl"

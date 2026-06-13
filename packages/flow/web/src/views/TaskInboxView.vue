@@ -371,7 +371,7 @@ const taskTableColumns = [
     <!-- Search bar -->
     <div :class="styles.searchBar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         placeholder="搜索任务名称"
         :prefix-icon="SearchIcon"
         clearable
@@ -508,7 +508,7 @@ const taskTableColumns = [
         <t-form label-position="top">
           <t-form-item label="选择驳回目标节点">
             <t-select
-              v-model="rejectTargetNodeId"
+              v-model:value="rejectTargetNodeId"
               placeholder="请选择要驳回到的节点"
               style="width: 100%"
               :disabled="rejectTargets.length === 0"
@@ -523,7 +523,7 @@ const taskTableColumns = [
           </t-form-item>
           <t-form-item label="驳回原因（可选）">
             <t-textarea
-              v-model="rejectComment"
+              v-model:value="rejectComment"
               :rows="3"
               placeholder="请输入驳回原因"
               maxlength="1000"
@@ -542,7 +542,7 @@ const taskTableColumns = [
       <t-form label-position="top">
         <t-form-item label="驳回原因（可选）">
           <t-textarea
-            v-model="batchRejectReason"
+            v-model:value="batchRejectReason"
             :rows="3"
             placeholder="请输入驳回原因"
             maxlength="1000"

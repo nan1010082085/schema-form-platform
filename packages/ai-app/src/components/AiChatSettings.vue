@@ -165,7 +165,7 @@ function handleSave(): void {
                 </div>
                 <div v-else :class="$style.formItem">
                   <t-select
-                    v-model="selectedModelId"
+                    v-model:value="selectedModelId"
                     placeholder="选择模型"
                     style="width: 100%"
                     :options="modelConfigs.map(config => ({
@@ -184,7 +184,7 @@ function handleSave(): void {
                 <div :class="$style.formItem">
                   <label :class="$style.label">回复语言</label>
                   <t-radio-group
-                    v-model="localSettings.preferences.replyLanguage"
+                    v-model:value="localSettings.preferences.replyLanguage"
                     :class="$style.radioGroup"
                   >
                     <t-radio-button
@@ -200,7 +200,7 @@ function handleSave(): void {
                 <div :class="$style.formItem">
                   <label :class="$style.label">回复风格</label>
                   <t-radio-group
-                    v-model="localSettings.preferences.replyStyle"
+                    v-model:value="localSettings.preferences.replyStyle"
                     :class="$style.radioGroup"
                   >
                     <t-radio-button
@@ -216,7 +216,7 @@ function handleSave(): void {
                 <div :class="$style.formItem">
                   <label :class="$style.label">代码注释</label>
                   <t-radio-group
-                    v-model="localSettings.preferences.codeComment"
+                    v-model:value="localSettings.preferences.codeComment"
                     :class="$style.radioGroup"
                   >
                     <t-radio-button
@@ -238,7 +238,7 @@ function handleSave(): void {
                 <div :class="$style.formItem">
                   <label :class="$style.label">生成方式</label>
                   <t-radio-group
-                    v-model="localSettings.historySummary.mode"
+                    v-model:value="localSettings.historySummary.mode"
                     :class="$style.radioGroup"
                   >
                     <t-radio-button
@@ -254,7 +254,7 @@ function handleSave(): void {
                 <div v-if="localSettings.historySummary.mode === 'manual'" :class="$style.formItem">
                   <label :class="$style.label">手动摘要</label>
                   <t-textarea
-                    v-model="localSettings.historySummary.manualSummary"
+                    v-model:value="localSettings.historySummary.manualSummary"
                     :rows="3"
                     placeholder="输入对话历史摘要..."
                   />

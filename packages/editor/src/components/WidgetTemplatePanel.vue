@@ -313,7 +313,7 @@ onMounted(() => {
       <div :class="styles['save-form']">
         <t-form-item label="模板名称" required-mark>
           <t-input
-            v-model="saveForm.name"
+            v-model:value="saveForm.name"
             placeholder="请输入模板名称"
             maxlength="100"
             show-word-limit
@@ -321,7 +321,7 @@ onMounted(() => {
         </t-form-item>
         <t-form-item label="描述">
           <t-textarea
-            v-model="saveForm.description"
+            v-model:value="saveForm.description"
             placeholder="请输入模板描述"
             :rows="2"
             maxlength="500"
@@ -341,7 +341,7 @@ onMounted(() => {
         <t-form-item label="标签">
           <div :class="styles['tag-input-row']">
             <t-input
-              v-model="tagInput"
+              v-model:value="tagInput"
               :class="styles['tag-input']"
               placeholder="输入标签后回车"
               size="small"

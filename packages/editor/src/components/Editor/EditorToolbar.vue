@@ -505,7 +505,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   <!-- 导入弹窗 -->
   <t-dialog v-model:visible="showImportDialog" header="导入 JSON Schema" width="600px">
     <t-textarea
-      v-model="importJson"
+      v-model:value="importJson"
       :rows="16"
       placeholder="在此粘贴 PartialWidget[] JSON..."
     />

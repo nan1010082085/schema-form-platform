@@ -146,7 +146,7 @@ function handleClose() {
     <t-form label-align="top" @submit.prevent="handleSubmit">
       <t-form-item label="租户名称" required-mark>
         <t-input
-          v-model="form.name"
+          v-model:value="form.name"
           placeholder="请输入租户名称"
           maxlength="100"
           show-word-limit
@@ -155,7 +155,7 @@ function handleClose() {
 
       <t-form-item label="租户编码" required-mark>
         <t-input
-          v-model="form.code"
+          v-model:value="form.code"
           placeholder="字母、数字、下划线、连字符"
           maxlength="50"
           :disabled="isEditing"
@@ -172,7 +172,7 @@ function handleClose() {
 
       <t-form-item label="用户上限">
         <t-input-number
-          v-model="form.maxUsers"
+          v-model:value="form.maxUsers"
           :min="1"
           :max="100000"
           :step="10"
@@ -182,7 +182,7 @@ function handleClose() {
 
       <t-form-item label="功能特性">
         <t-input
-          v-model="featuresInput"
+          v-model:value="featuresInput"
           placeholder="多个特性用逗号分隔，如: analytics, reports, api"
         />
         <div :class="styles.featuresHint">

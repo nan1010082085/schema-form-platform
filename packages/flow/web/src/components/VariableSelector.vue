@@ -146,7 +146,7 @@ function onPopoverChange(visible: boolean) {
         <!-- Search -->
         <div :class="styles.searchBox">
           <t-input
-            v-model="searchQuery"
+            v-model:value="searchQuery"
             :class="styles.searchInput"
             placeholder="搜索变量..."
             size="small"

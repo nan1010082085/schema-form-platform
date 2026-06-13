@@ -355,7 +355,7 @@ function formatCountdown(seconds: number): string {
         <!-- 时间范围筛选 -->
         <div :class="styles.timeRangeGroup">
           <t-radio-group
-            v-model="selectedPreset"
+            v-model:value="selectedPreset"
             size="small"
             @change="handlePresetChange"
           >
@@ -370,7 +370,7 @@ function formatCountdown(seconds: number): string {
           </t-radio-group>
           <t-date-picker
             v-if="isCustomRange"
-            v-model="customDateRange"
+            v-model:value="customDateRange"
             type="daterange"
             range-separator="至"
             placeholder="选择日期范围"

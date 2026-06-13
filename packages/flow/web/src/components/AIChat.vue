@@ -49,7 +49,7 @@
 
     <div :class="$style.inputArea">
       <t-input
-        v-model="inputText"
+        v-model:value="inputText"
         type="textarea"
         :rows="3"
         placeholder="描述你想要的流程，或问我任何问题..."

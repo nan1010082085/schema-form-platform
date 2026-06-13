@@ -86,7 +86,7 @@ async function handleSave() {
 
       <t-form-item label="描述">
         <t-textarea
-          v-model="description"
+          v-model:value="description"
           :rows="2"
           placeholder="模板描述（可选）"
           maxlength="500"

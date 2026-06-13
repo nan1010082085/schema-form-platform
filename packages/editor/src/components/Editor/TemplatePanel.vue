@@ -126,7 +126,7 @@ defineExpose({ loadTemplates })
     <!-- 搜索和筛选 -->
     <div :class="styles.toolbar">
       <t-input
-        v-model="searchQuery"
+        v-model:value="searchQuery"
         :class="styles.search"
         size="small"
         placeholder="搜索模板..."
@@ -137,7 +137,7 @@ defineExpose({ loadTemplates })
         </template>
       </t-input>
       <t-select
-        v-model="categoryFilter"
+        v-model:value="categoryFilter"
         :class="styles.categorySelect"
         size="small"
         placeholder="分类"
