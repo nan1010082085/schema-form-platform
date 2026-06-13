@@ -200,8 +200,8 @@ function typeTagTheme(type: CredentialType): 'success' | 'default' | 'warning' {
             {{ formatDate(row.updatedAt) }}
           </template>
           <template #actions="{ row }">
-            <t-button size="small" variant="text" theme="primary" @click="openEditDialog(row)">Edit</t-button>
-            <t-button size="small" variant="text" theme="danger" @click="handleDelete(row)">Delete</t-button>
+            <t-button size="small" variant="text" theme="primary" @click="openEditDialog(row)">编辑</t-button>
+            <t-button size="small" variant="text" theme="danger" @click="handleDelete(row)">删除</t-button>
           </template>
         </t-table>
 

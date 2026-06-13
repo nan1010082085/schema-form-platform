@@ -1,7 +1,7 @@
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.title">Schema Form Platform</h1>
-    <p :class="$style.subtitle">Schema 驱动的低代码表单引擎与流程引擎</p>
+    <h1 :class="$style.title">表单设计器平台</h1>
+    <p :class="$style.subtitle">低代码表单引擎与流程引擎</p>
 
     <div :class="$style.grid">
       <router-link to="/editor" :class="$style.card">

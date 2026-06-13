@@ -52,7 +52,7 @@ function navigateTo(node: MenuTreeNode) {
       <div :class="$style.headerLeft">
         <router-link to="/" :class="$style.logo">
           <div :class="$style.logoIcon">S</div>
-          <span :class="$style.logoText">Schema Form</span>
+          <span :class="$style.logoText">表单设计器</span>
         </router-link>
       </div>
 

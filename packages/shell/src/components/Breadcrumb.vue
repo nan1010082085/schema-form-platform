@@ -44,6 +44,6 @@ function handleClick(item: BreadcrumbItem): void {
     >
       {{ item.title }}
     </span>
-    <span v-if="items.length === 0" :class="styles.itemActive">Home</span>
+    <span v-if="items.length === 0" :class="styles.itemActive">首页</span>
   </nav>
 </template>

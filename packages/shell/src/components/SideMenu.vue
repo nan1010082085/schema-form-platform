@@ -107,7 +107,7 @@ defineExpose({ resetMenu })
       <!-- Error -->
       <div v-else-if="menuError" :class="styles.menuError">
         <span v-show="!collapsed" :class="styles.menuErrorText">{{ menuError }}</span>
-        <t-button variant="text" size="small" @click="fetchMenus">Retry</t-button>
+        <t-button variant="text" size="small" @click="fetchMenus">重试</t-button>
       </div>
 
       <!-- Home entry -->
@@ -117,7 +117,7 @@ defineExpose({ resetMenu })
         @click="router.push('/')"
       >
         <t-icon name="home-filled" :size="18" />
-        <span v-show="!collapsed" :class="styles.menuLabel">Home</span>
+        <span v-show="!collapsed" :class="styles.menuLabel">首页</span>
       </div>
 
       <!-- Dynamic menu tree -->

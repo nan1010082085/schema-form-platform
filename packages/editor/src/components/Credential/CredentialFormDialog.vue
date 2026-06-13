@@ -187,9 +187,9 @@ function handleClose() {
 
     <template #footer>
       <div :class="styles.footer">
-        <t-button @click="handleClose">Cancel</t-button>
+        <t-button @click="handleClose">取消</t-button>
         <t-button theme="primary" :loading="submitting" @click="handleSubmit">
-          {{ isEditing ? 'Save' : 'Create' }}
+          {{ isEditing ? '保存' : '创建' }}
         </t-button>
       </div>
     </template>

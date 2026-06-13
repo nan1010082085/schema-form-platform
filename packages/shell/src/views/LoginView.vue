@@ -40,7 +40,7 @@ async function handleLogin(): Promise<void> {
   <div :class="styles.page">
     <div :class="styles.card">
       <div :class="styles.header">
-        <h1 :class="styles.logo">Schema Form</h1>
+        <h1 :class="styles.logo">表单设计器</h1>
         <p :class="styles.subtitle">基础容器</p>
       </div>
 
