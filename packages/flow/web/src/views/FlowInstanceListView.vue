@@ -168,7 +168,7 @@ const tableColumns = [
         clearable
         :class="styles.searchInput"
         @clear="handleFilter"
-        @keyup.enter="handleFilter"
+        @enter="handleFilter"
       />
       <t-select
         v-model:value="statusFilter"

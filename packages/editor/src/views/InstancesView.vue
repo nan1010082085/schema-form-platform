@@ -482,7 +482,7 @@ function handleVersionPublished() {
             placeholder="请输入实例名称"
             maxlength="100"
             show-word-limit
-            @keyup.enter="confirmCreate"
+            @enter="confirmCreate"
           />
         </t-form-item>
         <t-form-item label="类型">

@@ -193,7 +193,7 @@ defineExpose({ open })
               v-model:value="fetchUrl"
               size="small"
               placeholder="/api/list 或 https://example.com/api/data"
-              @keyup.enter="handleFetchFromUrl"
+              @enter="handleFetchFromUrl"
             />
             <t-button
               theme="primary"

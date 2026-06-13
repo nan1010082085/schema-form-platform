@@ -373,7 +373,7 @@ onMounted(() => {
             :class="$style.searchInput"
             placeholder="输入自然语言描述，如：用户注册表单"
             clearable
-            @keyup.enter="handleSearch"
+            @enter="handleSearch"
           />
           <t-button
             theme="primary"

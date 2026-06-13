@@ -377,7 +377,7 @@ const taskTableColumns = [
         clearable
         :class="styles.searchInput"
         @clear="handleSearch"
-        @keyup.enter="handleSearch"
+        @enter="handleSearch"
       />
     </div>
 

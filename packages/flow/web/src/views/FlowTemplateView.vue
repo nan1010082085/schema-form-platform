@@ -110,7 +110,7 @@ function formatDate(dateStr: string | Date) {
         clearable
         :prefix-icon="SearchIcon"
         :class="styles.searchInput"
-        @keyup.enter="handleSearch"
+        @enter="handleSearch"
         @clear="handleSearch"
       />
       <t-select

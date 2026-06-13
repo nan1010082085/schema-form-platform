@@ -134,7 +134,7 @@ onMounted(fetchPosts)
         clearable
         :class="$style.search"
         @clear="handleSearch"
-        @keyup.enter="handleSearch"
+        @enter="handleSearch"
       />
       <t-button theme="primary" :icon="AddIcon" @click="openCreate">
         新增岗位

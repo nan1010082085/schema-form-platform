@@ -337,7 +337,7 @@ onMounted(async () => {
             clearable
             :class="$style.search"
             @clear="page = 1; fetchUsers()"
-            @keyup.enter="page = 1; fetchUsers()"
+            @enter="page = 1; fetchUsers()"
           />
           <t-select v-model:value="filterRoleId" placeholder="角色筛选" clearable :class="$style.filterSelect" @change="page = 1; fetchUsers()">
             <t-option v-for="role in roles" :key="role.id" :label="role.name" :value="role.id" />

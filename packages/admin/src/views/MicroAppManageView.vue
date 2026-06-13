@@ -182,7 +182,7 @@ onMounted(fetchApps)
           clearable
           :style="{ width: '240px' }"
           @clear="handleSearch"
-          @keyup.enter="handleSearch"
+          @enter="handleSearch"
         />
         <t-select v-model:value="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }" @change="handleSearch">
           <t-option label="启用" value="active" />

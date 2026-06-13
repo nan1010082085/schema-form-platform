@@ -345,7 +345,7 @@ onMounted(() => {
               :class="styles['tag-input']"
               placeholder="输入标签后回车"
               size="small"
-              @keyup.enter="addTag"
+              @enter="addTag"
             />
             <t-button size="small" @click="addTag">添加</t-button>
           </div>

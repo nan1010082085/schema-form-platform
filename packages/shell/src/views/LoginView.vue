@@ -57,7 +57,7 @@ async function handleLogin(): Promise<void> {
           v-model:value="form.username"
           placeholder="用户名"
           size="large"
-          @keyup.enter="handleLogin"
+          @enter="handleLogin"
         />
 
         <t-input
@@ -65,7 +65,7 @@ async function handleLogin(): Promise<void> {
           type="password"
           placeholder="密码"
           size="large"
-          @keyup.enter="handleLogin"
+          @enter="handleLogin"
         />
 
         <t-button

@@ -228,7 +228,7 @@ onMounted(async () => {
         clearable
         :class="$style.search"
         @clear="fetchRoles"
-        @keyup.enter="fetchRoles"
+        @enter="fetchRoles"
       />
       <t-button theme="primary" :icon="AddIcon" @click="openCreate">
         新增角色
