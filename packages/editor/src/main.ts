@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import 'tdesign-vue-next/esm/style/index.css'
+import 'tdesign-vue-next/dist/tdesign.css'
 import '@schema-form/shared-styles/tokens.css'
 
 import { setupTDesign } from '@schema-form/shared-config/tdesign'
