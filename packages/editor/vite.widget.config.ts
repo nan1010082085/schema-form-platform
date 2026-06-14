@@ -46,13 +46,13 @@ export default defineConfig({
       fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      // 外部化 Vue 和 Element Plus，避免重复打包
-      external: ['vue', 'element-plus'],
+      // 外部化 Vue 和 TDesign，避免重复打包
+      external: ['vue', 'tdesign-vue-next'],
       output: {
         // 将外部依赖保留为 import 语句
         globals: {
           vue: 'Vue',
-          'element-plus': 'ElementPlus',
+          'tdesign-vue-next': 'TDesign',
         },
         // 公共 chunk 分割：base 和 renderer 作为共享依赖
         manualChunks(id) {
