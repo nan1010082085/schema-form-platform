@@ -105,10 +105,10 @@ function toggleCollapse() {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--td-comp-margin-xl, 20px);
-  background: var(--topnav-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--td-border-level-2-color);
+  background: var(--topnav-bg, rgba(17, 24, 32, 0.95));
+  backdrop-filter: var(--glass-blur, blur(20px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(20px));
+  border-bottom: 1px solid var(--td-border-level-2-color, rgba(255, 255, 255, 0.1));
   flex-shrink: 0;
 }
 

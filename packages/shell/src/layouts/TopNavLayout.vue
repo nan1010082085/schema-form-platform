@@ -123,11 +123,11 @@ function navigateTo(node: MenuTreeNode) {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--td-comp-margin-xxl, 24px);
-  background: var(--topnav-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--td-border-level-2-color);
-  box-shadow: var(--td-shadow-1);
+  background: var(--topnav-bg, rgba(17, 24, 32, 0.95));
+  backdrop-filter: var(--glass-blur, blur(20px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(20px));
+  border-bottom: 1px solid var(--td-border-level-2-color, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--td-shadow-1, 0 1px 10px rgba(0, 0, 0, 0.05));
   flex-shrink: 0;
   z-index: 100;
 }
@@ -148,21 +148,21 @@ function navigateTo(node: MenuTreeNode) {
   width: 36px;
   height: 36px;
   border-radius: var(--td-radius-small, 3px);
-  background: var(--gradient-primary);
-  color: var(--td-text-color-anti);
+  background: var(--gradient-primary, linear-gradient(135deg, #00d4ff 0%, #009fcc 100%));
+  color: var(--td-text-color-anti, #fff);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: var(--glow-primary);
+  box-shadow: var(--glow-primary, 0 0 10px rgba(0, 212, 255, 0.3));
 }
 
 .logoText {
   font-size: 18px;
   font-weight: 600;
-  color: var(--td-text-color-primary);
+  color: var(--td-text-color-primary, rgba(255, 255, 255, 0.9));
   white-space: nowrap;
 }
 
@@ -179,7 +179,7 @@ function navigateTo(node: MenuTreeNode) {
   line-height: 64px;
   padding: 0 var(--td-comp-margin-l, 16px);
   font-size: 14px;
-  color: var(--td-text-color-secondary);
+  color: var(--td-text-color-secondary, rgba(255, 255, 255, 0.65));
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all var(--td-anim-duration-fast, 0.15s);
@@ -191,13 +191,13 @@ function navigateTo(node: MenuTreeNode) {
 }
 
 .navItem:hover {
-  color: var(--td-brand-color);
-  background: var(--sidebar-bg-hover);
+  color: var(--td-brand-color, #00d4ff);
+  background: var(--sidebar-bg-hover, rgba(0, 212, 255, 0.05));
 }
 
 .navItemActive {
-  color: var(--td-brand-color);
-  border-bottom-color: var(--td-brand-color);
+  color: var(--td-brand-color, #00d4ff);
+  border-bottom-color: var(--td-brand-color, #00d4ff);
   font-weight: 500;
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
