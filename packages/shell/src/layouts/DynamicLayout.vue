@@ -18,5 +18,5 @@ const currentLayout = computed(() => {
 </script>
 
 <template>
-  <component :is="currentLayout" />
+  <component :is="currentLayout" :key="layoutStore.style" />
 </template>
