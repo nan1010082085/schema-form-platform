@@ -171,6 +171,17 @@ function getRoleScopeDesc(role: Role): string {
   return `${role.name}（${dataScopeLabel[role.data_scope] || role.data_scope}）`
 }
 
+const userColumns = [
+  { colKey: 'username', title: '用户名', minWidth: 100 },
+  { colKey: 'displayName', title: '显示名', minWidth: 100 },
+  { colKey: 'email', title: '邮箱', minWidth: 140, cell: (_: any, { row }: any) => row.email || '-' },
+  { colKey: 'phone', title: '手机', minWidth: 120, cell: (_: any, { row }: any) => row.phone || '-' },
+  { colKey: 'deptId', title: '所属部门', minWidth: 100, cell: (_: any, { row }: any) => getDeptName(row.deptId) || '未分配' },
+  { colKey: 'roles', title: '角色', minWidth: 150 },
+  { colKey: 'status', title: '状态', width: 80 },
+  { colKey: 'actions', title: '操作', width: 220, fixed: 'right' as const },
+]
+
 // ── User CRUD ───────────────────────────────────────────
 function openCreate() {
   dialogMode.value = 'create'
@@ -362,53 +373,36 @@ onMounted(async () => {
       </div>
 
       <!-- Table -->
-      <t-table :data="users" :loading="loading" :class="$style.table" empty="暂无数据">
-        <t-col prop="username" label="用户名" :min-width="100" />
-        <t-col prop="displayName" label="显示名" :min-width="100" />
-        <t-col label="邮箱" :min-width="140">
-          <template #cell="{ row }">
-            <span>{{ row.email || '-' }}</span>
-          </template>
-        </t-col>
-        <t-col label="手机" :min-width="120">
-          <template #cell="{ row }">
-            <span>{{ row.phone || '-' }}</span>
-          </template>
-        </t-col>
-        <t-col label="所属部门" :min-width="100">
-          <template #cell="{ row }">
-            <span>{{ getDeptName(row.deptId) || '未分配' }}</span>
-          </template>
-        </t-col>
-        <t-col label="角色" :min-width="150">
-          <template #cell="{ row }">
-            <t-tag
-              v-for="roleName in getRoleNames(row.roles)"
-              :key="roleName"
-              size="small"
-              :class="$style.roleTag"
-            >
-              {{ roleName }}
-            </t-tag>
-            <span v-if="!row.roles || row.roles.length === 0" :class="$style.noRole">未分配</span>
-          </template>
-        </t-col>
-        <t-col label="状态" :width="80">
-          <template #cell="{ row }">
-            <t-tag :theme="row.status === 'active' ? 'success' : row.status === 'disabled' ? 'danger' : 'warning'" size="small">
-              {{ row.status === 'active' ? '正常' : row.status === 'disabled' ? '禁用' : '停用' }}
-            </t-tag>
-          </template>
-        </t-col>
-        <t-col label="操作" :width="220" fixed="right">
-          <template #cell="{ row }">
-            <div :class="$style.actions">
-              <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-              <t-button variant="text" size="small" @click="openResetPassword(row)">重置密码</t-button>
-              <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-            </div>
-          </template>
-        </t-col>
+      <t-table
+        :data="users"
+        :columns="userColumns"
+        :loading="loading"
+        :class="$style.table"
+        empty="暂无数据"
+      >
+        <template #cell-roles="{ row }">
+          <t-tag
+            v-for="roleName in getRoleNames(row.roles)"
+            :key="roleName"
+            size="small"
+            :class="$style.roleTag"
+          >
+            {{ roleName }}
+          </t-tag>
+          <span v-if="!row.roles || row.roles.length === 0" :class="$style.noRole">未分配</span>
+        </template>
+        <template #cell-status="{ row }">
+          <t-tag :theme="row.status === 'active' ? 'success' : row.status === 'disabled' ? 'danger' : 'warning'" size="small">
+            {{ row.status === 'active' ? '正常' : row.status === 'disabled' ? '禁用' : '停用' }}
+          </t-tag>
+        </template>
+        <template #cell-actions="{ row }">
+          <div :class="$style.actions">
+            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+            <t-button variant="text" size="small" @click="openResetPassword(row)">重置密码</t-button>
+            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+          </div>
+        </template>
       </t-table>
 
       <!-- Pagination -->

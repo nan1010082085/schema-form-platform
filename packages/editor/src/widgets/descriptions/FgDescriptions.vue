@@ -97,13 +97,13 @@ function formatDate(item: DescriptionItemConfig): string {
 <template>
   <div :class="styles.container">
     <div v-if="title" :class="styles.title">{{ title }}</div>
-    <div v-if="loading" v-loading="true" :class="styles.loading" />
-    <el-descriptions
+    <div v-if="loading" :class="styles.loading" />
+    <t-descriptions
       v-else-if="items.length"
       :column="column"
-      :border="border"
+      :bordered="border"
     >
-      <el-descriptions-item
+      <t-descriptions-item
         v-for="item in items"
         :key="item.field"
         :label="item.label"
@@ -112,7 +112,7 @@ function formatDate(item: DescriptionItemConfig): string {
         <!-- tag 类型 -->
         <template v-if="item.type === 'tag'">
           <t-tag
-            :type="(getTagConfig(item)?.color as 'success' | 'warning' | 'danger' | 'info') || undefined"
+            :theme="(getTagConfig(item)?.color as 'success' | 'warning' | 'danger' | 'default') || 'default'"
             size="small"
           >
             {{ getTagConfig(item)?.label }}
@@ -132,12 +132,11 @@ function formatDate(item: DescriptionItemConfig): string {
 
         <!-- image 类型 -->
         <template v-else-if="item.type === 'image'">
-          <el-image
+          <img
             v-if="getFieldValue(item.field)"
             :src="String(getFieldValue(item.field))"
             :style="{ width: (item.imageWidth || 80) + 'px', height: (item.imageHeight || 80) + 'px' }"
             :class="styles.image"
-            fit="cover"
           />
         </template>
 
@@ -150,8 +149,8 @@ function formatDate(item: DescriptionItemConfig): string {
         <template v-else>
           {{ formatValue(item) }}
         </template>
-      </el-descriptions-item>
-    </el-descriptions>
+      </t-descriptions-item>
+    </t-descriptions>
     <div v-else :class="styles.empty">暂无数据</div>
   </div>
 </template>

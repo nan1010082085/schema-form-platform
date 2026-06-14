@@ -71,6 +71,20 @@ const ACTION_THEMES: Record<string, string> = {
   other: 'default',
 }
 
+const logColumns = [
+  { colKey: 'username', title: '操作人', width: 100 },
+  { colKey: 'module', title: '模块', width: 100 },
+  { colKey: 'action', title: '操作类型', width: 90, align: 'center' as const },
+  { colKey: 'targetName', title: '操作目标', minWidth: 140 },
+  { colKey: 'method', title: '请求方法', width: 80, align: 'center' as const },
+  { colKey: 'url', title: '请求路径', minWidth: 200 },
+  { colKey: 'ip', title: 'IP 地址', width: 130 },
+  { colKey: 'status', title: '状态', width: 70, align: 'center' as const },
+  { colKey: 'duration', title: '耗时', width: 80, align: 'center' as const },
+  { colKey: 'createdAt', title: '操作时间', width: 170 },
+  { colKey: 'actions', title: '操作', width: 80, fixed: 'right' as const },
+]
+
 async function fetchLogs() {
   loading.value = true
   try {
@@ -184,55 +198,37 @@ onMounted(() => {
       </div>
     </div>
 
-    <t-table :data="logs" :loading="loading" :class="$style.table">
-      <t-col prop="username" label="操作人" :width="100" />
-      <t-col prop="module" label="模块" :width="100">
-        <template #cell="{ row }">
-          <t-tag size="small" theme="default">{{ row.module }}</t-tag>
-        </template>
-      </t-col>
-      <t-col label="操作类型" :width="90" align="center">
-        <template #cell="{ row }">
-          <t-tag :theme="(ACTION_THEMES[row.action] as any)" size="small">
-            {{ ACTION_LABELS[row.action] || row.action }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="targetName" label="操作目标" :min-width="140" />
-      <t-col prop="method" label="请求方法" :width="80" align="center">
-        <template #cell="{ row }">
-          <t-tag
-            :theme="row.method === 'DELETE' ? 'danger' : row.method === 'POST' ? 'success' : row.method === 'PUT' ? 'warning' : 'default'"
-            size="small"
-          >
-            {{ row.method }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="url" label="请求路径" :min-width="200" />
-      <t-col prop="ip" label="IP 地址" :width="130" />
-      <t-col label="状态" :width="70" align="center">
-        <template #cell="{ row }">
-          <t-tag :theme="row.status === 'success' ? 'success' : 'danger'" size="small">
-            {{ row.status === 'success' ? '成功' : '失败' }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col label="耗时" :width="80" align="center">
-        <template #cell="{ row }">
-          {{ formatDuration(row.duration) }}
-        </template>
-      </t-col>
-      <t-col prop="createdAt" label="操作时间" :width="170">
-        <template #cell="{ row }">
-          {{ new Date(row.createdAt).toLocaleString() }}
-        </template>
-      </t-col>
-      <t-col label="操作" :width="80" fixed="right">
-        <template #cell="{ row }">
-          <t-button variant="text" size="small" @click="showDetail(row)">详情</t-button>
-        </template>
-      </t-col>
+    <t-table :data="logs" :columns="logColumns" :loading="loading" :class="$style.table">
+      <template #cell-module="{ row }">
+        <t-tag size="small" theme="default">{{ row.module }}</t-tag>
+      </template>
+      <template #cell-action="{ row }">
+        <t-tag :theme="(ACTION_THEMES[row.action] as any)" size="small">
+          {{ ACTION_LABELS[row.action] || row.action }}
+        </t-tag>
+      </template>
+      <template #cell-method="{ row }">
+        <t-tag
+          :theme="row.method === 'DELETE' ? 'danger' : row.method === 'POST' ? 'success' : row.method === 'PUT' ? 'warning' : 'default'"
+          size="small"
+        >
+          {{ row.method }}
+        </t-tag>
+      </template>
+      <template #cell-status="{ row }">
+        <t-tag :theme="row.status === 'success' ? 'success' : 'danger'" size="small">
+          {{ row.status === 'success' ? '成功' : '失败' }}
+        </t-tag>
+      </template>
+      <template #cell-duration="{ row }">
+        {{ formatDuration(row.duration) }}
+      </template>
+      <template #cell-createdAt="{ row }">
+        {{ new Date(row.createdAt).toLocaleString() }}
+      </template>
+      <template #cell-actions="{ row }">
+        <t-button variant="text" size="small" @click="showDetail(row)">详情</t-button>
+      </template>
     </t-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">

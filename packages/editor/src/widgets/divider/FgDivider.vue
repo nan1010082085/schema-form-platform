@@ -14,11 +14,10 @@ const content = computed(() => widgetData.value.props?.content as string || '')
 </script>
 
 <template>
-  <el-divider
+  <t-divider
     :style="dynamicStyle"
-    :direction="(widgetData.props?.direction as 'horizontal' | 'vertical') || 'horizontal'"
-    :content-position="(widgetData.props?.contentPosition as 'left' | 'center' | 'right') || 'center'"
-  >
-    {{ content }}
-  </el-divider>
+    :layout="(widgetData.props?.direction as 'horizontal' | 'vertical') || 'horizontal'"
+    :align="(widgetData.props?.contentPosition as 'left' | 'center' | 'right') || 'center'"
+    :content="content"
+  />
 </template>

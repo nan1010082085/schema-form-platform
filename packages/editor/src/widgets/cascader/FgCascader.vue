@@ -24,7 +24,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <el-cascader
+  <t-cascader
     ref="cascaderRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
@@ -41,7 +41,7 @@ function forwardNativeChange() {
 </template>
 
 <style scoped>
-:deep(.el-cascader) {
+:deep(.t-cascader) {
   width: 100%;
 }
 </style>

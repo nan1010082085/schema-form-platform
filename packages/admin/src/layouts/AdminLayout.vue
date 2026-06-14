@@ -144,7 +144,7 @@ onMounted(fetchMenus)
             :class="$style.collapseBtn"
             @click="isCollapsed = !isCollapsed"
           >
-            <MenuIcon :size="20" />
+            <MenuIcon size="20px" />
           </t-button>
           <h2 :class="$style.pageTitle">{{ pageTitle }}</h2>
         </div>
@@ -267,46 +267,4 @@ onMounted(fetchMenus)
 }
 </style>
 
-<!-- 非 Module 样式：覆盖侧边栏内 TDesign 菜单组件 -->
-<style>
-.sidebar .t-menu {
-  background: transparent !important;
-  border-right: none !important;
-}
-
-.sidebar .t-menu .t-menu__item {
-  color: var(--sidebar-text-color) !important;
-  border-radius: 6px;
-  margin: 2px 8px;
-  transition: all 0.2s;
-}
-
-.sidebar .t-menu .t-menu__item:hover {
-  background: var(--sidebar-bg-hover) !important;
-  color: var(--td-text-color-primary) !important;
-}
-
-.sidebar .t-menu .t-is-active .t-menu__item,
-.sidebar .t-menu .t-menu__item.t-is-active {
-  background: var(--sidebar-bg-active) !important;
-  color: var(--sidebar-text-color-active) !important;
-  box-shadow: inset 0 0 12px rgba(0, 212, 255, 0.08);
-}
-
-.sidebar .t-menu .t-submenu__title {
-  color: var(--sidebar-text-color) !important;
-}
-
-.sidebar .t-menu .t-submenu__title:hover {
-  background: var(--sidebar-bg-hover) !important;
-  color: var(--td-text-color-primary) !important;
-}
-
-.sidebar .t-menu .t-submenu.t-is-opened .t-submenu__title {
-  color: var(--sidebar-text-color-active) !important;
-}
-
-.sidebar .t-menu .t-menu__sub {
-  background: rgba(0, 0, 0, 0.15) !important;
-}
-</style>
+<!-- 非 Module 样式：侧边栏菜单覆盖由 theme-tech.css 统一管理 -->

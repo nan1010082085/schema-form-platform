@@ -31,6 +31,15 @@ const form = ref({
 })
 const editingId = ref('')
 
+const postColumns = [
+  { colKey: 'postCode', title: '岗位编码', minWidth: 120 },
+  { colKey: 'postName', title: '岗位名称', minWidth: 120 },
+  { colKey: 'sort', title: '排序', width: 80 },
+  { colKey: 'status', title: '状态', width: 80 },
+  { colKey: 'remark', title: '备注', minWidth: 160 },
+  { colKey: 'actions', title: '操作', width: 160, fixed: 'right' as const },
+]
+
 async function fetchPosts() {
   loading.value = true
   try {
@@ -141,26 +150,18 @@ onMounted(fetchPosts)
       </t-button>
     </div>
 
-    <t-table :data="posts" :loading="loading" :class="$style.table">
-      <t-col prop="postCode" label="岗位编码" :min-width="120" />
-      <t-col prop="postName" label="岗位名称" :min-width="120" />
-      <t-col prop="sort" label="排序" :width="80" />
-      <t-col label="状态" :width="80">
-        <template #cell="{ row }">
-          <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-            {{ row.status === 'active' ? '正常' : '停用' }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="remark" label="备注" :min-width="160" />
-      <t-col label="操作" :width="160" fixed="right">
-        <template #cell="{ row }">
-          <div :class="$style.actions">
-            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </div>
-        </template>
-      </t-col>
+    <t-table :data="posts" :columns="postColumns" :loading="loading" :class="$style.table">
+      <template #cell-status="{ row }">
+        <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
+          {{ row.status === 'active' ? '正常' : '停用' }}
+        </t-tag>
+      </template>
+      <template #cell-actions="{ row }">
+        <div :class="$style.actions">
+          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+        </div>
+      </template>
     </t-table>
 
     <div :class="$style.pagination">

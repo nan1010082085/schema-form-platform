@@ -49,6 +49,7 @@ const form = ref({
   remark: '',
 })
 const editingId = ref('')
+const permissionsInput = ref('')
 
 const layoutOptions = [
   { value: 'with-menu', label: '带菜单布局', description: '使用主应用的导航和侧边栏' },
@@ -85,6 +86,7 @@ function openCreate() {
     sort: 0,
     remark: '',
   }
+  permissionsInput.value = ''
   dialogVisible.value = true
 }
 
@@ -102,6 +104,7 @@ function openEdit(app: MicroApp) {
     sort: app.sort ?? 0,
     remark: app.remark || '',
   }
+  permissionsInput.value = (app.permissions || []).join(', ')
   dialogVisible.value = true
 }
 
@@ -114,6 +117,11 @@ async function handleSubmit() {
     MessagePlugin.warning('请输入应用 URL')
     return
   }
+
+  form.value.permissions = permissionsInput.value
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/micro-apps', form.value)
@@ -144,8 +152,19 @@ async function handleDelete(app: MicroApp) {
   })
 }
 
-async function handleToggleStatus(app: MicroApp) {
-  const newStatus = app.status === 'active' ? 'inactive' : 'active'
+const appColumns = [
+  { colKey: 'name', title: '应用名称', minWidth: 120 },
+  { colKey: 'url', title: '应用 URL', minWidth: 200 },
+  { colKey: 'layout', title: '布局方式', width: 100, align: 'center' as const },
+  { colKey: 'activeRule', title: '激活规则', minWidth: 160 },
+  { colKey: 'status', title: '状态', width: 80, align: 'center' as const },
+  { colKey: 'sort', title: '排序', width: 70, align: 'center' as const },
+  { colKey: 'remark', title: '备注', minWidth: 140 },
+  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' as const },
+]
+
+async function handleToggleStatus(app: MicroApp, val: boolean) {
+  const newStatus = val ? 'active' : 'inactive'
   await apiClient.put(`/micro-apps/${app.id}`, { status: newStatus })
   MessagePlugin.success(`微应用已${newStatus === 'active' ? '启用' : '停用'}`)
   fetchApps()
@@ -191,36 +210,25 @@ onMounted(fetchApps)
       <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增微应用</t-button>
     </div>
 
-    <t-table :data="apps" :loading="loading" :class="$style.table">
-      <t-col prop="name" label="应用名称" :min-width="120" />
-      <t-col prop="url" label="应用 URL" :min-width="200" />
-      <t-col label="布局方式" :width="100" align="center">
-        <template #cell="{ row }">
-          <t-tag size="small" :theme="row.layout === 'without-menu' ? 'default' : 'primary'">
-            {{ row.layout === 'with-menu' ? '带菜单' : '无菜单' }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="activeRule" label="激活规则" :min-width="160" />
-      <t-col label="状态" :width="80" align="center">
-        <template #cell="{ row }">
-          <t-switch
-            :value="row.status === 'active'"
-            size="small"
-            @change="handleToggleStatus(row)"
-          />
-        </template>
-      </t-col>
-      <t-col prop="sort" label="排序" :width="70" align="center" />
-      <t-col prop="remark" label="备注" :min-width="140" />
-      <t-col label="操作" :width="140" fixed="right">
-        <template #cell="{ row }">
-          <div :class="$style.actions">
-            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </div>
-        </template>
-      </t-col>
+    <t-table :data="apps" :columns="appColumns" :loading="loading" :class="$style.table">
+      <template #cell-layout="{ row }">
+        <t-tag size="small" :theme="row.layout === 'without-menu' ? 'default' : 'primary'">
+          {{ row.layout === 'with-menu' ? '带菜单' : '无菜单' }}
+        </t-tag>
+      </template>
+      <template #cell-status="{ row }">
+        <t-switch
+          :value="row.status === 'active'"
+          size="small"
+          @change="handleToggleStatus(row, $event)"
+        />
+      </template>
+      <template #cell-actions="{ row }">
+        <div :class="$style.actions">
+          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+        </div>
+      </template>
     </t-table>
 
     <div :class="$style.pagination">
@@ -268,7 +276,7 @@ onMounted(fetchApps)
         <t-input v-model:value="form.activeRule" placeholder="URL 匹配规则，如：^/editor/" />
       </t-form-item>
       <t-form-item label="所需权限">
-        <t-input v-model:value="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />
+        <t-input v-model:value="permissionsInput" placeholder="权限编码，多个用逗号分隔（可选）" />
       </t-form-item>
       <t-form-item label="排序">
         <t-input-number v-model:value="form.sort" :min="0" :max="9999" />

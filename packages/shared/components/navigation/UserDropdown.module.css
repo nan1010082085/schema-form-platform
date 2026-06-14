@@ -1,23 +1,23 @@
 .userArea {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--td-comp-margin-m, 8px);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s ease;
+  padding: var(--td-comp-padding-s, 4px) var(--td-comp-padding-m, 8px);
+  border-radius: var(--td-radius-default, 6px);
+  transition: background var(--td-anim-duration-fast, 0.15s) ease;
 }
 
 .userArea:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--sidebar-bg-hover);
 }
 
 .userAvatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--color-primary, #1677ff);
-  color: var(--text-color-inverse, #fff);
+  background: var(--td-brand-color);
+  color: var(--td-text-color-anti);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,7 +28,7 @@
 
 .userName {
   font-size: 13px;
-  color: var(--text-color-primary, #303133);
+  color: var(--td-text-color-primary);
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -98,7 +98,7 @@ useExposeWidget(() => ({
   get selectedRows() { return selectedRows.value },
 }))
 
-// ---- Sort change wrapper (el-table order can be null) ----
+// ---- Sort change wrapper (table order can be null) ----
 
 function onSortChange({ prop, order }: { prop: string; order: 'ascending' | 'descending' | null }) {
   handleSortChange({ prop, order: order ?? '' })
@@ -140,7 +140,7 @@ defineExpose({
 <template>
   <div :class="styles.container">
     <t-table
-      v-loading="loading"
+      :loading="loading"
       :data="tableData"
       :stripe="stripe"
       :border="border"
@@ -174,16 +174,16 @@ defineExpose({
     </t-table>
 
     <!-- Pagination -->
-    <el-pagination
+    <t-pagination
       v-if="paginationConfig.enabled && listApiConfig.url"
       :class="styles.pagination"
-      layout="total, sizes, prev, pager, next, jumper"
       :total="total"
-      :current-page="currentPage"
+      :current="currentPage"
       :page-size="pageSize"
-      :page-sizes="paginationConfig.pageSizes"
+      :page-size-options="paginationConfig.pageSizes"
+      show-page-size
       @current-change="handlePageChange"
-      @size-change="handleSizeChange"
+      @page-size-change="handleSizeChange"
     />
   </div>
 </template>

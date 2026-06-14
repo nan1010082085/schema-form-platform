@@ -47,7 +47,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-color-page, #f5f7fa);
+  background: var(--td-bg-color-page);
   z-index: 10;
 }
 
@@ -60,8 +60,8 @@ onMounted(() => {
 .spinnerInner {
   width: 100%;
   height: 100%;
-  border: 3px solid var(--border-color-light, #e0e0e0);
-  border-top-color: var(--color-primary, #1677ff);
+  border: 3px solid var(--td-border-level-2-color);
+  border-top-color: var(--td-brand-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -74,7 +74,7 @@ onMounted(() => {
 
 .loadingText {
   font-size: 14px;
-  color: var(--text-color-regular, #666);
+  color: var(--td-text-color-secondary);
 }
 
 .microContainer {

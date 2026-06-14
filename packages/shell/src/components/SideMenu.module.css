@@ -1,13 +1,13 @@
 .sidebar {
   width: 240px;
   height: 100vh;
-  background: #0d1117;
+  background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--td-anim-duration-normal, 0.25s) var(--td-anim-ease-in-out);
   overflow: hidden;
   flex-shrink: 0;
-  border-right: 1px solid rgba(0, 212, 255, 0.1);
+  border-right: 1px solid var(--sidebar-border-color);
 }
 
 .sidebarCollapsed {
@@ -18,8 +18,8 @@
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+  padding: 0 var(--td-comp-padding-l, 16px);
+  border-bottom: 1px solid var(--td-border-level-3-color);
   flex-shrink: 0;
 }
 
@@ -34,22 +34,22 @@
 .logoIcon {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
-  color: #000;
+  border-radius: var(--td-radius-default, 6px);
+  background: var(--gradient-primary);
+  color: var(--td-text-color-anti);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+  box-shadow: var(--glow-primary);
 }
 
 .logoText {
   font-size: 16px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--td-text-color-primary);
   white-space: nowrap;
 }
 
@@ -78,9 +78,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  color: rgba(255, 255, 255, 0.35);
+  gap: var(--td-comp-margin-m, 8px);
+  padding: var(--td-comp-padding-l, 16px);
+  color: var(--td-text-color-placeholder);
   font-size: 13px;
 }
 
@@ -91,7 +91,7 @@
 
 .spinIcon {
   animation: spin 1s linear infinite;
-  color: #00d4ff;
+  color: var(--td-brand-color);
 }
 
 @keyframes spin {
@@ -105,25 +105,25 @@
   align-items: center;
   gap: 10px;
   height: 40px;
-  padding: 0 16px;
-  margin: 2px 8px;
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.55);
+  padding: 0 var(--td-comp-padding-l, 16px);
+  margin: 2px var(--td-comp-margin-m, 8px);
+  border-radius: var(--td-radius-default, 6px);
+  color: var(--sidebar-text-color);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--td-anim-duration-fast, 0.15s) var(--td-anim-ease-in-out);
   user-select: none;
   overflow: hidden;
   position: relative;
 }
 
 .menuItem:hover {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.06);
+  color: var(--sidebar-text-color-active);
+  background: var(--sidebar-bg-hover);
 }
 
 .menuItemActive {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.1);
+  color: var(--sidebar-text-color-active);
+  background: var(--sidebar-bg-active);
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
@@ -135,13 +135,13 @@
   transform: translateY(-50%);
   width: 3px;
   height: 20px;
-  background: #00d4ff;
+  background: var(--td-brand-color);
   border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  box-shadow: var(--glow-primary);
 }
 
 .menuItemActive:hover {
-  background: rgba(0, 212, 255, 0.12);
+  background: var(--sidebar-bg-active);
 }
 
 .menuLabel {
@@ -152,13 +152,13 @@
 
 .menuArrow {
   flex-shrink: 0;
-  transition: transform 0.2s ease;
-  color: rgba(255, 255, 255, 0.25);
+  transition: transform var(--td-anim-duration-fast, 0.15s) ease;
+  color: var(--td-text-color-disabled);
 }
 
 .menuArrowOpen {
   transform: rotate(90deg);
-  color: rgba(0, 212, 255, 0.5);
+  color: var(--td-brand-color);
 }
 
 .submenu {
@@ -169,23 +169,23 @@
   display: flex;
   align-items: center;
   height: 36px;
-  padding: 0 16px 0 42px;
-  margin: 2px 8px;
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.45);
+  padding: 0 var(--td-comp-padding-l, 16px) 0 42px;
+  margin: 2px var(--td-comp-margin-m, 8px);
+  border-radius: var(--td-radius-default, 6px);
+  color: var(--td-text-color-placeholder);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--td-anim-duration-fast, 0.15s) var(--td-anim-ease-in-out);
   user-select: none;
 }
 
 .submenuItem:hover {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.05);
+  color: var(--sidebar-text-color-active);
+  background: var(--sidebar-bg-hover);
 }
 
 .submenuItemActive {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.08);
+  color: var(--sidebar-text-color-active);
+  background: var(--sidebar-bg-active);
   text-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
 }
 
@@ -199,17 +199,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.35);
+  gap: var(--td-comp-margin-m, 8px);
+  color: var(--td-text-color-placeholder);
   cursor: pointer;
-  border-top: 1px solid rgba(0, 212, 255, 0.08);
+  border-top: 1px solid var(--td-border-level-3-color);
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all var(--td-anim-duration-fast, 0.15s) ease;
 }
 
 .sidebarFooter:hover {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.05);
+  color: var(--td-brand-color);
+  background: var(--sidebar-bg-hover);
 }
 
 .collapseText {

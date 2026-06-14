@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.callback">
-    <LoadingIcon :class="$style.spinner" :size="32" />
+    <LoadingIcon :class="$style.spinner" size="32px" />
     <p :class="$style.text">正在完成登录...</p>
   </div>
 </template>

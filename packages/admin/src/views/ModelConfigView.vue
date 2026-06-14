@@ -83,6 +83,15 @@ const testConfigId = ref('')
 
 const modelSuggestions = ref<string[]>([])
 
+const modelColumns = [
+  { colKey: 'name', title: '配置名称', minWidth: 160 },
+  { colKey: 'provider', title: 'Provider', width: 120, align: 'center' as const },
+  { colKey: 'model', title: '模型', minWidth: 180 },
+  { colKey: 'isDefault', title: '默认', width: 80, align: 'center' as const },
+  { colKey: 'parameters', title: '参数', minWidth: 200 },
+  { colKey: 'actions', title: '操作', width: 260, fixed: 'right' as const },
+]
+
 function updateModelSuggestions() {
   modelSuggestions.value = DEFAULT_MODELS[form.value.provider] ?? []
 }
@@ -262,46 +271,36 @@ onMounted(fetchConfigs)
       <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增配置</t-button>
     </div>
 
-    <t-table :data="configs" :loading="loading" :class="$style.table">
-      <t-col prop="name" label="配置名称" :min-width="160" />
-      <t-col label="Provider" :width="120" align="center">
-        <template #cell="{ row }">
-          <t-tag size="small" theme="default">
-            {{ PROVIDER_LABELS[row.provider] ?? row.provider }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="model" label="模型" :min-width="180" />
-      <t-col label="默认" :width="80" align="center">
-        <template #cell="{ row }">
-          <t-tag v-if="row.isDefault" size="small" theme="success">默认</t-tag>
-        </template>
-      </t-col>
-      <t-col label="参数" :min-width="200">
-        <template #cell="{ row }">
-          <span :class="$style.paramText">
-            T={{ row.parameters?.temperature ?? '-' }}, Max={{ row.parameters?.maxTokens ?? '-' }}, P={{ row.parameters?.topP ?? '-' }}
-          </span>
-        </template>
-      </t-col>
-      <t-col label="操作" :width="260" fixed="right">
-        <template #cell="{ row }">
-          <div :class="$style.actions">
-            <t-button variant="text" size="small" :icon="LinkIcon" @click="openTestDialog(row)">测试</t-button>
-            <t-button
-              v-if="!row.isDefault"
-              variant="text"
-              size="small"
-              :icon="CheckCircleFilledIcon"
-              @click="handleSetDefault(row)"
-            >
-              设为默认
-            </t-button>
-            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </div>
-        </template>
-      </t-col>
+    <t-table :data="configs" :columns="modelColumns" :loading="loading" :class="$style.table">
+      <template #cell-provider="{ row }">
+        <t-tag size="small" theme="default">
+          {{ PROVIDER_LABELS[row.provider] ?? row.provider }}
+        </t-tag>
+      </template>
+      <template #cell-isDefault="{ row }">
+        <t-tag v-if="row.isDefault" size="small" theme="success">默认</t-tag>
+      </template>
+      <template #cell-parameters="{ row }">
+        <span :class="$style.paramText">
+          T={{ row.parameters?.temperature ?? '-' }}, Max={{ row.parameters?.maxTokens ?? '-' }}, P={{ row.parameters?.topP ?? '-' }}
+        </span>
+      </template>
+      <template #cell-actions="{ row }">
+        <div :class="$style.actions">
+          <t-button variant="text" size="small" :icon="LinkIcon" @click="openTestDialog(row)">测试</t-button>
+          <t-button
+            v-if="!row.isDefault"
+            variant="text"
+            size="small"
+            :icon="CheckCircleFilledIcon"
+            @click="handleSetDefault(row)"
+          >
+            设为默认
+          </t-button>
+          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+        </div>
+      </template>
     </t-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">

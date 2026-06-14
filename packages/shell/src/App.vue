@@ -28,9 +28,9 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
-  color: var(--text-color-primary, #303133);
-  background: var(--bg-color-page, #f5f7fa);
+  font-family: var(--td-font-family);
+  color: var(--td-text-color-primary);
+  background: var(--td-bg-color-page);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -43,5 +43,4 @@ body {
   display: flex;
   flex-direction: column;
 }
-
 </style>

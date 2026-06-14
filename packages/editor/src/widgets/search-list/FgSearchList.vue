@@ -5,7 +5,7 @@
  * 职责：
  * - 根据 searchFields 配置渲染搜索表单
  * - 使用 useListData composable 管理数据加载、分页、排序、行选择
- * - 渲染 el-table + el-pagination + 批量操作栏
+ * - 渲染 t-table + t-pagination + 批量操作栏
  * - 支持 events/api configPanels
  */
 import { inject, ref, computed, watch } from 'vue'
@@ -215,7 +215,7 @@ defineExpose({
               :value="opt.value"
             />
           </t-select>
-          <el-cascader
+          <t-cascader
             v-else-if="field.type === 'cascader'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请选择'"
@@ -223,7 +223,7 @@ defineExpose({
             clearable
             size="default"
           />
-          <el-time-picker
+          <t-time-picker
             v-else-if="field.type === 'time-picker'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '选择时间'"
@@ -242,16 +242,15 @@ defineExpose({
               :value="opt.value"
             />
           </t-checkbox-group>
-          <el-date-picker
+          <t-date-picker
             v-else-if="field.type === 'date'"
             v-model="searchModel[field.field]"
-            type="date"
             :placeholder="field.placeholder || '选择日期'"
             clearable
             size="default"
-            value-format="YYYY-MM-DD"
+            format="YYYY-MM-DD"
           />
-          <el-date-picker
+          <t-date-picker
             v-else-if="field.type === 'date-range'"
             v-model="searchModel[field.field]"
             type="daterange"
@@ -260,7 +259,7 @@ defineExpose({
             end-placeholder="结束日期"
             clearable
             size="default"
-            value-format="YYYY-MM-DD"
+            format="YYYY-MM-DD"
           />
         </div>
       </template>
@@ -286,7 +285,7 @@ defineExpose({
 
     <!-- 数据表格 -->
     <t-table
-      v-loading="loading"
+      :loading="loading"
       :data="tableData"
       :stripe="widgetData.props?.stripe !== false"
       :border="widgetData.props?.border !== false"
@@ -311,16 +310,16 @@ defineExpose({
     </t-table>
 
     <!-- 分页 -->
-    <el-pagination
+    <t-pagination
       v-if="widgetData.props?.showPagination !== false"
-      layout="total, sizes, prev, pager, next"
       :total="total"
       :page-size="pageSize"
-      :page-sizes="[10, 20, 50, 100]"
-      :current-page="currentPage"
+      :page-size-options="[10, 20, 50, 100]"
+      :current="currentPage"
       :class="styles.pagination"
+      show-page-size
       @current-change="handlePageChange"
-      @size-change="handleSizeChange"
+      @page-size-change="handleSizeChange"
     />
   </div>
 </template>

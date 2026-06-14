@@ -8,9 +8,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useLayoutStore } from '@schema-form/shared-stores/layout'
 import { useMenu } from '@/composables/useMenu'
-import { useAuth } from '@/composables/useAuth'
 import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import LayoutSwitcher from '@schema-form/shared-components/LayoutSwitcher.vue'
@@ -18,9 +16,7 @@ import type { MenuTreeNode } from '@/types/menu'
 
 const route = useRoute()
 const router = useRouter()
-const layoutStore = useLayoutStore()
 const { menuTree } = useMenu()
-const { user } = useAuth()
 
 const withoutMenu = computed(() => route.meta?.withoutMenu === true)
 
@@ -113,8 +109,6 @@ function navigateTo(node: MenuTreeNode) {
 </template>
 
 <style module>
-@import '@schema-form/shared-styles/theme-tech.css';
-
 .layout {
   min-height: 100vh;
   display: flex;
@@ -129,11 +123,11 @@ function navigateTo(node: MenuTreeNode) {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--td-comp-margin-xxl, 24px);
-  background: rgba(17, 24, 32, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.05);
+  background: var(--topnav-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--td-border-level-2-color);
+  box-shadow: var(--td-shadow-1);
   flex-shrink: 0;
   z-index: 100;
 }
@@ -154,15 +148,15 @@ function navigateTo(node: MenuTreeNode) {
   width: 36px;
   height: 36px;
   border-radius: var(--td-radius-small, 3px);
-  background: linear-gradient(135deg, #00d4ff 0%, #009fcc 100%);
-  color: #000;
+  background: var(--gradient-primary);
+  color: var(--td-text-color-anti);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+  box-shadow: var(--glow-primary);
 }
 
 .logoText {
@@ -197,13 +191,13 @@ function navigateTo(node: MenuTreeNode) {
 }
 
 .navItem:hover {
-  color: #00d4ff;
-  background: rgba(0, 212, 255, 0.05);
+  color: var(--td-brand-color);
+  background: var(--sidebar-bg-hover);
 }
 
 .navItemActive {
-  color: #00d4ff;
-  border-bottom-color: #00d4ff;
+  color: var(--td-brand-color);
+  border-bottom-color: var(--td-brand-color);
   font-weight: 500;
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }

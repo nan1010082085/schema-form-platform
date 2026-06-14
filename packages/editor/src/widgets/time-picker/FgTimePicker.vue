@@ -24,7 +24,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <el-time-picker
+  <t-time-picker
     ref="pickerRef"
     v-model="widgetData.defaultValue as any"
     :style="dynamicStyle"
@@ -32,15 +32,15 @@ function forwardNativeChange() {
     :disabled="isDisabled"
     :readonly="(widgetData.props?.readonly as boolean) || false"
     :clearable="(widgetData.props?.clearable as boolean) ?? true"
-    :is-range="(widgetData.props?.isRange as boolean) || false"
+    :range="(widgetData.props?.isRange as boolean) || false"
     :format="(widgetData.props?.format as string) || 'HH:mm:ss'"
-    :arrow-control="(widgetData.props?.arrowControl as boolean) || false"
+    :allow-input="(widgetData.props?.arrowControl as boolean) || false"
     @change="forwardNativeChange"
   />
 </template>
 
 <style scoped>
-:deep(.el-time-picker) {
+:deep(.t-time-picker) {
   width: 100%;
 }
 </style>

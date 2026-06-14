@@ -3,30 +3,30 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: var(--text-color-secondary, #909399);
+  color: var(--td-text-color-secondary);
 }
 
 .item {
-  color: var(--text-color-secondary, #909399);
+  color: var(--td-text-color-secondary);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color var(--td-anim-duration-fast, 0.15s);
 }
 
 .item:hover {
-  color: var(--color-primary, #409eff);
+  color: var(--td-brand-color);
 }
 
 .itemActive {
-  color: var(--text-color-primary, #303133);
+  color: var(--td-text-color-primary);
   cursor: default;
   font-weight: 500;
 }
 
 .itemActive:hover {
-  color: var(--text-color-primary, #303133);
+  color: var(--td-text-color-primary);
 }
 
 .separator {
-  color: var(--text-color-placeholder, #c0c4cc);
+  color: var(--td-text-color-placeholder);
   margin: 0 2px;
 }

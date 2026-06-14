@@ -22,25 +22,20 @@ function forwardNativeChange() {
   autocompleteRef.value?.$el?.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
-function fetchSuggestions(queryString: string, cb: (results: { value: string }[]) => void) {
-  const suggestions = (widgetData.value.props?.suggestions as { value: string }[]) || []
-  const results = queryString
-    ? suggestions.filter(s => s.value.toLowerCase().includes(queryString.toLowerCase()))
-    : suggestions
-  cb(results)
-}
+const suggestions = computed(() =>
+  (widgetData.value.props?.suggestions as { value: string }[]) || []
+)
 </script>
 
 <template>
-  <el-autocomplete
+  <t-auto-complete
     ref="autocompleteRef"
     v-model="widgetData.defaultValue as string"
     :style="dynamicStyle"
     :placeholder="(widgetData.props?.placeholder as string) || '请输入'"
     :disabled="isDisabled"
     :clearable="(widgetData.props?.clearable as boolean) ?? true"
-    :debounce="(widgetData.props?.debounce as number) ?? 300"
-    :fetch-suggestions="fetchSuggestions"
+    :options="suggestions"
     @change="forwardNativeChange"
   />
 </template>

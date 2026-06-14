@@ -6,7 +6,7 @@
  */
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLayoutStore } from '@schema-form/shared-stores/layout'
 import SideMenu from '@/components/SideMenu.vue'
@@ -84,8 +84,6 @@ function toggleCollapse() {
 </template>
 
 <style module>
-@import '@schema-form/shared-styles/theme-tech.css';
-
 .layout {
   display: flex;
   height: 100vh;
@@ -107,10 +105,10 @@ function toggleCollapse() {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--td-comp-margin-xl, 20px);
-  background: rgba(17, 24, 32, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  background: var(--topnav-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--td-border-level-2-color);
   flex-shrink: 0;
 }
 

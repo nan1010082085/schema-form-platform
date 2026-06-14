@@ -18,10 +18,10 @@ const dynamicStyle = computed(() => ({
 </script>
 
 <template>
-  <el-rate
+  <t-rate
     v-model="widgetData.defaultValue as number"
     :style="dynamicStyle"
-    :max="(widgetData.props?.max as number) ?? 5"
+    :count="(widgetData.props?.max as number) ?? 5"
     :disabled="isDisabled"
     :allow-half="(widgetData.props?.allowHalf as boolean) || false"
     :show-text="(widgetData.props?.showText as boolean) || false"

@@ -45,6 +45,16 @@ const form = ref({
 })
 const editingId = ref('')
 
+const configColumns = [
+  { colKey: 'name', title: '参数名称', minWidth: 160 },
+  { colKey: 'key', title: '参数键名', minWidth: 200 },
+  { colKey: 'value', title: '参数值', minWidth: 200 },
+  { colKey: 'type', title: '类型', width: 100, align: 'center' as const },
+  { colKey: 'status', title: '状态', width: 80, align: 'center' as const },
+  { colKey: 'remark', title: '备注', minWidth: 160 },
+  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' as const },
+]
+
 async function fetchConfigs() {
   loading.value = true
   try {
@@ -168,37 +178,26 @@ onMounted(fetchConfigs)
       <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增参数</t-button>
     </div>
 
-    <t-table :data="configs" :loading="loading" :class="$style.table">
-      <t-col prop="name" label="参数名称" :min-width="160" />
-      <t-col prop="key" label="参数键名" :min-width="200">
-        <template #cell="{ row }">
-          <t-tag size="small" theme="default">{{ row.key }}</t-tag>
-        </template>
-      </t-col>
-      <t-col prop="value" label="参数值" :min-width="200" />
-      <t-col label="类型" :width="100" align="center">
-        <template #cell="{ row }">
-          <t-tag :theme="row.type === 'system' ? 'danger' : 'primary'" size="small">
-            {{ row.type === 'system' ? '系统' : '业务' }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col label="状态" :width="80" align="center">
-        <template #cell="{ row }">
-          <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-            {{ row.status === 'active' ? '启用' : '停用' }}
-          </t-tag>
-        </template>
-      </t-col>
-      <t-col prop="remark" label="备注" :min-width="160" />
-      <t-col label="操作" :width="140" fixed="right">
-        <template #cell="{ row }">
-          <div :class="$style.actions">
-            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </div>
-        </template>
-      </t-col>
+    <t-table :data="configs" :columns="configColumns" :loading="loading" :class="$style.table">
+      <template #cell-key="{ row }">
+        <t-tag size="small" theme="default">{{ row.key }}</t-tag>
+      </template>
+      <template #cell-type="{ row }">
+        <t-tag :theme="row.type === 'system' ? 'danger' : 'primary'" size="small">
+          {{ row.type === 'system' ? '系统' : '业务' }}
+        </t-tag>
+      </template>
+      <template #cell-status="{ row }">
+        <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
+          {{ row.status === 'active' ? '启用' : '停用' }}
+        </t-tag>
+      </template>
+      <template #cell-actions="{ row }">
+        <div :class="$style.actions">
+          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+        </div>
+      </template>
     </t-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">

@@ -69,6 +69,15 @@ const dataForm = ref({
 })
 const editingDataId = ref('')
 
+const dataColumns = [
+  { colKey: 'label', title: '标签', minWidth: 120 },
+  { colKey: 'value', title: '值', minWidth: 120 },
+  { colKey: 'sort', title: '排序', width: 80, align: 'center' as const },
+  { colKey: 'status', title: '状态', width: 80, align: 'center' as const },
+  { colKey: 'remark', title: '备注', minWidth: 140 },
+  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' as const },
+]
+
 async function fetchTypes() {
   typesLoading.value = true
   try {
@@ -349,26 +358,18 @@ onMounted(fetchTypes)
           </t-select>
         </div>
 
-        <t-table :data="dataList" :loading="dataLoading" :class="$style.table">
-          <t-col prop="label" label="标签" :min-width="120" />
-          <t-col prop="value" label="值" :min-width="120" />
-          <t-col prop="sort" label="排序" :width="80" align="center" />
-          <t-col label="状态" :width="80" align="center">
-            <template #cell="{ row }">
-              <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-                {{ row.status === 'active' ? '启用' : '停用' }}
-              </t-tag>
-            </template>
-          </t-col>
-          <t-col prop="remark" label="备注" :min-width="140" />
-          <t-col label="操作" :width="140" fixed="right">
-            <template #cell="{ row }">
-              <div :class="$style.actions">
-                <t-button variant="text" size="small" @click="openEditData(row)">编辑</t-button>
-                <t-button variant="text" size="small" theme="danger" @click="handleDataDelete(row)">删除</t-button>
-              </div>
-            </template>
-          </t-col>
+        <t-table :data="dataList" :columns="dataColumns" :loading="dataLoading" :class="$style.table">
+          <template #cell-status="{ row }">
+            <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
+              {{ row.status === 'active' ? '启用' : '停用' }}
+            </t-tag>
+          </template>
+          <template #cell-actions="{ row }">
+            <div :class="$style.actions">
+              <t-button variant="text" size="small" @click="openEditData(row)">编辑</t-button>
+              <t-button variant="text" size="small" theme="danger" @click="handleDataDelete(row)">删除</t-button>
+            </div>
+          </template>
         </t-table>
 
         <div v-if="dataTotal > dataPageSize" :class="$style.pagination">
@@ -383,7 +384,7 @@ onMounted(fetchTypes)
       </template>
 
       <div v-else :class="$style.placeholder">
-        <ListIcon :size="48" style="color: var(--td-text-color-placeholder)" />
+        <ListIcon size="48px" style="color: var(--td-text-color-placeholder)" />
         <p>请从左侧选择字典类型查看数据</p>
       </div>
     </div>

@@ -30,25 +30,25 @@ const transferStyle = computed(() => ({
 }))
 </script>
 <template>
-  <el-transfer
+  <t-transfer
     :data="[]"
-    :titles="titles"
-    :filterable="widgetData.props?.filterable !== false"
+    :title="titles"
+    :search="widgetData.props?.filterable !== false"
     :style="transferStyle"
   />
 </template>
 
 <style scoped>
-:deep(.el-transfer) {
+:deep(.t-transfer) {
   display: flex;
   width: 100%;
   height: 100%;
 }
-:deep(.el-transfer__buttons) {
+:deep(.t-transfer__buttons) {
   padding: 0 8px;
   flex-shrink: 0;
 }
-:deep(.el-transfer-panel) {
+:deep(.t-transfer-panel) {
   width: var(--transfer-panel-width) !important;
 }
 </style>

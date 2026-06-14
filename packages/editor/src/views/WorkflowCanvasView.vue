@@ -14,9 +14,10 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
 import { useWorkflow } from '@/composables/useWorkflow'
 import type { WorkflowNodeType, WorkflowNodeData } from '@/composables/useWorkflow'
+import { apiClient } from '@/utils/apiClient'
 import StartNode from '@/components/WorkflowNodes/StartNode.vue'
 import EndNode from '@/components/WorkflowNodes/EndNode.vue'
 import EditorNode from '@/components/WorkflowNodes/EditorNode.vue'
@@ -163,14 +164,38 @@ const saving = ref(false)
 const running = ref(false)
 const debugging = ref(false)
 
+// ── 工作流流程定义 ID（首次保存后赋值） ──
+const flowDefinitionId = ref('')
+
 async function handleSave() {
   saving.value = true
   try {
     const data = exportWorkflow()
-    // TODO: 调用 API 保存
-    console.log('Save workflow:', data)
+
+    // 1. 如果还没有 flowDefinitionId，先创建流程定义
+    if (!flowDefinitionId.value) {
+      const def = await apiClient.post<{ id: string }>('/flows', {
+        name: data.name || '未命名工作流',
+        description: data.description || '',
+      })
+      flowDefinitionId.value = (def as unknown as { id: string }).id
+    } else {
+      // 更新流程定义名称/描述
+      await apiClient.put(`/flows/${flowDefinitionId.value}`, {
+        name: data.name,
+        description: data.description,
+      })
+    }
+
+    // 2. 保存画布图数据为版本
+    await apiClient.post(`/flows/${flowDefinitionId.value}/versions`, {
+      graph: { nodes: data.nodes, edges: data.edges },
+      metadata: { variables: data.variables },
+    })
+
     MessagePlugin.success('工作流已保存')
-  } catch {
+  } catch (err) {
+    console.error('Save workflow failed:', err)
     MessagePlugin.error('保存失败')
   } finally {
     saving.value = false
@@ -180,9 +205,27 @@ async function handleSave() {
 async function handleRun() {
   running.value = true
   try {
-    // TODO: 调用 API 运行
-    MessagePlugin.success('工作流已启动')
-  } catch {
+    // 未保存则先保存
+    if (!flowDefinitionId.value) {
+      await handleSave()
+      if (!flowDefinitionId.value) return
+    }
+
+    // 发布流程定义
+    await apiClient.post(`/flows/${flowDefinitionId.value}/publish`)
+
+    // 启动流程实例
+    const instance = await apiClient.post<{ id: string }>('/flow-instances', {
+      definitionId: flowDefinitionId.value,
+      variables: workflow.value.variables.reduce(
+        (acc, v) => ({ ...acc, [v.key]: v.defaultValue ?? '' }),
+        {} as Record<string, unknown>,
+      ),
+    })
+
+    MessagePlugin.success(`工作流实例已启动 (${(instance as unknown as { id: string }).id})`)
+  } catch (err) {
+    console.error('Run workflow failed:', err)
     MessagePlugin.error('运行失败')
   } finally {
     running.value = false
@@ -192,9 +235,65 @@ async function handleRun() {
 async function handleDebug() {
   debugging.value = true
   try {
-    // TODO: 调试逻辑
-    MessagePlugin.info('调试模式已开启')
-  } catch {
+    const data = exportWorkflow()
+
+    // ── 结构校验 ──
+    const errors: string[] = []
+
+    // 1. 必须有开始和结束节点
+    const startNodes = data.nodes.filter(n => (n.data as WorkflowNodeData)?.nodeType === 'start')
+    const endNodes = data.nodes.filter(n => (n.data as WorkflowNodeData)?.nodeType === 'end')
+    if (startNodes.length === 0) errors.push('缺少「开始」节点')
+    if (endNodes.length === 0) errors.push('缺少「结束」节点')
+    if (startNodes.length > 1) errors.push('存在多个「开始」节点')
+    if (endNodes.length > 1) errors.push('存在多个「结束」节点')
+
+    // 2. 业务节点不能悬空（必须有入边和出边）
+    const edgeSources = new Set(data.edges.map(e => e.source))
+    const edgeTargets = new Set(data.edges.map(e => e.target))
+    for (const node of data.nodes) {
+      const nodeData = node.data as WorkflowNodeData
+      if (nodeData.nodeType === 'start') {
+        if (!edgeSources.has(node.id)) errors.push(`「${nodeData.label}」没有出边`)
+      } else if (nodeData.nodeType === 'end') {
+        if (!edgeTargets.has(node.id)) errors.push(`「${nodeData.label}」没有入边`)
+      } else {
+        if (!edgeTargets.has(node.id)) errors.push(`「${nodeData.label}」没有入边`)
+        if (!edgeSources.has(node.id)) errors.push(`「${nodeData.label}」没有出边`)
+      }
+    }
+
+    // 3. 条件节点必须配置条件
+    for (const node of data.nodes) {
+      const nodeData = node.data as WorkflowNodeData
+      if (nodeData.nodeType === 'condition') {
+        const cfg = nodeData.config as { field?: string; operator?: string; value?: string }
+        if (!cfg.field || !cfg.operator) {
+          errors.push(`条件节点「${nodeData.label}」未配置判断条件`)
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      const dialog = DialogPlugin.confirm({
+        header: '调试结果 — 发现问题',
+        body: errors.map((e, i) => `${i + 1}. ${e}`).join('\n'),
+        confirmBtn: '知道了',
+        cancelBtn: false,
+      })
+      return
+    }
+
+    // ── 校验通过，保存后做一次 dry-run 发布验证 ──
+    if (!flowDefinitionId.value) {
+      await handleSave()
+      if (!flowDefinitionId.value) return
+    }
+
+    await apiClient.post(`/flows/${flowDefinitionId.value}/publish`)
+    MessagePlugin.success('调试通过 — 流程结构合法，已自动发布')
+  } catch (err) {
+    console.error('Debug workflow failed:', err)
     MessagePlugin.error('调试失败')
   } finally {
     debugging.value = false

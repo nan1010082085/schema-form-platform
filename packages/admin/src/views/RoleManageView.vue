@@ -212,6 +212,19 @@ function getDataScopeLabel(scope: string): string {
   return opt?.label || scope
 }
 
+const roleColumns = [
+  { colKey: 'name', title: '角色名称', minWidth: 120 },
+  { colKey: 'description', title: '描述', minWidth: 160 },
+  { colKey: 'data_scope', title: '数据范围', width: 120 },
+  { colKey: 'permCount', title: '权限数', width: 80 },
+  { colKey: 'actions', title: '操作', width: 220, fixed: 'right' as const },
+]
+
+const memberColumns = [
+  { colKey: 'username', title: '用户名', minWidth: 120 },
+  { colKey: 'displayName', title: '显示名', minWidth: 120 },
+]
+
 onMounted(async () => {
   await Promise.all([fetchPermissions(), fetchDeptTree()])
   await fetchRoles()
@@ -235,28 +248,20 @@ onMounted(async () => {
       </t-button>
     </div>
 
-    <t-table :data="roles" :loading="loading" :class="$style.table">
-      <t-col prop="name" label="角色名称" :min-width="120" />
-      <t-col prop="description" label="描述" :min-width="160" />
-      <t-col label="数据范围" :width="120">
-        <template #cell="{ row }">
-          <t-tag size="small">{{ getDataScopeLabel(row.data_scope) }}</t-tag>
-        </template>
-      </t-col>
-      <t-col label="权限数" :width="80">
-        <template #cell="{ row }">
-          <span>{{ getPermCount(row) }}</span>
-        </template>
-      </t-col>
-      <t-col label="操作" :width="220" fixed="right">
-        <template #cell="{ row }">
-          <div :class="$style.actions">
-            <t-button variant="text" size="small" @click="openMembers(row)">查看成员</t-button>
-            <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </div>
-        </template>
-      </t-col>
+    <t-table :data="roles" :columns="roleColumns" :loading="loading" :class="$style.table">
+      <template #cell-data_scope="{ row }">
+        <t-tag size="small">{{ getDataScopeLabel(row.data_scope) }}</t-tag>
+      </template>
+      <template #cell-permCount="{ row }">
+        <span>{{ getPermCount(row) }}</span>
+      </template>
+      <template #cell-actions="{ row }">
+        <div :class="$style.actions">
+          <t-button variant="text" size="small" @click="openMembers(row)">查看成员</t-button>
+          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
+          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
+        </div>
+      </template>
     </t-table>
   </div>
 
@@ -321,10 +326,13 @@ onMounted(async () => {
     width="500px"
     destroy-on-close
   >
-    <t-table :data="members" :loading="membersLoading" :class="$style.membersTable" empty="暂无成员">
-      <t-col prop="username" label="用户名" :min-width="120" />
-      <t-col prop="displayName" label="显示名" :min-width="120" />
-    </t-table>
+    <t-table
+      :data="members"
+      :columns="memberColumns"
+      :loading="membersLoading"
+      :class="$style.membersTable"
+      empty="暂无成员"
+    />
     <div v-if="!membersLoading && members.length === 0" :class="$style.emptyMembers">
       暂无成员
     </div>
