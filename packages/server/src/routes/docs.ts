@@ -20,7 +20,7 @@ router.get('/api/docs', (ctx) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Schema Form Platform API Docs</title>
+  <title>表单设计器 API 文档</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
     html { box-sizing: border-box; overflow-y: scroll; }
