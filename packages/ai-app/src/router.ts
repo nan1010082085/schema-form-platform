@@ -43,6 +43,11 @@ const routes = [
     name: 'rag',
     component: () => import('./views/RagKnowledgeBase.vue'),
   },
+  {
+    path: '/monitor',
+    name: 'monitor',
+    component: () => import('./views/AiMonitorView.vue'),
+  },
 ]
 
 export function createAiRouter() {

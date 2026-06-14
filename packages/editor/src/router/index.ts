@@ -76,6 +76,46 @@ const routes = [
         name: 'workflows',
         component: () => import('@/views/WorkflowListView.vue'),
       },
+      {
+        path: 'credentials',
+        name: 'credentials',
+        component: () => import('@/views/CredentialListView.vue'),
+      },
+      {
+        path: 'tenants',
+        name: 'tenants',
+        component: () => import('@/views/TenantListView.vue'),
+      },
+      {
+        path: 'submissions',
+        name: 'submissions',
+        component: () => import('@/views/SubmissionListView.vue'),
+      },
+      {
+        path: 'widget-docs',
+        name: 'widget-docs',
+        component: () => import('@/views/WidgetDocsView.vue'),
+      },
+      {
+        path: 'workflow-instances',
+        name: 'workflow-instances',
+        component: () => import('@/views/WorkflowInstanceView.vue'),
+      },
+      {
+        path: 'workflow-preview',
+        name: 'workflow-preview',
+        component: () => import('@/views/WorkflowPreviewView.vue'),
+      },
+      {
+        path: 'workflow-start',
+        name: 'workflow-start',
+        component: () => import('@/views/WorkflowStartView.vue'),
+      },
+      {
+        path: 'workflow-templates',
+        name: 'workflow-templates',
+        component: () => import('@/views/WorkflowTemplateView.vue'),
+      },
     ],
   },
 

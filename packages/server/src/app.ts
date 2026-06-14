@@ -23,6 +23,7 @@ import tenantRouter from './routes/tenant.js'
 import deptsRouter from './routes/depts.js'
 import menusRouter from './routes/menus.js'
 import postsRouter from './routes/posts.js'
+import flowExportRouter from './flow-routes/flowExport.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
 import flowInstanceRouter from './flow-routes/flowInstance.js'
@@ -33,7 +34,7 @@ import flowBatchRouter from './flow-routes/flowBatch.js'
 import flowNotificationRouter from './flow-routes/flowNotification.js'
 import flowTemplateRouter from './flow-routes/flowTemplate.js'
 import flowMonitorRouter from './flow-routes/flowMonitor.js'
-import { aiRouter, monitorRouter, aiHealthRouter, ragRouter, llmProviderRouter } from './ai/index.js'
+import { aiRouter, monitorRouter, aiHealthRouter, ragRouter, llmProviderRouter, collaborationRouter, promptsRouter } from './ai/index.js'
 import aiPluginRouter from './ai/pluginRoutes.js'
 import mcpRouter from './routes/mcp.js'
 import configRouter from './routes/config.js'
@@ -162,6 +163,8 @@ app.use(flowTemplateRouter.routes())
 app.use(flowTemplateRouter.allowedMethods())
 app.use(flowMonitorRouter.routes())
 app.use(flowMonitorRouter.allowedMethods())
+app.use(flowExportRouter.routes())
+app.use(flowExportRouter.allowedMethods())
 app.use(aiRouter.routes())
 app.use(aiRouter.allowedMethods())
 app.use(aiHealthRouter.routes())
@@ -174,6 +177,10 @@ app.use(ragRouter.routes())
 app.use(ragRouter.allowedMethods())
 app.use(llmProviderRouter.routes())
 app.use(llmProviderRouter.allowedMethods())
+app.use(collaborationRouter.routes())
+app.use(collaborationRouter.allowedMethods())
+app.use(promptsRouter.routes())
+app.use(promptsRouter.allowedMethods())
 app.use(mcpRouter.routes())
 app.use(mcpRouter.allowedMethods())
 app.use(configRouter.routes())

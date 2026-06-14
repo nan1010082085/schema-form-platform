@@ -81,6 +81,7 @@ router.post('/', requireAuth, requirePermission('microapp:create'), validate(cre
     permissions?: string[]
     status?: string
     sort?: number
+    remark?: string
   }
 
   const existing = await MicroAppModel.findOne({ activeRule: body.activeRule })
@@ -100,6 +101,7 @@ router.post('/', requireAuth, requirePermission('microapp:create'), validate(cre
     permissions: body.permissions ?? [],
     status: body.status ?? 'active',
     sort: body.sort ?? 0,
+    remark: body.remark ?? '',
   })
 
   ctx.status = 201
@@ -118,6 +120,7 @@ router.put('/:id', requireAuth, requirePermission('microapp:edit'), validate(upd
     permissions?: string[]
     status?: string
     sort?: number
+    remark?: string
   }
 
   if (!uuidValidate(id)) {

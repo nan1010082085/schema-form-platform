@@ -169,7 +169,7 @@ function buildPrompt(): string {
 }
 
 async function callAI(prompt: string): Promise<string> {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+  const token = localStorage.getItem('sfp_access_token') || sessionStorage.getItem('sfp_access_token')
   if (!token) {
     throw new Error('请先登录')
   }

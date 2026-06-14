@@ -9,6 +9,7 @@ export const createMicroAppSchema = z.object({
   permissions: z.array(z.string()).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   sort: z.number().int().min(0).optional(),
+  remark: z.string().max(500).optional(),
 }).strict()
 
 export const updateMicroAppSchema = z.object({
@@ -20,6 +21,7 @@ export const updateMicroAppSchema = z.object({
   permissions: z.array(z.string()).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   sort: z.number().int().min(0).optional(),
+  remark: z.string().max(500).optional(),
 }).strict().refine((data) => Object.keys(data).length > 0, {
   message: 'At least one field is required.',
 })

@@ -87,7 +87,7 @@ export const dataSourceConfig = {
   type: 'select',
   api: {
     dictCode: 'STATUS',    // 优先从 global.dictMap.STATUS 查找
-    url: '/api/dict/STATUS', // 找不到时回退到 API
+    url: '/api/dict/data/by-type/STATUS', // 找不到时回退到 API
   },
 }`,
 

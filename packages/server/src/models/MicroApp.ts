@@ -13,6 +13,7 @@ export interface IMicroApp {
   permissions: string[]
   status: 'active' | 'inactive'
   sort: number
+  remark: string
   createdAt: Date
   updatedAt: Date
 }
@@ -29,6 +30,7 @@ const microAppSchema = new mongoose.Schema(
     permissions: { type: [String], default: [] },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     sort: { type: Number, default: 0 },
+    remark: { type: String, default: '' },
   },
   {
     timestamps: true,

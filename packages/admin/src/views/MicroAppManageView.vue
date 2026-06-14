@@ -9,8 +9,8 @@ interface MicroApp {
   name: string
   url: string
   icon: string
-  layout: 'default' | 'blank' | 'iframe'
-  activateRule: string
+  layout: 'with-menu' | 'without-menu'
+  activeRule: string
   permissions: string[]
   status: 'active' | 'inactive'
   sort: number
@@ -41,8 +41,8 @@ const form = ref({
   name: '',
   url: '',
   icon: '',
-  layout: 'default' as 'default' | 'blank' | 'iframe',
-  activateRule: '',
+  layout: 'with-menu' as 'with-menu' | 'without-menu',
+  activeRule: '',
   permissions: [] as string[],
   status: 'active' as 'active' | 'inactive',
   sort: 0,
@@ -51,9 +51,8 @@ const form = ref({
 const editingId = ref('')
 
 const layoutOptions = [
-  { value: 'default', label: '默认布局', description: '使用主应用的导航和布局' },
-  { value: 'blank', label: '空白布局', description: '无导航，适合独立页面' },
-  { value: 'iframe', label: 'iframe 嵌入', description: '通过 iframe 加载外部应用' },
+  { value: 'with-menu', label: '带菜单布局', description: '使用主应用的导航和侧边栏' },
+  { value: 'without-menu', label: '无菜单布局', description: '无导航，适合独立页面' },
 ]
 
 async function fetchApps() {
@@ -79,8 +78,8 @@ function openCreate() {
     name: '',
     url: '',
     icon: '',
-    layout: 'default',
-    activateRule: '',
+    layout: 'with-menu',
+    activeRule: '',
     permissions: [],
     status: 'active',
     sort: 0,
@@ -96,8 +95,8 @@ function openEdit(app: MicroApp) {
     name: app.name,
     url: app.url,
     icon: app.icon || '',
-    layout: app.layout || 'default',
-    activateRule: app.activateRule || '',
+    layout: app.layout || 'with-menu',
+    activeRule: app.activeRule || '',
     permissions: [...(app.permissions || [])],
     status: app.status || 'active',
     sort: app.sort ?? 0,
@@ -197,12 +196,12 @@ onMounted(fetchApps)
       <t-col prop="url" label="应用 URL" :min-width="200" />
       <t-col label="布局方式" :width="100" align="center">
         <template #cell="{ row }">
-          <t-tag size="small" :theme="row.layout === 'iframe' ? 'warning' : row.layout === 'blank' ? 'default' : 'primary'">
-            {{ row.layout === 'default' ? '默认' : row.layout === 'blank' ? '空白' : 'iframe' }}
+          <t-tag size="small" :theme="row.layout === 'without-menu' ? 'default' : 'primary'">
+            {{ row.layout === 'with-menu' ? '带菜单' : '无菜单' }}
           </t-tag>
         </template>
       </t-col>
-      <t-col prop="activateRule" label="激活规则" :min-width="160" />
+      <t-col prop="activeRule" label="激活规则" :min-width="160" />
       <t-col label="状态" :width="80" align="center">
         <template #cell="{ row }">
           <t-switch
@@ -266,7 +265,7 @@ onMounted(fetchApps)
         </div>
       </t-form-item>
       <t-form-item label="激活规则">
-        <t-input v-model:value="form.activateRule" placeholder="URL 匹配规则，如：^/editor/" />
+        <t-input v-model:value="form.activeRule" placeholder="URL 匹配规则，如：^/editor/" />
       </t-form-item>
       <t-form-item label="所需权限">
         <t-input v-model:value="form.permissions" placeholder="权限编码，多个用逗号分隔（可选）" />

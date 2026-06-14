@@ -449,7 +449,7 @@ export interface DictItem {
 }
 
 export async function fetchDictByCode(code: string): Promise<DictItem[]> {
-  return apiClient.get<DictItem[]>(`/dict/${encodeURIComponent(code)}`)
+  return apiClient.get<DictItem[]>(`/dict/data/by-type/${encodeURIComponent(code)}`)
 }
 
 export async function fetchDataList(
