@@ -25,8 +25,8 @@ const isMicroApp = computed(() => !!route.meta?.microApp)
   <!-- Admin page mode: placeholder for shell's own pages -->
   <div v-else :class="$style.placeholder">
     <div :class="$style.content">
-      <h2 :class="$style.title">{{ route.meta?.title || 'Page' }}</h2>
-      <p :class="$style.desc">This page is under construction.</p>
+      <h2 :class="$style.title">{{ route.meta?.title || '页面' }}</h2>
+      <p :class="$style.desc">页面建设中...</p>
     </div>
   </div>
 </template>

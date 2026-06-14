@@ -101,7 +101,7 @@ defineExpose({ resetMenu })
       <!-- Loading -->
       <div v-if="menuLoading" :class="styles.menuLoading">
         <t-icon name="loading" :size="20" :class="styles.spinIcon" />
-        <span v-show="!collapsed" :class="styles.menuLoadingText">Loading...</span>
+        <span v-show="!collapsed" :class="styles.menuLoadingText">加载中...</span>
       </div>
 
       <!-- Error -->

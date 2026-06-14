@@ -22,7 +22,7 @@ onMounted(() => {
       <div :class="$style.spinner">
         <div :class="$style.spinnerInner"></div>
       </div>
-      <div :class="$style.loadingText">Loading...</div>
+      <div :class="$style.loadingText">加载中...</div>
     </div>
 
     <!-- Qiankun mounts child apps here -->
