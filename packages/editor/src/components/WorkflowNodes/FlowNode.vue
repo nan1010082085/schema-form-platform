@@ -26,10 +26,10 @@ const props = defineProps<Props>()
 function openFlowDesigner(): void {
   if (props.data.config.flowId) {
     // 跳转到 Flow 设计器，编辑对应的流程
-    window.open(`/flow/designer?id=${props.data.config.flowId}`, '_blank')
+    window.open(`/schema-platform/flow/designer?id=${props.data.config.flowId}`, '_blank')
   } else {
     // 跳转到 Flow 列表页
-    window.open('/flow/list', '_blank')
+    window.open('/schema-platform/flow/list', '_blank')
   }
 }
 </script>

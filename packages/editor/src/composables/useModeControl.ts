@@ -34,7 +34,7 @@ export function useModeControl(options: UseModeControlOptions): UseModeControlRe
 
   function handlePreview() {
     if (currentSchemaId.value) {
-      window.open(`/preview?id=${currentSchemaId.value}`, '_blank')
+      window.open(`/schema-platform/editor/preview?id=${currentSchemaId.value}`, '_blank')
     }
   }
 

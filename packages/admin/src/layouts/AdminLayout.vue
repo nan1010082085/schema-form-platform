@@ -62,7 +62,7 @@ function getMenuIcon(iconName: string) {
 }
 
 function openPortal() {
-  window.open('/', '_blank')
+  window.open('/schema-platform/', '_blank')
 }
 
 function handleMenuClick(item: MenuItem) {

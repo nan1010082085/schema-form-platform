@@ -4,7 +4,7 @@ import { widgetDataKey } from '../base/types'
 import { useApiRequest } from '../../composables/useApiRequest'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import * as TDesignIcons from 'tdesign-icons-vue-next'
-import { TrendUpIcon, TrendDownIcon, RemoveIcon } from 'tdesign-icons-vue-next'
+import { TrendingUpIcon, TrendingDownIcon, RemoveIcon } from 'tdesign-icons-vue-next'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
@@ -126,10 +126,10 @@ useExposeWidget(() => ({
     </div>
     <div v-if="trendValue" :class="styles.footer">
       <template v-if="trend === 'up'">
-        <TrendUpIcon :class="[styles.trendIcon, trendClass]" />
+        <TrendingUpIcon :class="[styles.trendIcon, trendClass]" />
       </template>
       <template v-else-if="trend === 'down'">
-        <TrendDownIcon :class="[styles.trendIcon, trendClass]" />
+        <TrendingDownIcon :class="[styles.trendIcon, trendClass]" />
       </template>
       <template v-else>
         <RemoveIcon :class="[styles.trendIcon, trendClass]" />

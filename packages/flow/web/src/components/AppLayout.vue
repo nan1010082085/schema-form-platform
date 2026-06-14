@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { FileIcon, OrderListIcon, DesktopIcon, DataIcon, RootListIcon, BarChartIcon } from 'tdesign-icons-vue-next'
+import { FileIcon, OrderListIcon, DesktopIcon, DataIcon, RootListIcon, ChartBarIcon } from 'tdesign-icons-vue-next'
 import styles from './AppLayout.module.scss'
 
 const route = useRoute()
@@ -13,7 +13,7 @@ const navItems = [
   { path: '/tasks', label: '我的任务', icon: OrderListIcon },
   { path: '/monitor', label: '流程监控', icon: DataIcon },
   { path: '/templates', label: '流程模板', icon: RootListIcon },
-  { path: '/stats', label: '流程统计', icon: BarChartIcon },
+  { path: '/stats', label: '流程统计', icon: ChartBarIcon },
 ]
 
 const activeNav = computed(() => {

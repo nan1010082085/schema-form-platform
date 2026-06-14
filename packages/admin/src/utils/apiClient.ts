@@ -57,7 +57,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     if (window.__POWERED_BY_QIANKUN__) {
       window.parent.postMessage({ type: 'auth:unauthorized' }, '*')
     } else {
-      window.location.href = '/login'
+      window.location.href = '/schema-platform/login'
     }
     throw new ApiError('Authentication required', 401)
   }
