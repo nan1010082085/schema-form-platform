@@ -6,26 +6,26 @@
   flex-direction: column;
   overflow: hidden;
 
-  :global(.el-scrollbar) {
+  :global(.t-scrollbar) {
     flex: 1;
     min-height: 0;
   }
 
-  :global(.el-tree) {
+  :global(.t-tree) {
     background: transparent;
 
-    :global(.el-tree-node__content) {
+    :global(.t-tree__item) {
       height: auto;
       padding: 3px 8px 3px 0;
     }
 
-    :global(.el-tree-node.is-current > .el-tree-node__content) {
+    :global(.t-tree__item--active > .t-tree__item-content) {
       background-color: rgba(0, 212, 255, 0.08);
     }
   }
 
-  /* 隐藏 el-tree 自带展开图标 */
-  :global(.el-tree-node__expand-icon) {
+  /* 隐藏 t-tree 自带展开图标 */
+  :global(.t-tree__icon-arrow) {
     display: none !important;
     width: 0 !important;
     margin: 0 !important;

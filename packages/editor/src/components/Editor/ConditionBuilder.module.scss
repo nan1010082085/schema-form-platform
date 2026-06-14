@@ -5,9 +5,9 @@
 }
 
 /* 统一表单控件高度 32px */
-.builder :global(.el-input__wrapper),
-.builder :global(.el-select .el-input__wrapper),
-.builder :global(.el-button:not(.is-text):not(.is-link)) {
+.builder :global(.t-input),
+.builder :global(.t-select .t-input),
+.builder :global(.t-button:not(.t-button--text):not(.t-button--ghost)) {
   height: 32px !important;
   min-height: 32px !important;
 }

@@ -33,7 +33,7 @@
 }
 
 .jsonInput {
-  :global(.el-textarea__inner) {
+  :global(.t-textarea__inner) {
     font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     font-size: 11px;
     line-height: 1.5;
@@ -42,7 +42,7 @@
 }
 
 .jsonInputError {
-  :global(.el-textarea__inner) {
+  :global(.t-textarea__inner) {
     border-color: var(--color-danger, #f56c6c);
   }
 }
