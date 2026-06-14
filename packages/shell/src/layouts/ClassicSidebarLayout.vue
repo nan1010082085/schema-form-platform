@@ -13,7 +13,6 @@ import SideMenu from '@/components/SideMenu.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
-import LayoutSwitcher from '@schema-form/shared-components/LayoutSwitcher.vue'
 
 const route = useRoute()
 const layoutStore = useLayoutStore()
@@ -66,9 +65,6 @@ function toggleCollapse() {
         <div :class="$style.headerRight">
           <!-- 全局搜索 -->
           <GlobalSearch />
-
-          <!-- 布局切换 -->
-          <LayoutSwitcher />
 
           <!-- 用户下拉 -->
           <UserDropdown />
