@@ -21,7 +21,7 @@ onMounted(async () => {
   const origin = window.location.origin
   const client = new SSOClient({
     clientId: 'editor',
-    redirectUri: `${origin}/auth/callback`,
+    redirectUri: `${origin}/schema-platform/editor/auth/callback`,
     ssoBaseUrl: origin,
   })
 

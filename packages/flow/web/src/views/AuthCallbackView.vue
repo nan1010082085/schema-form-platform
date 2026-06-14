@@ -21,7 +21,7 @@ onMounted(async () => {
   const origin = window.location.origin
   const client = new SSOClient({
     clientId: 'flow',
-    redirectUri: `${origin}/auth/callback`,
+    redirectUri: `${origin}/schema-platform/flow/auth/callback`,
     ssoBaseUrl: origin,
   })
 

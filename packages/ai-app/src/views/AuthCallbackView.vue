@@ -21,7 +21,7 @@ onMounted(async () => {
   const origin = window.location.origin
   const client = new SSOClient({
     clientId: 'ai',
-    redirectUri: `${origin}/auth/callback`,
+    redirectUri: `${origin}/schema-platform/ai/auth/callback`,
     ssoBaseUrl: origin,
   })
 

@@ -10,8 +10,9 @@ import { createPinia } from 'pinia'
 import TDesign from 'tdesign-vue-next'
 import 'tdesign-vue-next/dist/tdesign.css'
 import '@schema-form/shared-styles/tokens.css'
-import { registerMicroApps, start } from 'qiankun'
+import { registerMicroApps, start, initGlobalState } from 'qiankun'
 import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
+import { useAuthStore } from '@/stores/auth'
 
 import App from './App.vue'
 import router from './router'
@@ -21,6 +22,16 @@ app.use(createPinia())
 app.use(router)
 app.use(TDesign)
 app.mount('#app')
+
+// 初始化 qiankun 全局状态
+const initialState = { token: localStorage.getItem('sfp_access_token') || '' }
+const actions = initGlobalState(initialState)
+
+// 同步 token 到 qiankun 全局状态
+const authStore = useAuthStore()
+authStore.$subscribe((_mutation, state) => {
+  actions.setGlobalState({ token: state.token || '' })
+})
 
 // Register micro-apps after Vue app is mounted
 const isDev = import.meta.env.DEV

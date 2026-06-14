@@ -10,8 +10,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AuthUser, AuthLoadingState } from '@schema-form/shared-utils/authTypes'
 
-const TOKEN_KEY = 'shell_access_token'
-const REFRESH_KEY = 'shell_refresh_token'
+const TOKEN_KEY = 'sfp_access_token'
+const REFRESH_KEY = 'sfp_refresh_token'
 const USER_KEY_KEY = 'shell_user_key'
 
 export const useAuthStore = defineStore('auth', () => {
