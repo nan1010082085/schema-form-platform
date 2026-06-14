@@ -21,9 +21,9 @@ const emit = defineEmits<{
   <t-dropdown trigger="click">
     <div :class="styles.userArea">
       <div :class="styles.userAvatar">
-        {{ username?.charAt(0)?.toUpperCase() || 'U' }}
+        {{ username?.charAt(0)?.toUpperCase() || '用' }}
       </div>
-      <span :class="styles.userName">{{ username || 'Guest' }}</span>
+      <span :class="styles.userName">{{ username || '未登录' }}</span>
     </div>
     <template #dropdown>
       <t-dropdown-menu>

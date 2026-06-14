@@ -37,7 +37,7 @@ export function useMenu() {
       const tree = await apiClient.get<MenuTreeNode[]>('/menus/route')
       menuStore.setMenuTree(tree)
     } catch (e: unknown) {
-      menuStore.setError(e instanceof Error ? e.message : 'Failed to load menus')
+      menuStore.setError(e instanceof Error ? e.message : '加载菜单失败')
     } finally {
       menuStore.setLoading(false)
     }
