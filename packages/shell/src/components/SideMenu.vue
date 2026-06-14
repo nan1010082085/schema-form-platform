@@ -92,7 +92,7 @@ defineExpose({ resetMenu })
     <div :class="styles.sidebarHeader">
       <router-link to="/" :class="styles.logoArea">
         <div :class="styles.logoIcon">S</div>
-        <span v-show="!collapsed" :class="styles.logoText">Shell</span>
+        <span v-show="!collapsed" :class="styles.logoText">表单设计器</span>
       </router-link>
     </div>
 
@@ -167,7 +167,7 @@ defineExpose({ resetMenu })
     <div :class="styles.sidebarFooter" @click="emit('toggleCollapse')">
       <t-icon v-if="collapsed" name="menu-unfold" :size="16" />
       <t-icon v-else name="menu-fold" :size="16" />
-      <span v-show="!collapsed" :class="styles.collapseText">Collapse</span>
+      <span v-show="!collapsed" :class="styles.collapseText">折叠</span>
     </div>
   </aside>
 </template>

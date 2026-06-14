@@ -19,7 +19,7 @@ function toggleSearch(): void {
     <t-input
       v-if="isExpanded"
       v-model:value="searchQuery"
-      placeholder="Search..."
+      placeholder="搜索..."
       :class="$style.searchInput"
       size="small"
       @blur="isExpanded = false"
