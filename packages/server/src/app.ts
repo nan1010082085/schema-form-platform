@@ -24,6 +24,8 @@ import deptsRouter from './routes/depts.js'
 import menusRouter from './routes/menus.js'
 import postsRouter from './routes/posts.js'
 import flowExportRouter from './flow-routes/flowExport.js'
+import flowActionRouter from './flow-routes/flowAction.js'
+import flowMessageRouter from './flow-routes/flowMessage.js'
 import flowRouter from './flow-routes/flow.js'
 import flowVersionRouter from './flow-routes/flowVersion.js'
 import flowInstanceRouter from './flow-routes/flowInstance.js'
@@ -165,6 +167,10 @@ app.use(flowMonitorRouter.routes())
 app.use(flowMonitorRouter.allowedMethods())
 app.use(flowExportRouter.routes())
 app.use(flowExportRouter.allowedMethods())
+app.use(flowActionRouter.routes())
+app.use(flowActionRouter.allowedMethods())
+app.use(flowMessageRouter.routes())
+app.use(flowMessageRouter.allowedMethods())
 app.use(aiRouter.routes())
 app.use(aiRouter.allowedMethods())
 app.use(aiHealthRouter.routes())
