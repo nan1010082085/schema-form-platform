@@ -1,12 +1,12 @@
 <template>
   <div :class="styles.designer">
     <FlowToolbar
+      :title="flowTitle"
       :is-preview="store.mode === 'preview'"
       :show-left-panel="showLeftPanel"
       :show-right-panel="showRightPanel"
       :show-ai-drawer="showAiDrawer"
       :saving="saving"
-      :flow-mode="flowMode"
       :layout-direction="layoutDirection"
       :layout-node-sep="layoutNodeSep"
       :layout-rank-sep="layoutRankSep"
@@ -23,9 +23,9 @@
       @toggle-left-panel="showLeftPanel = !showLeftPanel"
       @toggle-right-panel="showRightPanel = !showRightPanel"
       @toggle-ai="showAiDrawer = !showAiDrawer"
-      @toggle-flow-mode="toggleFlowMode"
       @auto-layout="onAutoLayout"
       @save-as-template="onSaveAsTemplate"
+      @update:title="flowTitle = $event"
       @update:layout-direction="layoutDirection = $event"
       @update:layout-node-sep="layoutNodeSep = $event"
       @update:layout-rank-sep="layoutRankSep = $event"
@@ -35,7 +35,7 @@
         v-if="store.mode === 'design'"
         :class="[styles.drawer, styles.drawerLeft, { [styles.drawerClosed]: !showLeftPanel }]"
       >
-        <FlowPalette :mode="flowMode" />
+        <FlowPalette />
       </div>
       <FlowCanvas ref="canvasRef" :read-only="store.mode === 'preview'" />
       <div
@@ -189,7 +189,7 @@ const route = useRoute()
 
 const definitionId = ref<string | null>((route.query.id as string) ?? null)
 const saving = ref(false)
-const flowMode = ref<'bpmn' | 'workflow'>('bpmn')
+const flowTitle = ref('')
 
 // Form preview state
 const previewPublishId = ref('')
@@ -354,10 +354,6 @@ function togglePreview() {
   store.setMode(store.mode === 'design' ? 'preview' : 'design')
 }
 
-function toggleFlowMode() {
-  flowMode.value = flowMode.value === 'bpmn' ? 'workflow' : 'bpmn'
-}
-
 function _goBack() {
   router.push('/list')
 }
@@ -374,6 +370,7 @@ onMounted(async () => {
     await definitionStore.fetchDefinition(definitionId.value)
     const def = definitionStore.currentDefinition
     if (!def) return
+    flowTitle.value = def.name
     flowSettings.name = def.name
     flowSettings.description = def.description ?? ''
     flowSettings.category = def.category ?? ''
@@ -412,8 +409,43 @@ onAiApply((data: AiApplyEvent) => {
   if (data.type === 'flow' && data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload)) {
     const { nodes, edges } = data.payload as { nodes?: unknown[]; edges?: unknown[] }
     if (nodes && edges) {
-      graphStore.loadFromFlowGraph(data.payload as unknown as FlowGraph)
-      MessagePlugin.success('已应用 AI 生成的流程')
+      // 生成 ID 映射，避免与现有节点冲突
+      const idMap = new Map<string, string>()
+      const newNodes = nodes.map((n: any) => {
+        const newId = `node-${crypto.randomUUID()}`
+        idMap.set(n.id, newId)
+        // 从 data.bpmnType 推断节点类型
+        const bpmnType = n.data?.bpmnType
+        const nodeType = bpmnType === 'startEvent' ? 'start' : bpmnType === 'endEvent' ? 'end' : 'task'
+        return {
+          id: newId,
+          type: nodeType,
+          position: { x: n.x ?? 0, y: n.y ?? 0 },
+          data: n.data,
+        } as Node
+      })
+      const newEdges = edges.map((e: any) => {
+        const sourceId = idMap.get(e.source?.cell ?? '') ?? e.source?.cell ?? ''
+        const targetId = idMap.get(e.target?.cell ?? '') ?? e.target?.cell ?? ''
+        return {
+          id: `edge-${crypto.randomUUID()}`,
+          source: sourceId,
+          target: targetId,
+          label: e.data?.label,
+          data: {
+            conditionExpression: e.data?.conditionExpression,
+            isDefault: e.data?.isDefault,
+          },
+        } as Edge
+      })
+      // 逐个插入，保留当前画布已有的节点和边
+      for (const node of newNodes) {
+        graphStore.addNode(node)
+      }
+      for (const edge of newEdges) {
+        graphStore.addEdge(edge)
+      }
+      MessagePlugin.success(`已插入 ${newNodes.length} 个节点到流程`)
       setTimeout(() => canvasRef.value?.fitView(), 100)
     }
   }
@@ -500,7 +532,7 @@ async function onSave() {
     // Create definition if new
     if (!definitionId.value) {
       const def = (await definitionStore.createDefinition({
-        name: flowSettings.name || '未命名流程',
+        name: flowTitle.value || '未命名流程',
         description: flowSettings.description,
         category: flowSettings.category,
       })) as { id: string }
@@ -508,7 +540,7 @@ async function onSave() {
     } else {
       // Update definition metadata
       await flowApi.updateFlow(definitionId.value, {
-        name: flowSettings.name,
+        name: flowTitle.value,
         description: flowSettings.description,
         category: flowSettings.category,
         permissions: flowSettings.permissions,
@@ -625,7 +657,7 @@ async function onSaveAsTemplate() {
     return
   }
 
-  const templateName = ref(flowSettings.name || '未命名模板')
+  const templateName = ref(flowTitle.value || '未命名模板')
   const confirmed = await new Promise<boolean>((resolve) => {
     const dialog = DialogPlugin.confirm({
       header: '保存为模板',
