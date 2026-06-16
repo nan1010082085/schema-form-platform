@@ -245,30 +245,14 @@
   font-family: inherit;
 }
 
-/* Agent select in input footer */
-.inputActions .agentSelect {
-  padding: 2px 20px 2px 8px;
-  border: 1px solid var(--ai-border-light, #EBEDF3);
-  border-radius: var(--ai-radius-sm, 2px);
+/* Agent select in input footer - use TDesign component styles */
+.inputActions :global(.t-select) {
+  width: 80px;
+}
+
+.inputActions :global(.t-select__input) {
   font-size: 10px;
   color: var(--ai-text-hint, #999999);
-  font-family: inherit;
-  background: var(--ai-bg-gray, #F5F7FA);
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='7' height='4' viewBox='0 0 7 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L3.5 3.5L6 1' stroke='%23999' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 5px center;
-  transition: border-color 0.15s;
-}
-
-.inputActions .agentSelect:hover:not(:disabled) {
-  border-color: var(--ai-color-primary, #0060A2);
-}
-
-.inputActions .agentSelect:focus {
-  border-color: var(--ai-color-primary, #0060A2);
 }
 
 /* Input actions container */

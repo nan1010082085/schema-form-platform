@@ -5,7 +5,7 @@
  * 400px 宽单栏布局，嵌入 Editor / Flow 内使用。
  * 对齐 docs/designs/ui/ai/sidebar.html 设计。
  *
- * 与 AiChatView 的区别：
+ * 特点：
  * - 无对话列表、无预览面板
  * - Agent 可切换（支持同项目多 Agent）
  * - 有上下文条（Schema / Node 信息）
@@ -351,7 +351,6 @@ function handleHostData(data: Record<string, unknown>) {
           <div :class="$style.inputActions">
             <t-select
               v-model:value="selectedAgent"
-              :class="$style.agentSelect"
               :disabled="store.loading"
               size="small"
               :options="agentOptions"
