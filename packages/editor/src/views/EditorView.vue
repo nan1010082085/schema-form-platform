@@ -18,6 +18,7 @@ import { useSnapshot } from '@/composables/useSnapshot'
 import { useAutoSave } from '@/composables/useAutoSave'
 import { useBoardStore } from '@/stores/board'
 import { useWidgetStore } from '@/stores/widget'
+import { parseSchemaJson } from '@/utils/parseSchemaJson'
 import { useEditorStore } from '@/stores/editor'
 import { useApiStore } from '@/stores/api'
 import { registerAllWidgets } from '@/widgets'
@@ -139,24 +140,60 @@ onMounted(async () => {
     // 加载特定版本
     const detail = await fetchVersion(editId, version)
     if (detail) {
+      // 解析 json，支持新格式 { widgets, board } 和旧格式 Widget[]
+      const json = detail.json as unknown
+      let widgets: Widget[] = []
+      let boardConfig: { canvas?: Record<string, unknown>; variables?: unknown[]; events?: unknown[] } = {}
+
+      if (json && typeof json === 'object' && 'widgets' in json && 'board' in json) {
+        // 新格式：{ widgets: Widget[], board: { canvas, variables, events } }
+        const data = json as { widgets: Widget[]; board: { canvas?: Record<string, unknown>; variables?: unknown[]; events?: unknown[] } }
+        widgets = data.widgets
+        boardConfig = data.board || {}
+      } else {
+        // 旧格式：直接是 Widget[]
+        widgets = json as Widget[]
+      }
+
       boardStore.loadBoard({
         id: detail.id,
         name: detail.name,
         status: (detail.status as 'draft' | 'published') || 'draft',
+        canvas: boardConfig.canvas,
+        variables: boardConfig.variables as any[],
+        events: boardConfig.events as any[],
       })
-      widgetStore.loadWidgets(detail.json as Widget[])
+      widgetStore.loadWidgets(widgets)
       currentEditId.value = editId
       currentVersion.value = version
     }
   } else if (id) {
     const detail = await apiStore.fetchSchemaById(id)
     if (detail) {
+      // 解析 json，支持新格式 { widgets, board } 和旧格式 Widget[]
+      const json = detail.json as unknown
+      let widgets: Widget[] = []
+      let boardConfig: { canvas?: Record<string, unknown>; variables?: unknown[]; events?: unknown[] } = {}
+
+      if (json && typeof json === 'object' && 'widgets' in json && 'board' in json) {
+        // 新格式：{ widgets: Widget[], board: { canvas, variables, events } }
+        const data = json as { widgets: Widget[]; board: { canvas?: Record<string, unknown>; variables?: unknown[]; events?: unknown[] } }
+        widgets = data.widgets
+        boardConfig = data.board || {}
+      } else {
+        // 旧格式：直接是 Widget[]
+        widgets = json as Widget[]
+      }
+
       boardStore.loadBoard({
         id: detail.id,
         name: detail.name,
         status: (detail.status as 'draft' | 'published') || 'draft',
+        canvas: boardConfig.canvas,
+        variables: boardConfig.variables as any[],
+        events: boardConfig.events as any[],
       })
-      widgetStore.loadWidgets(detail.json as Widget[])
+      widgetStore.loadWidgets(widgets)
       currentEditId.value = detail.editId
       currentVersion.value = detail.version
     }
@@ -177,7 +214,8 @@ onMounted(async () => {
   connectSocket()
   onAiApply((data: AiApplyEvent) => {
     if (data.type === 'schema' && Array.isArray(data.payload)) {
-      widgetStore.loadWidgets(data.payload as unknown as Widget[])
+      const { widgets } = parseSchemaJson(data.payload)
+      widgetStore.loadWidgets(widgets)
       MessagePlugin.success('已应用 AI 生成的 Schema')
     }
   })
@@ -327,6 +365,11 @@ async function handleSave() {
       boardStore.name,
       boardStore.id || undefined,
       thumbnail,
+      {
+        canvas: boardStore.canvas,
+        variables: boardStore.variables,
+        events: boardStore.events,
+      },
     )
 
     if (result) {
@@ -431,7 +474,16 @@ async function handleLoadVersion(entry: VersionEntry) {
   if (!currentEditId.value) return
   try {
     const detail = await fetchVersion(currentEditId.value, entry.version)
-    widgetStore.loadWidgets(detail.json as unknown as Widget[])
+    const { widgets, boardConfig } = parseSchemaJson(detail.json)
+    boardStore.loadBoard({
+      id: detail.id,
+      name: detail.name,
+      status: (detail.status as 'draft' | 'published') || 'draft',
+      canvas: boardConfig.canvas,
+      variables: boardConfig.variables as any[],
+      events: boardConfig.events as any[],
+    })
+    widgetStore.loadWidgets(widgets)
     currentVersion.value = entry.version
     editorStore.markClean()
     versionPopoverVisible.value = false
@@ -840,24 +892,22 @@ function handleClearCanvas() {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: var(--editor-canvas-bg, #0a0e14);
+  background: var(--bg-color-page);
 
   &__toolbar {
     display: flex;
     align-items: center;
     height: 44px;
     padding: 0 8px;
-    background: var(--glass-bg, rgba(17, 24, 32, 0.8));
-    backdrop-filter: var(--glass-blur, blur(20px));
-    -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-    border-bottom: 1px solid var(--glass-border, rgba(0, 212, 255, 0.1));
+    background: var(--bg-color-white);
+    border-bottom: 1px solid var(--border-color-light);
     flex-shrink: 0;
     gap: 4px;
     z-index: 100;
 
     &--preview {
-      background: rgba(0, 212, 255, 0.06);
-      border-bottom-color: rgba(0, 212, 255, 0.15);
+      background: var(--color-primary-bg-light);
+      border-bottom-color: var(--color-primary-lighter);
     }
   }
 
@@ -876,7 +926,7 @@ function handleClearCanvas() {
   &__divider {
     width: 1px;
     height: 20px;
-    background: rgba(0, 212, 255, 0.08);
+    background: var(--border-color-light);
     flex-shrink: 0;
     margin: 0 2px;
   }
@@ -884,17 +934,17 @@ function handleClearCanvas() {
   &__name-input {
     width: 140px;
     padding: 4px 8px;
-    border: 1px solid rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--border-color-base);
     font-size: var(--td-font-size-body-small);
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-color-primary);
+    background: var(--bg-color-white);
     outline: none;
     transition: border-color 0.2s;
     flex-shrink: 0;
     border-radius: 4px;
 
-    &:focus { border-color: #00d4ff; box-shadow: 0 0 8px rgba(0, 212, 255, 0.2); }
-    &::placeholder { color: rgba(255, 255, 255, 0.3); }
+    &:focus { border-color: var(--color-primary); }
+    &::placeholder { color: var(--text-color-placeholder); }
   }
 
   &__btn-group {
@@ -902,9 +952,9 @@ function handleClearCanvas() {
     align-items: center;
     gap: 0;
     padding: 2px 3px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-color-gray);
     border-radius: 6px;
-    border: 1px solid rgba(0, 212, 255, 0.05);
+    border: 1px solid var(--border-color-light);
   }
 
   &__icon-btn {
@@ -916,7 +966,7 @@ function handleClearCanvas() {
     height: 28px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
     cursor: pointer;
     border-radius: var(--td-radius-small);
     transition: all 0.15s;
@@ -924,8 +974,8 @@ function handleClearCanvas() {
     padding: 0;
 
     &:hover:not(:disabled) {
-      background: rgba(0, 212, 255, 0.08);
-      color: rgba(255, 255, 255, 0.95);
+      background: var(--bg-color-hover);
+      color: var(--text-color-primary);
     }
 
     &:disabled {
@@ -934,10 +984,10 @@ function handleClearCanvas() {
     }
 
     &--active {
-      color: #00d4ff;
-      background: rgba(0, 212, 255, 0.1);
+      color: var(--color-primary);
+      background: var(--color-primary-bg-light);
 
-      &:hover { background: rgba(0, 212, 255, 0.15); }
+      &:hover { background: var(--color-primary-lighter); }
     }
   }
 
@@ -946,14 +996,14 @@ function handleClearCanvas() {
     align-items: center;
     gap: 0;
     padding: 2px 3px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-color-gray);
     border-radius: 6px;
-    border: 1px solid rgba(0, 212, 255, 0.05);
+    border: 1px solid var(--border-color-light);
   }
 
   &__zoom-value {
     font-size: var(--td-font-size-body-small);
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
     min-width: 40px;
     text-align: center;
     user-select: none;
@@ -962,11 +1012,11 @@ function handleClearCanvas() {
   &__preview-label {
     font-size: 13px;
     font-weight: 500;
-    color: #00d4ff;
+    color: var(--color-primary);
     padding: 3px 10px;
-    background: rgba(0, 212, 255, 0.1);
+    background: var(--color-primary-bg-light);
     border-radius: var(--td-radius-small);
-    border: 1px solid rgba(0, 212, 255, 0.15);
+    border: 1px solid var(--color-primary-lighter);
   }
 
   &__btn {
@@ -982,25 +1032,24 @@ function handleClearCanvas() {
     white-space: nowrap;
 
     &--outline {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(0, 212, 255, 0.12);
-      color: rgba(255, 255, 255, 0.65);
-      &:hover { border-color: rgba(0, 212, 255, 0.3); background: rgba(0, 212, 255, 0.06); color: rgba(255, 255, 255, 0.9); }
+      background: var(--bg-color-white);
+      border: 1px solid var(--border-color-base);
+      color: var(--text-color-regular);
+      &:hover { border-color: var(--color-primary); color: var(--color-primary); }
     }
 
     &--primary {
-      background: #00d4ff;
-      border: 1px solid #00d4ff;
-      color: #000;
+      background: var(--color-primary);
+      border: 1px solid var(--color-primary);
+      color: #fff;
       font-weight: 600;
-      box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
-      &:hover { background: #33ddff; border-color: #33ddff; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+      &:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
     }
   }
 
   &__version-badge {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-color-muted);
     white-space: nowrap;
     flex-shrink: 0;
     font-family: monospace;
@@ -1031,14 +1080,14 @@ function handleClearCanvas() {
     align-items: center;
     justify-content: space-between;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+    border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 8px;
   }
 
   &__version-title {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-color-primary);
   }
 
   &__version-pagination {
@@ -1046,7 +1095,7 @@ function handleClearCanvas() {
     justify-content: center;
     margin-top: 12px;
     padding-top: 8px;
-    border-top: 1px solid rgba(0, 212, 255, 0.08);
+    border-top: 1px solid var(--border-color-light);
   }
 
   &__version-loading,
@@ -1054,7 +1103,7 @@ function handleClearCanvas() {
     padding: 16px 0;
     text-align: center;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-color-muted);
   }
 
   &__version-list {
@@ -1071,11 +1120,11 @@ function handleClearCanvas() {
     border-radius: var(--td-radius-small);
     transition: background 0.15s;
 
-    &:hover { background: rgba(0, 212, 255, 0.06); }
+    &:hover { background: var(--bg-color-hover); }
 
     &--current {
-      background: rgba(0, 212, 255, 0.1);
-      border: 1px solid rgba(0, 212, 255, 0.15);
+      background: var(--color-primary-bg-light);
+      border: 1px solid var(--color-primary-lighter);
     }
   }
 
@@ -1087,7 +1136,7 @@ function handleClearCanvas() {
 
   &__version-time {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
     font-family: monospace;
   }
 
@@ -1111,14 +1160,12 @@ function handleClearCanvas() {
     flex-direction: column;
     overflow: hidden;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--glass-bg, rgba(17, 24, 32, 0.8));
-    backdrop-filter: var(--glass-blur, blur(20px));
-    -webkit-backdrop-filter: var(--glass-blur, blur(20px));
+    background: var(--bg-color-white);
   }
 
   &__left {
     width: 260px;
-    border-right: 1px solid var(--glass-border, rgba(0, 212, 255, 0.1));
+    border-right: 1px solid var(--border-color-light);
 
     &--closed {
       width: 0;
@@ -1136,21 +1183,8 @@ function handleClearCanvas() {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--editor-canvas-bg, #0a0e14);
+    background: var(--bg-color-page);
     position: relative;
-
-    // 网格背景
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--editor-grid-color, rgba(0, 212, 255, 0.03)) 1px, transparent 1px),
-        linear-gradient(90deg, var(--editor-grid-color, rgba(0, 212, 255, 0.03)) 1px, transparent 1px);
-      background-size: 20px 20px;
-      pointer-events: none;
-      z-index: 0;
-    }
   }
 
   &__canvas-scroll {
@@ -1164,7 +1198,7 @@ function handleClearCanvas() {
 
   &__right {
     width: 300px;
-    border-left: 1px solid var(--glass-border, rgba(0, 212, 255, 0.1));
+    border-left: 1px solid var(--border-color-light);
 
     &--closed {
       width: 0;
@@ -1189,22 +1223,17 @@ function handleClearCanvas() {
     width: 20px;
     height: 20px;
     border-radius: 4px;
-    background: #00d4ff;
-    color: #000;
+    background: var(--color-primary);
+    color: #fff;
     font-size: 10px;
     font-weight: 700;
     line-height: 1;
     transition: all 0.15s;
-    box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
-  }
-
-  &__icon-btn--active &__ai-label {
-    box-shadow: 0 0 12px rgba(0, 212, 255, 0.5);
   }
 
   &__ai-drawer {
     width: 400px;
-    border-left: 1px solid rgba(0, 212, 255, 0.08);
+    border-left: 1px solid var(--border-color-light);
 
     &--open {
       width: 400px;
@@ -1236,8 +1265,7 @@ function handleClearCanvas() {
     bottom: 0;
     display: flex;
     flex-direction: column;
-    background: var(--glass-bg, rgba(17, 24, 32, 0.95));
-    backdrop-filter: var(--glass-blur, blur(20px));
+    background: var(--bg-color-white);
     z-index: 50;
   }
 
@@ -1246,14 +1274,14 @@ function handleClearCanvas() {
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+    border-bottom: 1px solid var(--border-color-light);
     flex-shrink: 0;
   }
 
   &__code-title {
     font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-color-primary);
   }
 
   &__code-scroll {
@@ -1267,7 +1295,7 @@ function handleClearCanvas() {
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 12px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-color-regular);
     white-space: pre-wrap;
     word-break: break-all;
   }
@@ -1281,9 +1309,9 @@ function handleClearCanvas() {
   &__shortcuts-title {
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-color-primary);
     padding-bottom: 6px;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.08);
+    border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 4px;
   }
 
@@ -1296,7 +1324,7 @@ function handleClearCanvas() {
 
   &__shortcut-label {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
   }
 
   &__shortcut-keys {
@@ -1304,7 +1332,7 @@ function handleClearCanvas() {
     align-items: center;
     gap: 3px;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-color-muted);
 
     kbd {
       display: inline-flex;
@@ -1315,11 +1343,10 @@ function handleClearCanvas() {
       padding: 0 5px;
       font-size: 11px;
       font-family: inherit;
-      color: rgba(255, 255, 255, 0.8);
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(0, 212, 255, 0.1);
+      color: var(--text-color-regular);
+      background: var(--bg-color-gray);
+      border: 1px solid var(--border-color-base);
       border-radius: 3px;
-      box-shadow: 0 1px 0 rgba(0, 212, 255, 0.05);
     }
   }
 

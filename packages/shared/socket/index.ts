@@ -22,13 +22,16 @@ export interface FlowNotificationEvent {
 }
 
 export interface AiApplyEvent {
-  widgets: unknown[]
-  timestamp: number
+  type: 'schema' | 'flow'
+  payload: unknown
+  conversationId?: string
 }
 
 export interface AiPublishedEvent {
-  schemaId: string
-  timestamp: number
+  type: 'schema' | 'flow'
+  id: string
+  publishId: string
+  conversationId?: string
 }
 
 // ---- Socket 状态 ----
