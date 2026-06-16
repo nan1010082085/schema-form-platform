@@ -215,8 +215,11 @@ onMounted(async () => {
   onAiApply((data: AiApplyEvent) => {
     if (data.type === 'schema' && Array.isArray(data.payload)) {
       const { widgets } = parseSchemaJson(data.payload)
-      widgetStore.loadWidgets(widgets)
-      MessagePlugin.success('已应用 AI 生成的 Schema')
+      // 逐个插入到当前画布，而非替换
+      for (const widget of widgets) {
+        widgetStore.addWidget(widget)
+      }
+      MessagePlugin.success(`已插入 ${widgets.length} 个组件到画布`)
     }
   })
   onAiPublished((data: AiPublishedEvent) => {
