@@ -489,17 +489,8 @@ export class FlowEngine {
             const serviceType = (serviceConfig?.type ?? node.config.serviceType) as string | undefined
 
             if (serviceType === 'dataUpdate') {
-              // Data update service task: execute data update rules
-              const { executeDataUpdateRules } = await import('../services/dataUpdateEngine.js')
-              const result = await executeDataUpdateRules(instance).catch((err: unknown) => {
-                console.error('[FlowEngine] ServiceTask dataUpdate failed:', err instanceof Error ? err.message : err)
-                return { submissionId: null, rulesApplied: 0 }
-              })
-
-              // Store result in instance variables for downstream nodes
-              if (result.submissionId) {
-                instance.variables[`${node.config.label}_result`] = result
-              }
+              // Data update service task: placeholder for future implementation
+              console.warn('[FlowEngine] dataUpdate service type is not yet implemented')
             }
 
             await logNodeComplete(instance._id, token.nodeId, { serviceType })
@@ -986,16 +977,8 @@ export class FlowEngine {
     if (isCompleted) {
       eventBus.emit('flow.completed', {
         instanceId: instance._id,
-        workflowId: instance.definitionId,
+        definitionId: instance.definitionId,
       }).catch(() => {})
-    }
-
-    // Execute data update rules when the flow completes
-    if (isCompleted) {
-      const { executeDataUpdateRules } = await import('../services/dataUpdateEngine.js')
-      await executeDataUpdateRules(instance).catch((err: unknown) => {
-        console.error('[FlowEngine] Data update rules execution failed:', err instanceof Error ? err.message : err)
-      })
     }
 
     if (instance.status === 'completed' && instance.parentInstanceId) {
@@ -1051,7 +1034,7 @@ export class FlowEngine {
       // Emit webhook event for flow rejection
       eventBus.emit('flow.rejected', {
         instanceId: instance._id,
-        workflowId: instance.definitionId,
+        definitionId: instance.definitionId,
         reason: `Task "${task.nodeName}" rejected by ${operator}`,
       }).catch(() => {})
     }

@@ -14,7 +14,6 @@ import { HumanMessage, SystemMessage, AIMessage, AIMessageChunk } from '@langcha
 import { buildFlowSystemPrompt } from '@schema-form/shared-ai/promptBuilder'
 import { getMetadata } from '../tools/toolHandlers.js'
 import { flowTools } from '../tools/flowTools.js'
-import { workflowTools } from '../tools/workflowTools.js'
 import { collaborationTools } from '../tools/collaborationTools.js'
 import { searchSchemasTool } from '../tools/schemaTools.js'
 import { getSchemaDetailTool } from '../tools/editorTools.js'
@@ -153,7 +152,7 @@ export async function flowAgentNode(
   const systemPrompt = await getFlowSystemPrompt()
   const userContent = buildContextMessage(state) + ragContext.context
 
-  const model = (await getLLM({ temperature: 0.7, maxTokens: 8192 })).bindTools([...flowTools, ...workflowTools, ...collaborationTools, searchSchemasTool, getSchemaDetailTool, ragSearchTool])
+  const model = (await getLLM({ temperature: 0.7, maxTokens: 8192 })).bindTools([...flowTools, ...collaborationTools, searchSchemasTool, getSchemaDetailTool, ragSearchTool])
 
   // 截断历史消息以避免 token 超限
   const truncatedHistory = truncateMessagesForLangGraph(state.messages)

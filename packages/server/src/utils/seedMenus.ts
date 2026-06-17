@@ -11,6 +11,7 @@ interface MenuSeed {
   permission: string
   sort: number
   microAppId: string | null
+  target?: '_self' | '_blank'
 }
 
 // Stable UUIDs for each menu item (deterministic via https://www.uuidgenerator.net/)
@@ -30,34 +31,27 @@ const IDS = {
   FLOW_DESIGN:  'a1b2c3d4-000d-4000-8000-00000000000d',
   FLOW_MONITOR: 'a1b2c3d4-000e-4000-8000-00000000000e',
   FLOW_APPROVE: 'a1b2c3d4-000f-4000-8000-00000000000f',
-  AI_APP:       'a1b2c3d4-0010-4000-8000-000000000010',
-  WORKFLOW:     'a1b2c3d4-0011-4000-8000-000000000011',
 } as const
 
 const MENUS: MenuSeed[] = [
   // ── 系统管理 (目录) ──
   { _id: IDS.SYSTEM,    parentId: null,           name: '系统管理',  path: '',               icon: 'Setting',    type: 'menu', permission: '',              sort: 1,  microAppId: null },
-  { _id: IDS.MICROAPP,  parentId: IDS.SYSTEM,     name: '微应用管理', path: '/schema-platform/admin/micro-apps', icon: 'Grid',       type: 'menu', permission: 'microapp:view', sort: 1,  microAppId: 'admin' },
-  { _id: IDS.MENU_MGMT, parentId: IDS.SYSTEM,     name: '菜单管理',  path: '/schema-platform/admin/menus',     icon: 'Menu',       type: 'menu', permission: 'menu:view',     sort: 2,  microAppId: 'admin' },
-  { _id: IDS.USER,      parentId: IDS.SYSTEM,     name: '用户管理',  path: '/schema-platform/admin/users',     icon: 'User',       type: 'menu', permission: 'user:view',     sort: 3,  microAppId: 'admin' },
-  { _id: IDS.ROLE,      parentId: IDS.SYSTEM,     name: '角色管理',  path: '/schema-platform/admin/roles',     icon: 'UserFilled', type: 'menu', permission: 'role:view',     sort: 4,  microAppId: 'admin' },
-  { _id: IDS.DEPT,      parentId: IDS.SYSTEM,     name: '部门管理',  path: '/schema-platform/admin/depts',     icon: 'OfficeBuilding', type: 'menu', permission: 'dept:view', sort: 5,  microAppId: 'admin' },
-  { _id: IDS.POST,      parentId: IDS.SYSTEM,     name: '岗位管理',  path: '/schema-platform/admin/posts',     icon: 'Postcard',   type: 'menu', permission: 'post:view',     sort: 6,  microAppId: 'admin' },
-  { _id: IDS.DICT,      parentId: IDS.SYSTEM,     name: '字典管理',  path: '/schema-platform/admin/dict',      icon: 'Collection', type: 'menu', permission: 'dict:view',     sort: 7,  microAppId: 'admin' },
-  { _id: IDS.CONFIG,    parentId: IDS.SYSTEM,     name: '参数设置',  path: '/schema-platform/admin/config',    icon: 'Tools',      type: 'menu', permission: 'config:view',   sort: 8,  microAppId: 'admin' },
-  { _id: IDS.LOGS,      parentId: IDS.SYSTEM,     name: '操作日志',  path: '/schema-platform/admin/logs',      icon: 'Document',   type: 'menu', permission: 'audit:view',    sort: 9,  microAppId: 'admin' },
+  { _id: IDS.MICROAPP,  parentId: IDS.SYSTEM,     name: '微应用管理', path: '/micro-apps', icon: 'Grid',       type: 'menu', permission: 'microapp:view', sort: 1,  microAppId: 'admin' },
+  { _id: IDS.MENU_MGMT, parentId: IDS.SYSTEM,     name: '菜单管理',  path: '/menus',     icon: 'Menu',       type: 'menu', permission: 'menu:view',     sort: 2,  microAppId: 'admin' },
+  { _id: IDS.USER,      parentId: IDS.SYSTEM,     name: '用户管理',  path: '/users',     icon: 'User',       type: 'menu', permission: 'user:view',     sort: 3,  microAppId: 'admin' },
+  { _id: IDS.ROLE,      parentId: IDS.SYSTEM,     name: '角色管理',  path: '/roles',     icon: 'UserFilled', type: 'menu', permission: 'role:view',     sort: 4,  microAppId: 'admin' },
+  { _id: IDS.DEPT,      parentId: IDS.SYSTEM,     name: '部门管理',  path: '/depts',     icon: 'OfficeBuilding', type: 'menu', permission: 'dept:view', sort: 5,  microAppId: 'admin' },
+  { _id: IDS.POST,      parentId: IDS.SYSTEM,     name: '岗位管理',  path: '/posts',     icon: 'Postcard',   type: 'menu', permission: 'post:view',     sort: 6,  microAppId: 'admin' },
+  { _id: IDS.DICT,      parentId: IDS.SYSTEM,     name: '字典管理',  path: '/dict',      icon: 'Collection', type: 'menu', permission: 'dict:view',     sort: 7,  microAppId: 'admin' },
+  { _id: IDS.CONFIG,    parentId: IDS.SYSTEM,     name: '参数设置',  path: '/config',    icon: 'Tools',      type: 'menu', permission: 'config:view',   sort: 8,  microAppId: 'admin' },
+  { _id: IDS.LOGS,      parentId: IDS.SYSTEM,     name: '操作日志',  path: '/logs',      icon: 'Document',   type: 'menu', permission: 'audit:view',    sort: 9,  microAppId: 'admin' },
 
-  // ── 表单设计器 ──
-  { _id: IDS.EDITOR,    parentId: null,           name: '表单设计器', path: '/schema-platform/editor',          icon: 'EditPen',    type: 'menu', permission: '',              sort: 2,  microAppId: 'editor' },
+  // ── 表单设计器（新开页签） ──
+  { _id: IDS.EDITOR,    parentId: null,           name: '表单设计器', path: '/editor',          icon: 'EditPen',    type: 'menu', permission: '',              sort: 2,  microAppId: 'editor',  target: '_blank' },
 
-  // ── 流程管理 (目录) ──
-  { _id: IDS.FLOW,          parentId: null,       name: '流程管理',  path: '',                 icon: 'Connection', type: 'menu', permission: '',            sort: 3,  microAppId: null },
-  { _id: IDS.FLOW_DESIGN,   parentId: IDS.FLOW,   name: '流程设计',  path: '/schema-platform/flow/design',     icon: 'Edit',       type: 'menu', permission: 'flow:design',   sort: 1,  microAppId: 'flow' },
-  { _id: IDS.FLOW_MONITOR,  parentId: IDS.FLOW,   name: '流程监控',  path: '/schema-platform/flow/monitor',    icon: 'Monitor',    type: 'menu', permission: 'flow:view',     sort: 2,  microAppId: 'flow' },
-  { _id: IDS.FLOW_APPROVE,  parentId: IDS.FLOW,   name: '审批中心',  path: '/schema-platform/flow/approval',   icon: 'Stamp',      type: 'menu', permission: 'flow:approve',  sort: 3,  microAppId: 'flow' },
+  // ── 流程管理（新开页签） ──
+  { _id: IDS.FLOW,          parentId: null,       name: '流程管理',  path: '/flow/design',     icon: 'Connection', type: 'menu', permission: '',            sort: 3,  microAppId: 'flow',     target: '_blank' },
 
-  // ── AI 应用 ──
-  { _id: IDS.AI_APP,    parentId: null,           name: 'AI 应用',   path: '/schema-platform/ai',              icon: 'MagicStick', type: 'menu', permission: '',              sort: 5,  microAppId: 'ai-app' },
 ]
 
 /**

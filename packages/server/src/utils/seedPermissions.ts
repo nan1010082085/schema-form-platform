@@ -19,6 +19,8 @@ const PERMISSION_DEFINITIONS: Array<{ code: string; name: string; module: string
   { code: 'flow:publish', name: '发布流程', module: 'flow', description: '发布流程设计' },
   { code: 'flow:approve', name: '审批流程', module: 'flow', description: '审批流程实例' },
   { code: 'flow:delete', name: '删除流程', module: 'flow', description: '删除流程设计' },
+  { code: 'flow:start', name: '发起流程', module: 'flow', description: '发起流程实例' },
+  { code: 'flow:monitor', name: '监控流程', module: 'flow', description: '监控流程实例运行状态' },
 
   // ── Tenant (租户) ──
   { code: 'tenant:view', name: '查看租户', module: 'system', description: '查看租户列表和详情' },
@@ -91,13 +93,6 @@ const PERMISSION_DEFINITIONS: Array<{ code: string; name: string; module: string
   { code: 'webhook:edit', name: '编辑 Webhook', module: 'webhook', description: '修改 Webhook 配置' },
   { code: 'webhook:delete', name: '删除 Webhook', module: 'webhook', description: '删除 Webhook' },
 
-  // ── Workflow (工作流) ──
-  { code: 'workflow:view', name: '查看工作流', module: 'workflow', description: '查看工作流列表和详情' },
-  { code: 'workflow:create', name: '创建工作流', module: 'workflow', description: '创建工作流设计' },
-  { code: 'workflow:edit', name: '编辑工作流', module: 'workflow', description: '修改工作流设计' },
-  { code: 'workflow:delete', name: '删除工作流', module: 'workflow', description: '删除工作流设计' },
-  { code: 'workflow:publish', name: '发布工作流', module: 'workflow', description: '发布/取消发布工作流' },
-  { code: 'workflow:start', name: '发起工作流', module: 'workflow', description: '发起工作流实例' },
 ]
 
 /**

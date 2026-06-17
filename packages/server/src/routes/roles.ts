@@ -50,6 +50,17 @@ router.get('/', requireAuth, requirePermission('role:view'), async (ctx) => {
   }
 })
 
+// GET /api/roles/:id — 获取单个角色
+router.get('/:id', requireAuth, requirePermission('role:view'), async (ctx) => {
+  const role = await RoleModel.findById(ctx.params.id)
+  if (!role) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '角色不存在' } }
+    return
+  }
+  ctx.body = { success: true, data: role.toJSON() }
+})
+
 // POST /api/roles — 创建角色
 router.post('/', requireAuth, requirePermission('role:create'), validate(createRoleSchema), async (ctx) => {
   const body = ctx.request.body as { name: string; description?: string; permissions?: string[]; data_scope?: string; dept_ids?: string[] }

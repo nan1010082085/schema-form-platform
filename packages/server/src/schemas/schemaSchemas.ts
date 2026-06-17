@@ -10,7 +10,7 @@ export const createSchemaSchema = z.object({
 
 export const updateSchemaSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  json: z.array(z.unknown()).optional(),
+  json: z.union([z.array(z.unknown()), z.record(z.unknown())]).optional(),
   type: z.enum(['form', 'search_list']).optional(),
   status: z.enum(['draft']).optional(),
   thumbnail: z.string().optional(),

@@ -199,6 +199,25 @@ router.post('/logout', async (ctx) => {
 router.get('/me', authMiddleware({ required: true }), async (ctx) => {
   const payload = ctx.state.user as JwtPayload
 
+  // 开发模式：返回 dev 用户，不查数据库
+  if (process.env.NODE_ENV !== 'production') {
+    ctx.body = {
+      success: true,
+      data: {
+        id: payload.id,
+        username: payload.username,
+        displayName: 'Dev User',
+        roles: payload.roles,
+        tenantId: payload.tenantId,
+        deptId: payload.deptId,
+        permissions: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    }
+    return
+  }
+
   const user = await UserModel.findById(payload.id)
   if (!user) {
     ctx.status = 404
@@ -217,6 +236,109 @@ router.get('/me', authMiddleware({ required: true }), async (ctx) => {
       permissions,
     },
   }
+})
+
+/**
+ * POST /api/auth/register
+ *
+ * 用户自主注册（开放接口，不需要 token）
+ */
+router.post('/register', async (ctx) => {
+  const { username, password, nickname, phone } = ctx.request.body as {
+    username: string
+    password: string
+    nickname?: string
+    phone?: string
+  }
+
+  if (!username || !password) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '用户名和密码不能为空。' } }
+    return
+  }
+
+  if (password.length < 8) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '密码至少 8 位。' } }
+    return
+  }
+
+  const DEFAULT_TENANT_ID = '000000'
+  const tenantId = ctx.get('X-Tenant-Id') || DEFAULT_TENANT_ID
+
+  // 检查用户名是否已存在
+  const existing = await UserModel.findOne({ username, tenantId })
+  if (existing) {
+    ctx.status = 409
+    ctx.body = { success: false, error: { message: '用户名已存在。' } }
+    return
+  }
+
+  // 创建用户（默认角色为空，需要管理员分配角色和权限）
+  const user = await UserModel.create({
+    _id: crypto.randomUUID(),
+    username,
+    password,
+    nickname: nickname || username,
+    phone: phone || '',
+    roles: [],
+    tenantId,
+    status: 'active',
+  })
+
+  ctx.status = 201
+  ctx.body = {
+    success: true,
+    data: {
+      id: user._id,
+      username: user.username,
+      nickname: user.nickname,
+    },
+  }
+})
+
+/**
+ * POST /api/auth/change-password
+ *
+ * 已登录用户修改密码
+ */
+router.post('/change-password', authMiddleware({ required: true }), async (ctx) => {
+  const payload = ctx.state.user as JwtPayload
+  const { oldPassword, newPassword } = ctx.request.body as {
+    oldPassword: string
+    newPassword: string
+  }
+
+  if (!oldPassword || !newPassword) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '旧密码和新密码不能为空。' } }
+    return
+  }
+
+  if (newPassword.length < 8) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '新密码至少 8 位。' } }
+    return
+  }
+
+  const user = await UserModel.findById(payload.id)
+  if (!user) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: '用户不存在。' } }
+    return
+  }
+
+  const valid = await user.comparePassword(oldPassword)
+  if (!valid) {
+    ctx.status = 400
+    ctx.body = { success: false, error: { message: '旧密码错误。' } }
+    return
+  }
+
+  user.password = newPassword
+  await user.save()
+
+  ctx.body = { success: true, data: null }
 })
 
 export default router

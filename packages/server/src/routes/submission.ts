@@ -10,7 +10,6 @@ import {
   batchDeleteSubmissionsSchema,
   batchUpdateSubmissionsStatusSchema,
 } from '../schemas/submissionSchemas.js'
-import { findWorkflowBySchemaId, startFlowFromSubmission } from '../services/workflowTrigger.js'
 import { eventBus } from '../services/eventBus.js'
 import {
   exportToCsv,
@@ -56,29 +55,6 @@ router.post('/:schemaId', requireAuth, validate(createSubmissionSchema), async (
     submitterId: submitterId ?? userId,
     status: 'submitted',
   })
-
-  // Auto-trigger workflow if a published Workflow is bound to this schema
-  const workflow = await findWorkflowBySchemaId(schemaId)
-  if (workflow) {
-    const flowInstance = await startFlowFromSubmission(workflow, submission, userId)
-    ctx.status = 201
-    ctx.body = {
-      success: true,
-      data: {
-        submission,
-        workflowId: workflow._id,
-        flowInstanceId: flowInstance._id,
-      },
-    }
-
-    // Fire-and-forget webhook event
-    eventBus.emit('submission.created', {
-      submissionId: submission._id,
-      schemaId,
-      data,
-    }).catch(() => {})
-    return
-  }
 
   ctx.status = 201
   ctx.body = { success: true, data: submission }

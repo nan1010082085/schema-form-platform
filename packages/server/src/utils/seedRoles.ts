@@ -29,8 +29,7 @@ export async function seedRoles(): Promise<void> {
     'config:view', 'config:create', 'config:edit', 'config:delete',
     'audit:view', 'audit:export',
     'schema:view', 'schema:create', 'schema:edit', 'schema:delete', 'schema:publish',
-    'flow:view', 'flow:create', 'flow:edit', 'flow:delete', 'flow:design', 'flow:approve', 'flow:monitor',
-    'workflow:view', 'workflow:create', 'workflow:edit', 'workflow:delete', 'workflow:publish', 'workflow:start',
+    'flow:view', 'flow:create', 'flow:edit', 'flow:delete', 'flow:design', 'flow:approve', 'flow:monitor', 'flow:publish', 'flow:start',
   ]
 
   await RoleModel.create({

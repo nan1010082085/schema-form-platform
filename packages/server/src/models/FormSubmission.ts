@@ -11,7 +11,6 @@ export interface IFormSubmission {
   submitterId: string | null
   tenantId: string
   status: SubmissionStatus
-  workflowId: string | null
   flowInstanceId: string | null
   createdAt: Date
   updatedAt: Date
@@ -25,7 +24,6 @@ const formSubmissionDef = new mongoose.Schema(
     submitterId: { type: String, default: null, index: true },
     tenantId: { type: String, default: '000000', index: true },
     status: { type: String, enum: ['submitted', 'approved', 'rejected'], default: 'submitted' },
-    workflowId: { type: String, default: null, index: true },
     flowInstanceId: { type: String, default: null, index: true },
   },
   {

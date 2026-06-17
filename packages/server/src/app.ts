@@ -44,13 +44,8 @@ import auditLogRouter from './routes/auditLog.js'
 import microAppRouter from './routes/microApp.js'
 import apiKeyRouter from './routes/apiKey.js'
 import submissionRouter from './routes/submission.js'
-import workflowRouter from './routes/workflow.js'
-import workflowInstanceRouter from './routes/workflowInstance.js'
-import workflowStatusRouter from './routes/workflowStatus.js'
-import workflowTemplateRouter from './routes/workflowTemplate.js'
 import webhookRouter from './routes/webhook.js'
 import webhookTriggerRouter from './routes/webhookTrigger.js'
-import workflowExecutionRouter from './routes/workflowExecution.js'
 import credentialRouter from './routes/credential.js'
 import modelConfigRouter from './routes/modelConfig.js'
 import { auditLogMiddleware } from './middleware/auditLog.js'
@@ -63,20 +58,23 @@ const app = new Koa()
 
 // --- Middleware stack ---
 app.use(errorHandler)
-app.use(ratelimit({
-  driver: 'memory',
-  db: new Map(),
-  duration: 60_000,
-  max: 100,
-  id: (ctx) => ctx.ip,
-  headers: {
-    remaining: 'Rate-Limit-Remaining',
-    reset: 'Rate-Limit-Reset',
-    total: 'Rate-Limit-Total',
-  },
-  errorMessage: 'Too many requests, please try again later.',
-  disableHeader: false,
-}))
+// 开发环境禁用 rate limiter
+if (process.env.NODE_ENV !== 'development') {
+  app.use(ratelimit({
+    driver: 'memory',
+    db: new Map(),
+    duration: 60_000,
+    max: 100,
+    id: (ctx) => ctx.ip,
+    headers: {
+      remaining: 'Rate-Limit-Remaining',
+      reset: 'Rate-Limit-Reset',
+      total: 'Rate-Limit-Total',
+    },
+    errorMessage: 'Too many requests, please try again later.',
+    disableHeader: false,
+  }))
+}
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -97,7 +95,7 @@ app.use(bodyParser())
 
 app.use(cors({
   origin: (ctx) => {
-    const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5000,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:5400,http://localhost:4173,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
+    const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5050,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:5400,http://localhost:4173,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
     if (origins === '*') return ctx.get('Origin')
     const allowed = origins.split(',').map((s) => s.trim())
     const requestOrigin = ctx.get('Origin')
@@ -199,20 +197,10 @@ app.use(apiKeyRouter.routes())
 app.use(apiKeyRouter.allowedMethods())
 app.use(submissionRouter.routes())
 app.use(submissionRouter.allowedMethods())
-app.use(workflowRouter.routes())
-app.use(workflowRouter.allowedMethods())
-app.use(workflowInstanceRouter.routes())
-app.use(workflowInstanceRouter.allowedMethods())
-app.use(workflowStatusRouter.routes())
-app.use(workflowStatusRouter.allowedMethods())
-app.use(workflowTemplateRouter.routes())
-app.use(workflowTemplateRouter.allowedMethods())
 app.use(webhookRouter.routes())
 app.use(webhookRouter.allowedMethods())
 app.use(webhookTriggerRouter.routes())
 app.use(webhookTriggerRouter.allowedMethods())
-app.use(workflowExecutionRouter.routes())
-app.use(workflowExecutionRouter.allowedMethods())
 app.use(credentialRouter.routes())
 app.use(credentialRouter.allowedMethods())
 app.use(modelConfigRouter.routes())

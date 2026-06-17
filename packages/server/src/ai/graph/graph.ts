@@ -141,17 +141,10 @@ async function routerNode(
   const isPage = /列表|统计|详情|仪表盘|dashboard|搜索列表|数据表格/.test(lower)
   const isForm = /表单|表|输入|填写|编辑/.test(lower)
   const isGeneral = /你好|你是谁|能做什么|帮助|介绍/.test(lower)
-  const isWorkflow = /工作流|创建.*流程|流程.*创建|workflow.*create|create.*workflow|关联.*表单|关联.*流程|配置.*规则/.test(lower)
 
   if (isGeneral) {
     console.log(`[router] 关键词匹配 -> general`)
     return { session: { ...state.session, currentAgent: 'general' }, task: { ...state.task, type: 'general' }, tools: { ...state.tools, needsTool: false } }
-  }
-
-  // Workflow 请求：创建工作流、关联表单/流程、配置规则
-  if (isWorkflow && !isForm) {
-    console.log(`[router] 关键词匹配 -> flow (workflow)`)
-    return { session: { ...state.session, currentAgent: 'flow' }, task: { ...state.task, type: 'generate_simple', chain: [{ agent: 'flow', description: '创建工作流', status: 'pending' }], currentStepIndex: 0 }, tools: { ...state.tools, needsTool: true } }
   }
 
   // 多意图检测：同时包含页面相关和表单/流程相关关键词时，创建 chain

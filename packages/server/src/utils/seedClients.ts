@@ -7,37 +7,47 @@ const DEFAULT_CLIENTS = [
   {
     clientId: 'shell',
     name: 'Shell 应用',
-    redirectUris: ['http://localhost:5000/auth/callback', `${PROD_ORIGIN}/auth/callback`],
-    type: 'public' as const,
-  },
-  {
-    clientId: 'shell',
-    name: '门户',
-    redirectUris: ['http://localhost:4000/auth/callback', `${PROD_ORIGIN}/auth/callback`],
+    redirectUris: ['http://localhost:5050/auth/callback', `${PROD_ORIGIN}/auth/callback`],
     type: 'public' as const,
   },
   {
     clientId: 'editor',
     name: '表单设计器',
-    redirectUris: ['http://localhost:5100/auth/callback', `${PROD_ORIGIN}/editor/auth/callback`],
+    redirectUris: [
+      'http://localhost:5100/auth/callback',
+      'http://localhost:5100/schema-platform/editor/auth/callback',
+      `${PROD_ORIGIN}/schema-platform/editor/auth/callback`,
+    ],
     type: 'public' as const,
   },
   {
     clientId: 'flow',
     name: '流程设计器',
-    redirectUris: ['http://localhost:5200/auth/callback', `${PROD_ORIGIN}/flow/auth/callback`],
+    redirectUris: [
+      'http://localhost:5200/auth/callback',
+      'http://localhost:5200/schema-platform/flow/auth/callback',
+      `${PROD_ORIGIN}/schema-platform/flow/auth/callback`,
+    ],
     type: 'public' as const,
   },
   {
     clientId: 'ai',
     name: 'AI 应用',
-    redirectUris: ['http://localhost:5300/auth/callback', `${PROD_ORIGIN}/ai/auth/callback`],
+    redirectUris: [
+      'http://localhost:5300/auth/callback',
+      'http://localhost:5300/schema-platform/ai/auth/callback',
+      `${PROD_ORIGIN}/schema-platform/ai/auth/callback`,
+    ],
     type: 'public' as const,
   },
   {
     clientId: 'admin',
     name: '系统管理',
-    redirectUris: ['http://localhost:5400/auth/callback', `${PROD_ORIGIN}/admin/auth/callback`],
+    redirectUris: [
+      'http://localhost:5400/auth/callback',
+      'http://localhost:5400/schema-platform/admin/auth/callback',
+      `${PROD_ORIGIN}/schema-platform/admin/auth/callback`,
+    ],
     type: 'public' as const,
   },
 ]
@@ -48,12 +58,13 @@ const DEFAULT_CLIENTS = [
  */
 export async function seedClients(): Promise<void> {
   let created = 0
+  let updated = 0
 
   for (const client of DEFAULT_CLIENTS) {
     const result = await ClientModel.updateOne(
       { clientId: client.clientId },
       {
-        $setOnInsert: {
+        $set: {
           ...client,
           secret: '',
           scopes: ['openid', 'profile', 'email'],
@@ -64,9 +75,9 @@ export async function seedClients(): Promise<void> {
       { upsert: true },
     )
     if (result.upsertedCount > 0) created++
+    else if (result.modifiedCount > 0) updated++
   }
 
-  if (created > 0) {
-    console.log(`[seed] Created ${created} SSO clients (total ${DEFAULT_CLIENTS.length})`)
-  }
+  const skipped = DEFAULT_CLIENTS.length - created - updated
+  console.log(`[seed] SSO clients: ${created} created, ${updated} updated, ${skipped} unchanged`)
 }
