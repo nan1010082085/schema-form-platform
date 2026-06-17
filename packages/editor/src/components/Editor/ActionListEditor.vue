@@ -59,7 +59,7 @@ const emit = defineEmits<{
 
 // ---- Widget options ----
 
-const { widgetOptions, allWidgetOptions } = useWidgetOptions()
+const { widgetOptions, allWidgetOptions, showHideOptions, dialogOptions, tabsOptions, setValueOptions, triggerEventOptions } = useWidgetOptions()
 
 // ---- No-config types ----
 
@@ -234,6 +234,25 @@ function handleTypeChange(action: UIAction, newType: UIActionType) {
 function handleChange() {
   emitChange()
 }
+
+/** 根据动作类型获取目标选项 */
+function getTargetOptions(type: UIActionType) {
+  switch (type) {
+    case 'open-dialog':
+      return dialogOptions.value
+    case 'hide':
+    case 'visible':
+    case 'disabled':
+    case 'show':
+      return showHideOptions.value
+    case 'switch-tab':
+      return tabsOptions.value
+    case 'refresh':
+      return allWidgetOptions.value
+    default:
+      return allWidgetOptions.value
+  }
+}
 </script>
 
 <template>
@@ -301,7 +320,7 @@ function handleChange() {
             @update:model-value="handleChange"
           >
             <el-option
-              v-for="opt in allWidgetOptions"
+              v-for="opt in getTargetOptions(action.type)"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
@@ -333,7 +352,7 @@ function handleChange() {
             @update:model-value="handleChange"
           >
             <el-option
-              v-for="opt in widgetOptions"
+              v-for="opt in setValueOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
@@ -411,7 +430,7 @@ function handleChange() {
             @update:model-value="handleChange"
           >
             <el-option
-              v-for="opt in allWidgetOptions"
+              v-for="opt in triggerEventOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
