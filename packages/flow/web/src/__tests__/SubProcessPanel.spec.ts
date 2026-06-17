@@ -37,7 +37,7 @@ vi.mock('../api/flowApi.ts', () => ({
 import SubProcessPanel from '../components/nodePanels/SubProcessPanel.vue'
 
 /* ------------------------------------------------------------------ */
-/*  TDesign stubs                                                      */
+/*  stubs                                                      */
 /* ------------------------------------------------------------------ */
 
 const tStubs = {

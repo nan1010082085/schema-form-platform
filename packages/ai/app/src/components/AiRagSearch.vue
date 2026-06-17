@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-/* TDesign migration: components registered globally */
 import type { RagSearchResult } from '@/types'
 
 export interface AiRagSearchProps {

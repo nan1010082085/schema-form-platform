@@ -32,7 +32,7 @@ vi.mock('../api/flowApi.ts', () => ({
 import SubProcessSelector from '../components/SubProcessSelector.vue'
 
 /* ------------------------------------------------------------------ */
-/*  TDesign stubs                                                      */
+/*  stubs                                                      */
 /* ------------------------------------------------------------------ */
 
 const tStubs = {

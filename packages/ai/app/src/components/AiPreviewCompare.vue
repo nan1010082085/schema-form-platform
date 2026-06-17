@@ -6,7 +6,6 @@
  */
 
 import { computed } from 'vue'
-/* TDesign migration: no direct import needed, components registered globally */
 import type { Widget, FlowGraph } from '@/types'
 
 export interface AiPreviewCompareProps {

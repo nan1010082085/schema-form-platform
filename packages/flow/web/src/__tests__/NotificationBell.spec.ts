@@ -29,9 +29,7 @@ describe('NotificationBell', () => {
 
   function createWrapper() {
     return mount(NotificationBell, {
-      global: {
-        plugins: [TDesign],
-      },
+      global: {},
     })
   }
 

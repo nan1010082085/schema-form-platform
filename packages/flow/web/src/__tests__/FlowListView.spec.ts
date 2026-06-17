@@ -30,7 +30,6 @@ describe('FlowListView', () => {
   function createWrapper() {
     return mount(FlowListView, {
       global: {
-        plugins: [TDesign],
         directives: {
           loading: () => {},
         },

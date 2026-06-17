@@ -20,7 +20,7 @@ import { registerWidget } from '@/widgets/registry'
 import type { Widget } from '@/widgets/base/types'
 import type { Component } from 'vue'
 
-// ---- Stub TDesign components ----
+// ---- Stub components ----
 
 const tInputStub = {
   template: `<div>

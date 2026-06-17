@@ -124,7 +124,6 @@ describe('TaskInboxView', () => {
   function createWrapper() {
     return mount(TaskInboxView, {
       global: {
-        plugins: [TDesign],
         directives: {
           loading: () => {},
         },

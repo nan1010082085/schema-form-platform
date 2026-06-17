@@ -245,7 +245,7 @@
   font-family: inherit;
 }
 
-/* Agent select in input footer - use TDesign component styles */
+/* Agent select in input footer */
 .inputActions :global(.t-select) {
   width: 80px;
 }

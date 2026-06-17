@@ -65,7 +65,6 @@ describe('FlowTemplateView', () => {
   function createWrapper() {
     return mount(FlowTemplateView, {
       global: {
-        plugins: [TDesign],
         directives: {
           loading: () => {},
         },

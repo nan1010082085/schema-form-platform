@@ -76,7 +76,7 @@ const elIconStub = {
   props: ['size', 'class'],
 }
 
-// TDesign stubs — render native elements that mirror the value
+// stubs — render native elements that mirror the value
 // Note: template strings must avoid escaped quotes inside attribute values
 
 const tInputStub = {

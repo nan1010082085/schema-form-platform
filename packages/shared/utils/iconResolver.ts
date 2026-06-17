@@ -1,7 +1,7 @@
 /**
  * 图标名称解析器
  *
- * 将数据库中存储的图标名（可能是 TDesign 风格或其他别名）解析为
+ * 将数据库中存储的图标名（可能是其他别名）解析为
  * AppIcon 组件可用的 kebab-case 图标名。
  *
  * 使用方式：
@@ -79,7 +79,7 @@ const ICON_ALIAS: Record<string, string> = {
  * 将图标名解析为 AppIcon 的 kebab-case 名称
  *
  * 解析顺序：
- * 1. 别名映射（TDesign / 其他 → EP kebab-case）
+ * 1. 别名映射（其他 → EP kebab-case）
  * 2. 已经是 kebab-case 则直接返回
  * 3. fallback 到 'document'
  */

@@ -7,7 +7,6 @@
  */
 
 import { computed } from 'vue'
-/* TDesign migration: components registered globally */
 
 interface Props {
   /** 参与者 ID 列表 */

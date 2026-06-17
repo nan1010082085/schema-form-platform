@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-/* TDesign migration: components registered globally */
 import type { SchemaDiff } from '@/types'
 
 export interface SchemaDiffPanelProps {

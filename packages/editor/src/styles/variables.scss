@@ -143,7 +143,7 @@ $text-color-pager: #86909c;
 $scrollbar-thumb-color: #dcdfe6;
 $scrollbar-track-color: #f3f4f6;
 
-// Element UI 按钮颜色变量（对齐 TDesign）
+// Element UI 按钮颜色变量
 // 主要按钮（primary）
 $el-button-primary-bg: $color-primary;
 $el-button-primary-text: #fff;
@@ -551,8 +551,8 @@ $calendar-cell-width: 40px;
   --border-width-sm: #{$border-width-sm};
   --border-width-md: #{$border-width-md};
 
-  // ========== 按钮样式（TDesign 主题变量） ==========
-  // TDesign 通过 --td-brand-color 等全局变量控制按钮样式
+  // ========== 按钮样式 ==========`
+  // 通过全局变量控制按钮样式
   // 此处保留项目特定的按钮高度/圆角变量
   --btn-height: 32px;
   --btn-radius: 2px;
@@ -594,7 +594,7 @@ $calendar-cell-width: 40px;
 // FormGrid 组件规范变量（从 FormGrid/styles/variables.scss 合并）
 // ============================================================
 
-// ---- 功能色值（对齐 TDesign） ----
+// ---- 功能色值 ----
 $fg-color-primary: #0052d9;
 $fg-color-warning: #ed7b2f;
 $fg-color-danger: #e34d59;
