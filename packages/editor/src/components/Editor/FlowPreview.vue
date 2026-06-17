@@ -13,6 +13,7 @@ export interface FlowItem {
   children?: FlowItem[]
 }
 
+import { ElTooltip } from 'element-plus'
 import styles from './FlowPreview.module.scss'
 
 defineProps<{
@@ -33,20 +34,32 @@ defineProps<{
       </div>
       <!-- 内容 -->
       <div :class="styles.content">
-        <div :class="styles.label">{{ item.label }}</div>
-        <div v-if="item.description" :class="styles.desc">{{ item.description }}</div>
+        <ElTooltip :content="item.label" placement="top" :show-after="300">
+          <div :class="styles.label">{{ item.label }}</div>
+        </ElTooltip>
+        <ElTooltip v-if="item.description" :content="item.description" placement="top" :show-after="300">
+          <div :class="styles.desc">{{ item.description }}</div>
+        </ElTooltip>
         <!-- 子节点 -->
         <div v-if="item.children?.length" :class="styles.children">
           <div v-for="(child, ci) in item.children" :key="ci" :class="styles.childRow">
             <span :class="styles.childIcon">{{ child.type === 'condition' ? '◇' : '○' }}</span>
-            <span :class="styles.childLabel">{{ child.label }}</span>
-            <span v-if="child.description" :class="styles.childDesc">{{ child.description }}</span>
+            <ElTooltip :content="child.label" placement="top" :show-after="300">
+              <span :class="styles.childLabel">{{ child.label }}</span>
+            </ElTooltip>
+            <ElTooltip v-if="child.description" :content="child.description" placement="top" :show-after="300">
+              <span :class="styles.childDesc">{{ child.description }}</span>
+            </ElTooltip>
             <!-- 三级子节点 -->
             <div v-if="child.children?.length" :class="styles.grandChildren">
               <div v-for="(gc, gi) in child.children" :key="gi" :class="styles.gcRow">
                 <span :class="styles.gcIcon">○</span>
-                <span :class="styles.gcLabel">{{ gc.label }}</span>
-                <span v-if="gc.description" :class="styles.gcDesc">{{ gc.description }}</span>
+                <ElTooltip :content="gc.label" placement="top" :show-after="300">
+                  <span :class="styles.gcLabel">{{ gc.label }}</span>
+                </ElTooltip>
+                <ElTooltip v-if="gc.description" :content="gc.description" placement="top" :show-after="300">
+                  <span :class="styles.gcDesc">{{ gc.description }}</span>
+                </ElTooltip>
               </div>
             </div>
           </div>

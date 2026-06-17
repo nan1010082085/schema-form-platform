@@ -56,6 +56,9 @@
   font-weight: 600;
   color: var(--text-color-title);
   line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .desc {
@@ -63,7 +66,9 @@
   font-size: 11px;
   margin-top: 2px;
   line-height: 16px;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---- 子节点列表 ---- */
@@ -89,6 +94,9 @@
 .childLabel {
   color: var(--text-color-regular);
   line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .childDesc {
@@ -96,6 +104,9 @@
   font-size: 11px;
   line-height: 16px;
   margin-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---- 三级子节点 ---- */
@@ -122,6 +133,9 @@
   color: var(--text-color-muted);
   font-size: 11px;
   line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gcDesc {
@@ -129,4 +143,7 @@
   font-size: 11px;
   line-height: 16px;
   margin-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
