@@ -9,7 +9,7 @@
   width: 70px;
   flex-shrink: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-color-regular);
   line-height: 32px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -33,7 +33,7 @@
 }
 
 .jsonInput {
-  :global(.t-textarea__inner) {
+  :global(.el-textarea__inner) {
     font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
     font-size: 11px;
     line-height: 1.5;
@@ -42,7 +42,7 @@
 }
 
 .jsonInputError {
-  :global(.t-textarea__inner) {
+  :global(.el-textarea__inner) {
     border-color: var(--color-danger, #f56c6c);
   }
 }
@@ -51,4 +51,38 @@
   font-size: 11px;
   color: var(--color-danger, #f56c6c);
   line-height: 1;
+}
+
+.colorArrayWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.colorArrayItems {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.colorArrayItem {
+  display: flex;
+  align-items: center;
+}
+
+.colorArrayActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.colorArrayActionBtn {
+  padding: 4px;
+  min-height: auto;
+  min-width: auto;
 }
