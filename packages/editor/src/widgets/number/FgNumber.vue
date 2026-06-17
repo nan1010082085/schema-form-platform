@@ -13,6 +13,10 @@ useExposeWidget((wd) => ({
 }))
 
 const dynamicStyle = computed(() => ({
+  width: '100%',
+  height: `${widgetData.value.position?.h ?? 32}px`,
+  '--el-component-size': `${widgetData.value.position?.h ?? 32}px`,
+  '--el-component-size-small': `${widgetData.value.position?.h ?? 32}px`,
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
@@ -25,7 +29,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-input-number
+  <el-input-number
     ref="numberRef"
     v-model="widgetData.defaultValue as number"
     :style="dynamicStyle"
@@ -41,11 +45,12 @@ function forwardNativeChange() {
 </template>
 
 <style scoped>
-:deep(.el-input-number) {
+.el-input-number {
   width: 100%;
-  height: 100%;
 }
-:deep(.el-input__wrapper) {
-  height: 100%;
+
+.el-input-number :deep(.el-input__wrapper) {
+  min-height: inherit;
+  height: inherit;
 }
 </style>
