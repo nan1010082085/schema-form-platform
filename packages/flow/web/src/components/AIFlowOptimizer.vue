@@ -2,49 +2,49 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">
-        <span :class="$style.icon">⚡</span>
+        <AppIcon name="operation" :size="20" />
         AI 流程优化分析
       </h3>
       <p :class="$style.subtitle">分析当前流程，获取优化建议</p>
     </div>
 
     <div :class="$style.actions">
-      <t-button
-        theme="primary"
+      <el-button
+        type="primary"
         size="large"
         :loading="analyzing"
         :disabled="!hasFlow"
         @click="handleAnalyze"
       >
-        <span v-if="!analyzing">📊 分析流程</span>
+        <span v-if="!analyzing"><AppIcon name="data-analysis" :size="16" /> 分析流程</span>
         <span v-else>分析中...</span>
-      </t-button>
+      </el-button>
     </div>
 
     <div v-if="!hasFlow" :class="$style.emptyState">
-      <t-empty description="请先在画布中创建流程" />
+      <el-empty description="请先在画布中创建流程" />
     </div>
 
     <div v-if="analysisResult" :class="$style.resultSection">
       <!-- 流程指标 -->
       <div :class="$style.metricsGrid">
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon">⏱️</div>
+          <div :class="$style.metricIcon"><AppIcon name="timer" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.avgDuration }}</div>
           <div :class="$style.metricLabel">平均执行时间</div>
         </div>
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon">🔄</div>
+          <div :class="$style.metricIcon"><AppIcon name="refresh" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.nodeCount }}</div>
           <div :class="$style.metricLabel">节点数量</div>
         </div>
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon">🔀</div>
+          <div :class="$style.metricIcon"><AppIcon name="switch" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.gatewayCount }}</div>
           <div :class="$style.metricLabel">网关数量</div>
         </div>
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon">📈</div>
+          <div :class="$style.metricIcon"><AppIcon name="trend-charts" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.optimizationPotential }}%</div>
           <div :class="$style.metricLabel">优化潜力</div>
         </div>
@@ -52,14 +52,14 @@
 
       <!-- 瓶颈分析 -->
       <div v-if="analysisResult.bottlenecks.length > 0" :class="$style.section">
-        <h4 :class="$style.sectionTitle">🚨 瓶颈分析</h4>
+        <h4 :class="$style.sectionTitle"><AppIcon name="warning" /> 瓶颈分析</h4>
         <div :class="$style.bottleneckList">
           <div
             v-for="(bottleneck, index) in analysisResult.bottlenecks"
             :key="index"
             :class="$style.bottleneckItem"
           >
-            <div :class="$style.bottleneckIcon">⚠️</div>
+            <div :class="$style.bottleneckIcon"><AppIcon name="warning" /></div>
             <div :class="$style.bottleneckContent">
               <div :class="$style.bottleneckTitle">{{ bottleneck.node }}</div>
               <div :class="$style.bottleneckDesc">{{ bottleneck.issue }}</div>
@@ -70,7 +70,7 @@
 
       <!-- 优化建议 -->
       <div v-if="analysisResult.suggestions.length > 0" :class="$style.section">
-        <h4 :class="$style.sectionTitle">💡 优化建议</h4>
+        <h4 :class="$style.sectionTitle"><AppIcon name="info-filled" /> 优化建议</h4>
         <div :class="$style.suggestionList">
           <div
             v-for="(suggestion, index) in analysisResult.suggestions"
@@ -83,35 +83,36 @@
             </div>
             <div :class="$style.suggestionTitle">{{ suggestion.title }}</div>
             <div :class="$style.suggestionDesc">{{ suggestion.description }}</div>
-            <t-button
+            <el-button
               v-if="suggestion.applicable"
               size="small"
-              theme="primary"
+              type="primary"
               :class="$style.applyBtn"
               @click="handleApplySuggestion(suggestion)"
             >
               应用建议
-            </t-button>
+            </el-button>
           </div>
         </div>
       </div>
 
       <!-- AI 分析报告 -->
       <div v-if="analysisResult.report" :class="$style.section">
-        <h4 :class="$style.sectionTitle">📋 AI 分析报告</h4>
+        <h4 :class="$style.sectionTitle"><AppIcon name="document" /> AI 分析报告</h4>
         <div :class="$style.reportContent">{{ analysisResult.report }}</div>
       </div>
     </div>
 
     <div v-if="error" :class="$style.error">
-      <t-alert :title="error" theme="error" closeable @close="error = ''" />
+      <el-alert :title="error" type="error" closable @close="error = ''" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface FlowNode {
   id: string
@@ -246,7 +247,8 @@ async function callAI(prompt: string): Promise<string> {
     throw new Error('请先登录')
   }
 
-  const response = await fetch('/api/ai/chat', {
+  const API_BASE = '/schema-platform/api'
+  const response = await fetch(`${API_BASE}/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -343,7 +345,7 @@ function parseAnalysisResult(response: string) {
 
 function handleApplySuggestion(suggestion: Suggestion) {
   emit('applySuggestion', suggestion)
-  MessagePlugin.success('建议已应用')
+  ElMessage.success('建议已应用')
 }
 </script>
 

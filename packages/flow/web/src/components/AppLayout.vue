@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { FileIcon, OrderListIcon, DesktopIcon, DataIcon, RootListIcon, ChartBarIcon } from 'tdesign-icons-vue-next'
 import styles from './AppLayout.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const navItems = [
-  { path: '/list', label: '流程列表', icon: FileIcon },
-  { path: '/instances', label: '流程实例', icon: DesktopIcon },
-  { path: '/tasks', label: '我的任务', icon: OrderListIcon },
-  { path: '/monitor', label: '流程监控', icon: DataIcon },
-  { path: '/templates', label: '流程模板', icon: RootListIcon },
-  { path: '/stats', label: '流程统计', icon: ChartBarIcon },
+  { path: '/list', label: '流程列表', icon: 'document' },
+  { path: '/instances', label: '流程实例', icon: 'monitor' },
+  { path: '/tasks', label: '我的任务', icon: 'list' },
+  { path: '/monitor', label: '流程监控', icon: 'data-board' },
+  { path: '/templates', label: '流程模板', icon: 'folder' },
+  { path: '/stats', label: '流程统计', icon: 'trend-charts' },
 ]
 
 const activeNav = computed(() => {
@@ -41,7 +41,7 @@ const activeNav = computed(() => {
           :to="item.path"
           :class="[styles.navItem, { [styles.navItemActive]: activeNav === item.path }]"
         >
-          <component :is="item.icon" style="font-size: 18px;" />
+          <AppIcon :name="item.icon" :size="18" />
           <span>{{ item.label }}</span>
         </router-link>
       </nav>

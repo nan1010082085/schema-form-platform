@@ -7,22 +7,22 @@
  */
 
 import { ref, computed } from 'vue'
-import { LinkIcon, DeleteIcon } from 'tdesign-icons-vue-next'
-import type { WorkflowVariableLeaf, WorkflowVariableSource } from '../composables/useWorkflowVariables'
-import styles from './VariableHighlightInput.module.css'
+import type { VariableLeaf, VariableSource } from '../composables/useVariableDefinitions'
+import styles from './VariableHighlightInput.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface VariableSegment {
   type: 'text' | 'variable'
   content: string
   path?: string
   label?: string
-  source?: WorkflowVariableSource
+  source?: VariableSource
 }
 
 const props = withDefaults(defineProps<{
   modelValue?: string
   placeholder?: string
-  variables?: WorkflowVariableLeaf[]
+  variables?: VariableLeaf[]
   disabled?: boolean
 }>(), {
   modelValue: '',
@@ -82,13 +82,11 @@ const segments = computed<VariableSegment[]>(() => {
 })
 
 /** Get variable source color */
-function getSourceColor(source?: WorkflowVariableSource): string {
+function getSourceColor(source?: VariableSource): string {
   switch (source) {
-    case 'trigger': return 'var(--node-accent-trigger, #f59e0b)'
-    case 'editor': return 'var(--node-accent-editor, #10b981)'
-    case 'flow': return 'var(--node-accent-flow, #6366f1)'
-    case 'ai': return 'var(--node-accent-ai, #8b5cf6)'
-    case 'system': return 'var(--node-accent-system, #64748b)'
+    case 'env': return 'var(--node-accent-trigger, #f59e0b)'
+    case 'form': return 'var(--node-accent-editor, #10b981)'
+    case 'node': return 'var(--node-accent-flow, #6366f1)'
     default: return 'var(--color-primary)'
   }
 }
@@ -112,23 +110,6 @@ function handleVariableClick(index: number, e: MouseEvent) {
 function deleteVariable(index: number) {
   const newSegments = [...segments.value]
   newSegments.splice(index, 1)
-
-  const newValue = newSegments.map(s => s.content).join('')
-  emit('update:modelValue', newValue)
-  popoverVisible.value = false
-  editingIndex.value = null
-}
-
-/** Replace variable reference */
-function _replaceVariable(index: number, newVariable: WorkflowVariableLeaf) {
-  const newSegments = [...segments.value]
-  newSegments[index] = {
-    type: 'variable',
-    content: `{{${newVariable.path}}}`,
-    path: newVariable.path,
-    label: newVariable.label,
-    source: newVariable.source,
-  }
 
   const newValue = newSegments.map(s => s.content).join('')
   emit('update:modelValue', newValue)
@@ -163,7 +144,7 @@ function closePopover() {
           :style="{ '--tag-color': getSourceColor(segment.source) }"
           @click="handleVariableClick(index, $event)"
         >
-          <LinkIcon :class="styles.variableIcon" />
+          <AppIcon name="link" :class="styles.variableIcon" />
           {{ segment.label }}
         </span>
       </template>
@@ -182,17 +163,17 @@ function closePopover() {
       >
         <div :class="styles.popoverHeader">
           <span :class="styles.popoverTitle">变量操作</span>
-          <DeleteIcon :class="styles.popoverClose" @click="closePopover" />
+          <AppIcon name="delete" :class="styles.popoverClose" @click="closePopover" />
         </div>
         <div :class="styles.popoverBody">
           <div :class="styles.popoverPath">
             {{ segments[editingIndex]?.path }}
           </div>
           <div :class="styles.popoverActions">
-            <t-button size="small" @click="deleteVariable(editingIndex)">
-              <DeleteIcon />
+            <el-button size="small" @click="deleteVariable(editingIndex)">
+              <AppIcon name="delete" />
               删除
-            </t-button>
+            </el-button>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 .field-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 8px;
-  min-height: var(--size-md);
+  min-height: 32px;
 }
 
 .field-row:last-child {
@@ -14,12 +14,12 @@
 }
 
 .field-row__label {
-  width: 80px;
+  width: 70px;
   flex-shrink: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-color-secondary);
+  font-size: 12px;
+  color: var(--text-color-regular);
   font-weight: 500;
-  line-height: var(--size-md);
+  line-height: 32px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -33,7 +33,7 @@
 .field-row__control {
   flex: 1;
   min-width: 0;
-  height: var(--size-md);
+  min-height: 32px;
   display: flex;
   align-items: center;
 }
@@ -43,18 +43,18 @@
   align-items: flex-start;
 }
 
-/* TDesign 组件高度覆盖 */
-.field-row__control :deep(.t-input),
-.field-row__control :deep(.t-select),
-.field-row__control :deep(.t-input-number) {
+/* Element Plus 组件高度覆盖 */
+.field-row__control :deep(.el-input),
+.field-row__control :deep(.el-select),
+.field-row__control :deep(.el-input-number) {
   width: 100%;
 }
 
-.field-row__control :deep(.t-input) {
-  height: var(--size-md);
+.field-row__control :deep(.el-input) {
+  height: 32px;
 }
 
-.field-row__control :deep(.t-input-number) {
-  height: var(--size-md);
+.field-row__control :deep(.el-input-number) {
+  height: 32px;
   min-height: 0;
 }

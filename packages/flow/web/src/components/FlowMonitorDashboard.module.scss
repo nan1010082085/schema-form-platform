@@ -33,6 +33,20 @@
 
 .datePicker {
   margin-left: var(--spacing-xs, 4px);
+
+  :deep(.el-range-editor) {
+    min-height: 32px;
+
+    .el-input__wrapper {
+      height: 32px;
+      line-height: 32px;
+    }
+
+    .el-range-input {
+      height: 32px;
+      line-height: 32px;
+    }
+  }
 }
 
 .statsRow {
@@ -41,20 +55,30 @@
 
 .statCard {
   text-align: center;
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .statCardClickable {
   cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
 
   &:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(245, 108, 108, 0.25);
   }
 }
 
 .statItem {
   padding: var(--spacing-sm, 12px) 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .statValue {

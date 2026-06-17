@@ -7,7 +7,8 @@
         :class="[$style.message, $style[msg.role]]"
       >
         <div :class="$style.messageAvatar">
-          {{ msg.role === 'user' ? '👤' : '🤖' }}
+          <AppIcon v-if="msg.role === 'user'" name="user" :size="16" />
+          <AppIcon v-else name="connection" :size="16" />
         </div>
         <div :class="$style.messageContent">
           <div :class="$style.messageText">{{ msg.content }}</div>
@@ -18,25 +19,25 @@
                 v-for="(node, i) in msg.flowData.nodes.slice(0, 5)"
                 :key="node.id"
               >
-                {{ getNodeIcon(node.type) }} {{ node.data?.name || node.type }}
+                <AppIcon :name="getNodeIcon(node.type)" :size="14" /> {{ node.data?.name || node.type }}
                 <span v-if="i < Math.min(msg.flowData.nodes.length, 5) - 1"> → </span>
               </span>
               <span v-if="msg.flowData.nodes.length > 5"> ...</span>
             </div>
-            <t-button
+            <el-button
               size="small"
-              theme="primary"
+              type="primary"
               :class="$style.applyBtn"
               @click="handleApplyFlow(msg.flowData)"
             >
               应用到画布
-            </t-button>
+            </el-button>
           </div>
         </div>
       </div>
 
       <div v-if="loading" :class="[$style.message, $style.assistant]">
-        <div :class="$style.messageAvatar">🤖</div>
+        <div :class="$style.messageAvatar"><AppIcon name="connection" :size="16" /></div>
         <div :class="$style.messageContent">
           <div :class="$style.typing">
             <span :class="$style.dot"></span>
@@ -48,8 +49,8 @@
     </div>
 
     <div :class="$style.inputArea">
-      <t-input
-        v-model:value="inputText"
+      <el-input
+        v-model="inputText"
         type="textarea"
         :rows="3"
         placeholder="描述你想要的流程，或问我任何问题..."
@@ -58,14 +59,14 @@
       />
       <div :class="$style.inputActions">
         <span :class="$style.hint">Ctrl + Enter 发送</span>
-        <t-button
-          theme="primary"
+        <el-button
+          type="primary"
           :loading="loading"
           :disabled="!inputText.trim()"
           @click="handleSend"
         >
           发送
-        </t-button>
+        </el-button>
       </div>
     </div>
   </div>
@@ -73,6 +74,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface FlowNode {
   id: string
@@ -103,19 +105,19 @@ const emit = defineEmits<{
 }>()
 
 const NODE_ICONS: Record<string, string> = {
-  'start-event': '▶️',
-  'end-event': '⏹️',
-  'user-task': '📝',
-  'service-task': '⚙️',
-  'exclusive-gateway': '🔀',
-  'parallel-gateway': '➗',
-  'inclusive-gateway': '⭕',
-  'sub-process': '📦',
-  'ai-task': '🤖',
+  'start-event': 'video-play',
+  'end-event': 'video-pause',
+  'user-task': 'edit',
+  'service-task': 'setting',
+  'exclusive-gateway': 'switch',
+  'parallel-gateway': 'sort',
+  'inclusive-gateway': 'circle-check',
+  'sub-process': 'document',
+  'ai-task': 'connection',
 }
 
 function getNodeIcon(type: string): string {
-  return NODE_ICONS[type] || '📋'
+  return NODE_ICONS[type] || 'document'
 }
 
 const messages = ref<Message[]>([
@@ -180,7 +182,8 @@ async function callAI(prompt: string): Promise<string> {
 
   const fullPrompt = prompt + contextInfo
 
-  const response = await fetch('/api/ai/chat', {
+  const API_BASE = '/schema-platform/api'
+  const response = await fetch(`${API_BASE}/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

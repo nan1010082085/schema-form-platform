@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.callback">
-    <LoadingIcon :class="$style.spinner" :size="32" />
+    <AppIcon name="loading" :class="$style.spinner" :size="32" />
     <p :class="$style.text">正在完成登录...</p>
   </div>
 </template>
@@ -8,8 +8,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { LoadingIcon } from 'tdesign-icons-vue-next'
 import { SSOClient } from '@schema-form/shared-utils/sso'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -21,7 +21,7 @@ onMounted(async () => {
   const origin = window.location.origin
   const client = new SSOClient({
     clientId: 'flow',
-    redirectUri: `${origin}/schema-platform/flow/auth/callback`,
+    redirectUri: `${origin}${import.meta.env.BASE_URL}auth/callback`,
     ssoBaseUrl: origin,
   })
 

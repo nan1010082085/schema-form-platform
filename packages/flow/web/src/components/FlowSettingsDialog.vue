@@ -3,6 +3,7 @@ import { reactive, watch } from 'vue'
 import type { FlowPermissions, FlowPermissionItem } from '@schema-form/flow-shared'
 import UserPicker from './UserPicker.vue'
 import styles from './FlowSettingsDialog.module.scss'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 interface SettingsData {
   name: string
@@ -78,30 +79,31 @@ function onSave() {
 </script>
 
 <template>
-  <t-dialog
-    header="流程设置"
-    :visible="visible"
+  <el-dialog
+    title="流程设置"
+    :model-value="visible"
     width="560px"
-    :close-on-overlay-click="false"
+    :close-on-click-modal="false"
     @close="onCancel"
+    @update:model-value="emit('update:visible', $event)"
   >
     <div :class="styles.settingsForm">
       <div :class="styles.field">
         <label :class="styles.fieldLabel">流程名称</label>
-        <t-input v-model:value="form.name" placeholder="输入流程名称" />
+        <el-input v-model="form.name" placeholder="输入流程名称" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">描述</label>
-        <t-input v-model:value="form.description" type="textarea" :rows="3" placeholder="流程描述" />
+        <el-input v-model="form.description" type="textarea" :rows="3" placeholder="流程描述" />
       </div>
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">分类</label>
-        <t-input v-model:value="form.category" placeholder="输入流程分类" />
+        <el-input v-model="form.category" placeholder="输入流程分类" />
       </div>
 
-      <t-divider />
+      <el-divider />
 
       <div :class="styles.sectionHeader">流程权限</div>
 
@@ -133,20 +135,17 @@ function onSave() {
         />
       </div>
 
-      <t-divider />
+      <el-divider />
 
       <div :class="styles.field">
         <label :class="styles.fieldLabel">默认驳回策略</label>
-        <t-radio-group v-model:value="form.defaultRejectPolicy">
-          <t-radio value="reject-on-all">全部驳回才驳回</t-radio>
-          <t-radio value="reject-on-any">一票驳回即驳回</t-radio>
-        </t-radio-group>
+        <FilterTabs v-model="form.defaultRejectPolicy" :options="[{ label: '全部驳回才驳回', value: 'reject-on-all' }, { label: '一票驳回即驳回', value: 'reject-on-any' }]" />
       </div>
     </div>
 
     <template #footer>
-      <t-button @click="onCancel">取消</t-button>
-      <t-button theme="primary" @click="onSave">保存</t-button>
+      <el-button @click="onCancel">取消</el-button>
+      <el-button type="primary" @click="onSave">保存</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>

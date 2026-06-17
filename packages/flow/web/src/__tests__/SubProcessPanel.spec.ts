@@ -3,10 +3,8 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 /* ------------------------------------------------------------------ */
-/*  Mock tdesign-icons-vue-next                                        */
 /* ------------------------------------------------------------------ */
 
-vi.mock('tdesign-icons-vue-next', () => ({
   ChevronRightIcon: { template: '<span />' },
   ChevronDownIcon: { template: '<span />' },
   AddIcon: { template: '<span />' },

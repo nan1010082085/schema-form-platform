@@ -1,9 +1,9 @@
 .panel {
   display: flex;
   flex-direction: column;
-  width: 500px;
+  width: 100%;
   min-height: 0;
-  background: var(--bg-color);
+  background: var(--bg-color-white);
   overflow: hidden;
 }
 
@@ -11,12 +11,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  font-size: var(--font-size-small);
+  padding: 12px 16px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-color-primary);
+  color: var(--color-primary);
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color-lighter);
+  border-bottom: 1px solid var(--color-primary-lighter);
 }
 
 .widgetNameRow {
@@ -24,13 +24,13 @@
   align-items: center;
   gap: 4px;
   padding: 8px 16px;
-  border-bottom: 1px solid var(--border-color-lighter);
+  border-bottom: 1px solid var(--color-primary-lighter);
   flex-shrink: 0;
 }
 
 .widgetType {
   font-weight: 600;
-  font-size: var(--font-size-small);
+  font-size: 13px;
   color: var(--text-color-primary);
 }
 

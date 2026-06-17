@@ -14,7 +14,7 @@ function update(key: string, value: unknown) {
 <template>
   <SectionToggle title="调用配置" :count="1">
     <FieldRow label="流程定义 ID">
-      <t-input
+      <el-input
         :model-value="(node.data?.callActivityDefinitionId as string) ?? ''"
         placeholder="关联的流程定义 ID"
         @input="update('callActivityDefinitionId', $event)"

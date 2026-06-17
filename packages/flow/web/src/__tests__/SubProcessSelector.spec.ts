@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 
 /* ------------------------------------------------------------------ */
-/*  Mock tdesign-icons-vue-next                                        */
 /* ------------------------------------------------------------------ */
 
-vi.mock('tdesign-icons-vue-next', () => ({
   SearchIcon: { template: '<span />' },
 }))
 

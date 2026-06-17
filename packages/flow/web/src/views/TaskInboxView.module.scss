@@ -78,16 +78,188 @@
   font-size: var(--font-size-13);
   color: var(--color-danger);
 }
-.searchBar {
+
+.toolbar {
   display: flex;
-  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color-lighter);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
 }
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .searchInput {
-  width: 280px;
+  width: 240px;
 }
+
+.content {
+  margin-top: var(--spacing-md);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.statusBar {
+  height: 4px;
+  background: var(--border-color-lighter);
+
+  &.status_pending {
+    background: var(--color-warning);
+  }
+  &.status_claimed {
+    background: var(--color-primary);
+  }
+  &.status_completed,
+  &.status_approved {
+    background: var(--color-success);
+  }
+  &.status_rejected {
+    background: var(--color-danger);
+  }
+}
+
+.cardBody {
+  flex: 1;
+  padding: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.initiator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.cardDates {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dateItem {
+  display: flex;
+  align-items: center;
+}
+
+.dateLabel {
+  font-size: 12px;
+  color: var(--text-color-placeholder);
+  min-width: 40px;
+}
+
+.dateValue {
+  font-size: 13px;
+  color: var(--text-color-regular);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color-lighter);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.emptyIcon {
+  color: var(--text-color-placeholder);
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.skeletonCard {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.skeletonThumb {
+  height: 4px;
+  background: var(--bg-color-page);
+}
+
+.skeletonTitle {
+  height: 20px;
+  margin: 16px 16px 12px;
+  background: var(--bg-color-page);
+  border-radius: 4px;
+}
+
+.skeletonText {
+  height: 14px;
+  margin: 0 16px 16px;
+  background: var(--bg-color-page);
+  border-radius: 4px;
+  width: 60%;
+}
+
 .pagination {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--spacing-md);
+  justify-content: center;
+  margin-top: 20px;
 }

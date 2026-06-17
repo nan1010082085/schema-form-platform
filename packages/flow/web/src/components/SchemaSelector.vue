@@ -2,16 +2,16 @@
   <div :class="$style.container">
     <!-- 搜索 -->
     <div :class="$style.search">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索表单"
         clearable
         @input="handleSearch"
       >
         <template #prefix>
-          <SearchIcon />
+          <AppIcon name="search" :size="14" />
         </template>
-      </t-input>
+      </el-input>
     </div>
 
     <!-- 列表 -->
@@ -29,18 +29,16 @@
         </div>
       </div>
 
-      <t-empty v-if="!loading && schemas.length === 0" description="暂无表单" />
+      <el-empty v-if="!loading && schemas.length === 0" description="暂无表单" />
     </div>
 
     <!-- 分页 -->
     <div :class="$style.pagination">
-      <t-pagination
-        v-model:current="currentPage"
+      <el-pagination
+        v-model:current-page="currentPage"
         :page-size="pageSize"
         :total="total"
-        show-total
-        show-prev-and-next-btn
-        show-page-number
+        layout="total, prev, pager, next"
         @current-change="fetchSchemas"
       />
     </div>
@@ -49,7 +47,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { SearchIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface SchemaItem {
   id: string
@@ -86,7 +84,8 @@ async function fetchSchemas() {
       params.set('search', searchQuery.value)
     }
 
-    const response = await fetch(`/api/schemas?${params}`, {
+    const API_BASE = '/schema-platform/api'
+    const response = await fetch(`${API_BASE}/schemas?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await response.json()

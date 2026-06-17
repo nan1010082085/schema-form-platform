@@ -14,7 +14,7 @@ function update(key: string, value: unknown) {
 <template>
   <SectionToggle title="条件配置" :count="1">
     <FieldRow label="条件表达式">
-      <t-input
+      <el-input
         :model-value="(node.data?.conditionExpression as string) ?? ''"
         placeholder="如: amount > 1000"
         @input="update('conditionExpression', $event)"

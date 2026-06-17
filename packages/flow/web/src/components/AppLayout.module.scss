@@ -1,13 +1,13 @@
 .layout {
   display: flex;
   height: 100vh;
-  background: var(--bg-color-secondary);
+  background: var(--bg-color-page);
 }
 
 .sidebar {
   width: 200px;
-  background: var(--bg-color);
-  border-right: 1px solid var(--border-color-lighter);
+  background: var(--bg-color-white);
+  border-right: 1px solid var(--bg-color-gray-darker);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -16,13 +16,13 @@
 .logo {
   padding: 20px 20px 16px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color-lighter);
+  border-bottom: 1px solid var(--bg-color-page);
 }
 
 .logoText {
-  font-size: var(--font-size-md);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--text-color-primary);
+  color: var(--text-color-title);
   letter-spacing: -0.5px;
 }
 
@@ -39,28 +39,28 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-md);
-  color: var(--text-color-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-color-regular);
   text-decoration: none;
   transition: all 0.15s;
   cursor: pointer;
 }
 
 .navItem:hover {
-  background: var(--bg-color-secondary);
-  color: var(--text-color-primary);
+  background: var(--bg-color-gray);
+  color: var(--text-color-title);
 }
 
 .navItemActive {
-  background: var(--color-primary-light);
+  background: var(--color-primary-lighter);
   color: var(--color-primary);
   font-weight: 500;
 }
 
 .sidebarFooter {
   padding: 8px;
-  border-top: 1px solid var(--border-color-lighter);
+  border-top: 1px solid var(--bg-color-page);
 }
 
 .main {

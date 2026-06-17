@@ -2,7 +2,7 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">审批记录</h3>
-      <t-button size="small" @click="refresh">刷新</t-button>
+      <el-button size="small" @click="refresh">刷新</el-button>
     </div>
 
     <div v-loading="loading" :class="$style.list">
@@ -13,9 +13,9 @@
       >
         <div :class="$style.itemHeader">
           <span :class="$style.nodeName">{{ task.nodeName }}</span>
-          <t-tag :theme="getStatusTheme(task.status)" size="small" variant="light">
+          <el-tag :type="getStatusTheme(task.status)" size="small" effect="light">
             {{ getStatusLabel(task.status) }}
-          </t-tag>
+          </el-tag>
         </div>
 
         <div :class="$style.itemBody">
@@ -25,9 +25,9 @@
           </div>
           <div v-if="task.outcome" :class="$style.outcome">
             <span :class="$style.label">结果：</span>
-            <t-tag :theme="getOutcomeTheme(task.outcome)" size="small" variant="light">
+            <el-tag :type="getOutcomeTheme(task.outcome)" size="small" effect="light">
               {{ getOutcomeLabel(task.outcome) }}
-            </t-tag>
+            </el-tag>
           </div>
           <div v-if="task.updatedAt" :class="$style.time">
             <span :class="$style.label">时间：</span>
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <t-empty v-if="!loading && tasks.length === 0" description="暂无审批记录" />
+      <el-empty v-if="!loading && tasks.length === 0" description="暂无审批记录" />
     </div>
   </div>
 </template>
@@ -71,7 +71,8 @@ async function fetchApprovalList() {
   loading.value = true
   try {
     const token = localStorage.getItem('sfp_access_token')
-    const response = await fetch(`/api/flow-tasks/approval-list?instanceId=${props.instanceId}`, {
+    const API_BASE = '/schema-platform/api'
+    const response = await fetch(`${API_BASE}/flow-tasks/approval-list?instanceId=${props.instanceId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await response.json()

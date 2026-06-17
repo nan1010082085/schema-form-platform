@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
 import TaskInboxView from '../views/TaskInboxView.vue'
 import type { TaskInstanceData } from '@schema-form/flow-shared'
 
@@ -36,21 +35,6 @@ vi.mock('../api/flowApi', () => ({
 
 import { flowApi } from '../api/flowApi'
 const mockedApi = vi.mocked(flowApi)
-
-// Mock DialogPlugin to auto-confirm
-vi.mock('tdesign-vue-next', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('tdesign-vue-next')>()
-  return {
-    ...actual,
-    DialogPlugin: {
-      ...actual.DialogPlugin,
-      confirm: vi.fn().mockImplementation(({ onConfirm }: { onConfirm?: () => void }) => {
-        if (onConfirm) onConfirm()
-        return { destroy: vi.fn() }
-      }),
-    },
-  }
-})
 
 // Mock functions for MicroFormEmbed exposed methods
 const mockGetValues = vi.fn().mockResolvedValue({ field1: 'value1' })

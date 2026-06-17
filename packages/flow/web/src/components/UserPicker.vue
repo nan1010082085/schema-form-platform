@@ -84,7 +84,7 @@ async function loadData(reset = false) {
     // 添加用户选项
     for (const user of usersRes.items) {
       newOptions.push({
-        value: `user:${user.id}`,
+        value: user.id,
         label: formatUserLabel(user as User),
         type: 'user',
       })
@@ -94,7 +94,7 @@ async function loadData(reset = false) {
     if (rolesRes) {
       for (const role of rolesRes.items) {
         newOptions.push({
-          value: `role:${role.id}`,
+          value: role.id,
           label: formatRoleLabel(role as Role),
           type: 'role',
         })
@@ -129,13 +129,6 @@ function onVisibleChange(visible: boolean) {
   }
 }
 
-function onScroll(event: Event) {
-  const target = event.target as HTMLElement
-  if (target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
-    loadData()
-  }
-}
-
 function onChange(val: string[]) {
   emit('update:modelValue', val)
 }
@@ -145,13 +138,31 @@ onMounted(() => {
   // 初始化时不加载，等下拉框打开时再加载
 })
 
-watch(() => props.modelValue, (val) => {
+watch(() => props.modelValue, async (val) => {
   // 确保选中的值在选项中存在
-  if (val) {
-    for (const v of val) {
-      if (!options.value.find(o => o.value === v)) {
-        // 如果选项中不存在，可能是已选择但未加载的项
-        // 这里可以触发加载，或者显示为标签
+  if (val && val.length > 0) {
+    const missingIds = val.filter(v => !options.value.find(o => o.value === v))
+    if (missingIds.length > 0) {
+      // 加载缺失的用户信息
+      try {
+        const users = await Promise.all(
+          missingIds.map(id => flowApi.getUserById(id))
+        )
+        const newOptions: SelectOption[] = []
+        for (const user of users) {
+          if (!options.value.find(o => o.value === user.id)) {
+            newOptions.push({
+              value: user.id,
+              label: formatUserLabel(user as User),
+              type: 'user',
+            })
+          }
+        }
+        if (newOptions.length > 0) {
+          options.value = [...options.value, ...newOptions]
+        }
+      } catch {
+        // 忽略错误
       }
     }
   }
@@ -159,39 +170,39 @@ watch(() => props.modelValue, (val) => {
 </script>
 
 <template>
-  <t-select
+  <el-select
     :model-value="modelValue"
     multiple
     filterable
-    :filter="() => true"
+    remote
     reserve-keyword
     :placeholder="placeholder"
     :loading="loading"
     @change="onChange"
-    @search="onSearch"
-    @popup-visible-change="onVisibleChange"
+    @remote-method="onSearch"
+    @visible-change="onVisibleChange"
   >
-    <t-option
+    <el-option
       v-for="item in options"
       :key="item.value"
       :label="item.label"
       :value="item.value"
     >
       <div :class="styles.optionItem">
-        <t-tag
-          :theme="item.type === 'user' ? 'default' : 'warning'"
+        <el-tag
+          :type="item.type === 'user' ? 'default' : 'warning'"
           size="small"
           :class="styles.typeTag"
         >
           {{ item.type === 'user' ? '用户' : '角色' }}
-        </t-tag>
+        </el-tag>
         <span :class="styles.optionLabel">{{ item.label }}</span>
       </div>
-    </t-option>
-    <template #panelBottomContent>
+    </el-option>
+    <template #dropdown>
       <div v-if="loading" :class="styles.loading">加载中...</div>
       <div v-if="!hasMore && options.length > 0" :class="styles.noMore">没有更多了</div>
       <div v-if="!loading && options.length === 0" :class="styles.empty">暂无数据</div>
     </template>
-  </t-select>
+  </el-select>
 </template>

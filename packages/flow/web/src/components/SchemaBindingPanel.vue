@@ -8,32 +8,32 @@
     <div :class="$style.field">
       <label :class="$style.label">绑定表单</label>
       <div :class="$style.selector">
-        <t-input
+        <el-input
           :model-value="schemaName"
           placeholder="点击选择表单"
           readonly
           @click="showSelector = true"
         >
           <template #suffix>
-            <t-button variant="text" @click="showSelector = true">选择</t-button>
+            <el-button link @click="showSelector = true">选择</el-button>
           </template>
-        </t-input>
+        </el-input>
       </div>
     </div>
 
     <!-- 表单模式 -->
     <div v-if="formSchemaId" :class="$style.field">
       <label :class="$style.label">表单模式</label>
-      <t-select
+      <el-select
         :model-value="formMode"
         style="width: 100%"
         @change="update('formMode', $event)"
       >
-        <t-option label="新建（create）" value="create" />
-        <t-option label="查看（view）" value="view" />
-        <t-option label="编辑（edit）" value="edit" />
-        <t-option label="审批（approve）" value="approve" />
-      </t-select>
+        <el-option label="新建（create）" value="create" />
+        <el-option label="查看（view）" value="view" />
+        <el-option label="编辑（edit）" value="edit" />
+        <el-option label="审批（approve）" value="approve" />
+      </el-select>
     </div>
 
     <!-- 说明 -->
@@ -54,9 +54,9 @@
     </div>
 
     <!-- Schema 选择弹窗 -->
-    <t-dialog
-      v-model:visible="showSelector"
-      header="选择表单"
+    <el-dialog
+      v-model="showSelector"
+      title="选择表单"
       width="800px"
       destroy-on-close
     >
@@ -64,7 +64,7 @@
         :selected-id="formSchemaId"
         @select="handleSelect"
       />
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>
 

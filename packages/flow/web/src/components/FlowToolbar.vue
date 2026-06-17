@@ -1,162 +1,119 @@
 <template>
   <div :class="[styles.toolbar, { [styles.previewBar]: isPreview }]">
-    <!-- Left: portal + app name + title -->
+    <!-- Left: portal + title -->
     <div :class="styles.left">
-      <t-tooltip content="返回门户首页" placement="bottom">
-        <button :class="styles.iconBtn" title="返回门户" @click="goToPortal">
-          <HomeFilledIcon style="font-size: 14px" />
-        </button>
-      </t-tooltip>
+      <button :class="styles.iconBtn" title="返回列表" @click="goToPortal">
+        <AppIcon name="arrow-left" :size="14" />
+      </button>
       <div :class="styles.divider" />
-      <span :class="styles.appName">流程设计器</span>
-      <div :class="styles.divider" />
-      <span :class="styles.title">{{ title || '未命名流程' }}</span>
-      <div :class="styles.divider" />
-      <t-segmented
-        :model-value="flowMode ?? 'bpmn'"
-        :options="[
-          { label: 'BPMN', value: 'bpmn' },
-          { label: 'Workflow', value: 'workflow' },
-        ]"
-        size="small"
-        @update:model-value="$emit('toggle-flow-mode')"
+      <input
+        v-if="!isPreview"
+        :class="styles.titleInput"
+        :value="title"
+        placeholder="未命名流程"
+        @input="$emit('update:title', ($event.target as HTMLInputElement).value)"
       />
+      <span v-else :class="styles.titleText">{{ title || '未命名流程' }}</span>
     </div>
 
     <!-- Center: panel toggles + undo/redo + export/import (hidden in preview) -->
     <div v-if="!isPreview" :class="styles.center">
-      <t-tooltip :content="showLeftPanel ? '隐藏节点面板' : '显示节点面板'" placement="bottom">
+      <el-tooltip :content="showLeftPanel ? '隐藏节点面板' : '显示节点面板'" placement="bottom">
         <button
           :class="[styles.iconBtn, { [styles.iconBtnActive]: showLeftPanel }]"
           title="节点面板"
           @click="$emit('toggle-left-panel')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="2" width="14" height="12" rx="1" />
-            <line x1="5" y1="2" x2="5" y2="14" />
-          </svg>
+          <AppIcon name="grid" :size="14" />
         </button>
-      </t-tooltip>
+      </el-tooltip>
       <div :class="styles.btnGroup">
-        <t-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
+        <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
           <button :class="styles.iconBtn" title="撤销 (Ctrl+Z)" @click="$emit('undo')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 3 2 7 6 11" />
-              <path d="M2 7h8a4 4 0 0 1 0 8H7" />
-            </svg>
+            <AppIcon name="back" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="重做 (Ctrl+Y)" placement="bottom">
+        </el-tooltip>
+        <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
           <button :class="styles.iconBtn" title="重做 (Ctrl+Y)" @click="$emit('redo')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="10 3 14 7 10 11" />
-              <path d="M14 7H6a4 4 0 0 0 0 8h3" />
-            </svg>
+            <AppIcon name="right" :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
       </div>
-      <t-tooltip :content="showRightPanel ? '隐藏属性面板' : '显示属性面板'" placement="bottom">
+      <el-tooltip :content="showRightPanel ? '隐藏属性面板' : '显示属性面板'" placement="bottom">
         <button
           :class="[styles.iconBtn, { [styles.iconBtnActive]: showRightPanel }]"
           title="属性面板"
           @click="$emit('toggle-right-panel')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="2" width="14" height="12" rx="1" />
-            <line x1="11" y1="2" x2="11" y2="14" />
-          </svg>
+          <AppIcon name="setting" :size="14" />
         </button>
-      </t-tooltip>
-      <t-popup
+      </el-tooltip>
+      <el-popover
         v-model:visible="layoutPopoverVisible"
         placement="bottom"
-        :overlay-inner-style="{ width: '240px' }"
+        :width="240"
         trigger="click"
       >
         <template #content>
           <div :class="styles.layoutPopover">
             <div :class="styles.layoutRow">
               <span :class="styles.layoutLabel">方向</span>
-              <t-segmented
+              <FilterTabs
                 :model-value="layoutDirection ?? 'TB'"
-                :options="[
-                  { label: '垂直', value: 'TB' },
-                  { label: '水平', value: 'LR' },
-                ]"
-                size="small"
+                :options="[{ label: '垂直', value: 'TB' }, { label: '水平', value: 'LR' }]"
                 @update:model-value="$emit('update:layoutDirection', $event as LayoutDirection)"
               />
             </div>
             <div :class="styles.layoutRow">
               <span :class="styles.layoutLabel">节点间距</span>
-              <t-slider
+              <el-slider
                 :model-value="layoutNodeSep ?? 60"
                 :min="20"
                 :max="200"
                 :step="10"
-                :show-tooltip="false"
                 size="small"
                 @update:model-value="$emit('update:layoutNodeSep', $event as number)"
               />
             </div>
             <div :class="styles.layoutRow">
               <span :class="styles.layoutLabel">层级间距</span>
-              <t-slider
+              <el-slider
                 :model-value="layoutRankSep ?? 80"
                 :min="30"
                 :max="300"
                 :step="10"
-                :show-tooltip="false"
                 size="small"
                 @update:model-value="$emit('update:layoutRankSep', $event as number)"
               />
             </div>
-            <t-button
-              theme="primary"
+            <el-button
+              type="primary"
               size="small"
               :class="styles.layoutApplyBtn"
               @click="$emit('auto-layout'); layoutPopoverVisible = false"
             >
               应用布局
-            </t-button>
+            </el-button>
           </div>
         </template>
-        <t-tooltip content="自动布局" placement="bottom" :disabled="layoutPopoverVisible">
-          <button :class="styles.iconBtn" title="自动布局" @click="layoutPopoverVisible = !layoutPopoverVisible">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="1" width="5" height="5" rx="1" />
-              <rect x="10" y="1" width="5" height="5" rx="1" />
-              <rect x="5.5" y="10" width="5" height="5" rx="1" />
-              <line x1="3.5" y1="6" x2="3.5" y2="10" stroke-dasharray="2 1" />
-              <line x1="12.5" y1="6" x2="12.5" y2="10" stroke-dasharray="2 1" />
-              <line x1="3.5" y1="10" x2="5.5" y2="10" stroke-dasharray="2 1" />
-              <line x1="12.5" y1="10" x2="10.5" y2="10" stroke-dasharray="2 1" />
-            </svg>
-          </button>
-        </t-tooltip>
-      </t-popup>
+        <button :class="styles.iconBtn" title="自动布局">
+          <AppIcon name="rank" :size="14" />
+        </button>
+      </el-popover>
       <div :class="styles.btnGroup">
-        <t-tooltip content="导出 BPMN" placement="bottom">
+        <el-tooltip content="导出 BPMN" placement="bottom">
           <button :class="styles.iconBtn" title="导出 BPMN" @click="$emit('export-bpmn')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 10v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3" />
-              <polyline points="4.5 6.5 8 10 11.5 6.5" />
-              <line x1="8" y1="2" x2="8" y2="10" />
-            </svg>
+            <AppIcon name="download" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="导入 BPMN" placement="bottom">
+        </el-tooltip>
+        <el-tooltip content="导入 BPMN" placement="bottom">
           <button :class="styles.iconBtn" title="导入 BPMN" @click="$emit('import-bpmn')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 10v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-3" />
-              <polyline points="4.5 9.5 8 6 11.5 9.5" />
-              <line x1="8" y1="14" x2="8" y2="6" />
-            </svg>
+            <AppIcon name="upload" :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
       </div>
       <div :class="styles.divider" />
-      <t-tooltip content="AI 助手" placement="bottom">
+      <el-tooltip content="AI 助手" placement="bottom">
         <button
           :class="[styles.iconBtn, styles.aiBtn, { [styles.iconBtnActive]: showAiDrawer }]"
           title="AI 助手"
@@ -164,14 +121,14 @@
         >
           <span :class="styles.aiLabel">AI</span>
         </button>
-      </t-tooltip>
-      <t-tooltip content="预览" placement="bottom">
+      </el-tooltip>
+      <el-tooltip content="预览" placement="bottom">
         <button :class="styles.iconBtn" title="预览" @click="$emit('toggle-preview')">
-          <BrowseIcon style="font-size: 14px" />
+          <AppIcon name="view" style="font-size: 14px" />
         </button>
-      </t-tooltip>
+      </el-tooltip>
       <!-- 快捷键帮助 -->
-      <t-popup placement="bottom" :overlay-inner-style="{ width: '300px' }" trigger="click">
+      <el-popover placement="bottom" :width="300" trigger="click">
         <template #content>
           <div :class="styles.shortcuts">
             <div :class="styles.shortcutsTitle">快捷键</div>
@@ -206,13 +163,9 @@
           </div>
         </template>
         <button :class="styles.iconBtn" title="快捷键帮助">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="8" cy="8" r="6.5" />
-            <path d="M5.5 6.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
-            <circle cx="8" cy="12" r="0.5" fill="currentColor" />
-          </svg>
+          <AppIcon name="question-filled" :size="14" />
         </button>
-      </t-popup>
+      </el-popover>
     </div>
 
     <!-- Center: preview label + simulation controls -->
@@ -220,64 +173,50 @@
       <span :class="styles.previewLabel">预览模式</span>
 
       <template v-if="!isSimulating">
-        <t-tooltip content="启动流程模拟" placement="bottom">
+        <el-tooltip content="启动流程模拟" placement="bottom">
           <button :class="[styles.simBtn, styles.simBtnPrimary]" title="开始模拟" @click="$emit('toggle-simulation')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="4 2 14 8 4 14 4 2" fill="currentColor" stroke="none" />
-            </svg>
+            <AppIcon name="video-play" :size="14" />
             <span>开始模拟</span>
           </button>
-        </t-tooltip>
+        </el-tooltip>
       </template>
 
       <template v-else>
         <div :class="styles.simDivider" />
 
-        <t-tooltip content="执行下一步" placement="bottom">
+        <el-tooltip content="执行下一步" placement="bottom">
           <button
             :class="styles.simIconBtn"
             title="下一步"
             :disabled="autoPlayActive"
             @click="$emit('step-forward')"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 2 11 8 3 14 3 2" fill="currentColor" stroke="none" />
-              <line x1="13" y1="2" x2="13" y2="14" />
-            </svg>
+            <AppIcon name="video-play" :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
 
-        <t-tooltip :content="autoPlayActive ? '暂停自动播放' : '自动播放'" placement="bottom">
+        <el-tooltip :content="autoPlayActive ? '暂停自动播放' : '自动播放'" placement="bottom">
           <button
             :class="styles.simIconBtn"
             :title="autoPlayActive ? '暂停' : '自动播放'"
             @click="$emit('toggle-auto-play')"
           >
-            <svg v-if="!autoPlayActive" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 2 13 8 3 14 3 2" fill="currentColor" stroke="none" />
-            </svg>
-            <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="2" width="4" height="12" rx="0.5" fill="currentColor" stroke="none" />
-              <rect x="9" y="2" width="4" height="12" rx="0.5" fill="currentColor" stroke="none" />
-            </svg>
+            <AppIcon name="video-play" v-if="!autoPlayActive" :size="14" />
+            <AppIcon name="video-pause" v-else :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
 
-        <t-tooltip content="切换播放速度" placement="bottom">
+        <el-tooltip content="切换播放速度" placement="bottom">
           <button :class="styles.simSpeedBtn" title="播放速度" @click="$emit('cycle-speed')">
             {{ speedLabel }}
           </button>
-        </t-tooltip>
+        </el-tooltip>
 
-        <t-tooltip content="重置到开始节点" placement="bottom">
+        <el-tooltip content="重置到开始节点" placement="bottom">
           <button :class="styles.simIconBtn" title="重置" @click="$emit('reset-simulation')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 8a6 6 0 0 1 10.472-4M14 8a6 6 0 0 1-10.472 4" />
-              <polyline points="2 3 2 7 6 7" />
-              <polyline points="14 13 14 9 10 9" />
-            </svg>
+            <AppIcon name="refresh-right" :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
 
         <div :class="styles.simDivider" />
 
@@ -287,14 +226,12 @@
 
         <span :class="styles.simStep">步骤 {{ currentStep }}</span>
 
-        <t-tooltip content="停止模拟并退出" placement="bottom">
+        <el-tooltip content="停止模拟并退出" placement="bottom">
           <button :class="[styles.simBtn, styles.simBtnStop]" title="停止模拟" @click="$emit('toggle-simulation')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none" />
-            </svg>
+            <AppIcon name="video-pause" :size="14" />
             <span>停止</span>
           </button>
-        </t-tooltip>
+        </el-tooltip>
       </template>
     </div>
 
@@ -303,35 +240,29 @@
       <template v-if="!isPreview">
         <NotificationBell />
         <div :class="styles.divider" />
-        <t-tooltip content="版本历史" placement="bottom">
+        <el-tooltip content="版本历史" placement="bottom">
           <button :class="styles.iconBtn" title="版本历史" @click="$emit('version-history')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="8" r="6.5" />
-              <polyline points="8 4.5 8 8 11 10" />
-            </svg>
+            <AppIcon name="clock" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="校验流程" placement="bottom">
-          <button :class="[styles.iconBtn, styles.iconBtnOutline]" title="校验" @click="$emit('validate')">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="4 8 7 11 12 5" />
-              <circle cx="8" cy="8" r="6.5" />
-            </svg>
+        </el-tooltip>
+        <el-tooltip content="校验流程" placement="bottom">
+          <button :class="styles.iconBtn" title="校验" @click="$emit('validate')">
+            <AppIcon name="circle-check" :size="14" />
           </button>
-        </t-tooltip>
-        <button :class="[styles.btn, styles.btnOutline]" title="设置" @click="$emit('settings')">设置</button>
-        <button :class="[styles.btn, styles.btnOutline]" title="保存" :disabled="saving" @click="$emit('save')">{{ saving ? '保存中...' : '保存' }}</button>
-        <button :class="[styles.btn, styles.btnOutline]" title="保存为模板" @click="$emit('save-as-template')">存为模板</button>
-        <button :class="[styles.btn, styles.btnPrimary]" title="发布" :disabled="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</button>
+        </el-tooltip>
+        <el-button size="small" @click="$emit('settings')">设置</el-button>
+        <el-button size="small" :loading="saving" @click="$emit('save')">{{ saving ? '保存中...' : '保存' }}</el-button>
+        <el-button size="small" @click="$emit('save-as-template')">存为模板</el-button>
+        <el-button type="primary" size="small" :loading="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</el-button>
       </template>
       <template v-else>
         <!-- Preview mode: exit button -->
-        <t-tooltip content="退出预览" placement="bottom">
-          <button :class="[styles.btn, styles.btnOutline]" title="退出预览" @click="$emit('toggle-preview')">
-            <EditIcon style="font-size: 14px" />
+        <el-tooltip content="退出预览" placement="bottom">
+          <el-button size="small" title="退出预览" @click="$emit('toggle-preview')">
+            <AppIcon name="edit" style="font-size: 14px" />
             <span>退出预览</span>
-          </button>
-        </t-tooltip>
+          </el-button>
+        </el-tooltip>
       </template>
     </div>
   </div>
@@ -339,13 +270,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { BrowseIcon, EditIcon, HomeFilledIcon } from 'tdesign-icons-vue-next'
 import type { SimulationSpeed } from '../composables/useSimulation.js'
 import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
 import { getAppUrl } from '@schema-form/shared-qiankun/config'
 import NotificationBell from './NotificationBell.vue'
 import styles from './FlowToolbar.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const props = defineProps<{
   title?: string
@@ -354,7 +286,6 @@ const props = defineProps<{
   showRightPanel?: boolean
   showAiDrawer?: boolean
   saving?: boolean
-  flowMode?: 'bpmn' | 'workflow'
   // Simulation props
   isSimulating?: boolean
   currentStep?: number
@@ -372,7 +303,8 @@ const layoutPopoverVisible = ref(false)
 const speedLabel = computed(() => SPEED_LABELS[props.speed ?? 'normal'])
 
 function goToPortal() {
-  window.location.href = getAppUrl('portal', import.meta.env.DEV)
+  const base = getAppUrl('flow', import.meta.env.DEV)
+  window.location.href = `${base}list`
 }
 
 defineEmits<{
@@ -389,7 +321,6 @@ defineEmits<{
   'toggle-left-panel': []
   'toggle-right-panel': []
   'toggle-ai': []
-  'toggle-flow-mode': []
   // Simulation events
   'toggle-simulation': []
   'step-forward': []
@@ -399,6 +330,7 @@ defineEmits<{
   // Auto-layout events
   'auto-layout': []
   'save-as-template': []
+  'update:title': [title: string]
   'update:layoutDirection': [direction: LayoutDirection]
   'update:layoutNodeSep': [value: number]
   'update:layoutRankSep': [value: number]

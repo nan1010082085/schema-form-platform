@@ -2,24 +2,24 @@
   <div :class="$style.container">
     <!-- 加载状态 -->
     <div v-if="loading" :class="$style.loading">
-      <LoadingIcon :class="$style.loadingIcon" />
+      <AppIcon name="loading" :class="$style.loadingIcon" />
       <span>加载表单中...</span>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" :class="$style.error">
-      <WarningFilledIcon :class="$style.errorIcon" />
+      <WarningFilled :class="$style.errorIcon" />
       <span>{{ error }}</span>
-      <t-button size="small" @click="loadSchema">重试</t-button>
+      <el-button size="small" @click="loadSchema">重试</el-button>
     </div>
 
     <!-- 表单渲染 -->
     <div v-else-if="schema" :class="$style.form">
       <div :class="$style.formHeader">
         <h3 :class="$style.formTitle">{{ schemaName }}</h3>
-        <t-tag v-if="formMode" :theme="getModeTheme(formMode)" size="small">
+        <el-tag v-if="formMode" :type="getModeTheme(formMode)" size="small">
           {{ getModeLabel(formMode) }}
-        </t-tag>
+        </el-tag>
       </div>
       <div :class="$style.formContent">
         <!-- 这里需要集成 Editor 的 SchemaRender 组件 -->
@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { LoadingIcon, WarningFilledIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   schemaId?: string
@@ -56,7 +56,7 @@ const formData = ref<Record<string, unknown>>({})
 
 async function loadSchema() {
   if (!props.schemaId && !props.publishId) {
-    error = '未指定表单'
+    error.value = '未指定表单'
     return
   }
 
@@ -94,11 +94,11 @@ async function loadSchema() {
 function getModeTheme(mode: string) {
   const map: Record<string, string> = {
     create: 'primary',
-    view: 'default',
+    view: 'info',
     edit: 'warning',
     approve: 'success',
   }
-  return map[mode] || 'default'
+  return map[mode] || 'info'
 }
 
 function getModeLabel(mode: string) {

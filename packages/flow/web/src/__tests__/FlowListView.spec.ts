@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
 import FlowListView from '../views/FlowListView.vue'
 
 vi.mock('vue-router', () => ({

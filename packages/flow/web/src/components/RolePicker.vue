@@ -55,7 +55,7 @@ async function loadData(reset = false) {
     const newOptions: SelectOption[] = []
     for (const role of res.items) {
       newOptions.push({
-        value: `role:${role.id}`,
+        value: role.id,
         label: formatRoleLabel(role),
       })
     }
@@ -103,13 +103,30 @@ onMounted(() => {
   // 初始化时不加载，等下拉框打开时再加载
 })
 
-watch(() => props.modelValue, (val) => {
+watch(() => props.modelValue, async (val) => {
   // 确保选中的值在选项中存在
-  if (val) {
-    for (const v of val) {
-      if (!options.value.find(o => o.value === v)) {
-        // 如果选项中不存在，可能是已选择但未加载的项
-        // 这里可以触发加载，或者显示为标签
+  if (val && val.length > 0) {
+    const missingIds = val.filter(v => !options.value.find(o => o.value === v))
+    if (missingIds.length > 0) {
+      // 加载缺失的角色信息
+      try {
+        const roles = await Promise.all(
+          missingIds.map(id => flowApi.getRoleById(id))
+        )
+        const newOptions: SelectOption[] = []
+        for (const role of roles) {
+          if (!options.value.find(o => o.value === role.id)) {
+            newOptions.push({
+              value: role.id,
+              label: formatRoleLabel(role as Role),
+            })
+          }
+        }
+        if (newOptions.length > 0) {
+          options.value = [...options.value, ...newOptions]
+        }
+      } catch {
+        // 忽略错误
       }
     }
   }
@@ -117,7 +134,7 @@ watch(() => props.modelValue, (val) => {
 </script>
 
 <template>
-  <t-select
+  <el-select
     :model-value="modelValue"
     multiple
     filterable
@@ -130,22 +147,22 @@ watch(() => props.modelValue, (val) => {
     @visible-change="onVisibleChange"
   >
     <div :class="styles.optionList" @scroll="onScroll">
-      <t-option
+      <el-option
         v-for="item in options"
         :key="item.value"
         :label="item.label"
         :value="item.value"
       >
         <div :class="styles.optionItem">
-          <t-tag theme="warning" size="small" :class="styles.typeTag">
+          <el-tag type="warning" size="small" :class="styles.typeTag">
             角色
-          </t-tag>
+          </el-tag>
           <span :class="styles.optionLabel">{{ item.label }}</span>
         </div>
-      </t-option>
+      </el-option>
       <div v-if="loading" :class="styles.loading">加载中...</div>
       <div v-if="!hasMore && options.length > 0" :class="styles.noMore">没有更多了</div>
       <div v-if="!loading && options.length === 0" :class="styles.empty">暂无数据</div>
     </div>
-  </t-select>
+  </el-select>
 </template>

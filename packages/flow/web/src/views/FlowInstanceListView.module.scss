@@ -1,39 +1,217 @@
-.flowInstanceList {
-  padding: var(--spacing-lg);
+.instanceList {
+  padding: 28px 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color-page);
 }
+
 .header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-color-primary);
+  }
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-20px);
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color-lighter);
 }
-.header h2 {
-  margin: 0;
-  font-size: var(--font-size-20);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-color-primary);
-}
-.headerActions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-.filters {
+
+.toolbarRight {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  gap: 8px;
 }
+
 .searchInput {
   width: 260px;
 }
-.actions {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  align-items: center;
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 16px;
 }
+
+// Card Grid
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.statusBar {
+  height: 4px;
+  background: var(--color-info);
+
+  &.status_running {
+    background: var(--color-primary);
+  }
+  &.status_completed {
+    background: var(--color-success);
+  }
+  &.status_terminated,
+  &.status_failed {
+    background: var(--color-danger);
+  }
+  &.status_suspended {
+    background: var(--color-warning);
+  }
+}
+
+.cardBody {
+  flex: 1;
+  padding: 16px;
+}
+
+.cardTitle {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.initiator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.cardDates {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dateItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.dateLabel {
+  color: var(--text-color-placeholder);
+  min-width: 30px;
+}
+
+.dateValue {
+  color: var(--text-color-regular);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color-lighter);
+}
+
 .pagination {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--spacing-md);
+  justify-content: center;
+  padding-top: 16px;
+}
+
+// Skeleton
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.skeletonCard {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-lighter);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.skeletonThumb {
+  height: 8px;
+  background: var(--bg-color-page);
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonTitle {
+  height: 20px;
+  margin: 16px 16px 8px;
+  background: var(--bg-color-page);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonText {
+  height: 14px;
+  margin: 0 16px 16px;
+  width: 60%;
+  background: var(--bg-color-page);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// Empty state
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.emptyIcon {
+  color: var(--text-color-placeholder);
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color-secondary);
 }

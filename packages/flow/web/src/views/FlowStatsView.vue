@@ -9,10 +9,11 @@
  */
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import * as echarts from 'echarts'
-import { RefreshIcon } from 'tdesign-icons-vue-next'
 import { useFlowMonitorStore } from '../stores/flowMonitor.js'
 import type { TimeRangePreset } from '@schema-form/flow-shared'
 import styles from './FlowStatsView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const store = useFlowMonitorStore()
 
@@ -28,6 +29,10 @@ const REFRESH_INTERVAL = 30_000
 // -- 趋势图维度切换: 日 / 周 --
 type TrendGranularity = 'day' | 'week'
 const trendGranularity = ref<TrendGranularity>('day')
+const trendGranularityOptions = [
+  { label: '按日', value: 'day' },
+  { label: '按周', value: 'week' },
+]
 
 // -- 时间范围 --
 const timeRangeOptions: Array<{ value: TimeRangePreset; label: string }> = [
@@ -54,12 +59,12 @@ function formatDuration(ms: number): string {
   return `${days} 天 ${remainHours} 小时`
 }
 
-function handlePresetChange(preset: TimeRangePreset) {
-  selectedPreset.value = preset
+function handlePresetChange(preset: string) {
+  selectedPreset.value = preset as TimeRangePreset
   isCustomRange.value = preset === 'custom'
   if (preset !== 'custom') {
     customDateRange.value = null
-    store.setTimeRange(preset)
+    store.setTimeRange(preset as TimeRangePreset)
   }
 }
 
@@ -253,23 +258,13 @@ onBeforeUnmount(() => {
       <h2 :class="styles.title">流程统计</h2>
       <div :class="styles.headerActions">
         <div :class="styles.timeRangeGroup">
-          <t-radio-group
-            v-model:value="selectedPreset"
-            size="small"
-            @change="handlePresetChange"
-          >
-            <t-radio-button
-              v-for="opt in timeRangeOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </t-radio-button>
-            <t-radio-button value="custom">自定义</t-radio-button>
-          </t-radio-group>
-          <t-date-picker
+          <FilterTabs v-model="selectedPreset" :options="timeRangeOptions" @update:model-value="handlePresetChange" />
+          <el-button size="small" :type="isCustomRange ? 'primary' : 'default'" @click="handlePresetChange('custom')">
+            自定义
+          </el-button>
+          <el-date-picker
             v-if="isCustomRange"
-            v-model:value="customDateRange"
+            v-model="customDateRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
@@ -280,86 +275,79 @@ onBeforeUnmount(() => {
             @change="handleCustomDateChange"
           />
         </div>
-        <t-button
-          variant="outline"
-          shape="circle"
+        <el-button
+          plain
+          circle
           :loading="store.loading"
           data-test="stats-refresh-btn"
           @click="store.fetchDashboard()"
         >
-          <RefreshIcon />
-        </t-button>
+          <AppIcon name="refresh" />
+        </el-button>
       </div>
     </div>
 
     <!-- 核心指标卡片 -->
-    <t-row :gutter="16" :class="styles.metricsRow">
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.metricCard">
+    <el-row :gutter="16" :class="styles.metricsRow">
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricTotal]">
               {{ store.stats.total }}
             </div>
             <div :class="styles.metricLabel">总流程数</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.metricCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricRunning]">
               {{ store.stats.running }}
             </div>
             <div :class="styles.metricLabel">运行中实例</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.metricCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricCompleted]">
               {{ store.stats.completed }}
             </div>
             <div :class="styles.metricLabel">已完成实例</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.metricCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.metricCard">
           <div :class="styles.metricItem">
             <div :class="[styles.metricValue, styles.metricDuration]">
               {{ formatDuration(store.avgDuration) }}
             </div>
             <div :class="styles.metricLabel">平均完成时长</div>
           </div>
-        </t-card>
-      </t-col>
-    </t-row>
+        </div>
+      </el-col>
+    </el-row>
 
     <!-- 趋势图 -->
-    <t-card hover-shadow :class="styles.chartCard">
+    <el-card shadow="never" :class="styles.chartCard">
       <template #header>
         <div :class="styles.chartHeader">
           <span>流程启动量趋势</span>
-          <t-radio-group
-            v-model:value="trendGranularity"
-            size="small"
-            data-test="trend-granularity"
-          >
-            <t-radio-button value="day">按日</t-radio-button>
-            <t-radio-button value="week">按周</t-radio-button>
-          </t-radio-group>
+          <FilterTabs v-model="trendGranularity" :options="trendGranularityOptions" />
         </div>
       </template>
       <div ref="trendChartRef" :class="styles.chart"></div>
-    </t-card>
+    </el-card>
 
     <!-- 节点耗时 Top 10 -->
-    <t-card hover-shadow :class="styles.chartCard">
+    <el-card shadow="never" :class="styles.chartCard">
       <template #header>
         <span>节点耗时排行 Top 10</span>
       </template>
       <div ref="nodeChartRef" :class="styles.chart"></div>
-    </t-card>
+    </el-card>
   </div>
 </template>

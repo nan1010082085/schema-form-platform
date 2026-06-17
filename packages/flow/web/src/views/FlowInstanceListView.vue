@@ -2,61 +2,43 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
-import { useFlowExport } from '../composables/useFlowExport.js'
 import type { FlowInstanceStatus } from '@schema-form/flow-shared'
 import styles from './FlowInstanceListView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const router = useRouter()
 const store = useFlowInstanceStore()
 const { instances, total, loading } = storeToRefs(store)
-const { exporting, exportInstance, exportBatch } = useFlowExport()
-
-const selectedIds = ref<string[]>([])
 
 const searchQuery = ref('')
 const statusFilter = ref<FlowInstanceStatus | ''>('')
 const page = ref(1)
 const pageSize = ref(20)
 
-const statusOptions = [
-  { value: '', label: '全部' },
-  { value: 'running', label: '运行中' },
-  { value: 'completed', label: '已完成' },
-  { value: 'terminated', label: '已终止' },
-  { value: 'suspended', label: '已暂停' },
-  { value: 'failed', label: '失败' },
+const statusTabs = [
+  { label: '全部', value: '' },
+  { label: '运行中', value: 'running' },
+  { label: '已完成', value: 'completed' },
+  { label: '已终止', value: 'terminated' },
+  { label: '已暂停', value: 'suspended' },
+  { label: '失败', value: 'failed' },
 ]
 
 onMounted(() => {
-  fetchInstances()
+  store.fetchInstances()
 })
-
-function fetchInstances() {
-  store.fetchInstances({
-    status: statusFilter.value || undefined,
-    search: searchQuery.value || undefined,
-    page: page.value,
-    pageSize: pageSize.value,
-  })
-}
 
 function handleFilter() {
   page.value = 1
-  fetchInstances()
-}
-
-function handlePageChange(newPage: number) {
-  page.value = newPage
-  fetchInstances()
-}
-
-function handleSizeChange(newSize: number) {
-  pageSize.value = newSize
-  page.value = 1
-  fetchInstances()
+  store.fetchInstances({
+    search: searchQuery.value || undefined,
+    status: statusFilter.value || undefined,
+    page: page.value,
+    pageSize: pageSize.value,
+  })
 }
 
 function handleViewDetail(id: string) {
@@ -64,53 +46,42 @@ function handleViewDetail(id: string) {
 }
 
 async function handleTerminate(id: string) {
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '确认终止',
-      body: '确定终止该流程实例？',
-      confirmBtn: '终止',
-      cancelBtn: '取消',
-      theme: 'warning',
-      onConfirm: () => { dialog.destroy(); resolve(true) },
-      onCancel: () => { dialog.destroy(); resolve(false) },
-    })
-  })
-  if (!confirmed) return
-  await store.terminateInstance(id)
-  MessagePlugin.success('已终止')
+  try {
+    await ElMessageBox.confirm('确定终止该实例？', '确认终止', { type: 'warning' })
+    await store.terminateInstance(id)
+    ElMessage.success('已终止')
+  } catch {
+    // cancelled
+  }
 }
 
 async function handleSuspend(id: string) {
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '确认暂停',
-      body: '确定暂停该流程实例？',
-      confirmBtn: '暂停',
-      cancelBtn: '取消',
-      theme: 'warning',
-      onConfirm: () => { dialog.destroy(); resolve(true) },
-      onCancel: () => { dialog.destroy(); resolve(false) },
-    })
-  })
-  if (!confirmed) return
-  await store.suspendInstance(id)
-  MessagePlugin.success('已暂停')
+  try {
+    await store.suspendInstance(id)
+    ElMessage.success('已暂停')
+  } catch {
+    ElMessage.error('暂停失败')
+  }
 }
 
 async function handleResume(id: string) {
-  await store.resumeInstance(id)
-  MessagePlugin.success('已恢复')
+  try {
+    await store.resumeInstance(id)
+    ElMessage.success('已恢复')
+  } catch {
+    ElMessage.error('恢复失败')
+  }
 }
 
 function statusTheme(status: string) {
   const map: Record<string, string> = {
-    running: 'default',
+    running: '',
     completed: 'success',
     terminated: 'danger',
     suspended: 'warning',
     failed: 'danger',
   }
-  return map[status] ?? 'default'
+  return map[status] ?? ''
 }
 
 function statusLabel(status: string) {
@@ -124,141 +95,137 @@ function statusLabel(status: string) {
   return map[status] ?? status
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string | Date) {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('zh-CN')
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  return date.toLocaleString('zh-CN')
 }
-
-function handleSelectionChange(keys: string[]) {
-  selectedIds.value = keys
-}
-
-const tableColumns = [
-  { colKey: 'row-select', type: 'selection', width: 50 },
-  { colKey: 'definitionName', title: '流程名称', minWidth: 180, ellipsis: true },
-  { colKey: 'initiatedBy', title: '发起人', width: 140 },
-  { colKey: 'status', title: '状态', width: 100 },
-  { colKey: 'startedAt', title: '开始时间', width: 180 },
-  { colKey: 'completedAt', title: '结束时间', width: 180 },
-  { colKey: 'actions', title: '操作', minWidth: 260, fixed: 'right' },
-]
 </script>
 
 <template>
-  <div :class="styles.flowInstanceList">
+  <div :class="styles.instanceList">
+    <!-- Header -->
     <div :class="styles.header">
-      <h2>流程实例</h2>
-      <div :class="styles.headerActions">
-        <t-button
-          v-if="selectedIds.length > 0"
-          theme="primary"
-          :loading="exporting"
-          @click="exportBatch(selectedIds)"
-        >
-          批量导出 ({{ selectedIds.length }})
-        </t-button>
+      <div>
+        <h2>流程实例</h2>
+        <p :class="styles.subtitle">管理所有流程运行实例</p>
       </div>
     </div>
 
-    <div :class="styles.filters">
-      <t-input
-        v-model:value="searchQuery"
-        placeholder="搜索流程名称或发起人"
-        :prefix-icon="SearchIcon"
-        clearable
-        :class="styles.searchInput"
-        @clear="handleFilter"
-        @enter="handleFilter"
-      />
-      <t-select
-        v-model:value="statusFilter"
-        placeholder="状态筛选"
-        clearable
-        style="width: 160px"
-        @change="handleFilter"
-      >
-        <t-option
-          v-for="opt in statusOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </t-select>
+    <!-- Filter bar -->
+    <div :class="styles.toolbar">
+      <FilterTabs v-model="statusFilter" :options="statusTabs" @update:model-value="handleFilter" />
+      <div :class="styles.toolbarRight">
+        <el-input
+          v-model="searchQuery"
+          placeholder="搜索流程名称或发起人"
+          clearable
+          :class="styles.searchInput"
+          @clear="handleFilter"
+          @keyup.enter="handleFilter"
+        >
+          <template #prefix>
+            <AppIcon name="search" :size="14" />
+          </template>
+        </el-input>
+      </div>
     </div>
 
-    <t-table
-      :data="instances"
-      :loading="loading"
-      stripe
-      :columns="tableColumns"
-      row-key="id"
-      :selected-row-keys="selectedIds"
-      @select-change="handleSelectionChange"
-    >
-      <template #definitionName="{ row }">
-        {{ row.definitionName || row.definitionId }}
-      </template>
-      <template #status="{ row }">
-        <t-tag :theme="statusTheme(row.status)" size="small">
-          {{ statusLabel(row.status) }}
-        </t-tag>
-      </template>
-      <template #startedAt="{ row }">
-        {{ formatDate(row.startedAt) }}
-      </template>
-      <template #completedAt="{ row }">
-        {{ formatDate(row.completedAt) }}
-      </template>
-      <template #actions="{ row }">
-        <div :class="styles.actions">
-          <t-button size="small" @click="handleViewDetail(row.id)">
-            查看详情
-          </t-button>
-          <t-button
-            v-if="row.status === 'running'"
-            size="small"
-            theme="warning"
-            @click="handleTerminate(row.id)"
-          >
-            终止
-          </t-button>
-          <t-button
-            v-if="row.status === 'running'"
-            size="small"
-            theme="default"
-            @click="handleSuspend(row.id)"
-          >
-            暂停
-          </t-button>
-          <t-button
-            v-if="row.status === 'suspended'"
-            size="small"
-            theme="success"
-            @click="handleResume(row.id)"
-          >
-            恢复
-          </t-button>
-          <t-button
-            size="small"
-            :loading="exporting"
-            @click="exportInstance(row.id)"
-          >
-            导出
-          </t-button>
+    <!-- Loading -->
+    <div v-if="loading" :class="styles.content">
+      <div :class="styles.skeleton">
+        <div v-for="i in 6" :key="i" :class="styles.skeletonCard">
+          <div :class="styles.skeletonThumb" />
+          <div :class="styles.skeletonTitle" />
+          <div :class="styles.skeletonText" />
         </div>
-      </template>
-    </t-table>
+      </div>
+    </div>
 
-    <div :class="styles.pagination">
-      <t-pagination
-        v-model:current="page"
+    <!-- Empty -->
+    <div v-else-if="instances.length === 0" :class="styles.emptyState">
+      <AppIcon name="document" :size="48" :class="styles.emptyIcon" />
+      <p :class="styles.emptyText">暂无流程实例</p>
+    </div>
+
+    <!-- Card Grid -->
+    <div v-else :class="styles.content">
+      <div :class="styles.cardGrid">
+        <div v-for="item in instances" :key="item.id" :class="styles.card">
+          <!-- 状态指示条 -->
+          <div :class="[styles.statusBar, styles[`status_${item.status}`]]" />
+
+          <!-- 卡片内容 -->
+          <div :class="styles.cardBody">
+            <h3 :class="styles.cardTitle">{{ item.definitionName || item.definitionId }}</h3>
+            <div :class="styles.cardMeta">
+              <el-tag size="small" :type="statusTheme(item.status)">
+                {{ statusLabel(item.status) }}
+              </el-tag>
+              <span :class="styles.initiator">
+                <AppIcon name="user" :size="12" />
+                {{ item.initiatedBy }}
+              </span>
+            </div>
+            <div :class="styles.cardDates">
+              <div :class="styles.dateItem">
+                <span :class="styles.dateLabel">开始</span>
+                <span :class="styles.dateValue">{{ formatDate(item.startedAt) }}</span>
+              </div>
+              <div v-if="item.completedAt" :class="styles.dateItem">
+                <span :class="styles.dateLabel">结束</span>
+                <span :class="styles.dateValue">{{ formatDate(item.completedAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片操作 -->
+          <div :class="styles.cardActions">
+            <el-button size="small" text type="primary" @click="handleViewDetail(item.id)">
+              <AppIcon name="view" :size="14" class="el-icon--left" />详情
+            </el-button>
+            <el-button
+              v-if="item.status === 'running'"
+              size="small"
+              text
+              type="warning"
+              @click="handleSuspend(item.id)"
+            >
+              <AppIcon name="video-pause" :size="14" />
+            </el-button>
+            <el-button
+              v-if="item.status === 'suspended'"
+              size="small"
+              text
+              type="success"
+              @click="handleResume(item.id)"
+            >
+              <AppIcon name="video-play" :size="14" />
+            </el-button>
+            <el-button
+              v-if="item.status === 'running'"
+              size="small"
+              text
+              type="danger"
+              @click="handleTerminate(item.id)"
+            >
+              <AppIcon name="switch-button" :size="14" />
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="total > pageSize" :class="styles.pagination">
+      <el-pagination
+        v-model:current-page="page"
         v-model:page-size="pageSize"
         :total="total"
         :page-sizes="[10, 20, 50]"
-        show-total
-        show-page-size
-        @current-change="handlePageChange"
-        @page-size-change="handleSizeChange"
+        layout="total, sizes, prev, pager, next"
+        @current-change="handleFilter"
+        @size-change="handleFilter"
       />
     </div>
   </div>

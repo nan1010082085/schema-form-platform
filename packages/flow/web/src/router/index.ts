@@ -1,24 +1,21 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
-import { SSOClient } from '@schema-form/shared-utils/sso'
-
-// SSO 客户端配置
-const SSO_CLIENT_ID = 'flow'
-const APP_BASE = APP_CONFIGS.flow.basePath
-
-function getSSOClient(): SSOClient {
-  const origin = window.location.origin
-  return new SSOClient({
-    clientId: SSO_CLIENT_ID,
-    redirectUri: `${origin}${APP_BASE}auth/callback`,
-    ssoBaseUrl: origin,
-  })
-}
 
 // qiankun 模式下使用 memory history，避免子应用路由篡改宿主 URL
 const isQiankunChild = () => !!window.__POWERED_BY_QIANKUN__
 
 const routes = [
+  // ---- 共享登录页（独立模式） ----
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@schema-form/shared-components/auth/LoginView.vue'),
+    props: {
+      title: '流程设计器',
+      subtitle: 'Schema Form Platform',
+    },
+    meta: { public: true },
+  },
+
   // ---- SSO Callback ----
   {
     path: '/auth/callback',
@@ -94,15 +91,18 @@ export function createFlowRouter() {
 
   // 路由守卫：独立访问时检查登录状态
   router.beforeEach((to) => {
-    // callback 页面不需要检查
-    if (to.name === 'auth-callback') {
+    // callback 和 login 页面不需要检查
+    if (to.name === 'auth-callback' || to.name === 'login') {
       return true
     }
 
     // 微前端模式下跳过检查（宿主已处理鉴权）
     if (!isQiankunChild() && !localStorage.getItem('sfp_access_token')) {
-      getSSOClient().login(window.location.href)
-      return false
+      // 跳转到统一登录页，带上当前路径作为 redirect 参数
+      return {
+        name: 'login',
+        query: { redirect: window.location.pathname },
+      }
     }
   })
 

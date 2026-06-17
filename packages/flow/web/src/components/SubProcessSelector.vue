@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { SearchIcon } from 'tdesign-icons-vue-next'
 import { flowApi } from '../api/flowApi.js'
 import styles from './SubProcessSelector.module.scss'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = withDefaults(defineProps<{
   modelValue?: string
@@ -91,30 +91,29 @@ defineExpose({ open })
 </script>
 
 <template>
-  <t-dialog
-    v-model:visible="visible"
-    header="选择子流程"
+  <el-dialog
+    v-model="visible"
+    title="选择子流程"
     width="600px"
-    :close-on-overlay-click="false"
+    :close-on-click-modal="false"
     destroy-on-close
     @close="onCancel"
   >
     <!-- 搜索栏 -->
     <div :class="styles.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索流程名称或描述"
         clearable
         :class="styles.searchInput"
       >
         <template #prefix>
-          <SearchIcon />
+          <AppIcon name="search" :size="14" />
         </template>
-      </t-input>
-      <t-button :loading="loading" @click="loadFlows">
-        <template #icon><SearchIcon /></template>
-        刷新
-      </t-button>
+      </el-input>
+      <el-button :loading="loading" @click="loadFlows">
+        <AppIcon name="refresh" :size="14" class="el-icon--left" />刷新
+      </el-button>
     </div>
 
     <!-- 流程列表 -->
@@ -150,10 +149,10 @@ defineExpose({ open })
         </span>
         <span v-else :class="styles.footerHint">请选择一个流程</span>
         <div :class="styles.footerActions">
-          <t-button @click="onCancel">取消</t-button>
-          <t-button theme="primary" :disabled="!selectedFlow" @click="onConfirm">确认</t-button>
+          <el-button @click="onCancel">取消</el-button>
+          <el-button type="primary" :disabled="!selectedFlow" @click="onConfirm">确认</el-button>
         </div>
       </div>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>

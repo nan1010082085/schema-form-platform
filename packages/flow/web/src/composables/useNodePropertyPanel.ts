@@ -1,5 +1,6 @@
 import { markRaw, type Component } from 'vue'
 import DefaultNodePanel from '@/components/nodePanels/DefaultNodePanel.vue'
+import StartEventPanel from '@/components/nodePanels/StartEventPanel.vue'
 import UserTaskPanel from '@/components/nodePanels/UserTaskPanel.vue'
 import ServiceTaskPanel from '@/components/nodePanels/ServiceTaskPanel.vue'
 import ScriptTaskPanel from '@/components/nodePanels/ScriptTaskPanel.vue'
@@ -8,10 +9,9 @@ import ReceiveTaskPanel from '@/components/nodePanels/ReceiveTaskPanel.vue'
 import TimerEventPanel from '@/components/nodePanels/TimerEventPanel.vue'
 import GatewayConditionPanel from '@/components/panels/GatewayConditionPanel.vue'
 import SubProcessPanel from '@/components/nodePanels/SubProcessPanel.vue'
-import { WORKFLOW_PANEL_REGISTRY } from '@/components/workflowPanels/index.js'
 
 const registry = new Map<string, Component>([
-  ['start-event', markRaw(DefaultNodePanel)],
+  ['start-event', markRaw(StartEventPanel)],
   ['end-event', markRaw(DefaultNodePanel)],
   ['user-task', markRaw(UserTaskPanel)],
   ['service-task', markRaw(ServiceTaskPanel)],
@@ -23,10 +23,6 @@ const registry = new Map<string, Component>([
   ['parallel-gateway', markRaw(GatewayConditionPanel)],
   ['inclusive-gateway', markRaw(GatewayConditionPanel)],
   ['sub-process', markRaw(SubProcessPanel)],
-  // Workflow 节点面板
-  ...Object.entries(WORKFLOW_PANEL_REGISTRY).map(
-    ([type, component]): [string, Component] => [type, component],
-  ),
 ])
 
 /**

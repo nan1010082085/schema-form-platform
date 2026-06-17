@@ -119,15 +119,12 @@ vi.mock('vue-router', () => ({
 }))
 
 /* ------------------------------------------------------------------ */
-/*  Mocks — tdesign-vue-next                                           */
 /* ------------------------------------------------------------------ */
 
-vi.mock('tdesign-vue-next', () => ({
   MessagePlugin: { success: vi.fn(), error: vi.fn() },
   DialogPlugin: { confirm: vi.fn(() => ({ destroy: vi.fn() })) },
 }))
 
-vi.mock('tdesign-icons-vue-next', () => ({
   LocationIcon: { template: '<span />' },
 }))
 

@@ -6,16 +6,15 @@
   "exports": {
     "./vite": "./vite.ts",
     "./vitest": "./vitest.ts",
-    "./elementPlus": "./elementPlus.ts",
-    "./tdesign": "./tdesign.ts"
+    "./element": "./element.ts"
   },
   "dependencies": {
     "@schema-form/shared-qiankun": "workspace:*",
+    "@element-plus/icons-vue": "^2.3.1",
     "@vitejs/plugin-vue": "^5.2.3",
+    "element-plus": "^2.9.7",
     "vite": "^6.3.0",
-    "vitest": "^3.1.4"
-  },
-  "peerDependencies": {
-    "tdesign-vue-next": ">=1.20.0"
+    "vitest": "^3.1.4",
+    "vue": "^3.5.13"
   }
 }

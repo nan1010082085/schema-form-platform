@@ -2,37 +2,38 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">
-        <span :class="$style.icon">🤖</span>
+        <AppIcon name="connection" :size="24" />
         AI 流程生成器
       </h3>
       <p :class="$style.subtitle">描述你的流程需求，AI 帮你自动生成</p>
     </div>
 
     <div :class="$style.inputSection">
-      <t-input
-        v-model:value="flowName"
+      <el-input
+        v-model="flowName"
         placeholder="输入流程名称，例如：请假审批流程"
         :class="$style.nameInput"
         size="large"
       />
-      <t-textarea
-        v-model:value="flowDescription"
+      <el-input
+        v-model="flowDescription"
+        type="textarea"
         :rows="6"
         placeholder="描述流程需求，例如：&#10;1. 员工提交请假申请&#10;2. 直属主管审批&#10;3. 如果超过3天，需要部门经理审批&#10;4. HR备案&#10;5. 通知员工结果"
         :class="$style.descInput"
       />
       <div :class="$style.actions">
-        <t-button
-          theme="primary"
+        <el-button
+          type="primary"
           size="large"
           :loading="generating"
           :disabled="!flowDescription.trim()"
           @click="handleGenerate"
         >
-          <span v-if="!generating">🤖 AI 生成流程</span>
+          <span v-if="!generating"><AppIcon name="connection" /> AI 生成流程</span>
           <span v-else>生成中...</span>
-        </t-button>
-        <t-button size="large" @click="handleClear">清空</t-button>
+        </el-button>
+        <el-button size="large" @click="handleClear">清空</el-button>
       </div>
     </div>
 
@@ -40,10 +41,10 @@
       <div :class="$style.previewHeader">
         <h4 :class="$style.previewTitle">生成的流程</h4>
         <div :class="$style.previewActions">
-          <t-button theme="success" @click="handleApply">
+          <el-button type="success" @click="handleApply">
             ✨ 应用到画布
-          </t-button>
-          <t-button @click="handleRegenerate">重新生成</t-button>
+          </el-button>
+          <el-button @click="handleRegenerate">重新生成</el-button>
         </div>
       </div>
 
@@ -54,7 +55,7 @@
             :key="node.id"
             :class="$style.nodeItem"
           >
-            <div :class="$style.nodeIcon">{{ getNodeIcon(node.type) }}</div>
+            <div :class="$style.nodeIcon"><AppIcon :name="getNodeIcon(node.type)" :size="16" /></div>
             <div :class="$style.nodeLabel">{{ node.data?.name || node.type }}</div>
             <div v-if="index < generatedFlow.nodes.length - 1" :class="$style.nodeArrow">→</div>
           </div>
@@ -68,14 +69,15 @@
     </div>
 
     <div v-if="error" :class="$style.error">
-      <t-alert :title="error" theme="error" closeable @close="error = ''" />
+      <el-alert :title="error" type="error" show-icon closable @close="error = ''" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface FlowNode {
   id: string
@@ -107,19 +109,19 @@ const aiResponse = ref('')
 const error = ref('')
 
 const NODE_ICONS: Record<string, string> = {
-  'start-event': '▶️',
-  'end-event': '⏹️',
-  'user-task': '📝',
-  'service-task': '⚙️',
-  'exclusive-gateway': '🔀',
-  'parallel-gateway': '➗',
-  'inclusive-gateway': '⭕',
-  'sub-process': '📦',
-  'ai-task': '🤖',
+  'start-event': 'video-play',
+  'end-event': 'video-pause',
+  'user-task': 'edit',
+  'service-task': 'setting',
+  'exclusive-gateway': 'switch',
+  'parallel-gateway': 'sort',
+  'inclusive-gateway': 'circle-check',
+  'sub-process': 'document',
+  'ai-task': 'connection',
 }
 
 function getNodeIcon(type: string): string {
-  return NODE_ICONS[type] || '📋'
+  return NODE_ICONS[type] || 'document'
 }
 
 async function handleGenerate() {
@@ -174,7 +176,8 @@ async function callAI(prompt: string): Promise<string> {
     throw new Error('请先登录')
   }
 
-  const response = await fetch('/api/ai/chat', {
+  const API_BASE = '/schema-platform/api'
+  const response = await fetch(`${API_BASE}/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -257,7 +260,7 @@ function parseResponse(response: string) {
 function handleApply() {
   if (generatedFlow.value) {
     emit('apply', generatedFlow.value)
-    MessagePlugin.success('流程已应用到画布')
+    ElMessage.success('流程已应用到画布')
   }
 }
 

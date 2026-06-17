@@ -19,7 +19,7 @@ const receiveCondition = computed(() => (props.node.data?.receiveCondition as st
 <template>
   <SectionToggle title="节点配置" :count="3">
     <FieldRow label="消息类型">
-      <t-input
+      <el-input
         :model-value="messageType"
         placeholder="例: notification、callback"
 
@@ -28,7 +28,7 @@ const receiveCondition = computed(() => (props.node.data?.receiveCondition as st
     </FieldRow>
 
     <FieldRow label="超时时间">
-      <t-input-number
+      <el-input-number
         :model-value="timeout"
         :min="1"
         :max="86400"
@@ -39,7 +39,7 @@ const receiveCondition = computed(() => (props.node.data?.receiveCondition as st
     </FieldRow>
 
     <FieldRow label="接收条件">
-      <t-input
+      <el-input
         :model-value="receiveCondition"
         placeholder="例: ${status === 'approved'}"
 

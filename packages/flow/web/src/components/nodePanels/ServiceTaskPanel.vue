@@ -63,55 +63,50 @@ const serviceType = computed(() => (props.node.data?.serviceType as string) ?? '
   <!-- 请求配置 -->
   <SectionToggle title="请求配置" :count="5">
     <FieldRow label="服务类型">
-      <t-radio-group
+      <el-radio-group
         :model-value="serviceType"
-
         @change="update('serviceType', $event)"
       >
-        <t-radio value="http">HTTP</t-radio>
-        <t-radio value="mq">消息队列</t-radio>
-        <t-radio value="custom">自定义</t-radio>
-      </t-radio-group>
+        <el-radio value="http">HTTP</el-radio>
+        <el-radio value="mq">消息队列</el-radio>
+        <el-radio value="custom">自定义</el-radio>
+      </el-radio-group>
     </FieldRow>
 
     <FieldRow label="请求地址">
-      <t-input
+      <el-input
         :model-value="apiUrl"
         placeholder="https://api.example.com/webhook"
-
-        @input="updateApi('url', $event)"
+        @change="updateApi('url', $event)"
       />
     </FieldRow>
 
     <FieldRow label="请求方法">
-      <t-select
+      <el-select
         :model-value="apiMethod"
-
         @change="updateApi('method', $event)"
       >
-        <t-option label="GET" value="get" />
-        <t-option label="POST" value="post" />
-      </t-select>
+        <el-option label="GET" value="get" />
+        <el-option label="POST" value="post" />
+      </el-select>
     </FieldRow>
 
     <FieldRow label="请求参数" textarea>
-      <t-input
+      <el-input
         type="textarea"
         :model-value="apiParams"
         :rows="3"
         placeholder='{"key": "value"}'
-
         @input="updateApi('params', parseJsonOrRaw($event))"
       />
     </FieldRow>
 
     <FieldRow label="请求头" textarea>
-      <t-input
+      <el-input
         type="textarea"
         :model-value="apiHeaders"
         :rows="2"
         placeholder='{"Content-Type": "application/json"}'
-
         @input="updateApi('headers', parseJsonOrRaw($event))"
       />
     </FieldRow>
@@ -120,22 +115,20 @@ const serviceType = computed(() => (props.node.data?.serviceType as string) ?? '
   <!-- 响应映射 -->
   <SectionToggle title="响应映射" :count="2">
     <FieldRow label="请求体" textarea>
-      <t-input
+      <el-input
         type="textarea"
         :model-value="apiBody"
         :rows="3"
         placeholder='{"key": "${variable}"}'
-
         @input="updateApi('body', parseJsonOrRaw($event))"
       />
     </FieldRow>
 
     <FieldRow label="数据路径">
-      <t-input
+      <el-input
         :model-value="dataPath"
         placeholder="result.records（支持 dot-path）"
-
-        @input="updateApi('dataPath', $event)"
+        @change="updateApi('dataPath', $event)"
       />
     </FieldRow>
   </SectionToggle>
@@ -143,40 +136,37 @@ const serviceType = computed(() => (props.node.data?.serviceType as string) ?? '
   <!-- 加载策略 -->
   <SectionToggle title="加载策略" :count="4">
     <FieldRow label="超时(ms)">
-      <t-input-number
+      <el-input-number
         :model-value="timeout"
         :min="1000"
         :max="60000"
         :step="1000"
-
         @change="updateApi('timeout', $event)"
       />
     </FieldRow>
 
     <FieldRow label="缓存TTL(ms)">
-      <t-input-number
+      <el-input-number
         :model-value="ttl"
         :min="0"
         :max="3600000"
         :step="1000"
-
         @change="updateApi('ttl', $event)"
       />
     </FieldRow>
 
     <FieldRow label="开启重试">
-      <t-switch
+      <el-switch
         :model-value="enableRetry"
         @change="updateApi('enableRetry', $event)"
       />
     </FieldRow>
 
     <FieldRow v-if="enableRetry" label="重试次数">
-      <t-input-number
+      <el-input-number
         :model-value="retryCount"
         :min="1"
         :max="5"
-
         @change="updateApi('retryCount', $event)"
       />
     </FieldRow>

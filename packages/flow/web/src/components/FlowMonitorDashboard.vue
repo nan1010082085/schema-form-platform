@@ -2,10 +2,11 @@
 import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
-import { RefreshIcon } from 'tdesign-icons-vue-next'
 import { useFlowMonitorStore } from '../stores/flowMonitor.js'
 import type { TimeRangePreset } from '@schema-form/flow-shared'
 import styles from './FlowMonitorDashboard.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const router = useRouter()
 const store = useFlowMonitorStore()
@@ -19,6 +20,15 @@ let statusChart: echarts.ECharts | null = null
 let trendChart: echarts.ECharts | null = null
 let nodeChart: echarts.ECharts | null = null
 let topFlowChart: echarts.ECharts | null = null
+
+// ECharts 颜色常量（品牌色，不支持 CSS 变量）
+const CHART_COLORS = {
+  primary: '#0060A2',
+  success: '#26A036',
+  warning: '#F09700',
+  danger: '#E50113',
+  muted: '#909399',
+} as const
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
@@ -54,11 +64,11 @@ function formatDuration(ms: number): string {
   return `${days} 天 ${remainHours} 小时`
 }
 
-function handlePresetChange(preset: TimeRangePreset) {
-  selectedPreset.value = preset
+function handlePresetChange(preset: string) {
+  selectedPreset.value = preset as TimeRangePreset
   if (preset !== 'custom') {
     customDateRange.value = null
-    store.setTimeRange(preset)
+    store.setTimeRange(preset as TimeRangePreset)
   }
 }
 
@@ -71,10 +81,6 @@ function handleCustomDateChange(dates: [string, string] | null) {
 
 function handleNavigateToFailed() {
   router.push({ name: 'flow-instances', query: { status: 'failed' } })
-}
-
-function handleNavigateToInstance(id: string) {
-  router.push({ name: 'flow-instance-detail', params: { id } })
 }
 
 // ---- Status Pie Chart ----
@@ -99,11 +105,11 @@ function updateStatusChart() {
         itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
         label: { show: true, formatter: '{b}\n{c} ({d}%)' },
         data: [
-          { value: running, name: '运行中', itemStyle: { color: '#409eff' } },
-          { value: completed, name: '已完成', itemStyle: { color: '#67c23a' } },
-          { value: terminated, name: '已终止', itemStyle: { color: '#909399' } },
-          { value: suspended, name: '已挂起', itemStyle: { color: '#e6a23c' } },
-          { value: failed, name: '已失败', itemStyle: { color: '#f56c6c' } },
+          { value: running, name: '运行中', itemStyle: { color: CHART_COLORS.primary } },
+          { value: completed, name: '已完成', itemStyle: { color: CHART_COLORS.success } },
+          { value: terminated, name: '已终止', itemStyle: { color: CHART_COLORS.muted } },
+          { value: suspended, name: '已挂起', itemStyle: { color: CHART_COLORS.warning } },
+          { value: failed, name: '已失败', itemStyle: { color: CHART_COLORS.danger } },
         ].filter((d) => d.value > 0),
       },
     ],
@@ -146,7 +152,7 @@ function updateTrendChart() {
         data: counts,
         smooth: true,
         areaStyle: { opacity: 0.15 },
-        itemStyle: { color: '#409eff' },
+        itemStyle: { color: CHART_COLORS.primary },
         lineStyle: { width: 2 },
         symbol: 'circle',
         symbolSize: 6,
@@ -200,7 +206,7 @@ function updateNodeChart() {
       {
         type: 'bar',
         data: durations,
-        itemStyle: { color: '#67c23a', borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: CHART_COLORS.success, borderRadius: [4, 4, 0, 0] },
         barMaxWidth: 40,
       },
     ],
@@ -241,7 +247,7 @@ function updateTopFlowChart() {
       {
         type: 'bar',
         data: counts,
-        itemStyle: { color: '#409eff', borderRadius: [0, 4, 4, 0] },
+        itemStyle: { color: CHART_COLORS.primary, borderRadius: [0, 4, 4, 0] },
         barMaxWidth: 28,
         label: { show: true, position: 'right', formatter: '{c}' },
       },
@@ -354,26 +360,17 @@ function formatCountdown(seconds: number): string {
       <div :class="styles.headerActions">
         <!-- 时间范围筛选 -->
         <div :class="styles.timeRangeGroup">
-          <t-radio-group
-            v-model:value="selectedPreset"
-            size="small"
-            @change="handlePresetChange"
-          >
-            <t-radio-button
-              v-for="opt in timeRangeOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </t-radio-button>
-            <t-radio-button value="custom">自定义</t-radio-button>
-          </t-radio-group>
-          <t-date-picker
+          <FilterTabs v-model="selectedPreset" :options="timeRangeOptions" @update:model-value="handlePresetChange" />
+          <el-button size="small" :type="isCustomRange ? 'primary' : 'default'" @click="selectedPreset = 'custom'">
+            自定义
+          </el-button>
+          <el-date-picker
             v-if="isCustomRange"
-            v-model:value="customDateRange"
+            v-model="customDateRange"
             type="daterange"
             range-separator="至"
-            placeholder="选择日期范围"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
             size="small"
             value-format="YYYY-MM-DD"
             :class="styles.datePicker"
@@ -381,56 +378,56 @@ function formatCountdown(seconds: number): string {
           />
         </div>
         <div :class="styles.refreshGroup">
-          <t-tooltip :content="autoRefreshEnabled ? '暂停自动刷新' : '开启自动刷新'" placement="top">
-            <t-button
-              :theme="autoRefreshEnabled ? 'primary' : 'default'"
+          <el-tooltip :content="autoRefreshEnabled ? '暂停自动刷新' : '开启自动刷新'" placement="top">
+            <el-button
+              :type="autoRefreshEnabled ? 'primary' : 'default'"
               size="small"
               :class="styles.autoRefreshBtn"
               data-test="auto-refresh-toggle"
               @click="toggleAutoRefresh"
             >
-              <RefreshIcon style="font-size: 14px" />
+              <AppIcon name="refresh" style="font-size: 14px" />
               {{ autoRefreshEnabled ? formatCountdown(countdownSeconds) : '已暂停' }}
-            </t-button>
-          </t-tooltip>
-          <t-button theme="primary" shape="circle" @click="handleManualRefresh" :loading="store.loading" data-test="refresh-btn">
-            <RefreshIcon />
-          </t-button>
+            </el-button>
+          </el-tooltip>
+          <el-button type="primary" circle @click="handleManualRefresh" :loading="store.loading" data-test="refresh-btn">
+            <AppIcon name="refresh" />
+          </el-button>
         </div>
       </div>
     </div>
 
     <!-- 统计卡片 -->
-    <t-row :gutter="16" :class="styles.statsRow">
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+    <el-row :gutter="16" :class="styles.statsRow">
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statTotal]">{{ store.stats.total }}</div>
             <div :class="styles.statLabel">总实例数</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statRunning]">{{ store.stats.running }}</div>
             <div :class="styles.statLabel">运行中</div>
             <div :class="styles.statPct">{{ store.stats.runningPct }}%</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statCompleted]">{{ store.stats.completed }}</div>
             <div :class="styles.statLabel">已完成</div>
             <div :class="styles.statPct">{{ store.stats.completedPct }}%</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card
-          hover-shadow
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <el-card
+          shadow="hover"
           :class="[styles.statCard, styles.statCardClickable]"
           @click="handleNavigateToFailed"
           data-test="failed-card"
@@ -440,86 +437,86 @@ function formatCountdown(seconds: number): string {
             <div :class="styles.statLabel">已失败</div>
             <div :class="[styles.statPct, styles.statPctFailed]">{{ store.stats.failedPct }}%</div>
           </div>
-        </t-card>
-      </t-col>
-    </t-row>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 第二行统计: 已终止 + 已挂起 + 今日新增 + 平均处理时长 -->
-    <t-row :gutter="16" :class="styles.statsRow">
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+    <el-row :gutter="16" :class="styles.statsRow">
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statTerminated]">{{ store.stats.terminated }}</div>
             <div :class="styles.statLabel">已终止</div>
             <div :class="styles.statPct">{{ store.stats.terminatedPct }}%</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statSuspended]">{{ store.stats.suspended }}</div>
             <div :class="styles.statLabel">已挂起</div>
             <div :class="styles.statPct">{{ store.stats.suspendedPct }}%</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statToday]">{{ store.todayNew }}</div>
             <div :class="styles.statLabel">今日新增</div>
           </div>
-        </t-card>
-      </t-col>
-      <t-col :xs="12" :sm="6">
-        <t-card hover-shadow :class="styles.statCard">
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div :class="styles.statCard">
           <div :class="styles.statItem">
             <div :class="[styles.statValue, styles.statDuration]">{{ formatDuration(store.avgDuration) }}</div>
             <div :class="styles.statLabel">平均处理时长</div>
           </div>
-        </t-card>
-      </t-col>
-    </t-row>
+        </div>
+      </el-col>
+    </el-row>
 
     <!-- 图表第一行: 状态分布 + 每日趋势 -->
-    <t-row :gutter="16" :class="styles.chartRow">
-      <t-col :xs="24" :md="10">
-        <t-card hover-shadow>
+    <el-row :gutter="16" :class="styles.chartRow">
+      <el-col :xs="24" :md="10">
+        <el-card shadow="never" :class="styles.chartCard">
           <template #header>
             <span>流程实例状态分布</span>
           </template>
           <div ref="statusChartRef" :class="styles.chart"></div>
-        </t-card>
-      </t-col>
-      <t-col :xs="24" :md="14">
-        <t-card hover-shadow>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :md="14">
+        <el-card shadow="never" :class="styles.chartCard">
           <template #header>
             <span>每日实例数量趋势</span>
           </template>
           <div ref="trendChartRef" :class="styles.chart"></div>
-        </t-card>
-      </t-col>
-    </t-row>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 图表第二行: 节点耗时 + 热门流程 -->
-    <t-row :gutter="16" :class="styles.chartRow">
-      <t-col :xs="24" :md="12">
-        <t-card hover-shadow>
+    <el-row :gutter="16" :class="styles.chartRow">
+      <el-col :xs="24" :md="12">
+        <el-card shadow="never" :class="styles.chartCard">
           <template #header>
             <span>节点平均处理时间</span>
           </template>
           <div ref="nodeChartRef" :class="styles.chart"></div>
-        </t-card>
-      </t-col>
-      <t-col :xs="24" :md="12">
-        <t-card hover-shadow>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :md="12">
+        <el-card shadow="never" :class="styles.chartCard">
           <template #header>
             <span>热门流程 Top 5</span>
           </template>
           <div ref="topFlowChartRef" :class="styles.chart"></div>
-        </t-card>
-      </t-col>
-    </t-row>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>

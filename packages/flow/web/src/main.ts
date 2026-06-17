@@ -1,9 +1,11 @@
-import 'tdesign-vue-next/dist/tdesign.css'
-import '@schema-form/shared-styles/tokens.css'
+import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/theme.scss'
+import '@schema-form/shared-styles/css-variables.scss'
 import './styles/variables.scss'
 import './styles/theme.scss'
 import { createQiankunApp } from '@schema-form/shared-qiankun/createQiankunApp'
 import { useQiankun } from '@schema-form/shared-qiankun'
+import { setupElementPlus } from '@schema-form/shared-config/element'
 
 import App from './App.vue'
 import { createFlowRouter } from './router/index.js'
@@ -21,7 +23,7 @@ const router = createFlowRouter()
 const { bootstrap, mount, unmount } = createQiankunApp({
   name: 'flow',
   rootComponent: App,
-  plugins: [router],
+  plugins: [router, { install: (app) => setupElementPlus(app) }],
   getToken: () => {
     const state = getGlobalState()
     return (state.token as string) || null

@@ -2,42 +2,42 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">
-        <span :class="$style.icon">🤖</span>
+        <AppIcon name="connection" :size="20" />
         AI 助手
       </h3>
-      <t-button :class="$style.closeBtn" variant="text" @click="$emit('close')">
-        <CloseIcon style="font-size: 20px;" />
-      </t-button>
+      <el-button :class="$style.closeBtn" link @click="$emit('close')">
+        <AppIcon name="close" style="font-size: 20px;" />
+      </el-button>
     </div>
 
-    <t-tabs v-model:value="activeTab" :class="$style.tabs">
-      <t-tab-panel label="生成流程" value="generate">
+    <el-tabs v-model="activeTab" :class="$style.tabs">
+      <el-tab-pane label="生成流程" name="generate">
         <AIFlowGenerator @apply="handleApplyFlow" />
-      </t-tab-panel>
-      <t-tab-panel label="优化分析" value="optimize">
+      </el-tab-pane>
+      <el-tab-pane label="优化分析" name="optimize">
         <AIFlowOptimizer
           :nodes="nodes"
           :edges="edges"
           @apply-suggestion="handleApplySuggestion"
         />
-      </t-tab-panel>
-      <t-tab-panel label="AI 对话" value="chat">
+      </el-tab-pane>
+      <el-tab-pane label="AI 对话" name="chat">
         <AIChat
           :nodes="nodes"
           :edges="edges"
           @update-flow="handleUpdateFlow"
         />
-      </t-tab-panel>
-    </t-tabs>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { CloseIcon } from 'tdesign-icons-vue-next'
 import AIFlowGenerator from './AIFlowGenerator.vue'
 import AIFlowOptimizer from './AIFlowOptimizer.vue'
 import AIChat from './AIChat.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface FlowNode {
   id: string

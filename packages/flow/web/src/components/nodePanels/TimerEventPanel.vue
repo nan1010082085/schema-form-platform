@@ -34,19 +34,19 @@ const timerHint = computed(() => {
 <template>
   <SectionToggle title="节点配置" :count="2">
     <FieldRow label="定时类型">
-      <t-radio-group
+      <el-radio-group
         :model-value="timerType"
 
         @change="update('timerType', $event)"
       >
-        <t-radio value="duration">持续时间</t-radio>
-        <t-radio value="date">指定日期</t-radio>
-        <t-radio value="cycle">循环</t-radio>
-      </t-radio-group>
+        <el-radio value="duration">持续时间</el-radio>
+        <el-radio value="date">指定日期</el-radio>
+        <el-radio value="cycle">循环</el-radio>
+      </el-radio-group>
     </FieldRow>
 
     <FieldRow label="定时值">
-      <t-input
+      <el-input
         :model-value="(node.data?.timerValue as string) ?? ''"
         :placeholder="timerPlaceholder"
 

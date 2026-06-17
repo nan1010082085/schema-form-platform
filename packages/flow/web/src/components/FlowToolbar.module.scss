@@ -16,6 +16,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
+
+  // 去掉 el-button 左侧 margin
+  :global(.el-button + .el-button) {
+    margin-left: 0;
+  }
 }
 
 .left {
@@ -30,6 +35,23 @@
 
 .right {
   flex-shrink: 0;
+
+  // 铃铛按钮与其他图标按钮对齐
+  :global(.el-badge) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    border-radius: var(--radius-small);
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--color-primary-lighter);
+      color: var(--color-primary);
+    }
+  }
 }
 
 .appName {
@@ -44,6 +66,34 @@
   font-weight: 600;
   color: var(--text-color-primary);
   white-space: nowrap;
+}
+
+.titleInput {
+  width: 128px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-color-primary);
+  background: var(--bg-color-secondary);
+  border: 1px solid var(--border-color-light);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+
+  &:focus {
+    border-color: var(--color-primary);
+  }
+
+  &::placeholder {
+    color: var(--text-color-placeholder);
+  }
+}
+
+.titleText {
+  font-size: 13px;
+  color: var(--text-color-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .divider {
@@ -75,18 +125,18 @@
   color: var(--text-color-secondary);
   cursor: pointer;
   border-radius: var(--radius-small);
-  transition: all 0.15s;
+  transition: all 0.2s;
   flex-shrink: 0;
   padding: 0;
 }
 
 .iconBtn:hover {
-  background: var(--bg-color-secondary);
-  color: var(--text-color-primary);
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
 }
 
 .iconBtn:disabled {
-  opacity: 0.35;
+  opacity: 0.25;
   cursor: not-allowed;
 }
 
@@ -98,16 +148,16 @@
 
 .iconBtnOutline:hover {
   border-color: var(--border-color-hover);
-  background: var(--bg-color-secondary);
+  background: var(--color-primary-lighter);
 }
 
 .iconBtnActive {
-  background: var(--color-primary-light);
   color: var(--color-primary);
-}
+  background: var(--color-primary-lighter);
 
-.iconBtnActive:hover {
-  background: var(--color-primary-light-3);
+  &:hover {
+    background: var(--color-primary-lighter);
+  }
 }
 
 .btn {
@@ -116,7 +166,7 @@
   gap: 4px;
   padding: 5px 12px;
   font-size: var(--font-size-small);
-  border-radius: var(--radius-small);
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -124,25 +174,29 @@
 }
 
 .btnOutline {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  color: var(--text-color-secondary);
+  background: var(--bg-color-gray);
+  border: 1px solid var(--color-primary-lighter);
+  color: var(--text-color-regular);
 }
 
 .btnOutline:hover {
-  border-color: var(--border-color-hover);
-  background: var(--bg-color-secondary);
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  color: var(--text-color-primary);
 }
 
 .btnPrimary {
   background: var(--color-primary);
   border: 1px solid var(--color-primary);
-  color: var(--color-white, #fff);
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 0 10px var(--color-primary-light);
 }
 
 .btnPrimary:hover {
-  background: var(--color-primary-light-3);
-  border-color: var(--color-primary-light-3);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 15px var(--color-primary-light);
 }
 
 .previewBar {
@@ -258,4 +312,114 @@
     border-radius: 3px;
     box-shadow: 0 1px 0 var(--border-color);
   }
+}
+
+// ---- 模拟控制按钮 ----
+.simBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: var(--font-size-small);
+  font-weight: 500;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.simBtnPrimary {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-white, #fff);
+
+  &:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+}
+
+.simBtnStop {
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  color: var(--color-white, #fff);
+
+  &:hover {
+    background: var(--color-danger-light);
+    border-color: var(--color-danger-light);
+  }
+}
+
+.simIconBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-small);
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-lighter);
+    color: var(--color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.simSpeedBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  background: var(--bg-color-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--border-color-hover);
+    color: var(--color-primary);
+  }
+}
+
+.simDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color-lighter);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.simStatus {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  margin: 0 8px;
+  white-space: nowrap;
+}
+
+.simStep {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary);
+  padding: 3px 8px;
+  background: var(--color-primary-lighter);
+  border-radius: var(--radius-small);
 }

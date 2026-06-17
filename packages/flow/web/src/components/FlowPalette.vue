@@ -2,60 +2,18 @@
   <div :class="styles.palette">
     <div :class="styles.title">流程元素</div>
     <div :class="styles.searchWrap">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         size="small"
         placeholder="搜索节点..."
         clearable
-        :prefix-icon="SearchIcon"
-      />
+      >
+        <template #prefix>
+          <AppIcon name="search" :size="14" />
+        </template>
+      </el-input>
     </div>
-    <div v-if="showWorkflowNodes" :class="styles.group">
-      <div :class="styles.groupTitle">触发器</div>
-      <div :class="styles.items">
-        <div
-          v-for="item in filteredWorkflowTriggerItems"
-          :key="item.type"
-          :class="styles.item"
-          data-test="palette-item"
-          draggable="true"
-          @dragstart="onDragStart($event, item)"
-        >
-          <span v-html="highlightText(item.label)" />
-        </div>
-      </div>
-    </div>
-    <div v-if="showWorkflowNodes" :class="styles.group">
-      <div :class="styles.groupTitle">操作</div>
-      <div :class="styles.items">
-        <div
-          v-for="item in filteredWorkflowActionItems"
-          :key="item.type"
-          :class="styles.item"
-          data-test="palette-item"
-          draggable="true"
-          @dragstart="onDragStart($event, item)"
-        >
-          <span v-html="highlightText(item.label)" />
-        </div>
-      </div>
-    </div>
-    <div v-if="showWorkflowNodes" :class="styles.group">
-      <div :class="styles.groupTitle">逻辑</div>
-      <div :class="styles.items">
-        <div
-          v-for="item in filteredWorkflowLogicItems"
-          :key="item.type"
-          :class="styles.item"
-          data-test="palette-item"
-          draggable="true"
-          @dragstart="onDragStart($event, item)"
-        >
-          <span v-html="highlightText(item.label)" />
-        </div>
-      </div>
-    </div>
-    <div v-if="showBpmnNodes" :class="styles.group">
+    <div :class="styles.group">
       <div :class="styles.groupTitle">事件</div>
       <div :class="styles.items">
         <div
@@ -66,11 +24,12 @@
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
+          <AppIcon :name="getEventIcon(item.type)" :size="16" />
           <span v-html="highlightText(item.label)" />
         </div>
       </div>
     </div>
-    <div v-if="showBpmnNodes" :class="styles.group">
+    <div :class="styles.group">
       <div :class="styles.groupTitle">任务</div>
       <div :class="styles.items">
         <div
@@ -81,11 +40,12 @@
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
+          <AppIcon :name="getTaskIcon(item.type)" :size="16" />
           <span v-html="highlightText(item.label)" />
         </div>
       </div>
     </div>
-    <div v-if="showBpmnNodes" :class="styles.group">
+    <div :class="styles.group">
       <div :class="styles.groupTitle">网关</div>
       <div :class="styles.items">
         <div
@@ -96,6 +56,7 @@
           draggable="true"
           @dragstart="onDragStart($event, item)"
         >
+          <AppIcon :name="getGatewayIcon(item.type)" :size="16" />
           <span v-html="highlightText(item.label)" />
         </div>
       </div>
@@ -108,44 +69,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { SearchIcon } from 'tdesign-icons-vue-next'
 import { BpmnElementType, DEFAULT_NODE_CONFIGS, DEFAULT_NODE_SIZES } from '@schema-form/flow-shared'
-import { useWorkflowNodes } from '../composables/useWorkflowNodes.js'
-import type { WorkflowNodeType } from '../composables/useWorkflowNodes.js'
 import styles from './FlowPalette.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface PaletteItem {
-  type: BpmnElementType | WorkflowNodeType
+  type: BpmnElementType
   label: string
   shape: string
 }
 
-const props = defineProps<{
-  mode?: 'bpmn' | 'workflow'
-}>()
-
-const { getDefaultData, getNodeSize } = useWorkflowNodes()
-
-const showBpmnNodes = computed(() => props.mode !== 'workflow')
-const showWorkflowNodes = computed(() => props.mode === 'workflow')
-
-// Workflow 节点分组
-const workflowTriggerItems: PaletteItem[] = [
-  { type: 'workflowStart', label: '开始', shape: 'workflow-start' },
-  { type: 'workflowEnd', label: '结束', shape: 'workflow-end' },
-]
-
-const workflowActionItems: PaletteItem[] = [
-  { type: 'workflowEditor', label: '表单配置', shape: 'workflow-editor' },
-  { type: 'workflowFlow', label: '子流程', shape: 'workflow-flow' },
-  { type: 'workflowAI', label: 'AI 任务', shape: 'workflow-ai' },
-]
-
-const workflowLogicItems: PaletteItem[] = [
-  { type: 'workflowCondition', label: '条件判断', shape: 'workflow-condition' },
-]
-
-// BPMN 节点分组
 const eventItems: PaletteItem[] = [
   { type: BpmnElementType.StartEvent, label: '开始事件', shape: 'bpmn-start-event' },
   { type: BpmnElementType.EndEvent, label: '结束事件', shape: 'bpmn-end-event' },
@@ -167,6 +100,39 @@ const gatewayItems: PaletteItem[] = [
   { type: BpmnElementType.InclusiveGateway, label: '包含网关', shape: 'bpmn-inclusive-gateway' },
 ]
 
+const EVENT_ICONS: Record<string, string> = {
+  [BpmnElementType.StartEvent]: 'video-play',
+  [BpmnElementType.EndEvent]: 'video-pause',
+  [BpmnElementType.TimerEvent]: 'timer',
+}
+
+const TASK_ICONS: Record<string, string> = {
+  [BpmnElementType.UserTask]: 'user',
+  [BpmnElementType.ServiceTask]: 'setting',
+  [BpmnElementType.ScriptTask]: 'document',
+  [BpmnElementType.SendTask]: 'position',
+  [BpmnElementType.ReceiveTask]: 'connection',
+  [BpmnElementType.SubProcess]: 'switch',
+}
+
+const GATEWAY_ICONS: Record<string, string> = {
+  [BpmnElementType.ExclusiveGateway]: 'switch',
+  [BpmnElementType.ParallelGateway]: 'sort',
+  [BpmnElementType.InclusiveGateway]: 'circle-check',
+}
+
+function getEventIcon(type: BpmnElementType): string {
+  return EVENT_ICONS[type] ?? 'video-play'
+}
+
+function getTaskIcon(type: BpmnElementType): string {
+  return TASK_ICONS[type] ?? 'setting'
+}
+
+function getGatewayIcon(type: BpmnElementType): string {
+  return GATEWAY_ICONS[type] ?? 'switch'
+}
+
 const searchQuery = ref('')
 
 function matchItem(item: PaletteItem, q: string): boolean {
@@ -179,9 +145,6 @@ function filterItems(items: PaletteItem[]): PaletteItem[] {
   return items.filter(item => matchItem(item, q))
 }
 
-const filteredWorkflowTriggerItems = computed(() => filterItems(workflowTriggerItems))
-const filteredWorkflowActionItems = computed(() => filterItems(workflowActionItems))
-const filteredWorkflowLogicItems = computed(() => filterItems(workflowLogicItems))
 const filteredEventItems = computed(() => filterItems(eventItems))
 const filteredTaskItems = computed(() => filterItems(taskItems))
 const filteredGatewayItems = computed(() => filterItems(gatewayItems))
@@ -189,11 +152,6 @@ const filteredGatewayItems = computed(() => filterItems(gatewayItems))
 const isAllEmpty = computed(() => {
   const q = searchQuery.value.trim()
   if (!q) return false
-  if (props.mode === 'workflow') {
-    return filteredWorkflowTriggerItems.value.length === 0
-      && filteredWorkflowActionItems.value.length === 0
-      && filteredWorkflowLogicItems.value.length === 0
-  }
   return filteredEventItems.value.length === 0
     && filteredTaskItems.value.length === 0
     && filteredGatewayItems.value.length === 0
@@ -217,24 +175,13 @@ function highlightText(text: string): string {
 function onDragStart(event: DragEvent, item: PaletteItem) {
   if (!event.dataTransfer) return
 
-  // Workflow 节点使用不同的数据格式
-  if (item.shape.startsWith('workflow-')) {
-    const workflowType = item.type as WorkflowNodeType
-    event.dataTransfer.setData('application/bpmn-node', JSON.stringify({
-      shape: item.shape,
-      data: getDefaultData(workflowType),
-      ...getNodeSize(workflowType),
-    }))
-  } else {
-    // BPMN 节点
-    event.dataTransfer.setData('application/bpmn-node', JSON.stringify({
-      shape: item.shape,
-      data: {
-        ...DEFAULT_NODE_CONFIGS[item.type as BpmnElementType],
-        bpmnType: item.type,
-      },
-      ...DEFAULT_NODE_SIZES[item.type as BpmnElementType],
-    }))
-  }
+  event.dataTransfer.setData('application/bpmn-node', JSON.stringify({
+    shape: item.shape,
+    data: {
+      ...DEFAULT_NODE_CONFIGS[item.type],
+      bpmnType: item.type,
+    },
+    ...DEFAULT_NODE_SIZES[item.type],
+  }))
 }
 </script>

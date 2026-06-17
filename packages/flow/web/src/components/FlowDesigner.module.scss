@@ -10,7 +10,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: var(--bg-color-secondary);
+  background: var(--bg-color-gray-light); // 画布周围用浅灰色
 }
 
 .drawer {
@@ -19,7 +19,7 @@
   flex-direction: column;
   overflow: hidden;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: var(--bg-color);
+  background: var(--bg-color-white); // 抽屉面板用白色
 }
 
 .drawerLeft {
@@ -28,7 +28,7 @@
 }
 
 .drawerRight {
-  width: 500px;
+  width: 320px;
   border-left: 1px solid var(--border-color-lighter);
 }
 
@@ -129,8 +129,8 @@
 }
 
 .formPreview {
-  border-top: 1px solid var(--border-color-lighter);
-  background: var(--bg-color);
+  border-top: 1px solid var(--border-color-light);
+  background: var(--bg-color-white);
   height: 320px;
   display: flex;
   flex-direction: column;

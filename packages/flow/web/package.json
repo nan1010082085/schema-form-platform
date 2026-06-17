@@ -19,7 +19,11 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
+    "@element-plus/icons-vue": "^2.3.1",
+    "@iconify-icons/ep": "^1.2.12",
+    "@iconify/vue": "^5.0.1",
     "@schema-form/flow-shared": "workspace:*",
+    "@schema-form/shared-components": "workspace:*",
     "@schema-form/shared-qiankun": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
@@ -29,9 +33,8 @@
     "@vue-flow/core": "^1.48.2",
     "@vue-flow/minimap": "^1.5.4",
     "echarts": "^6.1.0",
+    "element-plus": "^2.9.7",
     "pinia": "^2.3.0",
-    "tdesign-icons-vue-next": "^0.4.4",
-    "tdesign-vue-next": "^1.20.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

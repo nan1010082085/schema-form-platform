@@ -4,14 +4,11 @@ import { ref, computed } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 
 /* ------------------------------------------------------------------ */
-/*  Mocks — tdesign-vue-next                                           */
 /* ------------------------------------------------------------------ */
 
-vi.mock('tdesign-vue-next', () => ({
   MessagePlugin: { success: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('tdesign-icons-vue-next', () => ({
   ChevronRightIcon: { template: '<span />' },
   ChevronDownIcon: { template: '<span />' },
   CopyIcon: { template: '<span />' },

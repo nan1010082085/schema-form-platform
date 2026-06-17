@@ -220,7 +220,7 @@ const statusType = computed(() => {
     suspended: 'warning',
     failed: 'danger',
   }
-  return map[instance.value?.status ?? ''] ?? 'default'
+  return map[instance.value?.status ?? ''] ?? 'info'
 })
 
 const statusLabel = computed(() => {
@@ -252,7 +252,7 @@ function actionTheme(action: string) {
     claim: 'primary',
     delegate: 'warning',
   }
-  return map[action] ?? 'default'
+  return map[action] ?? 'info'
 }
 
 function formatDate(dateStr?: string | Date) {
@@ -260,35 +260,6 @@ function formatDate(dateStr?: string | Date) {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
-// TTable columns config for approval logs
-const logColumns = [
-  { colKey: 'nodeName', title: '节点', minWidth: 140 },
-  {
-    colKey: 'action',
-    title: '操作',
-    width: 100,
-    cell: 'actionCell',
-  },
-  { colKey: 'operator', title: '操作人', width: 120 },
-  {
-    colKey: 'outcome',
-    title: '结果',
-    width: 100,
-    cell: 'outcomeCell',
-  },
-  {
-    colKey: 'comment',
-    title: '备注',
-    minWidth: 160,
-    cell: 'commentCell',
-  },
-  {
-    colKey: 'createdAt',
-    title: '时间',
-    width: 180,
-    cell: 'dateCell',
-  },
-]
 </script>
 
 <template>
@@ -297,13 +268,13 @@ const logColumns = [
       <!-- Instance info header -->
       <div :class="styles.header">
         <div :class="styles.headerActions">
-          <t-button
-            theme="primary"
+          <el-button
+            type="primary"
             :loading="exporting"
             @click="exportInstance(instanceId)"
           >
             导出审批记录
-          </t-button>
+          </el-button>
         </div>
       </div>
 
@@ -322,7 +293,7 @@ const logColumns = [
         </div>
         <div :class="styles.infoRow">
           <span :class="styles.label">状态</span>
-          <t-tag :theme="statusType" size="small">{{ statusLabel }}</t-tag>
+          <el-tag :type="statusType" size="small">{{ statusLabel }}</el-tag>
         </div>
         <div :class="styles.infoRow">
           <span :class="styles.label">发起人</span>
@@ -339,8 +310,8 @@ const logColumns = [
       </div>
 
       <!-- Tabbed content -->
-      <t-tabs v-model:value="activeTab" @change="onTabChange">
-        <t-tab-panel label="流程图" value="graph">
+      <el-tabs v-model="activeTab" @tab-change="onTabChange">
+        <el-tab-pane label="流程图" name="graph">
           <div :class="styles.graphContainer">
             <VueFlow
               id="flow-instance-view"
@@ -366,66 +337,90 @@ const logColumns = [
               <Background />
             </VueFlow>
           </div>
-        </t-tab-panel>
+        </el-tab-pane>
 
-        <t-tab-panel label="流程变量" value="variables">
+        <el-tab-pane label="流程变量" name="variables">
           <template v-if="instance.variables && Object.keys(instance.variables).length > 0">
-            <t-descriptions :column="2" bordered size="small">
-              <t-descriptions-item
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item
                 v-for="(value, key) in instance.variables"
                 :key="String(key)"
                 :label="String(key)"
               >
                 {{ String(value) }}
-              </t-descriptions-item>
-            </t-descriptions>
+              </el-descriptions-item>
+            </el-descriptions>
           </template>
           <div v-else :class="styles.emptyTip">暂无流程变量</div>
-        </t-tab-panel>
+        </el-tab-pane>
 
-        <t-tab-panel label="活动轨迹" value="tokens">
-          <t-timeline>
-            <t-timeline-item
+        <el-tab-pane label="活动轨迹" name="tokens">
+          <div :class="styles.customTimeline">
+            <div
               v-for="token in instance.tokens"
               :key="token.tokenId"
-              :theme="token.state === 'active' ? 'primary' : token.state === 'completed' ? 'success' : 'default'"
-              :label="formatDate(instance.updatedAt)"
+              :class="styles.timelineItem"
             >
-              <span :class="styles.tokenNode">{{ token.nodeId }}</span>
-              <t-tag size="small" :theme="token.state === 'active' ? 'primary' : 'default'" :class="styles.tokenState">
-                {{ token.state }}
-              </t-tag>
-            </t-timeline-item>
-          </t-timeline>
-        </t-tab-panel>
+              <div
+                :class="[
+                  styles.timelineNode,
+                  token.state === 'active' ? styles.timelineNodePrimary : '',
+                  token.state === 'completed' ? styles.timelineNodeSuccess : '',
+                ]"
+              />
+              <div :class="styles.timelineContent">
+                <div :class="styles.timelineLabel">{{ formatDate(instance.updatedAt) }}</div>
+                <div :class="styles.timelineBody">
+                  <span :class="styles.tokenNode">{{ token.nodeId }}</span>
+                  <el-tag
+                    size="small"
+                    :type="token.state === 'active' ? 'primary' : 'info'"
+                    :class="styles.tokenState"
+                  >
+                    {{ token.state }}
+                  </el-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
 
-        <t-tab-panel label="审批日志" value="logs">
+        <el-tab-pane label="审批日志" name="logs">
           <div v-loading="logsLoading">
-            <t-table
+            <el-table
               v-if="approvalLogs.length > 0"
               :data="approvalLogs"
-              :columns="logColumns"
               size="small"
               stripe
               row-key="id"
             >
-              <template #actionCell="{ row }">
-                <t-tag :theme="actionTheme(row.action)" size="small">{{ actionLabel(row.action) }}</t-tag>
-              </template>
-              <template #outcomeCell="{ row }">
-                {{ row.outcome || '-' }}
-              </template>
-              <template #commentCell="{ row }">
-                {{ row.comment || '-' }}
-              </template>
-              <template #dateCell="{ row }">
-                {{ formatDate(row.createdAt) }}
-              </template>
-            </t-table>
+              <el-table-column prop="nodeName" label="节点" min-width="140" />
+              <el-table-column label="操作" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="actionTheme(row.action)" size="small">{{ actionLabel(row.action) }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="operator" label="操作人" width="120" />
+              <el-table-column label="结果" width="100">
+                <template #default="{ row }">
+                  {{ row.outcome || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="备注" min-width="160">
+                <template #default="{ row }">
+                  {{ row.comment || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="时间" width="180">
+                <template #default="{ row }">
+                  {{ formatDate(row.createdAt) }}
+                </template>
+              </el-table-column>
+            </el-table>
             <div v-else-if="!logsLoading" :class="styles.emptyTip">暂无审批记录</div>
           </div>
-        </t-tab-panel>
-      </t-tabs>
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>

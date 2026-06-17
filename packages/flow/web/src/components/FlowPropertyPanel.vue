@@ -1,10 +1,7 @@
 <template>
   <div :class="styles.panel">
     <div :class="styles.header">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="8" cy="8" r="6" />
-        <path d="M8 5v3l2 1" />
-      </svg>
+      <AppIcon name="clock" :size="14" />
       <span v-if="selectedNode">{{ nodeTypeDisplayName }} 配置</span>
       <span v-else-if="selectedEdge">连线配置</span>
       <span v-else>节点配置</span>
@@ -14,16 +11,16 @@
     <template v-if="selectedNode">
       <div :class="styles.widgetNameRow">
         <span :class="styles.widgetType">{{ nodeTypeDisplayName }}</span>
-        <t-tooltip content="复制节点 ID" placement="top" :show-after="500">
-          <CopyIcon :class="styles.copyIdIcon" @click="copyNodeId" />
-        </t-tooltip>
+        <el-tooltip content="复制节点 ID" placement="top" :show-after="500">
+          <AppIcon name="document-copy" :class="styles.copyIdIcon" @click="copyNodeId" />
+        </el-tooltip>
       </div>
 
-      <t-scrollbar :class="styles.scroll">
+      <el-scrollbar :class="styles.scroll">
         <!-- 基础属性 -->
         <SectionToggle title="基础属性" :count="2">
           <FieldRow label="节点名称">
-            <t-input
+            <el-input
               :model-value="selectedNode.data?.label ?? ''"
               placeholder="节点名称"
 
@@ -31,7 +28,7 @@
             />
           </FieldRow>
           <FieldRow label="节点说明" textarea>
-            <t-input
+            <el-input
               type="textarea"
               :model-value="selectedNode.data?.documentation ?? ''"
               placeholder="节点说明（可选）"
@@ -64,22 +61,22 @@
             <span :class="styles.edgeTarget">→ {{ edge.target }}</span>
           </div>
         </SectionToggle>
-      </t-scrollbar>
+      </el-scrollbar>
     </template>
 
     <!-- ===== Edge selected ===== -->
     <template v-else-if="selectedEdge">
       <div :class="styles.widgetNameRow">
         <span :class="styles.widgetType">连线</span>
-        <t-tooltip content="复制连线 ID" placement="top" :show-after="500">
-          <CopyIcon :class="styles.copyIdIcon" @click="copyEdgeId" />
-        </t-tooltip>
+        <el-tooltip content="复制连线 ID" placement="top" :show-after="500">
+          <AppIcon name="document-copy" :class="styles.copyIdIcon" @click="copyEdgeId" />
+        </el-tooltip>
       </div>
 
-      <t-scrollbar :class="styles.scroll">
+      <el-scrollbar :class="styles.scroll">
         <SectionToggle title="连线属性" :count="3">
           <FieldRow label="连线标签">
-            <t-input
+            <el-input
               :model-value="(selectedEdge.label as string) ?? ''"
               placeholder="连线标签"
 
@@ -87,7 +84,7 @@
             />
           </FieldRow>
           <FieldRow label="条件表达式">
-            <t-input
+            <el-input
               :model-value="selectedEdge.data?.conditionExpression ?? ''"
               placeholder="${amount > 10000}"
 
@@ -95,13 +92,13 @@
             />
           </FieldRow>
           <FieldRow label="默认连线">
-            <t-switch
+            <el-switch
               :model-value="selectedEdge.data?.isDefault ?? false"
               @change="updateEdgeData('isDefault', $event)"
             />
           </FieldRow>
         </SectionToggle>
-      </t-scrollbar>
+      </el-scrollbar>
     </template>
 
     <!-- ===== Nothing selected ===== -->
@@ -114,8 +111,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Edge } from '@vue-flow/core'
-import { CopyIcon } from 'tdesign-icons-vue-next'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useFlowDesignerStore } from '../stores/flowDesigner.js'
 import { useFlowGraphStore } from '../stores/flowGraph.js'
@@ -123,6 +119,7 @@ import { useNodePropertyPanel } from '../composables/useNodePropertyPanel.js'
 import SectionToggle from './nodePanels/SectionToggle.vue'
 import FieldRow from './nodePanels/FieldRow.vue'
 import styles from './FlowPropertyPanel.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const designerStore = useFlowDesignerStore()
 const graphStore = useFlowGraphStore()
@@ -204,13 +201,13 @@ function updateEdgeData(key: string, value: unknown) {
 function copyNodeId() {
   if (!selectedNode.value) return
   navigator.clipboard.writeText(selectedNode.value.id)
-  MessagePlugin.success('已复制节点 ID')
+  ElMessage.success('已复制节点 ID')
 }
 
 function copyEdgeId() {
   if (!selectedEdge.value) return
   navigator.clipboard.writeText(selectedEdge.value.id)
-  MessagePlugin.success('已复制连线 ID')
+  ElMessage.success('已复制连线 ID')
 }
 
 function selectEdge(edgeId: string) {

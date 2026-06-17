@@ -9,7 +9,6 @@ vi.mock('../api/flowApi.js', () => ({
   },
 }))
 
-vi.mock('tdesign-vue-next', () => ({
   MessagePlugin: {
     success: vi.fn(),
     error: vi.fn(),
@@ -18,7 +17,6 @@ vi.mock('tdesign-vue-next', () => ({
 }))
 
 import { flowApi } from '../api/flowApi.js'
-import { MessagePlugin } from 'tdesign-vue-next'
 
 // Mock URL.createObjectURL / revokeObjectURL
 const mockCreateObjectURL = vi.fn(() => 'blob:mock-url')

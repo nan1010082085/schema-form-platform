@@ -63,7 +63,7 @@
     <div v-if="previewPublishId && store.mode === 'design'" :class="styles.formPreview">
       <div :class="styles.formPreviewHeader">
         <span :class="styles.formPreviewTitle">表单预览</span>
-        <t-button size="small" variant="text" @click="previewPublishId = ''">关闭</t-button>
+        <el-button size="small" link @click="previewPublishId = ''">关闭</el-button>
       </div>
       <MicroFormEmbed
         :publish-id="previewPublishId"
@@ -80,11 +80,11 @@
     />
 
     <!-- Validation result dialog -->
-    <t-dialog
-      v-model:visible="validationVisible"
-      header="流程校验结果"
+    <el-dialog
+      v-model="validationVisible"
+      title="流程校验结果"
       width="520px"
-      :close-on-overlay-click="false"
+      :close-on-click-modal="false"
       destroy-on-close
       @close="store.clearErrorNodes()"
     >
@@ -107,43 +107,57 @@
           <span v-if="err.nodeId || err.edgeId" :class="styles.errId">
             ({{ err.nodeId ?? err.edgeId }})
           </span>
-          <LocationIcon v-if="err.nodeId" :class="styles.errLocateIcon" :size="14" />
+          <AppIcon name="location" v-if="err.nodeId" :class="styles.errLocateIcon" :size="14" />
         </div>
       </div>
       <template #footer>
-        <t-button @click="validationVisible = false">关闭</t-button>
+        <el-button @click="validationVisible = false">关闭</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
 
     <!-- Version history dialog -->
-    <t-dialog
-      v-model:visible="versionHistoryVisible"
-      header="版本历史"
+    <el-dialog
+      v-model="versionHistoryVisible"
+      title="版本历史"
       width="600px"
-      :close-on-overlay-click="false"
+      :close-on-click-modal="false"
       destroy-on-close
     >
-      <t-table
+      <el-table
+        v-loading="versionLoading"
         :data="versions"
-        :loading="versionLoading"
         :class="styles.versionTable"
-        empty-text="暂无版本历史"
         stripe
-        :columns="versionColumns"
         row-key="id"
-      />
+      >
+        <el-table-column prop="version" label="版本号" width="100" />
+        <el-table-column label="创建时间" min-width="180">
+          <template #default="{ row }">
+            {{ new Date(row.createdAt).toLocaleString() }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="80">
+          <template #default="{ row }">
+            {{ row.id === definitionStore.currentDefinition?.currentVersionId ? '当前' : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" align="center">
+          <template #default="{ row }">
+            {{ row.id }}
+          </template>
+        </el-table-column>
+      </el-table>
       <template #footer>
-        <t-button @click="versionHistoryVisible = false">关闭</t-button>
+        <el-button @click="versionHistoryVisible = false">关闭</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { LocationIcon } from 'tdesign-icons-vue-next'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import {
@@ -172,6 +186,7 @@ import { useAutoLayout } from '../composables/useAutoLayout.js'
 import { flowApi } from '../api/flowApi.js'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowDesigner.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()
@@ -184,7 +199,6 @@ const {
   rankSep: layoutRankSep,
   computeLayout,
 } = useAutoLayout()
-const router = useRouter()
 const route = useRoute()
 
 const definitionId = ref<string | null>((route.query.id as string) ?? null)
@@ -209,13 +223,13 @@ const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
 function handleAiDataChange(data: Record<string, unknown>) {
   const { type, payload } = data as { type: string; payload: unknown }
   if (type === 'ai:published' && payload) {
-    MessagePlugin.success('AI 已发布流程')
+    ElMessage.success('AI 已发布流程')
   }
   if (type === 'ai:open-in-editor' && payload) {
     const { flow } = payload as { flow: FlowGraph | null }
     if (flow && flow.nodes && flow.edges) {
       graphStore.loadFromFlowGraph(flow)
-      MessagePlugin.success('已加载 AI 生成的流程')
+      ElMessage.success('已加载 AI 生成的流程')
     }
   }
 }
@@ -245,30 +259,6 @@ function onSettingsSave(settings: typeof flowSettings) {
   Object.assign(flowSettings, settings)
 }
 
-const versionColumns = [
-  { colKey: 'version', title: '版本号', width: 100 },
-  {
-    colKey: 'createdAt',
-    title: '创建时间',
-    minWidth: 180,
-    cell: (_: unknown, { row }: { row: FlowVersionData }) => new Date(row.createdAt).toLocaleString(),
-  },
-  {
-    colKey: 'status',
-    title: '状态',
-    width: 80,
-    cell: (_: unknown, { row }: { row: FlowVersionData }) =>
-      row.id === definitionStore.currentDefinition?.currentVersionId ? '当前' : '',
-  },
-  {
-    colKey: 'actions',
-    title: '操作',
-    width: 120,
-    align: 'center' as const,
-    cell: (_: unknown, { row }: { row: FlowVersionData }) => row.id,
-  },
-]
-
 /* --- Version History --- */
 
 async function loadVersionHistory() {
@@ -278,7 +268,7 @@ async function loadVersionHistory() {
     const res = await flowApi.listVersions(definitionId.value)
     versions.value = res.items ?? []
   } catch {
-    MessagePlugin.error('加载版本历史失败')
+    ElMessage.error('加载版本历史失败')
   } finally {
     versionLoading.value = false
   }
@@ -287,50 +277,6 @@ async function loadVersionHistory() {
 function onVersionHistory() {
   versionHistoryVisible.value = true
   loadVersionHistory()
-}
-
-async function loadVersion(versionId: string) {
-  if (store.isDirty) {
-    const confirmDialog = DialogPlugin.confirm({
-      header: '提示',
-      body: '当前有未保存的修改，加载历史版本将覆盖这些修改。确定继续？',
-      confirmBtn: '继续',
-      cancelBtn: '取消',
-      theme: 'warning',
-      onConfirm: () => {
-        confirmDialog.destroy()
-        doLoadVersion(versionId)
-      },
-      onCancel: () => {
-        confirmDialog.destroy()
-      },
-    })
-    return
-  }
-
-  doLoadVersion(versionId)
-}
-
-async function doLoadVersion(versionId: string) {
-  if (!definitionId.value) return
-  try {
-    const version = await flowApi.getVersion(definitionId.value, versionId)
-    if (version.graph) {
-      graphStore.loadFromFlowGraph(version.graph)
-      setTimeout(() => canvasRef.value?.fitView(), 100)
-    }
-    if (version.metadata?.defaultRejectPolicy) {
-      flowSettings.defaultRejectPolicy = version.metadata.defaultRejectPolicy
-    }
-    if (version.metadata?.permissions) {
-      flowSettings.permissions = version.metadata.permissions
-    }
-    store.markClean()
-    versionHistoryVisible.value = false
-    MessagePlugin.success('已加载历史版本')
-  } catch {
-    MessagePlugin.error('加载版本失败')
-  }
 }
 
 // Watch selected node for form preview
@@ -352,10 +298,6 @@ watch(() => store.selectedNodeId, (nodeId) => {
 
 function togglePreview() {
   store.setMode(store.mode === 'design' ? 'preview' : 'design')
-}
-
-function _goBack() {
-  router.push('/list')
 }
 
 /* --- Load existing flow on mount --- */
@@ -394,7 +336,7 @@ onMounted(async () => {
     }
     store.markClean()
   } catch (e) {
-    MessagePlugin.error('加载流程失败')
+    ElMessage.error('加载流程失败')
   }
 })
 
@@ -445,14 +387,14 @@ onAiApply((data: AiApplyEvent) => {
       for (const edge of newEdges) {
         graphStore.addEdge(edge)
       }
-      MessagePlugin.success(`已插入 ${newNodes.length} 个节点到流程`)
+      ElMessage.success(`已插入 ${newNodes.length} 个节点到流程`)
       setTimeout(() => canvasRef.value?.fitView(), 100)
     }
   }
 })
 onAiPublished((data: AiPublishedEvent) => {
   if (data.type === 'flow') {
-    MessagePlugin.success('AI 已发布流程')
+    ElMessage.success('AI 已发布流程')
   }
 })
 
@@ -460,21 +402,21 @@ onAiPublished((data: AiPublishedEvent) => {
 
 onBeforeRouteLeave((_to, _from, next) => {
   if (!store.isDirty) return next()
-  const confirmDialog = DialogPlugin.confirm({
-    header: '提示',
-    body: '当前流程有未保存的修改，确定离开？',
-    confirmBtn: '离开',
-    cancelBtn: '留下',
-    theme: 'warning',
-    onConfirm: () => {
-      confirmDialog.destroy()
+  ElMessageBox.confirm(
+    '当前流程有未保存的修改，确定离开？',
+    '提示',
+    {
+      confirmButtonText: '离开',
+      cancelButtonText: '留下',
+      type: 'warning',
+    }
+  )
+    .then(() => {
       next()
-    },
-    onCancel: () => {
-      confirmDialog.destroy()
+    })
+    .catch(() => {
       next(false)
-    },
-  })
+    })
 })
 
 defineExpose({
@@ -558,9 +500,9 @@ async function onSave() {
     })
 
     store.markClean()
-    MessagePlugin.success('保存成功')
+    ElMessage.success('保存成功')
   } catch (e) {
-    MessagePlugin.error('保存失败')
+    ElMessage.error('保存失败')
   } finally {
     setTimeout(() => {
       _savingLock = false
@@ -572,18 +514,19 @@ async function onSave() {
 async function onPublish() {
   if (_savingLock) return
 
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '确认发布',
-      body: '确定发布此流程？发布后将创建新版本。',
-      confirmBtn: '发布',
-      cancelBtn: '取消',
-      theme: 'info',
-      onConfirm: () => { dialog.destroy(); resolve(true) },
-      onCancel: () => { dialog.destroy(); resolve(false) },
-    })
-  })
-  if (!confirmed) return
+  try {
+    await ElMessageBox.confirm(
+      '确定发布此流程？发布后将创建新版本。',
+      '确认发布',
+      {
+        confirmButtonText: '发布',
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    )
+  } catch {
+    return
+  }
 
   const errors = runValidation()
   if (hasErrors(errors)) {
@@ -603,9 +546,9 @@ async function onPublish() {
   try {
     await flowApi.publishFlow(definitionId.value)
     await definitionStore.fetchDefinition(definitionId.value)
-    MessagePlugin.success('发布成功')
+    ElMessage.success('发布成功')
   } catch (e) {
-    MessagePlugin.error('发布失败')
+    ElMessage.error('发布失败')
   } finally {
     setTimeout(() => {
       _savingLock = false
@@ -653,39 +596,36 @@ function onExportBpmn() {
 
 async function onSaveAsTemplate() {
   if (!definitionId.value) {
-    MessagePlugin.warning('请先保存流程，再执行此操作')
+    ElMessage.warning('请先保存流程，再执行此操作')
     return
   }
 
-  const templateName = ref(flowTitle.value || '未命名模板')
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '保存为模板',
-      body: `输入模板名称：`,
-      confirmBtn: '保存',
-      cancelBtn: '取消',
-      onConfirm: () => {
-        dialog.destroy()
-        resolve(true)
-      },
-      onCancel: () => {
-        dialog.destroy()
-        resolve(false)
-      },
-    })
-  })
+  let templateName = flowTitle.value || '未命名模板'
 
-  if (!confirmed || !templateName.value.trim()) return
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '请输入模板名称：',
+      '保存为模板',
+      {
+        confirmButtonText: '保存',
+        cancelButtonText: '取消',
+        inputValue: templateName,
+      }
+    )
+    templateName = value
+  } catch {
+    return
+  }
 
   try {
     await templateStore.saveAsTemplate(definitionId.value, {
-      name: templateName.value.trim(),
+      name: templateName.trim(),
       description: flowSettings.description,
       category: flowSettings.category,
     })
-    MessagePlugin.success('已保存为模板')
+    ElMessage.success('已保存为模板')
   } catch (e) {
-    MessagePlugin.error('保存模板失败')
+    ElMessage.error('保存模板失败')
   }
 }
 
@@ -701,7 +641,7 @@ function onImportBpmn() {
     definitionId.value = null
     store.reset()
     graphStore.loadFromFlowGraph(flowGraph)
-    MessagePlugin.success('BPMN 导入成功')
+    ElMessage.success('BPMN 导入成功')
   }
   input.click()
 }

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, reactive } from 'vue'
+import { onMounted, ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, PlayIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowDefinitionStore } from '../stores/flowDefinition.js'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
 import styles from './FlowListView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const router = useRouter()
 const store = useFlowDefinitionStore()
@@ -20,8 +21,20 @@ const createForm = reactive({
   category: '',
 })
 
+// 分页
+const page = ref(1)
+const pageSize = ref(20)
+
+// 筛选
+const activeTab = ref('all')
+const filterTabs = [
+  { label: '全部', value: 'all' },
+  { label: '草稿', value: 'draft' },
+  { label: '已发布', value: 'published' },
+]
+
 onMounted(() => {
-  store.fetchDefinitions()
+  fetchDefinitions()
 })
 
 function handleCreate() {
@@ -33,7 +46,7 @@ function handleCreate() {
 
 async function handleCreateConfirm() {
   if (!createForm.name.trim()) {
-    MessagePlugin.warning('请输入流程名称')
+    ElMessage.warning('请输入流程名称')
     return
   }
   try {
@@ -45,7 +58,7 @@ async function handleCreateConfirm() {
     createDialogVisible.value = false
     router.push({ name: 'flow-designer', query: { id: def.id } })
   } catch {
-    MessagePlugin.error('创建失败')
+    ElMessage.error('创建失败')
   }
 }
 
@@ -54,23 +67,20 @@ function handleEdit(id: string) {
 }
 
 async function handleDelete(id: string, name: string) {
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '确认删除',
-      body: `确定删除流程「${name}」？`,
-      confirmBtn: '删除',
-      cancelBtn: '取消',
-      theme: 'warning',
-      onConfirm: () => { dialog.destroy(); resolve(true) },
-      onCancel: () => { dialog.destroy(); resolve(false) },
-    })
-  })
-  if (!confirmed) return
+  try {
+    await ElMessageBox.confirm(
+      `确定删除流程「${name}」？`,
+      '确认删除',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
   try {
     await store.deleteDefinition(id)
-    MessagePlugin.success('删除成功')
+    ElMessage.success('删除成功')
   } catch {
-    MessagePlugin.error('删除失败')
+    ElMessage.error('删除失败')
   }
 }
 
@@ -79,43 +89,40 @@ async function handlePublish(id: string) {
   publishingId.value = id
   try {
     await store.publishDefinition(id)
-    MessagePlugin.success('发布成功')
+    ElMessage.success('发布成功')
   } catch {
-    MessagePlugin.error('发布失败')
+    ElMessage.error('发布失败')
   } finally {
     setTimeout(() => { publishingId.value = null }, COOLDOWN_MS)
   }
 }
 
 async function handleStart(id: string) {
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: '启动流程',
-      body: '确定启动该流程？',
-      confirmBtn: '启动',
-      cancelBtn: '取消',
-      theme: 'info',
-      onConfirm: () => { dialog.destroy(); resolve(true) },
-      onCancel: () => { dialog.destroy(); resolve(false) },
-    })
-  })
-  if (!confirmed) return
+  try {
+    await ElMessageBox.confirm(
+      '确定启动该流程？',
+      '启动流程',
+      { confirmButtonText: '启动', cancelButtonText: '取消', type: 'info' },
+    )
+  } catch {
+    return
+  }
   try {
     const instance = await instanceStore.startInstance(id)
-    MessagePlugin.success('流程已启动')
+    ElMessage.success('流程已启动')
     router.push({ name: 'flow-instance-detail', params: { id: instance.id } })
   } catch {
-    MessagePlugin.error('启动失败')
+    ElMessage.error('启动失败')
   }
 }
 
-function statusTheme(status: string) {
+function statusType(status: string) {
   const map: Record<string, string> = {
-    draft: 'default',
+    draft: 'info',
     published: 'success',
     archived: 'warning',
   }
-  return map[status] ?? 'default'
+  return map[status] ?? 'info'
 }
 
 function statusLabel(status: string) {
@@ -127,97 +134,165 @@ function statusLabel(status: string) {
   return map[status] ?? status
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString('zh-CN')
+function formatDate(dateStr: string | Date) {
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  return date.toLocaleString('zh-CN')
 }
 
-const tableColumns = [
-  { colKey: 'name', title: '名称', minWidth: 180 },
-  { colKey: 'description', title: '描述', minWidth: 200, ellipsis: true },
-  { colKey: 'category', title: '分类', width: 120 },
-  { colKey: 'status', title: '状态', width: 100 },
-  { colKey: 'createdAt', title: '创建时间', width: 180 },
-  { colKey: 'actions', title: '操作', width: 280, fixed: 'right' },
-]
+// 筛选后的列表
+const filteredDefinitions = computed(() => store.definitions)
+const filteredTotal = ref(0)
+
+function handlePageChange(newPage: number) {
+  page.value = newPage
+  fetchDefinitions()
+}
+
+function handleFilter() {
+  page.value = 1
+  fetchDefinitions()
+}
+
+function fetchDefinitions() {
+  store.fetchDefinitions({
+    status: activeTab.value === 'all' ? undefined : activeTab.value,
+    page: page.value,
+  }).then(() => {
+    filteredTotal.value = store.definitions.length
+  })
+}
 </script>
 
 <template>
   <div :class="styles.flowList">
+    <!-- Header -->
     <div :class="styles.header">
-      <h2>流程列表</h2>
-      <t-button theme="primary" @click="handleCreate">
-        <AddIcon />
-        新建流程
-      </t-button>
+      <div>
+        <h2>流程列表</h2>
+        <p :class="styles.subtitle">管理所有流程定义</p>
+      </div>
+      <div :class="styles.headerActions">
+        <el-button type="primary" @click="handleCreate">
+          <AppIcon name="plus" class="el-icon--left" />新建流程
+        </el-button>
+      </div>
     </div>
 
-    <t-table
-      :data="store.definitions"
-      :loading="store.loading"
-      stripe
-      :columns="tableColumns"
-      row-key="id"
-    >
-      <template #status="{ row }">
-        <t-tag :theme="statusTheme(row.status)" size="small">
-          {{ statusLabel(row.status) }}
-        </t-tag>
-      </template>
-      <template #createdAt="{ row }">
-        {{ formatDate(row.createdAt) }}
-      </template>
-      <template #actions="{ row }">
-        <div :class="styles.actions">
-          <t-button size="small" @click="handleEdit(row.id)">编辑</t-button>
-          <t-button
-            v-if="row.status === 'draft'"
-            size="small"
-            theme="success"
-            :loading="publishingId === row.id"
-            :disabled="publishingId !== null"
-            @click="handlePublish(row.id)"
-          >
-            {{ publishingId === row.id ? '发布中...' : '发布' }}
-          </t-button>
-          <t-button
-            v-if="row.status === 'published'"
-            size="small"
-            theme="primary"
-            @click="handleStart(row.id)"
-          >
-            <PlayIcon />
-            启动
-          </t-button>
-          <t-button size="small" theme="danger" @click="handleDelete(row.id, row.name)">
-            删除
-          </t-button>
+    <!-- Filter bar -->
+    <div :class="styles.toolbar">
+      <FilterTabs v-model="activeTab" :options="filterTabs" />
+    </div>
+
+    <!-- Loading -->
+    <div v-if="store.loading" :class="styles.content">
+      <div :class="styles.skeleton">
+        <div v-for="i in 6" :key="i" :class="styles.skeletonCard">
+          <div :class="styles.skeletonThumb" />
+          <div :class="styles.skeletonTitle" />
+          <div :class="styles.skeletonText" />
         </div>
-      </template>
-    </t-table>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div v-else-if="filteredDefinitions.length === 0" :class="styles.emptyState">
+      <AppIcon name="document" :size="48" :class="styles.emptyIcon" />
+      <p :class="styles.emptyText">暂无流程</p>
+      <el-button type="primary" @click="handleCreate">新建流程</el-button>
+    </div>
+
+    <!-- Card Grid -->
+    <div v-else :class="styles.content">
+      <div :class="styles.cardGrid">
+        <div v-for="item in filteredDefinitions" :key="item.id" :class="styles.card">
+          <!-- 缩略图占位 -->
+          <div :class="styles.cardThumb" @click="handleEdit(item.id)">
+            <AppIcon name="connection" :size="32" :class="styles.thumbIcon" />
+          </div>
+
+          <!-- 卡片内容 -->
+          <div :class="styles.cardBody">
+            <h3 :class="styles.cardTitle">{{ item.name }}</h3>
+            <p :class="styles.cardDesc">{{ item.description || '暂无描述' }}</p>
+            <div :class="styles.cardMeta">
+              <el-tag size="small" :type="statusType(item.status)">
+                {{ statusLabel(item.status) }}
+              </el-tag>
+              <span v-if="item.category" :class="styles.categoryTag">{{ item.category }}</span>
+              <span :class="styles.date">{{ formatDate(item.createdAt) }}</span>
+            </div>
+          </div>
+
+          <!-- 卡片操作 -->
+          <div :class="styles.cardActions">
+            <el-tooltip content="编辑" placement="top" :show-after="300">
+              <el-button size="small" text type="primary" @click="handleEdit(item.id)">
+                <AppIcon name="edit" />
+              </el-button>
+            </el-tooltip>
+            <el-tooltip v-if="item.status === 'draft'" content="发布" placement="top" :show-after="300">
+              <el-button
+                size="small"
+                text
+                type="success"
+                :loading="publishingId === item.id"
+                :disabled="publishingId !== null"
+                @click="handlePublish(item.id)"
+              >
+                <AppIcon name="promotion" />
+              </el-button>
+            </el-tooltip>
+            <el-tooltip v-if="item.status === 'published'" content="启动" placement="top" :show-after="300">
+              <el-button size="small" text type="primary" @click="handleStart(item.id)">
+                <AppIcon name="video-play" />
+              </el-button>
+            </el-tooltip>
+            <el-tooltip content="删除" placement="top" :show-after="300">
+              <el-button size="small" text type="danger" @click="handleDelete(item.id, item.name)">
+                <AppIcon name="delete" />
+              </el-button>
+            </el-tooltip>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="filteredTotal > pageSize" :class="styles.pagination">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="pageSize"
+          :total="filteredTotal"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next"
+          @current-change="handlePageChange"
+          @size-change="handlePageChange"
+        />
+      </div>
+    </div>
 
     <!-- 新建流程对话框 -->
-    <t-dialog
-      v-model:visible="createDialogVisible"
-      header="新建流程"
+    <el-dialog
+      v-model="createDialogVisible"
+      title="新建流程"
       width="480px"
-      :close-on-overlay-click="false"
+      :close-on-click-modal="false"
       destroy-on-close
     >
-      <t-form :data="createForm" label-width="80px">
-        <t-form-item label="流程名称" required>
-          <t-input v-model:value="createForm.name" placeholder="输入流程名称" maxlength="50" />
-        </t-form-item>
-        <t-form-item label="描述">
-          <t-textarea v-model:value="createForm.description" :rows="3" placeholder="流程描述（可选）" />
-        </t-form-item>
-        <t-form-item label="分类">
-          <t-input v-model:value="createForm.category" placeholder="流程分类（可选）" />
-        </t-form-item>
-      </t-form>
+      <el-form :model="createForm" label-width="80px">
+        <el-form-item label="流程名称" required>
+          <el-input v-model="createForm.name" placeholder="输入流程名称" maxlength="50" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="createForm.description" type="textarea" :rows="3" placeholder="流程描述（可选）" />
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-input v-model="createForm.category" placeholder="流程分类（可选）" />
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <t-button @click="createDialogVisible = false">取消</t-button>
-        <t-button theme="primary" @click="handleCreateConfirm">创建并编辑</t-button>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateConfirm">创建并编辑</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>

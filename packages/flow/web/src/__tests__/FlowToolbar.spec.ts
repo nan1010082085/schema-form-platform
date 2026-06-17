@@ -41,7 +41,7 @@ describe('FlowToolbar', () => {
 
   it('renders default title when no title prop provided', () => {
     const wrapper = mountToolbar()
-    expect(wrapper.text()).toContain('流程设计器')
+    expect(wrapper.text()).toContain('未命名流程')
   })
 
   it('renders custom title from prop', () => {
@@ -80,9 +80,9 @@ describe('FlowToolbar', () => {
     expect(texts).toContain('发布')
   })
 
-  it('navigates to portal when portal button clicked', async () => {
+  it('navigates to home when home button clicked', async () => {
     const wrapper = mountToolbar()
-    const btn = wrapper.find('button[title="返回门户"]')
+    const btn = wrapper.find('button[title="返回首页"]')
     expect(btn.exists()).toBe(true)
     // Button exists and is clickable — actual navigation is tested via integration
   })

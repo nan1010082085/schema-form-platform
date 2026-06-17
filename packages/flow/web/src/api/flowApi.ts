@@ -191,12 +191,22 @@ export const flowApi = {
     return request<{ items: Array<{ id: string; username: string; displayName: string; roles: string[] }>; total: number }>(`/users?${params}`)
   },
 
+  // User - 根据 ID 获取单个用户
+  getUserById: (id: string) => {
+    return request<{ id: string; username: string; displayName: string; roles: string[] }>(`/users/${id}`)
+  },
+
   // Roles - 新增
   searchRoles: (q: string, page?: number, pageSize?: number) => {
     const params = new URLSearchParams({ q })
     if (page) params.set('page', String(page))
     if (pageSize) params.set('pageSize', String(pageSize))
     return request<{ items: Array<{ id: string; name: string; description?: string }>; total: number }>(`/roles?${params}`)
+  },
+
+  // Role - 根据 ID 获取单个角色
+  getRoleById: (id: string) => {
+    return request<{ id: string; name: string; description?: string }>(`/roles/${id}`)
   },
 
   // Approval logs

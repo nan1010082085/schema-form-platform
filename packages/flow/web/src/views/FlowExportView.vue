@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { DownloadIcon } from 'tdesign-icons-vue-next'
 import { flowApi } from '../api/flowApi.js'
 import { useFlowExport } from '../composables/useFlowExport.js'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
 import styles from './FlowExportView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 
 const flows = ref<FlowDefinitionData[]>([])
 const { exporting, exportFiltered } = useFlowExport()
@@ -41,53 +42,50 @@ async function handleExport() {
     </div>
 
     <div :class="styles.formCard">
-      <t-form :data="exportForm" label-width="100px" label-align="right">
-        <t-form-item label="流程筛选">
-          <t-select
-            v-model:value="exportForm.flowId"
+      <el-form :model="exportForm" label-width="100px" label-position="right">
+        <el-form-item label="流程筛选">
+          <el-select
+            v-model="exportForm.flowId"
             placeholder="全部流程"
             clearable
             filterable
             style="width: 100%"
           >
-            <t-option
+            <el-option
               v-for="flow in flows"
               :key="flow.id"
               :label="flow.name"
               :value="flow.id"
             />
-          </t-select>
-        </t-form-item>
+          </el-select>
+        </el-form-item>
 
-        <t-form-item label="时间范围">
-          <t-date-picker
-            v-model:value="exportForm.dateRange"
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="exportForm.dateRange"
             type="daterange"
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             style="width: 100%"
           />
-        </t-form-item>
+        </el-form-item>
 
-        <t-form-item label="导出格式">
-          <t-radio-group v-model:value="exportForm.format">
-            <t-radio value="csv">CSV</t-radio>
-            <t-radio value="json">JSON</t-radio>
-          </t-radio-group>
-        </t-form-item>
+        <el-form-item label="导出格式">
+          <FilterTabs v-model="exportForm.format" :options="[{ label: 'CSV', value: 'csv' }, { label: 'JSON', value: 'json' }]" />
+        </el-form-item>
 
-        <t-form-item>
-          <t-button
-            theme="primary"
+        <el-form-item>
+          <el-button
+            type="primary"
             :loading="exporting"
             @click="handleExport"
           >
-            <DownloadIcon />
+            <AppIcon name="download" />
             导出
-          </t-button>
-        </t-form-item>
-      </t-form>
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
   </div>
 </template>

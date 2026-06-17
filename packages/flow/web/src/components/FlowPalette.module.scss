@@ -36,6 +36,9 @@
 }
 
 .item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 12px;
   background: var(--bg-color-secondary);
   border: 1px solid var(--border-color-lighter);
