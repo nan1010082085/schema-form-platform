@@ -69,7 +69,8 @@ const INTERACTIVE_CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
 const FORM_COMPONENT_TYPES: ReadonlySet<SchemaType> = new Set([
   'input', 'select', 'number', 'radio', 'checkbox',
   'date', 'textarea', 'richtext', 'upload',
-  'date-time-slot',
+  'date-time-slot', 'switch', 'slider', 'rate',
+  'cascader', 'color-picker', 'time-picker',
 ])
 
 /** 输入类组件（支持 focus/blur 事件） */
