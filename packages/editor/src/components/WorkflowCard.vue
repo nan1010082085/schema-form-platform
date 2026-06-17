@@ -5,7 +5,7 @@
  * 用于列表页卡片视图，展示工作流缩略图、名称、描述、状态和操作按钮。
  */
 import { computed } from 'vue'
-import { EditIcon, CopyIcon, SendIcon, DeleteIcon, SettingIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import type { WorkflowItem } from '@/utils/apiClient'
 import styles from './WorkflowCard.module.scss'
 

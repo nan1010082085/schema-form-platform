@@ -14,7 +14,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useWorkflow } from '@/composables/useWorkflow'
 import type { WorkflowNodeType, WorkflowNodeData } from '@/composables/useWorkflow'
 import { apiClient } from '@/utils/apiClient'
@@ -193,10 +193,10 @@ async function handleSave() {
       metadata: { variables: data.variables },
     })
 
-    MessagePlugin.success('工作流已保存')
+    ElMessage.success('工作流已保存')
   } catch (err) {
     console.error('Save workflow failed:', err)
-    MessagePlugin.error('保存失败')
+    ElMessage.error('保存失败')
   } finally {
     saving.value = false
   }
@@ -223,10 +223,10 @@ async function handleRun() {
       ),
     })
 
-    MessagePlugin.success(`工作流实例已启动 (${(instance as unknown as { id: string }).id})`)
+    ElMessage.success(`工作流实例已启动 (${(instance as unknown as { id: string }).id})`)
   } catch (err) {
     console.error('Run workflow failed:', err)
-    MessagePlugin.error('运行失败')
+    ElMessage.error('运行失败')
   } finally {
     running.value = false
   }
@@ -291,10 +291,10 @@ async function handleDebug() {
     }
 
     await apiClient.post(`/flows/${flowDefinitionId.value}/publish`)
-    MessagePlugin.success('调试通过 — 流程结构合法，已自动发布')
+    ElMessage.success('调试通过 — 流程结构合法，已自动发布')
   } catch (err) {
     console.error('Debug workflow failed:', err)
-    MessagePlugin.error('调试失败')
+    ElMessage.error('调试失败')
   } finally {
     debugging.value = false
   }

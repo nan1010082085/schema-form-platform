@@ -5,8 +5,8 @@
  * 展示单次执行的节点时间线、变量快照、错误信息。
  */
 import { ref, watch, h } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { CheckCircleFilledIcon, CloseCircleFilledIcon, LoadingIcon, ErrorCircleFilledIcon, MinusIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import { apiClient } from '@/utils/apiClient'
 import styles from './WorkflowExecutionDetail.module.scss'
 
@@ -59,7 +59,7 @@ async function fetchDetail() {
       `/workflow-executions/${encodeURIComponent(props.executionId)}`,
     )
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载详情失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载详情失败')
   } finally {
     loading.value = false
   }

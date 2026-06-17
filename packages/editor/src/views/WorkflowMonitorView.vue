@@ -5,8 +5,8 @@
  * 展示工作流执行历史列表、执行状态筛选、统计图表。
  */
 import { onMounted, ref, watch } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { SearchIcon, TimeIcon, TrendingUpIcon, OrderListIcon, BrowseIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import { apiClient } from '@/utils/apiClient'
 import WorkflowStats from '@/components/WorkflowStats.vue'
 import WorkflowExecutionDetail from '@/components/WorkflowExecutionDetail.vue'
@@ -76,7 +76,7 @@ async function fetchExecutions() {
     total.value = data.total
     totalPages.value = data.totalPages
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载失败')
   } finally {
     loading.value = false
   }

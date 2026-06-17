@@ -6,7 +6,7 @@
  */
 import { ref, computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { apiClient } from '@/utils/apiClient'
 import styles from './WorkflowNode.module.scss'
 
@@ -43,7 +43,7 @@ function openAIChat(): void {
 
 async function handleAIGenerate(): Promise<void> {
   if (!userPrompt.value.trim()) {
-    MessagePlugin.warning('请输入需求描述')
+    ElMessage.warning('请输入需求描述')
     return
   }
 
@@ -109,7 +109,7 @@ async function handleAIGenerate(): Promise<void> {
       if (configMatch) {
         const config = JSON.parse(configMatch[1])
         emit('update:config', { ...props.data.config, ...config, prompt: userPrompt.value })
-        MessagePlugin.success('AI 已生成配置')
+        ElMessage.success('AI 已生成配置')
       }
     } catch {
       // 配置解析失败，保留原始响应
@@ -117,7 +117,7 @@ async function handleAIGenerate(): Promise<void> {
 
     showAIDialog.value = false
   } catch (error) {
-    MessagePlugin.error('AI 生成失败：' + (error instanceof Error ? error.message : '未知错误'))
+    ElMessage.error('AI 生成失败：' + (error instanceof Error ? error.message : '未知错误'))
   } finally {
     isGenerating.value = false
   }

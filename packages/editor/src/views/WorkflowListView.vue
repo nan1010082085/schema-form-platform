@@ -6,8 +6,8 @@
  */
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon, GridViewIcon, OrderListIcon, SettingIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import {
   fetchWorkflows,
   deleteWorkflow,
@@ -56,7 +56,7 @@ async function loadWorkflows() {
     workflows.value = res.items
     total.value = res.total
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载工作流列表失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载工作流列表失败')
   } finally {
     loading.value = false
   }
@@ -98,10 +98,10 @@ function handleEdit(item: WorkflowItem) {
 async function handleDuplicate(item: WorkflowItem) {
   try {
     await duplicateWorkflow(item.id)
-    MessagePlugin.success('已复制')
+    ElMessage.success('已复制')
     await loadWorkflows()
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '复制失败')
+    ElMessage.error(err instanceof Error ? err.message : '复制失败')
   }
 }
 
@@ -116,7 +116,7 @@ async function handleToggleStatus(item: WorkflowItem) {
     confirmBtn: actionLabel,
     onConfirm: async () => {
       await toggleWorkflowStatus(item.id, nextStatus)
-      MessagePlugin.success(`已${actionLabel}`)
+      ElMessage.success(`已${actionLabel}`)
       await loadWorkflows()
       confirmDia.hide()
     },
@@ -132,7 +132,7 @@ async function handleDelete(item: WorkflowItem) {
     confirmBtn: '删除',
     onConfirm: async () => {
       await deleteWorkflow(item.id)
-      MessagePlugin.success('已删除')
+      ElMessage.success('已删除')
       await loadWorkflows()
       confirmDia.hide()
     },

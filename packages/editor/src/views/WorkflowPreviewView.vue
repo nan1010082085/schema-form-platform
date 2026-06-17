@@ -8,7 +8,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LoadingIcon, CloseCircleFilledIcon, ChevronRightIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'

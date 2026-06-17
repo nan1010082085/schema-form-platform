@@ -9,8 +9,8 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { ChevronRightIcon, AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import {
   apiClient,
   fetchSchemas,
@@ -115,7 +115,7 @@ async function loadSchemas() {
     const res: PaginatedResponse<SchemaListItem> = await fetchSchemas({ page: 1, pageSize: 100 })
     schemas.value = res.items
   } catch {
-    MessagePlugin.error('加载表单列表失败')
+    ElMessage.error('加载表单列表失败')
   } finally {
     schemasLoading.value = false
   }
@@ -130,7 +130,7 @@ async function loadFlows() {
     })
     flows.value = res.items
   } catch {
-    MessagePlugin.error('加载流程列表失败')
+    ElMessage.error('加载流程列表失败')
   } finally {
     flowsLoading.value = false
   }
@@ -140,7 +140,7 @@ async function loadSchemaDetail(id: string) {
   try {
     selectedSchemaDetail.value = await fetchSchemaById(id)
   } catch {
-    MessagePlugin.error('加载表单详情失败')
+    ElMessage.error('加载表单详情失败')
   }
 }
 
@@ -175,7 +175,7 @@ async function loadWorkflow(id: string) {
       await loadFlowVariables(wf.flowDefinitionId)
     }
   } catch {
-    MessagePlugin.error('加载工作流详情失败')
+    ElMessage.error('加载工作流详情失败')
   }
 }
 
@@ -262,7 +262,7 @@ function goToCreateFlow() {
 
 async function handleSave() {
   if (!selectedSchemaId.value || !selectedFlowId.value) {
-    MessagePlugin.warning('请先选择表单和流程')
+    ElMessage.warning('请先选择表单和流程')
     return
   }
 
@@ -279,14 +279,14 @@ async function handleSave() {
 
     if (isEditing.value && workflowId.value) {
       await updateWorkflow(workflowId.value, payload)
-      MessagePlugin.success('已保存')
+      ElMessage.success('已保存')
     } else {
       const created = await createWorkflow(payload)
-      MessagePlugin.success('已创建')
+      ElMessage.success('已创建')
       router.replace(`/workflow/${created.id}`)
     }
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '保存失败')
+    ElMessage.error(err instanceof Error ? err.message : '保存失败')
   } finally {
     saving.value = false
   }
@@ -302,9 +302,9 @@ async function handlePublish() {
   try {
     await publishWorkflow(workflowId.value)
     workflowStatus.value = 'published'
-    MessagePlugin.success('已发布')
+    ElMessage.success('已发布')
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '发布失败')
+    ElMessage.error(err instanceof Error ? err.message : '发布失败')
   } finally {
     publishing.value = false
   }

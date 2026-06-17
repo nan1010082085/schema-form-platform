@@ -5,7 +5,7 @@
  * 展示单个工作流模板的卡片组件，包含流程图预览、名称描述、分类标签、使用次数和操作按钮。
  */
 import { computed } from 'vue'
-import { BrowseIcon, AddIcon, LinkIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import type { WorkflowTemplateItem } from '@/utils/apiClient'
 import styles from './WorkflowTemplateCard.module.scss'
 

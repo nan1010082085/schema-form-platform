@@ -6,8 +6,8 @@
  */
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { SearchIcon, AddIcon, FileIcon, LinkIcon, OrderListIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import {
   fetchWorkflowTemplates,
   fetchWorkflowTemplateById,
@@ -99,7 +99,7 @@ async function openPreview(tpl: WorkflowTemplateItem) {
     previewTemplate.value = detail
     previewVisible.value = true
   } catch {
-    MessagePlugin.error('加载模板详情失败')
+    ElMessage.error('加载模板详情失败')
   } finally {
     previewLoading.value = false
   }
@@ -124,11 +124,11 @@ async function handleUse() {
     const result = await useWorkflowTemplate(useTemplate.value.id, {
       name: useName.value || undefined,
     })
-    MessagePlugin.success(`工作流「${result.workflow.name}」已创建`)
+    ElMessage.success(`工作流「${result.workflow.name}」已创建`)
     useDialogVisible.value = false
     router.push(`/workflow/${result.workflow.id}`)
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '创建工作流失败')
+    ElMessage.error(err instanceof Error ? err.message : '创建工作流失败')
   } finally {
     useLoading.value = false
   }

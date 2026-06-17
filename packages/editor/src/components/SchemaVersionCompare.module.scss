@@ -1,0 +1,393 @@
+.compare {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-color-white);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.closeBtn {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-color-secondary);
+  border-radius: var(--border-radius-sm);
+  transition: all 0.15s;
+}
+
+.closeBtn:hover {
+  background: var(--bg-color-gray-light);
+  color: var(--text-color-primary);
+}
+
+/* ---- 版本列表区 ---- */
+
+.versionPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.versionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+.versionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.versionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.versionBadge {
+  font-size: 11px;
+  color: var(--text-color-placeholder, #969FA8);
+}
+
+.compareBtn {
+  flex-shrink: 0;
+}
+
+.versionList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.versionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 8px;
+}
+
+.versionItem:hover {
+  background: var(--bg-color-gray-light);
+}
+
+.versionItemCurrent {
+  background: var(--color-primary-lighter);
+}
+
+.versionItemSelected {
+  background: var(--color-primary-lighter);
+}
+
+.versionItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.versionCheckbox {
+  flex-shrink: 0;
+}
+
+.versionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.versionTime {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.versionTags {
+  display: flex;
+  gap: 4px;
+}
+
+.versionItemRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.versionLoading,
+.versionEmpty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-color-placeholder, #969FA8);
+}
+
+.versionPagination {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+/* ---- 对比区 ---- */
+
+.comparePanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.compareHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  background: var(--bg-color-gray-light);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.compareTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.compareBack {
+  flex-shrink: 0;
+}
+
+.compareInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  background: var(--bg-color-gray-light);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.compareLabel {
+  font-size: 12px;
+  color: var(--text-color-placeholder, #969FA8);
+}
+
+.compareVersion {
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-color-primary);
+  font-weight: 500;
+}
+
+.compareArrow {
+  color: var(--text-color-placeholder, #969FA8);
+  font-size: 12px;
+}
+
+/* ---- Summary ---- */
+
+.summary {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color-light);
+  background: var(--bg-color-page);
+  flex-shrink: 0;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.noDiff {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: var(--text-color-muted, #909399);
+  font-size: 14px;
+}
+
+/* ---- Diff table ---- */
+
+.diffScroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+.diffTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.diffTh {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  background: var(--bg-color-gray);
+  border-bottom: 1px solid var(--border-color-light);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.diffTr {
+  transition: background 0.2s ease;
+}
+
+.diffTr:hover {
+  background: var(--bg-color-gray-light);
+}
+
+.diffTrAdded {
+  background: var(--color-success-bg);
+}
+
+.diffTrRemoved {
+  background: var(--color-danger-bg);
+}
+
+.diffTrModified {
+  background: var(--color-warning-bg);
+}
+
+.diffTrMoved {
+  background: var(--color-info-bg);
+}
+
+.diffTd {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color-light);
+  color: var(--text-color-secondary);
+  vertical-align: top;
+}
+
+.diffWidgetName {
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+
+.diffWidgetType {
+  font-size: 11px;
+  color: var(--text-color-placeholder, #969FA8);
+  margin-left: 4px;
+}
+
+.diffPath {
+  font-size: 11px;
+  color: var(--text-color-placeholder, #969FA8);
+  margin-top: 2px;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--bg-color-white);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ---- Changes detail ---- */
+
+.changesList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.changeItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  padding: 2px 0;
+}
+
+.changeField {
+  color: var(--text-color-placeholder, #969FA8);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.changeOld {
+  color: var(--color-danger);
+  text-decoration: line-through;
+  word-break: break-all;
+}
+
+.changeArrow {
+  color: var(--text-color-placeholder, #969FA8);
+  flex-shrink: 0;
+}
+
+.changeNew {
+  color: var(--color-success);
+  word-break: break-all;
+}
+
+/* ---- Compare loading ---- */
+
+.compareLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  gap: 8px;
+  color: var(--text-color-placeholder, #969FA8);
+  font-size: 14px;
+}
+
+/* ---- Compare error ---- */
+
+.compareError {
+  padding: 16px;
+  text-align: center;
+  color: var(--color-danger);
+  font-size: 13px;
+}

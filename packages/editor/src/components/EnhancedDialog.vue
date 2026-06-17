@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount } from 'vue'
-import { FullscreenIcon, FullscreenExitIcon, CloseIcon, HelpCircleFilledIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import styles from './EnhancedDialog.module.scss'
 
 const props = withDefaults(defineProps<{

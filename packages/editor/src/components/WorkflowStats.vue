@@ -5,7 +5,7 @@
  * 使用原生 ECharts 展示执行趋势、成功率、平均耗时、热门工作流。
  */
 import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { apiClient } from '@/utils/apiClient'
 import { echarts } from '@/widgets/base/echarts'
 import styles from './WorkflowStats.module.scss'
@@ -48,7 +48,7 @@ async function fetchStats() {
   try {
     stats.value = await apiClient.get<StatsData>('/workflow-executions/stats', { days: String(days.value) })
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载统计失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载统计失败')
   } finally {
     loading.value = false
   }

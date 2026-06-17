@@ -9,8 +9,8 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { CheckCircleFilledIcon, LoadingIcon, CloseCircleFilledIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
 import type { FormData, PartialWidget } from '@/components/WidgetRenderer'
 import type { WorkflowItem } from '@/utils/apiClient'
@@ -73,9 +73,9 @@ async function handleSubmit(data: FormData) {
   try {
     await startWorkflow(workflow.value.id, data)
     submitted.value = true
-    MessagePlugin.success('申请已提交')
+    ElMessage.success('申请已提交')
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '提交失败')
+    ElMessage.error(err instanceof Error ? err.message : '提交失败')
   } finally {
     submitting.value = false
   }
