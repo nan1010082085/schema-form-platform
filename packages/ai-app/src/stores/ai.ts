@@ -1,8 +1,15 @@
 /**
- * AI 对话状态管理
+ * AI 对话状态管理（向后兼容层）
  *
- * 职责：对话列表、当前对话消息、加载状态、生成物状态。
- * 不包含复杂业务逻辑 —— 那些由 composables 或组件层处理。
+ * 此文件保持向后兼容性，内部使用拆分后的 store。
+ * 新代码应直接使用拆分后的 store：
+ * - useConversationStore: 对话管理
+ * - useSSEStore: SSE 连接
+ * - useSchemaStore: Schema 状态
+ * - useLLMStore: LLM Provider
+ * - useRAGStore: RAG 搜索
+ * - useChatSettingsStore: 聊天设置
+ * - useHITLStore: HITL 中断
  */
 
 import { defineStore } from 'pinia'
@@ -11,404 +18,56 @@ import type {
   AIMessage,
   AgentType,
   ChatContext,
-  ChatSettings,
-  Conversation,
   Widget,
   FlowGraph,
   SSEEvent,
   TaskChainStep,
   MentionReference,
-  SSEConnectionStatus,
-  SchemaDiff,
-  FlowDiff,
-  VersionEntry,
-  RagSearchResult,
-  PendingInterrupt,
+  SearchResult,
+  MentionType,
+  MentionSearchResult,
+  FeedbackType,
 } from '@/types'
 import {
-  getConversations,
-  getConversationDetail,
-  deleteConversation,
-  publish,
-  getVersions,
-  rollbackVersion,
-  getLLMProviders,
-  switchLLMProvider,
-  getLLMUsage,
-  getLLMStrategies,
-  switchLLMStrategy,
-  searchRag,
   searchConversations,
   mentionSearch,
   submitMessageFeedback,
-  type LLMProviderInfo,
-  type LLMAggregatedUsage,
-  type MentionSearchResult,
-  type MentionType,
-  type SearchResult,
-  type FeedbackType,
 } from '@/api/aiApi'
-import {
-  emitChatSend,
-  emitChatCancel,
-  emitChatResume,
-  onChatEvent,
-} from '@schema-form/socket'
+
+import { useConversationStore } from './conversation'
+import { useSSEStore } from './sse'
+import { useSchemaStore } from './schema'
+import { useLLMStore } from './llm'
+import { useRAGStore } from './rag'
+import { useChatSettingsStore } from './chatSettings'
+import { useHITLStore } from './hitl'
 
 export const useAiStore = defineStore('ai', () => {
-  // ---- State ----
+  // ---- 内部 store 引用 ----
+  const conversationStore = useConversationStore()
+  const sseStore = useSSEStore()
+  const schemaStore = useSchemaStore()
+  const llmStore = useLLMStore()
+  const ragStore = useRAGStore()
+  const chatSettingsStore = useChatSettingsStore()
+  const hitlStore = useHITLStore()
 
-  const conversations = ref<Conversation[]>([])
-  const currentConversationId = ref<string | null>(null)
-  const messages = ref<AIMessage[]>([])
+  // ---- 本地状态 ----
   const activeAgent = ref<AgentType>('auto')
   const context = ref<ChatContext>({ source: 'standalone' })
-  const loading = ref(false)
-  const currentSchema = ref<Widget[] | null>(null)
-  const currentFlow = ref<FlowGraph | null>(null)
-  const error = ref<string | null>(null)
   const taskChain = ref<TaskChainStep[]>([])
   const taskChainIndex = ref(0)
 
-  // ---- SSE 连接状态与重试 ----
-  const sseStatus = ref<SSEConnectionStatus>('idle')
-  const retryCount = ref(0)
-  const lastMessagePayload = ref<{ content: string; mentions?: MentionReference[] } | null>(null)
-  const MAX_AUTO_RETRIES = 3
-  const RETRY_BASE_DELAY_MS = 2000
-  /** WebSocket 事件取消订阅函数 */
-  let unsubscribeChatEvent: (() => void) | null = null
-  /** 当前活跃的 done promise 解析函数（用于 stopGeneration 时提前结束） */
-  let activeDoneResolve: (() => void) | null = null
-  /** 标记当前流是否被用户主动停止 */
-  let streamStopped = false
-
-  // ---- Schema 增量编辑状态 ----
-  /** Schema 历史栈，用于撤销操作 */
-  const schemaHistory = ref<Widget[][]>([])
-  /** 最近一次增量更新的 diff */
-  const currentDiff = ref<SchemaDiff | null>(null)
-  /** 最近一次增量更新的 diff (flow) */
-  const currentFlowDiff = ref<FlowDiff | null>(null)
-  /** 最近一次增量更新的描述 */
-  const schemaUpdateDescription = ref<string | null>(null)
-
-  // ---- 版本历史状态 ----
-  const versionHistory = ref<VersionEntry[]>([])
-  const currentVersionIndex = ref<number>(-1)
-
-  // ---- 流式 Schema 生成状态 ----
-  /** 当前构建步骤 */
-  const currentBuildStep = ref<string | null>(null)
-
-  // ---- LLM Provider 状态 ----
-  const llmProviders = ref<LLMProviderInfo[]>([])
-  const llmDefaultProvider = ref<string>('deepseek')
-  const llmDefaultStrategy = ref<string | null>(null)
-  const llmStrategies = ref<string[]>([])
-  const llmUsage = ref<LLMAggregatedUsage | null>(null)
-  const llmLoading = ref(false)
-
-  // ---- RAG 状态 ----
-  const ragSearchResults = ref<RagSearchResult[]>([])
-  const ragSearching = ref(false)
-  /** 用户选中的 RAG context，发送消息时携带 */
-  const ragContext = ref<RagSearchResult[]>([])
-
-  // ---- HITL Interrupt 状态 ----
-  const pendingInterrupt = ref<PendingInterrupt | null>(null)
-
-  // ---- Chat Settings ----
-  const CHAT_SETTINGS_KEY = 'ai-chat-settings'
-
-  const DEFAULT_CHAT_SETTINGS: ChatSettings = {
-    preferences: {
-      replyLanguage: 'zh-CN',
-      replyStyle: 'detailed',
-      codeComment: 'yes',
-    },
-    historySummary: {
-      mode: 'auto',
-    },
-  }
-
-  const chatSettings = ref<ChatSettings>(loadChatSettings())
-
-  // ---- Getters ----
-
-  const currentConversation = computed(() =>
-    conversations.value.find((c) => c.id === currentConversationId.value) ?? null,
-  )
-
-  const hasPreview = computed(() =>
-    currentSchema.value !== null || currentFlow.value !== null,
-  )
-
-  const canUndoSchema = computed(() => schemaHistory.value.length > 0)
-
-  // ---- Actions ----
-
-  /**
-   * 可取消的延迟，abort 时立即 resolve。
-   */
-  function cancellableDelay(ms: number, signal: AbortSignal): Promise<void> {
-    return new Promise<void>((resolve) => {
-      if (signal.aborted) { resolve(); return }
-      const timer = setTimeout(() => {
-        signal.removeEventListener('abort', onAbort)
-        resolve()
-      }, ms)
-      function onAbort() {
-        clearTimeout(timer)
-        resolve()
-      }
-      signal.addEventListener('abort', onAbort, { once: true })
-    })
-  }
-
-  /**
-   * 核心 WebSocket 流执行逻辑，支持自动重试。
-   * 在指定的 assistantIndex 上写入内容，不创建新消息占位。
-   */
-  async function _executeStream(
-    content: string,
-    mentions: MentionReference[] | undefined,
-    assistantIndex: number,
-  ): Promise<void> {
-    let attempts = 0
-
-    while (attempts <= MAX_AUTO_RETRIES) {
-      sseStatus.value = attempts === 0 ? 'connecting' : 'reconnecting'
-      retryCount.value = attempts
-      streamStopped = false
-
-      // 清理上一次的事件监听
-      if (unsubscribeChatEvent) {
-        unsubscribeChatEvent()
-        unsubscribeChatEvent = null
-      }
-
-      // 用 Promise 等待 done 事件，事件驱动而非轮询
-      let doneEventReceived = false
-      let firstChunkReceived = false
-      let doneResolve: (() => void) | null = null
-
-      const donePromise = new Promise<void>((resolve) => {
-        doneResolve = resolve
-        activeDoneResolve = resolve
-      })
-
-      // 监听 chat events
-      unsubscribeChatEvent = onChatEvent((chatEvent) => {
-        if (doneEventReceived) return
-
-        if (!firstChunkReceived) {
-          firstChunkReceived = true
-          sseStatus.value = 'connected'
-        }
-
-        const event = chatEvent as unknown as SSEEvent
-        if (event.type === 'done') {
-          doneEventReceived = true
-          doneResolve?.()
-        }
-        handleSSEEvent(event, assistantIndex)
-      })
-
-      // 发送消息
-      emitChatSend({
-        conversationId: currentConversationId.value ?? undefined,
-        message: content,
-        context: {
-          ...context.value,
-          preferences: {
-            ...context.value.preferences,
-            replyLanguage: chatSettings.value.preferences.replyLanguage,
-            replyStyle: chatSettings.value.preferences.replyStyle,
-            codeComment: chatSettings.value.preferences.codeComment,
-          },
-          historySummary: chatSettings.value.historySummary.mode === 'manual'
-            ? chatSettings.value.historySummary.manualSummary
-            : context.value.historySummary,
-          currentSchema: currentSchema.value ?? undefined,
-          currentFlow: currentFlow.value ?? undefined,
-        },
-        mentions: mentions && mentions.length > 0 ? mentions : undefined,
-      })
-
-      // 等待 done 事件
-      await donePromise
-
-      sseStatus.value = 'idle'
-
-      // 清理事件监听
-      if (unsubscribeChatEvent) {
-        unsubscribeChatEvent()
-        unsubscribeChatEvent = null
-      }
-      activeDoneResolve = null
-
-      if (!doneEventReceived && !streamStopped) {
-        if (currentConversationId.value) {
-          loadConversations()
-        }
-      }
-
-      // 成功，跳出重试循环
-      break
-    }
-
-    // 最终清理
-    loading.value = false
-    if (messages.value[assistantIndex].status === 'streaming') {
-      messages.value[assistantIndex].status = 'received'
-    }
-  }
-
-  /**
-   * 发送用户消息，订阅 SSE 流，逐步更新 messages 和生成物。
-   */
-  async function sendMessage(content: string, mentions?: MentionReference[]): Promise<void> {
-    // 取消正在进行的请求
-    emitChatCancel()
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-
-    lastMessagePayload.value = { content, mentions }
-    retryCount.value = 0
-    loading.value = true
-    error.value = null
-
-    // 将 RAG context 注入消息内容
-    let enrichedContent = content
-    if (ragContext.value.length > 0) {
-      const ragBlock = ragContext.value
-        .map((r) => `[引用 Schema: ${r.name}] (相似度 ${r.score}%, 组件: ${r.widgetTypes.join(', ')})`)
-        .join('\n')
-      enrichedContent = `[RAG 上下文]\n${ragBlock}\n\n${content}`
-      // 发送后清除 RAG context
-      ragContext.value = []
-    }
-
-    // 追加用户消息
-    messages.value.push({
-      role: 'user',
-      content: enrichedContent,
-      timestamp: new Date(),
-      status: 'sent',
-    })
-
-    // 准备 assistant 消息占位
-    const assistantIndex = messages.value.length
-    messages.value.push({
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      status: 'streaming',
-    })
-
-    await _executeStream(enrichedContent, mentions, assistantIndex)
-  }
-
-  /**
-   * 重试最近一次失败的消息。
-   * 复用最后一条 assistant 消息的位置。
-   */
-  async function retryLastMessage(): Promise<void> {
-    if (!lastMessagePayload.value) return
-
-    // 取消正在进行的请求
-    emitChatCancel()
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-
-    retryCount.value = 0
-    loading.value = true
-    error.value = null
-
-    // 找到最后一条 assistant 消息并重置
-    const lastIdx = messages.value.length - 1
-    if (lastIdx >= 0 && messages.value[lastIdx].role === 'assistant') {
-      messages.value[lastIdx].content = ''
-      messages.value[lastIdx].status = 'streaming'
-      await _executeStream(lastMessagePayload.value.content, lastMessagePayload.value.mentions, lastIdx)
-    }
-  }
-
-  /**
-   * 重试指定 assistant 消息中的某个失败工具调用。
-   * 清除该工具调用的 error 状态，然后重新发送原始用户消息以触发 AI 重试。
-   */
-  async function retryToolCall(messageIndex: number, toolCallIndex: number): Promise<void> {
-    const msg = messages.value[messageIndex]
-    if (!msg || msg.role !== 'assistant' || !msg.toolCalls) return
-
-    const toolCall = msg.toolCalls[toolCallIndex]
-    if (!toolCall || !toolCall.error) return
-
-    // 清除该工具调用的错误状态，标记为重试中
-    toolCall.error = undefined
-    toolCall.result = undefined
-
-    // 找到该 assistant 消息之前的用户消息
-    let userContent = ''
-    let userMentions: MentionReference[] | undefined
-    for (let i = messageIndex - 1; i >= 0; i--) {
-      if (messages.value[i].role === 'user') {
-        userContent = messages.value[i].content
-        break
-      }
-    }
-    if (!userContent) return
-
-    // 取消正在进行的请求
-    emitChatCancel()
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-
-    loading.value = true
-    error.value = null
-
-    // 重置 assistant 消息状态
-    msg.status = 'streaming'
-
-    await _executeStream(userContent, userMentions, messageIndex)
-  }
-
-  /**
-   * 停止当前请求
-   */
-  function stopGeneration(): void {
-    emitChatCancel()
-    streamStopped = true
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-    // 通知 _executeStream 的 donePromise 提前结束
-    activeDoneResolve?.()
-    activeDoneResolve = null
-    retryCount.value = 0
-    lastMessagePayload.value = null
-  }
+  // ---- SSE 事件处理 ----
 
   function handleSSEEvent(event: SSEEvent, assistantIndex: number): void {
-    const msg = messages.value[assistantIndex]
+    const msg = conversationStore.messages[assistantIndex]
 
     switch (event.type) {
       case 'agent_switch':
         if (event.agent) {
           msg.agent = event.agent as 'editor' | 'flow' | 'general'
-
-          // 协作事件：显示协作提示
           if (event.collaboration && event.description) {
-            // 在 thinking 中添加协作说明
             const collaborationNote = `\n\n[协作] 请求 ${event.agent === 'editor' ? 'Editor' : 'Flow'} 专家协助：${event.description}`
             msg.thinking = (msg.thinking ?? '') + collaborationNote
           }
@@ -435,11 +94,7 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'schema':
         if (event.payload) {
-          // Push current schema to history before overwriting (for undo)
-          if (currentSchema.value) {
-            schemaHistory.value.push(JSON.parse(JSON.stringify(currentSchema.value)))
-          }
-          currentSchema.value = event.payload as Widget[]
+          schemaStore.updateSchema(event.payload as Widget[])
           msg.schema = event.payload as Widget[]
         }
         if (event.description) {
@@ -449,39 +104,36 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'schema_diff':
         if (event.diff) {
-          currentDiff.value = event.diff as SchemaDiff
-          schemaUpdateDescription.value = event.description ?? null
+          schemaStore.setSchemaDiff(event.diff as any, event.description)
         }
         break
 
       case 'flow_diff':
         if (event.diff) {
-          currentFlowDiff.value = event.diff as FlowDiff
+          schemaStore.setFlowDiff(event.diff as any)
         }
         break
 
       case 'version_created':
         if (event.versionId && event.version) {
-          versionHistory.value.unshift({
+          schemaStore.versionHistory.unshift({
             id: event.versionId,
             version: event.version,
-            type: currentSchema.value ? 'schema' : 'flow',
+            type: schemaStore.currentSchema ? 'schema' : 'flow',
             description: event.description,
             createdAt: new Date().toISOString(),
           })
-          currentVersionIndex.value = 0
+          schemaStore.currentVersionIndex = 0
         }
         break
 
       case 'schema_update':
-        // 流式 Schema 更新：设置当前构建步骤
         if (event.step) {
-          currentBuildStep.value = event.step
+          schemaStore.setBuildStep(event.step)
         }
         if (event.schema) {
-          currentSchema.value = event.schema as Widget[]
+          schemaStore.setCurrentSchema(event.schema as Widget[])
         }
-        // 在 thinking 中显示进度
         if (event.step && event.description) {
           const stepLabels: Record<string, string> = {
             layout: '布局结构',
@@ -496,10 +148,9 @@ export const useAiStore = defineStore('ai', () => {
         break
 
       case 'schema_complete':
-        // Schema 生成完成
-        currentBuildStep.value = null
+        schemaStore.setBuildStep(null)
         if (event.schema) {
-          currentSchema.value = event.schema as Widget[]
+          schemaStore.setCurrentSchema(event.schema as Widget[])
           msg.schema = event.schema as Widget[]
         }
         if (event.description) {
@@ -509,7 +160,7 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'flow':
         if (event.payload) {
-          currentFlow.value = event.payload as FlowGraph
+          schemaStore.setCurrentFlow(event.payload as FlowGraph)
           msg.flow = event.payload as FlowGraph
         }
         if (event.description) {
@@ -528,7 +179,6 @@ export const useAiStore = defineStore('ai', () => {
             })
           }
         }
-        // S4: Match by ID instead of name for precise result association
         if (event.phase === 'result' && event.tools) {
           for (const tool of event.tools) {
             const existing = tool.id
@@ -541,11 +191,9 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
-      // S5: Update existing tool call entry with error info instead of creating a new one
       case 'tool_error': {
         if (!msg.toolCalls) msg.toolCalls = []
         const errorMsg = event.content ?? '工具执行失败'
-        // Find existing entry by runId (S4) or by name as fallback
         const existing = event.runId
           ? msg.toolCalls.find((t) => t.id === event.runId)
           : msg.toolCalls.find((t) => t.name === (event.toolName ?? 'unknown') && !t.result)
@@ -572,26 +220,23 @@ export const useAiStore = defineStore('ai', () => {
 
       case 'done':
         if (event.conversationId) {
-          currentConversationId.value = event.conversationId
-          // 新对话创建后刷新左侧列表
-          loadConversations()
+          conversationStore.currentConversationId = event.conversationId
+          conversationStore.loadConversations()
         }
         break
 
       case 'interrupt': {
-        // HITL 确认：写操作需要用户确认
-        const interruptData: PendingInterrupt = {
+        hitlStore.setInterrupt({
           threadId: event.threadId ?? '',
           type: event.interruptType ?? 'unknown',
           message: event.message ?? '需要您的确认',
           data: event.data,
-        }
-        pendingInterrupt.value = interruptData
-        messages.value.push({
+        })
+        conversationStore.messages.push({
           role: 'assistant',
           type: 'interrupt',
-          content: interruptData.message,
-          data: interruptData,
+          content: event.message ?? '需要您的确认',
+          data: hitlStore.pendingInterrupt,
           timestamp: new Date(),
           status: 'received',
         })
@@ -599,8 +244,7 @@ export const useAiStore = defineStore('ai', () => {
       }
 
       case 'error':
-        error.value = event.content ?? 'Unknown error'
-        // 将错误信息写入消息内容，让用户明确看到失败原因
+        sseStore.error = event.content ?? 'Unknown error'
         if (msg.status === 'streaming') {
           const agentLabel = event.agent ? ` [${event.agent}]` : ''
           msg.content = (msg.content || msg.thinking || '')
@@ -611,319 +255,197 @@ export const useAiStore = defineStore('ai', () => {
     }
   }
 
+  // ---- Actions ----
+
   function switchAgent(agent: AgentType): void {
     activeAgent.value = agent
-    // 'auto' 对应后端 standalone 模式，由 Router Agent 自动分发
     context.value.source = agent === 'auto' ? 'standalone' : (agent as 'editor' | 'flow')
   }
 
-  // ---- RAG Actions ----
+  async function sendMessage(content: string, mentions?: MentionReference[]): Promise<void> {
+    sseStore.cancelCurrent()
+    sseStore.lastMessagePayload = { content, mentions }
+    sseStore.retryCount = 0
+    sseStore.loading = true
+    sseStore.error = null
 
-  async function searchRagAction(query: string, limit?: number): Promise<void> {
-    if (!query.trim()) {
-      ragSearchResults.value = []
-      return
-    }
-    ragSearching.value = true
-    try {
-      const result = await searchRag({ query: query.trim(), limit: limit ?? 5 })
-      ragSearchResults.value = result.schemas
-    } catch (err) {
-      ragSearchResults.value = []
-      throw err
-    } finally {
-      ragSearching.value = false
-    }
-  }
+    // 将 RAG context 注入消息内容
+    const ragPrefix = ragStore.getRagContextContent()
+    const enrichedContent = ragPrefix + content
 
-  function addRagContext(item: RagSearchResult): void {
-    if (!ragContext.value.find((c) => c.id === item.id)) {
-      ragContext.value.push(item)
-    }
-  }
+    // 追加用户消息
+    conversationStore.messages.push({
+      role: 'user',
+      content: enrichedContent,
+      timestamp: new Date(),
+      status: 'sent',
+    })
 
-  function removeRagContext(id: string): void {
-    ragContext.value = ragContext.value.filter((c) => c.id !== id)
-  }
-
-  function clearRagContext(): void {
-    ragContext.value = []
-    ragSearchResults.value = []
-  }
-
-  // ---- HITL Interrupt Actions ----
-
-  /** 清除 pending interrupt 状态 */
-  function clearInterrupt(): void {
-    pendingInterrupt.value = null
-  }
-
-  /**
-   * 响应 HITL interrupt：确认或拒绝。
-   * 发送 resume 请求，订阅返回的 SSE 流继续对话。
-   */
-  async function respondInterrupt(confirmed: boolean): Promise<void> {
-    const interrupt = pendingInterrupt.value
-    if (!interrupt) return
-
-    loading.value = true
-    error.value = null
-    pendingInterrupt.value = null
-
-    // 准备 assistant 消息占位，承接 resume 后的流式输出
-    const assistantIndex = messages.value.length
-    messages.value.push({
+    // 准备 assistant 消息占位
+    const assistantIndex = conversationStore.messages.length
+    conversationStore.messages.push({
       role: 'assistant',
       content: '',
       timestamp: new Date(),
       status: 'streaming',
     })
 
-    sseStatus.value = 'connecting'
-
-    // 监听 chat events
-    let doneEventReceived = false
-    let doneResolve: (() => void) | null = null
-    const donePromise = new Promise<void>((resolve) => {
-      doneResolve = resolve
+    await sseStore.executeStream(enrichedContent, mentions, assistantIndex, conversationStore.messages, {
+      onSSEEvent: handleSSEEvent,
+      onDone: (conversationId) => {
+        if (conversationId) conversationStore.loadConversations()
+      },
+      getContext: () => ({
+        context: context.value,
+        chatSettings: chatSettingsStore.chatSettings,
+        currentSchema: schemaStore.currentSchema,
+        currentFlow: schemaStore.currentFlow,
+        currentConversationId: conversationStore.currentConversationId,
+      }),
     })
+  }
 
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
+  async function retryLastMessage(): Promise<void> {
+    if (!sseStore.lastMessagePayload) return
+
+    sseStore.cancelCurrent()
+    sseStore.retryCount = 0
+    sseStore.loading = true
+    sseStore.error = null
+
+    const lastIdx = conversationStore.messages.length - 1
+    if (lastIdx >= 0 && conversationStore.messages[lastIdx].role === 'assistant') {
+      conversationStore.messages[lastIdx].content = ''
+      conversationStore.messages[lastIdx].status = 'streaming'
+      await sseStore.executeStream(
+        sseStore.lastMessagePayload.content,
+        sseStore.lastMessagePayload.mentions,
+        lastIdx,
+        conversationStore.messages,
+        {
+          onSSEEvent: handleSSEEvent,
+          onDone: (conversationId) => {
+            if (conversationId) conversationStore.loadConversations()
+          },
+          getContext: () => ({
+            context: context.value,
+            chatSettings: chatSettingsStore.chatSettings,
+            currentSchema: schemaStore.currentSchema,
+            currentFlow: schemaStore.currentFlow,
+            currentConversationId: conversationStore.currentConversationId,
+          }),
+        },
+      )
     }
+  }
 
-    unsubscribeChatEvent = onChatEvent((chatEvent) => {
-      sseStatus.value = 'connected'
-      const event = chatEvent as unknown as SSEEvent
-      if (event.type === 'done') {
-        doneEventReceived = true
-        doneResolve?.()
+  async function retryToolCall(messageIndex: number, toolCallIndex: number): Promise<void> {
+    const msg = conversationStore.messages[messageIndex]
+    if (!msg || msg.role !== 'assistant' || !msg.toolCalls) return
+
+    const toolCall = msg.toolCalls[toolCallIndex]
+    if (!toolCall || !toolCall.error) return
+
+    toolCall.error = undefined
+    toolCall.result = undefined
+
+    let userContent = ''
+    let userMentions: MentionReference[] | undefined
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (conversationStore.messages[i].role === 'user') {
+        userContent = conversationStore.messages[i].content
+        break
       }
-      handleSSEEvent(event, assistantIndex)
+    }
+    if (!userContent) return
+
+    sseStore.cancelCurrent()
+    sseStore.loading = true
+    sseStore.error = null
+    msg.status = 'streaming'
+
+    await sseStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
+      onSSEEvent: handleSSEEvent,
+      onDone: (conversationId) => {
+        if (conversationId) conversationStore.loadConversations()
+      },
+      getContext: () => ({
+        context: context.value,
+        chatSettings: chatSettingsStore.chatSettings,
+        currentSchema: schemaStore.currentSchema,
+        currentFlow: schemaStore.currentFlow,
+        currentConversationId: conversationStore.currentConversationId,
+      }),
     })
-
-    // 通过 WebSocket 恢复
-    emitChatResume(interrupt.threadId, confirmed)
-
-    // 等待 done 事件
-    await donePromise
-
-    sseStatus.value = 'idle'
-
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-
-    if (!doneEventReceived) {
-      if (currentConversationId.value) loadConversations()
-    }
-
-    loading.value = false
-    if (messages.value[assistantIndex].status === 'streaming') {
-      messages.value[assistantIndex].status = 'received'
-    }
   }
 
-  function loadChatSettings(): ChatSettings {
-    try {
-      const stored = localStorage.getItem(CHAT_SETTINGS_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored) as ChatSettings
-        return {
-          preferences: { ...DEFAULT_CHAT_SETTINGS.preferences, ...parsed.preferences },
-          historySummary: { ...DEFAULT_CHAT_SETTINGS.historySummary, ...parsed.historySummary },
-        }
-      }
-    } catch {
-      // localStorage 不可用或数据损坏，使用默认值
-    }
-    return { ...DEFAULT_CHAT_SETTINGS }
+  async function respondInterrupt(confirmed: boolean): Promise<void> {
+    const interrupt = hitlStore.pendingInterrupt
+    if (!interrupt) return
+
+    sseStore.loading = true
+    sseStore.error = null
+    hitlStore.clearInterrupt()
+
+    await sseStore.executeResume(interrupt.threadId, confirmed, conversationStore.messages, {
+      onSSEEvent: handleSSEEvent,
+      onDone: (conversationId) => {
+        if (conversationId) conversationStore.loadConversations()
+      },
+      getContext: () => ({
+        currentConversationId: conversationStore.currentConversationId,
+      }),
+    })
   }
 
-  function updateChatSettings(settings: {
-    preferences?: Partial<ChatSettings['preferences']>
-    historySummary?: Partial<ChatSettings['historySummary']>
-  }): void {
-    chatSettings.value = {
-      preferences: { ...chatSettings.value.preferences, ...settings.preferences },
-      historySummary: { ...chatSettings.value.historySummary, ...settings.historySummary },
-    }
-    localStorage.setItem(CHAT_SETTINGS_KEY, JSON.stringify(chatSettings.value))
-  }
+  async function loadConversation(id: string): Promise<void> {
+    conversationStore.clearConversation()
+    schemaStore.clearSchemaState()
+    hitlStore.clearInterrupt()
 
-  function clearConversation(): void {
-    // 取消正在进行的请求
-    emitChatCancel()
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
-
-    currentConversationId.value = null
-    messages.value = []
-    currentSchema.value = null
-    currentFlow.value = null
-    error.value = null
-    taskChain.value = []
-    taskChainIndex.value = 0
-    schemaHistory.value = []
-    currentDiff.value = null
-    currentFlowDiff.value = null
-    schemaUpdateDescription.value = null
-    versionHistory.value = []
-    currentVersionIndex.value = -1
-
-    // 重置 RAG 状态
-    ragSearchResults.value = []
-    ragContext.value = []
-
-    // 重置 HITL 状态
-    pendingInterrupt.value = null
-
-    // 重置 SSE 状态
-    sseStatus.value = 'idle'
-    retryCount.value = 0
-    lastMessagePayload.value = null
-  }
-
-  /**
-   * 撤销最近一次 Schema 增量更新。
-   * 从历史栈中弹出上一个 Schema 状态。
-   */
-  function undoLastSchemaUpdate(): void {
-    if (schemaHistory.value.length === 0) return
-    const previousSchema = schemaHistory.value.pop()
-    if (previousSchema) {
-      currentSchema.value = previousSchema
-      currentDiff.value = null
-      schemaUpdateDescription.value = null
-    }
-  }
-
-  /**
-   * 清除当前 diff 显示状态。
-   */
-  function clearDiff(): void {
-    currentDiff.value = null
-    currentFlowDiff.value = null
-    schemaUpdateDescription.value = null
-  }
-
-  async function loadConversations(): Promise<void> {
-    conversations.value = await getConversations()
+    const result = await conversationStore.loadConversation(id)
+    if (result.schema) schemaStore.setCurrentSchema(result.schema)
+    if (result.flow) schemaStore.setCurrentFlow(result.flow)
+    sseStore.error = null
   }
 
   async function removeConversation(id: string): Promise<void> {
-    await deleteConversation(id)
-    conversations.value = conversations.value.filter((c) => c.id !== id)
-    if (currentConversationId.value === id) {
+    await conversationStore.removeConversation(id)
+    if (conversationStore.currentConversationId === id) {
       clearConversation()
     }
   }
 
-  async function loadConversation(id: string): Promise<void> {
-    // 重置当前对话状态，防止加载前一个对话的残留数据（diff、版本历史等）
-    clearConversation()
+  function clearConversation(): void {
+    sseStore.cancelCurrent()
+    conversationStore.clearConversation()
+    schemaStore.clearSchemaState()
+    hitlStore.clearInterrupt()
+    sseStore.sseStatus = 'idle'
+    sseStore.retryCount = 0
+    sseStore.lastMessagePayload = null
+  }
 
-    const detail = await getConversationDetail(id)
-    currentConversationId.value = detail.id
-    messages.value = detail.messages.map((m) => ({
-      id: (m as Record<string, unknown>).id as string | undefined,
-      role: m.role as AIMessage['role'],
-      content: m.content,
-      thinking: (m as Record<string, unknown>).thinking as string | undefined,
-      tip: (m as Record<string, unknown>).tip as string | undefined,
-      toolCalls: (m as Record<string, unknown>).toolCalls as AIMessage['toolCalls'],
-      schema: m.schema as Widget[] | undefined,
-      flow: m.flow as FlowGraph | undefined,
-      timestamp: new Date(m.timestamp),
-      feedback: (m as Record<string, unknown>).feedback as 'positive' | 'negative' | null | undefined,
-    }))
-    // Restore preview state from last assistant message
-    const lastAssistant = [...detail.messages].reverse().find((m) => m.role === 'assistant')
-    if (lastAssistant?.schema) {
-      currentSchema.value = lastAssistant.schema as Widget[]
-    }
-    if (lastAssistant?.flow) {
-      currentFlow.value = lastAssistant.flow as FlowGraph
-    }
-    error.value = null
+  async function loadConversations(): Promise<void> {
+    await conversationStore.loadConversations()
   }
 
   async function publishCurrent(): Promise<{ id: string; publishId?: string; type: 'schema' | 'flow' } | null> {
-    if (!currentConversationId.value) return null
+    if (!conversationStore.currentConversationId) return null
 
-    const type = currentSchema.value ? 'schema' : 'flow'
-    const payload = currentSchema.value ?? currentFlow.value
+    const type = schemaStore.currentSchema ? 'schema' : 'flow'
+    const payload = schemaStore.currentSchema ?? schemaStore.currentFlow
     if (!payload) return null
 
-    const result = await publish({
-      conversationId: currentConversationId.value,
-      type,
-      payload,
-    })
-
-    return { id: result.id, publishId: result.publishId, type }
+    return conversationStore.publishCurrent({ type, data: payload as any })
   }
 
   function setContext(ctx: Partial<ChatContext>): void {
     context.value = { ...context.value, ...ctx }
   }
 
-  function setCurrentSchema(schema: Widget[] | null): void {
-    currentSchema.value = schema
-  }
+  // ---- 搜索 ----
 
-  function setCurrentFlow(flow: FlowGraph | null): void {
-    currentFlow.value = flow
-  }
-
-  // ---- 版本管理 ----
-
-  /**
-   * 加载当前对话的版本历史列表。
-   */
-  async function loadVersionHistory(): Promise<void> {
-    if (!currentConversationId.value) return
-    const data = await getVersions(currentConversationId.value)
-    versionHistory.value = data.map((v: { id: string; version: number; type: string; description?: string; createdAt: string }) => ({
-      id: v.id,
-      version: v.version,
-      type: v.type as 'schema' | 'flow',
-      description: v.description,
-      createdAt: v.createdAt,
-    }))
-    if (versionHistory.value.length > 0) {
-      currentVersionIndex.value = 0
-    }
-  }
-
-  /**
-   * 回滚到指定版本。
-   */
-  async function rollbackToVersion(versionId: string): Promise<void> {
-    if (!currentConversationId.value) return
-    const result = await rollbackVersion(currentConversationId.value, versionId)
-    if (result.type === 'schema' && result.content) {
-      // Push current to history before rollback
-      if (currentSchema.value) {
-        schemaHistory.value.push(JSON.parse(JSON.stringify(currentSchema.value)))
-      }
-      currentSchema.value = result.content as unknown as Widget[]
-      currentDiff.value = null
-    } else if (result.type === 'flow' && result.content) {
-      currentFlow.value = result.content as unknown as FlowGraph
-      currentFlowDiff.value = null
-    }
-    // Reload version history
-    await loadVersionHistory()
-  }
-
-  // ---- 对话搜索 ----
-
-  /** 搜索对话列表，支持关键词、时间范围、来源筛选 */
   async function searchConversationsAction(
     params: string | import('@/api/aiApi').SearchConversationsParams,
   ): Promise<SearchResult> {
@@ -931,9 +453,6 @@ export const useAiStore = defineStore('ai', () => {
     return searchConversations(normalized)
   }
 
-  // ---- Mention 搜索 ----
-
-  /** 搜索可引用的 Schema/Flow/Widget */
   async function mentionSearchAction(
     query: string,
     type: MentionType,
@@ -942,100 +461,43 @@ export const useAiStore = defineStore('ai', () => {
     return mentionSearch(query, type, limit)
   }
 
-  // ---- LLM Provider 管理 ----
-
-  async function loadLLMProviders(): Promise<void> {
-    llmLoading.value = true
-    try {
-      const data = await getLLMProviders()
-      llmProviders.value = data.providers
-      llmDefaultProvider.value = data.default
-      llmDefaultStrategy.value = data.defaultStrategy
-    } finally {
-      llmLoading.value = false
-    }
-  }
-
-  async function loadLLMStrategies(): Promise<void> {
-    const data = await getLLMStrategies()
-    llmStrategies.value = data.strategies
-    llmDefaultStrategy.value = data.default
-  }
-
-  async function loadLLMUsage(): Promise<void> {
-    const data = await getLLMUsage()
-    llmUsage.value = data as LLMAggregatedUsage
-  }
-
-  async function switchProvider(provider: string): Promise<void> {
-    await switchLLMProvider(provider)
-    llmDefaultProvider.value = provider
-    // 更新 providers 列表中的 isDefault 标记
-    llmProviders.value = llmProviders.value.map((p) => ({
-      ...p,
-      isDefault: p.name === provider,
-    }))
-  }
-
-  async function switchStrategy(strategy: string | null): Promise<void> {
-    await switchLLMStrategy(strategy)
-    llmDefaultStrategy.value = strategy
-  }
-
   // ---- 消息操作 ----
 
-  /**
-   * 提交消息反馈（点赞/点踩）。
-   */
   async function submitFeedback(messageIndex: number, type: FeedbackType): Promise<void> {
-    const msg = messages.value[messageIndex]
+    const msg = conversationStore.messages[messageIndex]
     if (!msg) return
 
     const messageId = msg.id
     if (!messageId) return
 
-    // Toggle feedback
     const newFeedback = msg.feedback === type ? null : type
     msg.feedback = newFeedback
 
     try {
       await submitMessageFeedback(messageId, type)
     } catch {
-      // Revert on error
       msg.feedback = msg.feedback === type ? null : type
     }
   }
 
-  /**
-   * 重新生成指定 assistant 消息。
-   * 找到该消息之前的用户消息并重新发送。
-   */
   async function regenerateMessage(messageIndex: number): Promise<void> {
-    const msg = messages.value[messageIndex]
+    const msg = conversationStore.messages[messageIndex]
     if (!msg || msg.role !== 'assistant') return
 
-    // 找到该 assistant 消息之前的用户消息
     let userContent = ''
     let userMentions: MentionReference[] | undefined
     for (let i = messageIndex - 1; i >= 0; i--) {
-      if (messages.value[i].role === 'user') {
-        userContent = messages.value[i].content
+      if (conversationStore.messages[i].role === 'user') {
+        userContent = conversationStore.messages[i].content
         break
       }
     }
     if (!userContent) return
 
-    // 取消正在进行的请求
-    emitChatCancel()
-    if (unsubscribeChatEvent) {
-      unsubscribeChatEvent()
-      unsubscribeChatEvent = null
-    }
+    sseStore.cancelCurrent()
+    sseStore.loading = true
+    sseStore.error = null
 
-    loading.value = true
-    error.value = null
-
-    // 重置 assistant 消息状态
     msg.content = ''
     msg.thinking = undefined
     msg.tip = undefined
@@ -1045,55 +507,65 @@ export const useAiStore = defineStore('ai', () => {
     msg.feedback = null
     msg.status = 'streaming'
 
-    await _executeStream(userContent, userMentions, messageIndex)
+    await sseStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
+      onSSEEvent: handleSSEEvent,
+      onDone: (conversationId) => {
+        if (conversationId) conversationStore.loadConversations()
+      },
+      getContext: () => ({
+        context: context.value,
+        chatSettings: chatSettingsStore.chatSettings,
+        currentSchema: schemaStore.currentSchema,
+        currentFlow: schemaStore.currentFlow,
+        currentConversationId: conversationStore.currentConversationId,
+      }),
+    })
   }
 
   return {
-    // state
-    conversations,
-    currentConversationId,
-    messages,
+    // state（从子 store 代理）
+    conversations: computed(() => conversationStore.conversations),
+    currentConversationId: computed(() => conversationStore.currentConversationId),
+    messages: computed(() => conversationStore.messages),
     activeAgent,
     context,
-    loading,
-    currentSchema,
-    currentFlow,
-    error,
+    loading: computed(() => sseStore.loading),
+    currentSchema: computed(() => schemaStore.currentSchema),
+    currentFlow: computed(() => schemaStore.currentFlow),
+    error: computed(() => sseStore.error),
     taskChain,
     taskChainIndex,
-    schemaHistory,
-    currentDiff,
-    currentFlowDiff,
-    schemaUpdateDescription,
-    versionHistory,
-    currentVersionIndex,
-    sseStatus,
-    retryCount,
-    llmProviders,
-    llmDefaultProvider,
-    llmDefaultStrategy,
-    llmStrategies,
-    llmUsage,
-    llmLoading,
-    chatSettings,
-    ragSearchResults,
-    ragSearching,
-    ragContext,
-    pendingInterrupt,
+    schemaHistory: computed(() => schemaStore.schemaHistory),
+    currentDiff: computed(() => schemaStore.currentDiff),
+    currentFlowDiff: computed(() => schemaStore.currentFlowDiff),
+    schemaUpdateDescription: computed(() => schemaStore.schemaUpdateDescription),
+    versionHistory: computed(() => schemaStore.versionHistory),
+    currentVersionIndex: computed(() => schemaStore.currentVersionIndex),
+    sseStatus: computed(() => sseStore.sseStatus),
+    retryCount: computed(() => sseStore.retryCount),
+    llmProviders: computed(() => llmStore.llmProviders),
+    llmDefaultProvider: computed(() => llmStore.llmDefaultProvider),
+    llmDefaultStrategy: computed(() => llmStore.llmDefaultStrategy),
+    llmStrategies: computed(() => llmStore.llmStrategies),
+    llmUsage: computed(() => llmStore.llmUsage),
+    llmLoading: computed(() => llmStore.llmLoading),
+    chatSettings: computed(() => chatSettingsStore.chatSettings),
+    ragSearchResults: computed(() => ragStore.ragSearchResults),
+    ragSearching: computed(() => ragStore.ragSearching),
+    ragContext: computed(() => ragStore.ragContext),
+    pendingInterrupt: computed(() => hitlStore.pendingInterrupt),
 
     // getters
-    currentConversation,
-    hasPreview,
-    canUndoSchema,
-
-    // constants
-    MAX_AUTO_RETRIES: computed(() => MAX_AUTO_RETRIES),
+    currentConversation: computed(() => conversationStore.currentConversation),
+    hasPreview: computed(() => schemaStore.hasPreview),
+    canUndoSchema: computed(() => schemaStore.canUndoSchema),
+    MAX_AUTO_RETRIES: computed(() => sseStore.MAX_AUTO_RETRIES),
 
     // actions
     sendMessage,
     retryLastMessage,
     retryToolCall,
-    stopGeneration,
+    stopGeneration: () => sseStore.stopGeneration(),
     switchAgent,
     clearConversation,
     loadConversations,
@@ -1101,26 +573,26 @@ export const useAiStore = defineStore('ai', () => {
     removeConversation,
     publishCurrent,
     setContext,
-    setCurrentSchema,
-    setCurrentFlow,
-    undoLastSchemaUpdate,
-    clearDiff,
-    loadVersionHistory,
-    rollbackToVersion,
-    loadLLMProviders,
-    loadLLMStrategies,
-    loadLLMUsage,
-    switchProvider,
-    switchStrategy,
-    updateChatSettings,
-    loadChatSettings,
-    searchRagAction,
-    addRagContext,
-    removeRagContext,
-    clearRagContext,
+    setCurrentSchema: (schema: Widget[] | null) => schemaStore.setCurrentSchema(schema),
+    setCurrentFlow: (flow: FlowGraph | null) => schemaStore.setCurrentFlow(flow),
+    undoLastSchemaUpdate: () => schemaStore.undoLastSchemaUpdate(),
+    clearDiff: () => schemaStore.clearDiff(),
+    loadVersionHistory: (conversationId: string) => schemaStore.loadVersionHistory(conversationId),
+    rollbackToVersion: (conversationId: string, versionId: string) => schemaStore.rollbackToVersion(conversationId, versionId),
+    loadLLMProviders: () => llmStore.loadLLMProviders(),
+    loadLLMStrategies: () => llmStore.loadLLMStrategies(),
+    loadLLMUsage: () => llmStore.loadLLMUsage(),
+    switchProvider: (provider: string) => llmStore.switchProvider(provider),
+    switchStrategy: (strategy: string | null) => llmStore.switchStrategy(strategy),
+    updateChatSettings: (settings: Parameters<typeof chatSettingsStore.updateChatSettings>[0]) => chatSettingsStore.updateChatSettings(settings),
+    loadChatSettings: () => chatSettingsStore.chatSettings,
+    searchRagAction: (query: string, limit?: number) => ragStore.searchRagAction(query, limit),
+    addRagContext: (item: any) => ragStore.addRagContext(item),
+    removeRagContext: (id: string) => ragStore.removeRagContext(id),
+    clearRagContext: () => ragStore.clearRagContext(),
     searchConversationsAction,
     mentionSearchAction,
-    clearInterrupt,
+    clearInterrupt: () => hitlStore.clearInterrupt(),
     respondInterrupt,
     submitFeedback,
     regenerateMessage,
