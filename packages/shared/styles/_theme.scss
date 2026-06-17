@@ -232,13 +232,23 @@
   background: transparent;
 
   &:hover,
-  &:focus {
+  &:focus,
+  &.el-button--primary:hover,
+  &.el-button--primary:focus,
+  &.el-button--danger:hover,
+  &.el-button--danger:focus {
+    color: var(--el-color-primary);
     background: transparent;
+    border-color: transparent;
 
-    // 去掉 hover 时 icon 变透明的效果
-    .el-icon {
-      color: inherit;
+    svg {
+      fill: currentColor;
     }
+  }
+
+  &.el-button--danger:hover,
+  &.el-button--danger:focus {
+    color: var(--el-color-danger);
   }
 }
 
