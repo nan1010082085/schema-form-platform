@@ -60,3 +60,14 @@ function forwardNativeChange() {
     />
   </el-select>
 </template>
+
+<style scoped>
+.el-select {
+  width: 100%;
+}
+
+.el-select :deep(.el-select__wrapper) {
+  min-height: inherit;
+  height: inherit;
+}
+</style>
