@@ -13,7 +13,10 @@
 }
 
 /* el-select 内部结构需要更深的选择器来继承高度 */
-.nodeWrapper > .el-select {
+.nodeWrapper .el-select {
+  width: 100%;
+  height: 100%;
+
   .el-select__wrapper {
     min-height: 100%;
     height: 100%;
