@@ -1,0 +1,214 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: var(--bg-color-white);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease-in-out;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color-base);
+}
+
+.sidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarHeader {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color-base);
+  flex-shrink: 0;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--text-color-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  white-space: nowrap;
+}
+
+.menuNav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+.menuNav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.menuNav::-webkit-scrollbar-thumb {
+  background: var(--bg-color-gray-dark);
+  border-radius: 2px;
+}
+
+.menuNav::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color-base);
+}
+
+.menuLoading,
+.menuError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--text-color-muted);
+  font-size: 13px;
+}
+
+.menuLoadingText,
+.menuErrorText {
+  white-space: nowrap;
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px;
+  margin: 2px 8px;
+  border-radius: 6px;
+  color: var(--text-color-regular);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.menuItem:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.menuItemActive {
+  color: var(--text-color-inverse);
+  background: var(--color-primary);
+}
+
+.menuItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--text-color-inverse);
+  border-radius: 0 2px 2px 0;
+}
+
+.menuItemActive:hover {
+  background: var(--color-primary);
+}
+
+.menuLabel {
+  font-size: 14px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.menuArrow {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  color: var(--text-color-disabled);
+}
+
+.menuArrowOpen {
+  transform: rotate(90deg);
+  color: var(--color-primary);
+}
+
+.submenu {
+  padding-left: 8px;
+}
+
+.submenuItem {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px 0 42px;
+  margin: 2px 8px;
+  border-radius: 6px;
+  color: var(--text-color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+}
+
+.submenuItem:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.submenuItemActive {
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.submenuLabel {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sidebarFooter {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-color-muted);
+  cursor: pointer;
+  border-top: 1px solid var(--border-color-base);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.sidebarFooter:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+}
+
+.collapseText {
+  font-size: 12px;
+  white-space: nowrap;
+}

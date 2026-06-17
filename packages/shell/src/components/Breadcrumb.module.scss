@@ -1,0 +1,32 @@
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.item {
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.item:hover {
+  color: var(--color-primary);
+}
+
+.itemActive {
+  color: var(--text-color-primary);
+  cursor: default;
+  font-weight: 500;
+}
+
+.itemActive:hover {
+  color: var(--text-color-primary);
+}
+
+.separator {
+  color: var(--text-color-placeholder, #969FA8);
+  margin: 0 2px;
+}
