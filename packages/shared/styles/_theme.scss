@@ -66,7 +66,6 @@
 
 // 日期选择器、选择器等默认高度 32px
 .el-input--small,
-.el-select--small,
 .el-date-editor--small,
 .el-cascader--small {
   height: 32px;
@@ -297,15 +296,6 @@
 // ============================================================
 // Element Plus 组件高度覆盖
 // ============================================================
-
-// small 尺寸 select 高度统一为 32px
-.el-select--small {
-  --el-component-size-small: 32px;
-
-  .el-select__wrapper {
-    min-height: 32px;
-  }
-}
 
 // small 尺寸 input 高度统一为 32px
 .el-input--small {

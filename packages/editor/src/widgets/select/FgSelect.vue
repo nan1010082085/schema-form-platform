@@ -24,6 +24,8 @@ const resolvedOptions = computed(() =>
 )
 
 const dynamicStyle = computed(() => ({
+  width: '100%',
+  height: '100%',
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
@@ -36,7 +38,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-select
+  <el-select
     ref="selectRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
@@ -48,17 +50,11 @@ function forwardNativeChange() {
     :loading="loading"
     @change="forwardNativeChange"
   >
-    <t-option
+    <el-option
       v-for="opt in resolvedOptions"
       :key="opt.value"
       :label="opt.label"
       :value="opt.value"
     />
-  </t-select>
+  </el-select>
 </template>
-
-<style scoped>
-:deep(.el-select__wrapper) {
-  height: 100%;
-}
-</style>
