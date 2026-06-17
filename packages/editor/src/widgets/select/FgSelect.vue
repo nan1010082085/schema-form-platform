@@ -24,6 +24,8 @@ const resolvedOptions = computed(() =>
 )
 
 const dynamicStyle = computed(() => ({
+  width: '100%',
+  height: `${widgetData.value.position?.h ?? 32}px`,
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
