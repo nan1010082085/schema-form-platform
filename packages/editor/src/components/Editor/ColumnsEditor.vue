@@ -5,8 +5,8 @@
  * Table-based inline editor for search-list column definitions.
  * Each column row has up/down reorder and delete buttons.
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SearchListColumnSchema, SchemaApiConfig } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   columns: SearchListColumnSchema[]
@@ -147,98 +147,99 @@ function handleApiParamsChange(idx: number, text: string) {
       <div class="columns-editor__item-header">
         <span class="columns-editor__item-title">列 {{ idx + 1 }}</span>
         <div class="columns-editor__item-actions">
-          <t-button
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <template #icon><ChevronUpIcon /></template>
-          </t-button>
-          <t-button
+            <AppIcon name="arrow-up" />
+          </el-button>
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === columns.length - 1"
             @click="moveDown(idx)"
           >
-            <template #icon><ChevronDownIcon /></template>
-          </t-button>
-          <t-button
-            theme="danger"
+            <AppIcon name="arrow-down" />
+          </el-button>
+          <el-button
+            type="danger"
             size="small"
-            variant="text"
+            text
             @click="removeColumn(idx)"
           >
-            <template #icon><DeleteIcon /></template>
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">字段名</label>
-        <t-input
-          :value="col.prop"
+        <el-input
+          :model-value="col.prop"
           size="small"
           placeholder="字段名"
-          @change="(v: string) => updateColumn(idx, 'prop', v)"
+          @update:model-value="(v: string) => updateColumn(idx, 'prop', v)"
         />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">标签</label>
-        <t-input
-          :value="col.label"
+        <el-input
+          :model-value="col.label"
           size="small"
           placeholder="显示标签"
-          @change="(v: string) => updateColumn(idx, 'label', v)"
+          @update:model-value="(v: string) => updateColumn(idx, 'label', v)"
         />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">宽度</label>
-        <t-input
-          :value="col.width ?? ''"
+        <el-input
+          :model-value="col.width ?? ''"
           size="small"
           placeholder="例如: 120 或 120px"
-          @change="(v: string) => updateColumn(idx, 'width', v || undefined)"
+          @update:model-value="(v: string) => updateColumn(idx, 'width', v || undefined)"
         />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">最小宽度</label>
-        <t-input
-          :value="col.minWidth ?? ''"
+        <el-input
+          :model-value="col.minWidth ?? ''"
           size="small"
           placeholder="例如: 80"
-          @change="(v: string) => updateColumn(idx, 'minWidth', v || undefined)"
+          @update:model-value="(v: string) => updateColumn(idx, 'minWidth', v || undefined)"
         />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">渲染方式</label>
-        <t-select
-          :value="col.render ?? 'text'"
+        <el-select
+          :model-value="col.render ?? 'text'"
           size="small"
           style="width: 100%"
-          @change="(v: string) => updateColumn(idx, 'render', v)"
+          @update:model-value="(v: string) => updateColumn(idx, 'render', v)"
         >
-          <t-option
+          <el-option
             v-for="opt in renderOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <div v-if="needsColorMap(col.render)" class="columns-editor__field">
         <label class="columns-editor__label">颜色映射 (JSON)</label>
-        <t-textarea
-          :value="colorMapToText(col.colorMap)"
+        <el-input
+          :model-value="colorMapToText(col.colorMap)"
           :rows="2"
+          type="textarea"
           size="small"
           placeholder='{"active":"success","inactive":"danger"}'
-          @change="(v: string) => updateColorMap(idx, v)"
+          @update:model-value="(v: string) => updateColorMap(idx, v)"
         />
       </div>
 
@@ -246,150 +247,151 @@ function handleApiParamsChange(idx: number, text: string) {
       <div v-if="needsColorMap(col.render)" class="columns-editor__api-section">
         <div class="columns-editor__field">
           <label class="columns-editor__label">接口地址 (动态选项)</label>
-          <t-input
-            :value="col.api?.url ?? ''"
+          <el-input
+            :model-value="col.api?.url ?? ''"
             size="small"
             placeholder="/api/options"
-            @change="(v: string) => updateColumnApi(idx, { url: v || '' })"
+            @update:model-value="(v: string) => updateColumnApi(idx, { url: v || '' })"
           />
         </div>
 
         <template v-if="col.api?.url">
           <div class="columns-editor__field">
             <label class="columns-editor__label">请求方法</label>
-            <t-select
-              :value="col.api?.method ?? 'get'"
+            <el-select
+              :model-value="col.api?.method ?? 'get'"
               size="small"
               style="width: 100%"
-              @change="(v: string) => updateColumnApi(idx, { method: v as 'get' | 'post' })"
+              @update:model-value="(v: string) => updateColumnApi(idx, { method: v as 'get' | 'post' })"
             >
-              <t-option label="GET" value="get" />
-              <t-option label="POST" value="post" />
-            </t-select>
+              <el-option label="GET" value="get" />
+              <el-option label="POST" value="post" />
+            </el-select>
           </div>
 
           <div class="columns-editor__field">
             <label class="columns-editor__label">参数 (JSON)</label>
-            <t-textarea
-              :value="getApiParamsText(idx)"
+            <el-input
+              :model-value="getApiParamsText(idx)"
               :rows="2"
+              type="textarea"
               size="small"
               placeholder='{"key": "value"}'
-              @change="(v: string) => handleApiParamsChange(idx, v)"
+              @update:model-value="(v: string) => handleApiParamsChange(idx, v)"
             />
           </div>
 
           <div class="columns-editor__field">
             <label class="columns-editor__label">数据路径</label>
-            <t-input
-              :value="col.api?.dataPath ?? ''"
+            <el-input
+              :model-value="col.api?.dataPath ?? ''"
               size="small"
               placeholder="data"
-              @change="(v: string) => updateColumnApi(idx, { dataPath: v || undefined })"
+              @update:model-value="(v: string) => updateColumnApi(idx, { dataPath: v || undefined })"
             />
           </div>
 
           <div class="columns-editor__field api-config__field--row">
             <div style="flex: 1">
               <label class="columns-editor__label">标签字段</label>
-              <t-input
-                :value="col.api?.labelKey ?? 'label'"
+              <el-input
+                :model-value="col.api?.labelKey ?? 'label'"
                 size="small"
                 placeholder="label"
-                @change="(v: string) => updateColumnApi(idx, { labelKey: v || undefined })"
+                @update:model-value="(v: string) => updateColumnApi(idx, { labelKey: v || undefined })"
               />
             </div>
             <div style="flex: 1">
               <label class="columns-editor__label">值字段</label>
-              <t-input
-                :value="col.api?.valueKey ?? 'value'"
+              <el-input
+                :model-value="col.api?.valueKey ?? 'value'"
                 size="small"
                 placeholder="value"
-                @change="(v: string) => updateColumnApi(idx, { valueKey: v || undefined })"
+                @update:model-value="(v: string) => updateColumnApi(idx, { valueKey: v || undefined })"
               />
             </div>
           </div>
 
-          <t-button size="small" theme="danger" variant="outline" style="width:100%;margin-top:4px" @click="removeColumnApi(idx)">
+          <el-button size="small" type="danger" plain style="width:100%;margin-top:4px" @click="removeColumnApi(idx)">
             移除 API
-          </t-button>
+          </el-button>
         </template>
       </div>
 
       <!-- Render-specific fields -->
       <div v-if="col.render === 'tooltip'" class="columns-editor__field">
         <label class="columns-editor__label">提示字段</label>
-        <t-input :value="col.tooltipField ?? ''" size="small" placeholder="提示内容的字段名" @change="(v: string) => updateColumn(idx, 'tooltipField', v || undefined)" />
+        <el-input :model-value="col.tooltipField ?? ''" size="small" placeholder="提示内容的字段名" @update:model-value="(v: string) => updateColumn(idx, 'tooltipField', v || undefined)" />
       </div>
 
       <div v-if="col.render === 'link'" class="columns-editor__field">
         <label class="columns-editor__label">链接事件</label>
-        <t-input :value="col.linkEvent ?? ''" size="small" placeholder="事件名 例如: view" @change="(v: string) => updateColumn(idx, 'linkEvent', v || undefined)" />
+        <el-input :model-value="col.linkEvent ?? ''" size="small" placeholder="事件名 例如: view" @update:model-value="(v: string) => updateColumn(idx, 'linkEvent', v || undefined)" />
       </div>
 
       <div v-if="col.render === 'image'" class="columns-editor__field">
         <label class="columns-editor__label">图片宽度 (px)</label>
-        <t-input-number :value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" theme="column" @change="(v: number) => updateColumn(idx, 'imageWidth', v)" />
+        <el-input-number :model-value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" @update:model-value="(v: number) => updateColumn(idx, 'imageWidth', v)" />
       </div>
 
       <div v-if="col.render === 'custom'" class="columns-editor__field">
         <label class="columns-editor__label">渲染函数名</label>
-        <t-input :value="col.renderFn ?? ''" size="small" placeholder="自定义渲染函数名" @change="(v: string) => updateColumn(idx, 'renderFn', v || undefined)" />
+        <el-input :model-value="col.renderFn ?? ''" size="small" placeholder="自定义渲染函数名" @update:model-value="(v: string) => updateColumn(idx, 'renderFn', v || undefined)" />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">可排序</label>
-        <t-switch
-          :value="col.sortable ?? false"
-          @change="(v: boolean) => updateColumn(idx, 'sortable', v)"
+        <el-switch
+          :model-value="col.sortable ?? false"
+          @update:model-value="(v: boolean) => updateColumn(idx, 'sortable', v)"
         />
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">固定列</label>
-        <t-select
-          :value="col.fixed"
+        <el-select
+          :model-value="col.fixed"
           size="small"
           style="width: 100%"
-          @change="(v: string) => updateColumn(idx, 'fixed', v)"
+          @update:model-value="(v: string) => updateColumn(idx, 'fixed', v)"
         >
-          <t-option
+          <el-option
             v-for="opt in fixedOptions"
             :key="String(opt.value)"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <div class="columns-editor__field">
         <label class="columns-editor__label">对齐方式</label>
-        <t-select
-          :value="col.align ?? 'left'"
+        <el-select
+          :model-value="col.align ?? 'left'"
           size="small"
           style="width: 100%"
-          @change="(v: string) => updateColumn(idx, 'align', v)"
+          @update:model-value="(v: string) => updateColumn(idx, 'align', v)"
         >
-          <t-option
+          <el-option
             v-for="opt in alignOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
     </div>
 
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="outline"
+      plain
       style="width: 100%; margin-top: 8px"
       @click="addColumn"
     >
-      <template #icon><AddIcon /></template>
+      <AppIcon name="plus" />
       添加列
-    </t-button>
+    </el-button>
   </div>
 </template>
 

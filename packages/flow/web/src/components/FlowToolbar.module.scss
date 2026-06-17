@@ -96,6 +96,16 @@
   flex-shrink: 0;
 }
 
+.versionBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-primary);
+  padding: 2px 6px;
+  background: var(--color-primary-lighter);
+  border-radius: var(--radius-small);
+  flex-shrink: 0;
+}
+
 .divider {
   width: 1px;
   height: 20px;
@@ -200,8 +210,8 @@
 }
 
 .previewBar {
-  background: var(--color-primary-light);
-  border-bottom-color: var(--color-primary-light-3);
+  background: var(--bg-color);
+  border-bottom-color: var(--border-color-lighter);
 }
 
 .previewLabel {
@@ -209,7 +219,7 @@
   font-weight: 500;
   color: var(--color-primary);
   padding: 3px 10px;
-  background: var(--color-primary-light-3);
+  background: var(--color-primary-lighter);
   border-radius: var(--radius-small);
 }
 
@@ -422,4 +432,16 @@
   padding: 3px 8px;
   background: var(--color-primary-lighter);
   border-radius: var(--radius-small);
+}
+
+.saveBtn {
+  :global(.el-icon) {
+    margin-left: 4px;
+  }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

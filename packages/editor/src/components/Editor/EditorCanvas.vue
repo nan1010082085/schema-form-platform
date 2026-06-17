@@ -11,7 +11,7 @@
  * - 画布交互（选中、拖拽、缩放）后续迭代接入
  */
 import { computed, provide, ref } from 'vue'
-import { DialogPlugin } from 'tdesign-vue-next'
+import { ElMessageBox } from 'element-plus'
 import { useBoardStore } from '../../stores/board'
 import { useEditorStore } from '../../stores/editor'
 import EditorOverlay from './EditorOverlay.vue'
@@ -19,7 +19,7 @@ import ZoomIndicator from './ZoomIndicator.vue'
 import SchemaRender from '../WidgetRenderer/SchemaRender.vue'
 import { useWidgetStore } from '../../stores/widget'
 import type { Widget } from '../../widgets/base/types'
-import type { PartialWidget, DialogRegistry, EventExecutionContext } from '../WidgetRenderer/types'
+import type { PartialWidget, DialogRegistry, EventExecutionContext, FormFieldValue } from '../WidgetRenderer/types'
 import { triggerWidgetEvent } from '../../engine'
 import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY, FORM_GRID_LINKAGE_KEY } from '../WidgetRenderer/types'
 import { useLinkage } from '../../composables/useLinkage'
@@ -150,15 +150,11 @@ const previewEventContext: EventExecutionContext = {
   },
   confirm: (message: string) => {
     return new Promise<void>((resolve) => {
-      const dialog = DialogPlugin.confirm({
-        header: '确认',
-        body: message,
-        theme: 'warning',
-        confirmBtn: '确定',
-        cancelBtn: '取消',
-        onConfirm: () => { resolve(); dialog.destroy() },
-        onClose: () => { resolve(); dialog.destroy() },
-      })
+      ElMessageBox.confirm(message, '确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).finally(() => resolve())
     })
   },
 }
@@ -169,7 +165,7 @@ provide(EVENT_CONTEXT_KEY, previewEventContext)
 const { stateMap: linkageStateMap } = useLinkage(
   widgetStore.widgets as unknown as PartialWidget[],
   computed(() => {
-    const values: Record<string, unknown> = {}
+    const values: Record<string, FormFieldValue> = {}
     function walk(items: Widget[]) {
       for (const w of items) {
         if (w.field) values[w.field] = w.defaultValue ?? null

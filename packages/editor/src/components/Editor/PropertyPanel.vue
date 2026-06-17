@@ -8,7 +8,6 @@
  * - 每行一个属性：label + value 水平排列
  */
 import { computed, ref, watch } from 'vue'
-import { ChevronDownIcon, ChevronRightIcon, HelpCircleFilledIcon, CopyIcon } from 'tdesign-icons-vue-next'
 import { useEditorStore } from '../../stores/editor'
 import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
@@ -32,6 +31,7 @@ import type { WidgetVariable } from '../../widgets/base/types'
 import { usePropertyAdapters } from '../../composables/usePropertyAdapters'
 import { useClipboard } from '../../composables/useClipboard'
 import styles from './style.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const editorStore = useEditorStore()
 const widgetStore = useWidgetStore()
@@ -84,8 +84,12 @@ interface PropertyItem {
   type: string
   value: unknown
   desc?: string
+  placeholder?: string
   options?: SelectOption[]
   fields?: ArrayFieldSchema[]
+  remoteUrl?: string
+  labelField?: string
+  valueField?: string
 }
 
 interface PropertySection {
@@ -194,8 +198,12 @@ const propertySections = computed<PropertySection[]>(() => {
           type: prop.type,
           value: widget.props?.[prop.key] ?? prop.default,
           desc: prop.desc,
+          placeholder: (prop as any).placeholder,
           options: prop.options,
           fields: prop.fields,
+          remoteUrl: (prop as any).remoteUrl,
+          labelField: (prop as any).labelField,
+          valueField: (prop as any).valueField,
         })
       }
     }
@@ -416,10 +424,7 @@ function updateBoardProperty(key: string, value: unknown) {
       <div :class="styles.scroll" style="overflow: auto; height: 100%;">
         <div :class="styles.section">
           <div :class="styles.sectionHeader" @click="canvasExpanded = !canvasExpanded">
-            <span :size="12" :class="styles.arrow">
-              <ChevronDownIcon v-if="canvasExpanded" />
-              <ChevronRightIcon v-else />
-            </span>
+            <AppIcon name="arrow-down" :size="12" :class="styles.arrow" />
             <span :class="styles.sectionLabel">画布配置</span>
           </div>
           <div v-if="canvasExpanded" :class="styles.sectionBody">
@@ -433,9 +438,9 @@ function updateBoardProperty(key: string, value: unknown) {
               @update="(v: unknown) => updateBoardProperty(item.key, v)"
             />
             <div :class="styles.variableBtn">
-              <t-button size="small" @click="boardVariableDialogVisible = true">
+              <el-button size="small" @click="boardVariableDialogVisible = true">
                 画布变量 ({{ boardStore.variables.length }})
-              </t-button>
+              </el-button>
             </div>
           </div>
         </div>
@@ -453,57 +458,61 @@ function updateBoardProperty(key: string, value: unknown) {
     <template v-else>
       <div :class="styles.widgetNameRow">
         <span :class="styles.widgetType">{{ widgetConfig?.displayName }}</span>
-        <t-popup
+        <el-popover
           v-if="widgetConfig?.config.description"
           :content="widgetConfig.config.description"
           placement="top"
-          :delay="500"
+          :show-after="500"
+          trigger="hover"
         >
-          <HelpCircleFilledIcon :class="styles.questionIcon" />
-        </t-popup>
-        <t-popup v-if="selectedWidget" content="复制部件 ID" placement="top" :delay="500">
-          <CopyIcon
-            :class="styles.copyIdIcon"
-            @click="copyWidgetId"
-          />
-        </t-popup>
+          <template #reference>
+            <AppIcon name="question-filled" :class="styles.questionIcon" />
+          </template>
+        </el-popover>
+        <el-popover v-if="selectedWidget" content="复制部件 ID" placement="top" :show-after="500" trigger="hover">
+          <template #reference>
+            <AppIcon name="copy-document" :class="styles.copyIdIcon" @click="copyWidgetId" />
+          </template>
+        </el-popover>
       </div>
 
       <!-- 动态配置入口（由 widget config.configPanels 声明驱动）—— 顶部横向按钮 -->
       <div v-if="configPanels.length" :class="styles.configActions">
         <div style="overflow: auto;">
           <div :class="styles.configButtons">
-            <t-popup placement="bottom-left" :width="280" trigger="click">
-              <template #content>
+            <el-popover placement="bottom-left" :width="280" trigger="click">
+              <template #default>
                 <div :class="styles.helpContent" v-html="configHelpText" />
               </template>
-              <div :class="styles.helpIconWrap">
-                <HelpCircleFilledIcon :class="styles.helpIcon" />
-              </div>
-            </t-popup>
+              <template #reference>
+                <div :class="styles.helpIconWrap">
+                  <AppIcon name="question-filled" :class="styles.helpIcon" />
+                </div>
+              </template>
+            </el-popover>
             <template v-for="panel in configPanels" :key="panel">
-              <t-button v-if="panel === 'events'" variant="outline" @click="openEventDialog">
+              <el-button v-if="panel === 'events'" plain @click="openEventDialog">
                 事件配置
                 <span v-if="selectedWidget.events?.length" :class="styles.badge">
                   {{ selectedWidget.events.length }}
                 </span>
-              </t-button>
-              <t-button v-if="panel === 'rules'" variant="outline" @click="openRuleDialog">
+              </el-button>
+              <el-button v-if="panel === 'rules'" plain @click="openRuleDialog">
                 规则配置
                 <span v-if="selectedWidget.rules?.length" :class="styles.badge">
                   {{ selectedWidget.rules.length }}
                 </span>
-              </t-button>
-              <t-button v-if="panel === 'api'" variant="outline" @click="openApiDialog">
+              </el-button>
+              <el-button v-if="panel === 'api'" plain @click="openApiDialog">
                 数据源
                 <span v-if="selectedWidget.api" :class="styles.badge">1</span>
-              </t-button>
-              <t-button v-if="panel === 'variables'" variant="outline" @click="variableDialogVisible = true">
+              </el-button>
+              <el-button v-if="panel === 'variables'" plain @click="variableDialogVisible = true">
                 变量
                 <span v-if="selectedWidget.variables?.length" :class="styles.badge">
                   {{ selectedWidget.variables.length }}
                 </span>
-              </t-button>
+              </el-button>
             </template>
           </div>
         </div>
@@ -511,19 +520,10 @@ function updateBoardProperty(key: string, value: unknown) {
 
       <div :class="styles.scroll" style="overflow: auto; height: 100%;">
         <!-- 手风琴分区 -->
-        <div
-          v-for="section in propertySections"
-          :key="section.key"
-          :class="styles.section"
-        >
-          <div
-            :class="styles.sectionHeader"
-            @click="toggleSection(section.key)"
-          >
-            <span :size="12" :class="styles.arrow">
-              <ChevronDownIcon v-if="expandedSections.has(section.key)" />
-              <ChevronRightIcon v-else />
-            </span>
+        <div v-for="section in propertySections" :key="section.key" :class="styles.section">
+          <div :class="styles.sectionHeader" @click="toggleSection(section.key)">
+            <AppIcon v-if="expandedSections.has(section.key)" name="arrow-down" :size="12" :class="styles.arrow" />
+            <AppIcon v-else name="arrow-right" :size="12" :class="styles.arrow" />
             <span :class="styles.sectionLabel">{{ section.label }}</span>
             <span :class="styles.sectionCount">{{ section.items.length }}</span>
           </div>
@@ -602,7 +602,11 @@ function updateBoardProperty(key: string, value: unknown) {
                 :type="item.type"
                 :value="item.value"
                 :desc="item.desc"
+                :placeholder="item.placeholder"
                 :options="item.options"
+                :remote-url="item.remoteUrl"
+                :label-field="item.labelField"
+                :value-field="item.valueField"
                 @update="(v: unknown) => updateProperty(item.key, v)"
               />
             </template>
@@ -642,4 +646,54 @@ function updateBoardProperty(key: string, value: unknown) {
     </template>
   </div>
 </template>
+
+<style scoped lang="scss">
+/* 属性面板内所有 small 尺寸输入组件统一高度 32px */
+
+:deep(.el-input--small) {
+  --el-component-size-small: 32px;
+
+  .el-input__wrapper {
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .el-input__inner {
+    height: 32px;
+  }
+}
+
+:deep(.el-select--small) {
+  --el-component-size-small: 32px;
+
+  .el-select__wrapper {
+    min-height: 32px;
+  }
+}
+
+:deep(.el-input-number--small) {
+  --el-component-size-small: 32px;
+  height: 32px;
+
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    height: 16px;
+    line-height: 16px;
+  }
+
+  .el-input-number__increase {
+    border-left: 1px solid var(--el-border-color);
+  }
+
+  .el-input__wrapper {
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .el-input__inner {
+    height: 32px;
+    line-height: 32px;
+  }
+}
+</style>
 

@@ -34,36 +34,36 @@ $datasource-error-margin-top: 3px !default;
 // ---- mixin: 统一表单控件高度 ----
 @mixin datasource-unified-controls {
   // Input
-  :global(.t-input) {
+  :global(.el-input) {
     height: $datasource-input-height !important;
     min-height: $datasource-input-height !important;
   }
 
   // Select
-  :global(.t-select .t-input) {
+  :global(.el-select .el-input) {
     height: $datasource-input-height !important;
     min-height: $datasource-input-height !important;
   }
 
   // InputNumber
-  :global(.t-input-number) {
+  :global(.el-input-number) {
     height: $datasource-control-height !important;
     min-height: $datasource-control-height !important;
   }
 
-  :global(.t-input-number .t-input) {
+  :global(.el-input-number .el-input) {
     height: auto !important;
     min-height: auto !important;
   }
 
   // Button (excluding text/link buttons)
-  :global(.t-button:not(.t-button--text):not(.t-button--ghost)) {
+  :global(.el-button:not(.is-text)) {
     height: $datasource-button-height !important;
     min-height: $datasource-button-height !important;
   }
 
   // Textarea
-  :global(.t-textarea__inner) {
+  :global(.el-textarea__inner) {
     min-height: $datasource-control-height;
   }
 }

@@ -4,9 +4,9 @@ import { widgetDataKey } from '../base/types'
 const widgetData = inject(widgetDataKey)!
 </script>
 <template>
-  <t-alert
+  <el-alert
     :title="(widgetData.props?.text as string) || '提示信息'"
-    :theme="(widgetData.props?.type as 'info' | 'success' | 'warning' | 'error') || 'info'"
-    :closeable="widgetData.props?.closable !== false"
+    :type="(widgetData.props?.type as 'info' | 'success' | 'warning' | 'error') || 'info'"
+    :closable="widgetData.props?.closable !== false"
   />
 </template>

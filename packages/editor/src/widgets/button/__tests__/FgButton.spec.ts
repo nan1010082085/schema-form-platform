@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
@@ -89,7 +89,10 @@ describe('FgButton', () => {
   describe('button size', () => {
     it('默认尺寸为 default', () => {
       const wrapper = mountWidget()
-      expect(wrapper.find('.el-button').classes()).toContain('el-button--default')
+      // Element Plus default 尺寸不添加额外类名
+      const classes = wrapper.find('.el-button').classes()
+      expect(classes).not.toContain('el-button--large')
+      expect(classes).not.toContain('el-button--small')
     })
 
     it('可设置为 large', () => {

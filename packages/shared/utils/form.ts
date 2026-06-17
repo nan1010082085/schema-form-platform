@@ -1,12 +1,11 @@
 /**
  * 表单工具
  *
- * 适配 Element Plus FormInstance → TDesign FormInstanceFunctions
- * 提供统一的表单验证接口
+ * 基于 Element Plus FormInstance 提供统一的表单验证接口
  */
 
 import { ref } from 'vue'
-import type { FormInstanceFunctions, FormRules } from 'tdesign-vue-next'
+import type { FormInstance, FormRules } from 'element-plus'
 
 export interface UseFormOptions {
   /** 初始值 */
@@ -16,7 +15,7 @@ export interface UseFormOptions {
 }
 
 export function useForm(options: UseFormOptions = {}) {
-  const formRef = ref<FormInstanceFunctions | null>(null)
+  const formRef = ref<FormInstance | null>(null)
   const formData = ref<Record<string, any>>(options.defaultValues || {})
 
   /**
@@ -26,8 +25,8 @@ export function useForm(options: UseFormOptions = {}) {
     if (!formRef.value) return true
 
     try {
-      const result = await formRef.value.validate()
-      return result === true
+      const valid = await formRef.value.validate()
+      return valid
     } catch {
       return false
     }
@@ -40,8 +39,8 @@ export function useForm(options: UseFormOptions = {}) {
     if (!formRef.value) return true
 
     try {
-      await formRef.value.validate(name)
-      return true
+      const valid = await formRef.value.validateField(name)
+      return valid
     } catch {
       return false
     }
@@ -51,7 +50,7 @@ export function useForm(options: UseFormOptions = {}) {
    * 重置表单
    */
   const reset = () => {
-    formRef.value?.reset()
+    formRef.value?.resetFields()
     if (options.defaultValues) {
       formData.value = { ...options.defaultValues }
     }
@@ -62,7 +61,7 @@ export function useForm(options: UseFormOptions = {}) {
    */
   const clearValidate = (name?: string) => {
     if (name) {
-      formRef.value?.clearValidate(name)
+      formRef.value?.clearValidate([name])
     } else {
       formRef.value?.clearValidate()
     }

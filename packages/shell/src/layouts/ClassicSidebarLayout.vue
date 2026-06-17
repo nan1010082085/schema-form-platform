@@ -13,6 +13,7 @@ import SideMenu from '@/components/SideMenu.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const route = useRoute()
 const layoutStore = useLayoutStore()
@@ -49,14 +50,13 @@ function toggleCollapse() {
       <header :class="$style.header">
         <div :class="$style.headerLeft">
           <!-- 移动端菜单按钮 -->
-          <t-button
+          <el-button
             :class="$style.mobileMenuBtn"
-            variant="text"
-            shape="square"
+            text
             @click="toggleCollapse"
           >
-            <t-icon name="menu" />
-          </t-button>
+            <AppIcon name="menu" :size="18" />
+          </el-button>
 
           <!-- 面包屑 -->
           <Breadcrumb />
@@ -84,7 +84,7 @@ function toggleCollapse() {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
 .contentArea {
@@ -100,24 +100,22 @@ function toggleCollapse() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--td-comp-margin-xl, 20px);
-  background: var(--topnav-bg, rgba(17, 24, 32, 0.95));
-  backdrop-filter: var(--glass-blur, blur(20px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-  border-bottom: 1px solid var(--td-border-level-2-color, rgba(255, 255, 255, 0.1));
+  padding: 0 20px;
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-base);
   flex-shrink: 0;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: var(--td-comp-margin-m, 8px);
+  gap: 8px;
 }
 
 .headerRight {
   display: flex;
   align-items: center;
-  gap: var(--td-comp-margin-l, 16px);
+  gap: 16px;
 }
 
 .mobileMenuBtn {
@@ -127,11 +125,7 @@ function toggleCollapse() {
 .main {
   flex: 1;
   overflow: auto;
-  background: var(--td-bg-color-page);
-  background-image:
-    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background: var(--bg-color-page);
 }
 
 /* 响应式：移动端 */

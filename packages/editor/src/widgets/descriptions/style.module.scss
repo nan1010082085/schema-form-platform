@@ -8,11 +8,11 @@
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: var(--td-text-color-primary);
+  color: var(--text-color-primary);
 }
 
 .empty {
-  color: var(--td-text-color-placeholder);
+  color: var(--text-color-secondary);
   font-size: 13px;
   padding: 24px 0;
   text-align: center;
@@ -23,7 +23,7 @@
 }
 
 .link {
-  color: var(--td-brand-color);
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: none;
 

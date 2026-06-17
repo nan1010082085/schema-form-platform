@@ -39,9 +39,12 @@ export const dialogConfig: WidgetConfig = {
       {
         key: 'publishId',
         label: '发布 ID',
-        type: 'input',
+        type: 'remote-select',
+        remoteUrl: '/schemas/published',
+        labelField: 'name',
+        valueField: 'publishId',
         default: '',
-        placeholder: '已发布 Schema 的 publishId',
+        placeholder: '选择已发布的 Schema',
         visibleOn: "props.contentMode === 'microapp'",
       },
       {

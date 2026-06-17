@@ -85,15 +85,15 @@
 }
 
 .statusDotSubmitted {
-  background: var(--td-brand-color);
+  background: var(--color-primary);
 }
 
 .statusDotApproved {
-  background: var(--td-success-color);
+  background: var(--color-success);
 }
 
 .statusDotRejected {
-  background: var(--td-error-color);
+  background: var(--color-danger);
 }
 
 .emptyState {
@@ -102,7 +102,7 @@
 }
 
 .emptyIcon {
-  color: var(--td-text-color-placeholder);
+  color: var(--text-color-placeholder);
   margin-bottom: 20px;
 }
 

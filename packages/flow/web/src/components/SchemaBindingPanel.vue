@@ -54,7 +54,7 @@
     </div>
 
     <!-- Schema 选择弹窗 -->
-    <el-dialog
+    <AppDialog
       v-model="showSelector"
       title="选择表单"
       width="800px"
@@ -64,13 +64,14 @@
         :selected-id="formSchemaId"
         @select="handleSelect"
       />
-    </el-dialog>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import SchemaSelector from './SchemaSelector.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 defineProps<{
   formSchemaId?: string

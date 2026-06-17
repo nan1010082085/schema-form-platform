@@ -23,7 +23,7 @@ import {
   deleteVersion as apiDeleteVersion,
 } from '@/utils/apiClient'
 import { diffSchema, getDiffSummary } from '@/utils/schemaDiff'
-import type { Widget } from '@/widgets/base/types'
+import { parseSchemaJson } from '@/utils/parseSchemaJson'
 
 export const useSchemaVersionStore = defineStore('schemaVersion', () => {
   // ================================================================
@@ -209,8 +209,8 @@ export const useSchemaVersionStore = defineStore('schemaVersion', () => {
       leftDetail.value = left
       rightDetail.value = right
 
-      const leftWidgets = (left.json ?? []) as unknown as Widget[]
-      const rightWidgets = (right.json ?? []) as unknown as Widget[]
+      const { widgets: leftWidgets } = parseSchemaJson(left.json)
+      const { widgets: rightWidgets } = parseSchemaJson(right.json)
 
       diffResult.value = diffSchema(leftWidgets, rightWidgets)
       return true

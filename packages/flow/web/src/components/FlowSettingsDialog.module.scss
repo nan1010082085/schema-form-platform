@@ -6,14 +6,17 @@
 
 .field {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
 }
 
 .fieldLabel {
+  flex-shrink: 0;
+  width: 80px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-color-secondary);
+  text-align: right;
 }
 
 .fieldHint {

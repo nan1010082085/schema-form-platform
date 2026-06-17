@@ -29,15 +29,15 @@ async function handleClick(idx: number) {
 
 <template>
   <div :style="dynamicStyle">
-    <t-button
+    <el-button
       v-for="(btn, idx) in buttons"
       :key="idx"
-      :type="(btn.type as 'primary' | 'success' | 'warning' | 'danger' | 'info' | '') || ''"
+      :type="(btn.type as 'primary' | 'success' | 'warning' | 'danger' | 'info' | '') || undefined"
       :disabled="isDisabled"
       @click="handleClick(idx)"
     >
       {{ btn.text }}
-    </t-button>
+    </el-button>
   </div>
 </template>
 
@@ -46,9 +46,5 @@ div {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-:deep(.el-button) {
-  flex: 1;
-  height: 100%;
 }
 </style>

@@ -11,6 +11,7 @@
  * - 支持 loadApi 远程数据加载
  */
 import { inject, ref, reactive, provide, watch, onMounted, onUnmounted } from 'vue'
+import type { FormInstance } from 'element-plus'
 import { widgetDataKey, formContextKey } from '../base/types'
 import type { Widget } from '../base/types'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
@@ -35,7 +36,7 @@ useExposeWidget(() => ({
 }))
 
 // ---- ElForm ref ----
-const formRef = ref<InstanceType<typeof import('tdesign-vue-next')['Form']>>()
+const formRef = ref<FormInstance>()
 
 // ---- 表单数据模型 ----
 const formModel = reactive<Record<string, unknown>>({})
@@ -137,7 +138,7 @@ defineExpose({
 </script>
 
 <template>
-  <t-form
+  <el-form
     ref="formRef"
     :model="formModel"
     :class="styles.formContainer"
@@ -145,5 +146,5 @@ defineExpose({
     :label-position="(widgetData.props?.labelPosition as 'left' | 'right' | 'top') || 'right'"
   >
     <slot />
-  </t-form>
+  </el-form>
 </template>

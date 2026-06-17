@@ -13,6 +13,7 @@ import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import LayoutSwitcher from '@schema-form/shared-components/LayoutSwitcher.vue'
 import type { MenuTreeNode } from '@/types/menu'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -68,7 +69,7 @@ function navigateTo(node: MenuTreeNode) {
           </div>
 
           <!-- 有子菜单 -->
-          <t-dropdown v-else trigger="click">
+          <el-dropdown v-else trigger="click">
             <div
               :class="[
                 $style.navItem,
@@ -76,20 +77,20 @@ function navigateTo(node: MenuTreeNode) {
               ]"
             >
               {{ node.name }}
-              <t-icon name="chevron-down" :size="12" />
+              <AppIcon name="arrow-down" :size="12" />
             </div>
             <template #dropdown>
-              <t-dropdown-menu>
-                <t-dropdown-item
+              <el-dropdown-menu>
+                <el-dropdown-item
                   v-for="child in node.children"
                   :key="child.id"
                   @click="navigateTo(child)"
                 >
                   {{ child.name }}
-                </t-dropdown-item>
-              </t-dropdown-menu>
+                </el-dropdown-item>
+              </el-dropdown-menu>
             </template>
-          </t-dropdown>
+          </el-dropdown>
         </template>
       </nav>
 
@@ -114,7 +115,7 @@ function navigateTo(node: MenuTreeNode) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
 .header {
@@ -122,12 +123,12 @@ function navigateTo(node: MenuTreeNode) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--td-comp-margin-xxl, 24px);
+  padding: 0 var(--spacing-lg);
   background: var(--topnav-bg, rgba(17, 24, 32, 0.95));
   backdrop-filter: var(--glass-blur, blur(20px));
   -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-  border-bottom: 1px solid var(--td-border-level-2-color, rgba(255, 255, 255, 0.1));
-  box-shadow: var(--td-shadow-1, 0 1px 10px rgba(0, 0, 0, 0.05));
+  border-bottom: 1px solid var(--border-color-light, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--shadow-sm, 0 1px 10px rgba(0, 0, 0, 0.05));
   flex-shrink: 0;
   z-index: 100;
 }
@@ -140,16 +141,16 @@ function navigateTo(node: MenuTreeNode) {
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--td-comp-margin-m, 8px);
+  gap: var(--spacing-sm);
   text-decoration: none;
 }
 
 .logoIcon {
   width: 36px;
   height: 36px;
-  border-radius: var(--td-radius-small, 3px);
+  border-radius: var(--border-radius-sm);
   background: var(--gradient-primary, linear-gradient(135deg, #00d4ff 0%, #009fcc 100%));
-  color: var(--td-text-color-anti, #fff);
+  color: var(--text-color-inverse, #fff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,14 +163,14 @@ function navigateTo(node: MenuTreeNode) {
 .logoText {
   font-size: 18px;
   font-weight: 600;
-  color: var(--td-text-color-primary, rgba(255, 255, 255, 0.9));
+  color: var(--text-color-primary, rgba(255, 255, 255, 0.9));
   white-space: nowrap;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: var(--td-comp-margin-xs, 4px);
+  gap: var(--spacing-xs);
   flex: 1;
   justify-content: center;
 }
@@ -177,12 +178,12 @@ function navigateTo(node: MenuTreeNode) {
 .navItem {
   height: 64px;
   line-height: 64px;
-  padding: 0 var(--td-comp-margin-l, 16px);
+  padding: 0 var(--spacing-md);
   font-size: 14px;
-  color: var(--td-text-color-secondary, rgba(255, 255, 255, 0.65));
+  color: var(--text-color-secondary, rgba(255, 255, 255, 0.65));
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all var(--td-anim-duration-fast, 0.15s);
+  transition: all 0.15s;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -191,26 +192,25 @@ function navigateTo(node: MenuTreeNode) {
 }
 
 .navItem:hover {
-  color: var(--td-brand-color, #00d4ff);
-  background: var(--sidebar-bg-hover, rgba(0, 212, 255, 0.05));
+  color: var(--color-primary);
+  background: var(--bg-color-hover, rgba(0, 212, 255, 0.05));
 }
 
 .navItemActive {
-  color: var(--td-brand-color, #00d4ff);
-  border-bottom-color: var(--td-brand-color, #00d4ff);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   font-weight: 500;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
 .headerRight {
   display: flex;
   align-items: center;
-  gap: var(--td-comp-margin-l, 16px);
+  gap: var(--spacing-md);
 }
 
 .main {
   flex: 1;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
   background-image:
     linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
@@ -225,7 +225,7 @@ function navigateTo(node: MenuTreeNode) {
   }
 
   .header {
-    padding: 0 var(--td-comp-margin-l, 16px);
+    padding: 0 var(--spacing-md);
   }
 }
 </style>

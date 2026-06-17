@@ -97,6 +97,7 @@ import DataBoard from '@iconify-icons/ep/data-board'
 import TrendCharts from '@iconify-icons/ep/trend-charts'
 import Histogram from '@iconify-icons/ep/histogram'
 import Crop from '@iconify-icons/ep/crop'
+import Location from '@iconify-icons/ep/location'
 
 /** 图标名称 → Iconify 图标对象映射 */
 const ICON_MAP: Record<string, typeof HomeFilled> = {
@@ -184,6 +185,7 @@ const ICON_MAP: Record<string, typeof HomeFilled> = {
   'trend-charts': TrendCharts,
   histogram: Histogram,
   crop: Crop,
+  location: Location,
 }
 
 const props = defineProps<{

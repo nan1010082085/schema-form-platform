@@ -5,7 +5,7 @@
  * Flow: paste JSON (or fetch from URL) -> parse -> preview inferences -> override types -> generate schema.
  */
 import { ref } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { apiClient } from '@/utils/apiClient'
 import {
   inferFieldsFromJson,
@@ -113,7 +113,7 @@ async function handleFetchFromUrl() {
     }
     inferences.value = result
     step.value = 'preview'
-    MessagePlugin.success(`获取并分析了 ${result.length} 个字段`)
+    ElMessage.success(`获取并分析了 ${result.length} 个字段`)
   } catch (e: unknown) {
     fetchError.value = e instanceof Error ? e.message : '请求失败'
   } finally {
@@ -131,7 +131,7 @@ function handleGenerate() {
   const schema = fieldInferencesToSchema(inferences.value)
   emit('import', schema)
   visible.value = false
-  MessagePlugin.success(`生成了 ${schema.length} 个 schema 项`)
+  ElMessage.success(`生成了 ${schema.length} 个 schema 项`)
 }
 
 function handleBack() {
@@ -142,11 +142,13 @@ defineExpose({ open })
 </script>
 
 <template>
-  <t-dialog
-    v-model:visible="visible"
-    header="从 JSON 导入"
+  <el-dialog
+    :model-value="visible"
+    title="从 JSON 导入"
     width="700px"
-    :close-on-overlay="false"
+    :close-on-click-modal="false"
+    :append-to-body="true"
+    destroy-on-close
     @close="visible = false"
   >
     <!-- Step 1: Paste JSON or Fetch from URL -->
@@ -171,8 +173,9 @@ defineExpose({ open })
 
       <!-- Paste mode -->
       <template v-if="inputMode === 'paste'">
-        <t-textarea
-          v-model:value="jsonText"
+        <el-input
+          v-model="jsonText"
+          type="textarea"
           :rows="14"
           placeholder='在此粘贴 API 响应 JSON, 例如:
 {
@@ -189,26 +192,27 @@ defineExpose({ open })
       <template v-else>
         <div class="json-importer__url-section">
           <div class="json-importer__url-row">
-            <t-input
-              v-model:value="fetchUrl"
+            <el-input
+              v-model="fetchUrl"
               size="small"
               placeholder="/api/list 或 https://example.com/api/data"
-              @enter="handleFetchFromUrl"
+              @keyup.enter="handleFetchFromUrl"
             />
-            <t-button
-              theme="primary"
+            <el-button
+              type="primary"
               size="small"
               :loading="fetching"
               @click="handleFetchFromUrl"
             >
               获取
-            </t-button>
+            </el-button>
           </div>
           <div v-if="fetchError" class="json-importer__error">{{ fetchError }}</div>
           <div v-if="jsonText" class="json-importer__fetched-preview">
             <label class="json-importer__label">获取的响应:</label>
-            <t-textarea
+            <el-input
               :model-value="jsonText"
+              type="textarea"
               :rows="8"
               readonly
               size="small"
@@ -223,47 +227,47 @@ defineExpose({ open })
       <p class="json-importer__summary">
         {{ inferences.length }} 个字段被检测到。如需要可覆盖推断的类型。
       </p>
-      <t-table :data="inferences" bordered size="small" max-height="400">
-        <t-table-column col-key="field" title="字段名" min-width="140" />
-        <t-table-column col-key="label" title="标签" min-width="120" />
-        <t-table-column title="类型" width="160">
-          <template #cell="{ row, rowIndex }">
-            <t-select
+      <el-table :data="inferences" border size="small" max-height="400">
+        <el-table-column prop="field" label="字段名" min-width="140" />
+        <el-table-column prop="label" label="标签" min-width="120" />
+        <el-table-column label="类型" width="160">
+          <template #default="{ row, $index }">
+            <el-select
               :model-value="row.type"
               size="small"
               style="width: 100%"
-              @update:model-value="handleOverrideType(rowIndex, $event as SchemaType)"
+              @update:model-value="handleOverrideType($index, $event as SchemaType)"
             >
-              <t-option
+              <el-option
                 v-for="opt in schemaTypeOptions"
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"
               />
-            </t-select>
+            </el-select>
           </template>
-        </t-table-column>
-        <t-table-column title="示例值" min-width="160">
-          <template #cell="{ row }">
+        </el-table-column>
+        <el-table-column label="示例值" min-width="160">
+          <template #default="{ row }">
             <span class="json-importer__sample">
               {{ typeof row.sample === 'object' ? JSON.stringify(row.sample) : String(row.sample ?? '') }}
             </span>
           </template>
-        </t-table-column>
-      </t-table>
+        </el-table-column>
+      </el-table>
     </div>
 
     <template #footer>
-      <t-button @click="visible = false">取消</t-button>
+      <el-button @click="visible = false">取消</el-button>
       <template v-if="step === 'input' && inputMode === 'paste'">
-        <t-button theme="primary" @click="handleParse">解析</t-button>
+        <el-button type="primary" @click="handleParse">解析</el-button>
       </template>
       <template v-else-if="step === 'preview'">
-        <t-button @click="handleBack">返回</t-button>
-        <t-button theme="primary" @click="handleGenerate">生成 Schema</t-button>
+        <el-button @click="handleBack">返回</el-button>
+        <el-button type="primary" @click="handleGenerate">生成 Schema</el-button>
       </template>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -288,12 +292,12 @@ defineExpose({ open })
     transition: all 0.2s;
 
     &:hover {
-      color: var(--td-brand-color);
+      color: var(--el-color-primary);
     }
 
     &--active {
-      color: var(--td-brand-color);
-      border-bottom-color: var(--td-brand-color);
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
     }
   }
 

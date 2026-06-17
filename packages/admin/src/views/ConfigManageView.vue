@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface Config {
   id: string
@@ -45,16 +45,6 @@ const form = ref({
 })
 const editingId = ref('')
 
-const configColumns = [
-  { colKey: 'name', title: '参数名称', minWidth: 160 },
-  { colKey: 'key', title: '参数键名', minWidth: 200 },
-  { colKey: 'value', title: '参数值', minWidth: 200 },
-  { colKey: 'type', title: '类型', width: 100, align: 'center' as const },
-  { colKey: 'status', title: '状态', width: 80, align: 'center' as const },
-  { colKey: 'remark', title: '备注', minWidth: 160 },
-  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' as const },
-]
-
 async function fetchConfigs() {
   loading.value = true
   try {
@@ -95,41 +85,38 @@ function openEdit(config: Config) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('请输入参数名称')
+    ElMessage.warning('请输入参数名称')
     return
   }
   if (!form.value.key.trim()) {
-    MessagePlugin.warning('请输入参数键名')
+    ElMessage.warning('请输入参数键名')
     return
   }
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/config', form.value)
-    MessagePlugin.success('参数创建成功')
+    ElMessage.success('参数创建成功')
   } else {
     await apiClient.put(`/config/${editingId.value}`, form.value)
-    MessagePlugin.success('参数更新成功')
+    ElMessage.success('参数更新成功')
   }
   dialogVisible.value = false
   fetchConfigs()
 }
 
 async function handleDelete(config: Config) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除参数「${config.name}」（${config.key}）？`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/config/${config.id}`)
-      MessagePlugin.success('参数已删除')
-      fetchConfigs()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除参数「${config.name}」（${config.key}）？`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await apiClient.delete(`/config/${config.id}`)
+    ElMessage.success('参数已删除')
+    fetchConfigs()
+  } catch {
+    // 用户取消，不做处理
+  }
 }
 
 function handlePageChange(p: number) {
@@ -159,94 +146,106 @@ onMounted(fetchConfigs)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
-        <t-input
-          v-model:value="searchQuery"
+        <el-input
+          v-model="searchQuery"
           placeholder="搜索名称或键名"
-          :prefix-icon="SearchIcon"
+          :prefix-icon="Search"
           clearable
           :style="{ width: '240px' }"
         />
-        <t-select v-model:value="typeFilter" placeholder="参数类型" clearable :style="{ width: '120px' }">
-          <t-option label="系统参数" value="system" />
-          <t-option label="业务参数" value="business" />
-        </t-select>
-        <t-select v-model:value="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
-          <t-option label="启用" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
+        <el-select v-model="typeFilter" placeholder="参数类型" clearable :style="{ width: '120px' }">
+          <el-option label="系统参数" value="system" />
+          <el-option label="业务参数" value="business" />
+        </el-select>
+        <el-select v-model="statusFilter" placeholder="状态" clearable :style="{ width: '100px' }">
+          <el-option label="启用" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
       </div>
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增参数</t-button>
+      <el-button type="primary" :icon="Plus" @click="openCreate">新增参数</el-button>
     </div>
 
-    <t-table :data="configs" :columns="configColumns" :loading="loading" :class="$style.table">
-      <template #cell-key="{ row }">
-        <t-tag size="small" theme="default">{{ row.key }}</t-tag>
-      </template>
-      <template #cell-type="{ row }">
-        <t-tag :theme="row.type === 'system' ? 'danger' : 'primary'" size="small">
-          {{ row.type === 'system' ? '系统' : '业务' }}
-        </t-tag>
-      </template>
-      <template #cell-status="{ row }">
-        <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-          {{ row.status === 'active' ? '启用' : '停用' }}
-        </t-tag>
-      </template>
-      <template #cell-actions="{ row }">
-        <div :class="$style.actions">
-          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-        </div>
-      </template>
-    </t-table>
+    <el-table v-loading="loading" :data="configs" :class="$style.table">
+      <el-table-column prop="name" label="参数名称" min-width="160" />
+      <el-table-column prop="key" label="参数键名" min-width="200">
+        <template #default="{ row }">
+          <el-tag size="small">{{ row.key }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="value" label="参数值" min-width="200" />
+      <el-table-column prop="type" label="类型" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.type === 'system' ? 'danger' : 'primary'" size="small">
+            {{ row.type === 'system' ? '系统' : '业务' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="status" label="状态" width="80" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'active' ? 'success' : 'warning'" size="small">
+            {{ row.status === 'active' ? '启用' : '停用' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="备注" min-width="160" />
+      <el-table-column label="操作" width="140" fixed="right">
+        <template #default="{ row }">
+          <div :class="$style.actions">
+            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">
-      <t-pagination
+      <el-pagination
+        layout="prev, pager, next"
         :total="total"
         :page-size="pageSize"
-        :current="page"
+        :current-page="page"
         @current-change="handlePageChange"
       />
     </div>
 
     <!-- 创建/编辑对话框 -->
-    <t-dialog
-      v-model:visible="dialogVisible"
-      :header="dialogMode === 'create' ? '新增参数' : '编辑参数'"
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogMode === 'create' ? '新增参数' : '编辑参数'"
       width="520px"
       destroy-on-close
     >
-      <t-form label-width="80px">
-        <t-form-item label="参数名称">
-          <t-input v-model:value="form.name" placeholder="请输入参数名称" />
-        </t-form-item>
-        <t-form-item label="参数键名">
-          <t-input v-model:value="form.key" placeholder="如 sys.upload.maxSize" :disabled="dialogMode === 'edit'" />
-        </t-form-item>
-        <t-form-item label="参数值">
-          <t-input v-model:value="form.value" placeholder="请输入参数值" />
-        </t-form-item>
-        <t-form-item label="参数类型">
-          <t-select v-model:value="form.type" :style="{ width: '100%' }">
-            <t-option label="系统参数" value="system" />
-            <t-option label="业务参数" value="business" />
-          </t-select>
-        </t-form-item>
-        <t-form-item label="状态">
-          <t-select v-model:value="form.status" :style="{ width: '100%' }">
-            <t-option label="启用" value="active" />
-            <t-option label="停用" value="inactive" />
-          </t-select>
-        </t-form-item>
-        <t-form-item label="备注">
-          <t-input v-model:value="form.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
-        </t-form-item>
-      </t-form>
+      <el-form label-width="80px">
+        <el-form-item label="参数名称">
+          <el-input v-model="form.name" placeholder="请输入参数名称" />
+        </el-form-item>
+        <el-form-item label="参数键名">
+          <el-input v-model="form.key" placeholder="如 sys.upload.maxSize" :disabled="dialogMode === 'edit'" />
+        </el-form-item>
+        <el-form-item label="参数值">
+          <el-input v-model="form.value" placeholder="请输入参数值" />
+        </el-form-item>
+        <el-form-item label="参数类型">
+          <el-select v-model="form.type" :style="{ width: '100%' }">
+            <el-option label="系统参数" value="system" />
+            <el-option label="业务参数" value="business" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="form.status" :style="{ width: '100%' }">
+            <el-option label="启用" value="active" />
+            <el-option label="停用" value="inactive" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <t-button @click="dialogVisible = false">取消</t-button>
-        <t-button theme="primary" @click="handleSubmit">确定</t-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>
 

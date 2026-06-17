@@ -4,6 +4,7 @@ import type { FlowPermissions, FlowPermissionItem } from '@schema-form/flow-shar
 import UserPicker from './UserPicker.vue'
 import styles from './FlowSettingsDialog.module.scss'
 import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 interface SettingsData {
   name: string
@@ -79,10 +80,10 @@ function onSave() {
 </script>
 
 <template>
-  <el-dialog
+  <AppDialog
     title="流程设置"
     :model-value="visible"
-    width="560px"
+    width="640px"
     :close-on-click-modal="false"
     @close="onCancel"
     @update:model-value="emit('update:visible', $event)"
@@ -147,5 +148,5 @@ function onSave() {
       <el-button @click="onCancel">取消</el-button>
       <el-button type="primary" @click="onSave">保存</el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>

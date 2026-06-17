@@ -18,12 +18,12 @@ const dynamicStyle = computed(() => ({
 </script>
 
 <template>
-  <t-color-picker
+  <el-color-picker
     v-model="widgetData.defaultValue as string"
     :style="dynamicStyle"
     :disabled="isDisabled"
-    :alpha="(widgetData.props?.showAlpha as boolean) || false"
-    :format="(widgetData.props?.colorFormat as string) || undefined"
-    :swatchColors="(widgetData.props?.predefine as string[]) || undefined"
+    :show-alpha="(widgetData.props?.showAlpha as boolean) || false"
+    :color-format="(widgetData.props?.colorFormat as string) || undefined"
+    :predefine="(widgetData.props?.predefine as string[]) || undefined"
   />
 </template>

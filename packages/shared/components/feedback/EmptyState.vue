@@ -5,8 +5,8 @@
  * 用于列表为空、搜索无结果等场景。
  * 支持自定义图标、标题、描述和操作按钮。
  */
-import { InfoCircleFilledIcon } from 'tdesign-icons-vue-next'
-import styles from './EmptyState.module.css'
+import styles from './EmptyState.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 withDefaults(defineProps<{
   /** 标题文本 */
@@ -22,7 +22,7 @@ withDefaults(defineProps<{
   <div :class="styles.empty">
     <div :class="styles.icon">
       <slot name="icon">
-        <InfoCircleFilledIcon />
+        <AppIcon name="info-filled" />
       </slot>
     </div>
     <div :class="styles.title">{{ title }}</div>

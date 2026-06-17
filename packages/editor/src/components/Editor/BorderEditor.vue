@@ -8,8 +8,8 @@
  * - 选中某边时显示该边的值，未选中时显示简写值
  */
 import { ref, computed } from 'vue'
-import { LinkIcon } from 'tdesign-icons-vue-next'
 import styles from './BorderEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   value?: Record<string, string>
@@ -181,14 +181,14 @@ const borderStyleOptions = [
       </div>
 
       <!-- Link toggle -->
-      <t-popup :content="linked ? '解除链接' : '链接四边'" placement="top" :delay="300">
+      <el-tooltip :content="linked ? '解除链接' : '链接四边'" placement="top" :show-after="300">
         <button
           :class="[styles.linkBtn, linked && styles.linkBtnActive]"
           @click="toggleLinked"
         >
-          <LinkIcon />
+          <AppIcon name="link" />
         </button>
-      </t-popup>
+      </el-tooltip>
     </div>
 
     <!-- 选中边提示（仅解除链接模式） -->
@@ -203,38 +203,38 @@ const borderStyleOptions = [
     <div :class="styles.controls">
       <div :class="styles.controlRow">
         <label :class="styles.controlLabel">宽度</label>
-        <t-input-number
-          :value="currentWidth"
+        <el-input-number
+          :model-value="currentWidth"
           :min="0"
           :max="20"
           size="small"
-          theme="column"
+          controls-position="right"
           :class="styles.numberInput"
           @change="onWidthChange"
         />
       </div>
       <div :class="styles.controlRow">
         <label :class="styles.controlLabel">样式</label>
-        <t-select
-          :value="currentStyle"
+        <el-select
+          :model-value="currentStyle"
           size="small"
           :class="styles.selectInput"
           @change="onStyleChange"
         >
-          <t-option
+          <el-option
             v-for="opt in borderStyleOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
       <div :class="styles.controlRow">
         <label :class="styles.controlLabel">颜色</label>
-        <t-color-picker
-          :value="currentColor"
+        <el-color-picker
+          :model-value="currentColor"
           size="small"
-          enable-alpha
+          show-alpha
           @change="onColorChange"
         />
       </div>

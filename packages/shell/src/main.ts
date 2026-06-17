@@ -2,18 +2,18 @@
  * Shell main entry
  *
  * Initializes:
- * 1. Vue app with Pinia + Router + TDesign
+ * 1. Vue app with Pinia + Router + Element Plus
  * 2. Qiankun micro-frontend (register + start)
  */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
-import 'tdesign-vue-next/dist/tdesign.css'
-import '@schema-form/shared-styles/tokens.css'
-import '@schema-form/shared-styles/theme-tech.css'
+import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/theme.scss'
+import '@schema-form/shared-styles/css-variables.scss'
 import { registerMicroApps, start, initGlobalState } from 'qiankun'
 import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import { useAuthStore } from '@/stores/auth'
+import { setupElementPlus } from '@schema-form/shared-config/element'
 
 import App from './App.vue'
 import router from './router'
@@ -21,7 +21,7 @@ import router from './router'
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
-app.use(TDesign)
+setupElementPlus(app)
 app.mount('#app')
 
 // 初始化 qiankun 全局状态
@@ -69,10 +69,13 @@ registerMicroApps(microApps, {
   ],
 })
 
-start({
-  sandbox: {
-    strictStyleIsolation: true,
-    experimentalStyleIsolation: false,
-  },
-  prefetch: 'all',
+// 等待路由就绪后再启动 qiankun，避免 #micro-container 不存在的竞态
+router.isReady().then(() => {
+  start({
+    sandbox: {
+      strictStyleIsolation: true,
+      experimentalStyleIsolation: false,
+    },
+    // 不用 prefetch: 'all'，避免在组件挂载前就加载子应用
+  })
 })

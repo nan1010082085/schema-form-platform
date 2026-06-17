@@ -19,9 +19,8 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  background: #00d4ff;
-  border: 1px solid rgba(0, 212, 255, 0.5);
-  box-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+  background: var(--bg-color-white);
+  border: 1px solid var(--color-primary);
   z-index: 10000;
   pointer-events: auto;
   cursor: nw-resize;

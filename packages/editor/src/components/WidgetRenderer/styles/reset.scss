@@ -109,14 +109,14 @@
   }
 
   // 下拉层
-  .t-popup,
-  .t-select-dropdown,
-  .t-picker-panel {
+  .el-popper,
+  .el-select-dropdown,
+  .el-picker-panel {
     z-index: 3000;
   }
 
   // 消息提示层
-  .t-message {
+  .el-message {
     z-index: 9999;
   }
 }

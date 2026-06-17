@@ -6,7 +6,7 @@ export const numberConfig: WidgetConfig = {
   author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
-    height: '44px',
+    height: '40px',
     fontSize: '14px',
   },
   defaultProps: {

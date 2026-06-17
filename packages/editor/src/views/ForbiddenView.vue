@@ -10,7 +10,7 @@ const router = useRouter()
     <div :class="styles.content">
       <h1 :class="styles.code">403</h1>
       <p :class="styles.message">抱歉，您没有权限访问此页面</p>
-      <t-button theme="primary" @click="router.push('/instances')">返回首页</t-button>
+      <el-button type="primary" @click="router.push('/instances')">返回首页</el-button>
     </div>
   </div>
 </template>

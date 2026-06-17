@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
@@ -100,7 +100,8 @@ describe('FgDivider', () => {
   describe('content 属性', () => {
     it('无 content 时分割线无文字', () => {
       const wrapper = mountWidget()
-      expect(wrapper.find('.el-divider__text').text()).toBe('')
+      // ElementPlus 无 content 时不渲染 inner-text 元素
+      expect(wrapper.find('.t-divider__inner-text').exists()).toBe(false)
     })
 
     it('有 content 时显示文字', () => {
@@ -116,7 +117,7 @@ describe('FgDivider', () => {
           },
         },
       })
-      expect(wrapper.find('.el-divider__text').text()).toBe('分隔标题')
+      expect(wrapper.find('.t-divider__inner-text').text()).toBe('分隔标题')
     })
   })
 

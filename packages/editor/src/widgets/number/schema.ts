@@ -7,7 +7,7 @@ export function createNumberWidget(id: string): Widget {
     ...publicSchema(id, 'number'),
     name: numberConfig.name,
     label: numberConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...numberConfig.defaultStyle },
     props: { ...numberConfig.defaultProps },
   }

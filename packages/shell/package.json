@@ -9,15 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "qiankun": "^2.10.16",
+    "@element-plus/icons-vue": "^2.3.1",
+    "@iconify-icons/ep": "^1.2.12",
+    "@iconify/vue": "^5.0.1",
     "@schema-form/shared-components": "workspace:*",
+    "@schema-form/shared-qiankun": "workspace:*",
     "@schema-form/shared-stores": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
-    "@schema-form/shared-qiankun": "workspace:*",
-    "tdesign-vue-next": "^1.20.1",
-    "tdesign-icons-vue-next": "^0.4.4",
+    "element-plus": "^2.9.7",
     "pinia": "^2.3.0",
+    "qiankun": "^2.10.16",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

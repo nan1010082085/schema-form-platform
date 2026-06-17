@@ -87,15 +87,15 @@
 }
 
 .stateDotActive {
-  background: var(--td-success-color);
+  background: var(--color-success);
 }
 
 .stateDotInactive {
-  background: var(--td-brand-color);
+  background: var(--color-primary);
 }
 
 .stateDotSuspended {
-  background: var(--td-warning-color);
+  background: var(--color-warning);
 }
 
 .featureTags {
@@ -114,7 +114,7 @@
 }
 
 .emptyIcon {
-  color: var(--td-text-color-placeholder);
+  color: var(--text-color-placeholder, #969FA8);
   margin-bottom: 20px;
 }
 
@@ -135,5 +135,5 @@
 }
 
 .placeholderDash {
-  color: var(--td-text-color-placeholder);
+  color: var(--text-color-placeholder, #969FA8);
 }

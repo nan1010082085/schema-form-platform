@@ -6,9 +6,9 @@
  * 支持 URL、Method、Headers、Response Data Path 配置。
  */
 import { ref, watch } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
-import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import styles from './RequestConfigDialog.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface RequestConfig {
   apiUrl: string
@@ -108,7 +108,7 @@ function handleClose() {
 </script>
 
 <template>
-  <EnhancedDialog
+  <AppDialog
     :model-value="visible"
     title="API 请求配置"
     width="560px"
@@ -119,8 +119,8 @@ function handleClose() {
       <!-- URL -->
       <div :class="styles.row">
         <label :class="styles.label">请求地址</label>
-        <t-input
-          v-model:value="localConfig.apiUrl"
+        <el-input
+          v-model="localConfig.apiUrl"
           size="small"
           placeholder="/api/data"
         />
@@ -129,33 +129,33 @@ function handleClose() {
       <!-- Method -->
       <div :class="styles.row">
         <label :class="styles.label">请求方法</label>
-        <t-select
-          v-model:value="localConfig.apiMethod"
+        <el-select
+          v-model="localConfig.apiMethod"
           size="small"
           style="flex: 1"
         >
-          <t-option
+          <el-option
             v-for="opt in methodOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- Headers -->
       <div :class="styles.section">
         <div :class="styles.sectionHeader">
           <span :class="styles.sectionTitle">请求头 (Headers)</span>
-          <t-button
-            theme="primary"
-            variant="text"
+          <el-button
+            type="primary"
+            text
             size="small"
             @click="addHeader"
           >
-            <AddIcon />
+            <AppIcon name="plus" />
             添加
-          </t-button>
+          </el-button>
         </div>
 
         <div
@@ -163,34 +163,34 @@ function handleClose() {
           :key="idx"
           :class="styles.headerRow"
         >
-          <t-input
-            v-model:value="entry.key"
+          <el-input
+            v-model="entry.key"
             size="small"
             placeholder="Header Name"
             @change="syncHeaders"
           />
-          <t-input
-            v-model:value="entry.value"
+          <el-input
+            v-model="entry.value"
             size="small"
             placeholder="Header Value"
             @change="syncHeaders"
           />
-          <t-button
-            theme="danger"
-            variant="text"
+          <el-button
+            type="danger"
+            text
             size="small"
             @click="removeHeader(idx)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
       <!-- Response Data Path -->
       <div :class="styles.row">
         <label :class="styles.label">数据路径</label>
-        <t-input
-          v-model:value="localConfig.responseDataPath"
+        <el-input
+          v-model="localConfig.responseDataPath"
           size="small"
           placeholder="data.list (点号分隔)"
         />
@@ -198,8 +198,8 @@ function handleClose() {
     </div>
 
     <template #footer>
-      <t-button size="small" @click="handleClose">取消</t-button>
-      <t-button theme="primary" size="small" @click="handleSave">保存</t-button>
+      <el-button size="small" @click="handleClose">取消</el-button>
+      <el-button type="primary" size="small" @click="handleSave">保存</el-button>
     </template>
-  </EnhancedDialog>
+  </AppDialog>
 </template>

@@ -5,6 +5,10 @@
   min-height: 32px;
 }
 
+.fieldTextarea {
+  align-items: flex-start;
+}
+
 .label {
   width: 70px;
   flex-shrink: 0;
@@ -38,6 +42,12 @@
     font-size: 11px;
     line-height: 1.5;
     resize: vertical;
+    height: auto !important;
+    min-height: 80px !important;
+  }
+
+  :global(.el-input__inner) {
+    height: auto !important;
   }
 }
 

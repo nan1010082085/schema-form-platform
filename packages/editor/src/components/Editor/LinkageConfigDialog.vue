@@ -8,19 +8,19 @@
  * - actions: SchemaEventAction[]（直接对接事件引擎）
  */
 import { ref, watch, computed } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import type {
   WidgetEvent,
   SchemaEventAction,
 } from '../../widgets/base/types'
-import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import ConditionBuilder from '@/components/Editor/ConditionBuilder.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 import FlowPreview from '@/components/Editor/FlowPreview.vue'
 import type { FlowItem } from '@/components/Editor/FlowPreview.vue'
 import styles from './LinkageConfigDialog.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -180,7 +180,7 @@ const flowItems = computed<FlowItem[]>(() =>
 </script>
 
 <template>
-  <EnhancedDialog
+  <AppDialog
     :model-value="visible"
     title="规则配置"
     width="1100px"
@@ -202,14 +202,14 @@ const flowItems = computed<FlowItem[]>(() =>
       >
         <div :class="styles.cardHeader">
           <span :class="styles.cardTitle">规则 <span :class="styles.cardNum">{{ ri + 1 }}</span></span>
-          <t-button
-            theme="danger"
-            variant="text"
+          <el-button
+            type="danger"
             size="small"
+            link
             @click="removeRule(ri)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
 
         <!-- watches（辅助配置，帮助用户理解触发来源） -->
@@ -221,39 +221,39 @@ const flowItems = computed<FlowItem[]>(() =>
               :key="wi"
               :class="styles.watchRow"
             >
-              <t-select
-                v-model:value="w.source"
+              <el-select
+                v-model="w.source"
                 filterable
                 placeholder="选择要监听的字段"
                 style="flex: 1"
               >
-                <t-option
+                <el-option
                   v-for="opt in allWidgetOptions"
                   :key="opt.value"
                   :label="opt.label"
                   :value="opt.value"
                 />
-              </t-select>
+              </el-select>
 
-              <t-button
-                theme="danger"
-                variant="text"
+              <el-button
+                type="danger"
                 size="small"
+                link
                 @click="removeWatch(ri, wi)"
               >
-                <DeleteIcon />
-              </t-button>
+                <AppIcon name="delete" />
+              </el-button>
             </div>
 
-            <t-button
-              theme="primary"
-              variant="text"
+            <el-button
+              type="primary"
               size="small"
+              link
               @click="addWatch(ri)"
             >
-              <AddIcon />
+              <AppIcon name="plus" />
               添加监听
-            </t-button>
+            </el-button>
           </div>
         </div>
 
@@ -274,15 +274,15 @@ const flowItems = computed<FlowItem[]>(() =>
       </div>
 
       <!-- 添加规则 -->
-      <t-button
-        theme="primary"
-        variant="outline"
+      <el-button
+        type="primary"
+        plain
         style="width: 100%"
         @click="addRule"
       >
-        <AddIcon />
+        <AppIcon name="plus" />
         添加规则
-      </t-button>
+      </el-button>
       </div>
 
       <!-- 右侧：流程预览 -->
@@ -295,8 +295,8 @@ const flowItems = computed<FlowItem[]>(() =>
     </div>
 
     <template #footer>
-      <t-button @click="handleClose">取消</t-button>
-      <t-button theme="primary" @click="handleSave">保存</t-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSave">保存</el-button>
     </template>
-  </EnhancedDialog>
+  </AppDialog>
 </template>

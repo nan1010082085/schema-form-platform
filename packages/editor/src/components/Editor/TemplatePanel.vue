@@ -7,16 +7,12 @@
  * 支持应用模板和删除操作。
  */
 import { ref, watch } from 'vue'
-import { SearchIcon } from 'tdesign-icons-vue-next'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchTemplates, deleteTemplate } from '@/utils/apiClient'
 import type { TemplateItem as WidgetTemplateItem, TemplateCategory } from '@/utils/apiClient'
 import type { PaginatedResponse } from '@/types/api'
 import styles from './TemplatePanel.module.scss'
-
-const emit = defineEmits<{
-  apply: [template: WidgetTemplateItem]
-}>()
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   form: '表单',
@@ -49,7 +45,7 @@ async function loadTemplates() {
     items.value = res.items
     total.value = res.total
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载模板失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载模板失败')
   } finally {
     loading.value = false
   }
@@ -83,25 +79,19 @@ function handleDragStart(event: DragEvent, template: WidgetTemplateItem) {
   event.dataTransfer!.effectAllowed = 'copy'
 }
 
-function handleApply(template: WidgetTemplateItem) {
-  emit('apply', template)
-}
-
 async function handleDelete(template: WidgetTemplateItem) {
   try {
-    await new Promise<boolean>((resolve) => {
-      const dialog = DialogPlugin.confirm({
-        header: '删除确认',
-        body: `确定删除模板「${template.name}」？`,
-        theme: 'warning',
-        confirmBtn: '确定',
-        cancelBtn: '取消',
-        onConfirm: () => { resolve(true); dialog.destroy() },
-        onClose: () => { resolve(false); dialog.destroy() },
-      })
-    })
+    await ElMessageBox.confirm(
+      `确定删除模板「${template.name}」？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
     await deleteTemplate(template.id)
-    MessagePlugin.success('模板已删除')
+    ElMessage.success('模板已删除')
     loadTemplates()
   } catch {
     // 用户取消
@@ -125,35 +115,35 @@ defineExpose({ loadTemplates })
   <div :class="styles.panel">
     <!-- 搜索和筛选 -->
     <div :class="styles.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         :class="styles.search"
         size="small"
         placeholder="搜索模板..."
         clearable
       >
-        <template #prefix-icon>
-          <SearchIcon />
+        <template #prefix>
+          <AppIcon name="search" />
         </template>
-      </t-input>
-      <t-select
-        v-model:value="categoryFilter"
+      </el-input>
+      <el-select
+        v-model="categoryFilter"
         :class="styles.categorySelect"
         size="small"
         placeholder="分类"
         clearable
       >
-        <t-option
+        <el-option
           v-for="(label, key) in CATEGORY_LABELS"
           :key="key"
           :label="label"
           :value="key"
         />
-      </t-select>
+      </el-select>
     </div>
 
     <!-- 模板列表 -->
-    <t-loading :loading="loading" :class="styles.scroll">
+    <div v-loading="loading" :class="styles.scroll">
       <div :class="styles.grid">
         <div
           v-for="template in items"
@@ -179,7 +169,6 @@ defineExpose({ loadTemplates })
 
           <!-- 操作按钮 -->
           <div :class="styles.actions">
-            <button :class="[styles.actionBtn, styles['actionBtn--apply']]" @click.stop="handleApply(template)">应用</button>
             <button
               v-if="!template.isBuiltin"
               :class="[styles.actionBtn, styles['actionBtn--delete']]"
@@ -192,15 +181,15 @@ defineExpose({ loadTemplates })
       <div v-if="items.length === 0 && !loading" :class="styles.empty">
         暂无模板
       </div>
-    </t-loading>
+    </div>
 
     <!-- 分页 -->
     <div v-if="totalPages > 1" :class="styles.pagination">
-      <t-pagination
-        size="small"
+      <el-pagination
+        small
         :total="total"
         :page-size="pageSize"
-        :current="page"
+        :current-page="page"
         @current-change="handlePageChange"
       />
     </div>

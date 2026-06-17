@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, reactive, watch, onMounted } from 'vue'
 import { widgetDataKey } from '../base/types'
-import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useListData } from '../../composables/useListData'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 import type { ListApiConfig } from '../../components/WidgetRenderer/types'
@@ -9,7 +8,6 @@ import type { TableColumn, PaginationConfig, SelectionConfig } from './config'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
-const { isDisabled } = useWidgetRenderState()
 
 // ---- Schema config ----
 
@@ -139,20 +137,19 @@ defineExpose({
 
 <template>
   <div :class="styles.container">
-    <t-table
-      :loading="loading"
+    <el-table
+      v-loading="loading"
       :data="tableData"
       :stripe="stripe"
       :border="border"
       :height="tableHeight"
-      :disabled="isDisabled"
       size="default"
       :class="styles.table"
       @sort-change="onSortChange"
       @selection-change="handleSelectionChange"
     >
       <!-- Selection column -->
-      <t-table-column
+      <el-table-column
         v-if="selectionConfig.enabled"
         type="selection"
         width="50"
@@ -160,7 +157,7 @@ defineExpose({
       />
 
       <!-- Data columns -->
-      <t-table-column
+      <el-table-column
         v-for="col in columns"
         :key="col.prop"
         :prop="col.prop"
@@ -171,19 +168,19 @@ defineExpose({
         :filters="col.filters"
         :filter-method="col.filters ? (col.filterMethod ?? defaultFilterMethod(col.prop)) : undefined"
       />
-    </t-table>
+    </el-table>
 
     <!-- Pagination -->
-    <t-pagination
+    <el-pagination
       v-if="paginationConfig.enabled && listApiConfig.url"
       :class="styles.pagination"
       :total="total"
-      :current="currentPage"
+      :current-page="currentPage"
       :page-size="pageSize"
-      :page-size-options="paginationConfig.pageSizes"
-      show-page-size
+      :page-sizes="paginationConfig.pageSizes"
+      layout="prev, pager, next, sizes, jumper"
       @current-change="handlePageChange"
-      @page-size-change="handleSizeChange"
+      @size-change="handleSizeChange"
     />
   </div>
 </template>

@@ -10,6 +10,7 @@ import { useCrossNodeData } from '../composables/useCrossNodeData.js'
 import MicroFormEmbed from '../components/MicroFormEmbed.vue'
 import UserPicker from '../components/UserPicker.vue'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 import styles from './TaskInboxView.module.scss'
 
@@ -536,15 +537,15 @@ async function handleFormValidate() {
       />
     </div>
 
-    <el-dialog v-model="delegateVisible" title="委派任务" width="400px">
+    <AppDialog v-model="delegateVisible" title="委派任务" width="400px">
       <UserPicker v-model="delegateTarget" placeholder="搜索并选择委派目标" />
       <template #footer>
         <el-button @click="delegateVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmDelegate">确认委派</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
-    <el-dialog v-model="rejectVisible" title="驳回到指定节点" width="480px" :close-on-click-modal="false">
+    <AppDialog v-model="rejectVisible" title="驳回到指定节点" width="480px" :close-on-click-modal="false">
       <div v-loading="rejectLoading">
         <el-form label-position="top">
           <el-form-item label="选择驳回目标节点">
@@ -578,10 +579,10 @@ async function handleFormValidate() {
         <el-button @click="rejectVisible = false">取消</el-button>
         <el-button type="danger" :loading="rejectLoading" @click="confirmReject">确认驳回</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
     <!-- Batch reject dialog -->
-    <el-dialog v-model="batchRejectVisible" title="批量驳回" width="480px" :close-on-click-modal="false">
+    <AppDialog v-model="batchRejectVisible" title="批量驳回" width="480px" :close-on-click-modal="false">
       <el-form label-position="top">
         <el-form-item label="驳回原因（可选）">
           <el-input
@@ -600,10 +601,10 @@ async function handleFormValidate() {
           确认驳回 {{ selectedTaskIds.length }} 项
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
     <!-- Batch result dialog -->
-    <el-dialog v-model="batchResultVisible" title="批量操作结果" width="480px">
+    <AppDialog v-model="batchResultVisible" title="批量操作结果" width="480px">
       <div v-if="batchResult" :class="styles.batchResult">
         <div :class="styles.batchResultSummary">
           <el-tag size="large">共 {{ batchResult.summary.total }} 项</el-tag>
@@ -626,6 +627,6 @@ async function handleFormValidate() {
       <template #footer>
         <el-button type="primary" @click="batchResultVisible = false">确定</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </div>
 </template>

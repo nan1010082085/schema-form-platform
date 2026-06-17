@@ -7,9 +7,9 @@
  * 双向同步表达式字符串
  */
 import { ref, watch } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { useConditionReferences } from '@/composables/useConditionReferences'
 import styles from './ConditionBuilder.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface ConditionClause {
   field: string
@@ -177,66 +177,66 @@ function needsValue(operator: string): boolean {
       :class="styles.clause"
     >
       <!-- 逻辑切换（非第一个子句） -->
-      <t-select
+      <el-select
         v-if="ci > 0"
         :model-value="clause.logic"
         :class="styles.logicSelect"
         @update:model-value="updateClause(ci, 'logic', $event)"
       >
-        <t-option label="且" value="&&" />
-        <t-option label="或" value="||" />
-      </t-select>
+        <el-option label="且" value="&&" />
+        <el-option label="或" value="||" />
+      </el-select>
 
       <!-- 字段选择（分组） -->
-      <t-select
+      <el-select
         :model-value="clause.field"
         filterable
         placeholder="选择字段"
         :class="styles.fieldSelect"
         @update:model-value="updateClause(ci, 'field', $event)"
       >
-        <t-option-group v-if="fieldRefs.length > 0" label="表单字段">
-          <t-option
+        <el-option-group v-if="fieldRefs.length > 0" label="表单字段">
+          <el-option
             v-for="opt in fieldRefs"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-option-group>
-        <t-option-group v-if="variableRefs.length > 0" label="变量">
-          <t-option
+        </el-option-group>
+        <el-option-group v-if="variableRefs.length > 0" label="变量">
+          <el-option
             v-for="opt in variableRefs"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-option-group>
-        <t-option-group v-if="exposedRefs.length > 0" label="组件暴露值">
-          <t-option
+        </el-option-group>
+        <el-option-group v-if="exposedRefs.length > 0" label="组件暴露值">
+          <el-option
             v-for="opt in exposedRefs"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-option-group>
-      </t-select>
+        </el-option-group>
+      </el-select>
 
       <!-- 运算符 -->
-      <t-select
+      <el-select
         :model-value="clause.operator"
         :class="styles.opSelect"
         @update:model-value="updateClause(ci, 'operator', $event)"
       >
-        <t-option
+        <el-option
           v-for="op in operatorOptions"
           :key="op.value"
           :label="op.label"
           :value="op.value"
         />
-      </t-select>
+      </el-select>
 
       <!-- 值输入 -->
-      <t-input
+      <el-input
         v-if="needsValue(clause.operator)"
         :model-value="clause.value"
         placeholder="比较值"
@@ -245,14 +245,14 @@ function needsValue(operator: string): boolean {
       />
 
       <!-- 删除 -->
-      <t-button
-        theme="danger"
+      <el-button
+        type="danger"
         size="small"
-        variant="text"
+        text
         @click="removeClause(ci)"
       >
-        <DeleteIcon />
-      </t-button>
+        <AppIcon name="delete"  />
+      </el-button>
     </div>
 
     <!-- 空状态 -->
@@ -261,15 +261,15 @@ function needsValue(operator: string): boolean {
     </div>
 
     <!-- 添加条件 -->
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="text"
+      text
       @click="addClause"
     >
-      <AddIcon />
+      <AppIcon name="plus"  />
       添加条件
-    </t-button>
+    </el-button>
 
     <!-- 表达式预览 -->
     <div v-if="clauses.length > 0" :class="styles.preview">

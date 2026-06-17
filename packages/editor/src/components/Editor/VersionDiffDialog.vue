@@ -133,58 +133,59 @@ watch(
 </script>
 
 <template>
-  <t-dialog
-    :visible="visible"
-    header="版本对比"
+  <el-dialog
+    :model-value="visible"
+    title="版本对比"
     width="900px"
-    :close-on-overlay="false"
+    :close-on-click-modal="false"
+    :append-to-body="true"
     :class="styles['diff-dialog']"
-    @update:visible="emit('update:visible', $event)"
+    @update:model-value="emit('update:visible', $event)"
   >
     <!-- 顶部版本选择器 -->
     <div :class="styles['version-selectors']">
       <span :class="styles['version-selectors__label']">旧版本</span>
-      <t-select
-        v-model:value="leftVersion"
+      <el-select
+        v-model="leftVersion"
         placeholder="选择旧版本"
         :loading="versionLoading"
         size="small"
         style="width: 200px"
         @change="diffResult = null"
       >
-        <t-option
+        <el-option
           v-for="entry in versionList"
           :key="entry.version"
           :label="formatVersion(entry.version)"
           :value="entry.version"
         />
-      </t-select>
+      </el-select>
       <span :class="styles['version-selectors__arrow']">→</span>
       <span :class="styles['version-selectors__label']">新版本</span>
-      <t-select
-        v-model:value="rightVersion"
+      <el-select
+        v-model="rightVersion"
         placeholder="选择新版本"
         :loading="versionLoading"
         size="small"
         style="width: 200px"
         @change="diffResult = null"
       >
-        <t-option
+        <el-option
           v-for="entry in versionList"
           :key="entry.version"
           :label="formatVersion(entry.version)"
           :value="entry.version"
         />
-      </t-select>
-      <t-button
-        theme="primary"
+      </el-select>
+      <el-button
+        type="primary"
         size="small"
         :loading="diffLoading"
         :disabled="!leftVersion || !rightVersion || leftVersion === rightVersion"
         @click="performDiff"
       >
         对比
-      </t-button>
+      </el-button>
     </div>
 
     <!-- 差异统计 -->
@@ -214,13 +215,13 @@ watch(
       <div :class="styles['diff-panel']">
         <div :class="styles['diff-panel__header']">
           <span :class="styles['diff-panel__title']">旧版本 {{ formatVersion(leftVersion) }}</span>
-          <t-button
+          <el-button
             v-if="leftVersion"
             size="small"
-            variant="text"
-            theme="primary"
+            link
+            type="primary"
             @click="handleLoadVersion(leftVersion)"
-          >加载此版本</t-button>
+          >加载此版本</el-button>
         </div>
         <div :class="styles['diff-panel__scroll']">
           <template v-if="diffResult">
@@ -284,13 +285,13 @@ watch(
       <div :class="styles['diff-panel']">
         <div :class="styles['diff-panel__header']">
           <span :class="styles['diff-panel__title']">新版本 {{ formatVersion(rightVersion) }}</span>
-          <t-button
+          <el-button
             v-if="rightVersion"
             size="small"
-            variant="text"
-            theme="primary"
+            link
+            type="primary"
             @click="handleLoadVersion(rightVersion)"
-          >加载此版本</t-button>
+          >加载此版本</el-button>
         </div>
         <div :class="styles['diff-panel__scroll']">
           <template v-if="diffResult">
@@ -353,7 +354,7 @@ watch(
 
     <!-- 底部 -->
     <template #footer>
-      <t-button @click="emit('update:visible', false)">关闭</t-button>
+      <el-button @click="emit('update:visible', false)">关闭</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>

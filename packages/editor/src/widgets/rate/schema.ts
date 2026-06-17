@@ -7,7 +7,7 @@ export function createRateWidget(id: string): Widget {
     ...publicSchema(id, 'rate'),
     name: rateConfig.name,
     label: rateConfig.displayName,
-    position: { x: 0, y: 0, w: 240, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 240, h: 40, zIndex: 1 },
     style: { ...rateConfig.defaultStyle },
     props: { ...rateConfig.defaultProps },
   }

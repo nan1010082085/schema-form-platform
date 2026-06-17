@@ -10,22 +10,22 @@ useExposeWidget((wd) => ({
 }))
 </script>
 <template>
-  <t-upload
+  <el-upload
     action="#"
     :accept="(widgetData.props?.accept as string)"
     :multiple="widgetData.props?.multiple"
-    :max="(widgetData.props?.limit as number)"
+    :limit="(widgetData.props?.limit as number)"
     :auto-upload="false"
   >
-    <t-button theme="primary">{{ (widgetData.props?.buttonText as string) || '点击上传' }}</t-button>
-  </t-upload>
+    <el-button type="primary">{{ (widgetData.props?.buttonText as string) || '点击上传' }}</el-button>
+  </el-upload>
 </template>
 <style scoped>
-:deep(.t-upload) {
+:deep(.el-upload) {
   width: 100%;
   height: 100%;
 }
-:deep(.t-button) {
+:deep(.el-button) {
   height: 100%;
 }
 </style>

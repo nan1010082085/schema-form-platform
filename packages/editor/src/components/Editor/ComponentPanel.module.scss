@@ -20,7 +20,6 @@
 .virtualWrapper {
   position: relative;
   width: 100%;
-  overflow: hidden;
 }
 
 .virtualContent {
@@ -28,17 +27,30 @@
   left: 0;
   right: 0;
   top: 0;
-}
-
-.group {
-  border-bottom: 1px solid rgba(0, 212, 255, 0.04);
-}
-
-.itemRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
   padding: 0 10px;
+  align-content: start;
+}
+
+/* 分组展开时的底部间距 */
+.groupHeader {
+  padding-bottom: 4px;
+}
+
+.item {
+  min-height: 36px;
+}
+
+/* 分类标题独占一行，横跨两列 */
+.groupHeader {
+  grid-column: 1 / -1;
+  border-bottom: 1px solid var(--color-primary-lighter);
+}
+
+.group {
+  border-bottom: 1px solid var(--color-primary-lighter);
 }
 
 .groupHeader {
@@ -52,11 +64,11 @@
 }
 
 .groupHeader:hover {
-  background: rgba(0, 212, 255, 0.04);
+  background: var(--color-primary-lighter);
 }
 
 .arrow {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--text-color-placeholder);
   flex-shrink: 0;
   transition: transform 0.2s;
 }
@@ -64,14 +76,14 @@
 .groupLabel {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-color-primary);
   flex: 1;
 }
 
 .groupCount {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
-  background: rgba(0, 212, 255, 0.06);
+  color: var(--text-color-placeholder);
+  background: var(--color-primary-lighter);
   border-radius: 8px;
   padding: 0 6px;
   line-height: 18px;
@@ -88,19 +100,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 8px 4px;
-  border: 1px solid rgba(0, 212, 255, 0.08);
+  border: 1px solid var(--color-primary-lighter);
   border-radius: 4px;
   cursor: grab;
   transition: all 0.15s;
-  background: rgba(0, 0, 0, 0.15);
-  margin-bottom: 6px;
+  background: var(--bg-color-gray);
 }
 
 .item:hover {
-  border-color: rgba(0, 212, 255, 0.3);
-  background: rgba(0, 212, 255, 0.06);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.1);
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-lighter);
+  box-shadow: 0 0 8px var(--color-primary-bg-light);
 }
 
 .item:active {
@@ -108,15 +120,20 @@
   opacity: 0.7;
 }
 
+.itemIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
 .itemLabel {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-color-regular);
   font-weight: 500;
   text-align: center;
 }
 
 .highlight {
-  color: #00d4ff;
+  color: var(--color-primary);
   font-weight: 700;
   font-style: normal;
 }
@@ -127,13 +144,13 @@
 }
 
 .emptyText {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-color-secondary);
   font-size: 13px;
   margin: 0 0 4px;
 }
 
 .emptyHint {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--text-color-disabled);
   font-size: 12px;
   margin: 0;
 }

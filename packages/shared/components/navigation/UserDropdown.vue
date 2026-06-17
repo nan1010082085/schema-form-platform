@@ -5,7 +5,7 @@
  * 纯渲染组件，逻辑通过 props 回调注入。
  * 各子项目通过 slot 可扩展下拉菜单项。
  */
-import styles from './UserDropdown.module.css'
+import styles from './UserDropdown.module.scss'
 
 defineProps<{
   /** 用户名，显示首字母头像和用户名文本 */
@@ -18,7 +18,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <t-dropdown trigger="click">
+  <el-dropdown trigger="click" @command="(cmd: string) => cmd === 'logout' && emit('logout')">
     <div :class="styles.userArea">
       <div :class="styles.userAvatar">
         {{ username?.charAt(0)?.toUpperCase() || '用' }}
@@ -26,11 +26,11 @@ const emit = defineEmits<{
       <span :class="styles.userName">{{ username || '未登录' }}</span>
     </div>
     <template #dropdown>
-      <t-dropdown-menu>
+      <el-dropdown-menu>
         <slot name="menu-prefix" />
-        <t-dropdown-item @click="emit('logout')">退出登录</t-dropdown-item>
+        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
         <slot name="menu-suffix" />
-      </t-dropdown-menu>
+      </el-dropdown-menu>
     </template>
-  </t-dropdown>
+  </el-dropdown>
 </template>

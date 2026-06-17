@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface Role {
   id: string
@@ -82,7 +82,6 @@ function buildPermTree(perms: Permission[]): PermTreeNode[] {
 
   const moduleLabels: Record<string, string> = {
     flow: '流程管理',
-    workflow: '工作流管理',
     schema: '表单管理',
     system: '系统管理',
     microapp: '微应用管理',
@@ -146,7 +145,7 @@ function openEdit(role: Role) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('请输入角色名称')
+    ElMessage.warning('请输入角色名称')
     return
   }
 
@@ -160,31 +159,28 @@ async function handleSubmit() {
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/roles', payload)
-    MessagePlugin.success('角色创建成功')
+    ElMessage.success('角色创建成功')
   } else {
     await apiClient.put(`/roles/${editingId.value}`, payload)
-    MessagePlugin.success('角色更新成功')
+    ElMessage.success('角色更新成功')
   }
   dialogVisible.value = false
   fetchRoles()
 }
 
 async function handleDelete(role: Role) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除角色「${role.name}」？删除后该角色下的用户将失去此角色。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/roles/${role.id}`)
-      MessagePlugin.success('角色已删除')
-      fetchRoles()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除角色「${role.name}」？删除后该角色下的用户将失去此角色。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await apiClient.delete(`/roles/${role.id}`)
+    ElMessage.success('角色已删除')
+    fetchRoles()
+  } catch {
+    // 用户取消
+  }
 }
 
 async function openMembers(role: Role) {
@@ -199,8 +195,8 @@ async function openMembers(role: Role) {
   }
 }
 
-function handlePermCheck(value: string[]) {
-  form.value.permissions = value.filter(k => !k.startsWith('module:'))
+function handlePermCheck(_data: unknown, info: { checkedKeys: string[] }) {
+  form.value.permissions = info.checkedKeys.filter(k => !k.startsWith('module:'))
 }
 
 function getPermCount(role: Role): number {
@@ -212,19 +208,6 @@ function getDataScopeLabel(scope: string): string {
   return opt?.label || scope
 }
 
-const roleColumns = [
-  { colKey: 'name', title: '角色名称', minWidth: 120 },
-  { colKey: 'description', title: '描述', minWidth: 160 },
-  { colKey: 'data_scope', title: '数据范围', width: 120 },
-  { colKey: 'permCount', title: '权限数', width: 80 },
-  { colKey: 'actions', title: '操作', width: 220, fixed: 'right' as const },
-]
-
-const memberColumns = [
-  { colKey: 'username', title: '用户名', minWidth: 120 },
-  { colKey: 'displayName', title: '显示名', minWidth: 120 },
-]
-
 onMounted(async () => {
   await Promise.all([fetchPermissions(), fetchDeptTree()])
   await fetchRoles()
@@ -234,109 +217,115 @@ onMounted(async () => {
 <template>
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索角色名称或描述"
-        :prefix-icon="SearchIcon"
+        :prefix-icon="Search"
         clearable
         :class="$style.search"
         @clear="fetchRoles"
-        @enter="fetchRoles"
+        @keyup.enter="fetchRoles"
       />
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate">
+      <el-button type="primary" :icon="Plus" @click="openCreate">
         新增角色
-      </t-button>
+      </el-button>
     </div>
 
-    <t-table :data="roles" :columns="roleColumns" :loading="loading" :class="$style.table">
-      <template #cell-data_scope="{ row }">
-        <t-tag size="small">{{ getDataScopeLabel(row.data_scope) }}</t-tag>
-      </template>
-      <template #cell-permCount="{ row }">
-        <span>{{ getPermCount(row) }}</span>
-      </template>
-      <template #cell-actions="{ row }">
-        <div :class="$style.actions">
-          <t-button variant="text" size="small" @click="openMembers(row)">查看成员</t-button>
-          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-        </div>
-      </template>
-    </t-table>
+    <el-table :data="roles" v-loading="loading" :class="$style.table" border>
+      <el-table-column prop="name" label="角色名称" min-width="120" />
+      <el-table-column prop="description" label="描述" min-width="160" />
+      <el-table-column label="数据范围" width="120">
+        <template #default="{ row }">
+          <el-tag size="small">{{ getDataScopeLabel(row.data_scope) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="权限数" width="80" align="center">
+        <template #default="{ row }">
+          {{ getPermCount(row) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="220" fixed="right">
+        <template #default="{ row }">
+          <div :class="$style.actions">
+            <el-button link type="primary" size="small" @click="openMembers(row)">查看成员</el-button>
+            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 
   <!-- Create/Edit Dialog -->
-  <t-dialog
-    v-model:visible="dialogVisible"
-    :header="dialogMode === 'create' ? '新增角色' : '编辑角色'"
+  <el-dialog
+    v-model="dialogVisible"
+    :title="dialogMode === 'create' ? '新增角色' : '编辑角色'"
     width="600px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="角色名称">
-        <t-input v-model:value="form.name" placeholder="请输入角色名称（如：管理员、部门经理）" />
-      </t-form-item>
-      <t-form-item label="描述">
-        <t-input v-model:value="form.description" type="textarea" :rows="2" placeholder="角色描述（可选）" />
-      </t-form-item>
-      <t-form-item label="数据范围">
-        <t-select v-model:value="form.data_scope" :style="{ width: '100%' }">
-          <t-option
+    <el-form label-width="80px">
+      <el-form-item label="角色名称">
+        <el-input v-model="form.name" placeholder="请输入角色名称（如：管理员、部门经理）" />
+      </el-form-item>
+      <el-form-item label="描述">
+        <el-input v-model="form.description" type="textarea" :rows="2" placeholder="角色描述（可选）" />
+      </el-form-item>
+      <el-form-item label="数据范围">
+        <el-select v-model="form.data_scope" style="width: 100%">
+          <el-option
             v-for="opt in dataScopeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
-      </t-form-item>
-      <t-form-item v-if="form.data_scope === 'custom'" label="自定义部门">
-        <t-tree-select
-          v-model:value="form.dept_ids"
+        </el-select>
+      </el-form-item>
+      <el-form-item v-if="form.data_scope === 'custom'" label="自定义部门">
+        <el-tree-select
+          v-model="form.dept_ids"
           :data="deptTree"
-          :keys="{ label: 'name', children: 'children', value: 'id' }"
+          :props="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择部门"
           multiple
           check-strictly
-          :style="{ width: '100%' }"
+          style="width: 100%"
         />
-      </t-form-item>
-      <t-form-item label="权限配置">
+      </el-form-item>
+      <el-form-item label="权限配置">
         <div :class="$style.permTreeWrapper">
-          <t-tree
+          <el-tree
             :data="permTree"
-            :keys="{ label: 'label', children: 'children', value: 'id' }"
-            :default-expanded="permTree.map(n => n.id)"
-            checkable
-            :value="form.permissions"
-            @change="handlePermCheck"
+            :props="{ label: 'label', children: 'children' }"
+            :default-expanded-keys="permTree.map(n => n.id)"
+            show-checkbox
+            node-key="id"
+            :default-checked-keys="form.permissions"
+            @check="handlePermCheck"
           />
         </div>
-      </t-form-item>
-    </t-form>
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="dialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleSubmit">确定</t-button>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 
   <!-- Members Dialog -->
-  <t-dialog
-    v-model:visible="membersVisible"
-    :header="`角色成员 - ${currentRole?.name || ''}`"
+  <el-dialog
+    v-model="membersVisible"
+    :title="`角色成员 - ${currentRole?.name || ''}`"
     width="500px"
     destroy-on-close
   >
-    <t-table
-      :data="members"
-      :columns="memberColumns"
-      :loading="membersLoading"
-      :class="$style.membersTable"
-      empty="暂无成员"
-    />
+    <el-table :data="members" v-loading="membersLoading" :class="$style.membersTable" border>
+      <el-table-column prop="username" label="用户名" min-width="120" />
+      <el-table-column prop="displayName" label="显示名" min-width="120" />
+    </el-table>
     <div v-if="!membersLoading && members.length === 0" :class="$style.emptyMembers">
       暂无成员
     </div>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style module>
@@ -371,7 +360,7 @@ onMounted(async () => {
   width: 100%;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid var(--td-border-level-2-color);
+  border: 1px solid var(--el-border-color);
   border-radius: 6px;
   padding: 8px;
 }
@@ -384,7 +373,7 @@ onMounted(async () => {
 .emptyMembers {
   text-align: center;
   padding: 24px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
   font-size: 14px;
 }
 </style>

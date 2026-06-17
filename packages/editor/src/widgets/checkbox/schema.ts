@@ -7,7 +7,7 @@ export function createCheckboxWidget(id: string): Widget {
     ...publicSchema(id, 'checkbox'),
     name: checkboxConfig.name,
     label: checkboxConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...checkboxConfig.defaultStyle },
     props: { ...checkboxConfig.defaultProps },
     options: [

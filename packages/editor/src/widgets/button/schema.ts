@@ -7,7 +7,7 @@ export function createButtonWidget(id: string): Widget {
     ...publicSchema(id, 'button'),
     name: buttonConfig.name,
     label: buttonConfig.displayName,
-    position: { x: 0, y: 0, w: 120, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 120, h: 40, zIndex: 1 },
     props: { ...buttonConfig.defaultProps },
   }
 }

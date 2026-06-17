@@ -25,7 +25,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-input
+  <el-input
     ref="inputRef"
     v-model="widgetData.defaultValue as string"
     :style="dynamicStyle"
@@ -40,9 +40,3 @@ function forwardNativeChange() {
     @input="forwardNativeChange"
   />
 </template>
-
-<style scoped>
-:deep(.el-textarea__inner) {
-  height: 100%;
-}
-</style>

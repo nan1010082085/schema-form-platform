@@ -5,8 +5,8 @@
  * List-based editor for search-list row operation buttons.
  * Conditional fields shown based on action type (emit/api/navigate/dialog).
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SearchListRowAction } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   rowActions: SearchListRowAction[]
@@ -107,36 +107,36 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       <div class="row-actions-editor__item-header">
         <span class="row-actions-editor__item-title">操作 {{ idx + 1 }}</span>
         <div class="row-actions-editor__item-actions">
-          <t-button
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <ChevronUpIcon />
-          </t-button>
-          <t-button
+            <AppIcon name="arrow-up" />
+          </el-button>
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === rowActions.length - 1"
             @click="moveDown(idx)"
           >
-            <ChevronDownIcon />
-          </t-button>
-          <t-button
-            theme="danger"
+            <AppIcon name="arrow-down" />
+          </el-button>
+          <el-button
+            type="danger"
             size="small"
-            variant="text"
+            text
             @click="removeAction(idx)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">标签</label>
-        <t-input
+        <el-input
           :model-value="action.label"
           size="small"
           placeholder="按钮文字"
@@ -146,24 +146,24 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">按钮类型</label>
-        <t-select
+        <el-select
           :model-value="action.buttonType ?? ''"
           size="small"
           style="width: 100%"
           @update:model-value="updateAction(idx, 'buttonType', $event)"
         >
-          <t-option
+          <el-option
             v-for="opt in buttonTypeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">图标</label>
-        <t-input
+        <el-input
           :model-value="action.icon ?? ''"
           size="small"
           placeholder="例如: Edit 或 EditPen"
@@ -173,25 +173,25 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">操作类型</label>
-        <t-select
+        <el-select
           :model-value="action.type"
           size="small"
           style="width: 100%"
           @update:model-value="updateAction(idx, 'type', $event)"
         >
-          <t-option
+          <el-option
             v-for="opt in actionTypeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- Emit type: event name -->
       <div v-if="action.type === 'emit'" class="row-actions-editor__field">
         <label class="row-actions-editor__label">触发事件</label>
-        <t-input
+        <el-input
           :model-value="action.emitEvent ?? ''"
           size="small"
           placeholder="例如: edit"
@@ -203,7 +203,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       <template v-if="action.type === 'api'">
         <div class="row-actions-editor__field">
           <label class="row-actions-editor__label">接口地址</label>
-          <t-input
+          <el-input
             :model-value="action.apiUrl ?? ''"
             size="small"
             placeholder="/api/item/:id"
@@ -212,26 +212,26 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </div>
         <div class="row-actions-editor__field">
           <label class="row-actions-editor__label">请求方法</label>
-          <t-select
+          <el-select
             :model-value="action.apiMethod ?? 'get'"
             size="small"
             style="width: 100%"
             @update:model-value="updateAction(idx, 'apiMethod', $event)"
           >
-            <t-option
+            <el-option
               v-for="opt in apiMethodOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
         </div>
       </template>
 
       <!-- Navigate type: path + query -->
       <div v-if="action.type === 'navigate'" class="row-actions-editor__field">
         <label class="row-actions-editor__label">跳转路径</label>
-        <t-input
+        <el-input
           :model-value="action.navigatePath ?? ''"
           size="small"
           placeholder="/detail/:id"
@@ -240,7 +240,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       </div>
       <div v-if="action.type === 'navigate'" class="row-actions-editor__field">
         <label class="row-actions-editor__label">跳转参数 (JSON)</label>
-        <t-textarea
+        <el-input
+          type="textarea"
           :model-value="action.navigateQuery ? JSON.stringify(action.navigateQuery, null, 2) : ''"
           :rows="2"
           size="small"
@@ -253,7 +254,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       <template v-if="action.type === 'dialog'">
         <div class="row-actions-editor__field">
           <label class="row-actions-editor__label">弹窗标题</label>
-          <t-input
+          <el-input
             :model-value="action.dialogTitle ?? ''"
             size="small"
             placeholder="弹窗标题"
@@ -262,7 +263,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </div>
         <div class="row-actions-editor__field">
           <label class="row-actions-editor__label">弹窗宽度</label>
-          <t-input
+          <el-input
             :model-value="action.dialogWidth ?? ''"
             size="small"
             placeholder="例如: 600px"
@@ -271,7 +272,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </div>
         <div class="row-actions-editor__field">
           <label class="row-actions-editor__label">弹窗 Schema (JSON)</label>
-          <t-textarea
+          <el-input
+            type="textarea"
             :model-value="action.dialogSchema ? JSON.stringify(action.dialogSchema, null, 2) : ''"
             :rows="4"
             size="small"
@@ -283,7 +285,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">确认提示</label>
-        <t-input
+        <el-input
           :model-value="action.confirm ?? ''"
           size="small"
           placeholder="例如: 确定要执行吗？"
@@ -293,7 +295,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">显示条件 (表达式)</label>
-        <t-input
+        <el-input
           :model-value="action.visibleOn ?? ''"
           size="small"
           placeholder="例如: status === 'active'"
@@ -303,7 +305,7 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <div class="row-actions-editor__field">
         <label class="row-actions-editor__label">禁用条件 (表达式)</label>
-        <t-input
+        <el-input
           :model-value="action.disabledOn ?? ''"
           size="small"
           placeholder="例如: status === 'closed'"
@@ -312,16 +314,16 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       </div>
     </div>
 
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="outline"
+      plain
       style="width: 100%; margin-top: 8px"
       @click="addAction"
     >
-      <template #icon><AddIcon /></template>
+      <AppIcon name="plus" />
       添加行操作
-    </t-button>
+    </el-button>
   </div>
 </template>
 

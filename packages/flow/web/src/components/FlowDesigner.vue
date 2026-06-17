@@ -7,6 +7,7 @@
       :show-right-panel="showRightPanel"
       :show-ai-drawer="showAiDrawer"
       :saving="saving"
+      :current-version="currentVersion"
       :layout-direction="layoutDirection"
       :layout-node-sep="layoutNodeSep"
       :layout-rank-sep="layoutRankSep"
@@ -29,7 +30,41 @@
       @update:layout-direction="layoutDirection = $event"
       @update:layout-node-sep="layoutNodeSep = $event"
       @update:layout-rank-sep="layoutRankSep = $event"
-    />
+    >
+      <template #version-popover>
+        <div :class="styles.versionPanel">
+          <div :class="styles.versionHeader">
+            <span :class="styles.versionTitle">版本历史</span>
+            <el-button size="small" text @click="onVersionHistory()">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
+          <div v-if="versionLoading" :class="styles.versionLoading">加载中...</div>
+          <div v-else-if="versions.length === 0" :class="styles.versionEmpty">暂无版本记录</div>
+          <div v-else :class="styles.versionList">
+            <div
+              v-for="entry in versions"
+              :key="entry.id"
+              :class="[styles.versionItem, { [styles.versionItemCurrent]: entry.id === definitionStore.currentDefinition?.currentVersionId }]"
+            >
+              <div :class="styles.versionInfo">
+                <span :class="styles.versionTime">{{ formatVersion(entry.version) }}</span>
+                <div :class="styles.versionTags">
+                  <el-tag v-if="entry.id === definitionStore.currentDefinition?.currentVersionId" size="small">当前</el-tag>
+                </div>
+              </div>
+              <el-button
+                v-if="entry.id !== definitionStore.currentDefinition?.currentVersionId"
+                size="small"
+                text
+                type="primary"
+                @click="handleLoadVersion(entry)"
+              >加载</el-button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </FlowToolbar>
     <div :class="styles.body">
       <div
         v-if="store.mode === 'design'"
@@ -80,10 +115,10 @@
     />
 
     <!-- Validation result dialog -->
-    <el-dialog
+    <AppDialog
       v-model="validationVisible"
       title="流程校验结果"
-      width="520px"
+      width="640px"
       :close-on-click-modal="false"
       destroy-on-close
       @close="store.clearErrorNodes()"
@@ -91,66 +126,51 @@
       <div v-if="validationErrors.length === 0" :class="styles.noErrors">
         校验通过，没有发现错误或警告。
       </div>
-      <div v-else :class="styles.errorList">
-        <div
-          v-for="(err, idx) in validationErrors"
-          :key="idx"
-          :class="[
-            styles.errorItem,
-            err.level === 'error' ? styles.errorLevel : styles.warnLevel,
-            { [styles.errorItemClickable]: !!err.nodeId },
-          ]"
-          @click="onValidationErrorClick(err)"
-        >
-          <span :class="styles.badge">{{ err.level === 'error' ? '错误' : '警告' }}</span>
-          <span :class="styles.errMsg">{{ err.message }}</span>
-          <span v-if="err.nodeId || err.edgeId" :class="styles.errId">
-            ({{ err.nodeId ?? err.edgeId }})
-          </span>
-          <AppIcon name="location" v-if="err.nodeId" :class="styles.errLocateIcon" :size="14" />
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="validationVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Version history dialog -->
-    <el-dialog
-      v-model="versionHistoryVisible"
-      title="版本历史"
-      width="600px"
-      :close-on-click-modal="false"
-      destroy-on-close
-    >
       <el-table
-        v-loading="versionLoading"
-        :data="versions"
-        :class="styles.versionTable"
+        v-else
+        :data="validationErrors"
+        :class="styles.validationTable"
         stripe
-        row-key="id"
+        size="small"
+        max-height="400"
       >
-        <el-table-column prop="version" label="版本号" width="100" />
-        <el-table-column label="创建时间" min-width="180">
+        <el-table-column label="级别" width="80" align="center">
           <template #default="{ row }">
-            {{ new Date(row.createdAt).toLocaleString() }}
+            <el-tag :type="row.level === 'error' ? 'danger' : 'warning'" size="small">
+              {{ row.level === 'error' ? '错误' : '警告' }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column prop="message" label="错误信息" min-width="280" show-overflow-tooltip />
+        <el-table-column label="节点" width="140" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.id === definitionStore.currentDefinition?.currentVersionId ? '当前' : '' }}
+            <span v-if="row.nodeId || row.edgeId" :class="styles.errId">
+              {{ row.nodeId ?? row.edgeId }}
+            </span>
+            <span v-else :class="styles.errIdEmpty">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" align="center">
+        <el-table-column label="操作" width="70" align="center">
           <template #default="{ row }">
-            {{ row.id }}
+            <el-tooltip content="定位节点" placement="top">
+              <el-button
+                v-if="row.nodeId"
+                text
+                type="primary"
+                size="small"
+                @click="onValidationErrorClick(row)"
+              >
+                <el-icon :size="14"><Location /></el-icon>
+              </el-button>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <template #footer>
-        <el-button @click="versionHistoryVisible = false">关闭</el-button>
+        <el-button @click="validationVisible = false">关闭</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
+
   </div>
 </template>
 
@@ -158,6 +178,7 @@
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh, Location } from '@element-plus/icons-vue'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import {
@@ -187,6 +208,7 @@ import { flowApi } from '../api/flowApi.js'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowDesigner.module.scss'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()
@@ -212,9 +234,9 @@ const previewHostMethods = ref<string[]>(['setValues', 'getValues', 'validate'])
 
 const settingsVisible = ref(false)
 const validationVisible = ref(false)
-const versionHistoryVisible = ref(false)
 const versions = ref<FlowVersionData[]>([])
 const versionLoading = ref(false)
+const currentVersion = ref('')
 const showLeftPanel = ref(true)
 const showRightPanel = ref(true)
 const showAiDrawer = ref(false)
@@ -275,8 +297,30 @@ async function loadVersionHistory() {
 }
 
 function onVersionHistory() {
-  versionHistoryVisible.value = true
   loadVersionHistory()
+}
+
+function formatVersion(version: string): string {
+  if (!version) return ''
+  // 版本号格式：v1.0.0 -> 1.0.0
+  return version.replace(/^v/, '')
+}
+
+async function handleLoadVersion(entry: FlowVersionData) {
+  if (!definitionId.value) return
+  try {
+    const version = (await flowApi.getVersion(definitionId.value, entry.id)) as {
+      graph?: FlowGraph
+      metadata?: Record<string, unknown>
+    }
+    if (version.graph) {
+      graphStore.loadFromFlowGraph(version.graph)
+      currentVersion.value = entry.version
+      ElMessage.success(`已加载版本 ${formatVersion(entry.version)}`)
+    }
+  } catch {
+    ElMessage.error('加载版本失败')
+  }
 }
 
 // Watch selected node for form preview
@@ -319,6 +363,7 @@ onMounted(async () => {
 
     if (def.currentVersionId) {
       const version = (await flowApi.getVersion(definitionId.value, def.currentVersionId)) as {
+        version: string
         graph: FlowGraph
         metadata?: { defaultRejectPolicy?: RejectPolicy; permissions?: FlowPermissions }
       }
@@ -333,6 +378,8 @@ onMounted(async () => {
       if (version.metadata?.permissions) {
         flowSettings.permissions = version.metadata.permissions
       }
+      // 设置当前版本号
+      currentVersion.value = version.version
     }
     store.markClean()
   } catch (e) {
@@ -491,13 +538,18 @@ async function onSave() {
 
     // Save version with graph
     const flowGraph = graphStore.toFlowGraph()
-    await flowApi.saveVersion(definitionId.value, {
+    const savedVersion = await flowApi.saveVersion(definitionId.value, {
       graph: flowGraph,
       metadata: {
         defaultRejectPolicy: flowSettings.defaultRejectPolicy,
         permissions: flowSettings.permissions,
       },
-    })
+    }) as { version?: string }
+
+    // 更新当前版本号
+    if (savedVersion?.version) {
+      currentVersion.value = savedVersion.version
+    }
 
     store.markClean()
     ElMessage.success('保存成功')

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget } from '@/widgets/registry'
@@ -62,7 +62,7 @@ describe('FgToolbarButtons', () => {
   describe('buttons 数组配置', () => {
     it('默认渲染查询和重置按钮', () => {
       const wrapper = mountWidget()
-      const buttons = wrapper.findAll('.el-button')
+      const buttons = wrapper.findAll('.t-button')
       expect(buttons.length).toBe(2)
       expect(buttons[0].text()).toBe('查询')
       expect(buttons[1].text()).toBe('重置')
@@ -86,7 +86,7 @@ describe('FgToolbarButtons', () => {
           },
         },
       })
-      const buttons = wrapper.findAll('.el-button')
+      const buttons = wrapper.findAll('.t-button')
       expect(buttons.length).toBe(3)
       expect(buttons[0].text()).toBe('新增')
       expect(buttons[1].text()).toBe('导出')
@@ -110,9 +110,9 @@ describe('FgToolbarButtons', () => {
           },
         },
       })
-      const buttons = wrapper.findAll('.el-button')
-      expect(buttons[0].classes()).toContain('el-button--primary')
-      expect(buttons[1].classes()).toContain('el-button--danger')
+      const buttons = wrapper.findAll('.t-button')
+      expect(buttons[0].classes()).toContain('t-button--theme-primary')
+      expect(buttons[1].classes()).toContain('t-button--theme-danger')
     })
 
     it('空按钮列表不报错', () => {
@@ -128,7 +128,7 @@ describe('FgToolbarButtons', () => {
           },
         },
       })
-      expect(wrapper.findAll('.el-button').length).toBe(0)
+      expect(wrapper.findAll('.t-button').length).toBe(0)
     })
   })
 
@@ -147,7 +147,7 @@ describe('FgToolbarButtons', () => {
           },
         },
       })
-      const buttons = wrapper.findAll('.el-button')
+      const buttons = wrapper.findAll('.t-button')
       buttons.forEach((btn) => {
         expect(btn.attributes('disabled')).toBeDefined()
       })

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed, ref, reactive } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget, getWidget } from '@/widgets/registry'
@@ -147,7 +147,7 @@ describe('FgTable', () => {
 
     it('渲染 el-table', () => {
       const wrapper = mountTable()
-      expect(wrapper.find('.el-table').exists()).toBe(true)
+      expect(wrapper.find('.t-table').exists()).toBe(true)
     })
 
     it('渲染正确的列数', () => {
@@ -230,12 +230,12 @@ describe('FgTable', () => {
 
     it('渲染 el-pagination（有 API URL 时）', () => {
       const wrapper = mountTable({ api: { url: '/api/data' } })
-      expect(wrapper.find('.el-pagination').exists()).toBe(true)
+      expect(wrapper.find('.t-pagination').exists()).toBe(true)
     })
 
     it('不渲染 el-pagination（无 API URL 时）', () => {
       const wrapper = mountTable()
-      expect(wrapper.find('.el-pagination').exists()).toBe(false)
+      expect(wrapper.find('.t-pagination').exists()).toBe(false)
     })
 
     it('不渲染 el-pagination（pagination.enabled 为 false）', () => {
@@ -243,7 +243,7 @@ describe('FgTable', () => {
         api: { url: '/api/data' },
         props: { pagination: { enabled: false, pageSize: 10, pageSizes: [10] } },
       })
-      expect(wrapper.find('.el-pagination').exists()).toBe(false)
+      expect(wrapper.find('.t-pagination').exists()).toBe(false)
     })
   })
 
@@ -267,7 +267,7 @@ describe('FgTable', () => {
     it('启用 selection 时渲染选择列', () => {
       const wrapper = mountTable({ props: { selection: { enabled: true } } })
       // Element Plus renders selection column — verify table renders without error
-      expect(wrapper.find('.el-table').exists()).toBe(true)
+      expect(wrapper.find('.t-table').exists()).toBe(true)
       // Verify the component's selectionConfig is enabled
       const widget = store.findWidget('test_table')!
       expect((widget.props?.selection as { enabled: boolean }).enabled).toBe(true)
@@ -275,7 +275,7 @@ describe('FgTable', () => {
 
     it('禁用 selection 时不渲染选择列', () => {
       const wrapper = mountTable()
-      expect(wrapper.find('.el-table-column--selection').exists()).toBe(false)
+      expect(wrapper.find('.t-table-column--selection').exists()).toBe(false)
     })
   })
 

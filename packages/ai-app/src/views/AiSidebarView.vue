@@ -20,6 +20,7 @@ import { connect as connectSocket, emitAiApply, emitAiPublished } from '@schema-
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
 import type { MessageEmbeddedCard } from '@/components/AiMessage.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const store = useAiStore()
 
@@ -51,7 +52,6 @@ const agentOptions = computed(() => config.agents.map(a => ({
   value: a,
   label: config.label[a]
 })))
-
 
 // 上下文标签
 const contextLabel = computed(() => {
@@ -193,12 +193,14 @@ async function handleApply() {
     const result = await store.publishCurrent()
     if (result) {
       message.success(isSchema ? '表单已应用到画布并发布成功' : '流程已应用到画布并发布成功')
-      emitAiPublished({
-        type: result.type,
-        id: result.id,
-        publishId: result.publishId,
-        conversationId: store.currentConversationId ?? undefined,
-      })
+      if (result.publishId) {
+        emitAiPublished({
+          type: result.type,
+          id: result.id,
+          publishId: result.publishId,
+          conversationId: store.currentConversationId ?? undefined,
+        })
+      }
       bridge.send('ai:published', {
         id: result.id,
         publishId: result.publishId,
@@ -349,23 +351,29 @@ function handleHostData(data: Record<string, unknown>) {
             </template>
           </div>
           <div :class="$style.inputActions">
-            <t-select
-              v-model:value="selectedAgent"
+            <el-select
+              v-model="selectedAgent"
               :disabled="store.loading"
               size="small"
-              :options="agentOptions"
-            />
-            <t-button
+              style="width: 100px"
+            >
+              <el-option
+                v-for="item in agentOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+            <el-button
               v-if="store.loading"
               :class="$style.stopBtn"
               title="停止生成"
-              variant="text"
+              type="primary"
+              link
               @click="handleStop"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
-            </t-button>
+              <AppIcon name="video-pause" :size="14" />
+            </el-button>
           </div>
         </div>
       </div>
@@ -373,4 +381,4 @@ function handleHostData(data: Record<string, unknown>) {
   </div>
 </template>
 
-<style module src="./AiSidebarView.module.css" />
+<style module src="./AiSidebarView.module.scss" />

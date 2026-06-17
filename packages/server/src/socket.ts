@@ -14,6 +14,7 @@ import { Server } from 'socket.io'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from './config/jwt.js'
 import type { JwtPayload } from './middleware/auth.js'
+import { registerChatHandlers } from './ai/chatStreamHandler.js'
 
 let io: Server | null = null
 
@@ -61,6 +62,9 @@ export function initSocket(httpServer: HttpServer): Server {
 
   io.on('connection', (socket) => {
     console.log(`[socket] client connected: ${socket.id}`)
+
+    // 注册 AI Chat 事件处理器
+    if (io) registerChatHandlers(socket, io)
 
     // 加入房间（editor:{schemaId} 或 flow:{flowId} 或 user:{userId}）
     socket.on('join', (room: string) => {

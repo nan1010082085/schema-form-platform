@@ -7,7 +7,7 @@ export function createRadioWidget(id: string): Widget {
     ...publicSchema(id, 'radio'),
     name: radioConfig.name,
     label: radioConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...radioConfig.defaultStyle },
     props: { ...radioConfig.defaultProps },
     options: [

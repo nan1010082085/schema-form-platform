@@ -61,7 +61,7 @@ function applyDefaults(schema: PartialWidget[], formData: FormData): void {
  * @param formRef - el-form 实例 ref，用于 validate / resetFields
  * @returns formData 及操作方法
  */
-export function useFormData(formRef: Ref<FormInstanceFunctions | undefined>): UseFormDataReturn {
+export function useFormData(formRef: Ref<FormInstance | undefined>): UseFormDataReturn {
   const formData = reactive<FormData>({})
 
   /** 从 schema 初始化默认值 */

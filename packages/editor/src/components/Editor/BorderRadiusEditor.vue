@@ -8,8 +8,8 @@
  * - 中央矩形实时预览圆角效果
  */
 import { ref, computed } from 'vue'
-import { LinkIcon } from 'tdesign-icons-vue-next'
 import styles from './BorderRadiusEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   value?: Record<string, string>
@@ -105,21 +105,21 @@ const previewStyle = computed(() => {
       </div>
 
       <!-- Link toggle -->
-      <t-popup :content="linked ? '解除链接' : '链接四角'" placement="top" :delay="300">
+      <el-tooltip :content="linked ? '解除链接' : '链接四角'" placement="top" :show-after="300">
         <button
           :class="[styles.linkBtn, linked && styles.linkBtnActive]"
           @click="toggleLinked"
         >
-          <LinkIcon />
+          <AppIcon name="link" :size="16" />
         </button>
-      </t-popup>
+      </el-tooltip>
     </div>
 
     <!-- 链接模式：单个输入 -->
     <div v-if="linked" :class="styles.controls">
       <div :class="styles.controlRow">
         <label :class="styles.controlLabel">圆角</label>
-        <t-input-number
+        <el-input-number
           :model-value="linkedValue"
           :min="0"
           :max="200"
@@ -135,7 +135,7 @@ const previewStyle = computed(() => {
     <div v-else :class="styles.controlsGrid">
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">左上</label>
-        <t-input-number
+        <el-input-number
           :model-value="tlVal"
           :min="0"
           :max="200"
@@ -147,7 +147,7 @@ const previewStyle = computed(() => {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">右上</label>
-        <t-input-number
+        <el-input-number
           :model-value="trVal"
           :min="0"
           :max="200"
@@ -159,7 +159,7 @@ const previewStyle = computed(() => {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">右下</label>
-        <t-input-number
+        <el-input-number
           :model-value="brVal"
           :min="0"
           :max="200"
@@ -171,7 +171,7 @@ const previewStyle = computed(() => {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">左下</label>
-        <t-input-number
+        <el-input-number
           :model-value="blVal"
           :min="0"
           :max="200"

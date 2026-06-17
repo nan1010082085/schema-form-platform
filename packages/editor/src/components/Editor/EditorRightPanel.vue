@@ -6,6 +6,7 @@
  */
 import PropertyPanel from './PropertyPanel.vue'
 import type { PartialWidget } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 defineProps<{
   selectedSchema: PartialWidget | null
@@ -27,17 +28,11 @@ function getDisplayLabel(item: PartialWidget): string {
   <aside class="right-panel">
     <!-- Header -->
     <div class="right-panel__header">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="8" cy="8" r="6"/>
-        <path d="M8 5v3l2 1"/>
-      </svg>
+      <AppIcon name="setting" :size="14" />
       <span v-if="selectedSchema">{{ getDisplayLabel(selectedSchema) }} 配置</span>
       <span v-else>编辑器配置</span>
       <button class="right-panel__close" @click="emit('close')">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <line x1="4" y1="4" x2="12" y2="12"/>
-          <line x1="12" y1="4" x2="4" y2="12"/>
-        </svg>
+        <AppIcon name="close" :size="12" />
       </button>
     </div>
 

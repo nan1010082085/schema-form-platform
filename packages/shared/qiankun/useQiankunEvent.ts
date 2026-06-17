@@ -3,7 +3,6 @@
  *
  * 提供子应用之间的事件通信能力
  */
-import { ref, onUnmounted } from 'vue'
 import type { QiankunEvent } from './types'
 
 type EventHandler = (payload: unknown) => void

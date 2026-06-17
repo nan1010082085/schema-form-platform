@@ -1,7 +1,6 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="title"
     :width="isFullscreen ? '100vw' : width"
     :fullscreen="isFullscreen"
     :style="isFullscreen ? { margin: 0 } : {}"
@@ -9,6 +8,7 @@
     :draggable="draggable && !isFullscreen"
     :append-to-body="appendToBody"
     :close-on-click-modal="false"
+    :show-close="false"
     @update:model-value="emit('update:modelValue', $event)"
     @close="handleClose"
   >
@@ -33,10 +33,12 @@
     </template>
     <slot />
     <template #footer>
-      <slot name="footer">
-        <el-button @click="handleCancel">取消</el-button>
-        <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
-      </slot>
+      <div class="app-dialog__footer">
+        <slot name="footer">
+          <el-button @click="handleCancel">取消</el-button>
+          <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
+        </slot>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -100,7 +102,7 @@ function handleClose() {
 .app-dialog__title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: #fff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -118,5 +120,18 @@ function handleClose() {
   width: 32px;
   height: 32px;
   font-size: 16px;
+  color: #fff !important;
+}
+
+.app-dialog__fullscreen-btn:hover,
+.app-dialog__close-btn:hover {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+.app-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 20px;
 }
 </style>

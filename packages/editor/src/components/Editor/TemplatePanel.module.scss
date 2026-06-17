@@ -10,10 +10,15 @@
   gap: 8px;
   padding: 8px 10px;
   flex-shrink: 0;
+  align-items: center;
 }
 
 .search {
   flex: 1;
+
+  :deep(.el-input__wrapper) {
+    height: 32px !important;
+  }
 }
 
 .categorySelect {

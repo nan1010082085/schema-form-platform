@@ -48,7 +48,7 @@ describe('ErrorBoundary', () => {
     expect(wrapper.find(`.${ebStyles['fg-error-boundary__message']}`).text()).toContain('测试错误')
 
     // 点击重试
-    await wrapper.find('.el-button').trigger('click')
+    await wrapper.find('.t-button').trigger('click')
     await nextTick()
 
     expect(wrapper.find(`.${ebStyles['fg-error-boundary']}`).exists()).toBe(false)
@@ -97,7 +97,7 @@ describe('ErrorBoundary', () => {
     (wrapper.vm as any).error = new Error('test');
     await nextTick()
 
-    await wrapper.find('.el-button').trigger('click')
+    await wrapper.find('.t-button').trigger('click')
     await nextTick()
 
     // 重试后组件重新挂载

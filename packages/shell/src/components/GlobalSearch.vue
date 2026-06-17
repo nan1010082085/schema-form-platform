@@ -5,6 +5,7 @@
  * Placeholder component for global search functionality.
  */
 import { ref } from 'vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const searchQuery = ref('')
 const isExpanded = ref(false)
@@ -16,23 +17,22 @@ function toggleSearch(): void {
 
 <template>
   <div :class="$style.searchWrapper">
-    <t-input
+    <el-input
       v-if="isExpanded"
-      v-model:value="searchQuery"
+      v-model="searchQuery"
       placeholder="搜索..."
       :class="$style.searchInput"
       size="small"
       @blur="isExpanded = false"
     />
-    <t-button
+    <el-button
       v-else
-      variant="text"
-      shape="square"
+      text
       size="small"
       @click="toggleSearch"
     >
-      <t-icon name="search" />
-    </t-button>
+      <AppIcon name="search" />
+    </el-button>
   </div>
 </template>
 

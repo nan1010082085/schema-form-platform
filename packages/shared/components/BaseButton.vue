@@ -8,8 +8,8 @@
  */
 
 import { computed } from 'vue'
-import { LoadingIcon } from 'tdesign-icons-vue-next'
-import styles from './BaseButton.module.css'
+import styles from './BaseButton.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = withDefaults(defineProps<{
   /** 按钮类型 */
@@ -59,7 +59,7 @@ function handleClick(event: MouseEvent) {
     @click="handleClick"
   >
     <span v-if="loading" :class="styles.spinner">
-      <LoadingIcon />
+      <AppIcon name="loading"  />
     </span>
     <slot v-if="iconPosition === 'left' && !loading" name="icon" />
     <span v-if="$slots.default" :class="styles.content">

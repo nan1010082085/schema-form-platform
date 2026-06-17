@@ -17,7 +17,6 @@
  */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { LoadingIcon, CloseCircleFilledIcon } from 'tdesign-icons-vue-next'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
 import type { FormData } from '@/components/WidgetRenderer'
 import type { PartialWidget } from '@/widgets/base/types'
@@ -26,6 +25,7 @@ import { fetchPublishedSchema, fetchPublishedByPublishId } from '@/utils/apiClie
 import { sendToHost } from '@/microapp/bridge'
 import { registerAllWidgets } from '@/widgets'
 import styles from './PublishView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 registerAllWidgets()
 
@@ -153,12 +153,12 @@ onUnmounted(() => window.removeEventListener('message', handleMessage))
 <template>
   <div :class="styles['fg-renderer']">
     <div v-if="loading" :class="styles['fg-renderer__loading']">
-      <LoadingIcon :class="styles['loading-spinner']" :size="24" />
+      <AppIcon name="loading" :class="styles['loading-spinner']" :size="24" />
       <span>加载中...</span>
     </div>
 
     <div v-else-if="error" :class="styles['fg-renderer__error']">
-      <CloseCircleFilledIcon :size="48" color="var(--color-danger)" />
+      <AppIcon name="circle-close-filled" :size="48" color="var(--el-color-danger)" />
       <p>{{ error }}</p>
     </div>
 

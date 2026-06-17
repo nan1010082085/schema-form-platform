@@ -11,17 +11,17 @@
  * 保存时 emit 完整的 WidgetEvent[]，由调用方写入 widget。
  */
 import { ref, watch, computed } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import type { WidgetEvent, SchemaEventAction, ReceivableEventConfig, EventTargetConfig } from '../../widgets/base/types'
 import { useWidgetStore } from '@/stores/widget'
 import { getWidget } from '@/widgets/registry'
-import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import ConditionBuilder from '@/components/Editor/ConditionBuilder.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 import FlowPreview from '@/components/Editor/FlowPreview.vue'
 import type { FlowItem } from '@/components/Editor/FlowPreview.vue'
 import styles from './EventConfigDialog.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -165,7 +165,7 @@ const flowItems = computed<FlowItem[]>(() =>
 </script>
 
 <template>
-  <EnhancedDialog
+  <AppDialog
     :model-value="visible"
     title="事件配置"
     width="1000px"
@@ -187,42 +187,42 @@ const flowItems = computed<FlowItem[]>(() =>
       >
         <div :class="styles.cardHeader">
           <span :class="styles.cardTitle">事件 <span :class="styles.cardNum">{{ ei + 1 }}</span></span>
-          <t-button
-            theme="danger"
+          <el-button
+            type="danger"
             size="small"
-            variant="text"
+            text
             @click="removeEvent(ei)"
           >
-            <template #icon><DeleteIcon /></template>
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
 
         <!-- trigger -->
         <div :class="styles.row">
           <label :class="styles.label">触发</label>
-          <t-select
-            v-model:value="evt.trigger"
+          <el-select
+            v-model="evt.trigger"
             style="flex: 1"
           >
-            <t-option
+            <el-option
               v-for="opt in triggerOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
         </div>
 
         <!-- eventTarget -->
         <div v-if="eventTargets?.length" :class="styles.row">
           <label :class="styles.label">目标</label>
-          <t-select
-            v-model:value="evt.eventTarget"
+          <el-select
+            v-model="evt.eventTarget"
             style="flex: 1"
             clearable
             placeholder="整个部件"
           >
-            <t-option
+            <el-option
               v-for="t in eventTargets"
               :key="t.id"
               :label="t.label"
@@ -230,8 +230,8 @@ const flowItems = computed<FlowItem[]>(() =>
             >
               <span>{{ t.label }}</span>
               <span v-if="t.description" style="color: var(--text-color-muted); font-size: 12px; margin-left: 8px">{{ t.description }}</span>
-            </t-option>
-          </t-select>
+            </el-option>
+          </el-select>
         </div>
 
         <!-- condition -->
@@ -245,8 +245,8 @@ const flowItems = computed<FlowItem[]>(() =>
         <!-- confirm -->
         <div :class="styles.row">
           <label :class="styles.label">确认</label>
-          <t-input
-            v-model:value="evt.confirm"
+          <el-input
+            v-model="evt.confirm"
             placeholder="可选，执行前弹出的确认提示"
           />
         </div>
@@ -261,15 +261,15 @@ const flowItems = computed<FlowItem[]>(() =>
       </div>
 
       <!-- 添加事件 -->
-      <t-button
-        theme="primary"
-        variant="outline"
+      <el-button
+        type="primary"
+        plain
         style="width: 100%"
         @click="addEvent"
       >
-        <template #icon><AddIcon /></template>
+        <AppIcon name="plus" />
         添加事件
-      </t-button>
+      </el-button>
       </div>
 
       <!-- 右侧：流程预览 -->
@@ -282,8 +282,8 @@ const flowItems = computed<FlowItem[]>(() =>
     </div>
 
     <template #footer>
-      <t-button @click="handleClose">取消</t-button>
-      <t-button theme="primary" @click="handleSave">保存</t-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSave">保存</el-button>
     </template>
-  </EnhancedDialog>
+  </AppDialog>
 </template>

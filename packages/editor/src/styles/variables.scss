@@ -32,191 +32,187 @@ $line-height-tight: 1.25;
 $line-height-normal: 1.5;
 $line-height-relaxed: 1.75;
 
-// ---------- 颜色系统 ----------
-// 主色系（品牌/链接/强调）— 科技感主题
-$color-primary: #00d4ff;
-$color-primary-hover: #33ddff;
-$color-primary-light: rgba(0, 212, 255, 0.2);
-$color-primary-lighter: rgba(0, 212, 255, 0.08);
-$color-primary-dark: #009fcc;
-$color-primary-bg-light: rgba(0, 212, 255, 0.06);
-$color-primary-dialog-header: #111820; // 对话框头部背景色
-$color-primary-active: #00d4ff; // 激活状态颜色（分页、输入框焦点等）
+// ---------- 颜色系统（对齐共享样式/flow） ----------
+// 主色系
+$color-primary: #0060A2;
+$color-primary-hover: #4581E9;
+$color-primary-light: #4581E9;
+$color-primary-lighter: #EEF5FF;
+$color-primary-dark: #0060A2;
+$color-primary-bg-light: #EEF5FF;
+$color-primary-dialog-header: #0060A2;
+$color-primary-active: #0060A2;
 
-// 功能色 - 成功（科技感深色主题）
-$color-success: #00e676;
-$color-success-light: #33eb91;
-$color-success-bg: rgba(0, 230, 118, 0.1);
+// 功能色 - 成功
+$color-success: #26A036;
+$color-success-light: #36B37E;
+$color-success-bg: rgba(82, 196, 26, 0.1);
 
-// 功能色 - 警告（科技感深色主题）
-$color-warning: #ffab40;
-$color-warning-alt: #ff9800;
-$color-warning-light: #ffbb66;
-$color-warning-bg: rgba(255, 171, 64, 0.1);
+// 功能色 - 警告
+$color-warning: #F09700;
+$color-warning-alt: #FF7D00;
+$color-warning-light: #FF6010;
+$color-warning-bg: rgba(255, 191, 0, 0.1);
 
-// 功能色 - 危险/错误（科技感深色主题）
-$color-danger: #ff5252;
-$color-danger-alt: #ff3333;
-$color-danger-light: #ff7575;
-$color-danger-bg: rgba(255, 82, 82, 0.1);
-$color-urge: #ff5252; // 催促文字色
-$color-urge-border: rgba(255, 82, 82, 0.3); // 催促边框色
+// 功能色 - 危险/错误
+$color-danger: #E50113;
+$color-danger-alt: #C4040F;
+$color-danger-light: #FF6B55;
+$color-danger-bg: rgba(255, 1, 1, 0.08);
+$color-urge: #FF3B30;
+$color-urge-border: #FFABA6;
 
-// 功能色 - 信息（科技感深色主题）
-$color-info: #00d4ff;
-$color-info-light: rgba(0, 212, 255, 0.1);
-$color-info-bg: rgba(0, 212, 255, 0.08);
+// 功能色 - 信息
+$color-info: #4581E9;
+$color-info-light: #E5EFF6;
+$color-info-bg: rgba(22, 119, 255, 0.08);
 
 // 功能色 - 链接变体
-$color-link-file: #2071D5; // 文件链接色
-$color-link-view: #015FA1; // 查看链接色
+$color-link-file: #2071D5;
+$color-link-view: #015FA1;
 
-// 中性色 - 文字（科技感深色主题）
-$text-color-title: rgba(255, 255, 255, 0.95);   // 标题/深色文字
-$text-color-primary: rgba(255, 255, 255, 0.9); // 主文字
-$text-color-regular: rgba(255, 255, 255, 0.7); // 常规
-$text-color-secondary: rgba(255, 255, 255, 0.55); // 次要
-$text-color-muted: rgba(255, 255, 255, 0.4);   // 辅助/弱化文字
-$text-color-placeholder: rgba(255, 255, 255, 0.3); // 占位/弱化
-$text-color-disabled: rgba(255, 255, 255, 0.2);
-$text-color-inverse: #000; // 深底上的反色
+// 中性色 - 文字
+$text-color-title: #303133;
+$text-color-primary: #333333;
+$text-color-regular: #606266;
+$text-color-secondary: #666666;
+$text-color-muted: #909399;
+$text-color-placeholder: #969FA8;
+$text-color-disabled: #C0C4CC;
+$text-color-inverse: #FFFFFF;
 
-// 中性色 - 背景（科技感深色主题）
-$bg-color-white: #111820;
-$bg-color-page: #0a0e14;
-$bg-color-gray-light: #161d26;
-$bg-color-gray: #1a2230;
-$bg-color-gray-dark: #222d3a;
-$bg-color-gray-darker: rgba(0, 212, 255, 0.08); // 分割线
-$bg-color-surface: #111820;     // 表面/卡片背景
-$bg-color-canvas-dot: rgba(0, 212, 255, 0.12);  // 画布网格点
-$bg-color-blue-light: rgba(0, 212, 255, 0.06);
-$bg-color-blue-lighter: rgba(0, 212, 255, 0.04);
-$bg-color-blue-table: rgba(0, 212, 255, 0.05);
-$bg-color-hover: rgba(0, 212, 255, 0.08);
-$bg-color-stripe: rgba(0, 212, 255, 0.03);
+// 中性色 - 背景
+$bg-color-white: #FFFFFF;
+$bg-color-page: #F5F6FA;
+$bg-color-gray-light: #FAFAFA;
+$bg-color-gray: #F5F7FA;
+$bg-color-gray-dark: #E4E7ED;
+$bg-color-gray-darker: #E8E8E8;
+$bg-color-surface: #FAFBFC;
+$bg-color-canvas-dot: #D0D5DD;
+$bg-color-blue-light: #EEF5FF;
+$bg-color-blue-lighter: #EEF5FF;
+$bg-color-blue-table: #F5F7FA;
+$bg-color-hover: #E5EFF6;
+$bg-color-stripe: #FAFAFA;
 
-// 中性色 - 边框（科技感深色主题）
-$border-color-base: rgba(0, 212, 255, 0.12);
-$border-color-light: rgba(0, 212, 255, 0.08);
-$border-color-light-alt: rgba(0, 212, 255, 0.08);
-$border-color-medium: rgba(0, 212, 255, 0.25);
-$border-color-dark: rgba(0, 212, 255, 0.15);
-$border-color-detail: rgba(0, 212, 255, 0.1);
-$border-color-detailBg: rgba(0, 212, 255, 0.04); // 详情页表格标题背景色
+// 中性色 - 边框
+$border-color-base: #D5DDE3;
+$border-color-light: #EBEDF3;
+$border-color-light-alt: #EBEDF3;
+$border-color-medium: #D5DDE3;
+$border-color-dark: #D5DDE3;
+$border-color-detail: #D5DDE3;
+$border-color-detailBg: #F5F7FA;
 
-$input-border-default: rgba(0, 212, 255, 0.1);
-$input-border-hover: rgba(0, 212, 255, 0.3);
-$input-border-focus: #00d4ff;
-$input-border-disabled: rgba(255, 255, 255, 0.08);
-$input-bg-disabled: rgba(255, 255, 255, 0.05);
-$input-border-error: #ff5252;
-$menu-hover-bg: rgba(0, 212, 255, 0.08);
+$input-border-default: #EBEDF3;
+$input-border-hover: #4581E9;
+$input-border-focus: #1369C1;
+$input-border-disabled: #E0E0E6;
+$input-bg-disabled: #E0E0E6;
+$input-border-error: #C4040F;
+$menu-hover-bg: #EEF5FF;
 
-// 表格相关颜色（科技感深色主题）
-$tableHover: rgba(0, 212, 255, 0.06); // 表格悬停背景色
-$tableBackground: #00d4ff; // 表格悬停边框色
-$rouBackground: rgba(0, 212, 255, 0.02); // 表格偶数行背景色
+// 表格相关颜色
+$tableHover: #F5F7FA;
+$tableBackground: #0060A2;
+$rouBackground: #FAFAFA;
 
-// 状态/标签色（科技感深色主题）
-$color-pending: #ffab40;
-$color-approved: #00e676;
-$color-rejected: #ff5252;
-$color-draft: rgba(255, 255, 255, 0.35);
-$color-link: #00d4ff;
-$color-link-hover: #33ddff;
-$color-cbcbcb: rgba(0, 212, 255, 0.1); // 分割线颜色
+// 状态/标签色
+$color-pending: #FFBF00;
+$color-approved: #52C41A;
+$color-rejected: #FF6010;
+$color-draft: #909399;
+$color-link: #2071D5;
+$color-link-hover: #015FA1;
+$color-cbcbcb: #E4E7ED;
 
-// 阴影（科技感深色主题）
-$shadow-sm: 0 0 8px rgba(0, 212, 255, 0.08);
-$shadow-md: 0 0 12px rgba(0, 212, 255, 0.12);
-$shadow-lg: 0 0 20px rgba(0, 212, 255, 0.18);
-$overlay-bg: rgba(0, 0, 0, 0.7);
-$shadow-overlay: rgba(0, 0, 0, 0.7);
-$menu-arrow-color: rgba(255, 255, 255, 0.2);
-$warning-bg-light: rgba(255, 171, 64, 0.1);
+// 阴影
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+$overlay-bg: rgba(0, 0, 0, 0.4);
+$shadow-overlay: rgba(0, 0, 0, 0.4);
+$menu-arrow-color: #909399;
+$warning-bg-light: rgba(255, 191, 0, 0.1);
 
 // 文字颜色扩展
-$text-color-pager: #5D5E74;
+$text-color-pager: #86909c;
 
-// 滚动条颜色（科技感深色主题）
-$scrollbar-thumb-color: rgba(0, 212, 255, 0.2);
-$scrollbar-track-color: transparent;
+// 滚动条颜色
+$scrollbar-thumb-color: #dcdfe6;
+$scrollbar-track-color: #f3f4f6;
 
-// Element UI 按钮颜色变量（科技感深色主题）
-// 主要按钮（primary）— 对齐品牌色 $color-primary
+// Element UI 按钮颜色变量（对齐 TDesign）
+// 主要按钮（primary）
 $el-button-primary-bg: $color-primary;
-$el-button-primary-text: #000;
+$el-button-primary-text: #fff;
 $el-button-primary-border: $color-primary;
 $el-button-primary-hover-bg: $color-primary-hover;
-$el-button-primary-hover-text: #000;
+$el-button-primary-hover-text: #fff;
 $el-button-primary-hover-border: $color-primary-hover;
 $el-button-primary-active-bg: $color-primary-dark;
-$el-button-primary-active-text: #000;
+$el-button-primary-active-text: #fff;
 $el-button-primary-active-border: $color-primary-dark;
-$el-button-primary-disabled-bg: rgba(0, 212, 255, 0.3);
-$el-button-primary-disabled-text: rgba(0, 0, 0, 0.5);
-$el-button-primary-disabled-border: rgba(0, 212, 255, 0.3);
+$el-button-primary-disabled-bg: #f2f3ff;
+$el-button-primary-disabled-text: rgba(0, 82, 217, 0.4);
+$el-button-primary-disabled-border: #f2f3ff;
 
-// 次要按钮（default）— 科技感深色主题
-$el-button-default-bg: rgba(0, 0, 0, 0.2);
-$el-button-default-text: rgba(255, 255, 255, 0.7);
-$el-button-default-border: rgba(0, 212, 255, 0.12);
-$el-button-default-hover-bg: rgba(0, 212, 255, 0.06);
-$el-button-default-hover-text: rgba(255, 255, 255, 0.9);
-$el-button-default-hover-border: rgba(0, 212, 255, 0.25);
-$el-button-default-active-bg: rgba(0, 212, 255, 0.1);
-$el-button-default-active-text: rgba(255, 255, 255, 0.95);
-$el-button-default-active-border: rgba(0, 212, 255, 0.3);
-$el-button-default-disabled-bg: rgba(0, 0, 0, 0.1);
-$el-button-default-disabled-text: rgba(255, 255, 255, 0.2);
-$el-button-default-disabled-border: rgba(0, 212, 255, 0.06);
+// 次要按钮（default）
+$el-button-default-bg: #fff;
+$el-button-default-text: rgba(0, 0, 0, 0.9);
+$el-button-default-border: #e8e8e8;
+$el-button-default-hover-bg: #f2f3ff;
+$el-button-default-hover-text: #0052d9;
+$el-button-default-hover-border: #0052d9;
+$el-button-default-active-bg: #f2f3ff;
+$el-button-default-active-text: #003cab;
+$el-button-default-active-border: #003cab;
+$el-button-default-disabled-bg: #fff;
+$el-button-default-disabled-text: rgba(0, 0, 0, 0.26);
+$el-button-default-disabled-border: #e8e8e8;
 
-// 成功按钮（success）— 科技感深色主题
-$el-button-success-bg: #00e676;
-$el-button-success-text: #000;
-$el-button-success-border: #00e676;
-$el-button-success-hover-bg: #33eb91;
-$el-button-success-hover-text: #000;
-$el-button-success-hover-border: #33eb91;
-$el-button-success-active-bg: #00cc6a;
-$el-button-success-active-text: #000;
-$el-button-success-active-border: #00cc6a;
-$el-button-success-disabled-bg: rgba(0, 230, 118, 0.3);
-$el-button-success-disabled-text: rgba(0, 0, 0, 0.5);
-$el-button-success-disabled-border: rgba(0, 230, 118, 0.3);
+// 成功按钮（success）
+$el-button-success-bg: $color-success;
+$el-button-success-text: #fff;
+$el-button-success-border: $color-success;
+$el-button-success-hover-bg: #47d993;
+$el-button-success-hover-text: #fff;
+$el-button-success-hover-border: #47d993;
+$el-button-success-active-bg: #008659;
+$el-button-success-active-text: #fff;
+$el-button-success-active-border: #008659;
+$el-button-success-disabled-bg: #e8f8f0;
+$el-button-success-disabled-text: rgba(0, 168, 112, 0.4);
+$el-button-success-disabled-border: #e8f8f0;
 
-// 警告按钮（warning）— 科技感深色主题
-$el-button-warning-bg: #ffab40;
-$el-button-warning-text: #000;
-$el-button-warning-border: #ffab40;
-$el-button-warning-hover-bg: #ffbb66;
-$el-button-warning-hover-text: #000;
-$el-button-warning-hover-border: #ffbb66;
-$el-button-warning-active-bg: #ff9800;
-$el-button-warning-active-text: #000;
-$el-button-warning-active-border: #ff9800;
-$el-button-warning-disabled-bg: rgba(255, 171, 64, 0.3);
-$el-button-warning-disabled-text: rgba(0, 0, 0, 0.5);
-$el-button-warning-disabled-border: rgba(255, 171, 64, 0.3);
+// 警告按钮（warning）
+$el-button-warning-bg: $color-warning;
+$el-button-warning-text: #fff;
+$el-button-warning-border: $color-warning;
+$el-button-warning-hover-bg: #f5a623;
+$el-button-warning-hover-text: #fff;
+$el-button-warning-hover-border: #f5a623;
+$el-button-warning-active-bg: #cd6209;
+$el-button-warning-active-text: #fff;
+$el-button-warning-active-border: #cd6209;
+$el-button-warning-disabled-bg: #fff1e1;
+$el-button-warning-disabled-text: rgba(237, 123, 47, 0.4);
+$el-button-warning-disabled-border: #fff1e1;
 
-// 危险按钮（danger）— 科技感深色主题
-$el-button-danger-bg: #ff5252;
+// 危险按钮（danger）
+$el-button-danger-bg: $color-danger;
 $el-button-danger-text: #fff;
-$el-button-danger-border: #ff5252;
-$el-button-danger-hover-bg: #ff7575;
+$el-button-danger-border: $color-danger;
+$el-button-danger-hover-bg: #f6685e;
 $el-button-danger-hover-text: #fff;
-$el-button-danger-hover-border: #ff7575;
-$el-button-danger-active-bg: #ff3333;
+$el-button-danger-hover-border: #f6685e;
+$el-button-danger-active-bg: #c93643;
 $el-button-danger-active-text: #fff;
-$el-button-danger-active-border: #ff3333;
-$el-button-danger-disabled-bg: rgba(255, 82, 82, 0.3);
-$el-button-danger-disabled-text: rgba(255, 255, 255, 0.5);
-$el-button-danger-disabled-border: rgba(255, 82, 82, 0.3);
-
-// 深色主题背景色（科技感）
-$dark-bg-primary: #0a0e14;
-$dark-bg-secondary: #111820;
+$el-button-danger-active-border: #c93643;
+$el-button-danger-disabled-bg: #fde2e4;
+$el-button-danger-disabled-text: rgba(227, 77, 89, 0.4);
+$el-button-danger-disabled-border: #fde2e4;
 
 // ---------- 尺寸系统 ----------
 $button-height: 32px;
@@ -225,7 +221,7 @@ $button-height-lg: 40px;
 $table-row-height: 40px;
 $detail-item-height: 48px;
 $input-height-sm: 32px;
-$input-height: 40px;
+$input-height: 32px;
 $search-border-width: 1px;
 $border-radius-sm: 2px;
 $border-radius-md: 4px;
@@ -328,8 +324,8 @@ $calendar-cell-width: 40px;
   // ========== 统一颜色主题（保留原有变量） ==========
   --color-white: #{$bg-color-white};
   --main-color: var(--color-primary); // 主色
-  --sub-color: var(--td-brand-color-light, #80b0d1); // 浅蓝1
-  --sub-color-8: var(--td-brand-color-light, #cce0ee); // 浅蓝2
+  --sub-color: var(--color-primary-light, #80b0d1); // 浅蓝1
+  --sub-color-8: var(--color-primary-lighter, #cce0ee); // 浅蓝2
   --sub-color-9: var(--color-primary-lighter); // 浅蓝2
 
   // ========== 字体系统 ==========
@@ -379,6 +375,7 @@ $calendar-cell-width: 40px;
   --color-primary-bg-light: #{$color-primary-bg-light};
   --color-primary-dialog-header: #{$color-primary-dialog-header};
   --color-primary-active: #{$color-primary-active};
+  --color-primary-rgb: 0, 82, 217; // 用于 rgba() 场景
   
 
   // 功能色 - 成功
@@ -396,6 +393,7 @@ $calendar-cell-width: 40px;
   --color-danger: #{$color-danger};
   --color-danger-alt: #{$color-danger-alt};
   --color-danger-light: #{$color-danger-light};
+  --color-danger-lighter: #{$color-danger-light};
   --color-danger-bg: #{$color-danger-bg};
   --color-urge: #{$color-urge}; // 催促文字色
   --color-urge-border: #{$color-urge-border}; // 催促边框色
@@ -410,9 +408,11 @@ $calendar-cell-width: 40px;
   --color-link-view: #{$color-link-view}; // 查看链接色
 
   // 中性色 - 文字
+  --text-color-title: #{$text-color-title}; // 标题
   --text-color-primary: #{$text-color-primary}; // 主文字
   --text-color-regular: #{$text-color-regular}; // 常规
   --text-color-secondary: #{$text-color-secondary}; // 次要
+  --text-color-muted: #{$text-color-muted}; // 辅助/弱化
   --text-color-placeholder: #{$text-color-placeholder}; // 占位/弱化
   --text-color-disabled: #{$text-color-disabled}; // 禁用
   --text-color-inverse: #{$text-color-inverse}; // 白底上的反色
@@ -430,6 +430,7 @@ $calendar-cell-width: 40px;
   --bg-color-blue-table: #{$bg-color-blue-table};
   --bg-color-hover: #{$bg-color-hover};
   --bg-color-stripe: #{$bg-color-stripe};
+  --bg-color-surface: #{$bg-color-surface};
 
   // 中性色 - 边框
   --border-color-base: #{$border-color-base};
@@ -556,6 +557,11 @@ $calendar-cell-width: 40px;
   --btn-height: 32px;
   --btn-radius: 2px;
 
+  // ========== 玻璃拟态效果（浅色主题） ==========
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(20px);
+
   // ========== 对话框样式 ==========
   --dialog-header-height: #{$detail-item-height}; // 对话框头部高度
   --dialog-footer-height: #{$dialog-footer-height}; // 对话框底部高度
@@ -584,35 +590,29 @@ $calendar-cell-width: 40px;
   --pagination-hover-color: #{$color-primary}; // 分页悬停颜色
 }
 
-// ========== 深色主题 ==========
-html.dark {
-  --main-bg-color: #{$dark-bg-primary}; // 首选背景颜色
-  --sub-main-bg-content: #{$dark-bg-secondary}; // 次选背景颜色
-}
-
 // ============================================================
 // FormGrid 组件规范变量（从 FormGrid/styles/variables.scss 合并）
 // ============================================================
 
-// ---- 功能色值（科技感深色主题）----
-$fg-color-primary: #00d4ff;
-$fg-color-warning: #ffab40;
-$fg-color-danger: #ff5252;
-$fg-color-success: #00e676;
+// ---- 功能色值（对齐 TDesign） ----
+$fg-color-primary: #0052d9;
+$fg-color-warning: #ed7b2f;
+$fg-color-danger: #e34d59;
+$fg-color-success: #00a870;
 
-// ---- 文字色值（科技感深色主题）----
-$fg-text-primary: rgba(255, 255, 255, 0.9);
-$fg-text-secondary: rgba(255, 255, 255, 0.55);
-$fg-text-hint: rgba(255, 255, 255, 0.3);
+// ---- 文字色值 ----
+$fg-text-primary: rgba(0, 0, 0, 0.9);
+$fg-text-secondary: rgba(0, 0, 0, 0.6);
+$fg-text-hint: rgba(0, 0, 0, 0.4);
 
-// ---- 线条底色（科技感深色主题）----
-$fg-border-general: rgba(0, 212, 255, 0.08);
-$fg-border-input: rgba(0, 212, 255, 0.1);
-$fg-border-focus: #00d4ff;
-$fg-border-active: #00d4ff;
-$fg-border-error: #ff5252;
-$fg-bg-disabled: rgba(255, 255, 255, 0.05);
-$fg-bg-menu-hover: rgba(0, 212, 255, 0.08);
+// ---- 线条底色 ----
+$fg-border-general: #e8e8e8;
+$fg-border-input: #e8e8e8;
+$fg-border-focus: #0052d9;
+$fg-border-active: #0052d9;
+$fg-border-error: #e34d59;
+$fg-bg-disabled: #f3f4f6;
+$fg-bg-menu-hover: #f2f3ff;
 
 // ---- 字体 ----
 $fg-font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;

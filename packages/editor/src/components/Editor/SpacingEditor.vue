@@ -8,8 +8,8 @@
  * - 中央矩形实时预览各边数值
  */
 import { ref, computed } from 'vue'
-import { LinkIcon } from 'tdesign-icons-vue-next'
 import styles from './SpacingEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   /** 'margin' 或 'padding' */
@@ -118,21 +118,21 @@ function toggleLinked() {
       </div>
 
       <!-- Link toggle -->
-      <t-popup :content="linked ? '解除链接' : '链接四边'" placement="top" :delay="300">
+      <el-tooltip :content="linked ? '解除链接' : '链接四边'" placement="top" :show-after="300">
         <button
           :class="[styles.linkBtn, linked && styles.linkBtnActive]"
           @click="toggleLinked"
         >
-          <LinkIcon />
+          <AppIcon name="link" />
         </button>
-      </t-popup>
+      </el-tooltip>
     </div>
 
     <!-- 链接模式：单个输入 -->
     <div v-if="linked" :class="styles.controls">
       <div :class="styles.controlRow">
         <label :class="styles.controlLabel">数值</label>
-        <t-input-number
+        <el-input-number
           :model-value="linkedValue"
           :min="0"
           :max="200"
@@ -148,7 +148,7 @@ function toggleLinked() {
     <div v-else :class="styles.controlsGrid">
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">上</label>
-        <t-input-number
+        <el-input-number
           :model-value="topVal"
           :min="0"
           :max="200"
@@ -160,7 +160,7 @@ function toggleLinked() {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">右</label>
-        <t-input-number
+        <el-input-number
           :model-value="rightVal"
           :min="0"
           :max="200"
@@ -172,7 +172,7 @@ function toggleLinked() {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">下</label>
-        <t-input-number
+        <el-input-number
           :model-value="bottomVal"
           :min="0"
           :max="200"
@@ -184,7 +184,7 @@ function toggleLinked() {
       </div>
       <div :class="styles.gridCell">
         <label :class="styles.gridLabel">左</label>
-        <t-input-number
+        <el-input-number
           :model-value="leftVal"
           :min="0"
           :max="200"

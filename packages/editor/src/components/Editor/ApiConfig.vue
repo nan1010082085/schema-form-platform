@@ -6,12 +6,12 @@
  * 右侧：测试连接面板（独立区域，不跟随表单滚动）
  */
 import { ref, computed } from 'vue'
-import { CheckIcon, ErrorCircleFilledIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { apiClient } from '@/utils/apiClient'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import type { SchemaApiConfig, PartialWidget } from '@/components/WidgetRenderer/types'
 import styles from './ApiConfig.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   api: SchemaApiConfig | undefined
@@ -245,7 +245,7 @@ defineExpose({ testConnection, testing })
   <div :class="styles.root">
     <!-- 未配置时的入口 -->
     <div v-if="!hasApi" :class="styles.toggle">
-      <t-button theme="primary" variant="outline" @click="enableApi">配置 API</t-button>
+      <el-button type="primary" plain @click="enableApi">配置 API</el-button>
     </div>
 
     <!-- 左右分栏 -->
@@ -254,9 +254,9 @@ defineExpose({ testConnection, testing })
       <div :class="styles.form">
         <!-- 移除配置 -->
         <div :class="styles.removeRow">
-          <t-button theme="danger" variant="text" size="small" @click="emit('remove-config')">
+          <el-button type="danger" link size="small" @click="emit('remove-config')">
             移除配置
-          </t-button>
+          </el-button>
         </div>
 
         <!-- 分组 1：请求配置 -->
@@ -265,33 +265,33 @@ defineExpose({ testConnection, testing })
           <!-- URL -->
           <div :class="styles.row">
             <label :class="styles.label">URL <span :class="styles.required">*</span></label>
-            <t-input
-              :value="api?.url ?? ''"
+            <el-input
+              :model-value="api?.url ?? ''"
               placeholder="/api/options"
               style="flex: 1"
-              @change="(v: string) => emitApiField('url', v)"
+              @update:model-value="(v: string) => emitApiField('url', v)"
             />
           </div>
 
           <!-- 请求方法 + 超时并排 -->
           <div :class="styles.row">
             <label :class="styles.label">方法</label>
-            <t-select
-              :value="api?.method ?? 'get'"
+            <el-select
+              :model-value="api?.method ?? 'get'"
               style="flex: 1"
-              @change="(v: string) => emitApiField('method', v as 'get' | 'post')"
+              @update:model-value="(v: string) => emitApiField('method', v as 'get' | 'post')"
             >
-              <t-option label="GET" value="get" />
-              <t-option label="POST" value="post" />
-            </t-select>
+              <el-option label="GET" value="get" />
+              <el-option label="POST" value="post" />
+            </el-select>
             <label :class="styles.label">超时</label>
-            <t-input-number
-              :value="api?.timeout ?? 5000"
+            <el-input-number
+              :model-value="api?.timeout ?? 5000"
               :min="1000"
               :step="1000"
-              theme="column"
+              controls-position="right"
               style="flex: 1"
-              @change="(v: number) => emitApiField('timeout', v ?? 5000)"
+              @update:model-value="(v: number) => emitApiField('timeout', v ?? 5000)"
             />
           </div>
 
@@ -299,12 +299,13 @@ defineExpose({ testConnection, testing })
           <div :class="styles.row">
             <label :class="styles.label">参数</label>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-              <t-textarea
-                :value="paramsText"
+              <el-input
+                type="textarea"
+                :model-value="paramsText"
                 :rows="2"
                 placeholder='{"key": "value"}'
                 :class="{ 'is-error': !!paramsError }"
-                @change="(v: string) => handleParamsChange(v)"
+                @update:model-value="(v: string) => handleParamsChange(v)"
               />
               <div v-if="paramsError" :class="styles.error">{{ paramsError }}</div>
             </div>
@@ -315,27 +316,27 @@ defineExpose({ testConnection, testing })
             <label :class="styles.label">请求头</label>
             <div :class="styles.kvList" style="flex: 1">
               <div v-for="(row, idx) in headerRows" :key="idx" :class="styles.kvRow">
-                <t-input
-                  :value="row.key"
+                <el-input
+                  :model-value="row.key"
                   placeholder="Header-Name"
-                  @change="(v: string) => handleHeaderKeyChange(idx, v)"
+                  @update:model-value="(v: string) => handleHeaderKeyChange(idx, v)"
                 />
-                <t-input
-                  :value="row.value"
+                <el-input
+                  :model-value="row.value"
                   placeholder="value"
-                  @change="(v: string) => handleHeaderValueChange(idx, v)"
+                  @update:model-value="(v: string) => handleHeaderValueChange(idx, v)"
                 />
-                <t-button
-                  theme="danger"
-                  variant="text"
+                <el-button
+                  type="danger"
+                  link
                   @click="removeHeaderRow(idx)"
                 >
-                  <DeleteIcon />
-                </t-button>
+                  <AppIcon name="delete" />
+                </el-button>
               </div>
-              <t-button size="small" variant="text" theme="primary" @click="addHeaderRow">
+              <el-button size="small" link type="primary" @click="addHeaderRow">
                 + 添加
-              </t-button>
+              </el-button>
             </div>
           </div>
 
@@ -343,12 +344,13 @@ defineExpose({ testConnection, testing })
           <div v-if="isPost" :class="styles.row">
             <label :class="styles.label">Body</label>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
-              <t-textarea
-                :value="bodyText"
+              <el-input
+                type="textarea"
+                :model-value="bodyText"
                 :rows="3"
                 placeholder='{"key": "value"}'
                 :class="{ 'is-error': !!bodyError }"
-                @change="(v: string) => handleBodyChange(v)"
+                @update:model-value="(v: string) => handleBodyChange(v)"
               />
               <div v-if="bodyError" :class="styles.error">{{ bodyError }}</div>
             </div>
@@ -360,34 +362,34 @@ defineExpose({ testConnection, testing })
           <div :class="styles.cardTitle">数据映射</div>
           <div :class="styles.row">
             <label :class="styles.label">路径</label>
-            <t-input
-              :value="api?.dataPath ?? ''"
+            <el-input
+              :model-value="api?.dataPath ?? ''"
               placeholder="result.records"
               style="flex: 1"
-              @change="(v: string) => emitApiField('dataPath', v || undefined)"
+              @update:model-value="(v: string) => emitApiField('dataPath', v || undefined)"
             />
           </div>
           <div :class="styles.row">
             <label :class="styles.label">标签</label>
-            <t-input
-              :value="api?.labelKey ?? 'label'"
+            <el-input
+              :model-value="api?.labelKey ?? 'label'"
               placeholder="label"
               style="flex: 1"
-              @change="(v: string) => emitApiField('labelKey', v)"
+              @update:model-value="(v: string) => emitApiField('labelKey', v)"
             />
             <label :class="styles.label">值</label>
-            <t-input
-              :value="api?.valueKey ?? 'value'"
+            <el-input
+              :model-value="api?.valueKey ?? 'value'"
               placeholder="value"
               style="flex: 1"
-              @change="(v: string) => emitApiField('valueKey', v)"
+              @update:model-value="(v: string) => emitApiField('valueKey', v)"
             />
             <label :class="styles.label">子节点</label>
-            <t-input
-              :value="api?.childrenKey ?? ''"
+            <el-input
+              :model-value="api?.childrenKey ?? ''"
               placeholder="children"
               style="flex: 1"
-              @change="(v: string) => emitApiField('childrenKey', v || undefined)"
+              @update:model-value="(v: string) => emitApiField('childrenKey', v || undefined)"
             />
           </div>
         </div>
@@ -397,47 +399,47 @@ defineExpose({ testConnection, testing })
           <div :class="styles.cardTitle">加载策略</div>
           <div :class="styles.row">
             <label :class="styles.label">加载</label>
-            <t-switch
-              :value="api?.immediate !== false"
-              @change="(v: boolean) => emitApiField('immediate', v)"
+            <el-switch
+              :model-value="api?.immediate !== false"
+              @update:model-value="(v: boolean) => emitApiField('immediate', v)"
             />
             <label :class="styles.label">缓存</label>
-            <t-input-number
-              :value="api?.ttl ?? 0"
+            <el-input-number
+              :model-value="api?.ttl ?? 0"
               :min="0"
               :step="1000"
-              theme="column"
+              controls-position="right"
               style="flex: 1"
-              @change="(v: number) => emitApiField('ttl', v ?? 0)"
+              @update:model-value="(v: number) => emitApiField('ttl', v ?? 0)"
             />
           </div>
           <div :class="styles.row">
             <label :class="styles.label">重试</label>
             <div style="display: flex; align-items: center; gap: 8px; flex: 1">
-              <t-switch
-                :value="api?.enableRetry ?? false"
-                @change="(v: boolean) => emitApiField('enableRetry', v)"
+              <el-switch
+                :model-value="api?.enableRetry ?? false"
+                @update:model-value="(v: boolean) => emitApiField('enableRetry', v)"
               />
-              <t-input-number
+              <el-input-number
                 v-if="api?.enableRetry"
-                :value="api?.retryCount ?? 3"
+                :model-value="api?.retryCount ?? 3"
                 :min="1"
                 :max="5"
-                theme="column"
+                controls-position="right"
                 style="width: 100px"
-                @change="(v: number) => emitApiField('retryCount', v ?? 3)"
+                @update:model-value="(v: number) => emitApiField('retryCount', v ?? 3)"
               />
             </div>
             <label :class="styles.label">策略</label>
-            <t-select
-              :value="api?.cacheLevel ?? 'memory'"
+            <el-select
+              :model-value="api?.cacheLevel ?? 'memory'"
               style="flex: 1"
-              @change="(v: string) => emitApiField('cacheLevel', v as 'memory' | 'indexeddb' | 'both')"
+              @update:model-value="(v: string) => emitApiField('cacheLevel', v as 'memory' | 'indexeddb' | 'both')"
             >
-              <t-option label="内存" value="memory" />
-              <t-option label="IndexedDB" value="indexeddb" />
-              <t-option label="两者" value="both" />
-            </t-select>
+              <el-option label="内存" value="memory" />
+              <el-option label="IndexedDB" value="indexeddb" />
+              <el-option label="两者" value="both" />
+            </el-select>
           </div>
         </div>
 
@@ -447,19 +449,19 @@ defineExpose({ testConnection, testing })
       <div :class="styles.test">
         <div :class="styles.testTitle">测试连接</div>
         <div :class="styles.testBody">
-          <t-button
-            theme="primary"
+          <el-button
+            type="primary"
             :loading="testing"
             style="width: 100%"
             @click="testConnection"
           >
             {{ testing ? '测试中...' : '测试连接' }}
-          </t-button>
+          </el-button>
 
           <!-- 成功结果 -->
           <template v-if="testResult?.success">
             <div :class="styles.testSuccess">
-              <CheckIcon />
+              <AppIcon name="circle-check-filled" />
               <span>{{ testResult.message }}</span>
             </div>
 
@@ -483,21 +485,21 @@ defineExpose({ testConnection, testing })
             <!-- 建议数据路径 -->
             <div v-if="testResult.suggestedDataPath" :class="styles.suggestion">
               <span>建议路径: <code>{{ testResult.suggestedDataPath }}</code></span>
-              <t-button size="small" theme="primary" variant="text" @click="applySuggestedDataPath">
+              <el-button size="small" type="primary" link @click="applySuggestedDataPath">
                 应用
-              </t-button>
+              </el-button>
             </div>
 
             <!-- 分析按钮 -->
-            <t-button theme="success" variant="outline" style="width: 100%; margin-top: 8px" @click="analyzeAndGenerateSchema">
+            <el-button type="success" plain style="width: 100%; margin-top: 8px" @click="analyzeAndGenerateSchema">
               分析并生成 Schema
-            </t-button>
+            </el-button>
           </template>
 
           <!-- 失败结果 -->
           <template v-else-if="testResult">
             <div :class="styles.testError">
-              <ErrorCircleFilledIcon />
+              <AppIcon name="circle-close-filled" />
               <span>{{ testResult.message }}</span>
             </div>
 
@@ -508,9 +510,9 @@ defineExpose({ testConnection, testing })
 
             <div v-if="testResult.suggestedDataPath" :class="styles.suggestionError">
               <span>建议路径: <code>{{ testResult.suggestedDataPath }}</code></span>
-              <t-button size="small" theme="primary" variant="text" @click="applySuggestedDataPath">
+              <el-button size="small" type="primary" link @click="applySuggestedDataPath">
                 应用
-              </t-button>
+              </el-button>
             </div>
           </template>
         </div>

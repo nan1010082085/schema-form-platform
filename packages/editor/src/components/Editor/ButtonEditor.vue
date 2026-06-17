@@ -5,8 +5,8 @@
  * Sprint 18: Replaces JSON textarea with per-action structured form.
  * Each action type shows conditional fields for its specific properties.
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SchemaButtonConfig, SchemaAction, ActionType } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   buttons: SchemaButtonConfig[]
@@ -136,38 +136,38 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
       <div class="button-editor__item-header">
         <span class="button-editor__item-title">按钮 {{ btnIdx + 1 }}</span>
         <div class="button-editor__item-actions">
-          <t-button size="small" variant="text" :disabled="btnIdx === 0" @click="moveUp(btnIdx)">
-            <template #icon><ChevronUpIcon /></template>
-          </t-button>
-          <t-button size="small" variant="text" :disabled="btnIdx === buttons.length - 1" @click="moveDown(btnIdx)">
-            <template #icon><ChevronDownIcon /></template>
-          </t-button>
-          <t-button theme="danger" size="small" variant="text" @click="removeButton(btnIdx)">
-            <template #icon><DeleteIcon /></template>
-          </t-button>
+          <el-button size="small" text :disabled="btnIdx === 0" @click="moveUp(btnIdx)">
+            <AppIcon name="arrow-up" />
+          </el-button>
+          <el-button size="small" text :disabled="btnIdx === buttons.length - 1" @click="moveDown(btnIdx)">
+            <AppIcon name="arrow-down" />
+          </el-button>
+          <el-button type="danger" size="small" text @click="removeButton(btnIdx)">
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
       <div class="button-editor__field">
         <label class="button-editor__label">文本</label>
-        <t-input :value="btn.text" size="small" placeholder="按钮文字" @change="(v: string) => updateButton(btnIdx, 'text', v)" />
+        <el-input :model-value="btn.text" size="small" placeholder="按钮文字" @update:model-value="(v: string) => updateButton(btnIdx, 'text', v)" />
       </div>
 
       <div class="button-editor__field">
         <label class="button-editor__label">按钮类型</label>
-        <t-select :value="btn.buttonType ?? ''" size="small" style="width: 100%" @change="(v: string) => updateButton(btnIdx, 'buttonType', v)">
-          <t-option v-for="opt in buttonTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-        </t-select>
+        <el-select :model-value="btn.buttonType ?? ''" size="small" style="width: 100%" @update:model-value="(v: string) => updateButton(btnIdx, 'buttonType', v)">
+          <el-option v-for="opt in buttonTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
       </div>
 
       <!-- Actions list -->
       <div class="button-editor__actions-section">
         <div class="button-editor__actions-header">
           <span class="button-editor__label">操作</span>
-          <t-button size="small" variant="text" @click="addAction(btnIdx)">
-            <template #icon><AddIcon /></template>
+          <el-button size="small" text @click="addAction(btnIdx)">
+            <AppIcon name="plus" />
             添加
-          </t-button>
+          </el-button>
         </div>
 
         <div v-if="!btn.actions?.length" class="button-editor__help" style="margin-bottom:4px">无操作。点击"添加"创建一个。</div>
@@ -176,50 +176,51 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <div class="button-editor__action-header">
             <span class="button-editor__action-title">操作 {{ aIdx + 1 }}</span>
             <div style="display:flex;gap:2px">
-              <t-button :disabled="aIdx === 0" size="small" variant="text" @click="moveActionUp(btnIdx, aIdx)">
-                <template #icon><ChevronUpIcon /></template>
-              </t-button>
-              <t-button :disabled="aIdx === (btn.actions?.length ?? 1) - 1" size="small" variant="text" @click="moveActionDown(btnIdx, aIdx)">
-                <template #icon><ChevronDownIcon /></template>
-              </t-button>
-              <t-button theme="danger" size="small" variant="text" @click="removeAction(btnIdx, aIdx)">
-                <template #icon><DeleteIcon /></template>
-              </t-button>
+              <el-button :disabled="aIdx === 0" size="small" text @click="moveActionUp(btnIdx, aIdx)">
+                <AppIcon name="arrow-up" />
+              </el-button>
+              <el-button :disabled="aIdx === (btn.actions?.length ?? 1) - 1" size="small" text @click="moveActionDown(btnIdx, aIdx)">
+                <AppIcon name="arrow-down" />
+              </el-button>
+              <el-button type="danger" size="small" text @click="removeAction(btnIdx, aIdx)">
+                <AppIcon name="delete" />
+              </el-button>
             </div>
           </div>
 
           <!-- Type -->
           <div class="button-editor__field">
             <label class="button-editor__label">类型</label>
-            <t-select :value="action.type" size="small" style="width:100%" @change="(v: string) => updateAction(btnIdx, aIdx, { type: v as ActionType })">
-              <t-option v-for="opt in actionTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-            </t-select>
+            <el-select :model-value="action.type" size="small" style="width:100%" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { type: v as ActionType })">
+              <el-option v-for="opt in actionTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
           </div>
 
           <!-- Common: Label -->
           <div class="button-editor__field">
             <label class="button-editor__label">标签</label>
-            <t-input :value="action.label ?? ''" size="small" placeholder="操作标签" @change="(v: string) => updateAction(btnIdx, aIdx, { label: v || undefined })" />
+            <el-input :model-value="action.label ?? ''" size="small" placeholder="操作标签" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { label: v || undefined })" />
           </div>
 
           <!-- Common: Confirm -->
           <div class="button-editor__field">
             <label class="button-editor__label">确认提示</label>
-            <t-input :value="action.confirm ?? ''" size="small" placeholder="执行前的确认提示" @change="(v: string) => updateAction(btnIdx, aIdx, { confirm: v || undefined })" />
+            <el-input :model-value="action.confirm ?? ''" size="small" placeholder="执行前的确认提示" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { confirm: v || undefined })" />
           </div>
 
           <!-- emit: eventName + eventPayload -->
           <template v-if="action.type === 'emit'">
             <div class="button-editor__field">
               <label class="button-editor__label">事件名称</label>
-              <t-input :value="action.eventName ?? ''" size="small" placeholder="例如: save" @change="(v: string) => updateAction(btnIdx, aIdx, { eventName: v || undefined })" />
+              <el-input :model-value="action.eventName ?? ''" size="small" placeholder="例如: save" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { eventName: v || undefined })" />
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">事件参数 (JSON)</label>
-              <t-textarea
-                :value="eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] ?? jsonText(action.eventPayload)"
+              <el-input
+                type="textarea"
+                :model-value="eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] ?? jsonText(action.eventPayload)"
                 :rows="2" size="small" placeholder='{"key":"value"}'
-                @change="(v: string) => { eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] = v; updateAction(btnIdx, aIdx, { eventPayload: parseJson(v) as SchemaAction['eventPayload'] }) }"
+                @update:model-value="(v: string) => { eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] = v; updateAction(btnIdx, aIdx, { eventPayload: parseJson(v) as SchemaAction['eventPayload'] }) }"
               />
             </div>
           </template>
@@ -228,18 +229,19 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <template v-if="action.type === 'dialog'">
             <div class="button-editor__field">
               <label class="button-editor__label">弹窗标题</label>
-              <t-input :value="action.dialogTitle ?? ''" size="small" placeholder="弹窗标题" @change="(v: string) => updateAction(btnIdx, aIdx, { dialogTitle: v || undefined })" />
+              <el-input :model-value="action.dialogTitle ?? ''" size="small" placeholder="弹窗标题" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { dialogTitle: v || undefined })" />
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">弹窗宽度</label>
-              <t-input :value="action.dialogWidth ?? ''" size="small" placeholder="600px" @change="(v: string) => updateAction(btnIdx, aIdx, { dialogWidth: v || undefined })" />
+              <el-input :model-value="action.dialogWidth ?? ''" size="small" placeholder="600px" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { dialogWidth: v || undefined })" />
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">弹窗 Schema (JSON)</label>
-              <t-textarea
-                :value="dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] ?? jsonText(action.dialogSchema)"
+              <el-input
+                type="textarea"
+                :model-value="dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] ?? jsonText(action.dialogSchema)"
                 :rows="4" size="small" placeholder='[{"type":"input","field":"name","label":"Name"}]'
-                @change="(v: string) => { dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] = v; updateAction(btnIdx, aIdx, { dialogSchema: parseJson(v) as SchemaAction['dialogSchema'] }) }"
+                @update:model-value="(v: string) => { dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] = v; updateAction(btnIdx, aIdx, { dialogSchema: parseJson(v) as SchemaAction['dialogSchema'] }) }"
               />
             </div>
           </template>
@@ -248,20 +250,21 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <template v-if="action.type === 'api'">
             <div class="button-editor__field">
               <label class="button-editor__label">接口地址</label>
-              <t-input :value="action.apiUrl ?? ''" size="small" placeholder="/api/endpoint" @change="(v: string) => updateAction(btnIdx, aIdx, { apiUrl: v || undefined })" />
+              <el-input :model-value="action.apiUrl ?? ''" size="small" placeholder="/api/endpoint" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { apiUrl: v || undefined })" />
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">请求方法</label>
-              <t-select :value="action.apiMethod ?? 'post'" size="small" style="width:100%" @change="(v: string) => updateAction(btnIdx, aIdx, { apiMethod: v as 'get' | 'post' })">
-                <t-option v-for="opt in apiMethodOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-              </t-select>
+              <el-select :model-value="action.apiMethod ?? 'post'" size="small" style="width:100%" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { apiMethod: v as 'get' | 'post' })">
+                <el-option v-for="opt in apiMethodOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">接口参数 (JSON 或 "formData")</label>
-              <t-textarea
-                :value="apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] ?? (typeof action.apiParams === 'string' ? action.apiParams : jsonText(action.apiParams))"
+              <el-input
+                type="textarea"
+                :model-value="apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] ?? (typeof action.apiParams === 'string' ? action.apiParams : jsonText(action.apiParams))"
                 :rows="2" size="small" placeholder='{"key":"value"} 或 "formData"'
-                @change="(v: string) => { apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] = v; updateAction(btnIdx, aIdx, { apiParams: v === 'formData' ? 'formData' : (parseJson(v) as Record<string, unknown> | undefined) }) }"
+                @update:model-value="(v: string) => { apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] = v; updateAction(btnIdx, aIdx, { apiParams: v === 'formData' ? 'formData' : (parseJson(v) as Record<string, unknown> | undefined) }) }"
               />
             </div>
           </template>
@@ -270,14 +273,15 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
           <template v-if="action.type === 'navigate'">
             <div class="button-editor__field">
               <label class="button-editor__label">跳转路径</label>
-              <t-input :value="action.navigatePath ?? ''" size="small" placeholder="/detail/:id" @change="(v: string) => updateAction(btnIdx, aIdx, { navigatePath: v || undefined })" />
+              <el-input :model-value="action.navigatePath ?? ''" size="small" placeholder="/detail/:id" @update:model-value="(v: string) => updateAction(btnIdx, aIdx, { navigatePath: v || undefined })" />
             </div>
             <div class="button-editor__field">
               <label class="button-editor__label">跳转参数 (JSON)</label>
-              <t-textarea
-                :value="navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] ?? jsonText(action.navigateQuery)"
+              <el-input
+                type="textarea"
+                :model-value="navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] ?? jsonText(action.navigateQuery)"
                 :rows="2" size="small" placeholder='{"from":"list"}'
-                @change="(v: string) => { navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] = v; updateAction(btnIdx, aIdx, { navigateQuery: parseJson(v) as Record<string, string> | undefined }) }"
+                @update:model-value="(v: string) => { navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] = v; updateAction(btnIdx, aIdx, { navigateQuery: parseJson(v) as Record<string, string> | undefined }) }"
               />
             </div>
           </template>
@@ -287,10 +291,10 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
       </div>
     </div>
 
-    <t-button theme="primary" size="small" variant="outline" style="width:100%;margin-top:8px" @click="addButton">
-      <template #icon><AddIcon /></template>
+    <el-button type="primary" size="small" plain style="width:100%;margin-top:8px" @click="addButton">
+      <AppIcon name="plus" />
       添加按钮
-    </t-button>
+    </el-button>
   </div>
 </template>
 

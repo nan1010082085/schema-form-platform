@@ -5,12 +5,12 @@
  * 表格展示所有租户，支持搜索、状态筛选、分页、创建/编辑/启停用/删除。
  */
 import { onMounted, ref, watch } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon, UserIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTenantStore } from '@/stores/tenant'
 import TenantFormDialog from '@/components/System/TenantFormDialog.vue'
 import type { TenantItem, TenantStatus } from '@/types/tenant'
 import styles from './TenantListView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const tenantStore = useTenantStore()
 
@@ -71,35 +71,43 @@ function openEditDialog(tenant: TenantItem) {
 }
 
 async function handleDelete(tenant: TenantItem) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除租户 "${tenant.name}"？删除后不可恢复。`,
-    theme: 'warning',
-    confirmBtn: '删除',
-    onConfirm: async () => {
-      const ok = await tenantStore.deleteTenant(tenant.id)
-      if (ok) MessagePlugin.success('已删除')
-      else MessagePlugin.error(tenantStore.error || '删除失败')
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除租户 "${tenant.name}"？删除后不可恢复。`,
+      '删除确认',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    const ok = await tenantStore.deleteTenant(tenant.id)
+    if (ok) ElMessage.success('已删除')
+    else ElMessage.error(tenantStore.error || '删除失败')
+  } catch {
+    // 用户取消
+  }
 }
 
 async function handleToggleStatus(tenant: TenantItem) {
   const newStatus: TenantStatus = tenant.status === 'active' ? 'inactive' : 'active'
   const actionLabel = newStatus === 'active' ? '启用' : '停用'
-  const confirmDia = DialogPlugin.confirm({
-    header: `${actionLabel}确认`,
-    body: `确认${actionLabel}租户 "${tenant.name}"？`,
-    theme: 'info',
-    confirmBtn: actionLabel,
-    onConfirm: async () => {
-      const result = await tenantStore.toggleTenantStatus(tenant.id, newStatus)
-      if (result) MessagePlugin.success(`已${actionLabel}`)
-      else MessagePlugin.error(tenantStore.error || `${actionLabel}失败`)
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认${actionLabel}租户 "${tenant.name}"？`,
+      `${actionLabel}确认`,
+      {
+        confirmButtonText: actionLabel,
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    )
+    const result = await tenantStore.toggleTenantStatus(tenant.id, newStatus)
+    if (result) ElMessage.success(`已${actionLabel}`)
+    else ElMessage.error(tenantStore.error || `${actionLabel}失败`)
+  } catch {
+    // 用户取消
+  }
 }
 
 function handleSaved() {
@@ -119,10 +127,10 @@ function statusLabel(status: TenantStatus): string {
   return map[status]
 }
 
-function statusTagTheme(status: TenantStatus): 'success' | 'default' | 'warning' {
-  const map: Record<TenantStatus, 'success' | 'default' | 'warning'> = {
+function statusTagType(status: TenantStatus): 'success' | 'info' | 'warning' {
+  const map: Record<TenantStatus, 'success' | 'info' | 'warning'> = {
     active: 'success',
-    inactive: 'default',
+    inactive: 'info',
     suspended: 'warning',
   }
   return map[status]
@@ -140,121 +148,127 @@ function statusTagTheme(status: TenantStatus): 'success' | 'default' | 'warning'
             <p :class="styles.subtitle">管理系统中的所有租户</p>
           </div>
           <div :class="styles.headerActions">
-            <t-button theme="primary" @click="openCreateDialog">
-              <template #icon><AddIcon /></template>
+            <el-button type="primary" @click="openCreateDialog">
+              <AppIcon name="plus" />
               创建租户
-            </t-button>
+            </el-button>
           </div>
         </div>
 
         <!-- Toolbar -->
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
-            <t-input
-              v-model:value="searchInput"
+            <el-input
+              v-model="searchInput"
               placeholder="搜索名称或编码..."
               clearable
               :class="styles.searchInput"
               @input="handleSearch"
               @clear="handleSearch('')"
             >
-              <template #prefix-icon><SearchIcon /></template>
-            </t-input>
-            <t-select v-model:value="activeStatus" :class="styles.statusSelect">
-              <t-option
+              <template #prefix>
+                <AppIcon name="search" />
+              </template>
+            </el-input>
+            <el-select v-model="activeStatus" :class="styles.statusSelect">
+              <el-option
                 v-for="opt in statusOptions"
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"
               />
-            </t-select>
+            </el-select>
           </div>
         </div>
       </div>
 
       <!-- Loading -->
       <div v-if="tenantStore.loading && !tenantStore.hasTenants" :class="styles.tableWrapper">
-        <t-skeleton :row-col="[{ width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }]" animation="gradient" />
+        <el-skeleton :rows="8" animated />
       </div>
 
       <!-- Empty -->
       <div v-else-if="tenantStore.isEmpty" :class="styles.emptyState">
         <div :class="styles.emptyIcon">
-          <UserIcon :size="64" />
+          <AppIcon name="user" :size="64" />
         </div>
         <h2 :class="styles.emptyTitle">暂无租户</h2>
         <p :class="styles.emptyDesc">创建第一个租户来开始使用</p>
-        <t-button theme="primary" @click="openCreateDialog">
-          <template #icon><AddIcon /></template>
+        <el-button type="primary" @click="openCreateDialog">
+          <AppIcon name="plus" />
           创建租户
-        </t-button>
+        </el-button>
       </div>
 
       <!-- Table -->
       <div v-else :class="styles.tableWrapper">
-        <t-table
+        <el-table
           :data="tenantStore.tenants"
-          :columns="[
-            { colKey: 'name', title: '租户名称', minWidth: 160, ellipsis: true },
-            { colKey: 'code', title: '编码', minWidth: 140, ellipsis: true },
-            { colKey: 'status', title: '状态', width: 100 },
-            { colKey: 'maxUsers', title: '用户上限', width: 100, align: 'center' },
-            { colKey: 'features', title: '功能特性', minWidth: 180 },
-            { colKey: 'createdAt', title: '创建时间', width: 170 },
-            { colKey: 'actions', title: '操作', width: 200, fixed: 'right' },
-          ]"
           stripe
           row-key="id"
         >
-          <template #code="{ row }">
-            <t-tag size="small" theme="default">{{ row.code }}</t-tag>
-          </template>
-          <template #status="{ row }">
-            <div :class="styles.stateCell">
-              <span :class="[styles.stateDot, styles[`stateDot${row.status.charAt(0).toUpperCase()}${row.status.slice(1)}`]]" />
-              <t-tag :theme="statusTagTheme(row.status)" size="small">{{ statusLabel(row.status) }}</t-tag>
-            </div>
-          </template>
-          <template #maxUsers="{ row }">
-            {{ row.config.maxUsers }}
-          </template>
-          <template #features="{ row }">
-            <div :class="styles.featureTags">
-              <template v-if="row.config.features.length">
-                <t-tag
-                  v-for="feat in row.config.features"
-                  :key="feat"
-                  size="small"
-                  theme="default"
-                  :class="styles.featureTag"
-                >{{ feat }}</t-tag>
-              </template>
-              <span v-else :class="styles.placeholderDash">-</span>
-            </div>
-          </template>
-          <template #createdAt="{ row }">
-            {{ formatDate(row.createdAt) }}
-          </template>
-          <template #actions="{ row }">
-            <t-button size="small" variant="text" theme="primary" @click="openEditDialog(row)">编辑</t-button>
-            <t-button
-              size="small"
-              variant="text"
-              :theme="row.status === 'active' ? 'warning' : 'success'"
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === 'active' ? '停用' : '启用' }}
-            </t-button>
-            <t-button size="small" variant="text" theme="danger" @click="handleDelete(row)">删除</t-button>
-          </template>
-        </t-table>
+          <el-table-column prop="name" label="租户名称" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="code" label="编码" min-width="140" show-overflow-tooltip>
+            <template #default="{ row }">
+              <el-tag size="small">{{ row.code }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <div :class="styles.stateCell">
+                <span :class="[styles.stateDot, styles[`stateDot${row.status.charAt(0).toUpperCase()}${row.status.slice(1)}`]]" />
+                <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="maxUsers" label="用户上限" width="100" align="center">
+            <template #default="{ row }">
+              {{ row.config.maxUsers }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="features" label="功能特性" min-width="180">
+            <template #default="{ row }">
+              <div :class="styles.featureTags">
+                <template v-if="row.config.features.length">
+                  <el-tag
+                    v-for="feat in row.config.features"
+                    :key="feat"
+                    size="small"
+                    :class="styles.featureTag"
+                  >{{ feat }}</el-tag>
+                </template>
+                <span v-else :class="styles.placeholderDash">-</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" width="170">
+            <template #default="{ row }">
+              {{ formatDate(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" type="primary" link @click="openEditDialog(row)">编辑</el-button>
+              <el-button
+                size="small"
+                :type="row.status === 'active' ? 'warning' : 'success'"
+                link
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === 'active' ? '停用' : '启用' }}
+              </el-button>
+              <el-button size="small" type="danger" link @click="handleDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
         <!-- Pagination -->
         <div v-if="tenantStore.pagination.total > 0" :class="styles.pagination">
-          <t-pagination
-            v-model:value="tenantStore.pagination.page"
+          <el-pagination
+            v-model:current-page="tenantStore.pagination.page"
             :page-size="tenantStore.pagination.pageSize"
             :total="tenantStore.pagination.total"
+            layout="prev, pager, next"
             @current-change="handlePageChange"
           />
         </div>

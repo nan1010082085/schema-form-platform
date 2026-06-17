@@ -7,13 +7,13 @@
  */
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { FileIcon, ChevronRightIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
 import { getWidgetsByGroup, type WidgetRegistryItem } from '@/widgets/registry'
 import { componentDocs } from '@/docs/components'
 import type { ComponentDoc, PropDoc, ExposeDoc } from '@/docs/components'
 import type { PartialWidget } from '@/widgets/base/types'
 import styles from './WidgetDocsView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -122,7 +122,7 @@ function formatSchema(doc: ComponentDoc, idx: number): string {
     <!-- 左侧导航栏 -->
     <aside :class="styles.sidebar">
       <div :class="styles.sidebarHeader">
-        <FileIcon :size="20" />
+        <AppIcon name="document" :size="20" />
         <span :class="styles.sidebarTitle">部件文档</span>
       </div>
       <div :class="styles.sidebarScroll">
@@ -136,8 +136,8 @@ function formatSchema(doc: ComponentDoc, idx: number): string {
             :class="styles.groupHeader"
             @click="toggleGroup(group.key)"
           >
-            <ChevronDownIcon v-if="expandedGroups.has(group.key)" :size="12" :class="styles.arrow" />
-            <ChevronRightIcon v-else :size="12" :class="styles.arrow" />
+            <AppIcon v-if="expandedGroups.has(group.key)" name="arrow-down" :size="12" :class="styles.arrow" />
+            <AppIcon v-else name="arrow-right" :size="12" :class="styles.arrow" />
             <span :class="styles.groupLabel">{{ group.label }}</span>
             <span :class="styles.groupCount">{{ group.items.length }}</span>
           </div>
@@ -185,47 +185,46 @@ function formatSchema(doc: ComponentDoc, idx: number): string {
           <!-- Expose 暴露方法 -->
           <div v-if="selectedDoc.exposes.length > 0" :class="styles.section">
             <h2 :class="styles.sectionTitle">Expose 暴露方法</h2>
-            <t-table
+            <el-table
               :data="(selectedDoc.exposes as ExposeDoc[])"
-              :columns="[
-                { colKey: 'name', title: '方法名', width: 160 },
-                { colKey: 'type', title: '类型', width: 140 },
-                { colKey: 'description', title: '说明', minWidth: 200 },
-              ]"
               :class="styles.table"
-              bordered
+              border
               size="small"
               row-key="name"
             >
-              <template #type="{ row }">
-                <code :class="styles.typeCode">{{ (row as ExposeDoc).type }}</code>
-              </template>
-            </t-table>
+              <el-table-column prop="name" label="方法名" width="160" />
+              <el-table-column prop="type" label="类型" width="140">
+                <template #default="{ row }">
+                  <code :class="styles.typeCode">{{ (row as ExposeDoc).type }}</code>
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="说明" min-width="200" />
+            </el-table>
           </div>
 
           <!-- Props 属性 -->
           <div v-if="selectedDoc.props.length > 0" :class="styles.section">
             <h2 :class="styles.sectionTitle">Props 属性</h2>
-            <t-table
+            <el-table
               :data="(selectedDoc.props as PropDoc[])"
-              :columns="[
-                { colKey: 'name', title: '属性名', width: 160 },
-                { colKey: 'type', title: '类型', width: 120 },
-                { colKey: 'default', title: '默认值', width: 120 },
-                { colKey: 'description', title: '说明', minWidth: 200 },
-              ]"
               :class="styles.table"
-              bordered
+              border
               size="small"
               row-key="name"
             >
-              <template #type="{ row }">
-                <code :class="styles.typeCode">{{ (row as PropDoc).type }}</code>
-              </template>
-              <template #default="{ row }">
-                <code :class="styles.typeCode">{{ (row as PropDoc).default }}</code>
-              </template>
-            </t-table>
+              <el-table-column prop="name" label="属性名" width="160" />
+              <el-table-column prop="type" label="类型" width="120">
+                <template #default="{ row }">
+                  <code :class="styles.typeCode">{{ (row as PropDoc).type }}</code>
+                </template>
+              </el-table-column>
+              <el-table-column prop="default" label="默认值" width="120">
+                <template #default="{ row }">
+                  <code :class="styles.typeCode">{{ (row as PropDoc).default }}</code>
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="说明" min-width="200" />
+            </el-table>
           </div>
 
           <!-- Schema 示例 -->
@@ -254,7 +253,7 @@ function formatSchema(doc: ComponentDoc, idx: number): string {
 
         <!-- 未选中 -->
         <div v-else :class="styles.empty">
-          <FileIcon :size="64" :class="styles.emptyIcon" />
+          <AppIcon name="document" :size="64" :class="styles.emptyIcon" />
           <p :class="styles.emptyText">请从左侧选择一个部件</p>
         </div>
       </div>

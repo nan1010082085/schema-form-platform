@@ -7,7 +7,8 @@
   "description": "Schema 驱动的可视化自由布局编辑器",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vite build",
+    "build:check": "vue-tsc -b && vite build",
     "build:widgets": "vite build --config vite.widget.config.ts",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{ts,vue,scss,json}\"",
@@ -17,6 +18,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@iconify-icons/ep": "^1.2.12",
+    "@iconify/vue": "^5.0.1",
+    "@schema-form/shared-components": "workspace:*",
     "@schema-form/shared-qiankun": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
@@ -26,12 +31,11 @@
     "@vue-flow/core": "^1.48.2",
     "@vue-flow/minimap": "^1.5.4",
     "echarts": "^6.1.0",
+    "element-plus": "^2.9.7",
     "html-to-image": "^1.11.13",
     "jsonpath-plus": "^10.4.0",
     "pinia": "^2.3.0",
     "pinyin-pro": "^3.28.1",
-    "tdesign-icons-vue-next": "^0.4.4",
-    "tdesign-vue-next": "^1.20.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

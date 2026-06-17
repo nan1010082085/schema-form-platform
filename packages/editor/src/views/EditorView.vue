@@ -49,13 +49,10 @@ const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
-// 自动保存开关（默认关闭）
-const autoSaveEnabled = ref(false)
-
 // 自动保存：脏数据 60 秒后自动触发保存
 const { isAutoSaving } = useAutoSave({
   delayMs: 60_000,
-  enabled: autoSaveEnabled,
+  enabled: true,
   onSave: handleSave,
 })
 
@@ -785,16 +782,6 @@ function handleClearCanvas() {
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <!-- 自动保存开关 -->
-          <el-tooltip :content="autoSaveEnabled ? '关闭自动保存' : '开启自动保存'" placement="bottom">
-            <button
-              class="editor-view__icon-btn"
-              :class="{ 'editor-view__icon-btn--active': autoSaveEnabled }"
-              @click="autoSaveEnabled = !autoSaveEnabled"
-            >
-              <AppIcon name="clock" :size="14" />
-            </button>
-          </el-tooltip>
           <el-button
             v-if="boardStore.id"
             type="primary"

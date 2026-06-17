@@ -13,4 +13,4 @@ defineProps<{
   </span>
 </template>
 
-<style module src="./AiLoadingDots.module.css" />
+<style module src="./AiLoadingDots.module.scss" />

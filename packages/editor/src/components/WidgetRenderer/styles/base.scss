@@ -15,17 +15,17 @@
 
 // ---- 单元格 ----
 .fg-grid-col {
-  border: 1px solid rgba(0, 212, 255, 0.08);
+  border: 1px solid var(--color-primary-lighter);
   box-sizing: border-box;
   display: flex;
   align-items: center;  // 内容垂直居中
-  background: rgba(17, 24, 32, 0.6);
+  background: var(--bg-color-white);
   min-width: 0;
   overflow: visible;
   transition: border-color 0.15s, box-shadow 0.15s;
 
   &:hover {
-    border-color: rgba(0, 212, 255, 0.15);
+    border-color: var(--color-primary-lighter);
   }
 }
 
@@ -70,15 +70,15 @@
   white-space: nowrap;
   margin-right: 0;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-color-secondary);
   font-size: 14px;
   min-width: 120px;
   text-align: center;
   padding: 10px 12px;
   display: flex;
   align-items: center;
-  background: rgba(0, 212, 255, 0.03);
-  border-right: 1px solid rgba(0, 212, 255, 0.08);
+  background: var(--color-primary-lighter);
+  border-right: 1px solid var(--color-primary-lighter);
 }
 
 // ---- 内容列 ----
@@ -97,8 +97,8 @@
   width: 100%;
   height: 100%;
   padding: 10px 12px;
-  background: rgba(0, 212, 255, 0.03);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--color-primary-lighter);
+  color: var(--text-color-secondary);
 }
 
 // ============================================================
@@ -109,11 +109,11 @@
   width: 100%;
   height: 100%;
 
-  .t-form-item {
+  .el-form-item {
     margin-bottom: 0;
     height: 100%;
 
-    .t-form__controls {
+    .el-form-item__content {
       display: flex;
       align-items: stretch;
       height: 100%;
@@ -132,8 +132,8 @@
     flex: 1;
     min-width: 0;
 
-    // 去掉 t-form-item 的边框和间距
-    .t-form-item {
+    // 去掉 form-item 的边框和间距
+    .el-form-item {
       margin-bottom: 0;
     }
   }
@@ -149,4 +149,4 @@
   }
 }
 
-// TDesign 组件覆盖已迁移至 theme.scss 统一管理
+// 组件覆盖已在 theme.scss 统一管理

@@ -21,7 +21,10 @@ const dynamicStyle = computed(() => {
 })
 
 const buttonType = computed(() => (widgetData.value.props?.type as string) || 'default')
-const buttonSize = computed(() => (widgetData.value.props?.size as string) || 'default')
+const buttonSize = computed(() => {
+  const size = (widgetData.value.props?.size as string) || 'default'
+  return size
+})
 const isPlain = computed(() => Boolean(widgetData.value.props?.plain))
 const isRound = computed(() => Boolean(widgetData.value.props?.round))
 const isCircle = computed(() => Boolean(widgetData.value.props?.circle))
@@ -35,9 +38,9 @@ async function handleClick() {
 </script>
 
 <template>
-  <t-button
+  <el-button
     :style="dynamicStyle"
-    :type="buttonType as 'primary' | 'success' | 'warning' | 'danger' | 'info' | ''"
+    :type="(buttonType as 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default') || 'default'"
     :size="buttonSize as 'large' | 'default' | 'small'"
     :plain="isPlain"
     :round="isRound"
@@ -46,12 +49,5 @@ async function handleClick() {
     @click="handleClick"
   >
     {{ buttonText }}
-  </t-button>
+  </el-button>
 </template>
-
-<style scoped>
-:deep(.el-button) {
-  width: 100%;
-  height: 100%;
-}
-</style>

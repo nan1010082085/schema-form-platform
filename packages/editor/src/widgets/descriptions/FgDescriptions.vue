@@ -98,12 +98,12 @@ function formatDate(item: DescriptionItemConfig): string {
   <div :class="styles.container">
     <div v-if="title" :class="styles.title">{{ title }}</div>
     <div v-if="loading" :class="styles.loading" />
-    <t-descriptions
+    <el-descriptions
       v-else-if="items.length"
       :column="column"
-      :bordered="border"
+      :border="border"
     >
-      <t-descriptions-item
+      <el-descriptions-item
         v-for="item in items"
         :key="item.field"
         :label="item.label"
@@ -111,12 +111,12 @@ function formatDate(item: DescriptionItemConfig): string {
       >
         <!-- tag 类型 -->
         <template v-if="item.type === 'tag'">
-          <t-tag
-            :theme="(getTagConfig(item)?.color as 'success' | 'warning' | 'danger' | 'default') || 'default'"
+          <el-tag
+            :type="(getTagConfig(item)?.color as 'success' | 'warning' | 'danger' | 'info') || 'info'"
             size="small"
           >
             {{ getTagConfig(item)?.label }}
-          </t-tag>
+          </el-tag>
         </template>
 
         <!-- link 类型 -->
@@ -149,8 +149,8 @@ function formatDate(item: DescriptionItemConfig): string {
         <template v-else>
           {{ formatValue(item) }}
         </template>
-      </t-descriptions-item>
-    </t-descriptions>
+      </el-descriptions-item>
+    </el-descriptions>
     <div v-else :class="styles.empty">暂无数据</div>
   </div>
 </template>

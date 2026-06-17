@@ -31,7 +31,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-date-picker
+  <el-date-picker
     ref="pickerRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
@@ -45,7 +45,7 @@ function forwardNativeChange() {
 </template>
 
 <style scoped>
-:deep(.t-date-picker) {
+:deep(.el-date-editor) {
   width: 100% !important;
   height: 100%;
 }

@@ -15,8 +15,20 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
   const required = options?.required ?? true
 
   return async (ctx, next) => {
-    // 本地开发跳过认证
+    // 本地开发：尝试从 token 解析真实用户，失败则 fallback 到 dev
     if (process.env.NODE_ENV !== 'production') {
+      const authHeader = ctx.get('Authorization')
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.slice(7)
+          const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
+          if (payload.tokenType !== 'refresh') {
+            ctx.state.user = payload
+            await next()
+            return
+          }
+        } catch { /* token invalid, use dev fallback */ }
+      }
       ctx.state.user = { id: 'dev', username: 'dev', roles: [], tenantId: '000000', deptId: null }
       await next()
       return

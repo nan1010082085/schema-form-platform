@@ -5,7 +5,6 @@
  * Sprint 18: Replaces "configured in JSON view" with structured form.
  * Each rule row: required switch -> type -> min/max -> pattern -> message -> trigger.
  */
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 
 interface FormRule {
   required?: boolean
@@ -76,35 +75,35 @@ function setRequired(index: number, val: boolean) {
     <div v-for="(rule, idx) in (rules ?? [])" :key="idx" class="rules-editor__item">
       <div class="rules-editor__item-header">
         <span class="rules-editor__item-title">规则 {{ idx + 1 }}</span>
-        <t-button theme="danger" size="small" variant="text" @click="removeRule(idx)">
-          <DeleteIcon />
-        </t-button>
+        <el-button type="danger" size="small" text @click="removeRule(idx)">
+          <AppIcon name="delete" />
+        </el-button>
       </div>
 
       <!-- Required -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">必填</label>
-        <t-switch :model-value="rule.required === true" @update:model-value="setRequired(idx, $event)" />
+        <el-switch :model-value="rule.required === true" @update:model-value="setRequired(idx, $event)" />
       </div>
 
       <!-- Type -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">类型</label>
-        <t-select
+        <el-select
           :model-value="rule.type ?? ''"
           size="small"
           style="width:100%"
           clearable
           @update:model-value="updateRule(idx, { type: $event || undefined })"
         >
-          <t-option v-for="opt in ruleTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-        </t-select>
+          <el-option v-for="opt in ruleTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
       </div>
 
       <!-- Min -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">最小值</label>
-        <t-input-number
+        <el-input-number
           :model-value="rule.min as number ?? undefined"
           size="small"
           style="width:100%"
@@ -117,7 +116,7 @@ function setRequired(index: number, val: boolean) {
       <!-- Max -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">最大值</label>
-        <t-input-number
+        <el-input-number
           :model-value="rule.max as number ?? undefined"
           size="small"
           style="width:100%"
@@ -130,7 +129,7 @@ function setRequired(index: number, val: boolean) {
       <!-- Pattern -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">正则表达式</label>
-        <t-input
+        <el-input
           :model-value="rule.pattern ? String(rule.pattern) : ''"
           size="small"
           placeholder="^[a-zA-Z]+$"
@@ -141,7 +140,7 @@ function setRequired(index: number, val: boolean) {
       <!-- Message -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">错误提示</label>
-        <t-input
+        <el-input
           :model-value="rule.message ?? ''"
           size="small"
           placeholder="校验错误提示"
@@ -152,21 +151,21 @@ function setRequired(index: number, val: boolean) {
       <!-- Trigger -->
       <div class="rules-editor__field">
         <label class="rules-editor__label">触发方式</label>
-        <t-select
+        <el-select
           :model-value="rule.trigger ?? 'blur'"
           size="small"
           style="width:100%"
           @update:model-value="updateRule(idx, { trigger: $event as string })"
         >
-          <t-option v-for="opt in triggerOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-        </t-select>
+          <el-option v-for="opt in triggerOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+        </el-select>
       </div>
     </div>
 
-    <t-button theme="primary" size="small" variant="outline" style="width:100%;margin-top:8px" @click="addRule">
-      <AddIcon />
+    <el-button type="primary" size="small" plain style="width:100%;margin-top:8px" @click="addRule">
+      <AppIcon name="plus" />
       添加规则
-    </t-button>
+    </el-button>
   </div>
 </template>
 

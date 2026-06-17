@@ -6,7 +6,7 @@ export const buttonConfig: WidgetConfig = {
   author: 'yangdongnan',
   defaultStyle: {
     width: '100px',
-    height: '44px',
+    height: '40px',
   },
   defaultProps: {
     type: 'primary',

@@ -6,7 +6,7 @@ declare module '*.vue' {
   export default component
 }
 
-declare module '*.module.css' {
+declare module '*.module.scss' {
   const classes: Record<string, string>
   export default classes
 }

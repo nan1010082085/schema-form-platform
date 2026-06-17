@@ -7,7 +7,7 @@ export function createColorPickerWidget(id: string): Widget {
     ...publicSchema(id, 'color-picker'),
     name: colorPickerConfig.name,
     label: colorPickerConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...colorPickerConfig.defaultStyle },
     props: { ...colorPickerConfig.defaultProps },
   }

@@ -3,9 +3,8 @@ import { inject, computed, ref, watch, type CSSProperties } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useApiRequest } from '../../composables/useApiRequest'
 import { useExposeWidget } from '../../composables/useExposeWidget'
-import * as TDesignIcons from 'tdesign-icons-vue-next'
-import { TrendingUpIcon, TrendingDownIcon, RemoveIcon } from 'tdesign-icons-vue-next'
 import styles from './style.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const widgetData = inject(widgetDataKey)!
 const { fetchApi } = useApiRequest()
@@ -81,10 +80,6 @@ const trendClass = computed(() => {
 
 // Icon resolution
 const iconName = computed(() => props.value.icon as string)
-const iconComponent = computed(() => {
-  if (!iconName.value) return null
-  return (TDesignIcons as Record<string, unknown>)[iconName.value] ?? null
-})
 
 // Dynamic styles
 const valueStyle = computed<CSSProperties>(() => {
@@ -110,9 +105,9 @@ useExposeWidget(() => ({
 <template>
   <div :class="[styles.container, { [styles.loading]: loading }]">
     <div :class="styles.header">
-      <component
-        v-if="iconComponent"
-        :is="iconComponent"
+      <AppIcon
+        v-if="iconName"
+        :name="iconName"
         :class="styles.icon"
       />
       <span :class="styles.title" :style="titleStyle">
@@ -126,13 +121,13 @@ useExposeWidget(() => ({
     </div>
     <div v-if="trendValue" :class="styles.footer">
       <template v-if="trend === 'up'">
-        <TrendingUpIcon :class="[styles.trendIcon, trendClass]" />
+        <AppIcon name="caret-top" :class="[styles.trendIcon, trendClass]" />
       </template>
       <template v-else-if="trend === 'down'">
-        <TrendingDownIcon :class="[styles.trendIcon, trendClass]" />
+        <AppIcon name="caret-bottom" :class="[styles.trendIcon, trendClass]" />
       </template>
       <template v-else>
-        <RemoveIcon :class="[styles.trendIcon, trendClass]" />
+        <AppIcon name="minus" :class="[styles.trendIcon, trendClass]" />
       </template>
       <span :class="[styles.trendValue, trendClass]">{{ trendValue }}</span>
     </div>

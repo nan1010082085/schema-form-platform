@@ -36,7 +36,7 @@ export interface SchemaListItem {
   name: string
   type: SchemaTypeValue
   status: SchemaStatusValue
-  json?: PartialWidget[]
+  json?: PartialWidget[] | { widgets: PartialWidget[]; board?: Record<string, unknown> }
   thumbnail?: string
   publishId?: string
   createdAt: string
@@ -45,7 +45,7 @@ export interface SchemaListItem {
 
 /** Schema 详情（含完整 JSON schema 定义） */
 export interface SchemaDetail extends SchemaListItem {
-  json: PartialWidget[]
+  json: PartialWidget[] | { widgets: PartialWidget[]; board?: Record<string, unknown> }
 }
 
 /** 发布 Schema（发布表 — 每个源 Schema 最多一条） */
@@ -67,7 +67,7 @@ export interface PublishedSchemaItem {
 export interface SchemaCreatePayload {
   name: string
   type: SchemaTypeValue
-  json: PartialWidget[]
+  json: PartialWidget[] | { widgets: PartialWidget[]; board?: Record<string, unknown> }
   editId?: string
   thumbnail?: string
 }
@@ -75,7 +75,7 @@ export interface SchemaCreatePayload {
 /** Schema 更新请求体（至少一个字段） */
 export interface SchemaUpdatePayload {
   name?: string
-  json?: PartialWidget[]
+  json?: PartialWidget[] | { widgets: PartialWidget[]; board?: Record<string, unknown> }
   type?: SchemaTypeValue
   thumbnail?: string
 }

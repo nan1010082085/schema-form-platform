@@ -5,9 +5,9 @@
  * 展示 useEventLog 捕获的事件/规则/API 执行日志。
  */
 import { ref, nextTick, watch } from 'vue'
-import { DeleteIcon } from 'tdesign-icons-vue-next'
 import { useEventLog } from '../../composables/useEventLog'
 import styles from './EventLogPanel.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const { entries, clear } = useEventLog()
 const scrollRef = ref<HTMLElement | null>(null)
@@ -45,16 +45,16 @@ const LEVEL_LABELS: Record<string, string> = {
     <div :class="styles.header">
       <span :class="styles.title">执行日志</span>
       <span :class="styles.count">{{ entries.length }}</span>
-      <t-button
+      <el-button
         :class="styles.clearBtn"
-        theme="danger"
-        variant="text"
+        type="danger"
+        link
         size="small"
         @click="clear"
       >
-        <DeleteIcon />
+        <AppIcon name="delete"  />
         清空
-      </t-button>
+      </el-button>
     </div>
     <div ref="scrollRef" :class="styles.scroll">
       <div v-if="entries.length === 0" :class="styles.empty">

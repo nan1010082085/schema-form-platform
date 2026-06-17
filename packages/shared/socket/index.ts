@@ -132,3 +132,58 @@ export function onFlowNotification(handler: (data: FlowNotificationEvent) => voi
   socket.on('flow:notification', handler)
   return () => { socket?.off('flow:notification', handler) }
 }
+
+// ---- AI Chat (WebSocket 流式对话) ----
+
+export interface ChatSendPayload {
+  conversationId?: string
+  message: string
+  context: {
+    source: string
+    schemaId?: string
+    flowId?: string
+    nodeId?: string
+    version?: string
+    preferences?: Record<string, unknown>
+    historySummary?: string
+    currentSchema?: Record<string, unknown>[]
+    currentFlow?: { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] }
+    selectedWidget?: { id: string; type: string; field?: string; label?: string }
+    editorMode?: 'edit' | 'preview'
+  }
+  mentions?: Array<{ id: string; type: string; name?: string; label?: string }>
+}
+
+export interface ChatEvent {
+  threadId: string
+  type: string
+  [key: string]: unknown
+}
+
+/** 发送聊天消息（启动流式响应） */
+export function emitChatSend(data: ChatSendPayload): void {
+  if (socket && connected) {
+    socket.emit('chat:send', data)
+  }
+}
+
+/** 取消当前聊天流 */
+export function emitChatCancel(): void {
+  if (socket && connected) {
+    socket.emit('chat:cancel')
+  }
+}
+
+/** 恢复 HITL 中断的对话 */
+export function emitChatResume(threadId: string, confirmed: boolean): void {
+  if (socket && connected) {
+    socket.emit('chat:resume', { threadId, confirmed })
+  }
+}
+
+/** 监听聊天流事件 */
+export function onChatEvent(handler: (data: ChatEvent) => void): () => void {
+  if (!socket) return () => {}
+  socket.on('chat:event', handler)
+  return () => { socket?.off('chat:event', handler) }
+}

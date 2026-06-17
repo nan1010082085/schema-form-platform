@@ -6,8 +6,8 @@
  * 替代原来的 SchemaCard 字段列表，让用户直接看到渲染效果。
  */
 import { computed } from 'vue'
-/* TDesign migration: components registered globally */
 import type { Widget } from '@/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 export interface SchemaPreviewCardProps {
   widgets: Widget[]
@@ -93,21 +93,14 @@ function getButtonType(w: Widget): string {
     <div :class="$style.header">
       <div :class="$style.headerLeft">
         <div :class="$style.headerIcon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="9" y1="21" x2="9" y2="9" />
-          </svg>
+          <AppIcon name="grid" :size="14" />
         </div>
         <span :class="$style.title">{{ title }}</span>
       </div>
       <div :class="$style.headerRight">
         <span :class="$style.badge">{{ sortedWidgets.length }} 个字段</span>
         <span :class="$style.viewHint">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
+          <AppIcon name="view" :size="12" />
           预览
         </span>
       </div>
@@ -115,19 +108,19 @@ function getButtonType(w: Widget): string {
 
     <!-- 表单预览区域 -->
     <div :class="$style.previewBody">
-      <t-form
+      <el-form
         :label-width="(formProps.labelWidth as string) ?? '100px'"
-        :label-align="(formProps.labelPosition as 'left' | 'right' | 'top') ?? 'right'"
+        :label-position="(formProps.labelPosition as 'left' | 'right' | 'top') ?? 'right'"
         :class="$style.form"
       >
         <template v-for="widget in sortedWidgets" :key="widget.id">
           <!-- input / email / phone / password -->
-          <t-form-item
+          <el-form-item
             v-if="['input', 'email', 'phone', 'password'].includes(widget.type)"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-input
+            <el-input
               :placeholder="getPlaceholder(widget)"
               :clearable="isClearable(widget)"
               :show-password="isShowPassword(widget)"
@@ -135,162 +128,159 @@ function getButtonType(w: Widget): string {
               :disabled="compact"
               size="default"
             />
-          </t-form-item>
+          </el-form-item>
 
           <!-- textarea -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'textarea'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-input
+            <el-input
               type="textarea"
               :placeholder="getPlaceholder(widget)"
               :rows="3"
               :disabled="compact"
             />
-          </t-form-item>
+          </el-form-item>
 
           <!-- select -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'select'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-select
+            <el-select
               :placeholder="getPlaceholder(widget)"
               :clearable="isClearable(widget)"
               :disabled="compact"
               style="width: 100%"
             >
-              <t-option
+              <el-option
                 v-for="opt in getOptions(widget)"
                 :key="String(opt.value)"
                 :label="opt.label"
                 :value="opt.value"
               />
-            </t-select>
-          </t-form-item>
+            </el-select>
+          </el-form-item>
 
           <!-- checkbox -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'checkbox'"
             :label="widget.label || undefined"
             :class="$style.formItem"
           >
-            <t-checkbox-group :disabled="compact">
-              <t-checkbox
+            <el-checkbox-group :disabled="compact">
+              <el-checkbox
                 v-for="opt in getOptions(widget)"
                 :key="String(opt.value)"
                 :label="opt.label"
                 :value="opt.value"
               />
-            </t-checkbox-group>
-          </t-form-item>
+            </el-checkbox-group>
+          </el-form-item>
 
           <!-- radio -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'radio'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-radio-group :disabled="compact">
-              <t-radio
+            <el-radio-group :disabled="compact">
+              <el-radio
                 v-for="opt in getOptions(widget)"
                 :key="String(opt.value)"
                 :value="opt.value"
               >
                 {{ opt.label }}
-              </t-radio>
-            </t-radio-group>
-          </t-form-item>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
 
           <!-- switch -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'switch'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-switch :disabled="compact" />
-          </t-form-item>
+            <el-switch :disabled="compact" />
+          </el-form-item>
 
           <!-- date-picker -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'date-picker' || widget.type === 'datepicker'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-date-picker
+            <el-date-picker
               :placeholder="getPlaceholder(widget)"
               :disabled="compact"
               style="width: 100%"
             />
-          </t-form-item>
+          </el-form-item>
 
           <!-- time-picker -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'time-picker' || widget.type === 'timepicker'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-time-picker
+            <el-time-picker
               :placeholder="getPlaceholder(widget)"
               :disabled="compact"
               style="width: 100%"
             />
-          </t-form-item>
+          </el-form-item>
 
           <!-- button -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'button'"
             :class="$style.formItem"
           >
-            <t-button
+            <el-button
               :type="getButtonType(widget) as any"
               :disabled="compact"
             >
               {{ getButtonText(widget) }}
-            </t-button>
-          </t-form-item>
+            </el-button>
+          </el-form-item>
 
           <!-- 数字输入 -->
-          <t-form-item
+          <el-form-item
             v-else-if="widget.type === 'number'"
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-input-number
-              :placeholder="getPlaceholder(widget)"
+            <el-input-number
               :disabled="compact"
               style="width: 100%"
             />
-          </t-form-item>
+          </el-form-item>
 
           <!-- 未知类型：fallback 显示 input -->
-          <t-form-item
+          <el-form-item
             v-else
             :label="widget.label"
             :class="$style.formItem"
           >
-            <t-input
+            <el-input
               :placeholder="getPlaceholder(widget) || widget.type"
               :disabled="compact"
             />
-          </t-form-item>
+          </el-form-item>
         </template>
-      </t-form>
+      </el-form>
     </div>
 
     <!-- 操作栏 -->
     <div v-if="!compact" :class="$style.actions">
-      <t-button :class="$style.btnPrimary" theme="primary" @click.stop="emit('primary-action')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+      <el-button :class="$style.btnPrimary" type="primary" @click.stop="emit('primary-action')">
+        <AppIcon name="check" :size="12" />
         确认发布
-      </t-button>
+      </el-button>
     </div>
   </div>
 </template>
 
-<style module src="./SchemaPreviewCard.module.css" />
+<style module src="./SchemaPreviewCard.module.scss" />

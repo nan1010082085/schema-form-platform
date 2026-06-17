@@ -4,6 +4,7 @@ import { flowApi } from '../api/flowApi.js'
 import styles from './SubProcessSelector.module.scss'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 const props = withDefaults(defineProps<{
   modelValue?: string
@@ -91,7 +92,7 @@ defineExpose({ open })
 </script>
 
 <template>
-  <el-dialog
+  <AppDialog
     v-model="visible"
     title="选择子流程"
     width="600px"
@@ -154,5 +155,5 @@ defineExpose({ open })
         </div>
       </div>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>

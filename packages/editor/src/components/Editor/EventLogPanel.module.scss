@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 200px;
-  border-top: 1px solid rgba(0, 212, 255, 0.08);
+  border-top: 1px solid var(--color-primary-lighter);
   background: var(--glass-bg, rgba(17, 24, 32, 0.9));
   backdrop-filter: var(--glass-blur, blur(16px));
   -webkit-backdrop-filter: var(--glass-blur, blur(16px));
@@ -13,20 +13,20 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+  border-bottom: 1px solid var(--color-primary-lighter);
   flex-shrink: 0;
 }
 
 .title {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-color-primary);
 }
 
 .count {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
-  background: rgba(0, 212, 255, 0.06);
+  color: var(--text-color-placeholder);
+  background: var(--color-primary-lighter);
   border-radius: 8px;
   padding: 0 6px;
   line-height: 18px;
@@ -46,7 +46,7 @@
 .empty {
   padding: 24px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--text-color-disabled);
   font-size: 12px;
 }
 
@@ -54,16 +54,16 @@
   display: flex;
   gap: 6px;
   padding: 3px 12px;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.04);
+  border-bottom: 1px solid var(--color-primary-lighter);
   line-height: 20px;
 }
 
 .entry:hover {
-  background: rgba(0, 212, 255, 0.04);
+  background: var(--color-primary-lighter);
 }
 
 .time {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--text-color-disabled);
   flex-shrink: 0;
 }
 
@@ -74,11 +74,11 @@
 }
 
 .scope {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-color-placeholder);
   flex-shrink: 0;
 }
 
 .message {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-color-primary);
   word-break: break-all;
 }

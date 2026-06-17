@@ -5,7 +5,7 @@ export const autocompleteConfig: WidgetConfig = {
   displayName: '自动补全',
   description: '自动补全输入框，支持远程搜索和静态建议列表',
   author: 'yangdongnan',
-  defaultStyle: { width: '240px', height: '44px' },
+  defaultStyle: { width: '240px', height: '40px' },
   defaultProps: {
     placeholder: '请输入',
     clearable: true,

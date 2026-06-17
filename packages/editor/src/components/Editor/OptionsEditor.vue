@@ -63,13 +63,13 @@ function updateOptionValue(index: number, value: string) {
         :key="i"
         :class="styles.row"
       >
-        <t-input
+        <el-input
           :model-value="opt.label"
           placeholder="显示文本"
           size="small"
           @update:model-value="(v: string) => updateOptionLabel(i, v)"
         />
-        <t-input
+        <el-input
           :model-value="String(opt.value)"
           placeholder="值"
           size="small"

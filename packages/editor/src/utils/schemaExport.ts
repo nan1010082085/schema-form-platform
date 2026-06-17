@@ -10,7 +10,7 @@ import type { SchemaDetail } from '@/types/api'
 export interface ExportedSchema {
   name: string
   type: string
-  json: unknown[]
+  json: unknown
   exportedAt: string
   version: '1.0'
 }

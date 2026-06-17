@@ -301,6 +301,8 @@ export const useApiStore = defineStore('schema', () => {
    * @param schema   - 要保存的 PartialWidget 数组
    * @param name     - Schema 名称
    * @param schemaId - 可选：要更新的 Schema ID
+   * @param thumbnail - 可选：缩略图
+   * @param boardConfig - 可选：画布配置（canvas, variables, events）
    * @returns 保存后的 Schema，失败返回 null
    */
   async function saveSchema(
@@ -308,11 +310,17 @@ export const useApiStore = defineStore('schema', () => {
     name: string,
     schemaId?: string,
     thumbnail?: string,
+    boardConfig?: { canvas?: Record<string, unknown>; variables?: unknown[]; events?: unknown[] },
   ): Promise<SchemaListItem | null> {
+    // 将 board 配置嵌入到 json 字段中
+    const jsonPayload = boardConfig
+      ? { widgets: schema, board: boardConfig }
+      : schema
+
     if (schemaId) {
-      return updateSchema(schemaId, { name, json: schema, thumbnail })
+      return updateSchema(schemaId, { name, json: jsonPayload, thumbnail })
     } else {
-      return createSchema({ name, type: 'form' as const, json: schema, thumbnail })
+      return createSchema({ name, type: 'form' as const, json: jsonPayload, thumbnail })
     }
   }
 

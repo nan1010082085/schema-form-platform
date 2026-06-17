@@ -7,12 +7,12 @@
  */
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { LoadingIcon } from 'tdesign-icons-vue-next'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
 import type { PartialWidget } from '@/widgets/base/types'
 import { fetchSchemaById } from '@/utils/apiClient'
 import { registerAllWidgets } from '@/widgets'
 import styles from './PreviewRenderView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 registerAllWidgets()
 
@@ -28,7 +28,7 @@ async function loadSchema(id: string) {
   error.value = ''
   try {
     const result = await fetchSchemaById(id)
-    schema.value = result.json
+    schema.value = Array.isArray(result.json) ? result.json : (result.json as any)?.widgets ?? []
     schemaName.value = result.name
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : `Schema "${id}" 未找到`
@@ -48,7 +48,7 @@ watch(schemaId, (id) => { if (id) loadSchema(id) }, { immediate: true })
     </div>
 
     <div v-if="loading" :class="styles['fg-preview-render__state']">
-      <LoadingIcon :class="styles['loading-spinner']" :size="24" />
+      <AppIcon name="loading" :class="styles['loading-spinner']" :size="24" />
       <span>加载中...</span>
     </div>
 

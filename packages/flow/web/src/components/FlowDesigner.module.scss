@@ -69,9 +69,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--bg-color-secondary);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color-lighter);
   font-size: 13px;
+  border-radius: var(--radius-small);
+  transition: background-color 0.15s;
 }
 
 .errorItem:last-child {
@@ -80,20 +82,20 @@
 
 .badge {
   flex-shrink: 0;
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
 }
 
 .errorLevel .badge {
-  background: var(--color-danger-light);
-  color: var(--color-danger);
+  background: #fef0f0;
+  color: #c45656;
 }
 
 .warnLevel .badge {
-  background: var(--color-warning-light);
-  color: var(--color-warning);
+  background: #fdf6ec;
+  color: #e6a23c;
 }
 
 .errMsg {
@@ -121,11 +123,19 @@
   flex-shrink: 0;
   margin-left: auto;
   color: var(--color-primary);
-  opacity: 0.7;
+  opacity: 0.6;
+  padding: 4px;
+  border-radius: var(--radius-small);
+  transition: all 0.15s;
 }
 
 .errorItemClickable:hover .errLocateIcon {
   opacity: 1;
+  background: var(--color-primary-lighter);
+}
+
+.errLocateIcon:hover {
+  background: var(--color-primary-lighter);
 }
 
 .formPreview {
@@ -152,4 +162,88 @@
 
 .versionTable {
   max-height: 400px;
+}
+
+.versionPanel {
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.versionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color-lighter);
+  margin-bottom: 8px;
+}
+
+.versionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.versionLoading,
+.versionEmpty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-color-placeholder);
+  font-size: 13px;
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.versionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  transition: background 0.15s;
+}
+
+.versionItem:hover {
+  background: var(--bg-color-secondary);
+}
+
+.versionItemCurrent {
+  background: var(--color-primary-lighter);
+}
+
+.versionInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.versionTime {
+  font-size: 13px;
+  color: var(--text-color-primary);
+}
+
+.versionTags {
+  display: flex;
+  gap: 4px;
+}
+
+.validationTable {
+  width: 100%;
+}
+
+.errId {
+  font-size: 12px;
+  color: var(--text-color-placeholder);
+  font-family: monospace;
+}
+
+.errIdEmpty {
+  color: var(--text-color-disabled);
 }

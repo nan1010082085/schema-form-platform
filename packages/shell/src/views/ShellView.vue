@@ -13,7 +13,7 @@ import { useRoute } from 'vue-router'
 import SideMenu from '@/components/SideMenu.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
-import styles from './ShellView.module.css'
+import styles from './ShellView.module.scss'
 
 const route = useRoute()
 const collapsed = ref(false)

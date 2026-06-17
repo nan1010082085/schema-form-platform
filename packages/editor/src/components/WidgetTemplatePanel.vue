@@ -11,12 +11,12 @@
  * 状态由 useTemplateStore 管理，本组件只做渲染和交互。
  */
 import { ref, onMounted } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon, AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTemplateStore } from '@/stores/template'
 import type { TemplateCategory } from '@/utils/apiClient'
 import type { Widget } from '@/widgets/base/types'
-import styles from './WidgetTemplatePanel.module.css'
+import styles from './WidgetTemplatePanel.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const emit = defineEmits<{
   'apply-template': [widgets: Record<string, unknown>[]]
@@ -78,40 +78,43 @@ function handlePageChange(newPage: number) {
 // ---- Apply template ----
 
 async function handleApply(templateId: string, templateName: string) {
-  const confirmed = await DialogPlugin.confirm({
-    header: '应用模板',
-    body: `确认应用模板「${templateName}」？模板内容将添加到画布。`,
-    confirmBtn: '应用',
-    cancelBtn: '取消',
-  })
-  if (confirmed !== 'confirm') return
+  try {
+    await ElMessageBox.confirm(
+      `确认应用模板「${templateName}」？模板内容将添加到画布。`,
+      '应用模板',
+      { confirmButtonText: '应用', cancelButtonText: '取消' },
+    )
+  } catch {
+    return
+  }
 
   try {
     const widgets = await templateStore.applyTemplateById(templateId)
     emit('apply-template', widgets)
-    MessagePlugin.success(`已应用模板「${templateName}」`)
+    ElMessage.success(`已应用模板「${templateName}」`)
   } catch {
-    MessagePlugin.error('应用模板失败')
+    ElMessage.error('应用模板失败')
   }
 }
 
 // ---- Delete template ----
 
 async function handleDelete(templateId: string, templateName: string) {
-  const confirmed = await DialogPlugin.confirm({
-    header: '删除模板',
-    body: `确认删除模板「${templateName}」？此操作不可撤销。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    theme: 'warning',
-  })
-  if (confirmed !== 'confirm') return
+  try {
+    await ElMessageBox.confirm(
+      `确认删除模板「${templateName}」？此操作不可撤销。`,
+      '删除模板',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
 
   try {
     await templateStore.removeTemplate(templateId)
-    MessagePlugin.success('已删除模板')
+    ElMessage.success('已删除模板')
   } catch {
-    MessagePlugin.error('删除模板失败')
+    ElMessage.error('删除模板失败')
   }
 }
 
@@ -151,11 +154,11 @@ function removeTag(index: number) {
 
 async function handleSaveTemplate() {
   if (!saveForm.value.name.trim()) {
-    MessagePlugin.warning('请输入模板名称')
+    ElMessage.warning('请输入模板名称')
     return
   }
   if (!props.currentWidgets || props.currentWidgets.length === 0) {
-    MessagePlugin.warning('画布为空，无法保存模板')
+    ElMessage.warning('画布为空，无法保存模板')
     return
   }
 
@@ -167,10 +170,10 @@ async function handleSaveTemplate() {
       widgets: props.currentWidgets as unknown as Record<string, unknown>[],
       tags: saveForm.value.tags,
     })
-    MessagePlugin.success('模板已保存')
+    ElMessage.success('模板已保存')
     showSaveDialog.value = false
   } catch {
-    MessagePlugin.error('保存模板失败')
+    ElMessage.error('保存模板失败')
   }
 }
 
@@ -186,7 +189,7 @@ onMounted(() => {
     <!-- Header: search + filter + save button -->
     <div :class="styles.header">
       <div :class="styles['header-row']">
-        <t-input
+        <el-input
           :model-value="templateStore.searchKeyword"
           :class="styles['search-input']"
           placeholder="搜索模板..."
@@ -194,22 +197,22 @@ onMounted(() => {
           size="small"
           @input="handleSearchChange"
         >
-          <template #prefix-icon>
-            <SearchIcon />
+          <template #prefix>
+            <AppIcon name="search"  />
           </template>
-        </t-input>
-        <t-button
+        </el-input>
+        <el-button
           :class="styles['save-btn']"
-          theme="primary"
+          type="primary"
           size="small"
           @click="openSaveDialog"
         >
-          <template #icon><AddIcon /></template>
+          <AppIcon name="plus" />
           保存
-        </t-button>
+        </el-button>
       </div>
       <div :class="styles['filter-row']">
-        <t-select
+        <el-select
           :model-value="templateStore.selectedCategory"
           :class="styles['filter-select']"
           placeholder="分类"
@@ -217,13 +220,13 @@ onMounted(() => {
           clearable
           @change="handleCategoryChange"
         >
-          <t-option
+          <el-option
             v-for="opt in categoryOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
     </div>
 
@@ -269,23 +272,23 @@ onMounted(() => {
             <span v-for="tag in tpl.tags" :key="tag" :class="styles['card-tag']">{{ tag }}</span>
           </div>
           <div :class="styles['card-actions']" @click.stop>
-            <t-button
-              theme="primary"
+            <el-button
+              type="primary"
               size="small"
-              variant="text"
+              link
               @click="handleApply(tpl.id, tpl.name)"
             >
               应用
-            </t-button>
-            <t-button
+            </el-button>
+            <el-button
               v-if="!tpl.isBuiltin"
-              theme="danger"
+              type="danger"
               size="small"
-              variant="text"
+              link
               @click="handleDelete(tpl.id, tpl.name)"
             >
-              <template #icon><DeleteIcon /></template>
-            </t-button>
+              <AppIcon name="delete" />
+            </el-button>
           </div>
         </div>
       </div>
@@ -293,64 +296,66 @@ onMounted(() => {
 
     <!-- Pagination -->
     <div v-if="templateStore.total > templateStore.pageSize" :class="styles.pagination">
-      <t-pagination
-        :current="templateStore.page"
+      <el-pagination
+        :current-page="templateStore.page"
         :page-size="templateStore.pageSize"
         :total="templateStore.total"
+        layout="prev, pager, next"
         size="small"
         @current-change="handlePageChange"
       />
     </div>
 
     <!-- Save template dialog -->
-    <t-dialog
-      v-model:visible="showSaveDialog"
-      header="保存为模板"
+    <el-dialog
+      v-model="showSaveDialog"
+      title="保存为模板"
       width="400px"
-      attach="body"
+      :close-on-click-modal="false"
       destroy-on-close
     >
       <div :class="styles['save-form']">
-        <t-form-item label="模板名称" required-mark>
-          <t-input
-            v-model:value="saveForm.name"
+        <el-form-item label="模板名称" required>
+          <el-input
+            v-model="saveForm.name"
             placeholder="请输入模板名称"
             maxlength="100"
             show-word-limit
           />
-        </t-form-item>
-        <t-form-item label="描述">
-          <t-textarea
-            v-model:value="saveForm.description"
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input
+            v-model="saveForm.description"
+            type="textarea"
             placeholder="请输入模板描述"
             :rows="2"
             maxlength="500"
             show-word-limit
           />
-        </t-form-item>
-        <t-form-item label="分类">
-          <t-select v-model:value="saveForm.category" style="width: 100%">
-            <t-option
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="saveForm.category" style="width: 100%">
+            <el-option
               v-for="opt in categoryOptions.filter(o => o.value)"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
-        </t-form-item>
-        <t-form-item label="标签">
+          </el-select>
+        </el-form-item>
+        <el-form-item label="标签">
           <div :class="styles['tag-input-row']">
-            <t-input
-              v-model:value="tagInput"
+            <el-input
+              v-model="tagInput"
               :class="styles['tag-input']"
               placeholder="输入标签后回车"
               size="small"
-              @enter="addTag"
+              @keyup.enter="addTag"
             />
-            <t-button size="small" @click="addTag">添加</t-button>
+            <el-button size="small" @click="addTag">添加</el-button>
           </div>
           <div v-if="saveForm.tags.length > 0" style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap;">
-            <t-tag
+            <el-tag
               v-for="(tag, idx) in saveForm.tags"
               :key="idx"
               closable
@@ -358,14 +363,14 @@ onMounted(() => {
               @close="removeTag(idx)"
             >
               {{ tag }}
-            </t-tag>
+            </el-tag>
           </div>
-        </t-form-item>
+        </el-form-item>
       </div>
       <template #footer>
-        <t-button @click="showSaveDialog = false">取消</t-button>
-        <t-button theme="primary" @click="handleSaveTemplate">保存</t-button>
+        <el-button @click="showSaveDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveTemplate">保存</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>

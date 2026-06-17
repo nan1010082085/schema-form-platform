@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon, LinkIcon, CheckCircleFilledIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface ModelParameters {
   temperature: number
@@ -83,17 +83,15 @@ const testConfigId = ref('')
 
 const modelSuggestions = ref<string[]>([])
 
-const modelColumns = [
-  { colKey: 'name', title: '配置名称', minWidth: 160 },
-  { colKey: 'provider', title: 'Provider', width: 120, align: 'center' as const },
-  { colKey: 'model', title: '模型', minWidth: 180 },
-  { colKey: 'isDefault', title: '默认', width: 80, align: 'center' as const },
-  { colKey: 'parameters', title: '参数', minWidth: 200 },
-  { colKey: 'actions', title: '操作', width: 260, fixed: 'right' as const },
-]
-
 function updateModelSuggestions() {
   modelSuggestions.value = DEFAULT_MODELS[form.value.provider] ?? []
+}
+
+function fetchModelSuggestions(query: string, cb: (items: Array<{ value: string }>) => void) {
+  const results = modelSuggestions.value
+    .filter(m => m.toLowerCase().includes(query.toLowerCase()))
+    .map(m => ({ value: m }))
+  cb(results)
 }
 
 async function fetchConfigs() {
@@ -150,11 +148,11 @@ function openEdit(config: ModelConfig) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('请输入配置名称')
+    ElMessage.warning('请输入配置名称')
     return
   }
   if (!form.value.model.trim()) {
-    MessagePlugin.warning('请输入模型名称')
+    ElMessage.warning('请输入模型名称')
     return
   }
 
@@ -174,36 +172,33 @@ async function handleSubmit() {
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/model-configs', body)
-    MessagePlugin.success('模型配置创建成功')
+    ElMessage.success('模型配置创建成功')
   } else {
     await apiClient.put(`/model-configs/${editingId.value}`, body)
-    MessagePlugin.success('模型配置更新成功')
+    ElMessage.success('模型配置更新成功')
   }
   dialogVisible.value = false
   fetchConfigs()
 }
 
 async function handleDelete(config: ModelConfig) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除模型配置「${config.name}」（${PROVIDER_LABELS[config.provider]} / ${config.model}）？`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/model-configs/${config.id}`)
-      MessagePlugin.success('模型配置已删除')
-      fetchConfigs()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除模型配置「${config.name}」（${PROVIDER_LABELS[config.provider]} / ${config.model}）？`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+    await apiClient.delete(`/model-configs/${config.id}`)
+    ElMessage.success('模型配置已删除')
+    fetchConfigs()
+  } catch {
+    // 用户取消
+  }
 }
 
 async function handleSetDefault(config: ModelConfig) {
   await apiClient.put(`/model-configs/${config.id}`, { isDefault: true })
-  MessagePlugin.success(`已将「${config.name}」设为 ${PROVIDER_LABELS[config.provider]} 默认模型`)
+  ElMessage.success(`已将「${config.name}」设为 ${PROVIDER_LABELS[config.provider]} 默认模型`)
   fetchConfigs()
 }
 
@@ -257,126 +252,136 @@ onMounted(fetchConfigs)
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
       <div :class="$style.toolbarLeft">
-        <t-input
-          v-model:value="searchQuery"
+        <el-input
+          v-model="searchQuery"
           placeholder="搜索配置名称"
-          :prefix-icon="SearchIcon"
+          :prefix-icon="Search"
           clearable
-          :style="{ width: '240px' }"
+          style="width: 240px"
         />
-        <t-select v-model:value="providerFilter" placeholder="供应商" clearable :style="{ width: '140px' }">
-          <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
-        </t-select>
+        <el-select v-model="providerFilter" placeholder="供应商" clearable style="width: 140px">
+          <el-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
+        </el-select>
       </div>
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate">新增配置</t-button>
+      <el-button type="primary" :icon="Plus" @click="openCreate">新增配置</el-button>
     </div>
 
-    <t-table :data="configs" :columns="modelColumns" :loading="loading" :class="$style.table">
-      <template #cell-provider="{ row }">
-        <t-tag size="small" theme="default">
-          {{ PROVIDER_LABELS[row.provider] ?? row.provider }}
-        </t-tag>
-      </template>
-      <template #cell-isDefault="{ row }">
-        <t-tag v-if="row.isDefault" size="small" theme="success">默认</t-tag>
-      </template>
-      <template #cell-parameters="{ row }">
-        <span :class="$style.paramText">
-          T={{ row.parameters?.temperature ?? '-' }}, Max={{ row.parameters?.maxTokens ?? '-' }}, P={{ row.parameters?.topP ?? '-' }}
-        </span>
-      </template>
-      <template #cell-actions="{ row }">
-        <div :class="$style.actions">
-          <t-button variant="text" size="small" :icon="LinkIcon" @click="openTestDialog(row)">测试</t-button>
-          <t-button
-            v-if="!row.isDefault"
-            variant="text"
-            size="small"
-            :icon="CheckCircleFilledIcon"
-            @click="handleSetDefault(row)"
-          >
-            设为默认
-          </t-button>
-          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-        </div>
-      </template>
-    </t-table>
+    <el-table :data="configs" v-loading="loading" :class="$style.table" border stripe>
+      <el-table-column prop="name" label="配置名称" min-width="160" />
+      <el-table-column prop="provider" label="Provider" width="120" align="center">
+        <template #default="{ row }">
+          <el-tag size="small">{{ PROVIDER_LABELS[row.provider] ?? row.provider }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="model" label="模型" min-width="180" />
+      <el-table-column prop="isDefault" label="默认" width="80" align="center">
+        <template #default="{ row }">
+          <el-tag v-if="row.isDefault" size="small" type="success">默认</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="参数" min-width="200">
+        <template #default="{ row }">
+          <span :class="$style.paramText">
+            T={{ row.parameters?.temperature ?? '-' }}, Max={{ row.parameters?.maxTokens ?? '-' }}, P={{ row.parameters?.topP ?? '-' }}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="260" fixed="right">
+        <template #default="{ row }">
+          <div :class="$style.actions">
+            <el-button type="primary" link size="small" :icon="Link" @click="openTestDialog(row)">测试</el-button>
+            <el-button
+              v-if="!row.isDefault"
+              type="primary"
+              link
+              size="small"
+              :icon="CircleCheckFilled"
+              @click="handleSetDefault(row)"
+            >
+              设为默认
+            </el-button>
+            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
 
     <div v-if="total > pageSize" :class="$style.pagination">
-      <t-pagination
+      <el-pagination
         :total="total"
         :page-size="pageSize"
-        :current="page"
+        :current-page="page"
+        layout="prev, pager, next"
         @current-change="handlePageChange"
       />
     </div>
 
     <!-- 创建/编辑对话框 -->
-    <t-dialog
-      v-model:visible="dialogVisible"
-      :header="dialogMode === 'create' ? '新增模型配置' : '编辑模型配置'"
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogMode === 'create' ? '新增模型配置' : '编辑模型配置'"
       width="560px"
       destroy-on-close
     >
-      <t-form label-width="100px">
-        <t-form-item label="配置名称">
-          <t-input v-model:value="form.name" placeholder="如 DeepSeek Chat 生产环境" />
-        </t-form-item>
-        <t-form-item label="供应商">
-          <t-select v-model:value="form.provider" :style="{ width: '100%' }">
-            <t-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
-          </t-select>
-        </t-form-item>
-        <t-form-item label="模型">
-          <t-auto-complete
-            v-model:value="form.model"
-            :options="modelSuggestions.map(m => ({ value: m }))"
+      <el-form label-width="100px">
+        <el-form-item label="配置名称">
+          <el-input v-model="form.name" placeholder="如 DeepSeek Chat 生产环境" />
+        </el-form-item>
+        <el-form-item label="供应商">
+          <el-select v-model="form.provider" style="width: 100%">
+            <el-option v-for="(label, key) in PROVIDER_LABELS" :key="key" :label="label" :value="key" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="模型">
+          <el-autocomplete
+            v-model="form.model"
+            :fetch-suggestions="fetchModelSuggestions"
             placeholder="如 deepseek-chat"
-            :style="{ width: '100%' }"
+            style="width: 100%"
           />
-        </t-form-item>
-        <t-form-item label="API Key">
-          <t-input v-model:value="form.apiKey" type="password" placeholder="留空表示不需要认证" />
-        </t-form-item>
-        <t-form-item label="接口地址">
-          <t-input v-model:value="form.baseUrl" placeholder="留空使用默认地址" />
-        </t-form-item>
-        <t-form-item label="温度">
-          <t-slider v-model:value="form.temperature" :min="0" :max="2" :step="0.1" :show-input="true" />
-        </t-form-item>
-        <t-form-item label="最大令牌数">
-          <t-input-number v-model:value="form.maxTokens" :min="1" :max="128000" :step="256" :style="{ width: '100%' }" />
-        </t-form-item>
-        <t-form-item label="采样概率">
-          <t-slider v-model:value="form.topP" :min="0" :max="1" :step="0.05" :show-input="true" />
-        </t-form-item>
-        <t-form-item label="设为默认">
-          <t-switch v-model:value="form.isDefault" />
-        </t-form-item>
-      </t-form>
+        </el-form-item>
+        <el-form-item label="API Key">
+          <el-input v-model="form.apiKey" type="password" show-password placeholder="留空表示不需要认证" />
+        </el-form-item>
+        <el-form-item label="接口地址">
+          <el-input v-model="form.baseUrl" placeholder="留空使用默认地址" />
+        </el-form-item>
+        <el-form-item label="温度">
+          <el-slider v-model="form.temperature" :min="0" :max="2" :step="0.1" show-input />
+        </el-form-item>
+        <el-form-item label="最大令牌数">
+          <el-input-number v-model="form.maxTokens" :min="1" :max="128000" :step="256" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="采样概率">
+          <el-slider v-model="form.topP" :min="0" :max="1" :step="0.05" show-input />
+        </el-form-item>
+        <el-form-item label="设为默认">
+          <el-switch v-model="form.isDefault" />
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <t-button @click="dialogVisible = false">取消</t-button>
-        <t-button theme="primary" @click="handleSubmit">确定</t-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
 
     <!-- 测试连接对话框 -->
-    <t-dialog
-      v-model:visible="testDialogVisible"
-      header="测试模型连接"
+    <el-dialog
+      v-model="testDialogVisible"
+      title="测试模型连接"
       width="480px"
       destroy-on-close
     >
       <div :class="$style.testBody">
-        <t-button
-          theme="primary"
+        <el-button
+          type="primary"
           :loading="testLoading"
           @click="handleTestConnection"
           :class="$style.testBtn"
         >
           {{ testLoading ? '测试中...' : '发送测试请求' }}
-        </t-button>
+        </el-button>
 
         <div v-if="testResult" :class="$style.testSuccess">
           <div :class="$style.testLabel">模型回复：</div>
@@ -392,9 +397,9 @@ onMounted(fetchConfigs)
         </div>
       </div>
       <template #footer>
-        <t-button @click="testDialogVisible = false">关闭</t-button>
+        <el-button @click="testDialogVisible = false">关闭</el-button>
       </template>
-    </t-dialog>
+    </el-dialog>
   </div>
 </template>
 
@@ -424,7 +429,7 @@ onMounted(fetchConfigs)
 
 .paramText {
   font-size: 12px;
-  color: var(--td-text-color-secondary);
+  color: var(--el-text-color-secondary);
   font-family: monospace;
 }
 
@@ -452,21 +457,21 @@ onMounted(fetchConfigs)
 
 .testSuccess {
   padding: 12px;
-  background: var(--td-success-color-1);
-  border: 1px solid var(--td-success-color-3);
+  background: var(--el-color-success-light-9);
+  border: 1px solid var(--el-color-success-light-5);
   border-radius: 6px;
 }
 
 .testLabel {
   font-size: 13px;
   font-weight: 500;
-  color: var(--td-text-color-primary);
+  color: var(--el-text-color-primary);
   margin-bottom: 8px;
 }
 
 .testReply {
   font-size: 14px;
-  color: var(--td-text-color-secondary);
+  color: var(--el-text-color-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;
@@ -477,15 +482,15 @@ onMounted(fetchConfigs)
   gap: 16px;
   margin-top: 8px;
   font-size: 12px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
 }
 
 .testError {
   padding: 12px;
-  background: var(--td-error-color-1);
-  border: 1px solid var(--td-error-color-3);
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-5);
   border-radius: 6px;
-  color: var(--td-error-color);
+  color: var(--el-color-danger);
   font-size: 13px;
 }
 </style>

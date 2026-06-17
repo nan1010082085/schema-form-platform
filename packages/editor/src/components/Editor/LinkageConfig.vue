@@ -10,9 +10,9 @@
  * - elseValue
  */
 import { computed } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { validateExpression } from '@/utils/expression'
 import type { SchemaLinkage, LinkageType, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   linkages: SchemaLinkage[]
@@ -117,38 +117,38 @@ function apiToText(api?: SchemaApiConfig): string {
     >
       <div class="linkage-config__item-header">
         <span class="linkage-config__item-title">规则 {{ idx + 1 }}</span>
-        <t-button
-          theme="danger"
-          variant="text"
+        <el-button
+          type="danger"
+          link
           size="small"
           @click="removeLinkage(idx)"
         >
-          <template #icon><DeleteIcon /></template>
-        </t-button>
+          <AppIcon name="delete" />
+        </el-button>
       </div>
 
       <!-- Type -->
       <div class="linkage-config__field">
         <label class="linkage-config__label">类型</label>
-        <t-select
+        <el-select
           :model-value="linkage.type"
           size="small"
           style="width: 100%"
           @update:model-value="updateLinkage(idx, 'type', $event as LinkageType)"
         >
-          <t-option
+          <el-option
             v-for="opt in linkageTypeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- Watch Fields -->
       <div class="linkage-config__field">
         <label class="linkage-config__label">监听字段</label>
-        <t-select
+        <el-select
           :model-value="linkage.watchFields"
           size="small"
           multiple
@@ -157,19 +157,20 @@ function apiToText(api?: SchemaApiConfig): string {
           placeholder="选择要监听的字段"
           @update:model-value="updateLinkage(idx, 'watchFields', $event as string[])"
         >
-          <t-option
+          <el-option
             v-for="opt in fieldOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- Condition Expression -->
       <div class="linkage-config__field">
         <label class="linkage-config__label">条件表达式</label>
-        <t-textarea
+        <el-input
+          type="textarea"
           :model-value="linkage.condition"
           :rows="2"
           size="small"
@@ -188,7 +189,8 @@ function apiToText(api?: SchemaApiConfig): string {
       <!-- thenOptions (for 'options' type) -->
       <div v-if="linkage.type === 'options'" class="linkage-config__field">
         <label class="linkage-config__label">联动选项 (label=value, 每行一个)</label>
-        <t-textarea
+        <el-input
+          type="textarea"
           :model-value="optionsToText(linkage.thenOptions)"
           :rows="3"
           size="small"
@@ -200,7 +202,8 @@ function apiToText(api?: SchemaApiConfig): string {
       <!-- thenApi (for 'options' type) -->
       <div v-if="linkage.type === 'options'" class="linkage-config__field">
         <label class="linkage-config__label">联动 API (JSON)</label>
-        <t-textarea
+        <el-input
+          type="textarea"
           :model-value="apiToText(linkage.thenApi)"
           :rows="3"
           size="small"
@@ -212,7 +215,7 @@ function apiToText(api?: SchemaApiConfig): string {
       <!-- set-value specific: literal value -->
       <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
         <label class="linkage-config__label">联动赋值 (字面量)</label>
-        <t-input
+        <el-input
           :model-value="String(linkage.thenValue ?? '')"
           size="small"
           placeholder="要设置的字面量值"
@@ -223,7 +226,7 @@ function apiToText(api?: SchemaApiConfig): string {
       <!-- set-value specific: value source field -->
       <div v-if="linkage.type === 'set-value'" class="linkage-config__field">
         <label class="linkage-config__label">值来源 (从字段复制)</label>
-        <t-select
+        <el-select
           :model-value="linkage.valueSource ?? ''"
           size="small"
           style="width: 100%"
@@ -231,19 +234,19 @@ function apiToText(api?: SchemaApiConfig): string {
           placeholder="选择要复制值的字段"
           @update:model-value="updateLinkage(idx, 'valueSource', $event || undefined)"
         >
-          <t-option
+          <el-option
             v-for="opt in fieldOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- reset-fields specific: target fields -->
       <div v-if="linkage.type === 'reset-fields'" class="linkage-config__field">
         <label class="linkage-config__label">目标字段 (要重置的字段)</label>
-        <t-select
+        <el-select
           :model-value="linkage.targetFields ?? []"
           size="small"
           multiple
@@ -252,19 +255,19 @@ function apiToText(api?: SchemaApiConfig): string {
           placeholder="选择要重置的字段"
           @update:model-value="updateLinkage(idx, 'targetFields', $event as string[])"
         >
-          <t-option
+          <el-option
             v-for="opt in fieldOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- elseValue -->
       <div class="linkage-config__field">
         <label class="linkage-config__label">否则赋值</label>
-        <t-input
+        <el-input
           :model-value="String(linkage.elseValue ?? '')"
           size="small"
           placeholder="条件为 false 时的回退值"
@@ -273,16 +276,16 @@ function apiToText(api?: SchemaApiConfig): string {
       </div>
     </div>
 
-    <t-button
-      theme="primary"
-      variant="outline"
+    <el-button
+      type="primary"
+      plain
       size="small"
       style="width: 100%; margin-top: 8px"
       @click="addLinkage"
     >
-      <template #icon><AddIcon /></template>
+      <AppIcon name="plus" />
       添加联动规则
-    </t-button>
+    </el-button>
   </div>
 </template>
 
@@ -339,7 +342,7 @@ function apiToText(api?: SchemaApiConfig): string {
     line-height: 1.3;
   }
 
-  .is-error :deep(.t-textarea__inner) {
+  .is-error :deep(.el-textarea__inner) {
     border-color: #f56c6c;
   }
 }

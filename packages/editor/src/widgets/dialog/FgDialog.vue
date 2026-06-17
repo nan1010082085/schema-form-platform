@@ -16,14 +16,12 @@ import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
-import { useLogger } from '@/composables/useLogger'
-import EnhancedDialog from '../../components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import { useExposeWidget } from '@/composables/useExposeWidget'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const eventCtx = inject(EVENT_CONTEXT_KEY, null)
-const logger = useLogger('FgDialog')
 
 useExposeWidget(() => ({
   get visible() { return visible.value },
@@ -47,7 +45,7 @@ const visible = ref(false)
 
 // ---- Dialog 独立 formModel ----
 const dialogModel = reactive<Record<string, unknown>>({})
-const childFormRef = ref<InstanceType<typeof import('tdesign-vue-next')['Form']>>()
+const childFormRef = ref<any>()
 
 // ---- Lifecycle ----
 const { trigger } = useWidgetLifecycle(widgetData, dialogModel)
@@ -140,7 +138,7 @@ async function handleCancel() {
     </div>
 
     <!-- 编辑模式：EnhancedDialog（teleport 到 body） -->
-    <EnhancedDialog
+    <AppDialog
       v-else
       v-model="visible"
       :title="(widgetData.props?.title as string) || '弹窗标题'"
@@ -156,10 +154,10 @@ async function handleCancel() {
       />
       <template v-if="widgetData.props?.showFooter !== false" #footer>
         <div :class="styles.footer">
-          <t-button @click="handleCancel">{{ (widgetData.props?.cancelText as string) || '取消' }}</t-button>
-          <t-button type="primary" @click="handleConfirm">{{ (widgetData.props?.confirmText as string) || '确定' }}</t-button>
+          <el-button @click="handleCancel">{{ (widgetData.props?.cancelText as string) || '取消' }}</el-button>
+          <el-button type="primary" @click="handleConfirm">{{ (widgetData.props?.confirmText as string) || '确定' }}</el-button>
         </div>
       </template>
-    </EnhancedDialog>
+    </AppDialog>
   </template>
 </template>

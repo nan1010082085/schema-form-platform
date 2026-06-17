@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface Menu {
   id: string
@@ -130,37 +130,34 @@ function openEdit(menu: Menu) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('请输入菜单名称')
+    ElMessage.warning('请输入菜单名称')
     return
   }
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/menus', form.value)
-    MessagePlugin.success('菜单创建成功')
+    ElMessage.success('菜单创建成功')
   } else {
     await apiClient.put(`/menus/${editingId.value}`, form.value)
-    MessagePlugin.success('菜单更新成功')
+    ElMessage.success('菜单更新成功')
   }
   dialogVisible.value = false
   fetchMenus()
 }
 
 async function handleDelete(menu: Menu) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除菜单「${menu.name}」？如有子菜单需先删除。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/menus/${menu.id}`)
-      MessagePlugin.success('菜单已删除')
-      fetchMenus()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除菜单「${menu.name}」？如有子菜单需先删除。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+    await apiClient.delete(`/menus/${menu.id}`)
+    ElMessage.success('菜单已删除')
+    fetchMenus()
+  } catch {
+    // 用户取消
+  }
 }
 
 function getMicroAppName(id: string | null): string {
@@ -181,59 +178,58 @@ onMounted(async () => {
 <template>
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索菜单名称"
-        :prefix-icon="SearchIcon"
+        :prefix-icon="Search"
         clearable
         :class="$style.search"
       />
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate(null)">
+      <el-button type="primary" :icon="Plus" @click="openCreate(null)">
         新增菜单
-      </t-button>
+      </el-button>
     </div>
 
-    <t-tree
+    <el-tree
       :data="filteredTree"
-      :keys="{ label: 'name', children: 'children', value: 'id' }"
-      :default-expanded="expandedKeys"
+      node-key="id"
+      :default-expand-all="true"
       :expand-on-click-node="false"
       :class="$style.tree"
-      :loading="loading"
-      hover
-      line
+      v-loading="loading"
+      highlight-current
     >
-      <template #label="{ node }">
+      <template #default="{ data }">
         <div :class="$style.nodeRow">
           <div :class="$style.nodeInfo">
-            <span :class="$style.nodeName">{{ node.data.name }}</span>
-            <t-tag size="small" :theme="node.data.type === 'menu' ? 'default' : 'warning'" :class="$style.nodeTag">
-              {{ typeLabel[node.data.type] || node.data.type }}
-            </t-tag>
-            <t-tag v-if="node.data.microAppId" size="small" theme="success" :class="$style.nodeTag">
-              {{ getMicroAppName(node.data.microAppId) }}
-            </t-tag>
-            <t-tag v-if="node.data.permission" size="small" theme="default" :class="$style.nodeTag">
-              {{ node.data.permission }}
-            </t-tag>
-            <t-tag v-if="node.data.path" size="small" theme="default" :class="$style.nodeTag">
-              {{ node.data.path }}
-            </t-tag>
-            <t-tag v-if="node.data.status === 'inactive'" size="small" theme="warning" :class="$style.nodeTag">
+            <span :class="$style.nodeName">{{ data.name }}</span>
+            <el-tag size="small" :type="data.type === 'menu' ? 'info' : 'warning'" :class="$style.nodeTag">
+              {{ typeLabel[data.type] || data.type }}
+            </el-tag>
+            <el-tag v-if="data.microAppId" size="small" type="success" :class="$style.nodeTag">
+              {{ getMicroAppName(data.microAppId) }}
+            </el-tag>
+            <el-tag v-if="data.permission" size="small" :class="$style.nodeTag">
+              {{ data.permission }}
+            </el-tag>
+            <el-tag v-if="data.path" size="small" :class="$style.nodeTag">
+              {{ data.path }}
+            </el-tag>
+            <el-tag v-if="data.status === 'inactive'" size="small" type="warning" :class="$style.nodeTag">
               停用
-            </t-tag>
-            <t-tag v-if="node.data.target === '_blank'" size="small" theme="danger" :class="$style.nodeTag">
+            </el-tag>
+            <el-tag v-if="data.target === '_blank'" size="small" type="danger" :class="$style.nodeTag">
               新页签
-            </t-tag>
+            </el-tag>
           </div>
           <div :class="$style.nodeActions">
-            <t-button variant="text" size="small" @click.stop="openCreate(node.data.id)">添加子菜单</t-button>
-            <t-button variant="text" size="small" @click.stop="openEdit(node.data)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click.stop="handleDelete(node.data)">删除</t-button>
+            <el-button size="small" link @click.stop="openCreate(data.id)">添加子菜单</el-button>
+            <el-button size="small" link @click.stop="openEdit(data)">编辑</el-button>
+            <el-button size="small" link type="danger" @click.stop="handleDelete(data)">删除</el-button>
           </div>
         </div>
       </template>
-    </t-tree>
+    </el-tree>
 
     <div v-if="!loading && filteredTree.length === 0" :class="$style.empty">
       暂无菜单数据
@@ -241,81 +237,81 @@ onMounted(async () => {
   </div>
 
   <!-- Create/Edit Dialog -->
-  <t-dialog
-    v-model:visible="dialogVisible"
-    :header="dialogMode === 'create' ? '新增菜单' : '编辑菜单'"
+  <el-dialog
+    v-model="dialogVisible"
+    :title="dialogMode === 'create' ? '新增菜单' : '编辑菜单'"
     width="520px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="菜单名称">
-        <t-input v-model:value="form.name" placeholder="请输入菜单名称" />
-      </t-form-item>
-      <t-form-item label="上级菜单">
-        <t-tree-select
-          v-model:value="form.parentId"
+    <el-form label-width="80px">
+      <el-form-item label="菜单名称">
+        <el-input v-model="form.name" placeholder="请输入菜单名称" />
+      </el-form-item>
+      <el-form-item label="上级菜单">
+        <el-tree-select
+          v-model="form.parentId"
           :data="menuTree"
-          :keys="{ label: 'name', children: 'children', value: 'id' }"
+          :props="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择上级菜单（留空为顶级）"
           clearable
           check-strictly
-          :style="{ width: '100%' }"
+          style="width: 100%"
         />
-      </t-form-item>
-      <t-form-item label="菜单类型">
-        <t-radio-group v-model:value="form.type">
-          <t-radio value="menu">菜单</t-radio>
-          <t-radio value="button">按钮</t-radio>
-        </t-radio-group>
-      </t-form-item>
-      <t-form-item label="关联微应用">
-        <t-select
-          v-model:value="form.microAppId"
+      </el-form-item>
+      <el-form-item label="菜单类型">
+        <el-radio-group v-model="form.type">
+          <el-radio value="menu">菜单</el-radio>
+          <el-radio value="button">按钮</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="关联微应用">
+        <el-select
+          v-model="form.microAppId"
           placeholder="选择微应用（可选）"
           clearable
-          :style="{ width: '100%' }"
+          style="width: 100%"
         >
-          <t-option
+          <el-option
             v-for="app in microApps"
             :key="app.id"
             :label="app.name"
             :value="app.id"
           />
-        </t-select>
-      </t-form-item>
-      <t-form-item label="打开方式">
-        <t-radio-group v-model:value="form.target">
-          <t-radio value="_self">当前窗口</t-radio>
-          <t-radio value="_blank">新页签</t-radio>
-        </t-radio-group>
-      </t-form-item>
-      <t-form-item label="路由路径">
-        <t-input v-model:value="form.path" placeholder="如：/users、/roles" />
-      </t-form-item>
-      <t-form-item label="组件路径">
-        <t-input v-model:value="form.component" placeholder="如：views/UserManageView" />
-      </t-form-item>
-      <t-form-item label="图标">
-        <t-input v-model:value="form.icon" placeholder="图标名称（可选）" />
-      </t-form-item>
-      <t-form-item label="权限编码">
-        <t-input v-model:value="form.permission" placeholder="如：system:user:list" />
-      </t-form-item>
-      <t-form-item label="排序">
-        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
-      </t-form-item>
-      <t-form-item label="状态">
-        <t-select v-model:value="form.status" :style="{ width: '100%' }">
-          <t-option label="正常" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
-      </t-form-item>
-    </t-form>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="打开方式">
+        <el-radio-group v-model="form.target">
+          <el-radio value="_self">当前窗口</el-radio>
+          <el-radio value="_blank">新页签</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="路由路径">
+        <el-input v-model="form.path" placeholder="如：/users、/roles" />
+      </el-form-item>
+      <el-form-item label="组件路径">
+        <el-input v-model="form.component" placeholder="如：views/UserManageView" />
+      </el-form-item>
+      <el-form-item label="图标">
+        <el-input v-model="form.icon" placeholder="图标名称（可选）" />
+      </el-form-item>
+      <el-form-item label="权限编码">
+        <el-input v-model="form.permission" placeholder="如：system:user:list" />
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number v-model="form.sort" :min="0" :max="9999" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="form.status" style="width: 100%">
+          <el-option label="正常" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="dialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleSubmit">确定</t-button>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style module>
@@ -336,7 +332,7 @@ onMounted(async () => {
 }
 
 .tree {
-  border: 1px solid var(--td-border-level-2-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 8px;
   min-height: 300px;
@@ -359,7 +355,7 @@ onMounted(async () => {
 
 .nodeName {
   font-size: 14px;
-  color: var(--td-text-color-primary);
+  color: var(--el-text-color-primary);
   font-weight: 500;
 }
 
@@ -382,7 +378,7 @@ onMounted(async () => {
 .empty {
   text-align: center;
   padding: 48px 20px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
   font-size: 14px;
 }
 </style>

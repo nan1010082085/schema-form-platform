@@ -16,6 +16,10 @@ const dynamicStyle = computed(() => ({
   fontSize: widgetStyle.value?.fontSize as string,
 }))
 
+const cascaderProps = computed(() => ({
+  multiple: (widgetData.value.props?.multiple as boolean) || false,
+}))
+
 const cascaderRef = ref<{ $el?: HTMLElement }>()
 
 function forwardNativeChange() {
@@ -24,7 +28,7 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-cascader
+  <el-cascader
     ref="cascaderRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
@@ -34,14 +38,14 @@ function forwardNativeChange() {
     :clearable="(widgetData.props?.clearable as boolean) ?? true"
     :show-all-levels="(widgetData.props?.showAllLevels as boolean) ?? true"
     :collapse-tags="(widgetData.props?.collapseTags as boolean) || false"
-    :multiple="(widgetData.props?.multiple as boolean) || false"
     :check-strictly="(widgetData.props?.checkStrictly as boolean) || false"
+    :props="cascaderProps"
     @change="forwardNativeChange"
   />
 </template>
 
 <style scoped>
-:deep(.t-cascader) {
+:deep(.el-cascader) {
   width: 100%;
 }
 </style>

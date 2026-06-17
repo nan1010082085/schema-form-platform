@@ -22,7 +22,7 @@ import { EVENT_CONTEXT_KEY, FORM_GRID_LINKAGE_KEY, DIALOG_REGISTRY_KEY } from '.
 import { getComponentMap } from '../../widgets/registry'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from './SchemaRender.vue'
-import EnhancedDialog from '../EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 const props = defineProps<{
   widget: PartialWidget
@@ -122,7 +122,7 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
   <template v-if="renderState.visible">
 
     <!-- Dialog container: render as EnhancedDialog (default open) -->
-    <EnhancedDialog
+    <AppDialog
       v-if="widget.type === 'dialog'"
       v-model="dialogVisible"
       :title="(widget.props?.title as string) || widget.label || '弹窗'"
@@ -142,14 +142,14 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
         />
       </template>
       <template v-if="widget.props?.showFooter !== false" #footer>
-        <t-button @click="dialogVisible = false">
+        <el-button @click="dialogVisible = false">
           {{ (widget.props?.cancelText as string) || '取消' }}
-        </t-button>
-        <t-button theme="primary" @click="dialogVisible = false">
+        </el-button>
+        <el-button type="primary" @click="dialogVisible = false">
           {{ (widget.props?.confirmText as string) || '确定' }}
-        </t-button>
+        </el-button>
       </template>
-    </EnhancedDialog>
+    </AppDialog>
 
     <!-- Container (non-dialog): component + recursive children -->
     <component
@@ -171,11 +171,10 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
     </component>
 
     <!-- Non-container with event interception + form-item wrapping -->
-    <t-form-item
+    <el-form-item
       v-else-if="needsFormItem"
       :label="widget.label"
-      :name="widget.field"
-      :rules="widget.validationRules"
+      :prop="widget.field"
       @change="FORM_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('change', $event)"
       @focus="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('focus')"
       @blur="INPUT_COMPONENT_TYPES.has(widget.type) && handleWidgetEvent('blur')"
@@ -186,7 +185,7 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
         :is="resolvedComponent"
         :widget="widget"
       />
-    </t-form-item>
+    </el-form-item>
 
     <!-- Non-container basic component with event interception -->
     <div

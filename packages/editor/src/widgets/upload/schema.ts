@@ -7,7 +7,7 @@ export function createUploadWidget(id: string): Widget {
     ...publicSchema(id, 'upload'),
     name: uploadConfig.name,
     label: uploadConfig.displayName,
-    position: { x: 0, y: 0, w: 240, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 240, h: 40, zIndex: 1 },
     style: { ...uploadConfig.defaultStyle },
     props: { ...uploadConfig.defaultProps },
   }

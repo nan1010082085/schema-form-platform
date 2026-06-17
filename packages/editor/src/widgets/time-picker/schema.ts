@@ -7,7 +7,7 @@ export function createTimePickerWidget(id: string): Widget {
     ...publicSchema(id, 'time-picker'),
     name: timePickerConfig.name,
     label: timePickerConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...timePickerConfig.defaultStyle },
     props: { ...timePickerConfig.defaultProps },
   }

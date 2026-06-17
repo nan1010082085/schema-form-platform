@@ -10,7 +10,7 @@
  * - 交互事件（选中、拖拽、缩放）
  */
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
 import { useDragStore } from '../../stores/drag'
@@ -42,15 +42,17 @@ interface FlatWidget {
 function flattenWidgets(widgets: Widget[], offsetX = 0, offsetY = 0, depth = 0): FlatWidget[] {
   const result: FlatWidget[] = []
   for (const w of widgets) {
+    // 跳过无效的 widget
+    if (!w || !w.position) continue
     result.push({
       widget: w,
-      canvasX: offsetX + w.position.x,
-      canvasY: offsetY + w.position.y,
+      canvasX: offsetX + (w.position.x || 0),
+      canvasY: offsetY + (w.position.y || 0),
       depth,
     })
     // 自渲染容器内部是流式布局，子组件绝对坐标与实际位置不匹配，跳过递归
     if (w.children?.length && !SELF_RENDERING_CONTAINERS.has(w.type)) {
-      result.push(...flattenWidgets(w.children, offsetX + w.position.x, offsetY + w.position.y, depth + 1))
+      result.push(...flattenWidgets(w.children, offsetX + (w.position.x || 0), offsetY + (w.position.y || 0), depth + 1))
     }
   }
   return result
@@ -486,9 +488,9 @@ async function handleTemplateDrop(templateId: string, clientX: number, clientY: 
     }
 
     editorStore.pushHistory([...widgetStore.widgets])
-    MessagePlugin.success(`已应用模板「${result.name}」`)
+    ElMessage.success(`已应用模板「${result.name}」`)
   } catch {
-    MessagePlugin.error('应用模板失败')
+    ElMessage.error('应用模板失败')
   }
 }
 </script>
@@ -523,6 +525,8 @@ async function handleTemplateDrop(templateId: string, clientX: number, clientY: 
           zIndex: (fw.widget.position.zIndex ?? 1) + 100 + fw.depth * 10,
         }
       })()"
+      @dragover.stop.prevent="handleDragOver($event)"
+      @drop.stop="handleDrop($event)"
       @mousedown.stop="handleWidgetMouseDown($event, fw.widget)"
       @click.stop="INTERACTIVE_CONTAINER_TYPES.has(fw.widget.type) && handleInteractiveClick($event, fw.widget)"
       @contextmenu.prevent="showContextMenu($event, fw.widget)"

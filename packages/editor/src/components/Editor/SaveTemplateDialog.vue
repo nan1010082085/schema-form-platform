@@ -5,7 +5,7 @@
  * 将画布上的 Widget 树保存为模板。
  */
 import { ref, watch } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { createTemplate } from '@/utils/apiClient'
 import type { TemplateCategory } from '@/utils/apiClient'
 
@@ -15,6 +15,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'update:visible': [value: boolean]
   close: []
   saved: []
 }>()
@@ -36,12 +37,13 @@ watch(() => props.visible, (val) => {
 })
 
 function handleClose() {
+  emit('update:visible', false)
   emit('close')
 }
 
 async function handleSave() {
   if (!name.value.trim()) {
-    MessagePlugin.warning('请输入模板名称')
+    ElMessage.warning('请输入模板名称')
     return
   }
 
@@ -60,11 +62,12 @@ async function handleSave() {
       tags,
     })
 
-    MessagePlugin.success('模板保存成功')
+    ElMessage.success('模板保存成功')
     emit('saved')
+    emit('update:visible', false)
     emit('close')
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '保存失败')
+    ElMessage.error(err instanceof Error ? err.message : '保存失败')
   } finally {
     saving.value = false
   }
@@ -72,45 +75,48 @@ async function handleSave() {
 </script>
 
 <template>
-  <t-dialog
-    :visible="visible"
-    header="保存为模板"
+  <el-dialog
+    :model-value="visible"
+    title="保存为模板"
     width="420px"
-    :close-on-overlay="false"
+    :close-on-click-modal="false"
+    :append-to-body="true"
+    @update:model-value="emit('update:visible', $event)"
     @close="handleClose"
   >
-    <t-form ref="formRef" label-width="70px" label-align="left">
-      <t-form-item label="名称" required>
-        <t-input v-model:value="name" placeholder="输入模板名称" maxlength="100" show-word-limit />
-      </t-form-item>
+    <el-form ref="formRef" label-width="70px" label-position="left">
+      <el-form-item label="名称" required>
+        <el-input v-model="name" placeholder="输入模板名称" maxlength="100" show-word-limit />
+      </el-form-item>
 
-      <t-form-item label="描述">
-        <t-textarea
-          v-model:value="description"
+      <el-form-item label="描述">
+        <el-input
+          v-model="description"
+          type="textarea"
           :rows="2"
           placeholder="模板描述（可选）"
           maxlength="500"
           show-word-limit
         />
-      </t-form-item>
+      </el-form-item>
 
-      <t-form-item label="分类">
-        <t-select v-model:value="category" style="width: 100%">
-          <t-option label="表单" value="form" />
-          <t-option label="报表" value="report" />
-          <t-option label="布局" value="layout" />
-          <t-option label="其他" value="other" />
-        </t-select>
-      </t-form-item>
+      <el-form-item label="分类">
+        <el-select v-model="category" style="width: 100%">
+          <el-option label="表单" value="form" />
+          <el-option label="报表" value="report" />
+          <el-option label="布局" value="layout" />
+          <el-option label="其他" value="other" />
+        </el-select>
+      </el-form-item>
 
-      <t-form-item label="标签">
-        <t-input v-model:value="tagsInput" placeholder="多个标签用逗号分隔" />
-      </t-form-item>
-    </t-form>
+      <el-form-item label="标签">
+        <el-input v-model="tagsInput" placeholder="多个标签用逗号分隔" />
+      </el-form-item>
+    </el-form>
 
     <template #footer>
-      <t-button @click="handleClose">取消</t-button>
-      <t-button theme="primary" :loading="saving" @click="handleSave">保存</t-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>

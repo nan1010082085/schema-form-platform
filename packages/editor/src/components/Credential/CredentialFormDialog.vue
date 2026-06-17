@@ -6,10 +6,9 @@
  * In edit mode, data fields are pre-filled from the server (decrypted).
  */
 import { ref, watch, computed } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import { useCredentialStore } from '@/stores/credential'
 import type {
-  CredentialItem,
   CredentialDetail,
   CredentialType,
   CredentialCreatePayload,
@@ -90,14 +89,14 @@ function isPasswordField(field: string): boolean {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('Please enter a credential name')
+    ElMessage.warning('Please enter a credential name')
     return
   }
 
   // Validate all fields are filled
   for (const field of currentFields.value) {
     if (!form.value.data[field]?.trim()) {
-      MessagePlugin.warning(`Please fill in ${getFieldLabel(field)}`)
+      ElMessage.warning(`Please fill in ${getFieldLabel(field)}`)
       return
     }
   }
@@ -112,11 +111,11 @@ async function handleSubmit() {
       }
       const result = await credentialStore.updateCredential(props.initialData.id, payload)
       if (result) {
-        MessagePlugin.success('Credential updated')
+        ElMessage.success('Credential updated')
         emit('update:visible', false)
         emit('saved')
       } else {
-        MessagePlugin.error(credentialStore.error || 'Update failed')
+        ElMessage.error(credentialStore.error || 'Update failed')
       }
     } else {
       const payload: CredentialCreatePayload = {
@@ -126,11 +125,11 @@ async function handleSubmit() {
       }
       const result = await credentialStore.createCredential(payload)
       if (result) {
-        MessagePlugin.success('Credential created')
+        ElMessage.success('Credential created')
         emit('update:visible', false)
         emit('saved')
       } else {
-        MessagePlugin.error(credentialStore.error || 'Creation failed')
+        ElMessage.error(credentialStore.error || 'Creation failed')
       }
     }
   } finally {
@@ -144,54 +143,54 @@ function handleClose() {
 </script>
 
 <template>
-  <t-dialog
-    :visible="visible"
-    :header="dialogTitle"
+  <el-dialog
+    :model-value="visible"
+    :title="dialogTitle"
     width="480px"
-    :close-on-overlay-click="false"
-    attach="body"
+    :close-on-click-modal="false"
+    append-to-body
     destroy-on-close
-    @update:visible="handleClose"
+    @close="handleClose"
   >
-    <t-form label-align="top" @submit.prevent="handleSubmit">
-      <t-form-item label="Name" required-mark>
-        <t-input
-          v-model:value="form.name"
+    <el-form label-position="top" @submit.prevent="handleSubmit">
+      <el-form-item label="Name" required>
+        <el-input
+          v-model="form.name"
           placeholder="e.g. Production API Key"
           maxlength="100"
           show-word-limit
         />
-      </t-form-item>
+      </el-form-item>
 
-      <t-form-item label="Type" required-mark>
-        <t-select v-model:value="form.type" :class="styles.fullWidth" :disabled="isEditing">
-          <t-option
+      <el-form-item label="Type" required>
+        <el-select v-model="form.type" :class="styles.fullWidth" :disabled="isEditing">
+          <el-option
             v-for="opt in typeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
-      </t-form-item>
+        </el-select>
+      </el-form-item>
 
       <template v-for="field in currentFields" :key="field">
-        <t-form-item :label="getFieldLabel(field)" required-mark>
-          <t-input
-            v-model:value="form.data[field]"
+        <el-form-item :label="getFieldLabel(field)" required>
+          <el-input
+            v-model="form.data[field]"
             :type="isPasswordField(field) ? 'password' : 'text'"
             :placeholder="`Enter ${getFieldLabel(field)}`"
           />
-        </t-form-item>
+        </el-form-item>
       </template>
-    </t-form>
+    </el-form>
 
     <template #footer>
       <div :class="styles.footer">
-        <t-button @click="handleClose">取消</t-button>
-        <t-button theme="primary" :loading="submitting" @click="handleSubmit">
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
           {{ isEditing ? '保存' : '创建' }}
-        </t-button>
+        </el-button>
       </div>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>

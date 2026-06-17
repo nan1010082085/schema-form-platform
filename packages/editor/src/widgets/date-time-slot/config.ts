@@ -5,7 +5,7 @@ export const dateTimeSlotConfig: WidgetConfig = {
   displayName: '日期时间区间',
   description: '日期时间区间选择器，支持开始/结束时间配置',
   author: 'yangdongnan',
-  defaultStyle: { width: '400px', height: '44px' },
+  defaultStyle: { width: '400px', height: '40px' },
   defaultProps: {
     startPlaceholder: '开始时间',
     endPlaceholder: '结束时间',

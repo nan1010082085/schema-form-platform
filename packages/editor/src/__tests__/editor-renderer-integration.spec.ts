@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { ref, computed } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import FgSearchList from '@/widgets/search-list/FgSearchList.vue'
 import { widgetDataKey } from '@/widgets/base/types'
 import type { Widget } from '@/widgets/base/types'
@@ -103,7 +103,7 @@ describe('SearchFieldsEditor → schema output', () => {
       props: { searchFields: [] },
     })
 
-    await wrapper.find('.el-button').trigger('click')
+    await wrapper.find('.t-button').trigger('click')
 
     const fields = wrapper.emitted<SearchFieldSchema[][]>('update:searchFields')![0][0]
     expect(fields).toHaveLength(1)
@@ -128,7 +128,7 @@ describe('ColumnsEditor → schema output', () => {
       props: { columns: [] },
     })
 
-    await wrapper.find('.el-button').trigger('click')
+    await wrapper.find('.t-button').trigger('click')
 
     const cols = wrapper.emitted<SearchListColumnSchema[][]>('update:columns')![0][0]
     expect(cols).toHaveLength(1)
@@ -161,7 +161,7 @@ describe('RowActionsEditor → schema output', () => {
       props: { rowActions: [] },
     })
 
-    await wrapper.find('.el-button').trigger('click')
+    await wrapper.find('.t-button').trigger('click')
 
     const actions = wrapper.emitted<SearchListRowAction[][]>('update:rowActions')![0][0]
     expect(actions).toHaveLength(1)

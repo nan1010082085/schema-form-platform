@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * PropertySection -- Collapsible panel section for the property panel.
- * Wraps content in a t-collapse-panel.
+ * Wraps content in an el-collapse-item.
  */
 import { ref, watch } from 'vue'
 
@@ -20,16 +20,16 @@ watch(() => props.defaultOpen, (val) => {
 </script>
 
 <template>
-  <t-collapse v-model:value="activeNames" class="property-section">
-    <t-collapse-panel value="section">
-      <template #header>
+  <el-collapse v-model="activeNames" class="property-section">
+    <el-collapse-item name="section">
+      <template #title>
         <span class="property-section__title">{{ title }}</span>
       </template>
       <div class="property-section__body">
         <slot />
       </div>
-    </t-collapse-panel>
-  </t-collapse>
+    </el-collapse-item>
+  </el-collapse>
 </template>
 
 <style scoped lang="scss">
@@ -40,7 +40,7 @@ watch(() => props.defaultOpen, (val) => {
   border-radius: 6px;
   overflow: hidden;
 
-  :deep(.t-collapse-panel__header) {
+  :deep(.el-collapse-item__header) {
     background: transparent;
     padding: 0 12px;
     font-size: 11px;
@@ -52,19 +52,19 @@ watch(() => props.defaultOpen, (val) => {
     letter-spacing: 0.3px;
     transition: color 0.15s;
 
-    &:hover { color: var(--td-brand-color); }
+    &:hover { color: var(--el-color-primary); }
   }
 
-  :deep(.t-collapse-panel__body) {
+  :deep(.el-collapse-item__wrap) {
     border-bottom: none;
     background: transparent;
   }
 
-  :deep(.t-collapse-panel__content) {
+  :deep(.el-collapse-item__content) {
     padding-bottom: 4px;
   }
 
-  :deep(.t-collapse-panel__arrow) {
+  :deep(.el-collapse-item__arrow) {
     font-size: 11px;
     color: #c0c4cc;
   }

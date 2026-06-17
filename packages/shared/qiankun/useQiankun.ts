@@ -3,7 +3,7 @@
  *
  * 提供全局状态管理能力
  */
-import { ref, onUnmounted } from 'vue'
+import { ref } from 'vue'
 
 interface QiankunState {
   [key: string]: unknown

@@ -1,7 +1,7 @@
 /**
  * useAuthStore -- 共享认证状态管理
  *
- * 各子项目（portal、shell、editor、flow、ai-app、admin）统一使用此 store。
+ * 各子项目（shell、editor、flow、ai-app、admin）统一使用此 store。
  * - 纯状态持有 + 薄 action，异步逻辑在各项目的 useAuth composable 中
  * - token 从 localStorage 恢复，保证刷新后登录态不丢失
  * - 统一 localStorage key 前缀 sfp_（schema-form-platform）

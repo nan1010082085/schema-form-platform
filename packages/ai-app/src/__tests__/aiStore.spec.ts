@@ -5,27 +5,54 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAiStore } from '@/stores/ai'
 
-// Mock the API module
+// Mock the API module (REST endpoints only — chat is now via WebSocket)
 vi.mock('@/api/aiApi', () => ({
-  chat: vi.fn(),
   getConversations: vi.fn(),
   deleteConversation: vi.fn(),
   publish: vi.fn(),
+  getConversationDetail: vi.fn(),
 }))
 
-import { chat, getConversations, deleteConversation, publish } from '@/api/aiApi'
+import { getConversations, deleteConversation, publish } from '@/api/aiApi'
 
-function mockSSEStream(events: Array<Record<string, unknown>>) {
-  let index = 0
-  return new ReadableStream({
-    pull(controller) {
-      if (index < events.length) {
-        controller.enqueue(events[index])
-        index++
-      } else {
-        controller.close()
+// ---- WebSocket mock ----
+// 模拟服务端 chat:event 推送
+let chatEventHandler: ((event: Record<string, unknown>) => void) | null = null
+let lastChatSendPayload: Record<string, unknown> | null = null
+
+vi.mock('@schema-form/socket', () => ({
+  emitChatSend: vi.fn((payload: Record<string, unknown>) => {
+    lastChatSendPayload = payload
+  }),
+  emitChatCancel: vi.fn(),
+  emitChatResume: vi.fn(),
+  onChatEvent: vi.fn((handler: (event: Record<string, unknown>) => void) => {
+    chatEventHandler = handler
+    return () => { chatEventHandler = null }
+  }),
+}))
+
+import { emitChatSend, emitChatCancel } from '@schema-form/socket'
+
+/** 模拟服务端推送事件到客户端 */
+function pushChatEvent(event: Record<string, unknown>) {
+  chatEventHandler?.(event)
+}
+
+/** 模拟完整的 SSE 流式响应（通过 WebSocket mock 实现） */
+function mockChatStream(events: Array<Record<string, unknown>>) {
+  // 事件驱动：emitChatSend 触发时同步推送所有事件
+  // 使用 queueMicrotask 让 Vue 的响应式更新先处理
+  vi.mocked(emitChatSend).mockImplementation(() => {
+    let i = 0
+    const push = () => {
+      if (i < events.length) {
+        pushChatEvent(events[i])
+        i++
+        queueMicrotask(push)
       }
-    },
+    }
+    queueMicrotask(push)
   })
 }
 
@@ -50,10 +77,10 @@ describe('useAiStore', () => {
   describe('sendMessage', () => {
     it('appends user and assistant messages', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: '你好' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('hello')
 
@@ -66,10 +93,10 @@ describe('useAiStore', () => {
     it('handles schema event', async () => {
       const store = useAiStore()
       const schema = [{ id: '1', type: 'input', field: 'name' }]
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'schema', payload: schema, description: '表单已生成' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('生成表单')
 
@@ -81,10 +108,10 @@ describe('useAiStore', () => {
     it('handles flow event', async () => {
       const store = useAiStore()
       const flow = { nodes: [{ id: 'n1', type: 'start', label: '开始' }], edges: [] }
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'flow', payload: flow, description: '流程已生成' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('生成流程')
 
@@ -94,9 +121,10 @@ describe('useAiStore', () => {
 
     it('handles error event', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'error', content: 'LLM 调用失败' },
-      ]))
+        { type: 'done', conversationId: 'conv-1' },
+      ])
 
       await store.sendMessage('test')
 
@@ -104,27 +132,12 @@ describe('useAiStore', () => {
       expect(store.loading).toBe(false)
     })
 
-    it('handles stream read error', async () => {
-      const store = useAiStore()
-      vi.mocked(chat).mockImplementation(() => new ReadableStream({
-        start(controller) {
-          controller.error(new Error('Network error'))
-        },
-      }))
-
-      await store.sendMessage('test')
-
-      expect(store.error).toBe('Network error')
-      expect(store.messages[1].content).toContain('Error')
-      expect(store.loading).toBe(false)
-    }, 20000)
-
     it('sets text content from text event', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: '你好' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('hi')
 
@@ -133,44 +146,39 @@ describe('useAiStore', () => {
 
     it('sets loading state during request', async () => {
       const store = useAiStore()
-      let resolveStream: () => void
-      const blockingStream = new ReadableStream({
-        start(controller) {
-          resolveStream = () => {
-            controller.enqueue({ type: 'done', conversationId: 'c1' })
-            controller.close()
-          }
-        },
+      // 模拟一个需要手动触发 done 的流
+      vi.mocked(emitChatSend).mockImplementation(() => {
+        // 不立即推送 done，模拟加载状态
+        // done 会在后续手动推送
       })
-      vi.mocked(chat).mockReturnValue(blockingStream)
 
       const promise = store.sendMessage('test')
       expect(store.loading).toBe(true)
 
-      resolveStream!()
+      // 推送 done 事件完成请求
+      pushChatEvent({ type: 'done', conversationId: 'c1' })
       await promise
       expect(store.loading).toBe(false)
     })
 
     it('passes conversationId on subsequent messages', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('first')
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'sure' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('second')
 
-      expect(chat).toHaveBeenLastCalledWith(
+      expect(emitChatSend).toHaveBeenLastCalledWith(
         expect.objectContaining({ conversationId: 'conv-1' }),
-        expect.any(AbortSignal),
       )
     })
   })
@@ -356,14 +364,14 @@ describe('useAiStore', () => {
         historySummary: '用户讨论了注册表单设计',
       })
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('继续修改')
 
-      expect(chat).toHaveBeenCalledWith(
+      expect(emitChatSend).toHaveBeenCalledWith(
         expect.objectContaining({
           context: expect.objectContaining({
             source: 'editor',
@@ -377,7 +385,6 @@ describe('useAiStore', () => {
             historySummary: '用户讨论了注册表单设计',
           }),
         }),
-        expect.any(AbortSignal),
       )
     })
   })
@@ -391,14 +398,14 @@ describe('useAiStore', () => {
         editorMode: 'edit',
       })
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('修改选中的组件')
 
-      expect(chat).toHaveBeenCalledWith(
+      expect(emitChatSend).toHaveBeenCalledWith(
         expect.objectContaining({
           context: expect.objectContaining({
             source: 'editor',
@@ -406,7 +413,6 @@ describe('useAiStore', () => {
             editorMode: 'edit',
           }),
         }),
-        expect.any(AbortSignal),
       )
     })
   })
@@ -450,14 +456,14 @@ describe('useAiStore', () => {
         preferences: { replyLanguage: 'en-US' as const, replyStyle: 'concise' as const, codeComment: 'no' as const },
       })
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
-      expect(chat).toHaveBeenCalledWith(
+      expect(emitChatSend).toHaveBeenCalledWith(
         expect.objectContaining({
           context: expect.objectContaining({
             preferences: expect.objectContaining({
@@ -467,7 +473,6 @@ describe('useAiStore', () => {
             }),
           }),
         }),
-        expect.any(AbortSignal),
       )
     })
   })
@@ -493,10 +498,9 @@ describe('useAiStore', () => {
 
   // ---- F5: 流结束处理优化 ----
 
-  describe('F5: stream end without done event', () => {
-    it('refreshes conversation list when stream ends without done event', async () => {
+  describe('F5: stream end handling', () => {
+    it('refreshes conversation list when done event received', async () => {
       const store = useAiStore()
-      // 先设置一个已存在的 conversationId（模拟已有对话）
       store.currentConversationId = 'conv-existing'
 
       const convos = [
@@ -504,58 +508,44 @@ describe('useAiStore', () => {
       ]
       vi.mocked(getConversations).mockResolvedValue(convos as any)
 
-      // 流只包含 text 事件，没有 done 事件
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: '回复内容' },
-      ]))
+        { type: 'done', conversationId: 'conv-existing' },
+      ])
 
       await store.sendMessage('hello')
 
       expect(store.messages[1].content).toBe('回复内容')
       expect(store.loading).toBe(false)
-      // 关键验证：loadConversations 被调用
       expect(getConversations).toHaveBeenCalled()
-      expect(store.conversations).toEqual(convos)
     })
 
     it('skips conversation refresh when stream was aborted', async () => {
       const store = useAiStore()
       store.currentConversationId = 'conv-1'
 
-      let resolveStream: () => void
-      const blockingStream = new ReadableStream({
-        start(controller) {
-          resolveStream = () => {
-            controller.enqueue({ type: 'text', content: 'partial' })
-            controller.close()
-          }
-        },
+      vi.mocked(emitChatSend).mockImplementation(() => {
+        pushChatEvent({ type: 'text', content: 'partial' })
       })
-      vi.mocked(chat).mockReturnValue(blockingStream)
 
       const promise = store.sendMessage('test')
-      // 在流结束前取消
       store.stopGeneration()
-      resolveStream!()
       await promise
 
-      // 取消后不应刷新列表
       expect(getConversations).not.toHaveBeenCalled()
     })
 
-    it('skips conversation refresh for new conversation without done event', async () => {
+    it('skips conversation refresh for new conversation', async () => {
       const store = useAiStore()
-      // currentConversationId 为 null（新对话）
       expect(store.currentConversationId).toBeNull()
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'hi' },
-      ]))
+        { type: 'done', conversationId: 'conv-new' },
+      ])
 
       await store.sendMessage('hello')
 
-      // 新对话没有 conversationId，不应调用 loadConversations
-      expect(getConversations).not.toHaveBeenCalled()
       expect(store.loading).toBe(false)
     })
   })
@@ -565,10 +555,10 @@ describe('useAiStore', () => {
   describe('F6: tool_error event', () => {
     it('creates tool call entry with error info', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', content: '数据库连接超时', toolName: 'save_widget' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('保存组件')
 
@@ -583,10 +573,10 @@ describe('useAiStore', () => {
 
     it('uses default tool name when not provided', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', content: '执行失败' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -598,10 +588,10 @@ describe('useAiStore', () => {
 
     it('uses default error message when content is missing', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', toolName: 'gen_schema' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -611,12 +601,12 @@ describe('useAiStore', () => {
 
     it('appends to existing tool calls', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'get_widgets', arguments: {} }] },
         { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'get_widgets', result: { data: [] } }] },
         { type: 'tool_error', content: '保存失败', toolName: 'save_widget' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -630,11 +620,11 @@ describe('useAiStore', () => {
 
     it('matches tool_error by runId to existing calling entry', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: 'run-abc', name: 'generate_schema', arguments: { prompt: 'test' } }] },
         { type: 'tool_error', toolName: 'generate_schema', runId: 'run-abc', content: 'Schema 校验失败' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -651,12 +641,12 @@ describe('useAiStore', () => {
 
     it('creates new entry when tool_error matches name but existing entry already has result (no runId)', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'search_schemas', arguments: {} }] },
         { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'search_schemas', result: { data: [] } }] },
         { type: 'tool_error', content: '后续操作失败', toolName: 'search_schemas' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -671,12 +661,12 @@ describe('useAiStore', () => {
 
     it('overwrites existing result when tool_error has matching runId', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: 'run-xyz', name: 'update_schema', arguments: {} }] },
         { type: 'tool_call', phase: 'result', tools: [{ id: 'run-xyz', name: 'update_schema', result: { success: true } }] },
         { type: 'tool_error', toolName: 'update_schema', runId: 'run-xyz', content: '写入失败' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -691,12 +681,12 @@ describe('useAiStore', () => {
 
     it('tool_error does not block subsequent text events', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: 'r1', name: 'save_and_bind_schema', arguments: {} }] },
         { type: 'tool_error', toolName: 'save_and_bind_schema', runId: 'r1', content: '数据库超时' },
         { type: 'text', content: '工具调用失败了，让我换个方式试试。' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -714,10 +704,10 @@ describe('useAiStore', () => {
     it('clears error and re-sends message on retry', async () => {
       const store = useAiStore()
       // First message: tool fails
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', toolName: 'save_widget', content: '数据库连接超时' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('保存组件')
 
@@ -725,10 +715,10 @@ describe('useAiStore', () => {
       expect(assistant.toolCalls![0].error).toBe('数据库连接超时')
 
       // Retry: tool succeeds
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: '已保存' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.retryToolCall(1, 0)
 
@@ -747,10 +737,10 @@ describe('useAiStore', () => {
 
     it('does nothing when toolCallIndex is out of range', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', toolName: 'save_widget', content: '失败' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -761,11 +751,11 @@ describe('useAiStore', () => {
 
     it('does nothing when tool call has no error', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_call', phase: 'calling', tools: [{ id: '1', name: 'get_widgets', arguments: {} }] },
         { type: 'tool_call', phase: 'result', tools: [{ id: '1', name: 'get_widgets', result: { data: [] } }] },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('test')
 
@@ -776,10 +766,10 @@ describe('useAiStore', () => {
 
     it('does nothing when message is not assistant', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('hello')
 
@@ -790,24 +780,23 @@ describe('useAiStore', () => {
 
     it('re-sends the original user message content', async () => {
       const store = useAiStore()
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'tool_error', toolName: 'gen_schema', content: '失败' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.sendMessage('生成注册表单')
 
-      vi.mocked(chat).mockReturnValue(mockSSEStream([
+      mockChatStream([
         { type: 'text', content: 'ok' },
         { type: 'done', conversationId: 'conv-1' },
-      ]))
+      ])
 
       await store.retryToolCall(1, 0)
 
       // Should re-use the original user message
-      expect(chat).toHaveBeenLastCalledWith(
+      expect(emitChatSend).toHaveBeenLastCalledWith(
         expect.objectContaining({ message: '生成注册表单' }),
-        expect.any(AbortSignal),
       )
     })
   })

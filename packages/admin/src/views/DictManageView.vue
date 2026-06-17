@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon, FolderIcon, ListIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface DictType {
   id: string
@@ -69,15 +69,6 @@ const dataForm = ref({
 })
 const editingDataId = ref('')
 
-const dataColumns = [
-  { colKey: 'label', title: '标签', minWidth: 120 },
-  { colKey: 'value', title: '值', minWidth: 120 },
-  { colKey: 'sort', title: '排序', width: 80, align: 'center' as const },
-  { colKey: 'status', title: '状态', width: 80, align: 'center' as const },
-  { colKey: 'remark', title: '备注', minWidth: 140 },
-  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' as const },
-]
-
 async function fetchTypes() {
   typesLoading.value = true
   try {
@@ -115,45 +106,42 @@ function openEditType(dictType: DictType) {
 
 async function handleTypeSubmit() {
   if (!typeForm.value.name.trim()) {
-    MessagePlugin.warning('请输入字典类型名称')
+    ElMessage.warning('请输入字典类型名称')
     return
   }
   if (!typeForm.value.code.trim()) {
-    MessagePlugin.warning('请输入字典类型编码')
+    ElMessage.warning('请输入字典类型编码')
     return
   }
 
   if (typeDialogMode.value === 'create') {
     await apiClient.post('/dict/types', typeForm.value)
-    MessagePlugin.success('字典类型创建成功')
+    ElMessage.success('字典类型创建成功')
   } else {
     await apiClient.put(`/dict/types/${editingTypeId.value}`, typeForm.value)
-    MessagePlugin.success('字典类型更新成功')
+    ElMessage.success('字典类型更新成功')
   }
   typeDialogVisible.value = false
   fetchTypes()
 }
 
 async function handleTypeDelete(dictType: DictType) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除字典类型「${dictType.name}」？该类型下的所有字典数据将被一并删除。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/dict/types/${dictType.id}`)
-      MessagePlugin.success('字典类型已删除')
-      if (selectedType.value?.id === dictType.id) {
-        selectedType.value = null
-        dataList.value = []
-      }
-      fetchTypes()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  await ElMessageBox.confirm(
+    `确认删除字典类型「${dictType.name}」？该类型下的所有字典数据将被一并删除。`,
+    '删除确认',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+  await apiClient.delete(`/dict/types/${dictType.id}`)
+  ElMessage.success('字典类型已删除')
+  if (selectedType.value?.id === dictType.id) {
+    selectedType.value = null
+    dataList.value = []
+  }
+  fetchTypes()
 }
 
 function selectType(dictType: DictType) {
@@ -208,11 +196,11 @@ function openEditData(dictData: DictData) {
 async function handleDataSubmit() {
   if (!selectedType.value) return
   if (!dataForm.value.label.trim()) {
-    MessagePlugin.warning('请输入字典标签')
+    ElMessage.warning('请输入字典标签')
     return
   }
   if (!dataForm.value.value.trim()) {
-    MessagePlugin.warning('请输入字典值')
+    ElMessage.warning('请输入字典值')
     return
   }
 
@@ -221,31 +209,28 @@ async function handleDataSubmit() {
       ...dataForm.value,
       dictTypeId: selectedType.value.id,
     })
-    MessagePlugin.success('字典数据创建成功')
+    ElMessage.success('字典数据创建成功')
   } else {
     await apiClient.put(`/dict/data/${editingDataId.value}`, dataForm.value)
-    MessagePlugin.success('字典数据更新成功')
+    ElMessage.success('字典数据更新成功')
   }
   dataDialogVisible.value = false
   fetchDataList()
 }
 
 async function handleDataDelete(dictData: DictData) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除字典数据「${dictData.label}」？`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/dict/data/${dictData.id}`)
-      MessagePlugin.success('字典数据已删除')
-      fetchDataList()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  await ElMessageBox.confirm(
+    `确认删除字典数据「${dictData.label}」？`,
+    '删除确认',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+  await apiClient.delete(`/dict/data/${dictData.id}`)
+  ElMessage.success('字典数据已删除')
+  fetchDataList()
 }
 
 function handleDataPageChange(page: number) {
@@ -277,54 +262,53 @@ onMounted(fetchTypes)
     <div :class="$style.leftPanel">
       <div :class="$style.panelHeader">
         <h3 :class="$style.panelTitle">
-          <FolderIcon />
+          <AppIcon name="folder" />
           字典类型
         </h3>
-        <t-button theme="primary" size="small" :icon="AddIcon" @click="openCreateType">
+        <el-button type="primary" size="small" :icon="Plus" @click="openCreateType">
           新增
-        </t-button>
+        </el-button>
       </div>
 
       <div :class="$style.panelSearch">
-        <t-input
-          v-model:value="typeSearchQuery"
+        <el-input
+          v-model="typeSearchQuery"
           placeholder="搜索名称或编码"
-          :prefix-icon="SearchIcon"
+          :prefix-icon="Search"
           clearable
           size="small"
         />
       </div>
 
-      <div :class="$style.typeList">
-        <t-loading :loading="typesLoading">
-          <div
-            v-for="item in types"
-            :key="item.id"
-            :class="[$style.typeItem, { [$style.typeItemActive]: selectedType?.id === item.id }]"
-            @click="selectType(item)"
-          >
-            <div :class="$style.typeInfo">
-              <div :class="$style.typeName">{{ item.name }}</div>
-              <div :class="$style.typeCode">{{ item.code }}</div>
-            </div>
-            <div :class="$style.typeActions">
-              <t-tag v-if="item.status === 'inactive'" size="small" theme="warning">停用</t-tag>
-              <t-button variant="text" size="small" @click.stop="openEditType(item)">编辑</t-button>
-              <t-button variant="text" size="small" theme="danger" @click.stop="handleTypeDelete(item)">删除</t-button>
-            </div>
+      <div :class="$style.typeList" v-loading="typesLoading">
+        <div
+          v-for="item in types"
+          :key="item.id"
+          :class="[$style.typeItem, { [$style.typeItemActive]: selectedType?.id === item.id }]"
+          @click="selectType(item)"
+        >
+          <div :class="$style.typeInfo">
+            <div :class="$style.typeName">{{ item.name }}</div>
+            <div :class="$style.typeCode">{{ item.code }}</div>
           </div>
-          <div v-if="!typesLoading && types.length === 0" :class="$style.empty">
-            暂无字典类型
+          <div :class="$style.typeActions">
+            <el-tag v-if="item.status === 'inactive'" size="small" type="warning">停用</el-tag>
+            <el-button link size="small" @click.stop="openEditType(item)">编辑</el-button>
+            <el-button link size="small" type="danger" @click.stop="handleTypeDelete(item)">删除</el-button>
           </div>
-        </t-loading>
+        </div>
+        <div v-if="!typesLoading && types.length === 0" :class="$style.empty">
+          暂无字典类型
+        </div>
       </div>
 
       <div v-if="typeTotal > typePageSize" :class="$style.pagination">
-        <t-pagination
-          size="small"
+        <el-pagination
+          small
+          layout="prev, pager, next"
           :total="typeTotal"
           :page-size="typePageSize"
-          :current="typePage"
+          :current-page="typePage"
           @current-change="handleTypePageChange"
         />
       </div>
@@ -335,123 +319,132 @@ onMounted(fetchTypes)
       <template v-if="selectedType">
         <div :class="$style.panelHeader">
           <h3 :class="$style.panelTitle">
-            <ListIcon />
+            <AppIcon name="list" />
             {{ selectedType.name }} — 字典数据
           </h3>
-          <t-button theme="primary" size="small" :icon="AddIcon" @click="openCreateData">
+          <el-button type="primary" size="small" :icon="Plus" @click="openCreateData">
             新增数据
-          </t-button>
+          </el-button>
         </div>
 
         <div :class="$style.panelSearch">
-          <t-input
-            v-model:value="dataSearchQuery"
+          <el-input
+            v-model="dataSearchQuery"
             placeholder="搜索标签或值"
-            :prefix-icon="SearchIcon"
+            :prefix-icon="Search"
             clearable
             size="small"
             :class="$style.searchInput"
           />
-          <t-select v-model:value="dataStatusFilter" placeholder="状态筛选" clearable size="small" :style="{ width: '100px' }">
-            <t-option label="启用" value="active" />
-            <t-option label="停用" value="inactive" />
-          </t-select>
+          <el-select v-model="dataStatusFilter" placeholder="状态筛选" clearable size="small" style="width: 100px">
+            <el-option label="启用" value="active" />
+            <el-option label="停用" value="inactive" />
+          </el-select>
         </div>
 
-        <t-table :data="dataList" :columns="dataColumns" :loading="dataLoading" :class="$style.table">
-          <template #cell-status="{ row }">
-            <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </t-tag>
-          </template>
-          <template #cell-actions="{ row }">
-            <div :class="$style.actions">
-              <t-button variant="text" size="small" @click="openEditData(row)">编辑</t-button>
-              <t-button variant="text" size="small" theme="danger" @click="handleDataDelete(row)">删除</t-button>
-            </div>
-          </template>
-        </t-table>
+        <el-table :data="dataList" v-loading="dataLoading" :class="$style.table" style="width: 100%">
+          <el-table-column prop="label" label="标签" min-width="120" />
+          <el-table-column prop="value" label="值" min-width="120" />
+          <el-table-column prop="sort" label="排序" width="80" align="center" />
+          <el-table-column prop="status" label="状态" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'active' ? 'success' : 'warning'" size="small">
+                {{ row.status === 'active' ? '启用' : '停用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="140" />
+          <el-table-column label="操作" width="140" fixed="right">
+            <template #default="{ row }">
+              <div :class="$style.actions">
+                <el-button link size="small" @click="openEditData(row)">编辑</el-button>
+                <el-button link size="small" type="danger" @click="handleDataDelete(row)">删除</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
 
         <div v-if="dataTotal > dataPageSize" :class="$style.pagination">
-          <t-pagination
-            size="small"
+          <el-pagination
+            small
+            layout="prev, pager, next"
             :total="dataTotal"
             :page-size="dataPageSize"
-            :current="dataPage"
+            :current-page="dataPage"
             @current-change="handleDataPageChange"
           />
         </div>
       </template>
 
       <div v-else :class="$style.placeholder">
-        <ListIcon size="48px" style="color: var(--td-text-color-placeholder)" />
+        <AppIcon name="list" :size="48" style="color: var(--el-text-color-placeholder)" />
         <p>请从左侧选择字典类型查看数据</p>
       </div>
     </div>
   </div>
 
   <!-- 字典类型对话框 -->
-  <t-dialog
-    v-model:visible="typeDialogVisible"
-    :header="typeDialogMode === 'create' ? '新增字典类型' : '编辑字典类型'"
+  <el-dialog
+    v-model="typeDialogVisible"
+    :title="typeDialogMode === 'create' ? '新增字典类型' : '编辑字典类型'"
     width="480px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="名称">
-        <t-input v-model:value="typeForm.name" placeholder="请输入字典类型名称" />
-      </t-form-item>
-      <t-form-item label="编码">
-        <t-input v-model:value="typeForm.code" placeholder="如 city、gender、status" />
-      </t-form-item>
-      <t-form-item label="状态">
-        <t-select v-model:value="typeForm.status" :style="{ width: '100%' }">
-          <t-option label="启用" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
-      </t-form-item>
-      <t-form-item label="备注">
-        <t-input v-model:value="typeForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
-      </t-form-item>
-    </t-form>
+    <el-form label-width="80px">
+      <el-form-item label="名称">
+        <el-input v-model="typeForm.name" placeholder="请输入字典类型名称" />
+      </el-form-item>
+      <el-form-item label="编码">
+        <el-input v-model="typeForm.code" placeholder="如 city、gender、status" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="typeForm.status" style="width: 100%">
+          <el-option label="启用" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="备注">
+        <el-input v-model="typeForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="typeDialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleTypeSubmit">确定</t-button>
+      <el-button @click="typeDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleTypeSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 
   <!-- 字典数据对话框 -->
-  <t-dialog
-    v-model:visible="dataDialogVisible"
-    :header="dataDialogMode === 'create' ? '新增字典数据' : '编辑字典数据'"
+  <el-dialog
+    v-model="dataDialogVisible"
+    :title="dataDialogMode === 'create' ? '新增字典数据' : '编辑字典数据'"
     width="480px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="标签">
-        <t-input v-model:value="dataForm.label" placeholder="显示文本，如：北京" />
-      </t-form-item>
-      <t-form-item label="值">
-        <t-input v-model:value="dataForm.value" placeholder="存储值，如：beijing" />
-      </t-form-item>
-      <t-form-item label="排序">
-        <t-input-number v-model:value="dataForm.sort" :min="0" :max="9999" />
-      </t-form-item>
-      <t-form-item label="状态">
-        <t-select v-model:value="dataForm.status" :style="{ width: '100%' }">
-          <t-option label="启用" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
-      </t-form-item>
-      <t-form-item label="备注">
-        <t-input v-model:value="dataForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
-      </t-form-item>
-    </t-form>
+    <el-form label-width="80px">
+      <el-form-item label="标签">
+        <el-input v-model="dataForm.label" placeholder="显示文本，如：北京" />
+      </el-form-item>
+      <el-form-item label="值">
+        <el-input v-model="dataForm.value" placeholder="存储值，如：beijing" />
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number v-model="dataForm.sort" :min="0" :max="9999" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="dataForm.status" style="width: 100%">
+          <el-option label="启用" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="备注">
+        <el-input v-model="dataForm.remark" type="textarea" :rows="2" placeholder="备注（可选）" />
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="dataDialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleDataSubmit">确定</t-button>
+      <el-button @click="dataDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleDataSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style module>
@@ -465,8 +458,8 @@ onMounted(fetchTypes)
 .leftPanel {
   width: 320px;
   flex-shrink: 0;
-  background: var(--td-bg-color-container);
-  border: 1px solid var(--td-border-level-2-color);
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -475,8 +468,8 @@ onMounted(fetchTypes)
 .rightPanel {
   flex: 1;
   min-width: 0;
-  background: var(--td-bg-color-container);
-  border: 1px solid var(--td-border-level-2-color);
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -488,13 +481,13 @@ onMounted(fetchTypes)
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--td-border-level-2-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .panelTitle {
   font-size: 14px;
   font-weight: 600;
-  color: var(--td-text-color-primary);
+  color: var(--el-text-color-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -505,7 +498,7 @@ onMounted(fetchTypes)
   padding: 8px 12px;
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid var(--td-border-level-2-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .panelSearch > *:first-child {
@@ -525,20 +518,20 @@ onMounted(fetchTypes)
   padding: 10px 16px;
   cursor: pointer;
   transition: background-color 0.15s;
-  border-bottom: 1px solid var(--td-border-level-2-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .typeItem:hover {
-  background: var(--td-bg-color-container-hover);
+  background: var(--el-fill-color-light);
 }
 
 .typeItemActive {
-  background: var(--td-brand-color-light);
-  border-color: var(--td-brand-color-light);
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-9);
 }
 
 .typeItemActive:hover {
-  background: var(--td-brand-color-light-hover);
+  background: var(--el-color-primary-light-8);
 }
 
 .typeInfo {
@@ -549,7 +542,7 @@ onMounted(fetchTypes)
 .typeName {
   font-size: 14px;
   font-weight: 500;
-  color: var(--td-text-color-primary);
+  color: var(--el-text-color-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -557,7 +550,7 @@ onMounted(fetchTypes)
 
 .typeCode {
   font-size: 12px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
   font-family: monospace;
   margin-top: 2px;
 }
@@ -600,7 +593,7 @@ onMounted(fetchTypes)
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
 }
 
 .placeholder p {
@@ -611,7 +604,7 @@ onMounted(fetchTypes)
 .empty {
   text-align: center;
   padding: 32px 16px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
   font-size: 13px;
 }
 

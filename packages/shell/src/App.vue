@@ -5,39 +5,24 @@
  * Minimal root that just renders the router view.
  * Global styles and resets are applied here.
  */
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import '@schema-form/shared-styles/css-variables.scss'
 </script>
 
 <template>
-  <div class="shell-root">
-    <router-view />
-  </div>
+  <ElConfigProvider
+    :locale="zhCn"
+    :size="'default'"
+    :z-index="2000"
+  >
+    <div class="shell-root">
+      <router-view />
+    </div>
+  </ElConfigProvider>
 </template>
 
 <style>
-/* Shell global base reset */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: var(--td-font-family);
-  color: var(--td-text-color-primary);
-  background: var(--td-bg-color-page);
-  -webkit-font-smoothing: antialiased;
-}
-
-#app {
-  height: 100%;
-}
-
 .shell-root {
   height: 100vh;
   display: flex;

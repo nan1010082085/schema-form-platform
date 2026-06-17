@@ -12,10 +12,17 @@
  */
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// TDesign icons are used via <t-icon name="xxx" /> — no imports needed
 import { useMenu } from '@/composables/useMenu'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
+import { resolveIconName } from '@schema-form/shared-utils/iconResolver'
 import type { MenuTreeNode } from '@/types/menu'
-import styles from './SideMenu.module.css'
+import styles from './SideMenu.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+
+/** 根据图标名获取 Element Plus 图标组件 */
+function resolveIcon(name?: string): string {
+  return resolveIconName(name)
+}
 
 const props = defineProps<{
   collapsed: boolean
@@ -67,10 +74,33 @@ watch(() => props.collapsed, (val) => {
   if (val) openedMenus.value = new Set()
 })
 
+/** microAppId → APP_CONFIGS key 映射 */
+const APP_ID_MAP: Record<string, keyof typeof APP_CONFIGS> = {
+  editor: 'editor',
+  flow: 'flow',
+  'ai-app': 'ai',
+  admin: 'admin',
+}
+
 /** Navigate to a menu route */
 function navigateTo(node: MenuTreeNode): void {
   if (!node.path) return
-  router.push(node.path)
+  if (node.target === '_blank') {
+    // 新开页签：开发环境子应用 base 为 /，生产环境用 basePath
+    const isDev = import.meta.env.DEV
+    const configKey = node.microAppId ? APP_ID_MAP[node.microAppId] : undefined
+    if (configKey) {
+      const config = APP_CONFIGS[configKey]
+      const url = isDev
+        ? `//localhost:${config.devPort}/`
+        : `${window.location.origin}${config.basePath}`
+      window.open(url, '_blank')
+    } else {
+      window.open(node.path, '_blank')
+    }
+  } else {
+    router.push(node.path)
+  }
 }
 
 /** Handle menu item click */
@@ -100,23 +130,19 @@ defineExpose({ resetMenu })
     <nav :class="styles.menuNav">
       <!-- Loading -->
       <div v-if="menuLoading" :class="styles.menuLoading">
-        <t-icon name="loading" :size="20" :class="styles.spinIcon" />
+        <AppIcon name="loading" :size="20" :class="styles.spinIcon" />
         <span v-show="!collapsed" :class="styles.menuLoadingText">加载中...</span>
       </div>
 
       <!-- Error -->
       <div v-else-if="menuError" :class="styles.menuError">
         <span v-show="!collapsed" :class="styles.menuErrorText">{{ menuError }}</span>
-        <t-button variant="text" size="small" @click="fetchMenus">重试</t-button>
+        <el-button type="primary" text size="small" @click="fetchMenus">重试</el-button>
       </div>
 
       <!-- Home entry -->
-      <div
-        v-if="!menuLoading && !menuError"
-        :class="[styles.menuItem, { [styles.menuItemActive]: route.path === '/' }]"
-        @click="router.push('/')"
-      >
-        <t-icon name="home-filled" :size="18" />
+      <div v-if="!menuLoading && !menuError" :class="[styles.menuItem, { [styles.menuItemActive]: route.path === '/' }]" @click="router.push('/')">
+        <AppIcon name="home-filled" :size="18" />
         <span v-show="!collapsed" :class="styles.menuLabel">首页</span>
       </div>
 
@@ -128,26 +154,26 @@ defineExpose({ resetMenu })
             :class="[
               styles.menuItem,
               {
-                [styles.menuItemActive]: isActive(node) && !node.children?.length,
+                [styles.menuItemActive]: isActive(node) && !(node.children?.length && node.target !== '_blank'),
                 [styles.menuItemOpen]: hasActiveChild(node) || isSubmenuOpen(node.id),
               },
             ]"
             :title="collapsed ? node.name : undefined"
             @click="handleMenuClick(node)"
           >
-            <t-icon :name="node.icon || 'file'" :size="18" />
+            <AppIcon :name="resolveIcon(node.icon)" :size="18" />
             <span v-show="!collapsed" :class="styles.menuLabel">{{ node.name }}</span>
-            <t-icon
-              v-if="node.children?.length && !collapsed"
-              name="chevron-right"
-              :class="[styles.menuArrow, { [styles.menuArrowOpen]: isSubmenuOpen(node.id) }]"
+            <AppIcon
+              v-if="node.children?.length && node.target !== '_blank' && !collapsed"
+              name="arrow-down"
               :size="12"
+              :class="[styles.menuArrow, { [styles.menuArrowOpen]: isSubmenuOpen(node.id) }]"
             />
           </div>
 
-          <!-- Level 2 submenu (expanded) -->
+          <!-- Level 2 submenu (expanded) - only show for target=_self -->
           <div
-            v-if="node.children?.length && !collapsed && isSubmenuOpen(node.id)"
+            v-if="node.children?.length && node.target !== '_blank' && !collapsed && isSubmenuOpen(node.id)"
             :class="styles.submenu"
           >
             <div
@@ -165,8 +191,7 @@ defineExpose({ resetMenu })
 
     <!-- Collapse button -->
     <div :class="styles.sidebarFooter" @click="emit('toggleCollapse')">
-      <t-icon v-if="collapsed" name="menu-unfold" :size="16" />
-      <t-icon v-else name="menu-fold" :size="16" />
+      <AppIcon :name="collapsed ? 'expand' : 'fold'" :size="16" />
       <span v-show="!collapsed" :class="styles.collapseText">折叠</span>
     </div>
   </aside>

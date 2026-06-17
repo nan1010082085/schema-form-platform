@@ -5,8 +5,9 @@
  * 部件库标签页 + 结构树标签页 + 模板标签页
  */
 import { ref } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 import ComponentPanel from './ComponentPanel.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import WidgetTree from './WidgetTree.vue'
 import TemplatePanel from './TemplatePanel.vue'
 import { useWidgetStore } from '@/stores/widget'
@@ -34,9 +35,9 @@ async function handleApplyTemplate(template: TemplateItem) {
       widgetStore.addWidget(w as unknown as Widget)
     }
     editorStore.pushHistory(widgetStore.widgets)
-    MessagePlugin.success(`已应用模板「${template.name}」`)
+    ElMessage.success(`已应用模板「${template.name}」`)
   } catch {
-    MessagePlugin.error('应用模板失败')
+    ElMessage.error('应用模板失败')
   }
 }
 </script>
@@ -50,12 +51,7 @@ async function handleApplyTemplate(template: TemplateItem) {
         :class="{ 'left-panel__tab--active': activeTab === 'components' }"
         @click="activeTab = 'components'"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1" y="1" width="6" height="6" rx="1"/>
-          <rect x="9" y="1" width="6" height="6" rx="1"/>
-          <rect x="1" y="9" width="6" height="6" rx="1"/>
-          <rect x="9" y="9" width="6" height="6" rx="1"/>
-        </svg>
+        <AppIcon name="grid" :size="14" />
         <span>部件库</span>
       </button>
       <button
@@ -63,14 +59,7 @@ async function handleApplyTemplate(template: TemplateItem) {
         :class="{ 'left-panel__tab--active': activeTab === 'structure' }"
         @click="activeTab = 'structure'"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="1" y1="4" x2="6" y2="4"/>
-          <line x1="1" y1="8" x2="10" y2="8"/>
-          <line x1="1" y1="12" x2="8" y2="12"/>
-          <circle cx="12" cy="4" r="2"/>
-          <circle cx="14" cy="8" r="2"/>
-          <circle cx="10" cy="12" r="2"/>
-        </svg>
+        <AppIcon name="list" :size="14" />
         <span>结构</span>
       </button>
       <button
@@ -78,11 +67,7 @@ async function handleApplyTemplate(template: TemplateItem) {
         :class="{ 'left-panel__tab--active': activeTab === 'templates' }"
         @click="activeTab = 'templates'"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="2" width="12" height="12" rx="2"/>
-          <line x1="2" y1="6" x2="14" y2="6"/>
-          <line x1="6" y1="6" x2="6" y2="14"/>
-        </svg>
+        <AppIcon name="document" :size="14" />
         <span>模板</span>
       </button>
     </div>
@@ -118,14 +103,14 @@ async function handleApplyTemplate(template: TemplateItem) {
   background: var(--glass-bg, rgba(17, 24, 32, 0.8));
   backdrop-filter: var(--glass-blur, blur(20px));
   -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-  border-right: 1px solid rgba(0, 212, 255, 0.08);
+  border-right: 1px solid var(--color-primary-lighter);
   display: flex;
   flex-direction: column;
   z-index: 2;
 
   &__tabs {
     display: flex;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+    border-bottom: 1px solid var(--color-primary-lighter);
     flex-shrink: 0;
   }
 
@@ -136,21 +121,20 @@ async function handleApplyTemplate(template: TemplateItem) {
     justify-content: center;
     gap: 5px;
     padding: 8px 4px;
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--el-font-size-extra-small, 12px);
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-color-secondary);
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { color: #00d4ff; background: rgba(0, 212, 255, 0.04); }
+    &:hover { color: var(--color-primary); background: var(--color-primary-lighter); }
     &--active {
-      color: #00d4ff;
-      border-bottom-color: #00d4ff;
-      background: rgba(0, 212, 255, 0.06);
-      text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      background: var(--color-primary-lighter);
     }
   }
 
@@ -166,7 +150,7 @@ async function handleApplyTemplate(template: TemplateItem) {
     display: flex;
     gap: 6px;
     padding: 8px 12px;
-    border-top: 1px solid rgba(0, 212, 255, 0.06);
+    border-top: 1px solid var(--color-primary-lighter);
     flex-shrink: 0;
   }
 
@@ -176,10 +160,10 @@ async function handleApplyTemplate(template: TemplateItem) {
     border-radius: 3px;
     white-space: nowrap;
 
-    &--draft { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.35); }
+    &--draft { background: var(--text-color-disabled); color: var(--text-color-placeholder); }
     &--published { background: rgba(0, 230, 118, 0.1); color: #00e676; }
-    &--form { background: rgba(0, 212, 255, 0.1); color: #00d4ff; }
-    &--search-list { background: rgba(0, 212, 255, 0.1); color: #00d4ff; }
+    &--form { background: var(--color-primary-bg-light); color: var(--color-primary); }
+    &--search-list { background: var(--color-primary-bg-light); color: var(--color-primary); }
   }
 }
 </style>

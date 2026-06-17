@@ -7,7 +7,7 @@ export function createTagInputWidget(id: string): Widget {
     ...publicSchema(id, 'tag-input'),
     name: tagInputConfig.name,
     label: tagInputConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...tagInputConfig.defaultStyle },
     props: { ...tagInputConfig.defaultProps },
   }

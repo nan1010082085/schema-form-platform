@@ -2,15 +2,16 @@
 /**
  * WidgetTemplateView — 组件模板库
  *
- * 卡片网格展示模板，支持搜索、分类筛选、详情预览、一键插入画布。
+ * 卡片网格展示模板，支持搜索、分类筛选、详情预览。
  */
 import { onMounted, ref } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon, GridViewIcon, AddIcon, DeleteIcon, BrowseIcon, FileIcon, AppIcon, DesktopIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTemplateStore } from '@/stores/template'
 import { useWidgetStore } from '@/stores/widget'
 import { WidgetRenderer } from '@/components/WidgetRenderer'
 import { registerAllWidgets } from '@/widgets'
+import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import type { TemplateItem } from '@/utils/apiClient'
 import type { PartialWidget } from '@/widgets/base/types'
 import styles from './WidgetTemplateView.module.scss'
@@ -74,40 +75,19 @@ function openPreview(template: TemplateItem) {
   previewVisible.value = true
 }
 
-// ---- 插入画布 ----
-async function applyToCanvas(template: TemplateItem) {
-  try {
-    const widgets = await templateStore.applyTemplateById(template.id)
-    // 逐个添加 widget 到画布，补全 position
-    let offsetX = 50
-    let offsetY = 50
-    for (const raw of widgets) {
-      const w = raw as Record<string, unknown>
-      if (!w.position) {
-        w.position = { x: offsetX, y: offsetY, w: 300, h: 60, zIndex: 1 }
-        offsetY += 80
-      }
-      widgetStore.addWidget(w as any)
-    }
-    MessagePlugin.success(`模板"${template.name}"已插入画布`)
-  } catch {
-    MessagePlugin.error('应用模板失败')
-  }
-}
-
 // ---- 删除模板 ----
 async function handleDelete(template: TemplateItem) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确定删除模板"${template.name}"吗？此操作不可撤销。`,
-    theme: 'warning',
-    confirmBtn: '确定删除',
-    onConfirm: async () => {
-      await templateStore.removeTemplate(template.id)
-      MessagePlugin.success('模板已删除')
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确定删除模板"${template.name}"吗？此操作不可撤销。`,
+      '删除确认',
+      { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+    )
+    await templateStore.removeTemplate(template.id)
+    ElMessage.success('模板已删除')
+  } catch {
+    // 用户取消
+  }
 }
 
 // ---- 分类标签颜色 ----
@@ -122,13 +102,20 @@ const CATEGORY_TAG_THEME: Record<string, 'default' | 'success' | 'warning' | 'da
   other: 'default',
 }
 
-function getCategoryTagTheme(category: string): 'default' | 'success' | 'warning' | 'danger' {
+function getCategoryTagType(category: string): 'default' | 'success' | 'warning' | 'danger' | 'info' {
   return CATEGORY_TAG_THEME[category] ?? 'default'
 }
 
 // ---- 分类中文名 ----
 function getCategoryLabel(category: string): string {
   return CATEGORY_OPTIONS.find(c => c.value === category)?.label ?? category
+}
+
+// ---- 日期格式化 ----
+function formatDate(dateStr: string | Date) {
+  if (!dateStr) return '-'
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  return date.toLocaleDateString('zh-CN')
 }
 
 // ---- 初始加载 ----
@@ -139,183 +126,173 @@ onMounted(() => {
 
 <template>
   <div :class="styles.container">
-    <!-- 顶栏：搜索 + 筛选 -->
-    <div :class="styles.toolbar">
-      <div :class="styles.toolbarLeft">
-        <AppIcon :size="20" :class="styles.toolbarIcon" />
-        <span :class="styles.toolbarTitle">组件模板库</span>
-        <t-tag :class="styles.countTag" theme="default" size="small">
-          {{ templateStore.total }} 个模板
-        </t-tag>
+    <!-- Header -->
+    <div :class="styles.header">
+      <div :class="styles.titleRow">
+        <div>
+          <h1>模板库</h1>
+          <p :class="styles.subtitle">管理组件模板，支持搜索、分类筛选、详情预览</p>
+        </div>
+        <div :class="styles.headerActions">
+          <el-tag size="small" :class="styles.countTag">
+            {{ templateStore.total }} 个模板
+          </el-tag>
+        </div>
       </div>
-      <div :class="styles.toolbarRight">
-        <t-input
-          v-model:value="searchInput"
-          placeholder="搜索模板名称或描述"
-          clearable
-          :class="styles.searchInput"
-          @input="handleSearch"
-        >
-          <template #prefix-icon><SearchIcon /></template>
-        </t-input>
+
+      <!-- Filter bar -->
+      <div :class="styles.toolbar">
+        <FilterTabs v-model="templateStore.selectedCategory" :options="CATEGORY_OPTIONS" @update:model-value="handleCategoryChange" />
+        <div :class="styles.toolbarRight">
+          <el-input
+            v-model="searchInput"
+            placeholder="搜索模板名称或描述"
+            clearable
+            :class="styles.searchInput"
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <AppIcon name="search" :size="14" />
+            </template>
+          </el-input>
+        </div>
       </div>
     </div>
 
-    <!-- 分类标签栏 -->
-    <div :class="styles.categoryBar">
-      <div :class="styles.categoryList">
-        <t-tag
-          v-for="cat in CATEGORY_OPTIONS"
-          :key="cat.value"
-          :theme="templateStore.selectedCategory === cat.value ? 'primary' : 'default'"
-          :variant="templateStore.selectedCategory === cat.value ? 'dark' : 'outline'"
-          :class="styles.categoryTag"
-          @click="handleCategoryChange(cat.value)"
-        >
-          {{ cat.label }}
-        </t-tag>
+    <!-- Loading -->
+    <div v-if="templateStore.loading" :class="styles.content">
+      <div :class="styles.skeleton">
+        <div v-for="i in 6" :key="i" :class="styles.skeletonCard">
+          <div :class="styles.skeletonThumb" />
+          <div :class="styles.skeletonTitle" />
+          <div :class="styles.skeletonText" />
+        </div>
       </div>
     </div>
 
-    <!-- 内容区 -->
-    <div :class="styles.content">
-      <!-- 加载中 -->
-      <div v-if="templateStore.loading" :class="styles.loadingState">
-        <GridViewIcon :size="32" :class="styles.loadingIcon" />
-        <span>加载中...</span>
-      </div>
+    <!-- Error -->
+    <div v-else-if="templateStore.error" :class="styles.content">
+      <el-alert :title="templateStore.error" type="error" show-icon :closable="false">
+        <template #default>
+          <el-button size="small" @click="templateStore.loadTemplates()">重试</el-button>
+        </template>
+      </el-alert>
+    </div>
 
-      <!-- 错误 -->
-      <div v-else-if="templateStore.error" :class="styles.errorState">
-        <span :class="styles.errorText">{{ templateStore.error }}</span>
-        <t-button size="small" @click="templateStore.loadTemplates()">重试</t-button>
+    <!-- Empty state -->
+    <div v-else-if="templateStore.templates.length === 0" :class="styles.emptyState">
+      <div :class="styles.emptyIcon">
+        <AppIcon name="document" :size="64" />
       </div>
+      <h2 :class="styles.emptyTitle">暂无模板</h2>
+      <p :class="styles.emptyDesc">尝试调整筛选条件或创建新模板</p>
+    </div>
 
-      <!-- 空状态 -->
-      <div v-else-if="templateStore.templates.length === 0" :class="styles.emptyState">
-        <FileIcon :size="48" :class="styles.emptyIcon" />
-        <p :class="styles.emptyText">暂无模板</p>
-        <p :class="styles.emptyHint">尝试调整筛选条件或创建新模板</p>
-      </div>
-
-      <!-- 模板卡片网格 -->
-      <div v-else :class="styles.cardGrid">
+    <!-- Card Grid -->
+    <div v-else :class="styles.content">
+      <div :class="styles.cardGrid">
         <div
           v-for="tpl in templateStore.templates"
           :key="tpl.id"
           :class="styles.card"
         >
-          <!-- 缩略图占位 -->
-          <div :class="styles.cardThumb">
-            <GridViewIcon :size="32" :class="styles.thumbIcon" />
-            <t-tag
-              :theme="getCategoryTagTheme(tpl.category)"
+          <!-- 缩略图 -->
+          <div :class="styles.cardPreview" @click="openPreview(tpl)">
+            <img v-if="tpl.thumbnail" :src="tpl.thumbnail" :alt="tpl.name" :class="styles.thumbnail" />
+            <div v-else :class="styles.thumbnailPlaceholder">
+              <AppIcon name="grid" :size="32" />
+            </div>
+            <el-tag
+              :type="getCategoryTagType(tpl.category)"
               :class="styles.cardCategory"
               size="small"
-              variant="dark"
+              effect="dark"
             >
               {{ getCategoryLabel(tpl.category) }}
-            </t-tag>
+            </el-tag>
           </div>
 
           <!-- 卡片内容 -->
           <div :class="styles.cardBody">
-            <h3 :class="styles.cardTitle">{{ tpl.name }}</h3>
-            <p :class="styles.cardDesc">{{ tpl.description || '暂无描述' }}</p>
+            <h3 :class="styles.cardName">{{ tpl.name }}</h3>
             <div :class="styles.cardMeta">
               <span :class="styles.metaItem">
-                <BrowseIcon :size="12" />
+                <AppIcon name="view" :size="12" />
                 {{ tpl.usageCount }} 次使用
               </span>
               <span v-if="tpl.isBuiltin" :class="styles.builtinBadge">内置</span>
+              <span :class="styles.metaDate">{{ formatDate(tpl.updatedAt) }}</span>
             </div>
-            <!-- 标签 -->
+            <p v-if="tpl.description" :class="styles.cardDesc">{{ tpl.description }}</p>
             <div v-if="tpl.tags.length > 0" :class="styles.tagList">
-              <t-tag
+              <el-tag
                 v-for="tag in tpl.tags"
                 :key="tag"
                 size="small"
-                theme="default"
-                variant="outline"
                 :class="styles.tag"
               >
                 {{ tag }}
-              </t-tag>
+              </el-tag>
             </div>
           </div>
 
           <!-- 卡片操作 -->
           <div :class="styles.cardActions">
-            <t-button
-              theme="primary"
-              size="small"
-              :class="styles.actionBtn"
-              @click="applyToCanvas(tpl)"
-            >
-              <template #icon><AddIcon /></template>
-              插入画布
-            </t-button>
-            <t-button
-              size="small"
-              :class="styles.actionBtn"
-              @click="openPreview(tpl)"
-            >
-              <template #icon><FileIcon /></template>
-              预览
-            </t-button>
-            <t-button
-              v-if="!tpl.isBuiltin"
-              theme="danger"
-              size="small"
-              :class="styles.actionBtn"
-              @click="handleDelete(tpl)"
-            >
-              <template #icon><DeleteIcon /></template>
-            </t-button>
+            <el-tooltip content="预览" placement="top" :show-after="300">
+              <el-button size="small" text type="primary" @click="openPreview(tpl)">
+                <AppIcon name="view" />
+              </el-button>
+            </el-tooltip>
+            <el-tooltip v-if="!tpl.isBuiltin" content="删除" placement="top" :show-after="300">
+              <el-button size="small" text type="danger" @click="handleDelete(tpl)">
+                <AppIcon name="delete" />
+              </el-button>
+            </el-tooltip>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- 分页 -->
-      <div v-if="templateStore.totalPages > 1" :class="styles.pagination">
-        <t-pagination
-          :current="templateStore.page"
-          :page-size="templateStore.pageSize"
-          :total="templateStore.total"
-          @current-change="handlePageChange"
-        />
-      </div>
+    <!-- Pagination -->
+    <div v-if="templateStore.totalPages > 1" :class="styles.pagination">
+      <el-pagination
+        :current-page="templateStore.page"
+        :page-size="templateStore.pageSize"
+        :total="templateStore.total"
+        layout="prev, pager, next"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 详情预览抽屉 -->
-    <t-drawer
-      v-model:visible="previewVisible"
-      :header="previewTemplate?.name ?? '模板预览'"
+    <el-drawer
+      v-model="previewVisible"
+      :title="previewTemplate?.name ?? '模板预览'"
       size="55%"
-      placement="right"
+      direction="rtl"
     >
       <div v-if="previewTemplate" :class="styles.previewContent">
         <!-- 模式切换 -->
         <div :class="styles.previewModeBar">
-          <t-radio-group v-model:value="previewMode" size="small">
-            <t-radio-button value="render">
-              <DesktopIcon :size="14" />
+          <el-radio-group v-model="previewMode" size="small">
+            <el-radio-button value="render">
+              <AppIcon name="monitor" :size="14" />
               渲染预览
-            </t-radio-button>
-            <t-radio-button value="json">
-              <FileIcon :size="14" />
+            </el-radio-button>
+            <el-radio-button value="json">
+              <AppIcon name="document" :size="14" />
               JSON 源码
-            </t-radio-button>
-          </t-radio-group>
+            </el-radio-button>
+          </el-radio-group>
         </div>
 
         <!-- 模板基本信息 -->
         <div :class="styles.previewMeta">
           <div :class="styles.previewMetaRow">
             <span :class="styles.previewMetaLabel">分类</span>
-            <t-tag :theme="getCategoryTagTheme(previewTemplate.category)" variant="outline" size="small">
+            <el-tag :type="getCategoryTagType(previewTemplate.category)" size="small">
               {{ getCategoryLabel(previewTemplate.category) }}
-            </t-tag>
+            </el-tag>
           </div>
           <div :class="styles.previewMetaRow">
             <span :class="styles.previewMetaLabel">统计</span>
@@ -330,15 +307,13 @@ onMounted(() => {
           <div v-if="previewTemplate.tags.length > 0" :class="styles.previewMetaRow">
             <span :class="styles.previewMetaLabel">标签</span>
             <div :class="styles.previewTagList">
-              <t-tag
+              <el-tag
                 v-for="tag in previewTemplate.tags"
                 :key="tag"
                 size="small"
-                theme="default"
-                variant="outline"
               >
                 {{ tag }}
-              </t-tag>
+              </el-tag>
             </div>
           </div>
         </div>
@@ -350,14 +325,7 @@ onMounted(() => {
 
         <!-- JSON 源码 -->
         <pre v-else :class="styles.schemaCode"><code>{{ previewJson }}</code></pre>
-
-        <div :class="styles.previewActions">
-          <t-button theme="primary" @click="applyToCanvas(previewTemplate!)">
-            <template #icon><AddIcon /></template>
-            插入画布
-          </t-button>
-        </div>
       </div>
-    </t-drawer>
+    </el-drawer>
   </div>
 </template>

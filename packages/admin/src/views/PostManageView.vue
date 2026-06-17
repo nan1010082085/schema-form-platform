@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface Post {
   id: string
@@ -30,15 +30,6 @@ const form = ref({
   remark: '',
 })
 const editingId = ref('')
-
-const postColumns = [
-  { colKey: 'postCode', title: '岗位编码', minWidth: 120 },
-  { colKey: 'postName', title: '岗位名称', minWidth: 120 },
-  { colKey: 'sort', title: '排序', width: 80 },
-  { colKey: 'status', title: '状态', width: 80 },
-  { colKey: 'remark', title: '备注', minWidth: 160 },
-  { colKey: 'actions', title: '操作', width: 160, fixed: 'right' as const },
-]
 
 async function fetchPosts() {
   loading.value = true
@@ -77,41 +68,38 @@ function openEdit(post: Post) {
 
 async function handleSubmit() {
   if (!form.value.postCode.trim()) {
-    MessagePlugin.warning('请输入岗位编码')
+    ElMessage.warning('请输入岗位编码')
     return
   }
   if (!form.value.postName.trim()) {
-    MessagePlugin.warning('请输入岗位名称')
+    ElMessage.warning('请输入岗位名称')
     return
   }
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/posts', form.value)
-    MessagePlugin.success('岗位创建成功')
+    ElMessage.success('岗位创建成功')
   } else {
     await apiClient.put(`/posts/${editingId.value}`, form.value)
-    MessagePlugin.success('岗位更新成功')
+    ElMessage.success('岗位更新成功')
   }
   dialogVisible.value = false
   fetchPosts()
 }
 
 async function handleDelete(post: Post) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除岗位「${post.postName}」？如有用户关联需先处理。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/posts/${post.id}`)
-      MessagePlugin.success('岗位已删除')
-      fetchPosts()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除岗位「${post.postName}」？如有用户关联需先处理。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+    await apiClient.delete(`/posts/${post.id}`)
+    ElMessage.success('岗位已删除')
+    fetchPosts()
+  } catch {
+    // 用户取消删除
+  }
 }
 
 function handlePageChange(page: number) {
@@ -136,80 +124,88 @@ onMounted(fetchPosts)
 <template>
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索岗位名称或编码"
-        :prefix-icon="SearchIcon"
+        :prefix-icon="Search"
         clearable
         :class="$style.search"
         @clear="handleSearch"
-        @enter="handleSearch"
+        @keyup.enter="handleSearch"
       />
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate">
+      <el-button type="primary" :icon="Plus" @click="openCreate">
         新增岗位
-      </t-button>
+      </el-button>
     </div>
 
-    <t-table :data="posts" :columns="postColumns" :loading="loading" :class="$style.table">
-      <template #cell-status="{ row }">
-        <t-tag :theme="row.status === 'active' ? 'success' : 'warning'" size="small">
-          {{ row.status === 'active' ? '正常' : '停用' }}
-        </t-tag>
-      </template>
-      <template #cell-actions="{ row }">
-        <div :class="$style.actions">
-          <t-button variant="text" size="small" @click="openEdit(row)">编辑</t-button>
-          <t-button variant="text" size="small" theme="danger" @click="handleDelete(row)">删除</t-button>
-        </div>
-      </template>
-    </t-table>
+    <el-table :data="posts" v-loading="loading" :class="$style.table" border stripe>
+      <el-table-column prop="postCode" label="岗位编码" min-width="120" />
+      <el-table-column prop="postName" label="岗位名称" min-width="120" />
+      <el-table-column prop="sort" label="排序" width="80" align="center" />
+      <el-table-column label="状态" width="80" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'active' ? 'success' : 'warning'" size="small">
+            {{ row.status === 'active' ? '正常' : '停用' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+      <el-table-column label="操作" width="160" fixed="right" align="center">
+        <template #default="{ row }">
+          <div :class="$style.actions">
+            <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
 
     <div :class="$style.pagination">
-      <t-pagination
-        v-model:current="currentPage"
+      <el-pagination
+        v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :total="total"
-        :page-size-options="[10, 20, 50]"
-        show-total
-        show-page-size
+        :page-sizes="[10, 20, 50]"
+        layout="total, sizes, prev, pager, next"
+        background
         @current-change="handlePageChange"
-        @page-size-change="handleSizeChange"
+        @size-change="handleSizeChange"
       />
     </div>
   </div>
 
   <!-- Create/Edit Dialog -->
-  <t-dialog
-    v-model:visible="dialogVisible"
-    :header="dialogMode === 'create' ? '新增岗位' : '编辑岗位'"
+  <el-dialog
+    v-model="dialogVisible"
+    :title="dialogMode === 'create' ? '新增岗位' : '编辑岗位'"
     width="500px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="岗位编码">
-        <t-input v-model:value="form.postCode" placeholder="请输入岗位编码（如：ceo、hr）" />
-      </t-form-item>
-      <t-form-item label="岗位名称">
-        <t-input v-model:value="form.postName" placeholder="请输入岗位名称（如：首席执行官）" />
-      </t-form-item>
-      <t-form-item label="排序">
-        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
-      </t-form-item>
-      <t-form-item label="状态">
-        <t-select v-model:value="form.status" :style="{ width: '100%' }">
-          <t-option label="正常" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
-      </t-form-item>
-      <t-form-item label="备注">
-        <t-input v-model:value="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
-      </t-form-item>
-    </t-form>
+    <el-form label-width="80px">
+      <el-form-item label="岗位编码">
+        <el-input v-model="form.postCode" placeholder="请输入岗位编码（如：ceo、hr）" />
+      </el-form-item>
+      <el-form-item label="岗位名称">
+        <el-input v-model="form.postName" placeholder="请输入岗位名称（如：首席执行官）" />
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number v-model="form.sort" :min="0" :max="9999" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="form.status" style="width: 100%">
+          <el-option label="正常" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="备注">
+        <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注信息（可选）" />
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="dialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleSubmit">确定</t-button>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style module>

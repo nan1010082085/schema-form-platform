@@ -109,7 +109,7 @@ async function loadWidgetConfigs(): Promise<WidgetAIMetadata[]> {
   const widgets: WidgetAIMetadata[] = []
 
   // 用 fs 扫描 widget 目录
-  const widgetsDir = join(ROOT, 'packages/editor/web/src/widgets')
+  const widgetsDir = join(ROOT, 'packages/editor/src/widgets')
   const entries = readdirSync(widgetsDir, { withFileTypes: true })
 
   for (const entry of entries) {

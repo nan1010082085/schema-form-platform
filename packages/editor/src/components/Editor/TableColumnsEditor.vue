@@ -5,9 +5,9 @@
  * Simplified column editor for the Table widget.
  * Each column row has: prop, label, width, fixed.
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { TableColumn } from '../../widgets/table/config'
 import styles from './TableColumnsEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   columns: TableColumn[]
@@ -73,36 +73,36 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
       <div :class="styles.itemHeader">
         <span :class="styles.itemTitle">列 {{ idx + 1 }}</span>
         <div :class="styles.itemActions">
-          <t-button
+          <el-button
             size="small"
-            variant="text"
+            link
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <ChevronUpIcon />
-          </t-button>
-          <t-button
+            <AppIcon name="arrow-up" />
+          </el-button>
+          <el-button
             size="small"
-            variant="text"
+            link
             :disabled="idx === columns.length - 1"
             @click="moveDown(idx)"
           >
-            <ChevronDownIcon />
-          </t-button>
-          <t-button
-            theme="danger"
+            <AppIcon name="arrow-down" />
+          </el-button>
+          <el-button
+            type="danger"
             size="small"
-            variant="text"
+            link
             @click="removeColumn(idx)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
       <div :class="styles.field">
         <label :class="styles.label">字段名</label>
-        <t-input
+        <el-input
           :model-value="col.prop"
           size="small"
           placeholder="字段名"
@@ -112,7 +112,7 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
 
       <div :class="styles.field">
         <label :class="styles.label">标签</label>
-        <t-input
+        <el-input
           :model-value="col.label"
           size="small"
           placeholder="显示标签"
@@ -122,7 +122,7 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
 
       <div :class="styles.field">
         <label :class="styles.label">宽度</label>
-        <t-input-number
+        <el-input-number
           :model-value="col.width"
           size="small"
           controls-position="right"
@@ -136,31 +136,31 @@ function updateColumn<K extends keyof TableColumn>(index: number, field: K, valu
 
       <div :class="styles.field">
         <label :class="styles.label">固定列</label>
-        <t-select
+        <el-select
           :model-value="col.fixed"
           size="small"
           style="width: 100%"
           @update:model-value="updateColumn(idx, 'fixed', $event)"
         >
-          <t-option
+          <el-option
             v-for="opt in fixedOptions"
             :key="String(opt.value)"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
     </div>
 
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="outline"
+      plain
       style="width: 100%; margin-top: 8px"
       @click="addColumn"
     >
-      <AddIcon />
+      <AppIcon name="plus" />
       添加列
-    </t-button>
+    </el-button>
   </div>
 </template>

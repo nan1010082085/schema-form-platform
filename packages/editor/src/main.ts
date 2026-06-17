@@ -1,59 +1,18 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/theme.scss'
 import '@schema-form/shared-styles/css-variables.scss'
 
-import { applyThemeInline, installThemeWatchdog, EDITOR_THEME_VARS, type ThemeVars } from '@schema-form/shared-qiankun/themeGuard'
+import { setupElementPlus } from '@schema-form/shared-config/element'
 
 import '@/styles/variables.scss'
-import '@/styles/theme.scss'
-import '@/styles/tech-theme.scss'
-
-/** 科技感主题变量 — 覆盖 EDITOR_THEME_VARS 中的 Element Plus 变量 */
-const TECH_THEME_VARS: ThemeVars = {
-  ...EDITOR_THEME_VARS,
-  '--el-color-primary': '#00d4ff',
-  '--el-color-primary-light-3': '#33ddff',
-  '--el-color-primary-light-5': '#66e3ff',
-  '--el-color-primary-light-7': '#99ecff',
-  '--el-color-primary-light-8': '#b3f0ff',
-  '--el-color-primary-light-9': '#e6f9ff',
-  '--el-color-primary-dark-2': '#00b8e6',
-  '--el-color-warning': '#ffab40',
-  '--el-color-danger': '#ff5252',
-  '--el-color-success': '#00e676',
-  '--el-text-color-primary': 'rgba(255, 255, 255, 0.95)',
-  '--el-text-color-regular': 'rgba(255, 255, 255, 0.7)',
-  '--el-text-color-placeholder': 'rgba(255, 255, 255, 0.35)',
-  '--el-text-color-disabled': 'rgba(255, 255, 255, 0.2)',
-  '--el-border-color': 'rgba(0, 212, 255, 0.12)',
-  '--el-border-color-light': 'rgba(0, 212, 255, 0.08)',
-  '--el-border-color-lighter': 'rgba(0, 212, 255, 0.06)',
-  '--el-border-color-extra-light': 'rgba(0, 212, 255, 0.04)',
-  '--el-border-color-dark': 'rgba(0, 212, 255, 0.15)',
-  '--el-border-color-hover': '#00d4ff',
-  '--el-border-color-focus': '#00d4ff',
-  '--el-fill-color': 'rgba(0, 0, 0, 0.2)',
-  '--el-fill-color-light': 'rgba(0, 0, 0, 0.15)',
-  '--el-fill-color-lighter': 'rgba(0, 0, 0, 0.1)',
-  '--el-fill-color-blank': '#111820',
-  '--el-bg-color': '#111820',
-  '--el-bg-color-page': '#0a0e14',
-  '--el-bg-color-overlay': '#161d26',
-  '--el-mask-color': 'rgba(0, 0, 0, 0.7)',
-}
 
 import App from './App.vue'
 import { createEditorRouter } from './router'
 import { configureApiClient } from './utils/apiClient'
 import { registerAllWidgets } from './widgets'
 import { permissionDirective } from './directives/permission'
-
-// ============================================================
-// 主题初始化
-// ============================================================
-applyThemeInline(TECH_THEME_VARS)
-installThemeWatchdog(TECH_THEME_VARS)
 
 // ============================================================
 // Token 解析
@@ -87,6 +46,7 @@ function createEditorApp() {
 
   app.use(pinia)
   app.use(router)
+  setupElementPlus(app)
   app.directive('permission', permissionDirective)
   registerAllWidgets()
 

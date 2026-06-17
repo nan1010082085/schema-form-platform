@@ -26,7 +26,6 @@ import type {
   PendingInterrupt,
 } from '@/types'
 import {
-  chat,
   getConversations,
   getConversationDetail,
   deleteConversation,
@@ -41,7 +40,6 @@ import {
   searchRag,
   searchConversations,
   mentionSearch,
-  resumeInterrupt,
   submitMessageFeedback,
   type LLMProviderInfo,
   type LLMAggregatedUsage,
@@ -50,6 +48,12 @@ import {
   type SearchResult,
   type FeedbackType,
 } from '@/api/aiApi'
+import {
+  emitChatSend,
+  emitChatCancel,
+  emitChatResume,
+  onChatEvent,
+} from '@schema-form/socket'
 
 export const useAiStore = defineStore('ai', () => {
   // ---- State ----
@@ -65,7 +69,6 @@ export const useAiStore = defineStore('ai', () => {
   const error = ref<string | null>(null)
   const taskChain = ref<TaskChainStep[]>([])
   const taskChainIndex = ref(0)
-  const abortController = ref<AbortController | null>(null)
 
   // ---- SSE 连接状态与重试 ----
   const sseStatus = ref<SSEConnectionStatus>('idle')
@@ -73,6 +76,12 @@ export const useAiStore = defineStore('ai', () => {
   const lastMessagePayload = ref<{ content: string; mentions?: MentionReference[] } | null>(null)
   const MAX_AUTO_RETRIES = 3
   const RETRY_BASE_DELAY_MS = 2000
+  /** WebSocket 事件取消订阅函数 */
+  let unsubscribeChatEvent: (() => void) | null = null
+  /** 当前活跃的 done promise 解析函数（用于 stopGeneration 时提前结束） */
+  let activeDoneResolve: (() => void) | null = null
+  /** 标记当前流是否被用户主动停止 */
+  let streamStopped = false
 
   // ---- Schema 增量编辑状态 ----
   /** Schema 历史栈，用于撤销操作 */
@@ -158,7 +167,7 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   /**
-   * 核心 SSE 流执行逻辑，支持自动重试。
+   * 核心 WebSocket 流执行逻辑，支持自动重试。
    * 在指定的 assistantIndex 上写入内容，不创建新消息占位。
    */
   async function _executeStream(
@@ -169,111 +178,84 @@ export const useAiStore = defineStore('ai', () => {
     let attempts = 0
 
     while (attempts <= MAX_AUTO_RETRIES) {
-      // 每次尝试创建独立的 AbortController
-      const localController = new AbortController()
-      abortController.value = localController
-      const { signal } = localController
-
       sseStatus.value = attempts === 0 ? 'connecting' : 'reconnecting'
       retryCount.value = attempts
+      streamStopped = false
 
-      try {
-        const stream = chat({
-          conversationId: currentConversationId.value ?? undefined,
-          message: content,
-          context: {
-            ...context.value,
-            preferences: {
-              ...context.value.preferences,
-              replyLanguage: chatSettings.value.preferences.replyLanguage,
-              replyStyle: chatSettings.value.preferences.replyStyle,
-              codeComment: chatSettings.value.preferences.codeComment,
-            },
-            historySummary: chatSettings.value.historySummary.mode === 'manual'
-              ? chatSettings.value.historySummary.manualSummary
-              : context.value.historySummary,
-            // 多轮迭代：携带当前已生成的 Schema/Flow，供 AI 基于上次结果修改
-            currentSchema: currentSchema.value ?? undefined,
-            currentFlow: currentFlow.value ?? undefined,
+      // 清理上一次的事件监听
+      if (unsubscribeChatEvent) {
+        unsubscribeChatEvent()
+        unsubscribeChatEvent = null
+      }
+
+      // 用 Promise 等待 done 事件，事件驱动而非轮询
+      let doneEventReceived = false
+      let firstChunkReceived = false
+      let doneResolve: (() => void) | null = null
+
+      const donePromise = new Promise<void>((resolve) => {
+        doneResolve = resolve
+        activeDoneResolve = resolve
+      })
+
+      // 监听 chat events
+      unsubscribeChatEvent = onChatEvent((chatEvent) => {
+        if (doneEventReceived) return
+
+        if (!firstChunkReceived) {
+          firstChunkReceived = true
+          sseStatus.value = 'connected'
+        }
+
+        const event = chatEvent as unknown as SSEEvent
+        if (event.type === 'done') {
+          doneEventReceived = true
+          doneResolve?.()
+        }
+        handleSSEEvent(event, assistantIndex)
+      })
+
+      // 发送消息
+      emitChatSend({
+        conversationId: currentConversationId.value ?? undefined,
+        message: content,
+        context: {
+          ...context.value,
+          preferences: {
+            ...context.value.preferences,
+            replyLanguage: chatSettings.value.preferences.replyLanguage,
+            replyStyle: chatSettings.value.preferences.replyStyle,
+            codeComment: chatSettings.value.preferences.codeComment,
           },
-          mentions: mentions && mentions.length > 0 ? mentions : undefined,
-        }, signal)
+          historySummary: chatSettings.value.historySummary.mode === 'manual'
+            ? chatSettings.value.historySummary.manualSummary
+            : context.value.historySummary,
+          currentSchema: currentSchema.value ?? undefined,
+          currentFlow: currentFlow.value ?? undefined,
+        },
+        mentions: mentions && mentions.length > 0 ? mentions : undefined,
+      })
 
-        const reader = stream.getReader()
-        let doneEventReceived = false
-        let firstChunkReceived = false
+      // 等待 done 事件
+      await donePromise
 
-        while (true) {
-          if (signal.aborted) {
-            reader.cancel()
-            break
-          }
+      sseStatus.value = 'idle'
 
-          const { done, value } = await reader.read()
-          if (done) break
+      // 清理事件监听
+      if (unsubscribeChatEvent) {
+        unsubscribeChatEvent()
+        unsubscribeChatEvent = null
+      }
+      activeDoneResolve = null
 
-          if (!firstChunkReceived) {
-            firstChunkReceived = true
-            sseStatus.value = 'connected'
-          }
-
-          const event = value as SSEEvent
-          if (event.type === 'done') {
-            doneEventReceived = true
-          }
-          handleSSEEvent(event, assistantIndex)
-        }
-
-        sseStatus.value = 'idle'
-
-        if (!doneEventReceived && !signal.aborted) {
-          if (currentConversationId.value) {
-            loadConversations()
-          }
-        }
-
-        // 成功，跳出重试循环
-        break
-      } catch (err) {
-        if (signal.aborted) {
-          // 用户主动取消（stop 或新消息覆盖）
-          messages.value[assistantIndex].content += '\n\n[已停止]'
-          messages.value[assistantIndex].status = 'received'
-          sseStatus.value = 'idle'
-          break
-        }
-
-        attempts++
-
-        if (attempts <= MAX_AUTO_RETRIES) {
-          // 自动重试
-          sseStatus.value = 'reconnecting'
-          retryCount.value = attempts
-          messages.value[assistantIndex].content = `连接中断，正在重连 (${attempts}/${MAX_AUTO_RETRIES})...`
-          messages.value[assistantIndex].status = 'streaming'
-
-          await cancellableDelay(RETRY_BASE_DELAY_MS * attempts, signal)
-
-          // 延迟后再次检查是否被取消
-          if (signal.aborted) {
-            messages.value[assistantIndex].content += '\n\n[已停止]'
-            messages.value[assistantIndex].status = 'received'
-            sseStatus.value = 'idle'
-            break
-          }
-
-          // 重置 assistant 消息内容，准备下一次尝试
-          messages.value[assistantIndex].content = ''
-          error.value = null
-        } else {
-          // 超过最大重试次数
-          const msg = err instanceof Error ? err.message : 'Unknown error'
-          sseStatus.value = 'disconnected'
-          error.value = msg
-          messages.value[assistantIndex].content = `Error: ${msg}`
-          messages.value[assistantIndex].status = 'error'
+      if (!doneEventReceived && !streamStopped) {
+        if (currentConversationId.value) {
+          loadConversations()
         }
       }
+
+      // 成功，跳出重试循环
+      break
     }
 
     // 最终清理
@@ -281,7 +263,6 @@ export const useAiStore = defineStore('ai', () => {
     if (messages.value[assistantIndex].status === 'streaming') {
       messages.value[assistantIndex].status = 'received'
     }
-    abortController.value = null
   }
 
   /**
@@ -289,8 +270,10 @@ export const useAiStore = defineStore('ai', () => {
    */
   async function sendMessage(content: string, mentions?: MentionReference[]): Promise<void> {
     // 取消正在进行的请求
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
 
     lastMessagePayload.value = { content, mentions }
@@ -337,8 +320,10 @@ export const useAiStore = defineStore('ai', () => {
     if (!lastMessagePayload.value) return
 
     // 取消正在进行的请求
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
 
     retryCount.value = 0
@@ -381,8 +366,10 @@ export const useAiStore = defineStore('ai', () => {
     if (!userContent) return
 
     // 取消正在进行的请求
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
 
     loading.value = true
@@ -398,9 +385,15 @@ export const useAiStore = defineStore('ai', () => {
    * 停止当前请求
    */
   function stopGeneration(): void {
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    streamStopped = true
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
+    // 通知 _executeStream 的 donePromise 提前结束
+    activeDoneResolve?.()
+    activeDoneResolve = null
     retryCount.value = 0
     lastMessagePayload.value = null
   }
@@ -686,56 +679,50 @@ export const useAiStore = defineStore('ai', () => {
       status: 'streaming',
     })
 
-    // 复用 _executeStream 的模式，但用 resumeInterrupt 流
-    const localController = new AbortController()
-    abortController.value = localController
-    const { signal } = localController
-
     sseStatus.value = 'connecting'
 
-    try {
-      const stream = resumeInterrupt(interrupt.threadId, confirmed, signal)
-      const reader = stream.getReader()
-      let doneEventReceived = false
+    // 监听 chat events
+    let doneEventReceived = false
+    let doneResolve: (() => void) | null = null
+    const donePromise = new Promise<void>((resolve) => {
+      doneResolve = resolve
+    })
 
-      while (true) {
-        if (signal.aborted) {
-          reader.cancel()
-          break
-        }
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
+    }
 
-        const { done, value } = await reader.read()
-        if (done) break
-
-        sseStatus.value = 'connected'
-        const event = value as SSEEvent
-        if (event.type === 'done') doneEventReceived = true
-        handleSSEEvent(event, assistantIndex)
+    unsubscribeChatEvent = onChatEvent((chatEvent) => {
+      sseStatus.value = 'connected'
+      const event = chatEvent as unknown as SSEEvent
+      if (event.type === 'done') {
+        doneEventReceived = true
+        doneResolve?.()
       }
+      handleSSEEvent(event, assistantIndex)
+    })
 
-      sseStatus.value = 'idle'
+    // 通过 WebSocket 恢复
+    emitChatResume(interrupt.threadId, confirmed)
 
-      if (!doneEventReceived && !signal.aborted) {
-        if (currentConversationId.value) loadConversations()
-      }
-    } catch (err) {
-      if (signal.aborted) {
-        messages.value[assistantIndex].content += '\n\n[已停止]'
-        messages.value[assistantIndex].status = 'received'
-        sseStatus.value = 'idle'
-      } else {
-        const msg = err instanceof Error ? err.message : 'Unknown error'
-        sseStatus.value = 'disconnected'
-        error.value = msg
-        messages.value[assistantIndex].content = `Error: ${msg}`
-        messages.value[assistantIndex].status = 'error'
-      }
-    } finally {
-      loading.value = false
-      if (messages.value[assistantIndex].status === 'streaming') {
-        messages.value[assistantIndex].status = 'received'
-      }
-      abortController.value = null
+    // 等待 done 事件
+    await donePromise
+
+    sseStatus.value = 'idle'
+
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
+    }
+
+    if (!doneEventReceived) {
+      if (currentConversationId.value) loadConversations()
+    }
+
+    loading.value = false
+    if (messages.value[assistantIndex].status === 'streaming') {
+      messages.value[assistantIndex].status = 'received'
     }
   }
 
@@ -768,8 +755,10 @@ export const useAiStore = defineStore('ai', () => {
 
   function clearConversation(): void {
     // 取消正在进行的请求
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
 
     currentConversationId.value = null
@@ -1037,8 +1026,10 @@ export const useAiStore = defineStore('ai', () => {
     if (!userContent) return
 
     // 取消正在进行的请求
-    if (abortController.value) {
-      abortController.value.abort()
+    emitChatCancel()
+    if (unsubscribeChatEvent) {
+      unsubscribeChatEvent()
+      unsubscribeChatEvent = null
     }
 
     loading.value = true

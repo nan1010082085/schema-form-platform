@@ -1,0 +1,2922 @@
+{
+  "version": "2026-06-17",
+  "generatedAt": "2026-06-17T08:05:35.182Z",
+  "widgets": [
+    {
+      "type": "dialog",
+      "group": "container",
+      "canHaveChildren": true,
+      "displayName": "弹窗容器",
+      "description": "弹窗容器，支持编辑模式和微前端模式，可配置标题、宽度、按钮",
+      "defaultProps": {
+        "title": "弹窗标题",
+        "width": "600px",
+        "confirmText": "确定",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false,
+        "draggable": true,
+        "showFullscreenBtn": true
+      },
+      "keyProps": [
+        "draggable",
+        "showFullscreenBtn"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 600
+      },
+      "exposedValues": [
+        {
+          "key": "visible",
+          "type": "boolean",
+          "description": "弹窗是否可见"
+        },
+        {
+          "key": "dialogData",
+          "type": "object",
+          "description": "弹窗表单数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "open",
+          "description": "打开弹窗"
+        },
+        {
+          "name": "close",
+          "description": "关闭弹窗"
+        }
+      ],
+      "eventTargets": [
+        {
+          "id": "confirm",
+          "label": "确认按钮",
+          "description": "点击确认时触发"
+        },
+        {
+          "id": "cancel",
+          "label": "取消按钮",
+          "description": "点击取消时触发"
+        }
+      ],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "form",
+      "group": "container",
+      "canHaveChildren": true,
+      "displayName": "表单容器",
+      "description": "表单容器，包裹 el-form，支持表单提交、校验和数据收集",
+      "defaultProps": {
+        "labelWidth": "100px",
+        "labelPosition": "right"
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 600
+      },
+      "exposedValues": [
+        {
+          "key": "formData",
+          "type": "object",
+          "description": "表单数据模型"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "card",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "卡片容器",
+      "description": "卡片容器，提供标题和阴影包裹，用于内容分组展示",
+      "defaultProps": {
+        "title": "卡片标题",
+        "shadow": "hover",
+        "showHeader": true
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 400
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "divider",
+      "group": "layout",
+      "canHaveChildren": false,
+      "displayName": "分割线",
+      "description": "分割线组件，用于内容区域分隔",
+      "defaultProps": {
+        "direction": "horizontal",
+        "contentPosition": "center",
+        "content": ""
+      },
+      "keyProps": [
+        "direction",
+        "contentPosition",
+        "content"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 1
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "double-col",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "双列容器",
+      "description": "双列布局容器，每列可放置 1 个组件",
+      "defaultProps": {
+        "gutter": 16,
+        "colWidths": [
+          50,
+          50
+        ]
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 200
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "quad-col",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "四列容器",
+      "description": "四列布局容器，每列可放置 1 个组件",
+      "defaultProps": {
+        "gutter": 16,
+        "colWidths": [
+          25,
+          25,
+          25,
+          25
+        ]
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 200
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "single-col",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "单列容器",
+      "description": "单列布局容器，内部可放置 1 个组件",
+      "defaultProps": {
+        "gutter": 16,
+        "colWidths": [
+          100
+        ]
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 200
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "spacer",
+      "group": "layout",
+      "canHaveChildren": false,
+      "displayName": "间距",
+      "description": "间隔组件，用于控制元素间距",
+      "defaultProps": {
+        "height": 20
+      },
+      "keyProps": [
+        "height"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 20
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "tabs",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "页签容器",
+      "description": "页签容器，支持动态增删标签页，组件绑定到指定标签",
+      "defaultProps": {
+        "tabs": [
+          {
+            "key": "tab1",
+            "label": "标签一"
+          },
+          {
+            "key": "tab2",
+            "label": "标签二"
+          }
+        ],
+        "activeKey": "tab1",
+        "type": "border-card",
+        "tabPosition": "top"
+      },
+      "keyProps": [
+        "tabs"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 400
+      },
+      "exposedValues": [
+        {
+          "key": "activeKey",
+          "type": "string",
+          "description": "当前激活标签"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "triple-col",
+      "group": "layout",
+      "canHaveChildren": true,
+      "displayName": "三列容器",
+      "description": "三列布局容器，每列可放置 1 个组件",
+      "defaultProps": {
+        "gutter": 16,
+        "colWidths": [
+          33,
+          34,
+          33
+        ]
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 600,
+        "h": 200
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "autocomplete",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "自动补全",
+      "description": "自动补全输入框，支持远程搜索和静态建议列表",
+      "defaultProps": {
+        "placeholder": "请输入",
+        "clearable": true,
+        "disabled": false,
+        "debounce": 300,
+        "suggestions": []
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "debounce",
+        "suggestions"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前输入值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "cascader",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "级联选择",
+      "description": "级联选择器，适用于省市区、多级分类等场景",
+      "defaultProps": {
+        "placeholder": "请选择",
+        "clearable": true,
+        "disabled": false,
+        "showAllLevels": true,
+        "collapseTags": false,
+        "multiple": false,
+        "checkStrictly": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "showAllLevels",
+        "collapseTags",
+        "multiple",
+        "checkStrictly",
+        "options"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "array",
+          "description": "当前选中值（数组）",
+          "example": []
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "checkbox",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "多选",
+      "description": "多选框组，支持静态选项和动态数据源",
+      "defaultProps": {
+        "disabled": false
+      },
+      "keyProps": [
+        "disabled"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "color-picker",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "颜色选择",
+      "description": "颜色选择器，用于主题配置、可视化编辑等场景",
+      "defaultProps": {
+        "disabled": false,
+        "showAlpha": false,
+        "colorFormat": "",
+        "predefine": []
+      },
+      "keyProps": [
+        "disabled",
+        "showAlpha",
+        "colorFormat"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前颜色值",
+          "example": "#409eff"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "date",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "日期选择",
+      "description": "日期选择器，支持日期格式配置",
+      "defaultProps": {
+        "placeholder": "请选择日期",
+        "clearable": true,
+        "disabled": false,
+        "type": "date",
+        "format": "YYYY-MM-DD"
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "type",
+        "format"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "date-time-slot",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "日期时间区间",
+      "description": "日期时间区间选择器，支持开始/结束时间配置",
+      "defaultProps": {
+        "startPlaceholder": "开始时间",
+        "endPlaceholder": "结束时间",
+        "format": "YYYY-MM-DD HH:mm:ss",
+        "rangeSeparator": "至"
+      },
+      "keyProps": [
+        "startPlaceholder",
+        "endPlaceholder",
+        "format",
+        "rangeSeparator"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "descriptions",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "描述列表",
+      "description": "以 key-value 形式展示数据，支持多列布局和多种值类型",
+      "defaultProps": {
+        "title": "详情",
+        "column": 2,
+        "border": true,
+        "items": [
+          {
+            "label": "字段1",
+            "field": "field1",
+            "type": "text"
+          },
+          {
+            "label": "字段2",
+            "field": "field2",
+            "type": "text"
+          }
+        ]
+      },
+      "keyProps": [
+        "title",
+        "column",
+        "border",
+        "items"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "data",
+          "type": "object",
+          "description": "描述列表数据对象"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "input",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "输入框",
+      "description": "单行文本输入框，支持 placeholder、清空、禁用等配置",
+      "defaultProps": {
+        "placeholder": "请输入",
+        "clearable": true,
+        "disabled": false,
+        "readonly": false,
+        "showPassword": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "readonly",
+        "maxlength",
+        "showPassword"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "number",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "数字输入",
+      "description": "数字输入框，支持步进、最小最大值限制",
+      "defaultProps": {
+        "placeholder": "请输入数字",
+        "disabled": false,
+        "step": 1
+      },
+      "keyProps": [
+        "placeholder",
+        "disabled",
+        "min",
+        "max",
+        "step",
+        "precision"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "radio",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "单选",
+      "description": "单选框组，支持静态选项和动态数据源",
+      "defaultProps": {
+        "disabled": false
+      },
+      "keyProps": [
+        "disabled"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "rate",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "评分",
+      "description": "评分控件，用于用户打分评价场景",
+      "defaultProps": {
+        "max": 5,
+        "disabled": false,
+        "allowHalf": false,
+        "showText": false,
+        "showScore": false,
+        "voidColor": "",
+        "voidIconClass": "",
+        "colors": [],
+        "iconClasses": []
+      },
+      "keyProps": [
+        "max",
+        "disabled",
+        "allowHalf",
+        "showText",
+        "showScore"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "number",
+          "description": "当前评分值",
+          "example": 0
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "richtext",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "富文本",
+      "description": "富文本编辑器，支持格式化内容输入",
+      "defaultProps": {
+        "placeholder": "请输入内容",
+        "readonly": false
+      },
+      "keyProps": [
+        "placeholder",
+        "readonly"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 200
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "select",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "下拉选择",
+      "description": "下拉选择器，支持静态选项和动态数据源加载",
+      "defaultProps": {
+        "placeholder": "请选择",
+        "clearable": true,
+        "disabled": false,
+        "multiple": false,
+        "filterable": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "multiple",
+        "filterable"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "slider",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "滑块",
+      "description": "滑块控件，适用于数值范围选择、评分等场景",
+      "defaultProps": {
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "showInput": false,
+        "showStops": false,
+        "showTooltip": true,
+        "disabled": false,
+        "range": false
+      },
+      "keyProps": [
+        "min",
+        "max",
+        "step",
+        "showInput",
+        "showStops",
+        "showTooltip",
+        "disabled",
+        "range"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "number",
+          "description": "当前滑块值",
+          "example": 0
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "statistic",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "统计卡片",
+      "description": "KPI 统计卡片，展示数值与趋势",
+      "defaultProps": {
+        "title": "总用户数",
+        "value": 12345,
+        "prefix": "",
+        "suffix": "",
+        "precision": 0,
+        "trend": "up",
+        "trendValue": "",
+        "icon": "",
+        "color": "#409EFF",
+        "valueFontSize": "28px",
+        "titleFontSize": "14px"
+      },
+      "keyProps": [
+        "title",
+        "value",
+        "prefix",
+        "suffix",
+        "precision",
+        "trend",
+        "trendValue",
+        "icon",
+        "color",
+        "valueFontSize",
+        "titleFontSize"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "currentValue",
+          "type": "number",
+          "description": "当前显示的数值"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-value",
+          "description": "设置数值",
+          "params": {
+            "value": "数值"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "switch",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "开关",
+      "description": "开关控件，用于布尔值切换",
+      "defaultProps": {
+        "disabled": false,
+        "activeText": "",
+        "inactiveText": "",
+        "activeColor": "",
+        "inactiveColor": "",
+        "activeValue": true,
+        "inactiveValue": false
+      },
+      "keyProps": [
+        "disabled",
+        "activeText",
+        "inactiveText",
+        "activeColor",
+        "inactiveColor"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "boolean",
+          "description": "当前开关状态",
+          "example": false
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "tag-input",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "标签输入",
+      "description": "标签输入框，支持动态添加和删除标签",
+      "defaultProps": {
+        "placeholder": "请输入标签",
+        "disabled": false,
+        "maxlength": 20,
+        "maxTags": 10,
+        "closable": true
+      },
+      "keyProps": [
+        "placeholder",
+        "disabled",
+        "maxlength",
+        "maxTags",
+        "closable"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "array",
+          "description": "当前标签数组",
+          "example": []
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "textarea",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "文本域",
+      "description": "多行文本输入框，支持行数配置",
+      "defaultProps": {
+        "placeholder": "请输入",
+        "disabled": false,
+        "readonly": false,
+        "rows": 3,
+        "showWordLimit": false
+      },
+      "keyProps": [
+        "placeholder",
+        "disabled",
+        "readonly",
+        "rows",
+        "maxlength",
+        "showWordLimit"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 80
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "time-picker",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "时间选择",
+      "description": "时间选择器，支持固定时间和范围选择",
+      "defaultProps": {
+        "placeholder": "请选择时间",
+        "clearable": true,
+        "disabled": false,
+        "readonly": false,
+        "isRange": false,
+        "format": "HH:mm:ss",
+        "arrowControl": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "readonly",
+        "isRange",
+        "format",
+        "arrowControl"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 44
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前时间值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "upload",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "文件上传",
+      "description": "文件上传组件，支持文件类型和大小限制",
+      "defaultProps": {
+        "accept": "",
+        "multiple": false,
+        "maxSize": 10,
+        "limit": 5,
+        "buttonText": "点击上传"
+      },
+      "keyProps": [
+        "accept",
+        "multiple",
+        "limit",
+        "buttonText"
+      ],
+      "defaultSize": {
+        "w": 280,
+        "h": 80
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "banner",
+      "group": "static",
+      "canHaveChildren": false,
+      "displayName": "横幅",
+      "description": "横幅提示组件，支持 info/success/warning/error 类型",
+      "defaultProps": {
+        "text": "提示信息",
+        "type": "info",
+        "closable": true
+      },
+      "keyProps": [
+        "text",
+        "type",
+        "closable"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 40
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "title",
+      "group": "static",
+      "canHaveChildren": false,
+      "displayName": "标题",
+      "description": "标题组件，用于页面或区块标题展示",
+      "defaultProps": {
+        "content": "标题文字",
+        "level": 3,
+        "align": "left"
+      },
+      "keyProps": [
+        "content",
+        "level",
+        "align"
+      ],
+      "defaultSize": {
+        "w": 300,
+        "h": 40
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "button",
+      "group": "action",
+      "canHaveChildren": false,
+      "displayName": "按钮",
+      "description": "按钮组件，支持事件配置和样式自定义",
+      "defaultProps": {
+        "type": "primary",
+        "size": "default",
+        "plain": false,
+        "round": false,
+        "circle": false,
+        "disabled": false,
+        "text": "按钮"
+      },
+      "keyProps": [],
+      "defaultSize": {
+        "w": 120,
+        "h": 36
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "toolbar-buttons",
+      "group": "action",
+      "canHaveChildren": false,
+      "displayName": "工具栏按钮",
+      "description": "工具栏按钮组，用于操作栏按钮排列",
+      "defaultProps": {
+        "buttons": [
+          {
+            "text": "查询",
+            "type": "primary"
+          },
+          {
+            "text": "重置",
+            "type": ""
+          }
+        ],
+        "disabled": false
+      },
+      "keyProps": [
+        "buttons",
+        "disabled"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 44
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
+      "type": "editable-table",
+      "group": "table",
+      "canHaveChildren": false,
+      "displayName": "可编辑表格",
+      "description": "可编辑表格，支持动态增删行、列配置",
+      "defaultProps": {
+        "title": "可编辑表格",
+        "addButtonText": "添加行",
+        "showAddButton": true,
+        "showDeleteButton": true,
+        "maxRows": 0
+      },
+      "keyProps": [
+        "title",
+        "addButtonText",
+        "showAddButton",
+        "columns"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "表格数据"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "search-list",
+      "group": "table",
+      "canHaveChildren": false,
+      "displayName": "搜索列表",
+      "description": "搜索列表复合组件，包含搜索表单、数据表格、分页、行选择、批量操作",
+      "defaultProps": {
+        "title": "列表",
+        "pageSize": 10,
+        "showPagination": true,
+        "stripe": true,
+        "border": true,
+        "searchFields": [],
+        "columns": [],
+        "sortable": false,
+        "selection": {
+          "enabled": false
+        },
+        "batchActions": []
+      },
+      "keyProps": [
+        "title",
+        "searchFields",
+        "columns",
+        "sortable",
+        "pageSize",
+        "showPagination",
+        "stripe",
+        "border",
+        "selection.enabled",
+        "batchActions"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 500
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "列表数据"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "已选行数据"
+        },
+        {
+          "key": "selectedCount",
+          "type": "number",
+          "description": "已选行数"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载列表数据"
+        },
+        {
+          "name": "reset-search",
+          "description": "重置搜索条件并刷新"
+        },
+        {
+          "name": "clear-selection",
+          "description": "清空行选择"
+        }
+      ],
+      "eventTargets": [
+        {
+          "id": "search",
+          "label": "搜索按钮",
+          "description": "点击搜索时触发"
+        },
+        {
+          "id": "reset",
+          "label": "重置按钮",
+          "description": "点击重置时触发"
+        },
+        {
+          "id": "selection-change",
+          "label": "行选择变化",
+          "description": "行选择状态变化时触发"
+        },
+        {
+          "id": "sort-change",
+          "label": "排序变化",
+          "description": "点击排序时触发"
+        }
+      ],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "table",
+      "group": "table",
+      "canHaveChildren": false,
+      "displayName": "表格",
+      "description": "数据表格组件，支持列配置、分页、排序、筛选、行选择",
+      "defaultProps": {
+        "columns": [
+          {
+            "prop": "name",
+            "label": "姓名",
+            "width": 120
+          },
+          {
+            "prop": "age",
+            "label": "年龄",
+            "width": 80
+          }
+        ],
+        "stripe": true,
+        "border": true,
+        "height": 280,
+        "sortable": false,
+        "filterable": false,
+        "pagination": {
+          "enabled": true,
+          "pageSize": 20,
+          "pageSizes": [
+            10,
+            20,
+            50,
+            100
+          ]
+        },
+        "selection": {
+          "enabled": false
+        }
+      },
+      "keyProps": [
+        "columns",
+        "stripe",
+        "border",
+        "height",
+        "sortable",
+        "filterable",
+        "selection.enabled",
+        "pagination.enabled",
+        "pagination.pageSize"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "表格数据"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "当前选中的行数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载表格数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置表格数据",
+          "params": {
+            "data": "数据数组"
+          }
+        },
+        {
+          "name": "set-search-params",
+          "description": "设置搜索参数",
+          "params": {
+            "params": "参数对象"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "file-list",
+      "group": "business",
+      "canHaveChildren": false,
+      "displayName": "文件列表",
+      "description": "文件列表组件，支持文件预览和删除",
+      "defaultProps": {
+        "title": "附件",
+        "allowDelete": true,
+        "allowPreview": true
+      },
+      "keyProps": [
+        "title"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "array",
+          "description": "文件列表数据"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "transfer",
+      "group": "business",
+      "canHaveChildren": false,
+      "displayName": "穿梭框",
+      "description": "穿梭框组件，支持左右列表数据穿梭",
+      "defaultProps": {
+        "leftTitle": "待选",
+        "rightTitle": "已选",
+        "filterable": true
+      },
+      "keyProps": [
+        "leftTitle",
+        "rightTitle",
+        "filterable"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "array",
+          "description": "已选值"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "tree-layout",
+      "group": "business",
+      "canHaveChildren": false,
+      "displayName": "树形布局",
+      "description": "树形布局容器，支持树形结构展示和搜索",
+      "defaultProps": {
+        "title": "树形布局",
+        "showSearch": true
+      },
+      "keyProps": [
+        "title",
+        "showSearch"
+      ],
+      "defaultSize": {
+        "w": 600,
+        "h": 400
+      },
+      "exposedValues": [],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "bar-chart",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "柱状图",
+      "description": "柱状图组件，支持堆叠、水平方向",
+      "defaultProps": {
+        "staticData": [
+          {
+            "category": "1月",
+            "value": 120
+          },
+          {
+            "category": "2月",
+            "value": 200
+          },
+          {
+            "category": "3月",
+            "value": 150
+          },
+          {
+            "category": "4月",
+            "value": 80
+          },
+          {
+            "category": "5月",
+            "value": 170
+          }
+        ],
+        "xField": "category",
+        "yField": "value",
+        "xAxisName": "",
+        "yAxisName": "",
+        "title": "",
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showTooltip": true,
+        "showLabel": false,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "stack": false,
+        "horizontal": false,
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "xField",
+        "yField",
+        "xAxisName",
+        "yAxisName",
+        "title",
+        "showLegend",
+        "legendPosition",
+        "showTooltip",
+        "showLabel",
+        "stack",
+        "horizontal",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "candlestick",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "K 线图",
+      "description": "K 线图组件，用于展示金融数据的开盘、收盘、最低、最高价格",
+      "defaultProps": {
+        "staticData": [
+          {
+            "date": "2024-01",
+            "open": 20,
+            "close": 30,
+            "low": 15,
+            "high": 35
+          },
+          {
+            "date": "2024-02",
+            "open": 30,
+            "close": 25,
+            "low": 20,
+            "high": 35
+          },
+          {
+            "date": "2024-03",
+            "open": 25,
+            "close": 35,
+            "low": 22,
+            "high": 38
+          },
+          {
+            "date": "2024-04",
+            "open": 35,
+            "close": 28,
+            "low": 25,
+            "high": 40
+          },
+          {
+            "date": "2024-05",
+            "open": 28,
+            "close": 38,
+            "low": 26,
+            "high": 42
+          }
+        ],
+        "dateField": "date",
+        "openField": "open",
+        "closeField": "close",
+        "lowField": "low",
+        "highField": "high",
+        "title": "",
+        "showLegend": true,
+        "colorScheme": "default",
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "dateField",
+        "openField",
+        "closeField",
+        "lowField",
+        "highField",
+        "title",
+        "showLegend",
+        "colorScheme",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "funnel",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "漏斗图",
+      "description": "漏斗图组件，用于展示转化流程各阶段数据",
+      "defaultProps": {
+        "staticData": [
+          {
+            "name": "展示",
+            "value": 100
+          },
+          {
+            "name": "点击",
+            "value": 80
+          },
+          {
+            "name": "访问",
+            "value": 60
+          },
+          {
+            "name": "咨询",
+            "value": 40
+          },
+          {
+            "name": "订单",
+            "value": 20
+          }
+        ],
+        "nameField": "name",
+        "valueField": "value",
+        "title": "",
+        "showLegend": true,
+        "showLabel": true,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "nameField",
+        "valueField",
+        "title",
+        "showLegend",
+        "showLabel",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "gauge",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "仪表盘",
+      "description": "仪表盘组件，用于展示单个指标的完成度",
+      "defaultProps": {
+        "staticData": [
+          {
+            "value": 75
+          }
+        ],
+        "valueField": "value",
+        "min": 0,
+        "max": 100,
+        "unit": "",
+        "title": "",
+        "showTooltip": true,
+        "showLabel": true,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "valueField",
+        "min",
+        "max",
+        "unit",
+        "title",
+        "showTooltip",
+        "showLabel",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "heatmap",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "热力图",
+      "description": "热力图组件，用于展示二维数据密度",
+      "defaultProps": {
+        "staticData": [
+          {
+            "x": 0,
+            "y": 0,
+            "value": 5
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "value": 1
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "value": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "value": 7
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "value": 3
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "value": 1
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "value": 2
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "value": 4
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "value": 6
+          }
+        ],
+        "xField": "x",
+        "yField": "y",
+        "valueField": "value",
+        "title": "",
+        "showLabel": false,
+        "colorScheme": "default",
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "xField",
+        "yField",
+        "valueField",
+        "title",
+        "showLabel",
+        "colorScheme",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "line-chart",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "折线图",
+      "description": "折线图组件，支持平滑曲线、面积填充",
+      "defaultProps": {
+        "staticData": [
+          {
+            "category": "1月",
+            "value": 120
+          },
+          {
+            "category": "2月",
+            "value": 200
+          },
+          {
+            "category": "3月",
+            "value": 150
+          },
+          {
+            "category": "4月",
+            "value": 80
+          },
+          {
+            "category": "5月",
+            "value": 170
+          }
+        ],
+        "xField": "category",
+        "yField": "value",
+        "xAxisName": "",
+        "yAxisName": "",
+        "title": "",
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showTooltip": true,
+        "showLabel": false,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "smooth": false,
+        "area": false,
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "xField",
+        "yField",
+        "xAxisName",
+        "yAxisName",
+        "title",
+        "showLegend",
+        "legendPosition",
+        "showTooltip",
+        "showLabel",
+        "smooth",
+        "area",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "pie-chart",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "饼图",
+      "description": "饼图组件，支持玫瑰图、环形图",
+      "defaultProps": {
+        "staticData": [
+          {
+            "name": "直接访问",
+            "value": 335
+          },
+          {
+            "name": "邮件营销",
+            "value": 310
+          },
+          {
+            "name": "联盟广告",
+            "value": 234
+          },
+          {
+            "name": "视频广告",
+            "value": 135
+          },
+          {
+            "name": "搜索引擎",
+            "value": 548
+          }
+        ],
+        "nameField": "name",
+        "valueField": "value",
+        "title": "",
+        "showLegend": true,
+        "legendPosition": "left",
+        "showTooltip": true,
+        "showLabel": false,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "roseType": false,
+        "innerRadius": "",
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "nameField",
+        "valueField",
+        "title",
+        "showLegend",
+        "legendPosition",
+        "showTooltip",
+        "showLabel",
+        "roseType",
+        "innerRadius",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "radar",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "雷达图",
+      "description": "雷达图组件，用于多维度数据对比分析",
+      "defaultProps": {
+        "staticData": [
+          {
+            "category": "销售",
+            "value": 90
+          },
+          {
+            "category": "管理",
+            "value": 85
+          },
+          {
+            "category": "信息技术",
+            "value": 80
+          },
+          {
+            "category": "客服",
+            "value": 70
+          },
+          {
+            "category": "研发",
+            "value": 95
+          },
+          {
+            "category": "市场",
+            "value": 75
+          }
+        ],
+        "categoryField": "category",
+        "valueField": "value",
+        "indicators": [
+          {
+            "name": "销售",
+            "max": 100
+          },
+          {
+            "name": "管理",
+            "max": 100
+          },
+          {
+            "name": "信息技术",
+            "max": 100
+          },
+          {
+            "name": "客服",
+            "max": 100
+          },
+          {
+            "name": "研发",
+            "max": 100
+          },
+          {
+            "name": "市场",
+            "max": 100
+          }
+        ],
+        "title": "",
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showTooltip": true,
+        "showLabel": false,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "categoryField",
+        "valueField",
+        "indicators",
+        "title",
+        "showLegend",
+        "legendPosition",
+        "showTooltip",
+        "showLabel",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    },
+    {
+      "type": "scatter-chart",
+      "group": "chart",
+      "canHaveChildren": false,
+      "displayName": "散点图",
+      "description": "散点图组件，用于展示两个变量之间的关系",
+      "defaultProps": {
+        "staticData": [
+          {
+            "x": 10,
+            "y": 8.04
+          },
+          {
+            "x": 8,
+            "y": 6.95
+          },
+          {
+            "x": 13,
+            "y": 7.58
+          },
+          {
+            "x": 9,
+            "y": 8.81
+          },
+          {
+            "x": 11,
+            "y": 8.33
+          },
+          {
+            "x": 14,
+            "y": 9.96
+          },
+          {
+            "x": 6,
+            "y": 7.24
+          },
+          {
+            "x": 4,
+            "y": 4.26
+          },
+          {
+            "x": 12,
+            "y": 10.84
+          },
+          {
+            "x": 7,
+            "y": 4.82
+          },
+          {
+            "x": 5,
+            "y": 5.68
+          }
+        ],
+        "xField": "x",
+        "yField": "y",
+        "xAxisName": "",
+        "yAxisName": "",
+        "title": "",
+        "showLegend": true,
+        "legendPosition": "bottom",
+        "showTooltip": true,
+        "showLabel": false,
+        "colorScheme": "default",
+        "customColors": [
+          "#5470c6",
+          "#91cc75",
+          "#fac858",
+          "#ee6666",
+          "#73c0de"
+        ],
+        "animation": true,
+        "rawOption": null
+      },
+      "keyProps": [
+        "staticData",
+        "xField",
+        "yField",
+        "xAxisName",
+        "yAxisName",
+        "title",
+        "showLegend",
+        "legendPosition",
+        "showTooltip",
+        "showLabel",
+        "animation",
+        "colorScheme",
+        "customColors",
+        "rawOption"
+      ],
+      "defaultSize": {
+        "w": 400,
+        "h": 300
+      },
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "chartData",
+          "type": "array",
+          "description": "图表数据"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置图表数据",
+          "params": {
+            "data": "数据数组"
+          }
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "api",
+        "variables"
+      ]
+    }
+  ],
+  "flowNodes": [
+    {
+      "type": "startEvent",
+      "label": "开始",
+      "description": "流程开始事件，每个流程必须有且仅有一个",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "event",
+      "configFields": []
+    },
+    {
+      "type": "endEvent",
+      "label": "结束",
+      "description": "流程结束事件，标记流程完成",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "event",
+      "configFields": []
+    },
+    {
+      "type": "timerEvent",
+      "label": "定时事件",
+      "description": "定时事件，支持延时、定时触发、周期执行",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "event",
+      "configFields": [
+        {
+          "key": "timerType",
+          "type": "string",
+          "description": "定时类型：duration(延时)/date(定时)/cycle(周期)"
+        },
+        {
+          "key": "timerValue",
+          "type": "undefined",
+          "description": "定时值（ISO 8601 格式，如 PT1H 表示1小时）"
+        }
+      ]
+    },
+    {
+      "type": "userTask",
+      "label": "用户任务",
+      "description": "用户任务，需要人工处理（审批、填写表单等）",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": [
+        {
+          "key": "assigneeType",
+          "type": "string",
+          "description": "指派类型：user(指定用户)/role(按角色)/expression(表达式)"
+        },
+        {
+          "key": "candidateUsers",
+          "type": "undefined",
+          "description": "候选用户 ID 列表"
+        },
+        {
+          "key": "candidateRoles",
+          "type": "undefined",
+          "description": "候选角色 ID 列表"
+        },
+        {
+          "key": "approvalMode",
+          "type": "undefined",
+          "description": "审批模式：single(单人)/countersign(会签)/or-sign(或签)"
+        },
+        {
+          "key": "formSchemaId",
+          "type": "undefined",
+          "description": "关联的表单 Schema ID"
+        },
+        {
+          "key": "formMode",
+          "type": "undefined",
+          "description": "表单模式：edit(编辑)/view(只读)"
+        },
+        {
+          "key": "rejectPolicy",
+          "type": "undefined",
+          "description": "驳回策略：reject-on-all(全部驳回)/reject-on-any(任一驳回)"
+        }
+      ]
+    },
+    {
+      "type": "serviceTask",
+      "label": "服务任务",
+      "description": "服务任务，自动调用 API 或执行函数",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": [
+        {
+          "key": "serviceType",
+          "type": "string",
+          "description": "服务类型：http(API调用)/function(函数)/script(脚本)"
+        },
+        {
+          "key": "apiConfig",
+          "type": "undefined",
+          "description": "API 配置（url, method, params, headers, body）"
+        }
+      ]
+    },
+    {
+      "type": "scriptTask",
+      "label": "脚本任务",
+      "description": "脚本任务，执行 JavaScript/Groovy/Python 脚本",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "sendTask",
+      "label": "发送任务",
+      "description": "发送任务，向外部系统发送消息",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "receiveTask",
+      "label": "接收任务",
+      "description": "接收任务，等待外部消息触发",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "exclusiveGateway",
+      "label": "排他网关",
+      "description": "排他网关（XOR），根据条件走唯一分支",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "gateway",
+      "configFields": [
+        {
+          "key": "gatewayDirection",
+          "type": "string",
+          "description": "方向：diverging(发散)/converging(汇聚)"
+        },
+        {
+          "key": "defaultFlow",
+          "type": "undefined",
+          "description": "默认流边 ID（所有条件都不满足时走此边）"
+        }
+      ]
+    },
+    {
+      "type": "parallelGateway",
+      "label": "并行网关",
+      "description": "并行网关（AND），同时执行所有分支",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "gateway",
+      "configFields": []
+    },
+    {
+      "type": "inclusiveGateway",
+      "label": "包含网关",
+      "description": "包容网关（OR），执行满足条件的所有分支",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "gateway",
+      "configFields": []
+    },
+    {
+      "type": "subProcess",
+      "label": "子流程",
+      "description": "子流程，嵌套执行另一套流程定义",
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "category": "container",
+      "configFields": []
+    },
+    {
+      "type": "messageEvent",
+      "label": "消息事件",
+      "description": "messageEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "signalEvent",
+      "label": "信号事件",
+      "description": "signalEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "conditionalEvent",
+      "label": "条件事件",
+      "description": "conditionalEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "errorEvent",
+      "label": "错误事件",
+      "description": "errorEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "escalationEvent",
+      "label": "升级事件",
+      "description": "escalationEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "compensationEvent",
+      "label": "补偿事件",
+      "description": "compensationEvent",
+      "size": {
+        "width": 200,
+        "height": 36
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "callActivity",
+      "label": "调用活动",
+      "description": "callActivity",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "businessRuleTask",
+      "label": "业务规则任务",
+      "description": "businessRuleTask",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "manualTask",
+      "label": "手动任务",
+      "description": "manualTask",
+      "size": {
+        "width": 160,
+        "height": 80
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "eventBasedGateway",
+      "label": "事件网关",
+      "description": "eventBasedGateway",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "complexGateway",
+      "label": "复杂网关",
+      "description": "complexGateway",
+      "size": {
+        "width": 40,
+        "height": 40
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "adHocSubProcess",
+      "label": "临时子流程",
+      "description": "adHocSubProcess",
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "category": "task",
+      "configFields": []
+    },
+    {
+      "type": "transaction",
+      "label": "事务",
+      "description": "transaction",
+      "size": {
+        "width": 300,
+        "height": 200
+      },
+      "category": "task",
+      "configFields": []
+    }
+  ],
+  "systems": {
+    "eventActionTypes": [
+      "show",
+      "hide",
+      "open-dialog",
+      "close-dialog",
+      "switch-tab",
+      "set-value",
+      "submit",
+      "reset",
+      "emit",
+      "set-variable",
+      "trigger-event",
+      "post-message",
+      "close-tab",
+      "copy",
+      "refresh",
+      "api",
+      "navigate"
+    ],
+    "linkageTypes": [
+      "visible",
+      "disabled",
+      "required",
+      "options",
+      "set-value",
+      "reset-fields"
+    ],
+    "containerTypes": [
+      "form",
+      "card",
+      "tabs",
+      "dialog",
+      "single-col",
+      "double-col",
+      "triple-col",
+      "quad-col"
+    ],
+    "variableTypes": [
+      "string",
+      "number",
+      "boolean",
+      "object",
+      "array"
+    ]
+  }
+}

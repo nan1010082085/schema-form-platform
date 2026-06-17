@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { useLayoutStore } from '@schema-form/shared-stores/layout'
-import { DesktopIcon, MenuIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const layoutStore = useLayoutStore()
 
@@ -17,7 +17,7 @@ function handleSwitch(style: 'sidebar' | 'topnav') {
 
 <template>
   <div :class="$style.switcher">
-    <t-tooltip content="侧边栏布局" placement="bottom">
+    <el-tooltip content="侧边栏布局" placement="bottom" effect="dark">
       <div
         :class="[
           $style.option,
@@ -25,11 +25,11 @@ function handleSwitch(style: 'sidebar' | 'topnav') {
         ]"
         @click="handleSwitch('sidebar')"
       >
-        <desktop-icon :size="18" />
+        <AppIcon name="monitor" :size="18" />
       </div>
-    </t-tooltip>
+    </el-tooltip>
 
-    <t-tooltip content="顶部导航布局" placement="bottom">
+    <el-tooltip content="顶部导航布局" placement="bottom" effect="dark">
       <div
         :class="[
           $style.option,
@@ -37,9 +37,9 @@ function handleSwitch(style: 'sidebar' | 'topnav') {
         ]"
         @click="handleSwitch('topnav')"
       >
-        <menu-icon :size="18" />
+        <MenuIcon :size="18" />
       </div>
-    </t-tooltip>
+    </el-tooltip>
   </div>
 </template>
 
@@ -49,8 +49,8 @@ function handleSwitch(style: 'sidebar' | 'topnav') {
   align-items: center;
   gap: 4px;
   padding: 4px;
-  background: var(--td-bg-color-secondarycontainer, #f5f5f5);
-  border-radius: var(--td-radius-default, 6px);
+  background: var(--el-bg-color-overlay, #f5f5f5);
+  border-radius: var(--el-border-radius-base, 6px);
 }
 
 .option {
@@ -59,25 +59,25 @@ function handleSwitch(style: 'sidebar' | 'topnav') {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--td-radius-small, 3px);
-  color: var(--td-text-color-secondary, rgba(0, 0, 0, 0.6));
+  border-radius: var(--el-border-radius-small, 3px);
+  color: var(--el-text-color-secondary, rgba(0, 0, 0, 0.6));
   cursor: pointer;
-  transition: all var(--td-anim-duration-fast, 0.1s);
+  transition: all var(--el-transition-duration-fast, 0.1s);
 }
 
 .option:hover {
-  color: var(--td-text-color-primary, rgba(0, 0, 0, 0.9));
-  background: var(--td-bg-color-container-hover, #f5f5f5);
+  color: var(--el-text-color-primary, rgba(0, 0, 0, 0.9));
+  background: var(--el-fill-color-light, #f5f5f5);
 }
 
 .optionActive {
-  color: var(--td-brand-color, #0052d9);
-  background: var(--td-bg-color-container, #fff);
-  box-shadow: var(--td-shadow-1, 0 1px 10px rgba(0, 0, 0, 0.05));
+  color: var(--el-color-primary, #0052d9);
+  background: var(--el-bg-color, #fff);
+  box-shadow: var(--el-box-shadow-light, 0 1px 10px rgba(0, 0, 0, 0.05));
 }
 
 .optionActive:hover {
-  color: var(--td-brand-color, #0052d9);
-  background: var(--td-bg-color-container, #fff);
+  color: var(--el-color-primary, #0052d9);
+  background: var(--el-bg-color, #fff);
 }
 </style>

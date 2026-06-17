@@ -7,7 +7,7 @@
  */
 
 import { computed } from 'vue'
-import styles from './BaseCard.module.css'
+import styles from './BaseCard.module.scss'
 
 const props = withDefaults(defineProps<{
   /** 标题 */

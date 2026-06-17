@@ -111,6 +111,7 @@ export const useTemplateStore = defineStore('template', () => {
     category?: TemplateCategory
     widgets: Record<string, unknown>[]
     tags?: string[]
+    thumbnail?: string
   }): Promise<TemplateItem> {
     const template = await createTemplate(payload)
     // 刷新列表

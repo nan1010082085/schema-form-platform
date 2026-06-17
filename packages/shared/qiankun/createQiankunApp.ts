@@ -5,20 +5,20 @@
  */
 import { createApp, type App, type Component } from 'vue'
 import { createPinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
-import 'tdesign-vue-next/dist/tdesign.css'
+
+// ── 工厂函数 ──
 
 export interface CreateQiankunAppOptions {
   /** 应用名称 */
   name: string
   /** 根组件 */
   rootComponent: Component
-  /** TDesign 配置 */
-  tdesignConfig?: Record<string, unknown>
   /** 额外的插件 */
   plugins?: Array<{ install: (app: App) => void }>
   /** Token 提供者 */
   getToken?: () => string | null
+  /** 额外的 setup 回调（在插件注册后执行） */
+  extraSetup?: (app: App) => void
 }
 
 /**
@@ -28,9 +28,9 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
   const {
     name,
     rootComponent,
-    tdesignConfig = {},
     plugins = [],
     getToken,
+    extraSetup,
   } = options
 
   let app: App | null = null
@@ -51,12 +51,14 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     // 注册 Pinia
     app.use(createPinia())
 
-    // 注册 TDesign
-    app.use(TDesign, tdesignConfig)
-
     // 注册额外插件
     for (const plugin of plugins) {
       app.use(plugin)
+    }
+
+    // 额外 setup 回调（用于注册 Element Plus 等组件库）
+    if (extraSetup) {
+      extraSetup(app)
     }
 
     // 挂载到指定容器或默认容器

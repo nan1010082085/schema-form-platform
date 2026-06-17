@@ -176,6 +176,7 @@ function formatToolName(name: string): string {
 
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 function renderMarkdown(content: string): string {
   if (!content) return ''
@@ -383,16 +384,9 @@ const steps = computed<StepData[]>(() => {
     <!-- Avatar -->
     <div :class="[$style.avatar, role === 'user' ? $style.avatarUser : $style.avatarAssistant]">
       <!-- User icon -->
-      <svg v-if="role === 'user'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
+      <AppIcon name="user" v-if="role === 'user'" :size="16" />
       <!-- AI icon -->
-      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
+      <AppIcon name="connection" v-else :size="16" />
     </div>
 
     <!-- Content area -->
@@ -422,7 +416,7 @@ const steps = computed<StepData[]>(() => {
                   <span :class="[$style.codeBlockArrow, { [$style.codeBlockArrowExpanded]: !codeCollapsed[idx] }]">▸</span>
                   <span :class="$style.codeBlockTitle">{{ step.title }}</span>
                 </div>
-                <t-button :class="$style.codeCopyBtn" variant="text" size="small" @click.stop="copyCode(step.content)">复制</t-button>
+                <el-button :class="$style.codeCopyBtn" text size="small" @click.stop="copyCode(step.content)">复制</el-button>
               </div>
               <div v-if="!codeCollapsed[idx]" :class="$style.codeBlockBody">
                 <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
@@ -509,56 +503,42 @@ const steps = computed<StepData[]>(() => {
 
         <!-- Tip -->
         <div v-if="tip" :class="$style.tip">
-          <svg :class="$style.tipIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
+          <AppIcon name="info-filled" :class="$style.tipIcon" :size="18" />
           <span :class="$style.tipText">{{ tip }}</span>
         </div>
       </template>
 
       <!-- Action menu (hover to show) -->
       <div v-if="role === 'assistant' && !loading && isHovered" :class="$style.actionMenu">
-        <t-tooltip content="复制" placement="top" :delay="300">
+        <el-tooltip content="复制" placement="top" :show-after="300">
           <button :class="$style.actionBtn" @click="handleCopy">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
+            <AppIcon name="copy-document" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="重新生成" placement="top" :delay="300">
+        </el-tooltip>
+        <el-tooltip content="重新生成" placement="top" :show-after="300">
           <button :class="$style.actionBtn" @click="handleRegenerate">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
+            <AppIcon name="refresh" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="点赞" placement="top" :delay="300">
+        </el-tooltip>
+        <el-tooltip content="点赞" placement="top" :show-after="300">
           <button
             :class="[$style.actionBtn, { [$style.actionBtnActive]: currentFeedback === 'positive' }]"
             @click="handleFeedback('positive')"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
+            <AppIcon name="star" :size="14" />
           </button>
-        </t-tooltip>
-        <t-tooltip content="点踩" placement="top" :delay="300">
+        </el-tooltip>
+        <el-tooltip content="点踩" placement="top" :show-after="300">
           <button
             :class="[$style.actionBtn, { [$style.actionBtnActive]: currentFeedback === 'negative' }]"
             @click="handleFeedback('negative')"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
-            </svg>
+            <AppIcon name="star" :size="14" />
           </button>
-        </t-tooltip>
+        </el-tooltip>
       </div>
     </div>
   </div>
 </template>
 
-<style module src="./AiMessage.module.css" />
+<style module src="./AiMessage.module.scss" />

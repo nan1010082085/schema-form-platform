@@ -7,7 +7,7 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import styles from './Breadcrumb.module.css'
+import styles from './Breadcrumb.module.scss'
 
 interface BreadcrumbItem {
   title: string

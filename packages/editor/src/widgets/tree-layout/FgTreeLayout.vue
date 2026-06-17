@@ -7,7 +7,7 @@ const widgetData = inject(widgetDataKey)!
 <template>
   <div :class="styles.container">
     <div :class="styles.header">{{ (widgetData.props?.title as string) || '树形布局' }}</div>
-    <t-input v-if="widgetData.props?.showSearch" placeholder="搜索" size="small" :class="styles.search" />
+    <el-input v-if="widgetData.props?.showSearch" placeholder="搜索" size="small" :class="styles.search" />
     <div :class="styles.body">树形内容区域</div>
   </div>
 </template>

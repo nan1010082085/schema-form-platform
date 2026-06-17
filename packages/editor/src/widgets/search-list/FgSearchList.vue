@@ -5,7 +5,7 @@
  * 职责：
  * - 根据 searchFields 配置渲染搜索表单
  * - 使用 useListData composable 管理数据加载、分页、排序、行选择
- * - 渲染 t-table + t-pagination + 批量操作栏
+ * - 渲染 el-table + el-pagination + 批量操作栏
  * - 支持 events/api configPanels
  */
 import { inject, ref, computed, watch } from 'vue'
@@ -183,7 +183,7 @@ defineExpose({
       <template v-for="field in searchFields" :key="field.field">
         <div :class="styles.searchItem">
           <span v-if="field.label" :class="styles.searchLabel">{{ field.label }}</span>
-          <t-input
+          <el-input
             v-if="field.type === 'input'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请输入'"
@@ -191,7 +191,7 @@ defineExpose({
             size="default"
             @keyup.enter="handleSearch"
           />
-          <t-input-number
+          <el-input-number
             v-else-if="field.type === 'number'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请输入'"
@@ -201,21 +201,21 @@ defineExpose({
             controls-position="right"
             size="default"
           />
-          <t-select
+          <el-select
             v-else-if="field.type === 'select'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请选择'"
             clearable
             size="default"
           >
-            <t-option
+            <el-option
               v-for="opt in (field.options || [])"
               :key="String(opt.value)"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
-          <t-cascader
+          </el-select>
+          <el-cascader
             v-else-if="field.type === 'cascader'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '请选择'"
@@ -223,26 +223,26 @@ defineExpose({
             clearable
             size="default"
           />
-          <t-time-picker
+          <el-time-picker
             v-else-if="field.type === 'time-picker'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '选择时间'"
             clearable
             size="default"
           />
-          <t-checkbox-group
+          <el-checkbox-group
             v-else-if="field.type === 'checkbox'"
             v-model="searchModel[field.field]"
             size="default"
           >
-            <t-checkbox
+            <el-checkbox
               v-for="opt in (field.options || [])"
               :key="String(opt.value)"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-checkbox-group>
-          <t-date-picker
+          </el-checkbox-group>
+          <el-date-picker
             v-else-if="field.type === 'date'"
             v-model="searchModel[field.field]"
             :placeholder="field.placeholder || '选择日期'"
@@ -250,7 +250,7 @@ defineExpose({
             size="default"
             format="YYYY-MM-DD"
           />
-          <t-date-picker
+          <el-date-picker
             v-else-if="field.type === 'date-range'"
             v-model="searchModel[field.field]"
             type="daterange"
@@ -264,62 +264,63 @@ defineExpose({
         </div>
       </template>
       <div :class="styles.searchActions">
-        <t-button type="primary" @click="handleSearch">搜索</t-button>
-        <t-button @click="handleReset">重置</t-button>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleReset">重置</el-button>
       </div>
     </div>
 
     <!-- 批量操作栏 -->
     <div v-if="selectionEnabled && selectedRows.length > 0" :class="styles.batchBar">
       <span :class="styles.batchInfo">已选 {{ selectedRows.length }} 项</span>
-      <t-button
+      <el-button
         v-for="action in batchActions"
         :key="action.action"
         size="small"
         @click="handleBatchAction(action.action)"
       >
         {{ action.label }}
-      </t-button>
-      <t-button size="small" @click="clearSelection">取消选择</t-button>
+      </el-button>
+      <el-button size="small" @click="clearSelection">取消选择</el-button>
     </div>
 
     <!-- 数据表格 -->
-    <t-table
-      :loading="loading"
-      :data="tableData"
-      :stripe="widgetData.props?.stripe !== false"
-      :border="widgetData.props?.border !== false"
-      :class="styles.table"
-      @selection-change="onSelectionChange"
-      @sort-change="onSortChange"
-    >
-      <t-table-column
-        v-if="selectionEnabled"
-        type="selection"
-        width="50"
-        fixed="left"
-      />
-      <t-table-column
-        v-for="col in columns"
-        :key="col.field"
-        :prop="col.field"
-        :label="col.label"
-        :width="col.width"
-        :sortable="(sortable || col.sortable) ? 'custom' : false"
-      />
-    </t-table>
+    <div v-loading="loading">
+      <el-table
+        :data="tableData"
+        :stripe="widgetData.props?.stripe !== false"
+        :border="widgetData.props?.border !== false"
+        :class="styles.table"
+        @selection-change="onSelectionChange"
+        @sort-change="onSortChange"
+      >
+        <el-table-column
+          v-if="selectionEnabled"
+          type="selection"
+          width="50"
+          fixed="left"
+        />
+        <el-table-column
+          v-for="col in columns"
+          :key="col.field"
+          :prop="col.field"
+          :label="col.label"
+          :width="col.width"
+          :sortable="(sortable || col.sortable) ? 'custom' : false"
+        />
+      </el-table>
+    </div>
 
     <!-- 分页 -->
-    <t-pagination
+    <el-pagination
       v-if="widgetData.props?.showPagination !== false"
       :total="total"
       :page-size="pageSize"
-      :page-size-options="[10, 20, 50, 100]"
-      :current="currentPage"
+      :page-sizes="[10, 20, 50, 100]"
+      :current-page="currentPage"
       :class="styles.pagination"
-      show-page-size
+      layout="total, sizes, prev, pager, next, jumper"
       @current-change="handlePageChange"
-      @page-size-change="handleSizeChange"
+      @size-change="handleSizeChange"
     />
   </div>
 </template>

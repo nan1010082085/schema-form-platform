@@ -7,7 +7,7 @@ export const rateConfig: WidgetConfig = {
   author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
-    height: '44px',
+    height: '40px',
   },
   defaultProps: {
     max: 5,

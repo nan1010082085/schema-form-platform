@@ -8,7 +8,7 @@
 import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
-import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import styles from './OptionsApiConfigDialog.module.scss'
 
 const props = defineProps<{
@@ -54,7 +54,7 @@ function handleClose() {
 </script>
 
 <template>
-  <EnhancedDialog
+  <AppDialog
     :model-value="visible"
     title="数据源配置"
     width="900px"
@@ -69,8 +69,8 @@ function handleClose() {
     </div>
 
     <template #footer>
-      <t-button @click="handleClose">取消</t-button>
-      <t-button theme="primary" @click="handleSave">保存</t-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSave">保存</el-button>
     </template>
-  </EnhancedDialog>
+  </AppDialog>
 </template>

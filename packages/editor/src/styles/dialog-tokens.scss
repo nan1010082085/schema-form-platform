@@ -75,9 +75,9 @@
 
 // 统一表单控件高度 32px
 @mixin unified-control-height {
-  :global(.t-input),
-  :global(.t-select .t-input),
-  :global(.t-button:not(.t-button--text):not(.t-button--ghost)) {
+  :global(.el-input),
+  :global(.el-select .el-input),
+  :global(.el-button:not(.is-text)) {
     height: 32px !important;
     min-height: 32px !important;
   }

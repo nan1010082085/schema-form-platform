@@ -20,9 +20,9 @@ import { registerWidget } from '@/widgets/registry'
 import type { Widget } from '@/widgets/base/types'
 import type { Component } from 'vue'
 
-// ---- Stub Element Plus components ----
+// ---- Stub TDesign components ----
 
-const elInputStub = {
+const tInputStub = {
   template: `<div>
     <input v-if="type !== 'textarea'" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" />
     <textarea v-else :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" @focus="$emit('focus')" @blur="$emit('blur')" />
@@ -31,73 +31,83 @@ const elInputStub = {
   emits: ['update:modelValue', 'focus', 'blur'],
 }
 
-const elInputNumberStub = {
+const tTextareaStub = {
+  template: '<textarea :value="innerValue" @input="$emit(\'update:value\', $event.target.value); $emit(\'update:modelValue\', $event.target.value)" @focus="$emit(\'focus\')" @blur="$emit(\'blur\')" />',
+  props: ['value', 'modelValue', 'size', 'placeholder', 'disabled', 'rows', 'readonly'],
+  emits: ['update:value', 'update:modelValue', 'focus', 'blur'],
+  computed: {
+    innerValue() { return this.value ?? this.modelValue }
+  }
+}
+
+const tInputNumberStub = {
   template: '<input type="number" :value="modelValue" @input="$emit(\'update:modelValue\', Number($event.target.value))" />',
   props: ['modelValue', 'min', 'max', 'size', 'controlsPosition'],
   emits: ['update:modelValue'],
 }
 
-const elSwitchStub = {
+const tSwitchStub = {
   template: '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
   props: ['modelValue'],
   emits: ['update:modelValue'],
 }
 
-const elSelectStub = {
+const tSelectStub = {
   template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
   props: ['modelValue', 'size', 'style'],
   emits: ['update:modelValue'],
 }
 
-const elOptionStub = {
+const tOptionStub = {
   template: '<option :value="value"><slot>{{ label }}</slot></option>',
   props: ['label', 'value'],
 }
 
-const elColorPickerStub = {
+const tColorPickerStub = {
   template: '<input type="color" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
   props: ['modelValue', 'size', 'showAlpha'],
   emits: ['update:modelValue'],
 }
 
-const elButtonStub = {
+const tButtonStub = {
   template: '<button @click="$emit(\'click\')"><slot /></button>',
-  props: ['size', 'plain', 'type', 'icon', 'text', 'disabled', 'danger'],
+  props: ['size', 'plain', 'theme', 'icon', 'text', 'disabled', 'danger'],
   emits: ['click'],
 }
 
-const elTooltipStub = {
+const tTooltipStub = {
   template: '<span><slot /></span>',
   props: ['content', 'placement', 'showAfter', 'disabled'],
 }
 
-const elIconStub = {
+const tIconStub = {
   template: '<span><slot /></span>',
   props: ['size', 'class'],
 }
 
-const elScrollbarStub = {
+const tScrollbarStub = {
   template: '<div><slot /></div>',
   props: ['class'],
 }
 
-const elPopoverStub = {
+const tPopupStub = {
   template: '<div><slot name="reference" /><slot /></div>',
   props: ['placement', 'width', 'trigger'],
 }
 
 const stubs = {
-  ElInput: elInputStub,
-  ElInputNumber: elInputNumberStub,
-  ElSwitch: elSwitchStub,
-  ElSelect: elSelectStub,
-  ElOption: elOptionStub,
-  ElColorPicker: elColorPickerStub,
-  ElButton: elButtonStub,
-  ElTooltip: elTooltipStub,
-  ElIcon: elIconStub,
-  ElScrollbar: elScrollbarStub,
-  ElPopover: elPopoverStub,
+  TInput: tInputStub,
+  TTextarea: tTextareaStub,
+  TInputNumber: tInputNumberStub,
+  TSwitch: tSwitchStub,
+  TSelect: tSelectStub,
+  TOption: tOptionStub,
+  TColorPicker: tColorPickerStub,
+  TButton: tButtonStub,
+  TTooltip: tTooltipStub,
+  TIcon: tIconStub,
+  TScrollbar: tScrollbarStub,
+  TPopup: tPopupStub,
 }
 
 // ---- Test widget factory ----

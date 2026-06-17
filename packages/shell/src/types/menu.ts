@@ -14,5 +14,7 @@ export interface MenuTreeNode {
   status: 'active' | 'inactive'
   component: string
   parentId: string | null
+  target?: '_self' | '_blank'
+  microAppId?: string
   children: MenuTreeNode[]
 }

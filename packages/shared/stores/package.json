@@ -6,6 +6,9 @@
   "exports": {
     "./layout": "./layout.ts"
   },
+  "dependencies": {
+    "vue": ">=3.5.0"
+  },
   "peerDependencies": {
     "pinia": ">=2.3.0"
   }

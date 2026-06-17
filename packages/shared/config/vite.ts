@@ -77,6 +77,7 @@ export function createViteConfig(
     },
     server: {
       port: appConfig.devPort,
+      strictPort: true,
       cors: true,
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -86,6 +87,46 @@ export function createViteConfig(
         interval: 300,
       },
       proxy: {
+        // 前端 API_BASE 统一为 /schema-platform/api，需要同时代理 /schema-platform/api 和 /api
+        '/schema-platform/api': {
+          target: getApiProxyTarget(),
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/schema-platform\/api/, '/api'),
+          // SSE 流式传输：手动处理响应以避免 http-proxy 缓冲
+          selfHandleResponse: true,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes, _, res) => {
+              const contentType = proxyRes.headers['content-type'] ?? ''
+              const isSSE = contentType.includes('text/event-stream')
+
+              // 透传响应头
+              const headers = { ...proxyRes.headers }
+              delete headers['content-encoding']
+              delete headers['transfer-encoding']
+              if (isSSE) {
+                headers['cache-control'] = 'no-cache'
+                headers['x-accel-buffering'] = 'no'
+              }
+              res.writeHead(proxyRes.statusCode ?? 200, headers)
+
+              if (isSSE) {
+                // SSE：逐 chunk 转发，不缓冲
+                proxyRes.on('data', (chunk) => {
+                  res.write(chunk)
+                  // 强制刷新，确保 chunk 立即发送到浏览器
+                  if (typeof (res as any).flush === 'function') {
+                    (res as any).flush()
+                  }
+                })
+                proxyRes.on('end', () => res.end())
+                proxyRes.on('error', () => res.end())
+              } else {
+                // 非 SSE：正常 pipe
+                proxyRes.pipe(res)
+              }
+            })
+          },
+        },
         '/api': {
           target: getApiProxyTarget(),
           changeOrigin: true,

@@ -7,7 +7,7 @@ export const tagInputConfig: WidgetConfig = {
   author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
-    height: '44px',
+    height: '40px',
   },
   defaultProps: {
     placeholder: '请输入标签',

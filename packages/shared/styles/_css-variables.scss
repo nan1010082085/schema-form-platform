@@ -96,4 +96,61 @@
   --font-weight-regular: #{$font-weight-regular};
   --font-weight-medium: #{$font-weight-medium};
   --font-weight-semibold: #{$font-weight-semibold};
+
+  // ---------- flow 编辑器兼容变量 ----------
+  // 通用背景色
+  --bg-color: #{$bg-color-white};
+  --bg-color-secondary: #{$bg-color-page};
+
+  // 通用边框色
+  --border-color: #{$border-color-base};
+  --border-color-hover: #{$border-color-dark};
+  --border-color-lighter: #{$border-color-light};
+
+  // 通用圆角
+  --border-radius-base: #{$border-radius-sm};
+  --radius-small: #{$border-radius-sm};
+  --radius-md: #{$border-radius-md};
+
+  // 通用文字色
+  --color-white: #{$text-color-inverse};
+
+  // 主色变体（Element Plus 兼容）
+  --color-primary-light-3: #{$color-primary-light};
+  --color-primary-light-5: #{$color-primary-light};
+  --color-primary-light-7: #{$color-primary-bg-light};
+  --color-primary-light-8: #{$color-primary-bg-light};
+  --color-primary-light-9: #{$color-primary-bg-light};
+
+  // 通用字号
+  --font-size-base: #{$font-size-14};
+  --font-size-small: #{$font-size-12};
+  --font-size-md: #{$font-size-14};
+
+  // 通用字体
+  --font-family: #{$font-family-base};
+}
+
+/* ---------- 全局重置 ---------- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-family-base);
+  color: var(--text-color-primary);
+  background: var(--bg-color-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
 }

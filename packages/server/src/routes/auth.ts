@@ -199,20 +199,33 @@ router.post('/logout', async (ctx) => {
 router.get('/me', authMiddleware({ required: true }), async (ctx) => {
   const payload = ctx.state.user as JwtPayload
 
-  // 开发模式：返回 dev 用户，不查数据库
-  if (process.env.NODE_ENV !== 'production') {
+  // 开发模式 fallback：auth 中间件注入的 dev 用户
+  if (payload.id === 'dev') {
+    // 查找第一个有管理员角色的用户作为 dev 用户
+    const adminRole = await RoleModel.findOne({ name: '管理员' })
+    if (adminRole) {
+      const adminUser = await UserModel.findOne({ roles: adminRole._id })
+      if (adminUser) {
+        const roles = await RoleModel.find({ _id: { $in: adminUser.roles } })
+        const permissions = [...new Set(roles.flatMap((r) => r.permissions))]
+        ctx.body = {
+          success: true,
+          data: { ...adminUser.toJSON(), permissions },
+        }
+        return
+      }
+    }
+    // fallback：返回基础 dev 信息
     ctx.body = {
       success: true,
       data: {
-        id: payload.id,
-        username: payload.username,
+        id: 'dev',
+        username: 'dev',
         displayName: 'Dev User',
-        roles: payload.roles,
-        tenantId: payload.tenantId,
-        deptId: payload.deptId,
+        roles: [],
         permissions: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        tenantId: '000000',
+        deptId: null,
       },
     }
     return

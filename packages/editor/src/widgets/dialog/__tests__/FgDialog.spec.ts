@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed, nextTick } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget, getWidget } from '@/widgets/registry'
@@ -207,9 +207,9 @@ describe('FgDialog', () => {
       wrapper.vm.open()
       await nextTick()
       await nextTick()
-      // el-dialog append-to-body teleports content — search entire component tree
-      const buttons = wrapper.findAllComponents({ name: 'ElButton' })
-      const confirmBtn = buttons.find(b => b.text().includes('确定'))
+      // ElementPlus dialog 渲染到 document.body，通过组件树查找按钮
+      const tButtons = wrapper.findAllComponents({ name: 'TButton' })
+      const confirmBtn = tButtons.find(b => b.text().includes('确定'))
       expect(confirmBtn).toBeDefined()
       await confirmBtn!.trigger('click')
       await nextTick()
@@ -221,8 +221,8 @@ describe('FgDialog', () => {
       wrapper.vm.open()
       await nextTick()
       await nextTick()
-      const buttons = wrapper.findAllComponents({ name: 'ElButton' })
-      const cancelBtn = buttons.find(b => b.text().includes('取消'))
+      const tButtons = wrapper.findAllComponents({ name: 'TButton' })
+      const cancelBtn = tButtons.find(b => b.text().includes('取消'))
       expect(cancelBtn).toBeDefined()
       await cancelBtn!.trigger('click')
       await nextTick()
@@ -234,8 +234,8 @@ describe('FgDialog', () => {
       wrapper.vm.open({ status: 'active' })
       await nextTick()
       await nextTick()
-      const buttons = wrapper.findAllComponents({ name: 'ElButton' })
-      const confirmBtn = buttons.find(b => b.text().includes('确定'))
+      const tButtons = wrapper.findAllComponents({ name: 'TButton' })
+      const confirmBtn = tButtons.find(b => b.text().includes('确定'))
       expect(confirmBtn).toBeDefined()
       await confirmBtn!.trigger('click')
       await nextTick()
@@ -322,7 +322,7 @@ describe('FgDialog', () => {
           },
         },
       })
-      expect(wrapper.find('.el-dialog').exists()).toBe(false)
+      expect(wrapper.find('.t-dialog').exists()).toBe(false)
     })
   })
 })

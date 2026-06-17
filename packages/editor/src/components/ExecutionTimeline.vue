@@ -6,8 +6,8 @@
  * 点击节点可展开查看输入/输出数据。
  */
 import { ref } from 'vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import styles from './ExecutionTimeline.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 // ── Types ──
 export interface NodeLog {
@@ -38,13 +38,13 @@ const expandedNodes = ref<Set<string>>(new Set())
 
 // ── Helpers ──
 function nodeIcon(status: string) {
-  const map: Record<string, string> = {
-    completed: 'circle-check-filled',
-    failed: 'circle-close-filled',
-    running: 'loading',
-    skipped: 'remove',
+  const map: Record<string, typeof SuccessFilled> = {
+    completed: SuccessFilled,
+    failed: CircleCloseFilled,
+    running: Loading,
+    skipped: Remove,
   }
-  return map[status] ?? 'warning'
+  return map[status] ?? WarningFilled
 }
 
 function nodeIconColor(status: string): string {
@@ -138,9 +138,9 @@ function handleNodeClick(node: NodeLog) {
       <div :class="styles.content">
         <div :class="styles.header">
           <span :class="styles.nodeName">{{ node.nodeName || node.nodeId }}</span>
-          <t-tag :theme="statusTheme(node.status)" size="small">
+          <el-tag :type="statusTheme(node.status)" size="small">
             {{ statusLabel(node.status) }}
-          </t-tag>
+          </el-tag>
         </div>
 
         <div :class="styles.meta">
@@ -154,16 +154,16 @@ function handleNodeClick(node: NodeLog) {
 
         <!-- Error -->
         <div v-if="node.error" :class="styles.errorBlock">
-          <AppIcon name="circle-close-filled" :size="16" />
+          <AppIcon name="circle-close-filled"  />
           <span>{{ node.error }}</span>
         </div>
 
         <!-- I/O (expandable) -->
         <template v-if="hasIO(node)">
           <div :class="styles.ioToggle">
-            <t-text theme="primary" size="small" style="cursor: pointer">
+            <el-link type="primary" :underline="false">
               {{ expandedNodes.has(node.id) ? '收起' : '查看' }} 输入/输出
-            </t-text>
+            </el-link>
           </div>
 
           <div v-if="expandedNodes.has(node.id)" :class="styles.ioSection">

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import EnhancedDialog from '@/components/EnhancedDialog.vue'
 
 // el-dialog uses append-to-body (Teleport), so query from document instead of wrapper
@@ -17,7 +17,7 @@ describe('EnhancedDialog', () => {
       global: { plugins: [ElementPlus] },
     })
     await nextTick()
-    expect(document.querySelector('.el-dialog')).toBeTruthy()
+    expect(document.querySelector('.t-dialog')).toBeTruthy()
     wrapper.unmount()
   })
 
@@ -51,8 +51,12 @@ describe('EnhancedDialog', () => {
     expect(btn).toBeTruthy()
     btn.click()
     await nextTick()
-    const dialog = document.querySelector('.el-dialog') as HTMLElement
-    expect(dialog.classList.contains('is-fullscreen')).toBe(true)
+    // 点击后应显示退出全屏图标（FullscreenExitIcon），原全屏按钮消失
+    const exitBtn = document.querySelector('[data-testid="fullscreen-btn"]') as HTMLElement
+    expect(exitBtn).toBeTruthy()
+    // 全屏状态下的样式类应用到 dialog context wrapper
+    const dialogCtx = document.querySelector('.t-dialog__ctx')
+    expect(dialogCtx?.classList.contains('is-fullscreen')).toBe(true)
     wrapper.unmount()
   })
 })

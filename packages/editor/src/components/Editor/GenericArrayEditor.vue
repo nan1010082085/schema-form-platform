@@ -5,9 +5,9 @@
  * 根据 fields 声明动态渲染每个数组项的字段。
  * 支持 text / select / number / switch 四种字段类型。
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { ArrayFieldSchema } from '../../widgets/base/types'
 import styles from './GenericArrayEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 export type { ArrayFieldSchema }
 
@@ -82,30 +82,30 @@ function getItemTitle(item: unknown, index: number): string {
       <div :class="styles.itemHeader">
         <span :class="styles.itemTitle">#{{ getItemTitle(item, idx) }}</span>
         <div :class="styles.itemActions">
-          <t-button
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === 0"
             @click="moveUp(idx)"
           >
-            <ChevronUpIcon />
-          </t-button>
-          <t-button
+            <AppIcon name="arrow-up" />
+          </el-button>
+          <el-button
             size="small"
-            variant="text"
+            text
             :disabled="idx === value.length - 1"
             @click="moveDown(idx)"
           >
-            <ChevronDownIcon />
-          </t-button>
-          <t-button
-            theme="danger"
+            <AppIcon name="arrow-down" />
+          </el-button>
+          <el-button
+            type="danger"
             size="small"
-            variant="text"
+            text
             @click="removeItem(idx)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete" />
+          </el-button>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ function getItemTitle(item: unknown, index: number): string {
       >
         <label :class="styles.label">{{ field.label }}</label>
 
-        <t-input
+        <el-input
           v-if="field.type === 'text'"
           :model-value="(item as Record<string, unknown>)[field.key] as string"
           size="small"
@@ -124,7 +124,7 @@ function getItemTitle(item: unknown, index: number): string {
           @update:model-value="updateField(idx, field.key, $event)"
         />
 
-        <t-input-number
+        <el-input-number
           v-else-if="field.type === 'number'"
           :model-value="(item as Record<string, unknown>)[field.key] as number"
           controls-position="right"
@@ -133,22 +133,22 @@ function getItemTitle(item: unknown, index: number): string {
           @update:model-value="updateField(idx, field.key, $event ?? 0)"
         />
 
-        <t-select
+        <el-select
           v-else-if="field.type === 'select'"
           :model-value="(item as Record<string, unknown>)[field.key]"
           size="small"
           style="width: 100%"
           @update:model-value="updateField(idx, field.key, $event)"
         >
-          <t-option
+          <el-option
             v-for="opt in field.options"
             :key="String(opt.value)"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
 
-        <t-switch
+        <el-switch
           v-else-if="field.type === 'switch'"
           :model-value="(item as Record<string, unknown>)[field.key] as boolean"
           size="small"
@@ -157,15 +157,15 @@ function getItemTitle(item: unknown, index: number): string {
       </div>
     </div>
 
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="outline"
+      plain
       style="width: 100%; margin-top: 8px"
       @click="addItem"
     >
-      <AddIcon />
+      <AppIcon name="plus" />
       添加
-    </t-button>
+    </el-button>
   </div>
 </template>

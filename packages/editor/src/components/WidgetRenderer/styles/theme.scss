@@ -1,76 +1,51 @@
 // ============================================================
 // FormGrid 组件特定样式覆盖
-// TDesign 通用覆盖已迁移至 src/styles/theme.scss（全局 :root 级别）
 // 此文件仅保留 FormGrid 布局相关的组件样式
 // ============================================================
 @use './variables' as *;
 
-// ---- fg 容器内默认 44px 高度 ----
+// ---- fg 容器内默认高度 ----
 .fg {
-  --td-comp-size-m: 44px;
-
-  .t-input {
-    min-height: 44px;
-
-    .t-input__inner {
-      height: 44px;
-      line-height: 44px;
-      font-size: $fg-font-size-body;
-      color: rgba(255, 255, 255, 0.9);
-      background: rgba(0, 0, 0, 0.15);
-      border-color: rgba(0, 212, 255, 0.08);
-
-      &::placeholder {
-        color: rgba(255, 255, 255, 0.3);
-      }
-
-      &:focus {
-        border-color: #00d4ff;
-        box-shadow: 0 0 6px rgba(0, 212, 255, 0.15);
-      }
-    }
-  }
-
-  .t-select {
+  .el-input {
     min-height: 44px;
   }
 
-  .t-input-number {
+  .el-select {
     min-height: 44px;
   }
 
-  .t-form__label {
+  .el-input-number {
+    min-height: 44px;
+  }
+
+  .el-form-item__label {
     line-height: 44px;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
   }
 }
 
 // ---- fg-cell-content 内组件高度自适应 ----
 .fg-cell-content {
-  .t-input {
+  .el-input {
     height: 100%;
   }
 
-  .t-date-picker {
+  .el-date-editor {
     height: 100%;
   }
 
-  .t-textarea {
+  .el-textarea {
     height: 100%;
-
-    .t-textarea__inner {
-      height: 100%;
-    }
   }
 
-  .t-input-number {
+  .el-input-number {
     height: 100%;
   }
 }
 
 // ---- Dialog 弹窗（FormGrid 内嵌弹窗额外样式） ----
 .fg-dialog {
-  .t-dialog {
+  .el-dialog {
     border-radius: $border-radius-md;
   }
 }

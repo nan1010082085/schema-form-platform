@@ -7,7 +7,7 @@ export function createCascaderWidget(id: string): Widget {
     ...publicSchema(id, 'cascader'),
     name: cascaderConfig.name,
     label: cascaderConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...cascaderConfig.defaultStyle },
     props: { ...cascaderConfig.defaultProps },
   }

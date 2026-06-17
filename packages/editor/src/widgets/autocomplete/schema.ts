@@ -7,7 +7,7 @@ export function createAutocompleteWidget(id: string): Widget {
     ...publicSchema(id, 'autocomplete'),
     name: autocompleteConfig.name,
     label: autocompleteConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...autocompleteConfig.defaultStyle },
     props: { ...autocompleteConfig.defaultProps },
   }

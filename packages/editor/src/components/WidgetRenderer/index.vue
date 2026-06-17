@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, watch, toRef } from 'vue'
+import { ref, computed, provide, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import en from 'element-plus/es/locale/lang/en'
 import SchemaRender from './SchemaRender.vue'
 import type { Widget } from '../../widgets/base/types'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
@@ -40,6 +43,12 @@ import { triggerWidgetEvent } from '@/engine/eventEngine'
 import styles from './style.module.scss'
 
 const logger = useLogger('WidgetRenderer')
+
+/** Element Plus 语言包映射 */
+const epLocaleMap: Record<FormGridLocale, typeof zhCn> = {
+  'zh-CN': zhCn,
+  'en-US': en,
+}
 
 const props = defineProps<FormGridProps & {
   /** 编辑器模式：启用容器拖放区域（Sprint 11） */
@@ -83,7 +92,7 @@ const emit = defineEmits<{
   'container-drop': [payload: { parentPath: number[]; index: number; dragDataRaw: string }]
 }>()
 
-const formRef = ref<FormInstanceFunctions>()
+const formRef = ref<FormInstance>()
 const loading = ref(false)
 
 // ---- Dialog state ----
@@ -133,7 +142,7 @@ const { executeBeforeSubmit, executeAfterLoad } = useLifecycle(props.lifecycle, 
 
 // ---- 上下文注入 ----
 const context: FormGridContext = {
-  user: props.user ?? { id: '', name: '', deptId: '', deptName: '', roles: [] },
+  user: props.user ?? { id: '', name: '', deptId: '', deptName: '', roles: [], permissions: [] },
   request: props.request ?? { token: '', headers: {}, baseUrl: '' },
   global: props.global ?? { dictMap: {}, config: {} },
 }
@@ -249,7 +258,7 @@ const eventContext: EventExecutionContext = {
       handler(true)
       return
     }
-    // 降级：使用 WidgetRenderer 内置 el-dialog
+    // 降级：使用 WidgetRenderer 内置 dialog 组件
     const widget = findWidgetInSchema(props.schema, target)
     if (widget?.type === 'dialog') {
       openDialog({
@@ -274,17 +283,11 @@ const eventContext: EventExecutionContext = {
   emit: (eventName: string, payload?: unknown) => {
     emit('action', { type: 'emit', eventName, eventPayload: payload } as SchemaAction)
   },
-  confirm: (message: string) => {
-    return new Promise<void>((resolve, reject) => {
-      const dialog = DialogPlugin.confirm({
-        header: '确认',
-        body: message,
-        theme: 'warning',
-        confirmBtn: '确定',
-        cancelBtn: '取消',
-        onConfirm: () => { resolve(); dialog.destroy() },
-        onClose: () => { reject(new Error('cancelled')); dialog.destroy() },
-      })
+  confirm: async (message: string) => {
+    await ElMessageBox.confirm(message, '确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
     })
   },
   get variables() { return variablesContext.value },
@@ -352,6 +355,9 @@ watch(
 const currentLocale = computed(() => props.locale ?? 'zh-CN')
 const { t } = useLocale(currentLocale)
 provide(FORM_GRID_T_KEY, t)
+
+// Element Plus 语言包（按需映射，避免全量加载）
+const epLocale = computed(() => epLocaleMap[currentLocale.value])
 
 /**
  * 对 API 返回数据应用字段映射
@@ -507,15 +513,15 @@ defineExpose({
 </script>
 
 <template>
-  <t-config-provider :global-config="{ locale: tdLocale }">
-    <t-loading :loading="loading" :class="styles.fg" :style="absoluteContainerStyle">
+  <el-config-provider :locale="epLocale">
+    <div v-loading="loading" :class="styles.fg" :style="absoluteContainerStyle">
       <!-- 绝对定位模式：与编辑器画布一致，保留 position 坐标 -->
       <template v-if="isAbsoluteLayout">
         <SchemaRender :widgets="(schema as Widget[])" mode="preview" />
       </template>
 
       <!-- 流式布局模式（默认）：WidgetNode 流式渲染 -->
-      <t-form v-else ref="formRef" :data="formData">
+      <el-form v-else ref="formRef" :model="formData">
         <template v-for="(item, idx) in schema" :key="idx">
           <ErrorBoundary
             v-if="!item.hidden"
@@ -534,18 +540,18 @@ defineExpose({
             />
           </ErrorBoundary>
         </template>
-      </t-form>
+      </el-form>
 
       <!-- Built-in dialog (internal mode only): renders dialogSchema from button actions -->
-      <t-dialog
+      <el-dialog
         v-if="dialogMode === 'internal'"
         v-model:visible="dialogVisible"
-        :header="dialogTitle"
+        :title="dialogTitle"
         :width="dialogWidth ?? '600px'"
-        attach="body"
+        append-to-body
         @close="handleDialogCancel"
       >
-        <t-form v-if="dialogSchema?.length" :data="formData">
+        <el-form v-if="dialogSchema?.length" :model="formData">
           <SchemaRender
             v-for="(item, dIdx) in dialogSchema"
             :key="dIdx"
@@ -553,12 +559,12 @@ defineExpose({
             :form-data="formData"
             :path="[dIdx]"
           />
-        </t-form>
+        </el-form>
         <template #footer>
-          <t-button @click="handleDialogCancel">取消</t-button>
-          <t-button theme="primary" @click="handleDialogConfirm">确定</t-button>
+          <el-button @click="handleDialogCancel">取消</el-button>
+          <el-button type="primary" @click="handleDialogConfirm">确定</el-button>
         </template>
-      </t-dialog>
-    </t-loading>
-  </t-config-provider>
+      </el-dialog>
+    </div>
+  </el-config-provider>
 </template>

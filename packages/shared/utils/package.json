@@ -7,12 +7,20 @@
     "./apiClient": "./apiClient.ts",
     "./authTypes": "./authTypes.ts",
     "./sso": "./sso.ts",
+    "./useAuth": "./useAuth.ts",
     "./stores": "./stores/index.ts",
     "./stores/authStore": "./stores/authStore.ts",
     "./message": "./message.ts",
-    "./microAppConfig": "./microAppConfig.ts"
+    "./microAppConfig": "./microAppConfig.ts",
+    "./form": "./form.ts",
+    "./iconResolver": "./iconResolver.ts"
+  },
+  "dependencies": {
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
   },
   "peerDependencies": {
-    "tdesign-vue-next": ">=1.20.0"
+    "element-plus": ">=2.9.0"
   }
 }

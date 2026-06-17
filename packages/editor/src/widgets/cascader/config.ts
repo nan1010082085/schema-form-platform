@@ -7,7 +7,7 @@ export const cascaderConfig: WidgetConfig = {
   author: 'yangdongnan',
   defaultStyle: {
     width: '240px',
-    height: '44px',
+    height: '40px',
   },
   defaultProps: {
     placeholder: '请选择',

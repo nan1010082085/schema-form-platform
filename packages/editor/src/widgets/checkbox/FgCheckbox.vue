@@ -36,33 +36,19 @@ function forwardNativeChange() {
 </script>
 
 <template>
-  <t-checkbox-group
+  <el-checkbox-group
     ref="groupRef"
     v-model="widgetData.defaultValue"
     :style="dynamicStyle"
     :disabled="isDisabled"
     @change="forwardNativeChange"
   >
-    <t-checkbox
+    <el-checkbox
       v-for="opt in resolvedOptions"
       :key="opt.value"
-      :value="opt.value"
+      :label="opt.value"
     >
       {{ opt.label }}
-    </t-checkbox>
-  </t-checkbox-group>
+    </el-checkbox>
+  </el-checkbox-group>
 </template>
-
-<style scoped>
-:deep(.el-checkbox-group) {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-}
-:deep(.el-checkbox) {
-  height: 100%;
-}
-</style>

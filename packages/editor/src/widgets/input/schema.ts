@@ -7,7 +7,7 @@ export function createInputWidget(id: string): Widget {
     ...publicSchema(id, 'input'),
     name: inputConfig.name,
     label: inputConfig.displayName,
-    position: { x: 0, y: 0, w: 280, h: 44, zIndex: 1 },
+    position: { x: 0, y: 0, w: 280, h: 40, zIndex: 1 },
     style: { ...inputConfig.defaultStyle },
     props: { ...inputConfig.defaultProps },
   }

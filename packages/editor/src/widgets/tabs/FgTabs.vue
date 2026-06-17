@@ -3,7 +3,7 @@
  * FgTabs — 页签容器 Widget
  *
  * 职责：
- * - t-tabs 包裹，支持多标签页
+ * - el-tabs 包裹，支持多标签页
  * - 渲染 tab headers（标签头）
  * - 子组件由 SchemaNode 的 childrenLayer 渲染（绝对定位，位置正确）
  *
@@ -33,9 +33,9 @@ const tabs = computed<TabItem[]>(() => {
 
 const activeKey = ref((widgetData.value.props?.activeKey as string) || tabs.value[0]?.key || 'tab1')
 
-const tabTheme = computed(() => {
+const tabType = computed(() => {
   const t = widgetData.value.props?.type as string
-  return t === 'card' || t === 'border-card' ? 'card' : 'line'
+  return t === 'card' ? 'card' : undefined
 })
 
 const tabPosition = computed(() => {
@@ -45,26 +45,21 @@ const tabPosition = computed(() => {
     : 'top'
 })
 
-function handleTabChange(name: string | number) {
-  activeKey.value = name as string
-}
-
 defineExpose({ activeKey })
 </script>
 
 <template>
-  <t-tabs
+  <el-tabs
     :class="styles.tabsContainer"
     v-model="activeKey"
-    :theme="tabTheme"
-    :placement="tabPosition"
-    @change="handleTabChange"
+    :type="tabType"
+    :tab-position="tabPosition"
   >
-    <t-tab-panel
+    <el-tab-pane
       v-for="tab in tabs"
       :key="tab.key"
-      :value="tab.key"
       :label="tab.label"
+      :name="tab.key"
     />
-  </t-tabs>
+  </el-tabs>
 </template>

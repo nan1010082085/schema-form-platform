@@ -3,35 +3,17 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { apiClient } from '@/utils/apiClient'
 import { useQiankun } from '@schema-form/shared-qiankun'
-import {
-  DesktopIcon,
-  MenuIcon,
-  UserIcon,
-  UserCircleIcon,
-  BuildingIcon,
-  WorkIcon,
-  BookmarkIcon,
-  SettingIcon,
-  FileIcon,
-} from 'tdesign-icons-vue-next'
-
-const ICON_MAP: Record<string, any> = {
-  Desktop: DesktopIcon,
-  Menu: MenuIcon,
-  User: UserIcon,
-  UserCircle: UserCircleIcon,
-  Building: BuildingIcon,
-  Briefcase: WorkIcon,
-  Bookmark: BookmarkIcon,
-  Setting: SettingIcon,
-  File: FileIcon,
-}
+import { useAuthStore } from '../stores/auth'
+import { resolveIconName } from '@schema-form/shared-utils/iconResolver'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface MenuItem {
   id: string
   name: string
   path: string
   icon: string
+  permission?: string
+  microAppId: string | null
   target: '_self' | '_blank'
   children?: MenuItem[]
 }
@@ -42,26 +24,37 @@ const { getGlobalState } = useQiankun()
 const isCollapsed = ref(false)
 const menuItems = ref<MenuItem[]>([])
 
-/** 微前端模式下隐藏侧边栏，由宿主 shell 提供导航 */
-const isQiankun = () => !!window.__POWERED_BY_QIANKUN__
-
 const activeMenu = computed(() => route.name as string)
 const pageTitle = computed(() => (route.meta?.title as string) || '系统管理')
 
 async function fetchMenus() {
   try {
+    // 先加载用户权限
+    const authStore = useAuthStore()
+    await authStore.loadUser()
+
     const data = await apiClient.get<MenuItem[]>('/menus?tree=true&type=menu&status=active')
-    menuItems.value = Array.isArray(data) ? data : []
+    const all = Array.isArray(data) ? data : []
+    // 过滤：系统管理相关菜单 + 权限过滤
+    menuItems.value = all.filter(item => {
+      if (item.microAppId && item.microAppId !== 'admin') return false
+      // 有权限要求时检查权限
+      if (item.permission && !authStore.hasPermission(item.permission)) return false
+      // 子菜单也需要过滤
+      if (item.children) {
+        item.children = item.children.filter(child => {
+          if (child.permission && !authStore.hasPermission(child.permission)) return false
+          return true
+        })
+      }
+      return true
+    })
   } catch {
     menuItems.value = []
   }
 }
 
-function getMenuIcon(iconName: string) {
-  return ICON_MAP[iconName] || DesktopIcon
-}
-
-function openPortal() {
+function openHome() {
   window.open('/schema-platform/', '_blank')
 }
 
@@ -84,54 +77,44 @@ onMounted(fetchMenus)
 </script>
 
 <template>
-  <!-- 微前端模式：只渲染内容区，侧边栏由宿主 shell 提供 -->
-  <div v-if="isQiankun()" :class="$style.embedContent">
-    <RouterView />
-  </div>
-
-  <!-- standalone 模式：完整布局 -->
-  <div v-else :class="$style.layout">
+  <div :class="$style.layout">
     <!-- 侧边栏 -->
     <aside :class="[$style.sidebar, { [$style.sidebarCollapsed]: isCollapsed }]">
       <div :class="$style.logo">
         <span v-if="!isCollapsed">系统管理</span>
         <span v-else>管</span>
       </div>
-      <t-menu
-        :value="activeMenu"
-        :collapsed="isCollapsed"
+      <el-menu
+        :default-active="activeMenu"
+        :collapse="isCollapsed"
         :class="$style.menu"
       >
         <template v-for="item in menuItems" :key="item.id">
-          <t-submenu v-if="item.children?.length" :value="item.id">
+          <el-sub-menu v-if="item.children?.length" :index="item.id">
             <template #title>
-              <component :is="getMenuIcon(item.icon)" />
+              <AppIcon :name="resolveIconName(item.icon)" :size="18" />
               <span>{{ item.name }}</span>
             </template>
-            <t-menu-item
+            <el-menu-item
               v-for="child in item.children"
               :key="child.id"
-              :value="child.path"
+              :index="child.path"
               @click="handleMenuClick(child)"
             >
-              <template #icon>
-                <component :is="getMenuIcon(child.icon)" />
-              </template>
+              <AppIcon :name="resolveIconName(child.icon)" :size="18" />
               {{ child.name }}
-            </t-menu-item>
-          </t-submenu>
-          <t-menu-item
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item
             v-else
-            :value="item.path"
+            :index="item.path"
             @click="handleMenuClick(item)"
           >
-            <template #icon>
-              <component :is="getMenuIcon(item.icon)" />
-            </template>
+            <AppIcon :name="resolveIconName(item.icon)" :size="18" />
             {{ item.name }}
-          </t-menu-item>
+          </el-menu-item>
         </template>
-      </t-menu>
+      </el-menu>
     </aside>
 
     <!-- 主内容区 -->
@@ -139,17 +122,17 @@ onMounted(fetchMenus)
       <!-- 顶部栏 -->
       <header :class="$style.header">
         <div :class="$style.headerLeft">
-          <t-button
-            variant="text"
+          <el-button
+            text
             :class="$style.collapseBtn"
             @click="isCollapsed = !isCollapsed"
           >
-            <MenuIcon size="20px" />
-          </t-button>
+            <AppIcon :name="isCollapsed ? 'expand' : 'fold'" :size="20" />
+          </el-button>
           <h2 :class="$style.pageTitle">{{ pageTitle }}</h2>
         </div>
         <div :class="$style.headerRight">
-          <t-button variant="text" @click="openPortal">返回门户</t-button>
+          <el-button text @click="openHome">返回首页</el-button>
         </div>
       </header>
 
@@ -166,23 +149,22 @@ onMounted(fetchMenus)
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
 .layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
-/* ── 侧边栏：深色底 + 右侧发光边框 ──────────────────────── */
+/* ── 侧边栏：浅色底（对齐 editor / flow 风格） ─────────── */
 .sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border-color);
-  box-shadow: 1px 0 15px rgba(0, 212, 255, 0.06);
+  background: var(--bg-color-white);
+  border-right: 1px solid var(--border-color-base);
   display: flex;
   flex-direction: column;
   transition: width 0.3s;
@@ -193,7 +175,6 @@ onMounted(fetchMenus)
   width: 64px;
 }
 
-/* Logo 区域：霓虹文字 + 发光底边 */
 .logo {
   height: 56px;
   display: flex;
@@ -201,11 +182,10 @@ onMounted(fetchMenus)
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
-  color: #00d4ff;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.2);
-  border-bottom: 1px solid var(--sidebar-border-color);
+  color: var(--text-color-title);
+  border-bottom: 1px solid var(--border-color-base);
   white-space: nowrap;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .menu {
@@ -220,16 +200,14 @@ onMounted(fetchMenus)
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
-/* ── 头部栏：玻璃拟态 ──────────────────────────────────── */
+/* ── 头部栏：浅色底 ───────────────────────────────────── */
 .header {
   height: 56px;
-  background: rgba(17, 24, 32, 0.75);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-base);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -250,7 +228,7 @@ onMounted(fetchMenus)
 .pageTitle {
   font-size: 16px;
   font-weight: 600;
-  color: var(--td-text-color-primary);
+  color: var(--text-color-title);
   margin: 0;
 }
 
@@ -266,5 +244,3 @@ onMounted(fetchMenus)
   padding: 0;
 }
 </style>
-
-<!-- 非 Module 样式：侧边栏菜单覆盖由 theme-tech.css 统一管理 -->

@@ -121,7 +121,8 @@ export async function mockPublishSchema(id: string): Promise<PublishedSchemaItem
     sourceId: id,
     name: schema.name,
     type: schema.type,
-    json: schema.json ?? [],
+    // @ts-ignore - json 格式兼容
+    json: (Array.isArray(schema.json) ? schema.json : schema.json?.widgets ?? []) as unknown[],
     publishId: genId(),
     version: schema.version ?? '20250101000000',
     publishedAt: new Date().toISOString(),

@@ -76,19 +76,82 @@ const elIconStub = {
   props: ['size', 'class'],
 }
 
+// TDesign stubs — render native elements that mirror the value
+// Note: template strings must avoid escaped quotes inside attribute values
+
+const tInputStub = {
+  template: `<input :value="modelValue || value || ''" @input="$emit('update:modelValue', $event.target.value); $emit('update:value', $event.target.value)" />`,
+  props: ['modelValue', 'value', 'size', 'placeholder', 'disabled', 'type', 'rows', 'readonly', 'clearable', 'prefixIcon'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
+const tInputNumberStub = {
+  template: `<input type="number" :value="modelValue ?? value ?? 0" @input="$emit('update:modelValue', Number($event.target.value)); $emit('update:value', Number($event.target.value))" />`,
+  props: ['modelValue', 'value', 'min', 'max', 'size', 'controlsPosition', 'controls-position'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
+const tSwitchStub = {
+  template: `<input type="checkbox" :checked="modelValue ?? value ?? false" @change="$emit('update:modelValue', $event.target.checked); $emit('update:value', $event.target.checked)" />`,
+  props: ['modelValue', 'value'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
+const tSelectStub = {
+  template: `<select :value="modelValue || value || ''" @change="$emit('update:modelValue', $event.target.value); $emit('update:value', $event.target.value)"><slot /></select>`,
+  props: ['modelValue', 'value', 'size', 'style', 'clearable'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
+const tOptionStub = {
+  template: `<option :value="value"><slot>{{ label }}</slot></option>`,
+  props: ['label', 'value'],
+}
+
+const tColorPickerStub = {
+  template: `<input type="color" :value="modelValue || value || ''" @input="$emit('update:modelValue', $event.target.value); $emit('update:value', $event.target.value)" />`,
+  props: ['modelValue', 'value', 'size', 'showAlpha', 'show-alpha'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
+const tButtonStub = {
+  template: `<button @click="$emit('click')"><slot /></button>`,
+  props: ['size', 'variant', 'type', 'theme'],
+  emits: ['click'],
+}
+
+const tPopupStub = {
+  template: `<span><slot /></span>`,
+  props: ['content', 'placement', 'delay', 'trigger', 'width', 'overlayInnerStyle', 'showArrow'],
+}
+
+const tTextareaStub = {
+  template: `<textarea :value="modelValue || value || ''" @input="$emit('update:modelValue', $event.target.value); $emit('update:value', $event.target.value)" />`,
+  props: ['modelValue', 'value', 'rows', 'size', 'placeholder'],
+  emits: ['update:modelValue', 'update:value'],
+}
+
 const stubs = {
-  ElInput: elInputStub,
-  ElInputNumber: elInputNumberStub,
-  ElSwitch: elSwitchStub,
-  ElSelect: elSelectStub,
-  ElOption: elOptionStub,
-  ElColorPicker: elColorPickerStub,
-  ElButton: elButtonStub,
-  ElTooltip: elTooltipStub,
-  ElIcon: elIconStub,
+  't-input': tInputStub,
+  't-input-number': tInputNumberStub,
+  't-switch': tSwitchStub,
+  't-select': tSelectStub,
+  't-option': tOptionStub,
+  't-color-picker': tColorPickerStub,
+  't-button': tButtonStub,
+  't-popup': tPopupStub,
+  't-textarea': tTextareaStub,
   EventConfigDialog: { template: '<div />', props: ['visible', 'events'], emits: ['update:visible', 'save'] },
   LinkageConfigDialog: { template: '<div />', props: ['visible', 'rules'], emits: ['update:visible', 'save'] },
   OptionsApiConfigDialog: { template: '<div />', props: ['visible', 'api'], emits: ['update:visible', 'save'] },
+  VariableConfigDialog: { template: '<div />', props: ['visible', 'variables', 'title'], emits: ['update:visible', 'save'] },
+  BorderEditor: { template: '<div />', props: ['value'], emits: ['update'] },
+  BorderRadiusEditor: { template: '<div />', props: ['value'], emits: ['update'] },
+  SpacingEditor: { template: '<div />', props: ['mode', 'value'], emits: ['update'] },
+  TableColumnsEditor: { template: '<div />', props: ['columns'], emits: ['update:columns'] },
+  GenericArrayEditor: { template: '<div />', props: ['value', 'fields'], emits: ['update'] },
+  OptionsEditor: { template: '<div />', props: ['label', 'value'], emits: ['update'] },
+  RulesEditor: { template: '<div />', props: ['rules'], emits: ['update:rules'] },
 }
 
 // ---- Test widget factory ----

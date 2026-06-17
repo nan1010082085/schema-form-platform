@@ -6,24 +6,19 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DashboardIcon, AppIcon, DesktopIcon, SettingIcon } from 'tdesign-icons-vue-next'
-import BreadcrumbNav from './BreadcrumbNav.vue'
 import styles from './AppLayout.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const navItems = [
-  { path: '/instances', label: '实例管理', icon: DashboardIcon },
-  { path: '/templates', label: '模板库', icon: AppIcon },
-  { path: '/workflows', label: '工作流管理', icon: SettingIcon },
-  { path: '/workflow-monitor', label: '工作流监控', icon: DesktopIcon },
+  { path: '/instances', label: '实例管理', icon: 'odometer' },
+  { path: '/templates', label: '模板库', icon: 'grid' },
 ]
 
 const activeNav = computed(() => {
   if (route.path.startsWith('/templates')) return '/templates'
-  if (route.path.startsWith('/workflows')) return '/workflows'
-  if (route.path.startsWith('/workflow-monitor')) return '/workflow-monitor'
   return route.path
 })
 </script>
@@ -43,7 +38,7 @@ const activeNav = computed(() => {
           :to="item.path"
           :class="[styles.navItem, activeNav === item.path && styles.navItemActive]"
         >
-          <component :is="item.icon" :size="18" />
+          <AppIcon :name="item.icon" :size="18" />
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -51,7 +46,6 @@ const activeNav = computed(() => {
 
     <!-- 主内容区 -->
     <main :class="styles.main">
-      <BreadcrumbNav />
       <router-view />
     </main>
   </div>

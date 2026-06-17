@@ -5,10 +5,10 @@
  * 展示 Schema 的历史版本列表，标记发布版本，支持加载和发布特定版本。
  */
 import { ref, watch } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
-import { LoadingIcon } from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
 import { fetchVersions, publishSchema } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -39,7 +39,7 @@ async function loadVersions(page = 1) {
     versions.value = res.items ?? []
     total.value = res.total ?? 0
   } catch {
-    MessagePlugin.error('加载版本历史失败')
+    ElMessage.error('加载版本历史失败')
   } finally {
     loading.value = false
   }
@@ -64,14 +64,14 @@ async function handlePublishVersion(version: string) {
   try {
     const result = await publishSchema(props.editId, version)
     if (result) {
-      MessagePlugin.success(`版本 ${version} 发布成功`)
+      ElMessage.success(`版本 ${version} 发布成功`)
       emit('published')
       loadVersions(currentPage.value)
     } else {
-      MessagePlugin.error('发布失败')
+      ElMessage.error('发布失败')
     }
   } catch {
-    MessagePlugin.error('发布失败')
+    ElMessage.error('发布失败')
   } finally {
     publishingVersion.value = null
   }
@@ -90,26 +90,20 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
   if (row.published) return 'version-history__row-published'
   return ''
 }
-
-const tableColumns = [
-  { colKey: 'version', title: '版本号', minWidth: 200, ellipsis: true },
-  { colKey: 'status', title: '状态', width: 120, ellipsis: true },
-  { colKey: 'createdAt', title: '创建时间', width: 180, ellipsis: true },
-  { colKey: 'operation', title: '操作', width: 150, fixed: 'right' },
-]
 </script>
 
 <template>
-  <t-dialog
-    :visible="visible"
-    @update:visible="emit('update:visible', $event)"
-    :header="`版本历史 — ${schemaName || ''}`"
+  <el-dialog
+    :model-value="visible"
+    @update:model-value="emit('update:visible', $event)"
+    :title="`版本历史 — ${schemaName || ''}`"
     width="50%"
-    :close-on-overlay="false"
+    :close-on-click-modal="false"
+    :append-to-body="true"
     destroy-on-close
   >
     <div v-if="loading" class="version-history__loading">
-      <LoadingIcon class="version-history__spinning" />
+      <AppIcon name="loading" class="version-history__spinning" />
       <span>加载中...</span>
     </div>
 
@@ -118,70 +112,78 @@ const tableColumns = [
     </div>
 
     <template v-else>
-      <t-table
+      <el-table
         :data="versions"
-        :columns="tableColumns"
         stripe
         size="small"
         :row-class-name="tableRowClassName"
         row-key="version"
       >
-        <template #cell-version="{ row }">
-          <span :class="{ 'version-history__current': row.version === currentVersion, 'version-history__published': row.published }">
-            {{ formatVersion(row.version) }}
-          </span>
-        </template>
+        <el-table-column prop="version" label="版本号" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span :class="{ 'version-history__current': row.version === currentVersion, 'version-history__published': row.published }">
+              {{ formatVersion(row.version) }}
+            </span>
+          </template>
+        </el-table-column>
 
-        <template #cell-status="{ row }">
-          <div class="version-history__status-cell">
-            <t-tag v-if="row.version === currentVersion" theme="primary" size="small" variant="outline">当前</t-tag>
-            <t-tag v-if="row.published" theme="success" size="small">已发布</t-tag>
-            <t-tag v-if="!row.published && row.version !== currentVersion" theme="default" size="small" variant="outline">草稿</t-tag>
-          </div>
-        </template>
+        <el-table-column prop="status" label="状态" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="version-history__status-cell">
+              <el-tag v-if="row.version === currentVersion" type="primary" size="small" effect="plain">当前</el-tag>
+              <el-tag v-if="row.published" type="success" size="small">已发布</el-tag>
+              <el-tag v-if="!row.published && row.version !== currentVersion" type="info" size="small" effect="plain">草稿</el-tag>
+            </div>
+          </template>
+        </el-table-column>
 
-        <template #cell-createdAt="{ row }">
-          {{ formatDate(row.createdAt) }}
-        </template>
+        <el-table-column prop="createdAt" label="创建时间" width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
 
-        <template #cell-operation="{ row }">
-          <t-button
-            v-if="row.version !== currentVersion"
-            theme="primary"
-            variant="text"
-            size="small"
-            @click="handleLoadVersion(row.version)"
-          >
-            加载
-          </t-button>
-          <t-button
-            v-if="!row.published"
-            theme="success"
-            variant="text"
-            size="small"
-            :loading="publishingVersion === row.version"
-            @click="handlePublishVersion(row.version)"
-          >
-            发布
-          </t-button>
-        </template>
-      </t-table>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.version !== currentVersion"
+              type="primary"
+              link
+              size="small"
+              @click="handleLoadVersion(row.version)"
+            >
+              加载
+            </el-button>
+            <el-button
+              v-if="!row.published"
+              type="success"
+              link
+              size="small"
+              :loading="publishingVersion === row.version"
+              @click="handlePublishVersion(row.version)"
+            >
+              发布
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <div v-if="total > 0" class="version-history__pagination">
-        <t-pagination
-          v-model:current="currentPage"
+        <el-pagination
+          v-model:current-page="currentPage"
           :page-size="pageSize"
           :total="total"
           size="small"
+          layout="prev, pager, next"
           @current-change="handlePageChange"
         />
       </div>
     </template>
 
     <template #footer>
-      <t-button @click="emit('update:visible', false)">关闭</t-button>
+      <el-button @click="emit('update:visible', false)">关闭</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -193,7 +195,7 @@ const tableColumns = [
     justify-content: center;
     gap: 8px;
     padding: 32px 0;
-    color: var(--td-text-color-placeholder);
+    color: #999;
     font-size: 14px;
   }
 
@@ -210,12 +212,12 @@ const tableColumns = [
 
   &__current {
     font-weight: 600;
-    color: var(--td-brand-color);
+    color: #409eff;
   }
 
   &__published {
     font-weight: 600;
-    color: var(--td-success-color);
+    color: #67c23a;
   }
 
   &__pagination {
@@ -225,10 +227,10 @@ const tableColumns = [
   }
 
   :deep(.version-history__row-published) {
-    background-color: var(--td-success-color-light) !important;
+    background-color: #f0f9eb !important;
 
     &:hover > td {
-      background-color: var(--td-success-color-light) !important;
+      background-color: #f0f9eb !important;
     }
   }
 

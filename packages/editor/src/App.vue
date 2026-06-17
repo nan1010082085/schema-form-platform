@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import '@schema-form/shared-styles/css-variables.scss'
 import { useAppStore } from '@/stores/app'
 import { fetchCurrentUser } from '@/utils/apiClient'
 
@@ -21,18 +24,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <RouterView />
+  <ElConfigProvider
+    :locale="zhCn"
+    :size="'default'"
+    :z-index="2000"
+  >
+    <RouterView />
+  </ElConfigProvider>
 </template>
-
-<style>
-html,
-body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-#app {
-  height: 100%;
-}
-</style>

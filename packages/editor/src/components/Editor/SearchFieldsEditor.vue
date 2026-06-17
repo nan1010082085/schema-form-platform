@@ -6,8 +6,8 @@
  * Each field has add/remove/reorder with conditional options display
  * and full API configuration (url, method, params, dataPath, labelKey, valueKey).
  */
-import { AddIcon, DeleteIcon, ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
 import type { SearchFieldSchema, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   searchFields: SearchFieldSchema[]
@@ -137,53 +137,50 @@ function handleParamsChange(idx: number, text: string) {
       <div class="search-fields-editor__item-header">
         <span class="search-fields-editor__item-title">字段 {{ idx + 1 }}</span>
         <div class="search-fields-editor__item-actions">
-          <t-button
+          <el-button
             size="small"
-            variant="text"
+            :icon="ArrowUp"
+            text
             :disabled="idx === 0"
             @click="moveUp(idx)"
-          >
-            <ChevronUpIcon />
-          </t-button>
-          <t-button
+          />
+          <el-button
             size="small"
-            variant="text"
+            :icon="ArrowDown"
+            text
             :disabled="idx === searchFields.length - 1"
             @click="moveDown(idx)"
-          >
-            <ChevronDownIcon />
-          </t-button>
-          <t-button
-            theme="danger"
+          />
+          <el-button
             size="small"
-            variant="text"
+            :icon="Delete"
+            type="danger"
+            text
             @click="removeField(idx)"
-          >
-            <DeleteIcon />
-          </t-button>
+          />
         </div>
       </div>
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">类型</label>
-        <t-select
+        <el-select
           :model-value="field.type"
           size="small"
           style="width: 100%"
           @update:model-value="updateField(idx, 'type', $event)"
         >
-          <t-option
+          <el-option
             v-for="opt in typeOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">字段</label>
-        <t-input
+        <el-input
           :model-value="field.field"
           size="small"
           placeholder="字段名"
@@ -193,7 +190,7 @@ function handleParamsChange(idx: number, text: string) {
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">标签</label>
-        <t-input
+        <el-input
           :model-value="field.label"
           size="small"
           placeholder="显示标签"
@@ -203,7 +200,7 @@ function handleParamsChange(idx: number, text: string) {
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">栅格 (1-24)</label>
-        <t-input-number
+        <el-input-number
           :model-value="field.span ?? 8"
           :min="1"
           controls-position="right"
@@ -216,7 +213,7 @@ function handleParamsChange(idx: number, text: string) {
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">占位符</label>
-        <t-input
+        <el-input
           :model-value="field.placeholder ?? ''"
           size="small"
           placeholder="占位符文本"
@@ -227,7 +224,8 @@ function handleParamsChange(idx: number, text: string) {
       <template v-if="needsOptions(field.type)">
         <div class="search-fields-editor__field">
           <label class="search-fields-editor__label">选项 (label=value, 每行一个)</label>
-          <t-textarea
+          <el-input
+            type="textarea"
             :model-value="optionsToText(field.options)"
             :rows="3"
             size="small"
@@ -239,7 +237,7 @@ function handleParamsChange(idx: number, text: string) {
         <div class="search-fields-editor__api-section">
           <div class="search-fields-editor__field">
             <label class="search-fields-editor__label">接口地址</label>
-            <t-input
+            <el-input
               :model-value="field.api?.url ?? ''"
               size="small"
               placeholder="/api/options"
@@ -250,20 +248,21 @@ function handleParamsChange(idx: number, text: string) {
           <template v-if="field.api?.url">
             <div class="search-fields-editor__field">
               <label class="search-fields-editor__label">请求方法</label>
-              <t-select
+              <el-select
                 :model-value="field.api?.method ?? 'get'"
                 size="small"
                 style="width: 100%"
                 @update:model-value="updateApiField(idx, { method: $event as 'get' | 'post' })"
               >
-                <t-option label="GET" value="get" />
-                <t-option label="POST" value="post" />
-              </t-select>
+                <el-option label="GET" value="get" />
+                <el-option label="POST" value="post" />
+              </el-select>
             </div>
 
             <div class="search-fields-editor__field">
               <label class="search-fields-editor__label">参数 (JSON)</label>
-              <t-textarea
+              <el-input
+                type="textarea"
                 :model-value="getParamsText(idx, field)"
                 :rows="2"
                 size="small"
@@ -274,7 +273,7 @@ function handleParamsChange(idx: number, text: string) {
 
             <div class="search-fields-editor__field">
               <label class="search-fields-editor__label">数据路径 (点号分隔)</label>
-              <t-input
+              <el-input
                 :model-value="field.api?.dataPath ?? ''"
                 size="small"
                 placeholder="data"
@@ -285,7 +284,7 @@ function handleParamsChange(idx: number, text: string) {
             <div class="search-fields-editor__field api-config__field--row">
               <div style="flex: 1">
                 <label class="search-fields-editor__label">标签字段</label>
-                <t-input
+                <el-input
                   :model-value="field.api?.labelKey ?? 'label'"
                   size="small"
                   placeholder="label"
@@ -294,7 +293,7 @@ function handleParamsChange(idx: number, text: string) {
               </div>
               <div style="flex: 1">
                 <label class="search-fields-editor__label">值字段</label>
-                <t-input
+                <el-input
                   :model-value="field.api?.valueKey ?? 'value'"
                   size="small"
                   placeholder="value"
@@ -303,16 +302,16 @@ function handleParamsChange(idx: number, text: string) {
               </div>
             </div>
 
-            <t-button size="small" theme="danger" variant="outline" style="width:100%;margin-top:4px" @click="removeApi(idx)">
+            <el-button size="small" type="danger" style="width:100%;margin-top:4px" @click="removeApi(idx)">
               移除 API
-            </t-button>
+            </el-button>
           </template>
         </div>
       </template>
 
       <div class="search-fields-editor__field">
         <label class="search-fields-editor__label">默认值</label>
-        <t-input
+        <el-input
           :model-value="String(field.defaultValue ?? '')"
           size="small"
           placeholder="默认值"
@@ -321,16 +320,15 @@ function handleParamsChange(idx: number, text: string) {
       </div>
     </div>
 
-    <t-button
-      theme="primary"
+    <el-button
+      type="primary"
       size="small"
-      variant="outline"
       style="width: 100%; margin-top: 8px"
+      :icon="Plus"
       @click="addField"
     >
-      <template #icon><AddIcon /></template>
       添加搜索字段
-    </t-button>
+    </el-button>
   </div>
 </template>
 

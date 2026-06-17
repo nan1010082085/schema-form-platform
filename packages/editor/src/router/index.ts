@@ -1,21 +1,6 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
-import { DialogPlugin } from 'tdesign-vue-next'
+import { ElMessageBox } from 'element-plus'
 import { useEditorStore } from '@/stores/editor'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
-import { SSOClient } from '@schema-form/shared-utils/sso'
-
-// SSO 客户端配置
-const SSO_CLIENT_ID = 'editor'
-const APP_BASE = APP_CONFIGS.editor.basePath
-
-function getSSOClient(): SSOClient {
-  const origin = window.location.origin
-  return new SSOClient({
-    clientId: SSO_CLIENT_ID,
-    redirectUri: `${origin}${APP_BASE}auth/callback`,
-    ssoBaseUrl: origin,
-  })
-}
 
 // qiankun 模式下使用 memory history，避免子应用路由篡改宿主 URL
 const isQiankunSubApp = () => !!window.__POWERED_BY_QIANKUN__
@@ -31,6 +16,18 @@ function resolveToken(): string | null {
 }
 
 const routes = [
+  // ---- 共享登录页（独立模式） ----
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@schema-form/shared-components/auth/LoginView.vue'),
+    props: {
+      title: '表单设计器',
+      subtitle: 'Schema Form Platform',
+    },
+    meta: { public: true },
+  },
+
   // ---- SSO Callback ----
   {
     path: '/auth/callback',
@@ -62,21 +59,6 @@ const routes = [
         component: () => import('@/views/WidgetTemplateView.vue'),
       },
       {
-        path: 'workflow-monitor',
-        name: 'workflow-monitor',
-        component: () => import('@/views/WorkflowMonitorView.vue'),
-      },
-      {
-        path: 'workflow-executions',
-        name: 'workflow-executions',
-        component: () => import('@/views/WorkflowExecutionView.vue'),
-      },
-      {
-        path: 'workflows',
-        name: 'workflows',
-        component: () => import('@/views/WorkflowListView.vue'),
-      },
-      {
         path: 'credentials',
         name: 'credentials',
         component: () => import('@/views/CredentialListView.vue'),
@@ -96,26 +78,6 @@ const routes = [
         name: 'widget-docs',
         component: () => import('@/views/WidgetDocsView.vue'),
       },
-      {
-        path: 'workflow-instances',
-        name: 'workflow-instances',
-        component: () => import('@/views/WorkflowInstanceView.vue'),
-      },
-      {
-        path: 'workflow-preview',
-        name: 'workflow-preview',
-        component: () => import('@/views/WorkflowPreviewView.vue'),
-      },
-      {
-        path: 'workflow-start',
-        name: 'workflow-start',
-        component: () => import('@/views/WorkflowStartView.vue'),
-      },
-      {
-        path: 'workflow-templates',
-        name: 'workflow-templates',
-        component: () => import('@/views/WorkflowTemplateView.vue'),
-      },
     ],
   },
 
@@ -124,21 +86,6 @@ const routes = [
     path: '/editor',
     name: 'editor',
     component: () => import('@/views/EditorView.vue'),
-  },
-  {
-    path: '/workflow-canvas',
-    name: 'workflow-canvas',
-    component: () => import('@/views/WorkflowCanvasView.vue'),
-  },
-  {
-    path: '/workflow/create',
-    name: 'workflow-create',
-    component: () => import('@/views/WorkflowEditorView.vue'),
-  },
-  {
-    path: '/workflow/:id',
-    name: 'workflow-edit',
-    component: () => import('@/views/WorkflowEditorView.vue'),
   },
   {
     path: '/preview',
@@ -174,15 +121,18 @@ export function createEditorRouter() {
 
   // 路由守卫：独立访问时检查登录状态
   router.beforeEach((to) => {
-    // 403/404/callback 页面不需要检查
-    if (to.name === 'forbidden' || to.name === 'not-found' || to.name === 'auth-callback') {
+    // 403/404/callback/login 页面不需要检查
+    if (to.name === 'forbidden' || to.name === 'not-found' || to.name === 'auth-callback' || to.name === 'login') {
       return true
     }
 
     // 微前端模式下跳过检查（宿主已处理鉴权）
     if (!isQiankunSubApp() && !resolveToken()) {
-      getSSOClient().login(window.location.href)
-      return false
+      // 跳转到统一登录页，带上当前路径作为 redirect 参数
+      return {
+        name: 'login',
+        query: { redirect: window.location.pathname },
+      }
     }
   })
 
@@ -199,26 +149,18 @@ export function createEditorRouter() {
       const editorStore = useEditorStore()
       if (editorStore.isDirty) {
         // 弹框确认（异步），先阻止导航
-        const dialog = DialogPlugin.confirm({
-          header: '提示',
-          body: '当前编辑未保存，确定要离开吗？',
-          theme: 'warning',
-          confirmBtn: '确定离开',
-          cancelBtn: '取消',
-          closeOnOverlayClick: false,
-          closeOnEscKeydown: false,
-          onConfirm: () => {
-            dialog.destroy()
-            allowEditorLeave = true
-            router.push(to.fullPath)
-          },
-          onClose: () => {
-            dialog.destroy()
-            // 用户取消：恢复浏览器 URL 到当前路由（仅非微前端模式）
-            if (!isQiankunSubApp()) {
-              window.history.pushState(null, '', router.resolve(from.fullPath).href)
-            }
-          },
+        ElMessageBox.confirm('当前编辑未保存，确定要离开吗？', '提示', {
+          confirmButtonText: '确定离开',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).then(() => {
+          allowEditorLeave = true
+          router.push(to.fullPath)
+        }).catch(() => {
+          // 用户取消：恢复浏览器 URL 到当前路由（仅非微前端模式）
+          if (!isQiankunSubApp()) {
+            window.history.pushState(null, '', router.resolve(from.fullPath).href)
+          }
         })
         return false
       }

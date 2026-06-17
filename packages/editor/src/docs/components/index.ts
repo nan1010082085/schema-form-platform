@@ -33,7 +33,6 @@ import filePreview from './file-preview'
 import searchList from './search-list'
 import editableTable from './editable-table'
 import formContainer from './form-container'
-import workflowForm from './workflow-form'
 import linkage from './linkage'
 
 export type { ComponentDoc, PropDoc, EventDoc, SlotDoc, ExposeDoc, SchemaExample, ExposedValueDoc, ReceivableEventDoc } from './types'
@@ -72,7 +71,6 @@ export const componentDocs: ComponentDoc[] = [
   searchList,
   editableTable,
   formContainer,
-  workflowForm,
   linkage,
 ]
 

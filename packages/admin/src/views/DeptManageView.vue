@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiClient } from '@/utils/apiClient'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { AddIcon, SearchIcon } from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 interface Dept {
   id: string
@@ -79,13 +79,13 @@ function openEdit(dept: Dept) {
 
 async function handleSubmit() {
   if (!form.value.name.trim()) {
-    MessagePlugin.warning('请输入部门名称')
+    ElMessage.warning('请输入部门名称')
     return
   }
 
   if (dialogMode.value === 'create') {
     await apiClient.post('/depts', form.value)
-    MessagePlugin.success('部门创建成功')
+    ElMessage.success('部门创建成功')
   } else {
     await apiClient.put(`/depts/${editingId.value}`, {
       name: form.value.name,
@@ -93,28 +93,25 @@ async function handleSubmit() {
       status: form.value.status,
       leader: form.value.leader,
     })
-    MessagePlugin.success('部门更新成功')
+    ElMessage.success('部门更新成功')
   }
   dialogVisible.value = false
   fetchDepts()
 }
 
 async function handleDelete(dept: Dept) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: `确认删除部门「${dept.name}」？如有子部门或关联用户需先处理。`,
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-    onConfirm: async () => {
-      await apiClient.delete(`/depts/${dept.id}`)
-      MessagePlugin.success('部门已删除')
-      fetchDepts()
-      confirmDia.destroy()
-    },
-    onClose: () => {
-      confirmDia.destroy()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(
+      `确认删除部门「${dept.name}」？如有子部门或关联用户需先处理。`,
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+    await apiClient.delete(`/depts/${dept.id}`)
+    ElMessage.success('部门已删除')
+    fetchDepts()
+  } catch {
+    // 用户取消
+  }
 }
 
 async function handleDragEnd(info: any) {
@@ -124,7 +121,7 @@ async function handleDragEnd(info: any) {
   } else {
     await apiClient.patch(`/depts/${dragNode.data.id}/move`, { parentId: dropNode.data.parentId })
   }
-  MessagePlugin.success('排序已更新')
+  ElMessage.success('排序已更新')
   fetchDepts()
 }
 
@@ -134,49 +131,48 @@ onMounted(fetchDepts)
 <template>
   <div :class="$style.wrapper">
     <div :class="$style.toolbar">
-      <t-input
-        v-model:value="searchQuery"
+      <el-input
+        v-model="searchQuery"
         placeholder="搜索部门名称"
-        :prefix-icon="SearchIcon"
+        :prefix-icon="Search"
         clearable
         :class="$style.search"
       />
-      <t-button theme="primary" :icon="AddIcon" @click="openCreate(null)">
+      <el-button type="primary" :icon="Plus" @click="openCreate(null)">
         新增部门
-      </t-button>
+      </el-button>
     </div>
 
-    <t-tree
+    <el-tree
       :data="filteredTree"
-      :keys="{ label: 'name', children: 'children', value: 'id' }"
-      :default-expanded="expandedKeys"
+      node-key="id"
+      :default-expanded-keys="expandedKeys"
       :expand-on-click-node="false"
       :class="$style.tree"
-      :loading="loading"
-      hover
-      line
+      v-loading="loading"
+      highlight-current
       draggable
-      @drag-end="handleDragEnd"
+      @node-drop="handleDragEnd"
     >
-      <template #label="{ node }">
+      <template #default="{ data }">
         <div :class="$style.nodeRow">
           <div :class="$style.nodeInfo">
-            <span :class="$style.nodeName">{{ node.data.name }}</span>
-            <t-tag v-if="node.data.leader" size="small" theme="default" :class="$style.nodeTag">
-              {{ node.data.leader }}
-            </t-tag>
-            <t-tag v-if="node.data.status === 'inactive'" size="small" theme="warning" :class="$style.nodeTag">
+            <span :class="$style.nodeName">{{ data.name }}</span>
+            <el-tag v-if="data.leader" size="small" :class="$style.nodeTag">
+              {{ data.leader }}
+            </el-tag>
+            <el-tag v-if="data.status === 'inactive'" size="small" type="warning" :class="$style.nodeTag">
               停用
-            </t-tag>
+            </el-tag>
           </div>
           <div :class="$style.nodeActions">
-            <t-button variant="text" size="small" @click.stop="openCreate(node.data.id)">添加子部门</t-button>
-            <t-button variant="text" size="small" @click.stop="openEdit(node.data)">编辑</t-button>
-            <t-button variant="text" size="small" theme="danger" @click.stop="handleDelete(node.data)">删除</t-button>
+            <el-button link size="small" @click.stop="openCreate(data.id)">添加子部门</el-button>
+            <el-button link size="small" @click.stop="openEdit(data)">编辑</el-button>
+            <el-button link size="small" type="danger" @click.stop="handleDelete(data)">删除</el-button>
           </div>
         </div>
       </template>
-    </t-tree>
+    </el-tree>
 
     <div v-if="!loading && filteredTree.length === 0" :class="$style.empty">
       暂无部门数据
@@ -184,45 +180,45 @@ onMounted(fetchDepts)
   </div>
 
   <!-- Create/Edit Dialog -->
-  <t-dialog
-    v-model:visible="dialogVisible"
-    :header="dialogMode === 'create' ? '新增部门' : '编辑部门'"
+  <el-dialog
+    v-model="dialogVisible"
+    :title="dialogMode === 'create' ? '新增部门' : '编辑部门'"
     width="480px"
     destroy-on-close
   >
-    <t-form label-width="80px">
-      <t-form-item label="部门名称">
-        <t-input v-model:value="form.name" placeholder="请输入部门名称" />
-      </t-form-item>
-      <t-form-item label="上级部门">
-        <t-tree-select
-          v-model:value="form.parentId"
+    <el-form label-width="80px">
+      <el-form-item label="部门名称">
+        <el-input v-model="form.name" placeholder="请输入部门名称" />
+      </el-form-item>
+      <el-form-item label="上级部门">
+        <el-tree-select
+          v-model="form.parentId"
           :data="deptTree"
-          :keys="{ label: 'name', children: 'children', value: 'id' }"
+          :props="{ label: 'name', children: 'children', value: 'id' }"
           placeholder="选择上级部门（留空为顶级）"
           clearable
           check-strictly
           :style="{ width: '100%' }"
         />
-      </t-form-item>
-      <t-form-item label="负责人">
-        <t-input v-model:value="form.leader" placeholder="部门负责人（可选）" />
-      </t-form-item>
-      <t-form-item label="排序">
-        <t-input-number v-model:value="form.sort" :min="0" :max="9999" />
-      </t-form-item>
-      <t-form-item label="状态">
-        <t-select v-model:value="form.status" :style="{ width: '100%' }">
-          <t-option label="正常" value="active" />
-          <t-option label="停用" value="inactive" />
-        </t-select>
-      </t-form-item>
-    </t-form>
+      </el-form-item>
+      <el-form-item label="负责人">
+        <el-input v-model="form.leader" placeholder="部门负责人（可选）" />
+      </el-form-item>
+      <el-form-item label="排序">
+        <el-input-number v-model="form.sort" :min="0" :max="9999" />
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select v-model="form.status" :style="{ width: '100%' }">
+          <el-option label="正常" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <t-button @click="dialogVisible = false">取消</t-button>
-      <t-button theme="primary" @click="handleSubmit">确定</t-button>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style module>
@@ -243,7 +239,7 @@ onMounted(fetchDepts)
 }
 
 .tree {
-  border: 1px solid var(--td-border-level-2-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 8px;
   min-height: 300px;
@@ -265,7 +261,7 @@ onMounted(fetchDepts)
 
 .nodeName {
   font-size: 14px;
-  color: var(--td-text-color-primary);
+  color: var(--el-text-color-primary);
 }
 
 .nodeTag {
@@ -287,7 +283,7 @@ onMounted(fetchDepts)
 .empty {
   text-align: center;
   padding: 48px 20px;
-  color: var(--td-text-color-placeholder);
+  color: var(--el-text-color-placeholder);
   font-size: 14px;
 }
 </style>

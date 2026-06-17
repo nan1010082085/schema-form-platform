@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
 import type { VersionEntry, SchemaDetail } from '@/types/api'
@@ -392,6 +392,6 @@ describe('SchemaVersionCompare', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('共 50 个版本')
-    expect(wrapper.find('.el-pagination').exists()).toBe(true)
+    expect(wrapper.find('.t-pagination').exists()).toBe(true)
   })
 })

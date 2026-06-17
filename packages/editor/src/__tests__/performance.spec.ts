@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { nextTick, ref } from 'vue'
 import FormGrid from '@/components/WidgetRenderer/index.vue'
 import type { PartialWidget } from '@/widgets/base/types'

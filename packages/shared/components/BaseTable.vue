@@ -7,8 +7,8 @@
  */
 
 import { computed, ref } from 'vue'
-import { ChevronUpIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
-import styles from './BaseTable.module.css'
+import styles from './BaseTable.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 /** 列定义 */
 export interface TableColumn {
@@ -195,14 +195,10 @@ const slots = defineSlots<{
               <span :class="styles.thContent">
                 <span>{{ col.title }}</span>
                 <span v-if="col.sortable" :class="styles.sortIcons">
-                  <ChevronUpIcon
-                    :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'asc' ? styles.sortActive : '']"
-                    :size="12"
-                  />
-                  <ChevronDownIcon
-                    :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'desc' ? styles.sortActive : '']"
-                    :size="12"
-                  />
+                  <AppIcon name="arrow-up" :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'asc' ? styles.sortActive : '']"
+                    :size="12" />
+                  <AppIcon name="arrow-down" :class="[styles.sortIcon, sortState?.key === col.key && sortState?.order === 'desc' ? styles.sortActive : '']"
+                    :size="12" />
                 </span>
               </span>
             </th>

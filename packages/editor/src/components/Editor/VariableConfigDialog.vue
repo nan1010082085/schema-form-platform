@@ -6,10 +6,10 @@
  * 每个变量包含：name, type, defaultValue, description。
  */
 import { ref, watch, computed } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import type { WidgetVariable } from '../../widgets/base/types'
-import EnhancedDialog from '@/components/EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import styles from './VariableConfigDialog.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -97,7 +97,7 @@ function handleClose() {
 </script>
 
 <template>
-  <EnhancedDialog
+  <AppDialog
     :model-value="visible"
     :title="title || '变量配置'"
     width="600px"
@@ -117,20 +117,20 @@ function handleClose() {
       >
         <div :class="styles.cardHeader">
           <span :class="styles.cardTitle">变量 {{ i + 1 }}</span>
-          <t-button
-            theme="danger"
-            variant="text"
+          <el-button
+            type="danger"
+            link
             size="small"
             @click="removeVariable(i)"
           >
-            <DeleteIcon />
-          </t-button>
+            <AppIcon name="delete"  />
+          </el-button>
         </div>
 
         <div :class="styles.row">
           <label :class="styles.label">名称</label>
-          <t-input
-            v-model:value="v.name"
+          <el-input
+            v-model="v.name"
             placeholder="变量名（如 isAdmin）"
             style="flex: 1"
           />
@@ -138,49 +138,50 @@ function handleClose() {
 
         <div :class="styles.row">
           <label :class="styles.label">类型</label>
-          <t-select
-            v-model:value="v.type"
+          <el-select
+            v-model="v.type"
             style="width: 120px"
-            @update:model-value="v.defaultValue = $event === 'boolean' ? false : $event === 'number' ? 0 : $event === 'object' ? {} : $event === 'array' ? [] : ''"
+            @change="v.defaultValue = $event === 'boolean' ? false : $event === 'number' ? 0 : $event === 'object' ? {} : $event === 'array' ? [] : ''"
           >
-            <t-option
+            <el-option
               v-for="opt in typeOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
 
           <label :class="styles.label" style="margin-left: 8px">默认值</label>
-          <t-switch
+          <el-switch
             v-if="v.type === 'boolean'"
-            v-model:value="v.defaultValue"
+            v-model="v.defaultValue"
           />
-          <t-input-number
+          <el-input-number
             v-else-if="v.type === 'number'"
-            v-model:value="v.defaultValue as number"
+            v-model="v.defaultValue as number"
             controls-position="right"
           />
-          <t-input
+          <el-input
             v-else-if="v.type === 'string'"
-            v-model:value="v.defaultValue as string"
+            v-model="v.defaultValue as string"
             placeholder="默认值"
             style="flex: 1"
           />
-          <t-textarea
+          <el-input
             v-else
+            type="textarea"
             :model-value="typeof v.defaultValue === 'object' ? JSON.stringify(v.defaultValue) : (v.defaultValue as string) ?? ''"
             :rows="2"
             :placeholder="v.type === 'object' ? '{&quot;key&quot;: &quot;value&quot;}' : '[&quot;item1&quot;, &quot;item2&quot;]'"
             style="flex: 1"
-            @update:model-value="handleJsonInput(v, $event)"
+            @input="handleJsonInput(v, $event)"
           />
         </div>
 
         <div :class="styles.row">
           <label :class="styles.label">描述</label>
-          <t-input
-            v-model:value="v.description"
+          <el-input
+            v-model="v.description"
             placeholder="可选，变量用途说明"
             style="flex: 1"
           />
@@ -191,20 +192,20 @@ function handleClose() {
       <div v-if="nameError" :class="styles.error">{{ nameError }}</div>
 
       <!-- 添加变量 -->
-      <t-button
-        theme="primary"
-        variant="outline"
+      <el-button
+        type="primary"
+        plain
         style="width: 100%"
         @click="addVariable"
       >
-        <AddIcon />
+        <AppIcon name="plus"  />
         添加变量
-      </t-button>
+      </el-button>
     </div>
 
     <template #footer>
-      <t-button @click="handleClose">取消</t-button>
-      <t-button theme="primary" :disabled="!!nameError" @click="handleSave">保存</t-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :disabled="!!nameError" @click="handleSave">保存</el-button>
     </template>
-  </EnhancedDialog>
+  </AppDialog>
 </template>

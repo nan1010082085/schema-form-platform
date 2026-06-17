@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import { useWidgetStore } from '@/stores/widget'
 import { registerAllWidgets } from '@/widgets/index'
 import { createWidget, getWidget } from '@/widgets/registry'
@@ -176,13 +176,13 @@ describe('FgSearchList', () => {
 
     it('渲染 el-table 和 el-pagination', () => {
       const wrapper = mountSearchList()
-      expect(wrapper.find('.el-table').exists()).toBe(true)
-      expect(wrapper.find('.el-pagination').exists()).toBe(true)
+      expect(wrapper.find('.t-table').exists()).toBe(true)
+      expect(wrapper.find('.t-pagination').exists()).toBe(true)
     })
 
     it('showPagination=false 时隐藏分页', () => {
       const wrapper = mountSearchList({ props: { showPagination: false } })
-      expect(wrapper.find('.el-pagination').exists()).toBe(false)
+      expect(wrapper.find('.t-pagination').exists()).toBe(false)
     })
   })
 
@@ -215,14 +215,14 @@ describe('FgSearchList', () => {
   describe('行选择', () => {
     it('selection.enabled=false 时不渲染 selection 列', () => {
       const wrapper = mountSearchList()
-      expect(wrapper.find('.el-table__column--selection').exists()).toBe(false)
+      expect(wrapper.find('.t-table__column--selection').exists()).toBe(false)
     })
 
     it('selection.enabled=true 时表格正常渲染', () => {
       const wrapper = mountSearchList({
         props: { selection: { enabled: true } },
       })
-      expect(wrapper.find('.el-table').exists()).toBe(true)
+      expect(wrapper.find('.t-table').exists()).toBe(true)
     })
 
     it('selection 配置可持久化到 store', () => {
@@ -298,7 +298,7 @@ describe('FgSearchList', () => {
       const wrapper = mountSearchList({
         props: { searchFields: [{ field: 'name', label: '姓名', type: 'input' }] },
       })
-      expect(wrapper.find('.el-input').exists()).toBe(true)
+      expect(wrapper.find('.t-input').exists()).toBe(true)
     })
 
     it('select 类型渲染 el-select', () => {
@@ -310,36 +310,36 @@ describe('FgSearchList', () => {
           }],
         },
       })
-      expect(wrapper.find('.el-select').exists()).toBe(true)
+      expect(wrapper.find('.t-select').exists()).toBe(true)
     })
 
     it('number 类型渲染 el-input-number', () => {
       const wrapper = mountSearchList({
         props: { searchFields: [{ field: 'age', label: '年龄', type: 'number' }] },
       })
-      expect(wrapper.find('.el-input-number').exists()).toBe(true)
+      expect(wrapper.find('.t-input-number').exists()).toBe(true)
     })
 
     it('date 类型渲染 el-date-picker', () => {
       const wrapper = mountSearchList({
         props: { searchFields: [{ field: 'date', label: '日期', type: 'date' }] },
       })
-      expect(wrapper.find('.el-date-editor').exists()).toBe(true)
+      expect(wrapper.find('.t-date-picker').exists()).toBe(true)
     })
 
     it('date-range 类型渲染 el-date-picker range', () => {
       const wrapper = mountSearchList({
         props: { searchFields: [{ field: 'range', label: '日期范围', type: 'date-range' }] },
       })
-      expect(wrapper.find('.el-date-editor').exists()).toBe(true)
+      expect(wrapper.find('.t-date-picker').exists()).toBe(true)
     })
 
     it('time-picker 类型渲染时间选择器', () => {
       const wrapper = mountSearchList({
         props: { searchFields: [{ field: 'time', label: '时间', type: 'time-picker' }] },
       })
-      // Element Plus time-picker renders as .el-date-editor with time-related trigger
-      expect(wrapper.find('.el-date-editor').exists()).toBe(true)
+      // ElementPlus time-picker 渲染为 .t-time-picker
+      expect(wrapper.find('.t-time-picker').exists()).toBe(true)
     })
 
     it('checkbox 类型渲染 el-checkbox-group', () => {
@@ -351,7 +351,7 @@ describe('FgSearchList', () => {
           }],
         },
       })
-      expect(wrapper.find('.el-checkbox-group').exists()).toBe(true)
+      expect(wrapper.find('.t-checkbox-group').exists()).toBe(true)
     })
 
     it('cascader 类型渲染 el-cascader', () => {
@@ -363,7 +363,7 @@ describe('FgSearchList', () => {
           }],
         },
       })
-      expect(wrapper.find('.el-cascader').exists()).toBe(true)
+      expect(wrapper.find('.t-cascader').exists()).toBe(true)
     })
   })
 

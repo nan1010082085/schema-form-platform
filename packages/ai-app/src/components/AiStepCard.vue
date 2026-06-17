@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-/* TDesign migration: components registered globally */
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { StepType, StepStatus } from '@/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 export interface AiStepCardProps {
   /** 步骤序号（从 1 开始） */
@@ -204,21 +204,11 @@ const highlightedJson = computed(() => {
         <!-- Icon -->
         <div :class="[$style.icon, $style[`icon_${type}`]]">
           <!-- thinking icon -->
-          <svg v-if="type === 'thinking'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4" />
-            <path d="M12 8h.01" />
-          </svg>
+          <AppIcon name="info-filled" v-if="type === 'thinking'" :size="14" />
           <!-- tool_call icon -->
-          <svg v-else-if="type === 'tool_call'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-          </svg>
+          <AppIcon name="edit" v-else-if="type === 'tool_call'" :size="14" />
           <!-- tool_error icon -->
-          <svg v-else-if="type === 'tool_error'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
+          <AppIcon name="circle-close-filled" v-else-if="type === 'tool_error'" :size="14" />
         </div>
         <!-- Title + subtitle -->
         <div :class="$style.headerText">
@@ -250,9 +240,7 @@ const highlightedJson = computed(() => {
         <span v-if="type === 'thinking' && !isRunning" :class="$style.badgeThinking">思考完成</span>
         <!-- Collapse toggle -->
         <div :class="[$style.toggle, { [$style.toggleExpanded]: !collapsed }]">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <AppIcon name="arrow-down" :size="12" />
         </div>
       </div>
     </div>
@@ -286,9 +274,7 @@ const highlightedJson = computed(() => {
           <div :class="$style.jsonBlockHeader" @click="jsonCollapsed = !jsonCollapsed">
             <div :class="$style.jsonBlockLabel">JSON 数据</div>
             <div :class="[$style.toggle, { [$style.toggleExpanded]: !jsonCollapsed }]">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <AppIcon name="arrow-down" :size="12" />
             </div>
           </div>
           <div v-show="!jsonCollapsed" :class="$style.jsonBlockBody">
@@ -300,27 +286,20 @@ const highlightedJson = computed(() => {
       <template v-if="type === 'tool_call' || type === 'tool_error'">
         <!-- Error display -->
         <div v-if="isError" :class="$style.errorContent">
-          <svg :class="$style.errorIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
+          <AppIcon name="circle-close-filled" :class="$style.errorIcon" :size="20" />
           <div :class="$style.errorBody">
             <div :class="$style.errorText">{{ friendlyErrorDescription }}</div>
             <div v-if="error && error !== friendlyErrorDescription" :class="$style.errorDetail">{{ error }}</div>
-            <t-button
+            <el-button
               v-if="type === 'tool_error'"
               :class="$style.retryBtn"
-              variant="text"
+              text
               size="small"
               @click.stop="$emit('retry-tool')"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10" />
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-              </svg>
+              <AppIcon name="refresh" :size="12" />
               重试
-            </t-button>
+            </el-button>
           </div>
         </div>
 
@@ -375,30 +354,25 @@ const highlightedJson = computed(() => {
 
     <!-- Footer for result cards (schema/flow) -->
     <div v-if="type === 'result' && (primaryAction || secondaryAction)" :class="$style.footer">
-      <t-button
+      <el-button
         v-if="secondaryAction"
         :class="$style.btnOutline"
         @click="$emit('secondary-action')"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
+        <AppIcon name="edit" :size="12" />
         {{ secondaryAction }}
-      </t-button>
-      <t-button
+      </el-button>
+      <el-button
         v-if="primaryAction"
         :class="$style.btnPrimary"
-        theme="primary"
+        type="primary"
         @click="$emit('primary-action')"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <AppIcon name="check" :size="12" />
         {{ primaryAction }}
-      </t-button>
+      </el-button>
     </div>
   </div>
 </template>
 
-<style module src="./AiStepCard.module.css" />
+<style module src="./AiStepCard.module.scss" />

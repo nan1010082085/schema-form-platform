@@ -5,8 +5,7 @@
  * 选择表单 → 查看该表单的所有提交数据，支持状态筛选、分页、删除、导出 CSV/Excel。
  */
 import { onMounted, ref, computed, watch } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { SearchIcon, DownloadIcon, FileIcon, DeleteIcon, CheckIcon, ChevronDownIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   fetchSchemas,
   fetchSubmissions,
@@ -19,6 +18,7 @@ import {
 } from '@/utils/apiClient'
 import type { PaginatedResponse, SchemaListItem } from '@/types/api'
 import styles from './SubmissionListView.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 // ── 表单列表 ──
 const schemas = ref<SchemaListItem[]>([])
@@ -78,7 +78,7 @@ async function loadSubmissions() {
     submissions.value = res.items
     total.value = res.total
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '加载提交数据失败')
+    ElMessage.error(err instanceof Error ? err.message : '加载提交数据失败')
   } finally {
     loading.value = false
   }
@@ -111,54 +111,54 @@ function handlePageChange(p: number) {
 
 // ── 删除 ──
 async function handleDelete(item: SubmissionItem) {
-  const confirmDia = DialogPlugin.confirm({
-    header: '删除确认',
-    body: '确认删除此条提交数据？删除后不可恢复。',
-    theme: 'warning',
-    confirmBtn: '删除',
-    onConfirm: async () => {
-      await deleteSubmission(selectedSchemaId.value, item.id)
-      MessagePlugin.success('已删除')
-      await loadSubmissions()
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm('确认删除此条提交数据？删除后不可恢复。', '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await deleteSubmission(selectedSchemaId.value, item.id)
+    ElMessage.success('已删除')
+    await loadSubmissions()
+  } catch {
+    // 用户取消，不做处理
+  }
 }
 
 // ── 批量删除 ──
 async function handleBatchDelete() {
   const ids = selectedRows.value.map((r) => r.id)
-  const confirmDia = DialogPlugin.confirm({
-    header: '批量删除确认',
-    body: `确认删除选中的 ${ids.length} 条提交数据？删除后不可恢复。`,
-    theme: 'warning',
-    confirmBtn: '删除',
-    onConfirm: async () => {
-      const result = await batchDeleteSubmissions(selectedSchemaId.value, ids)
-      MessagePlugin.success(`已删除 ${result.deletedCount} 条数据`)
-      selectedRows.value = []
-      await loadSubmissions()
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(`确认删除选中的 ${ids.length} 条提交数据？删除后不可恢复。`, '批量删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const result = await batchDeleteSubmissions(selectedSchemaId.value, ids)
+    ElMessage.success(`已删除 ${result.deletedCount} 条数据`)
+    selectedRows.value = []
+    await loadSubmissions()
+  } catch {
+    // 用户取消
+  }
 }
 
 // ── 批量审批 ──
 async function handleBatchApprove() {
   const ids = selectedRows.value.map((r) => r.id)
-  const confirmDia = DialogPlugin.confirm({
-    header: '批量审批确认',
-    body: `确认通过选中的 ${ids.length} 条提交数据？`,
-    theme: 'warning',
-    confirmBtn: '通过',
-    onConfirm: async () => {
-      const result = await batchUpdateSubmissionsStatus(selectedSchemaId.value, ids, 'approved')
-      MessagePlugin.success(`已更新 ${result.modifiedCount} 条数据状态`)
-      selectedRows.value = []
-      await loadSubmissions()
-      confirmDia.hide()
-    },
-  })
+  try {
+    await ElMessageBox.confirm(`确认通过选中的 ${ids.length} 条提交数据？`, '批量审批确认', {
+      confirmButtonText: '通过',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const result = await batchUpdateSubmissionsStatus(selectedSchemaId.value, ids, 'approved')
+    ElMessage.success(`已更新 ${result.modifiedCount} 条数据状态`)
+    selectedRows.value = []
+    await loadSubmissions()
+  } catch {
+    // 用户取消
+  }
 }
 
 // ── 选择变更 ──
@@ -180,9 +180,9 @@ async function handleExport(format: ExportFormat) {
     a.download = `submissions-${selectedSchemaName.value || selectedSchemaId.value}.${FORMAT_EXTENSIONS[format]}`
     a.click()
     URL.revokeObjectURL(url)
-    MessagePlugin.success(`导出 ${FORMAT_LABELS[format]} 成功`)
+    ElMessage.success(`导出 ${FORMAT_LABELS[format]} 成功`)
   } catch (err) {
-    MessagePlugin.error(err instanceof Error ? err.message : '导出失败')
+    ElMessage.error(err instanceof Error ? err.message : '导出失败')
   }
 }
 
@@ -196,13 +196,13 @@ function statusLabel(status: string): string {
   return map[status] ?? status
 }
 
-function statusTagTheme(status: string): 'default' | 'success' | 'warning' | 'danger' {
-  const map: Record<string, 'default' | 'success' | 'warning' | 'danger'> = {
-    submitted: 'default',
+function statusTagType(status: string): 'info' | 'success' | 'danger' {
+  const map: Record<string, 'info' | 'success' | 'danger'> = {
+    submitted: 'info',
     approved: 'success',
     rejected: 'danger',
   }
-  return map[status] ?? 'default'
+  return map[status] ?? 'info'
 }
 
 function dataPreview(data: Record<string, unknown>): string {
@@ -232,57 +232,55 @@ function dataKeys(item: SubmissionItem): string[] {
           </div>
           <div :class="styles.headerActions">
             <template v-if="hasSelection">
-              <t-button theme="danger" @click="handleBatchDelete">
-                <template #icon><DeleteIcon /></template>
+              <el-button type="danger" @click="handleBatchDelete">
+                <AppIcon name="delete" class="el-icon--left" />
                 批量删除 ({{ selectedRows.length }})
-              </t-button>
-              <t-button theme="success" @click="handleBatchApprove">
-                <template #icon><CheckIcon /></template>
+              </el-button>
+              <el-button type="success" @click="handleBatchApprove">
+                <AppIcon name="check" class="el-icon--left" />
                 批量通过 ({{ selectedRows.length }})
-              </t-button>
-              <t-divider layout="vertical" />
+              </el-button>
+              <el-divider direction="vertical" />
             </template>
-            <t-dropdown
-              :options="[
-                { content: '导出 CSV', value: 'csv' },
-                { content: '导出 Excel', value: 'xlsx' },
-              ]"
-              :disabled="!selectedSchemaId || total === 0"
-              @click="(data: { value: string }) => handleExport(data.value as ExportFormat)"
-            >
-              <t-button :disabled="!selectedSchemaId || total === 0">
-                <template #icon><DownloadIcon /></template>
+            <el-dropdown :disabled="!selectedSchemaId || total === 0" @command="handleExport">
+              <el-button :disabled="!selectedSchemaId || total === 0">
+                <AppIcon name="arrow-down" class="el-icon--left" />
                 导出
-                <template #suffix><ChevronDownIcon /></template>
-              </t-button>
-            </t-dropdown>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="csv">导出 CSV</el-dropdown-item>
+                  <el-dropdown-item command="xlsx">导出 Excel</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
 
         <!-- Toolbar -->
         <div :class="styles.toolbar">
           <div :class="styles.toolbarLeft">
-            <t-select
-              v-model:value="selectedSchemaId"
+            <el-select
+              v-model="selectedSchemaId"
               placeholder="选择表单"
               filterable
               :class="styles.schemaSelect"
             >
-              <t-option
+              <el-option
                 v-for="s in schemas"
                 :key="s.id"
                 :label="s.name"
                 :value="s.id"
               />
-            </t-select>
-            <t-select v-model:value="activeStatus" :class="styles.statusSelect">
-              <t-option
+            </el-select>
+            <el-select v-model="activeStatus" :class="styles.statusSelect">
+              <el-option
                 v-for="opt in statusOptions"
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"
               />
-            </t-select>
+            </el-select>
           </div>
         </div>
       </div>
@@ -290,7 +288,7 @@ function dataKeys(item: SubmissionItem): string[] {
       <!-- 未选择表单 -->
       <div v-if="!selectedSchemaId" :class="styles.emptyState">
         <div :class="styles.emptyIcon">
-          <FileIcon :size="64" />
+          <AppIcon name="document" :size="64" />
         </div>
         <h2 :class="styles.emptyTitle">请选择表单</h2>
         <p :class="styles.emptyDesc">从上方下拉框选择一个表单来查看提交数据</p>
@@ -298,65 +296,71 @@ function dataKeys(item: SubmissionItem): string[] {
 
       <!-- Loading -->
       <div v-else-if="loading && submissions.length === 0" :class="styles.tableWrapper">
-        <t-skeleton :row-col="[{ width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }, { width: '100%' }]" animation="gradient" />
+        <el-skeleton :rows="8" animated />
       </div>
 
       <!-- Empty -->
       <div v-else-if="total === 0" :class="styles.emptyState">
         <div :class="styles.emptyIcon">
-          <SearchIcon :size="64" />
+          <AppIcon name="search" :size="64" />
         </div>
         <h2 :class="styles.emptyTitle">暂无提交数据</h2>
         <p :class="styles.emptyDesc">该表单还没有收到任何提交</p>
       </div>
 
       <!-- Table -->
-      <div v-else :class="styles.tableWrapper">
-        <t-loading :loading="loading">
-          <t-table
-            :data="submissions"
-            :columns="[
-              { colKey: 'row-select', type: 'multiple', width: 55 },
-              { colKey: 'id', title: 'ID', width: 280, ellipsis: true },
-              { colKey: 'data', title: '提交数据', minWidth: 300 },
-              { colKey: 'status', title: '状态', width: 100 },
-              { colKey: 'submitterId', title: '提交者', width: 280, ellipsis: true },
-              { colKey: 'createdAt', title: '提交时间', width: 170 },
-              { colKey: 'actions', title: '操作', width: 100, fixed: 'right' },
-            ]"
-            stripe
-            row-key="id"
-            @select-change="handleSelectionChange"
-          >
-            <template #data="{ row }">
-              <t-popup :content="dataKeys(row).map(key => `${key}: ${typeof row.data[key] === 'object' ? JSON.stringify(row.data[key]) : String(row.data[key] ?? '')}`).join('\n')" placement="top" :show-after="500">
+      <div v-else :class="styles.tableWrapper" v-loading="loading">
+        <el-table
+          :data="submissions"
+          stripe
+          row-key="id"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
+          <el-table-column prop="data" label="提交数据" min-width="300">
+            <template #default="{ row }">
+              <el-tooltip
+                :content="dataKeys(row).map(key => `${key}: ${typeof row.data[key] === 'object' ? JSON.stringify(row.data[key]) : String(row.data[key] ?? '')}`).join('\n')"
+                placement="top"
+                :show-after="500"
+              >
                 <span :class="styles.dataPreview">{{ dataPreview(row.data) }}</span>
-              </t-popup>
+              </el-tooltip>
             </template>
-            <template #status="{ row }">
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
               <div :class="styles.statusCell">
                 <span :class="[styles.statusDot, styles[`statusDot${row.status.charAt(0).toUpperCase()}${row.status.slice(1)}`]]" />
-                <t-tag :theme="statusTagTheme(row.status)" size="small">{{ statusLabel(row.status) }}</t-tag>
+                <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
               </div>
             </template>
-            <template #submitterId="{ row }">
+          </el-table-column>
+          <el-table-column prop="submitterId" label="提交者" width="280" show-overflow-tooltip>
+            <template #default="{ row }">
               {{ row.submitterId ?? '-' }}
             </template>
-            <template #createdAt="{ row }">
+          </el-table-column>
+          <el-table-column prop="createdAt" label="提交时间" width="170">
+            <template #default="{ row }">
               {{ formatDate(row.createdAt) }}
             </template>
-            <template #actions="{ row }">
-              <t-button size="small" variant="text" theme="danger" @click="handleDelete(row)">删除</t-button>
+          </el-table-column>
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button type="danger" link size="small" @click="handleDelete(row)">删除</el-button>
             </template>
-          </t-table>
-        </t-loading>
+          </el-table-column>
+        </el-table>
 
         <!-- Pagination -->
         <div v-if="total > 0" :class="styles.pagination">
-          <t-pagination
-            v-model:value="page"
+          <el-pagination
+            v-model:current-page="page"
             :page-size="pageSize"
             :total="total"
+            layout="prev, pager, next"
             @current-change="handlePageChange"
           />
         </div>

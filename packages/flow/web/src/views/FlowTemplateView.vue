@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowTemplateView.module.scss'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 const router = useRouter()
 const store = useFlowTemplateStore()
@@ -203,7 +204,7 @@ function formatDate(dateStr: string | Date) {
     </div>
 
     <!-- Apply template dialog -->
-    <el-dialog
+    <AppDialog
       v-model="applyDialogVisible"
       title="从模板创建流程"
       width="480px"
@@ -227,10 +228,10 @@ function formatDate(dateStr: string | Date) {
         <el-button @click="applyDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleApplyConfirm">创建并编辑</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
     <!-- Preview template dialog -->
-    <el-dialog
+    <AppDialog
       v-model="previewDialogVisible"
       title="模板预览"
       width="720px"
@@ -242,6 +243,6 @@ function formatDate(dateStr: string | Date) {
       <template #footer>
         <el-button @click="previewDialogVisible = false">关闭</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </div>
 </template>

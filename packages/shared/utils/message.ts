@@ -1,11 +1,11 @@
 /**
  * 消息提示工具
  *
- * 适配 Element Plus ElMessage → TDesign MessagePlugin
+ * 基于 Element Plus ElMessage / ElMessageBox
  * 提供统一的消息提示接口
  */
 
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export interface ConfirmOptions {
   title: string
@@ -20,44 +20,38 @@ export interface ConfirmOptions {
  */
 export const message = {
   success: (msg: string, duration = 3000) =>
-    MessagePlugin.success(msg, duration),
+    ElMessage.success({ message: msg, duration }),
 
   error: (msg: string, duration = 3000) =>
-    MessagePlugin.error(msg, duration),
+    ElMessage.error({ message: msg, duration }),
 
   warning: (msg: string, duration = 3000) =>
-    MessagePlugin.warning(msg, duration),
+    ElMessage.warning({ message: msg, duration }),
 
   info: (msg: string, duration = 3000) =>
-    MessagePlugin.info(msg, duration),
+    ElMessage.info({ message: msg, duration }),
 
   loading: (msg: string, duration = 0) =>
-    MessagePlugin.loading(msg, duration),
+    ElMessage({ message: msg, type: 'info', duration, showClose: false }),
 
-  closeAll: () => MessagePlugin.closeAll(),
+  closeAll: () => ElMessage.closeAll(),
 }
 
 /**
  * 确认对话框
  */
 export function confirm(options: ConfirmOptions): Promise<boolean> {
-  return new Promise((resolve) => {
-    const dialog = DialogPlugin.confirm({
-      header: options.title,
-      body: options.message,
-      theme: options.type || 'warning',
-      confirmBtn: options.confirmText || '确定',
-      cancelBtn: options.cancelText || '取消',
-      onConfirm: () => {
-        resolve(true)
-        dialog.destroy()
-      },
-      onClose: () => {
-        resolve(false)
-        dialog.destroy()
-      },
-    })
-  })
+  return ElMessageBox.confirm(
+    options.message,
+    options.title,
+    {
+      type: (options.type || 'warning') as 'warning' | 'info' | 'success' | 'error',
+      confirmButtonText: options.confirmText || '确定',
+      cancelButtonText: options.cancelText || '取消',
+    },
+  )
+    .then(() => true)
+    .catch(() => false)
 }
 
 /**
@@ -89,20 +83,20 @@ export async function asyncMessage<T>(
     error?: string | ((err: Error) => string)
   } = {}
 ): Promise<T> {
-  const loadingId = MessagePlugin.loading(loadingMsg, 0)
+  const loadingInstance = ElMessage({ message: loadingMsg, type: 'info', duration: 0, showClose: false })
 
   try {
     const result = await promise
-    MessagePlugin.close(loadingId)
+    loadingInstance.close()
     const msg = typeof successMsg === 'function' ? successMsg(result) : successMsg
-    MessagePlugin.success(msg)
+    ElMessage.success(msg)
     return result
   } catch (err) {
-    MessagePlugin.close(loadingId)
+    loadingInstance.close()
     const msg = typeof errorMsg === 'function'
       ? errorMsg(err as Error)
       : errorMsg
-    MessagePlugin.error(msg)
+    ElMessage.error(msg)
     throw err
   }
 }

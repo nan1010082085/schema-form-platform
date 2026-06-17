@@ -38,7 +38,7 @@ const isMicroApp = computed(() => !!route.meta?.microApp)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--td-bg-color-page);
+  background: var(--bg-color-page);
 }
 
 .content {
@@ -48,12 +48,12 @@ const isMicroApp = computed(() => !!route.meta?.microApp)
 .title {
   font-size: 20px;
   font-weight: 600;
-  color: var(--td-text-color-primary);
+  color: var(--text-color-primary);
   margin-bottom: 8px;
 }
 
 .desc {
   font-size: 14px;
-  color: var(--td-text-color-secondary);
+  color: var(--text-color-secondary);
 }
 </style>

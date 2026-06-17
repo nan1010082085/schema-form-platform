@@ -1,15 +1,7 @@
 <template>
   <div :class="$style.root">
     <div :class="$style.spinner">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25" />
-        <path
-          d="M12 2a10 10 0 0 1 10 10"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-      </svg>
+      <AppIcon name="loading" :size="48" />
     </div>
     <p :class="$style.text">{{ statusText }}</p>
   </div>
@@ -26,6 +18,7 @@
 import { ref, onMounted } from 'vue'
 import { SSOClient, SSOError } from '../../utils/sso.js'
 import { useAuthStore } from '../../utils/stores/authStore.js'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   /** SSO 客户端实例 */

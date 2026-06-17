@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { computed, defineComponent, h, provide } from 'vue'
-import TDesign from 'tdesign-vue-next'
+import ElementPlus from 'element-plus'
 import FgTabs from '@/widgets/tabs/FgTabs.vue'
 import { widgetDataKey } from '@/widgets/base/types'
 import type { Widget } from '@/widgets/base/types'
@@ -90,14 +90,14 @@ describe('FgTabs (widget)', () => {
 
     it('renders correct number of tab panes', () => {
       const wrapper = mountTabs()
-      const panes = wrapper.findAll('.el-tab-pane')
+      const panes = wrapper.findAll('.t-tab-panel')
       expect(panes.length).toBeGreaterThanOrEqual(1)
     })
 
     it('defaults to first tab active', () => {
       const wrapper = mountTabs()
-      // First tab should be active (has is-active class)
-      const activeTab = wrapper.find('.el-tabs__item.is-active')
+      // First tab should be active (has t-is-active class)
+      const activeTab = wrapper.find('.t-tabs__nav-item.t-is-active')
       expect(activeTab.exists()).toBe(true)
       expect(activeTab.text()).toContain('基本信息')
     })
@@ -108,14 +108,14 @@ describe('FgTabs (widget)', () => {
   describe('tab switching', () => {
     it('switches tab on click', async () => {
       const wrapper = mountTabs()
-      const tabNavs = wrapper.findAll('.el-tabs__item')
+      const tabNavs = wrapper.findAll('.t-tabs__nav-item')
       expect(tabNavs.length).toBe(3)
 
       await tabNavs[1].trigger('click')
       await wrapper.vm.$nextTick()
 
       // Second tab should now be active
-      const activeTab = wrapper.find('.el-tabs__item.is-active')
+      const activeTab = wrapper.find('.t-tabs__nav-item.t-is-active')
       expect(activeTab.text()).toContain('审批信息')
     })
   })
@@ -127,7 +127,7 @@ describe('FgTabs (widget)', () => {
       const wrapper = mountTabs({
         widget: { props: { tabs: [{ key: 't1', label: 'Tab 1' }], tabPosition: 'left' } },
       })
-      const tabsEl = wrapper.find('.el-tabs')
+      const tabsEl = wrapper.find('.t-tabs')
       expect(tabsEl.exists()).toBe(true)
     })
 
@@ -135,7 +135,7 @@ describe('FgTabs (widget)', () => {
       const wrapper = mountTabs({
         widget: { props: { tabs: [{ key: 't1', label: 'Tab 1' }], type: 'card' } },
       })
-      const tabsEl = wrapper.find('.el-tabs')
+      const tabsEl = wrapper.find('.t-tabs')
       expect(tabsEl.exists()).toBe(true)
     })
 
