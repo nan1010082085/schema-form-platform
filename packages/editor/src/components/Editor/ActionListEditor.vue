@@ -8,10 +8,10 @@
  * UI 别名：'visible' ↔ 'show', 'disabled' ↔ 'show' + '__disabled__', 'fetch-data' ↔ 'api'
  */
 import { ref, watch } from 'vue'
-import { AddIcon, DeleteIcon } from 'tdesign-icons-vue-next'
 import { useWidgetOptions } from '@/composables/useWidgetOptions'
 import type { SchemaEventAction, EventActionType, ReceivableEventConfig } from '../../widgets/base/types'
 import styles from './ActionListEditor.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 // ---- Types ----
 
@@ -213,7 +213,8 @@ function removeAction(index: number) {
   emitChange()
 }
 
-function handleTypeChange(action: UIAction) {
+function handleTypeChange(action: UIAction, newType: UIActionType) {
+  action.type = newType
   action.target = ''
   action.value = ''
   action.apiUrl = ''
@@ -239,15 +240,15 @@ function handleChange() {
   <div :class="styles.section">
     <div :class="styles.sectionHeader">
       <span :class="styles.sectionTitle">动作列表</span>
-      <t-button
-        theme="primary"
+      <el-button
+        type="primary"
         size="small"
-        variant="text"
+        link
         @click="addAction"
       >
-        <template #icon><AddIcon /></template>
+        <AppIcon name="plus" />
         添加
-      </t-button>
+      </el-button>
     </div>
 
     <div v-if="localActions.length === 0" :class="styles.sectionEmpty">
@@ -261,59 +262,59 @@ function handleChange() {
     >
       <div :class="styles.actionHeader">
         <span :class="styles.actionIndex">动作 {{ ai + 1 }}</span>
-        <t-button
-          theme="danger"
+        <el-button
+          type="danger"
           size="small"
-          variant="text"
+          link
           @click="removeAction(ai)"
         >
-          <template #icon><DeleteIcon /></template>
-        </t-button>
+          <AppIcon name="delete" />
+        </el-button>
       </div>
 
       <!-- action type -->
       <div :class="styles.row">
         <label :class="styles.label">类型</label>
-        <t-select
+        <el-select
           :model-value="action.type"
           style="flex: 1"
-          @update:model-value="handleTypeChange(action)"
+          @update:model-value="(val: UIActionType) => handleTypeChange(action, val)"
         >
-          <t-option
+          <el-option
             v-for="opt in actionTypes"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"
           />
-        </t-select>
+        </el-select>
       </div>
 
       <!-- target: open-dialog / hide / visible / disabled / switch-tab / refresh / show -->
       <template v-if="['open-dialog', 'hide', 'visible', 'disabled', 'switch-tab', 'refresh', 'show'].includes(action.type)">
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
-          <t-select
-            v-model:value="action.target"
+          <el-select
+            v-model="action.target"
             filterable
             :placeholder="action.type === 'open-dialog' ? '选择弹窗组件' : action.type === 'hide' ? '选择要隐藏的组件' : action.type === 'visible' ? '选择要显示的组件' : action.type === 'disabled' ? '选择要禁用的组件' : '选择目标组件'"
             style="flex: 1"
             @update:model-value="handleChange"
           >
-            <t-option
+            <el-option
               v-for="opt in allWidgetOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
         </div>
       </template>
 
       <!-- switch-tab: value (tab key) -->
       <div v-if="action.type === 'switch-tab'" :class="styles.row">
         <label :class="styles.label">标签</label>
-        <t-input
-          v-model:value="action.value"
+        <el-input
+          v-model="action.value"
           placeholder="标签 key"
           style="flex: 1"
           @update:model-value="handleChange"
@@ -324,25 +325,25 @@ function handleChange() {
       <template v-if="action.type === 'set-value'">
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
-          <t-select
-            v-model:value="action.target"
+          <el-select
+            v-model="action.target"
             filterable
             placeholder="选择要设置值的字段"
             style="flex: 1"
             @update:model-value="handleChange"
           >
-            <t-option
+            <el-option
               v-for="opt in widgetOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
         </div>
         <div :class="styles.row">
           <label :class="styles.label">值</label>
-          <t-input
-            v-model:value="action.value"
+          <el-input
+            v-model="action.value"
             placeholder="要设置的值"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -354,8 +355,8 @@ function handleChange() {
       <template v-if="action.type === 'fetch-data' || action.type === 'api'">
         <div :class="styles.row">
           <label :class="styles.label">URL</label>
-          <t-input
-            v-model:value="action.apiUrl"
+          <el-input
+            v-model="action.apiUrl"
             placeholder="/api/data"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -363,16 +364,16 @@ function handleChange() {
         </div>
         <div :class="styles.row">
           <label :class="styles.label">方法</label>
-          <t-select
-            v-model:value="action.apiMethod"
+          <el-select
+            v-model="action.apiMethod"
             style="width: 120px"
             @update:model-value="handleChange"
           >
-            <t-option label="GET" value="get" />
-            <t-option label="POST" value="post" />
-            <t-option label="PUT" value="put" />
-            <t-option label="DELETE" value="delete" />
-          </t-select>
+            <el-option label="GET" value="get" />
+            <el-option label="POST" value="post" />
+            <el-option label="PUT" value="put" />
+            <el-option label="DELETE" value="delete" />
+          </el-select>
         </div>
       </template>
 
@@ -380,8 +381,8 @@ function handleChange() {
       <template v-if="action.type === 'set-variable'">
         <div :class="styles.row">
           <label :class="styles.label">变量</label>
-          <t-input
-            v-model:value="action.variable"
+          <el-input
+            v-model="action.variable"
             placeholder="变量名"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -389,8 +390,8 @@ function handleChange() {
         </div>
         <div :class="styles.row">
           <label :class="styles.label">值</label>
-          <t-input
-            v-model:value="action.value"
+          <el-input
+            v-model="action.value"
             placeholder="要设置的值"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -402,41 +403,41 @@ function handleChange() {
       <template v-if="action.type === 'trigger-event'">
         <div :class="styles.row">
           <label :class="styles.label">目标</label>
-          <t-select
-            v-model:value="action.eventTarget"
+          <el-select
+            v-model="action.eventTarget"
             filterable
             placeholder="选择目标组件"
             style="flex: 1"
             @update:model-value="handleChange"
           >
-            <t-option
+            <el-option
               v-for="opt in allWidgetOptions"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"
             />
-          </t-select>
+          </el-select>
         </div>
         <div :class="styles.row">
           <label :class="styles.label">事件</label>
-          <t-select
+          <el-select
             v-if="action.eventTarget && getReceivableEvents(action.eventTarget).length > 0"
-            v-model:value="action.eventName"
+            v-model="action.eventName"
             filterable
             placeholder="选择事件"
             style="flex: 1"
             @update:model-value="handleChange"
           >
-            <t-option
+            <el-option
               v-for="evt in getReceivableEvents(action.eventTarget)"
               :key="evt.name"
               :label="`${evt.name} — ${evt.description}`"
               :value="evt.name"
             />
-          </t-select>
-          <t-input
+          </el-select>
+          <el-input
             v-else
-            v-model:value="action.eventName"
+            v-model="action.eventName"
             placeholder="事件名（如 click）"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -448,8 +449,8 @@ function handleChange() {
       <template v-if="action.type === 'navigate'">
         <div :class="styles.row">
           <label :class="styles.label">路径</label>
-          <t-input
-            v-model:value="action.value"
+          <el-input
+            v-model="action.value"
             placeholder="/path"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -461,8 +462,8 @@ function handleChange() {
       <template v-if="action.type === 'emit'">
         <div :class="styles.row">
           <label :class="styles.label">值</label>
-          <t-input
-            v-model:value="action.value"
+          <el-input
+            v-model="action.value"
             placeholder="事件 payload"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -474,8 +475,8 @@ function handleChange() {
       <template v-if="action.type === 'post-message'">
         <div :class="styles.row">
           <label :class="styles.label">消息</label>
-          <t-input
-            v-model:value="action.message"
+          <el-input
+            v-model="action.message"
             placeholder='{"type":"save"}'
             style="flex: 1"
             @update:model-value="handleChange"
@@ -487,8 +488,8 @@ function handleChange() {
       <template v-if="action.type === 'copy'">
         <div :class="styles.row">
           <label :class="styles.label">内容</label>
-          <t-input
-            v-model:value="action.text"
+          <el-input
+            v-model="action.text"
             placeholder="复制内容（支持 formData.xxx）"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -500,8 +501,8 @@ function handleChange() {
       <template v-if="action.type === 'startFlow'">
         <div :class="styles.row">
           <label :class="styles.label">流程定义</label>
-          <t-input
-            v-model:value="action.definitionId"
+          <el-input
+            v-model="action.definitionId"
             placeholder="流程定义 ID"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -509,8 +510,8 @@ function handleChange() {
         </div>
         <div :class="styles.row">
           <label :class="styles.label">变量</label>
-          <t-input
-            v-model:value="action.flowVariables"
+          <el-input
+            v-model="action.flowVariables"
             placeholder='{"key": "value"}（可选）'
             style="flex: 1"
             @update:model-value="handleChange"
@@ -522,8 +523,8 @@ function handleChange() {
       <template v-if="action.type === 'endFlow'">
         <div :class="styles.row">
           <label :class="styles.label">实例 ID</label>
-          <t-input
-            v-model:value="action.instanceId"
+          <el-input
+            v-model="action.instanceId"
             placeholder="流程实例 ID"
             style="flex: 1"
             @update:model-value="handleChange"
@@ -531,8 +532,8 @@ function handleChange() {
         </div>
         <div :class="styles.row">
           <label :class="styles.label">原因</label>
-          <t-input
-            v-model:value="action.reason"
+          <el-input
+            v-model="action.reason"
             placeholder="结束原因（可选）"
             style="flex: 1"
             @update:model-value="handleChange"
