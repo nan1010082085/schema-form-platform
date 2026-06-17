@@ -38,6 +38,7 @@ export function detectContainerCollision(
 
   for (const container of containers) {
     if (container.id === widget.id) continue
+    if (!container.position) continue
     const cp = container.position
     const area = overlapArea(wx, wy, ww, wh, cp.x, cp.y, cp.w, cp.h)
     if (area >= widgetArea * 0.5) {
@@ -69,6 +70,7 @@ export function detectNestedContainerCollision(
 
   for (const container of containers) {
     if (container.id === widget.id) continue
+    if (!container.position) continue
     const cx = container._canvasX
     const cy = container._canvasY
     const cw = container.position.w
@@ -115,15 +117,16 @@ export function collectAllContainers(
   const result: Array<Widget & { _canvasX: number; _canvasY: number; _depth: number }> = []
   for (const w of widgets) {
     if (w.id === excludeId) continue
+    if (!w.position) continue
     if (CONTAINER_TYPES_SET.has(w.type)) {
       const canvasX = offsetX + w.position.x
       const canvasY = offsetY + w.position.y
-      result.push(Object.assign(w, { _canvasX: canvasX, _canvasY: canvasY, _depth: depth }))
+      result.push({ ...w, _canvasX: canvasX, _canvasY: canvasY, _depth: depth })
       // 自渲染容器（多列布局）的子组件坐标系由容器内部管理，
       // 但其 children 仍需递归收集以支持深层嵌套碰撞
       if (w.children?.length) {
         result.push(...collectAllContainers(
-          w.children as Widget[],
+          w.children.filter((c): c is Widget => c != null && c.position != null) as Widget[],
           canvasX,
           canvasY,
           depth + 1,

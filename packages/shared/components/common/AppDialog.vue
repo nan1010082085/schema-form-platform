@@ -1,61 +1,64 @@
 <template>
-  <t-dialog
-    v-model:visible="visible"
+  <el-dialog
+    :model-value="modelValue"
     :title="title"
-    :width="width"
-    :destroy-on-close="destroyOnClose"
-    :draggable="draggable"
+    :width="isFullscreen ? '100vw' : width"
     :fullscreen="isFullscreen"
-    :footer="false"
+    :style="isFullscreen ? { margin: 0 } : {}"
+    :destroy-on-close="destroyOnClose"
+    :draggable="draggable && !isFullscreen"
+    :append-to-body="appendToBody"
+    :close-on-click-modal="false"
+    @update:model-value="emit('update:modelValue', $event)"
     @close="handleClose"
   >
     <template #header>
-      <div
-        :class="$style.header"
-        @mousedown="handleDragStart"
-      >
-        <span>{{ title }}</span>
-        <div :class="$style.headerActions">
-          <t-button theme="default" variant="text" size="small" @click="toggleFullscreen">
-            <template #icon>
-              <FullscreenExitIcon v-if="isFullscreen" />
-              <FullscreenIcon v-else />
-            </template>
-          </t-button>
-          <t-button theme="default" variant="text" size="small" @click="handleClose">
-            <template #icon>
-              <CloseIcon />
-            </template>
-          </t-button>
+      <div class="app-dialog__header">
+        <span class="app-dialog__title">{{ title }}</span>
+        <div class="app-dialog__header-right">
+          <el-button
+            class="app-dialog__fullscreen-btn"
+            :icon="isFullscreen ? ScaleToOriginal : FullScreen"
+            text
+            @click="toggleFullscreen"
+          />
+          <el-button
+            class="app-dialog__close-btn"
+            :icon="Close"
+            text
+            @click="emit('update:modelValue', false)"
+          />
         </div>
       </div>
     </template>
     <slot />
     <template #footer>
       <slot name="footer">
-        <t-button theme="default" @click="handleCancel">取消</t-button>
-        <t-button theme="primary" :loading="loading" @click="handleConfirm">确定</t-button>
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
       </slot>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { FullscreenIcon, FullscreenExitIcon, CloseIcon } from 'tdesign-icons-vue-next'
+import { ref } from 'vue'
+import { FullScreen, ScaleToOriginal, Close } from '@element-plus/icons-vue'
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   modelValue: boolean
   title: string
   width?: string
   destroyOnClose?: boolean
   loading?: boolean
   draggable?: boolean
+  appendToBody?: boolean
 }>(), {
   width: '580px',
   destroyOnClose: true,
   loading: false,
   draggable: true,
+  appendToBody: true,
 })
 
 const emit = defineEmits<{
@@ -64,11 +67,6 @@ const emit = defineEmits<{
   'cancel': []
   'close': []
 }>()
-
-const visible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-})
 
 const isFullscreen = ref(false)
 
@@ -81,32 +79,44 @@ function handleConfirm() {
 }
 
 function handleCancel() {
-  visible.value = false
+  emit('update:modelValue', false)
   emit('cancel')
 }
 
 function handleClose() {
-  isFullscreen.value = false
   emit('close')
-}
-
-function handleDragStart(e: MouseEvent) {
-  // TDesign 的 draggable 已内置，这里可以添加额外的拖拽逻辑
-  e.preventDefault()
 }
 </script>
 
-<style module>
-.header {
+<style scoped>
+.app-dialog__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  cursor: move;
-  user-select: none;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
 }
 
-.headerActions {
+.app-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-dialog__header-right {
   display: flex;
+  align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+}
+
+.app-dialog__fullscreen-btn,
+.app-dialog__close-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
 }
 </style>
