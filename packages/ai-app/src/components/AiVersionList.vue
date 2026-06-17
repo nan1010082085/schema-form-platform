@@ -9,7 +9,7 @@
  */
 
 import { computed } from 'vue'
-import { LoadingIcon } from 'tdesign-icons-vue-next'
+import { Loading } from '@element-plus/icons-vue'
 import type { AIVersion } from '@/types'
 
 export interface AiVersionListProps {
@@ -57,7 +57,7 @@ function getTypeColor(type: AIVersion['type']): string {
 
     <!-- Loading state -->
     <div v-if="loading" :class="$style.loading" data-testid="loading">
-      <LoadingIcon :class="$style.loadingIcon" />
+      <el-icon :class="$style.loadingIcon"><Loading /></el-icon>
       <span>加载中...</span>
     </div>
 
@@ -69,7 +69,7 @@ function getTypeColor(type: AIVersion['type']): string {
     </div>
 
     <!-- Version list -->
-    <t-scrollbar v-else :class="$style.scrollbar">
+    <el-scrollbar v-else :class="$style.scrollbar">
       <div :class="$style.items">
         <div
           v-for="version in versions"
@@ -82,14 +82,14 @@ function getTypeColor(type: AIVersion['type']): string {
         >
           <div :class="$style.itemHeader">
             <span :class="$style.versionNumber" data-testid="version-number">v{{ version.version }}</span>
-            <t-tag
+            <el-tag
               :color="getTypeColor(version.type)"
               size="small"
               :class="$style.typeTag"
               data-testid="version-type"
             >
               {{ getTypeLabel(version.type) }}
-            </t-tag>
+            </el-tag>
             <span :class="$style.time">{{ formatDate(version.createdAt) }}</span>
           </div>
 
@@ -98,26 +98,26 @@ function getTypeColor(type: AIVersion['type']): string {
           </div>
 
           <div :class="$style.actions">
-            <t-button
+            <el-button
               size="small"
               :class="$style.btnRestore"
               data-testid="btn-restore"
               @click="emit('restore', version.id)"
             >
               恢复此版本
-            </t-button>
-            <t-button
+            </el-button>
+            <el-button
               size="small"
               :class="$style.btnCompare"
               data-testid="btn-compare"
               @click="emit('compare', version.id)"
             >
               对比
-            </t-button>
+            </el-button>
           </div>
         </div>
       </div>
-    </t-scrollbar>
+    </el-scrollbar>
   </div>
 </template>
 

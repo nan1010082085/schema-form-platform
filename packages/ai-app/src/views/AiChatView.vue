@@ -12,7 +12,7 @@ import { bridge } from '@/utils/bridge'
 import type { AgentType, ChatSettings, MentionReference, RagSearchResult } from '@/types'
 import { storeToRefs } from 'pinia'
 import { message } from '@schema-form/shared-utils/message'
-import { HomeIcon } from 'tdesign-icons-vue-next'
+import { HomeFilled } from '@element-plus/icons-vue'
 import { getAppUrl } from '@schema-form/shared-qiankun/config'
 import AiConversationList from '@/components/AiConversationList.vue'
 import AiChatPanel from '@/components/AiChatPanel.vue'
@@ -291,11 +291,11 @@ onMounted(() => {
     <!-- 顶栏 -->
     <div :class="$style.topbar">
       <div :class="$style.topbarLeft">
-        <t-tooltip content="返回主应用首页" placement="bottom">
+        <el-tooltip content="返回主应用首页" placement="bottom">
           <button :class="$style.homeBtn" title="返回主应用" @click="goToPortal">
-            <HomeIcon size="14" />
+            <el-icon :size="14"><HomeFilled /></el-icon>
           </button>
-        </t-tooltip>
+        </el-tooltip>
         <div :class="$style.topbarDivider" />
         <span :class="$style.appName">AI 助手</span>
         <div :class="$style.topbarDivider" />
@@ -309,9 +309,9 @@ onMounted(() => {
           <span :class="$style.modelDot"></span>
           <span :class="$style.modelName">DeepSeek</span>
         </div>
-        <t-button theme="primary" size="small" @click="handleNewConversation">
+        <el-button type="primary" size="small" @click="handleNewConversation">
           + 新对话
-        </t-button>
+        </el-button>
       </div>
     </div>
 
@@ -385,9 +385,9 @@ onMounted(() => {
     </div>
 
     <!-- 折叠/展开切换按钮（放在 body 外部，避免被 overflow: hidden 裁剪） -->
-    <t-button :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" variant="text" @click="rightPanelCollapsed = !rightPanelCollapsed">
+    <el-button :class="[$style.panelToggle, { [$style.panelToggleCollapsed]: rightPanelCollapsed }]" text @click="rightPanelCollapsed = !rightPanelCollapsed">
       {{ rightPanelCollapsed ? '◀' : '▶' }}
-    </t-button>
+    </el-button>
 
     <!-- Settings Dialog -->
     <AiChatSettings
