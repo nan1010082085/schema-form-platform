@@ -6,34 +6,13 @@
  * 保留新版设计风格，恢复旧版关键功能
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
-import {
-  RollbackIcon,
-  RefreshIcon,
-  CopyIcon,
-  DeleteIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  FolderAddIcon,
-  FolderMinusIcon,
-  CheckCircleFilledIcon,
-  ErrorCircleFilledIcon,
-  BrowseIcon,
-  FullscreenIcon,
-  SendIcon,
-  UploadIcon,
-  DownloadIcon,
-  MoreIcon,
-  EditIcon,
-  LockIcon,
-  DesktopIcon,
-  HomeIcon,
-} from 'tdesign-icons-vue-next'
+import { ElMessage } from 'element-plus'
 import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
 import { useApiStore } from '@/stores/api'
 import { getAppUrl } from '@schema-form/shared-qiankun/config'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const props = defineProps<{
   mode: InteractionMode
@@ -93,11 +72,11 @@ const modeLabels: Record<InteractionMode, string> = {
   'publish-readonly': '发布(只读)',
 }
 
-const modeOptions: { value: InteractionMode; label: string; icon: any }[] = [
-  { value: 'edit', label: '编辑模式', icon: EditIcon },
-  { value: 'preview', label: '预览模式', icon: BrowseIcon },
-  { value: 'publish-interactive', label: '发布(交互)', icon: DesktopIcon },
-  { value: 'publish-readonly', label: '发布(只读)', icon: LockIcon },
+const modeOptions: { value: InteractionMode; label: string; icon: string }[] = [
+  { value: 'edit', label: '编辑模式', icon: 'edit' },
+  { value: 'preview', label: '预览模式', icon: 'view' },
+  { value: 'publish-interactive', label: '发布(交互)', icon: 'monitor' },
+  { value: 'publish-readonly', label: '发布(只读)', icon: 'lock' },
 ]
 
 // ---- Computed states ----
@@ -129,11 +108,11 @@ function handleImport() {
 function confirmImport() {
   try {
     const parsed = JSON.parse(importJson.value) as unknown
-    if (!Array.isArray(parsed)) { MessagePlugin.error('JSON 必须是数组'); return }
+    if (!Array.isArray(parsed)) { ElMessage.error('JSON 必须是数组'); return }
     emit('import', parsed as PartialWidget[])
     showImportDialog.value = false
-    MessagePlugin.success('Schema 导入成功')
-  } catch { MessagePlugin.error('JSON 格式错误') }
+    ElMessage.success('Schema 导入成功')
+  } catch { ElMessage.error('JSON 格式错误') }
 }
 
 // ---- Load from server ----
@@ -153,16 +132,17 @@ async function handleOpenLoadDialog() {
 async function handleLoadSchema(item: SchemaListItem) {
   const detail = await apiStore.fetchSchemaById(item.id)
   if (detail) {
-    if (!detail.json) { MessagePlugin.error('Schema 数据为空'); return }
-    emit('load-schema', detail.json)
+    if (!detail.json) { ElMessage.error('Schema 数据为空'); return }
+    const json = Array.isArray(detail.json) ? detail.json : (detail.json as any).widgets ?? []
+    emit('load-schema', json)
     showLoadDialog.value = false
-    MessagePlugin.success(`Schema "${item.name}" 已加载`)
+    ElMessage.success(`Schema "${item.name}" 已加载`)
   }
 }
 
 // ---- More dropdown ----
-function handleMoreCommand(opt: { value: string | number }) {
-  switch (opt.value) {
+function handleMoreCommand(command: string | number | object) {
+  switch (command) {
     case 'load': handleOpenLoadDialog(); break
     case 'import-json': handleImport(); break
     case 'import-response': emit('import-response'); break
@@ -181,7 +161,7 @@ function handleZIndexUp() { if (hasSelection.value) emit('zindex-up') }
 function handleZIndexDown() { if (hasSelection.value) emit('zindex-down') }
 function handleUndo() { if (props.canUndo) emit('undo') }
 function handleRedo() { if (props.canRedo) emit('redo') }
-function handleGroup(opt: { value: string | number }) { if (props.canGroup) emit('group', opt.value as 'card') }
+function handleGroup(command: string | number | object) { if (props.canGroup) emit('group', command as 'card') }
 function handleUngroup() { if (props.canUngroup) emit('ungroup') }
 
 // ---- Keyboard shortcuts ----
@@ -205,7 +185,8 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function goToPortal() {
-  window.location.href = getAppUrl('shell', import.meta.env.DEV)
+  const base = getAppUrl('editor', import.meta.env.DEV)
+  window.location.href = `${base}instances`
 }
 
 onMounted(() => { document.addEventListener('keydown', handleKeydown) })
@@ -216,11 +197,11 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   <div class="editor-toolbar">
     <!-- 左侧：返回 / 名称 / 面板切换 -->
     <div class="editor-toolbar__left">
-      <t-popup content="返回门户首页" placement="bottom">
-        <button class="editor-toolbar__icon-btn" title="返回门户" @click="goToPortal">
-          <HomeIcon />
+      <el-tooltip content="返回列表" placement="bottom">
+        <button class="editor-toolbar__icon-btn" title="返回列表" @click="goToPortal">
+          <AppIcon name="back" :size="14" />
         </button>
-      </t-popup>
+      </el-tooltip>
       <div class="editor-toolbar__divider" />
       <span class="editor-toolbar__app-name">表单编辑器</span>
       <div class="editor-toolbar__divider" />
@@ -237,10 +218,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         title="部件面板"
         @click="emit('update:leftPanelVisible', !leftPanelVisible)"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
-          <line x1="5.5" y1="2" x2="5.5" y2="14"/>
-        </svg>
+        <AppIcon name="grid" :size="16" />
       </button>
       <button
         class="editor-toolbar__icon-btn"
@@ -248,90 +226,87 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
         title="属性面板"
         @click="emit('update:rightPanelVisible', !rightPanelVisible)"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1.5" y="2" width="13" height="12" rx="1.5"/>
-          <line x1="10.5" y1="2" x2="10.5" y2="14"/>
-        </svg>
+        <AppIcon name="setting" :size="16" />
       </button>
     </div>
 
     <!-- 中间：编辑操作按钮组（仅编辑模式显示） -->
     <div v-if="mode === 'edit'" class="editor-toolbar__center">
       <div class="editor-toolbar__btn-group">
-        <t-popup content="撤销 (Ctrl+Z)" placement="bottom">
+        <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!canUndo" @click="handleUndo">
-            <RollbackIcon />
+            <AppIcon name="refresh-left" />
           </button>
-        </t-popup>
-        <t-popup content="重做 (Ctrl+Y)" placement="bottom">
+        </el-tooltip>
+        <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!canRedo" @click="handleRedo">
-            <RefreshIcon />
+            <AppIcon name="refresh-right" />
           </button>
-        </t-popup>
+        </el-tooltip>
       </div>
-
       <div class="editor-toolbar__btn-group">
-        <t-popup :content="batchLabel('复制 (Ctrl+C)')" placement="bottom">
+        <el-tooltip :content="batchLabel('复制 (Ctrl+C)')" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleCopy">
-            <CopyIcon />
+            <AppIcon name="copy-document" />
           </button>
-        </t-popup>
-        <t-popup :content="batchLabel('删除 (Del)')" placement="bottom">
+        </el-tooltip>
+        <el-tooltip :content="batchLabel('删除 (Del)')" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection" @click="handleDelete">
-            <DeleteIcon />
+            <AppIcon name="delete" />
           </button>
-        </t-popup>
-        <t-popup content="上移 (Ctrl+Up)" placement="bottom">
+        </el-tooltip>
+        <el-tooltip content="上移 (Ctrl+Up)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isFirstItem" @click="handleMoveUp">
-            <ChevronUpIcon />
+            <AppIcon name="arrow-up" />
           </button>
-        </t-popup>
-        <t-popup content="下移 (Ctrl+Down)" placement="bottom">
+        </el-tooltip>
+        <el-tooltip content="下移 (Ctrl+Down)" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!hasSelection || isLastItem" @click="handleMoveDown">
-            <ChevronDownIcon />
+            <AppIcon name="arrow-down" />
           </button>
-        </t-popup>
+        </el-tooltip>
       </div>
-
       <div class="editor-toolbar__btn-group">
-        <t-dropdown trigger="click" @click="handleMoreCommand">
+        <el-dropdown trigger="click" @command="handleMoreCommand">
           <button class="editor-toolbar__icon-btn" title="更多操作">
-            <MoreIcon />
+            <AppIcon name="more-filled" />
           </button>
-          <t-dropdown-menu>
-            <t-dropdown-item :disabled="!hasSelection" value="zindex-up">
-              上移一层 (Alt+↑)
-            </t-dropdown-item>
-            <t-dropdown-item :disabled="!hasSelection" value="zindex-down">
-              下移一层 (Alt+↓)
-            </t-dropdown-item>
-          </t-dropdown-menu>
-        </t-dropdown>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item :disabled="!hasSelection" command="zindex-up">
+                上移一层 (Alt+↑)
+              </el-dropdown-item>
+              <el-dropdown-item :disabled="!hasSelection" command="zindex-down">
+                下移一层 (Alt+↓)
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
-
       <div class="editor-toolbar__btn-group">
-        <t-dropdown :disabled="!canGroup" trigger="click" @click="handleGroup">
+        <el-dropdown :disabled="!canGroup" trigger="click" @command="handleGroup">
           <button class="editor-toolbar__icon-btn" :disabled="!canGroup">
-            <FolderAddIcon />
+            <AppIcon name="folder-add" />
           </button>
-          <t-dropdown-menu>
-            <t-dropdown-item value="card">分组为卡片</t-dropdown-item>
-            <t-dropdown-item value="page">分组为页面</t-dropdown-item>
-            <t-dropdown-item value="toolbar">分组为工具栏</t-dropdown-item>
-          </t-dropdown-menu>
-        </t-dropdown>
-        <t-popup content="取消分组" placement="bottom">
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="card">分组为卡片</el-dropdown-item>
+              <el-dropdown-item command="page">分组为页面</el-dropdown-item>
+              <el-dropdown-item command="toolbar">分组为工具栏</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-tooltip content="取消分组" placement="bottom">
           <button class="editor-toolbar__icon-btn" :disabled="!canUngroup" @click="handleUngroup">
-            <FolderMinusIcon />
+            <AppIcon name="folder-remove" />
           </button>
-        </t-popup>
+        </el-tooltip>
       </div>
-
       <div class="editor-toolbar__btn-group">
-        <t-popup content="校验 Schema" placement="bottom">
+        <el-tooltip content="校验 Schema" placement="bottom">
           <button class="editor-toolbar__icon-btn" @click="emit('validate')">
-            <ErrorCircleFilledIcon v-if="(validationErrorCount ?? 0) > 0" style="color: #e6a23c" />
-            <CheckCircleFilledIcon v-else style="color: #67c23a" />
+            <AppIcon v-if="(validationErrorCount ?? 0) > 0" name="circle-close-filled" style="color: #e6a23c" />
+            <AppIcon v-else name="circle-check-filled" style="color: #67c23a" />
             <span v-if="(validationErrorCount ?? 0) > 0" class="editor-toolbar__badge editor-toolbar__badge--error">
               {{ validationErrorCount }}
             </span>
@@ -339,89 +314,89 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
               {{ validationWarningCount }}
             </span>
           </button>
-        </t-popup>
+        </el-tooltip>
       </div>
     </div>
 
     <!-- 右侧：模式切换/画布/缩略图/导出/预览/保存/发布 -->
     <div class="editor-toolbar__right">
       <!-- 模式切换下拉 -->
-      <t-dropdown trigger="click" @click="(m: any) => emit('update:mode', m.value)">
+      <el-dropdown trigger="click" @command="(m: any) => emit('update:mode', m)">
         <button class="editor-toolbar__mode-indicator" :class="`editor-toolbar__mode-indicator--${mode}`">
-          <EditIcon v-if="mode === 'edit'" />
-          <BrowseIcon v-else-if="mode === 'preview'" />
-          <DesktopIcon v-else-if="mode === 'publish-interactive'" />
-          <LockIcon v-else />
+          <AppIcon v-if="mode === 'edit'" name="lock" />
+          <AppIcon v-else-if="mode === 'preview'" name="monitor" />
+          <AppIcon v-else-if="mode === 'publish-interactive'" name="video-play" />
+          <AppIcon v-else name="lock" />
           <span>{{ modeLabels[mode] }}</span>
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 6l4 4 4-4"/>
-          </svg>
+          <AppIcon name="arrow-down" :size="10" />
         </button>
-        <t-dropdown-menu>
-          <t-dropdown-item
-            v-for="m in modeOptions"
-            :key="m.value"
-            :value="m.value"
-            :class="{ 'is-active': mode === m.value }"
-          >
-            <component :is="m.icon" />
-            {{ m.label }}
-          </t-dropdown-item>
-        </t-dropdown-menu>
-      </t-dropdown>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="m in modeOptions"
+              :key="m.value"
+              :command="m.value"
+              :class="{ 'is-active': mode === m.value }"
+            >
+              <AppIcon :name="m.icon" />
+              {{ m.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
       <div class="editor-toolbar__divider" />
 
       <!-- 画布尺寸 -->
-      <t-dropdown trigger="click" @click="(v: any) => emit('canvas-size-change', v.value)">
+      <el-dropdown trigger="click" @command="(v: any) => emit('canvas-size-change', v)">
         <button class="editor-toolbar__icon-btn" title="画布尺寸">
-          <FullscreenIcon />
+          <AppIcon name="full-screen" />
         </button>
-        <t-dropdown-menu>
-          <t-dropdown-item
-            v-for="preset in canvasSizePresets"
-            :key="preset.value"
-            :value="preset.value"
-            :class="{ 'is-active': canvasSizePreset === preset.value }"
-          >
-            {{ preset.label }}
-          </t-dropdown-item>
-        </t-dropdown-menu>
-      </t-dropdown>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="preset in canvasSizePresets"
+              :key="preset.value"
+              :command="preset.value"
+              :class="{ 'is-active': canvasSizePreset === preset.value }"
+            >
+              {{ preset.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
       <!-- 缩略图开关 -->
-      <t-popup content="缩略图" placement="bottom">
+      <el-tooltip content="缩略图" placement="bottom">
         <button
           class="editor-toolbar__icon-btn"
           :class="{ 'editor-toolbar__icon-btn--active': showThumbnail }"
           @click="emit('toggle-thumbnail')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="1" width="14" height="14" rx="1.5"/>
-            <rect x="3" y="3" width="4" height="3" rx="0.5"/>
-            <path d="M3 12l3-4 2 2 3-4 4 6"/>
-          </svg>
+          <AppIcon name="picture" :size="14" />
         </button>
-      </t-popup>
+      </el-tooltip>
 
       <!-- 更多 -->
-      <t-dropdown trigger="click" @click="handleMoreCommand">
+      <el-dropdown trigger="click" @command="handleMoreCommand">
         <button class="editor-toolbar__icon-btn" title="更多">
-          <MoreIcon />
+          <AppIcon name="more-filled" />
         </button>
-        <t-dropdown-menu>
-          <t-dropdown-item value="load">
-            <DownloadIcon />从服务器加载
-          </t-dropdown-item>
-          <t-dropdown-item value="import-json">
-            <UploadIcon />导入 JSON
-          </t-dropdown-item>
-          <t-dropdown-item value="import-response">导入响应</t-dropdown-item>
-          <t-dropdown-item divider value="export-json">
-            <DownloadIcon />导出 JSON
-          </t-dropdown-item>
-        </t-dropdown-menu>
-      </t-dropdown>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="load">
+              <AppIcon name="folder" />从服务器加载
+            </el-dropdown-item>
+            <el-dropdown-item command="import-json">
+              <AppIcon name="upload" />导入 JSON
+            </el-dropdown-item>
+            <el-dropdown-item command="import-response">导入响应</el-dropdown-item>
+            <el-dropdown-item divided command="export-json">
+              <AppIcon name="download" />导出 JSON
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
       <div class="editor-toolbar__divider" />
 
@@ -433,11 +408,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           title="桌面"
           @click="emit('update:previewMode', 'desktop')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="2" width="14" height="10" rx="1"/>
-            <line x1="5" y1="14" x2="11" y2="14"/>
-            <line x1="8" y1="12" x2="8" y2="14"/>
-          </svg>
+          <AppIcon name="monitor" :size="14" />
         </button>
         <button
           class="editor-toolbar__mode-btn"
@@ -445,10 +416,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           title="平板"
           @click="emit('update:previewMode', 'tablet')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="1" width="12" height="14" rx="1.5"/>
-            <circle cx="8" cy="12.5" r="0.8" fill="currentColor"/>
-          </svg>
+          <AppIcon name="iphone" :size="14" />
         </button>
         <button
           class="editor-toolbar__mode-btn"
@@ -456,10 +424,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
           title="移动端"
           @click="emit('update:previewMode', 'mobile')"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="1" width="8" height="14" rx="1.5"/>
-            <circle cx="8" cy="12.5" r="0.8" fill="currentColor"/>
-          </svg>
+          <AppIcon name="cellphone" :size="14" />
         </button>
       </div>
 
@@ -467,13 +432,13 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
 
       <!-- 预览 -->
       <button class="editor-toolbar__btn editor-toolbar__btn--outline" @click="emit('preview')">
-        <BrowseIcon />
+        <AppIcon name="view" />
         <span>预览</span>
       </button>
 
       <!-- 发布 -->
       <button class="editor-toolbar__btn editor-toolbar__btn--success" @click="emit('publish')">
-        <SendIcon />
+        <AppIcon name="promotion" />
         <span>发布</span>
       </button>
 
@@ -485,35 +450,36 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   </div>
 
   <!-- 从服务器加载弹窗 -->
-  <t-dialog v-model:visible="showLoadDialog" header="从服务器加载 Schema" width="560px">
-    <t-loading :loading="loadSchemaLoading">
-      <t-table
+  <el-dialog v-model="showLoadDialog" title="从服务器加载 Schema" width="560px" :append-to-body="true">
+    <div v-loading="loadSchemaLoading">
+      <el-table
         :data="loadSchemaList"
         height="300"
         @row-click="handleLoadSchema"
       >
-        <t-table-column col-key="name" title="名称" />
-        <t-table-column col-key="updatedAt" title="更新时间" width="180" />
-      </t-table>
-    </t-loading>
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="updatedAt" label="更新时间" width="180" />
+      </el-table>
+    </div>
     <p v-if="!loadSchemaLoading && loadSchemaList.length === 0"
       style="text-align:center; color:#909399; padding: 24px 0;">
       服务器上未找到 Schema
     </p>
-  </t-dialog>
+  </el-dialog>
 
   <!-- 导入弹窗 -->
-  <t-dialog v-model:visible="showImportDialog" header="导入 JSON Schema" width="600px">
-    <t-textarea
-      v-model:value="importJson"
+  <el-dialog v-model="showImportDialog" title="导入 JSON Schema" width="600px" :append-to-body="true">
+    <el-input
+      v-model="importJson"
+      type="textarea"
       :rows="16"
       placeholder="在此粘贴 PartialWidget[] JSON..."
     />
     <template #footer>
-      <t-button @click="showImportDialog = false">取消</t-button>
-      <t-button theme="primary" @click="confirmImport">导入</t-button>
+      <el-button @click="showImportDialog = false">取消</el-button>
+      <el-button type="primary" @click="confirmImport">导入</el-button>
     </template>
-  </t-dialog>
+  </el-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -522,10 +488,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   align-items: center;
   height: 44px;
   padding: 0 8px;
-  background: var(--glass-bg, rgba(17, 24, 32, 0.8));
-  backdrop-filter: var(--glass-blur, blur(20px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-  border-bottom: 1px solid var(--glass-border, rgba(0, 212, 255, 0.1));
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color-light);
   flex-shrink: 0;
   gap: 4px;
   position: sticky;
@@ -535,7 +499,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   &__divider {
     width: 1px;
     height: 20px;
-    background: rgba(0, 212, 255, 0.08);
+    background: var(--border-color-light);
     flex-shrink: 0;
     margin: 0 2px;
   }
@@ -551,7 +515,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   &__app-name {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-color-secondary);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -559,17 +523,17 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
   &__name-input {
     width: 128px;
     padding: 4px 8px;
-    border: 1px solid rgba(0, 212, 255, 0.1);
-    font-size: var(--td-font-size-body-small);
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color-light);
+    font-size: 13px;
+    color: var(--text-color-primary);
+    background: var(--bg-color-secondary);
     outline: none;
     transition: border-color 0.2s;
     flex-shrink: 0;
     border-radius: 4px;
 
-    &:focus { border-color: #00d4ff; box-shadow: 0 0 8px rgba(0, 212, 255, 0.2); }
-    &::placeholder { color: rgba(255, 255, 255, 0.3); }
+    &:focus { border-color: var(--color-primary); }
+    &::placeholder { color: var(--text-color-placeholder); }
   }
 
   // ---- Center section (edit operations) ----
@@ -587,9 +551,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 0;
     padding: 2px 3px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-color-secondary);
     border-radius: 6px;
-    border: 1px solid rgba(0, 212, 255, 0.05);
   }
 
   // ---- Right section ----
@@ -610,15 +573,15 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     height: 28px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-color-secondary);
     cursor: pointer;
-    border-radius: var(--td-radius-small);
-    transition: all 0.15s;
+    border-radius: var(--radius-small);
+    transition: all 0.2s;
     flex-shrink: 0;
 
     &:hover:not(:disabled) {
-      background: rgba(0, 212, 255, 0.08);
-      color: rgba(255, 255, 255, 0.95);
+      background: var(--color-primary-lighter);
+      color: var(--color-primary);
     }
 
     &:disabled {
@@ -627,10 +590,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     }
 
     &--active {
-      color: #00d4ff;
-      background: rgba(0, 212, 255, 0.1);
+      color: var(--color-primary);
+      background: var(--color-primary-lighter);
 
-      &:hover { background: rgba(0, 212, 255, 0.15); }
+      &:hover { background: var(--color-primary-lighter); }
     }
   }
 
@@ -650,8 +613,8 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     border-radius: 7px;
     color: #fff;
 
-    &--error { background: var(--td-error-color); }
-    &--warning { background: var(--td-warning-color); }
+    &--error { background: var(--el-color-danger); }
+    &--warning { background: var(--el-color-warning); }
   }
 
   // ---- Mode switcher ----
@@ -660,10 +623,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 2px;
     padding: 2px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--td-radius-small);
+    background: var(--bg-color-gray);
+    border-radius: var(--el-border-radius-small);
     flex-shrink: 0;
-    border: 1px solid rgba(0, 212, 255, 0.05);
+    border: 1px solid var(--color-primary-lighter);
   }
 
   &__mode-btn {
@@ -674,17 +637,17 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     height: 24px;
     border: none;
     background: transparent;
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-color-placeholder);
     cursor: pointer;
     border-radius: 3px;
     transition: all 0.15s;
 
-    &:hover { color: rgba(255, 255, 255, 0.55); }
+    &:hover { color: var(--text-color-secondary); }
 
     &--active {
-      background: rgba(0, 212, 255, 0.1);
-      color: #00d4ff;
-      box-shadow: 0 0 8px rgba(0, 212, 255, 0.15);
+      background: var(--color-primary-bg-light);
+      color: var(--color-primary);
+      box-shadow: 0 0 8px var(--color-primary-lighter);
     }
   }
 
@@ -694,21 +657,21 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--el-font-size-base);
     font-weight: 500;
-    border: 1px solid rgba(0, 212, 255, 0.12);
+    border: 1px solid var(--color-primary-lighter);
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-color-gray);
     cursor: pointer;
     transition: all 0.15s;
     flex-shrink: 0;
 
-    &:hover { border-color: rgba(0, 212, 255, 0.3); background: rgba(0, 212, 255, 0.06); }
+    &:hover { border-color: var(--color-primary-light); background: var(--color-primary-lighter); }
 
-    &--edit { color: #00d4ff; border-color: rgba(0, 212, 255, 0.2); }
+    &--edit { color: var(--color-primary); border-color: var(--color-primary-light); }
     &--preview { color: #ffab40; border-color: rgba(255, 171, 64, 0.2); }
     &--publish-interactive { color: #00e676; border-color: rgba(0, 230, 118, 0.2); }
-    &--publish-readonly { color: rgba(255, 255, 255, 0.35); border-color: rgba(0, 212, 255, 0.08); }
+    &--publish-readonly { color: var(--text-color-placeholder); border-color: var(--color-primary-lighter); }
   }
 
   // ---- Text buttons ----
@@ -717,7 +680,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     align-items: center;
     gap: 4px;
     padding: 5px 12px;
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--el-font-size-base);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
@@ -725,10 +688,10 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     white-space: nowrap;
 
     &--outline {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(0, 212, 255, 0.12);
-      color: rgba(255, 255, 255, 0.65);
-      &:hover { border-color: rgba(0, 212, 255, 0.3); background: rgba(0, 212, 255, 0.06); color: rgba(255, 255, 255, 0.9); }
+      background: var(--bg-color-gray);
+      border: 1px solid var(--color-primary-lighter);
+      color: var(--text-color-regular);
+      &:hover { border-color: var(--color-primary-light); background: var(--color-primary-lighter); color: var(--text-color-primary); }
     }
 
     &--success {
@@ -741,12 +704,12 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
     }
 
     &--primary {
-      background: #00d4ff;
-      border: 1px solid #00d4ff;
+      background: var(--color-primary);
+      border: 1px solid var(--color-primary);
       color: #000;
       font-weight: 600;
-      box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
-      &:hover { background: #33ddff; border-color: #33ddff; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+      box-shadow: 0 0 10px var(--color-primary-light);
+      &:hover { background: var(--color-primary); border-color: var(--color-primary); box-shadow: 0 0 15px var(--color-primary-light); }
     }
   }
 }

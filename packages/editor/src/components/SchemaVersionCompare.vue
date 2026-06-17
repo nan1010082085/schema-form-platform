@@ -14,17 +14,19 @@
  * - schemaDiff — Widget 树差异算法
  */
 import { ref, computed } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import { ChevronRightIcon, DownloadIcon, RollbackIcon, RefreshIcon, CloseIcon } from 'tdesign-icons-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
 import { useWidgetStore } from '@/stores/widget'
 import { useEditorStore } from '@/stores/editor'
+import { useBoardStore } from '@/stores/board'
+import { parseSchemaJson } from '@/utils/parseSchemaJson'
 import type { VersionEntry } from '@/types/api'
-import type { Widget } from '@/widgets/base/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const versionStore = useSchemaVersionStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
+const boardStore = useBoardStore()
 
 const emit = defineEmits<{
   close: []
@@ -42,8 +44,6 @@ function formatVersion(v: string): string {
   if (!v || v.length !== 14) return v
   return `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)} ${v.slice(8, 10)}:${v.slice(10, 12)}:${v.slice(12, 14)}`
 }
-
-
 
 // ---- 版本选择 ----
 
@@ -99,24 +99,38 @@ function handleBackToList() {
 // ---- 版本回滚 ----
 
 async function handleRollback(version: string) {
-  const confirmed = await DialogPlugin.confirm({
-    header: '版本回滚',
-    body: `确认回滚到版本 ${formatVersion(version)}？当前未保存的修改将丢失。`,
-    theme: 'warning',
-    confirmBtn: '回滚',
-    cancelBtn: '取消',
-  })
-  if (confirmed !== 'confirm') return
+  try {
+    await ElMessageBox.confirm(
+      `确认回滚到版本 ${formatVersion(version)}？当前未保存的修改将丢失。`,
+      '版本回滚',
+      {
+        confirmButtonText: '回滚',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+  } catch {
+    return
+  }
 
   const detail = await versionStore.rollbackToVersion(version)
   if (detail) {
-    widgetStore.loadWidgets(detail.json as unknown as Widget[])
+    const { widgets, boardConfig } = parseSchemaJson(detail.json)
+    boardStore.loadBoard({
+      id: detail.id,
+      name: detail.name,
+      status: (detail.status as 'draft' | 'published') || 'draft',
+      canvas: boardConfig.canvas,
+      variables: boardConfig.variables as any[],
+      events: boardConfig.events as any[],
+    })
+    widgetStore.loadWidgets(widgets)
     editorStore.markClean()
     emit('version-loaded', version)
-    MessagePlugin.success(`已回滚到版本 ${formatVersion(version)}`)
+    ElMessage.success(`已回滚到版本 ${formatVersion(version)}`)
     emit('close')
   } else {
-    MessagePlugin.error('回滚失败')
+    ElMessage.error('回滚失败')
   }
 }
 
@@ -139,9 +153,9 @@ async function handleExport(version: string) {
   if (json) {
     const filename = `schema-${versionStore.editId}-${version}.json`
     downloadJson(json, filename)
-    MessagePlugin.success('导出成功')
+    ElMessage.success('导出成功')
   } else {
-    MessagePlugin.error('导出失败')
+    ElMessage.error('导出失败')
   }
 }
 
@@ -149,28 +163,33 @@ async function handleExport(version: string) {
 
 async function handleDelete(entry: VersionEntry) {
   if (entry.published) {
-    MessagePlugin.warning('不能删除已发布的版本')
+    ElMessage.warning('不能删除已发布的版本')
     return
   }
   if (entry.version === versionStore.currentVersion) {
-    MessagePlugin.warning('不能删除当前版本')
+    ElMessage.warning('不能删除当前版本')
     return
   }
 
-  const confirmed = await DialogPlugin.confirm({
-    header: '删除版本',
-    body: `确认删除版本 ${formatVersion(entry.version)}？此操作不可恢复。`,
-    theme: 'warning',
-    confirmBtn: '删除',
-    cancelBtn: '取消',
-  })
-  if (confirmed !== 'confirm') return
+  try {
+    await ElMessageBox.confirm(
+      `确认删除版本 ${formatVersion(entry.version)}？此操作不可恢复。`,
+      '删除版本',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+  } catch {
+    return
+  }
 
   const success = await versionStore.removeVersion(entry.version)
   if (success) {
-    MessagePlugin.success('版本已删除')
+    ElMessage.success('版本已删除')
   } else {
-    MessagePlugin.error('删除失败')
+    ElMessage.error('删除失败')
   }
 }
 
@@ -276,9 +295,9 @@ function formatChangeValue(val: unknown): string {
     <!-- Header -->
     <div :class="$style.header">
       <span :class="$style.title">版本历史</span>
-      <button :class="$style.closeBtn" @click="emit('close')">
-        <CloseIcon :size="16" />
-      </button>
+      <el-button :class="$style.closeBtn" text @click="emit('close')">
+        <AppIcon name="close" />
+      </el-button>
     </div>
 
     <!-- 版本列表视图 -->
@@ -293,18 +312,18 @@ function formatChangeValue(val: unknown): string {
             </span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <t-button
+            <el-button
               :class="$style.compareBtn"
-              theme="primary"
+              type="primary"
               size="small"
               :disabled="!canCompare"
               @click="handleCompare"
             >
               对比选中版本
-            </t-button>
-            <t-button size="small" variant="text" @click="handleRefresh">
-              <template #icon><RefreshIcon /></template>
-            </t-button>
+            </el-button>
+            <el-button size="small" text @click="handleRefresh">
+              <AppIcon name="refresh" />
+            </el-button>
           </div>
         </div>
 
@@ -327,7 +346,7 @@ function formatChangeValue(val: unknown): string {
               ]"
             >
               <div :class="$style.versionItemLeft" @click="toggleSelect(entry.version)">
-                <t-checkbox
+                <el-checkbox
                   :class="$style.versionCheckbox"
                   :model-value="isSelected(entry.version)"
                   @click.stop
@@ -338,53 +357,53 @@ function formatChangeValue(val: unknown): string {
                     {{ formatVersion(entry.version) }}
                   </span>
                   <div :class="$style.versionTags">
-                    <t-tag v-if="entry.published" theme="success" size="small">
+                    <el-tag v-if="entry.published" type="success" size="small">
                       已发布
-                    </t-tag>
-                    <t-tag v-if="entry.version === versionStore.currentVersion" theme="primary" size="small">
+                    </el-tag>
+                    <el-tag v-if="entry.version === versionStore.currentVersion" type="primary" size="small">
                       当前
-                    </t-tag>
-                    <t-tag v-if="getSideLabel(entry.version)" theme="warning" size="small">
+                    </el-tag>
+                    <el-tag v-if="getSideLabel(entry.version)" type="warning" size="small">
                       {{ getSideLabel(entry.version) }}
-                    </t-tag>
+                    </el-tag>
                   </div>
                 </div>
               </div>
 
               <div :class="$style.versionItemRight">
-                <t-popup content="回滚到此版本" placement="top">
-                  <t-button
+                <el-tooltip content="回滚到此版本" placement="top">
+                  <el-button
                     size="small"
-                    variant="text"
+                    text
                     :disabled="entry.version === versionStore.currentVersion"
                     @click.stop="handleRollback(entry.version)"
                   >
-                    <template #icon><RollbackIcon /></template>
-                  </t-button>
-                </t-popup>
-                <t-popup content="导出" placement="top">
-                  <t-button
+                    <AppIcon name="refresh-left" />
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="导出" placement="top">
+                  <el-button
                     size="small"
-                    variant="text"
+                    text
                     @click.stop="handleExport(entry.version)"
                   >
-                    <template #icon><DownloadIcon /></template>
-                  </t-button>
-                </t-popup>
-                <t-popup
+                    <AppIcon name="download" />
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip
                   v-if="!entry.published && entry.version !== versionStore.currentVersion"
                   content="删除此版本"
                   placement="top"
                 >
-                  <t-button
+                  <el-button
                     size="small"
-                    variant="text"
-                    theme="danger"
+                    text
+                    type="danger"
                     @click.stop="handleDelete(entry)"
                   >
-                    <template #icon><CloseIcon /></template>
-                  </t-button>
-                </t-popup>
+                    <AppIcon name="close" />
+                  </el-button>
+                </el-tooltip>
               </div>
             </div>
           </template>
@@ -392,11 +411,12 @@ function formatChangeValue(val: unknown): string {
 
         <!-- 分页 -->
         <div v-if="versionStore.total > versionStore.pageSize" :class="$style.versionPagination">
-          <t-pagination
-            :current="versionStore.page"
+          <el-pagination
+            :current-page="versionStore.page"
             :page-size="versionStore.pageSize"
             :total="versionStore.total"
-            size="small"
+            small
+            layout="prev, pager, next"
             @current-change="(p: number) => versionStore.goToPage(p)"
           />
         </div>
@@ -409,16 +429,16 @@ function formatChangeValue(val: unknown): string {
         <!-- 对比头部 -->
         <div :class="$style.compareHeader">
           <span :class="$style.compareTitle">版本对比</span>
-          <t-button :class="$style.compareBack" size="small" variant="text" @click="handleBackToList">
+          <el-button :class="$style.compareBack" size="small" text @click="handleBackToList">
             返回列表
-          </t-button>
+          </el-button>
         </div>
 
         <!-- 对比信息 -->
         <div :class="$style.compareInfo">
           <span :class="$style.compareLabel">旧版本:</span>
           <span :class="$style.compareVersion">{{ formatVersion(versionStore.compareLeft) }}</span>
-          <ChevronRightIcon :class="$style.compareArrow" :size="12" />
+          <AppIcon name="arrow-right" :class="$style.compareArrow" />
           <span :class="$style.compareLabel">新版本:</span>
           <span :class="$style.compareVersion">{{ formatVersion(versionStore.compareRight) }}</span>
         </div>
@@ -445,7 +465,7 @@ function formatChangeValue(val: unknown): string {
 
         <!-- Loading -->
         <div v-if="versionStore.compareLoading" :class="$style.compareLoading">
-          <RefreshIcon :class="'is-loading'" />
+          <AppIcon name="refresh" :class="'is-loading'" />
           <span>正在对比...</span>
         </div>
 
@@ -522,4 +542,4 @@ function formatChangeValue(val: unknown): string {
   </div>
 </template>
 
-<style module src="./SchemaVersionCompare.module.css" />
+<style module src="./SchemaVersionCompare.module.scss" />
