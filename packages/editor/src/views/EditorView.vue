@@ -757,7 +757,7 @@ function handleClearCanvas() {
               title="版本对比"
               @click="handleOpenVersionCompare"
             >
-              <AppIcon name="switch" :size="14" />
+              <AppIcon name="document-copy" :size="14" />
             </button>
           </el-tooltip>
           <el-button size="small" @click="handleClearCanvas">清空</el-button>
