@@ -248,6 +248,11 @@ export class ApiClient {
     return this.useMock
   }
 
+  /** 获取当前 token（供外部需要手动构建请求时使用） */
+  getTokenValue(): string {
+    return this.getToken?.() ?? ''
+  }
+
   private async buildAndSend<T>(
     method: string,
     path: string,
@@ -700,7 +705,7 @@ export async function updateSubmissionStatus(
     method: 'PATCH',
     headers: (() => {
       const h: Record<string, string> = { 'Content-Type': 'application/json' }
-      const token = (apiClient as unknown as { getToken: (() => string) | null }).getToken?.() ?? ''
+      const token = apiClient.getTokenValue()
       if (token) {
         h['Authorization'] = `Bearer ${token}`
         h['Sinosoft-Auth'] = token
@@ -746,7 +751,7 @@ export async function exportSubmissions(
   const qs = params.toString()
   const url = `${apiClient.getBaseUrl()}/submissions/${encodeURIComponent(schemaId)}/export?${qs}`
   const headers: Record<string, string> = {}
-  const token = (apiClient as unknown as { getToken: (() => string) | null }).getToken?.() ?? ''
+  const token = apiClient.getTokenValue()
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
     headers['Sinosoft-Auth'] = token

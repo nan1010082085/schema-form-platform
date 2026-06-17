@@ -23,6 +23,53 @@ function getContainerTypes(): Set<string> {
   return getAllContainerTypes() as Set<string>
 }
 
+/**
+ * 列容器容量检查与自动分配 colIndex
+ * 返回 true 表示容量已满，无法添加
+ */
+function checkAndAssignColIndex(
+  widget: Widget,
+  container: Widget,
+  colContainerColumns: number,
+): boolean {
+  if (widget.colIndex === undefined) {
+    const colCounts = new Array(colContainerColumns).fill(0)
+    for (const child of container.children ?? []) {
+      const ci = (child as Widget).colIndex ?? 0
+      if (ci < colContainerColumns) colCounts[ci]++
+    }
+    widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
+  }
+  const targetCol = widget.colIndex ?? 0
+  const existing = container.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
+  return existing.length >= 1
+}
+
+/**
+ * 计算列容器中子部件的位置和尺寸
+ */
+function calculateColPosition(
+  widget: Widget,
+  container: Widget,
+  colContainerColumns: number,
+): void {
+  const colWidths = (container.props?.colWidths as number[]) || []
+  const gutter = (container.props?.gutter as number) || 0
+  const colCount = colContainerColumns
+  const colIdx = widget.colIndex ?? 0
+  const colPercent = (colWidths[colIdx] ?? (100 / colCount)) / 100
+  const gutterAdj = gutter * (colCount - 1) / colCount
+  let xOffset = 0
+  for (let j = 0; j < colIdx; j++) {
+    const prevPercent = (colWidths[j] ?? (100 / colCount)) / 100
+    xOffset += container.position.w * prevPercent - gutterAdj + gutter
+  }
+  widget.position.x = xOffset
+  widget.position.y = 0
+  widget.position.w = container.position.w * colPercent - gutterAdj
+  widget.position.h = container.position.h
+}
+
 /** 列容器类型 → 列数映射 */
 const COL_CONTAINER_COLUMNS: Record<string, number> = {
   'single-col': 1,
@@ -276,39 +323,13 @@ export const useWidgetStore = defineStore('widget', () => {
     // 列容器：容量检查必须在 removeFromList 之前，否则 widget 会从画布消失
     const colContainerColumns = getColContainerColumns(container.type)
     if (colContainerColumns > 0) {
-      // 先自动分配 colIndex，再检查容量
-      if (widget.colIndex === undefined) {
-        const colCounts = new Array(colContainerColumns).fill(0)
-        for (const child of container.children ?? []) {
-          const ci = (child as Widget).colIndex ?? 0
-          if (ci < colContainerColumns) colCounts[ci]++
-        }
-        widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
-      }
-      const targetCol = widget.colIndex ?? 0
-      const existing = container.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
-      if (existing.length >= 1) return // column full — 1 widget per column
+      if (checkAndAssignColIndex(widget, container, colContainerColumns)) return
     }
 
     removeFromList(widgetId, widgets.value)
 
     if (colContainerColumns > 0) {
-      // 调整子部件尺寸以填满所在列
-      const colWidths = (container.props?.colWidths as number[]) || []
-      const gutter = (container.props?.gutter as number) || 0
-      const colCount = colContainerColumns
-      const colIdx = widget.colIndex ?? 0
-      const colPercent = (colWidths[colIdx] ?? (100 / colCount)) / 100
-      const gutterAdj = gutter * (colCount - 1) / colCount
-      let xOffset = 0
-      for (let j = 0; j < colIdx; j++) {
-        const prevPercent = (colWidths[j] ?? (100 / colCount)) / 100
-        xOffset += container.position.w * prevPercent - gutterAdj + gutter
-      }
-      widget.position.x = xOffset
-      widget.position.y = 0
-      widget.position.w = container.position.w * colPercent - gutterAdj
-      widget.position.h = container.position.h
+      calculateColPosition(widget, container, colContainerColumns)
     }
 
     if (!container.children) container.children = []
@@ -373,17 +394,7 @@ export const useWidgetStore = defineStore('widget', () => {
     // 列容器：容量检查必须在 removeFromList 之前，否则 widget 会从画布消失
     const colContainerColumns = getColContainerColumns(target.type)
     if (colContainerColumns > 0) {
-      if (widget.colIndex === undefined) {
-        const colCounts = new Array(colContainerColumns).fill(0)
-        for (const child of target.children ?? []) {
-          const ci = (child as Widget).colIndex ?? 0
-          if (ci < colContainerColumns) colCounts[ci]++
-        }
-        widget.colIndex = colCounts.indexOf(Math.min(...colCounts))
-      }
-      const targetCol = widget.colIndex ?? 0
-      const existing = target.children?.filter(c => (c as Widget).colIndex === targetCol) ?? []
-      if (existing.length >= 1) return // column full — 1 widget per column
+      if (checkAndAssignColIndex(widget, target, colContainerColumns)) return
     }
 
     removeFromList(id, widgets.value)
@@ -392,22 +403,7 @@ export const useWidgetStore = defineStore('widget', () => {
     widget.position.y = y
 
     if (colContainerColumns > 0) {
-      // 调整子部件尺寸以填满所在列
-      const colWidths = (target.props?.colWidths as number[]) || []
-      const gutter = (target.props?.gutter as number) || 0
-      const colCount = colContainerColumns
-      const colIdx = widget.colIndex ?? 0
-      const colPercent = (colWidths[colIdx] ?? (100 / colCount)) / 100
-      const gutterAdj = gutter * (colCount - 1) / colCount
-      let xOffset = 0
-      for (let j = 0; j < colIdx; j++) {
-        const prevPercent = (colWidths[j] ?? (100 / colCount)) / 100
-        xOffset += target.position.w * prevPercent - gutterAdj + gutter
-      }
-      widget.position.x = xOffset
-      widget.position.y = 0
-      widget.position.w = target.position.w * colPercent - gutterAdj
-      widget.position.h = target.position.h
+      calculateColPosition(widget, target, colContainerColumns)
     }
 
     if (!target.children) target.children = []

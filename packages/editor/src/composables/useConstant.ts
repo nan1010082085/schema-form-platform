@@ -52,10 +52,14 @@ export function canNest(type: SchemaType): boolean {
 
 /**
  * 获取所有容器类型（静态缓存，用于非响应式场景）
+ * 注意：此函数每次调用都会遍历所有 widgets，建议在非频繁调用场景使用
  */
-export function getAllContainerTypes(): Set<SchemaType> {
+export function useAllContainerTypes(): Set<SchemaType> {
   return getContainerTypesFromRegistry()
 }
+
+/** @deprecated 使用 useAllContainerTypes 替代 */
+export const getAllContainerTypes = useAllContainerTypes
 
 /** 布局/容器组件（layout + container 分组，动态） */
 export function useLayoutTypes(): ReadonlySet<SchemaType> {
@@ -99,7 +103,7 @@ export function useBusinessTypes(): ReadonlySet<SchemaType> {
 /**
  * 获取指定分组的所有组件类型
  */
-export function getTypesByGroup(group: WidgetRegistryItem['group']): Set<SchemaType> {
+export function useTypesByGroup(group: WidgetRegistryItem['group']): Set<SchemaType> {
   const types = new Set<SchemaType>()
   for (const item of getAllWidgets()) {
     if (item.group === group) {
@@ -108,3 +112,6 @@ export function getTypesByGroup(group: WidgetRegistryItem['group']): Set<SchemaT
   }
   return types
 }
+
+/** @deprecated 使用 useTypesByGroup 替代 */
+export const getTypesByGroup = useTypesByGroup

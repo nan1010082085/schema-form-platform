@@ -162,7 +162,9 @@ export async function executeEventAction(
     case 'post-message': {
       if (action.message) {
         const data = resolveMessageData(action.message, ctx)
-        window.parent.postMessage(data, '*')
+        // 安全考虑：使用当前页面的 origin 而非 '*'
+        // 如果需要跨域通信，应配置具体的 targetOrigin
+        window.parent.postMessage(data, window.location.origin)
         logger.event('发送消息:', data)
       }
       break
