@@ -1,9 +1,8 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import 'tdesign-vue-next/dist/tdesign.css'
-import '@schema-form/shared-styles/tokens.css'
+import 'element-plus/dist/index.css'
+import '@schema-form/shared-styles/css-variables.scss'
 
-import { setupTDesign } from '@schema-form/shared-config/tdesign'
 import { applyThemeInline, installThemeWatchdog, EDITOR_THEME_VARS, type ThemeVars } from '@schema-form/shared-qiankun/themeGuard'
 
 import '@/styles/variables.scss'
@@ -88,7 +87,6 @@ function createEditorApp() {
 
   app.use(pinia)
   app.use(router)
-  setupTDesign(app, { size: 'medium' })
   app.directive('permission', permissionDirective)
   registerAllWidgets()
 

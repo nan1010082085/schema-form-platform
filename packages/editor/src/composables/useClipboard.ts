@@ -2,9 +2,9 @@
  * useClipboard — 剪贴板操作 composable
  *
  * 优先使用 navigator.clipboard API，降级到 execCommand('copy')。
- * 自动通过 MessagePlugin 给出成功/失败反馈。
+ * 自动通过 ElMessage 给出成功/失败反馈。
  */
-import { MessagePlugin } from 'tdesign-vue-next'
+import { ElMessage } from 'element-plus'
 
 export function useClipboard() {
   /**
@@ -19,15 +19,15 @@ export function useClipboard() {
       } else {
         fallbackCopy(text)
       }
-      MessagePlugin.success(successMsg)
+      ElMessage.success(successMsg)
       return true
     } catch {
       try {
         fallbackCopy(text)
-        MessagePlugin.success(successMsg)
+        ElMessage.success(successMsg)
         return true
       } catch {
-        MessagePlugin.error('复制失败')
+        ElMessage.error('复制失败')
         return false
       }
     }

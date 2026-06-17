@@ -6,13 +6,7 @@
  * 点击节点可展开查看输入/输出数据。
  */
 import { ref } from 'vue'
-import {
-  CheckCircleFilledIcon,
-  CloseCircleFilledIcon,
-  LoadingIcon,
-  ErrorCircleFilledIcon,
-  MinusIcon,
-} from 'tdesign-icons-vue-next'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import styles from './ExecutionTimeline.module.scss'
 
 // ── Types ──
@@ -44,13 +38,13 @@ const expandedNodes = ref<Set<string>>(new Set())
 
 // ── Helpers ──
 function nodeIcon(status: string) {
-  const map: Record<string, typeof CheckCircleFilledIcon> = {
-    completed: CheckCircleFilledIcon,
-    failed: CloseCircleFilledIcon,
-    running: LoadingIcon,
-    skipped: MinusIcon,
+  const map: Record<string, string> = {
+    completed: 'circle-check-filled',
+    failed: 'circle-close-filled',
+    running: 'loading',
+    skipped: 'remove',
   }
-  return map[status] ?? ErrorCircleFilledIcon
+  return map[status] ?? 'warning'
 }
 
 function nodeIconColor(status: string): string {
@@ -160,7 +154,7 @@ function handleNodeClick(node: NodeLog) {
 
         <!-- Error -->
         <div v-if="node.error" :class="styles.errorBlock">
-          <ErrorCircleFilledIcon />
+          <AppIcon name="circle-close-filled" :size="16" />
           <span>{{ node.error }}</span>
         </div>
 

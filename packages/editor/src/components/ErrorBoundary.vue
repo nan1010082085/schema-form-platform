@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref, onErrorCaptured, computed, h } from 'vue'
-import { Button as TButton } from 'tdesign-vue-next'
+import { ElButton } from 'element-plus'
 import styles from './ErrorBoundary.module.scss'
 
 export default defineComponent({
@@ -55,8 +55,8 @@ export default defineComponent({
               : null,
             h('div', { class: styles['fg-error-boundary__message'] }, error.value?.message ?? '未知错误'),
             h(
-              TButton,
-              { size: 'small', theme: 'primary', onClick: retry },
+              ElButton,
+              { size: 'small', type: 'primary', onClick: retry },
               () => '重试',
             ),
           ]),

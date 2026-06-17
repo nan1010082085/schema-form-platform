@@ -12,7 +12,7 @@
  * 3. validate / resetFields 依赖外部传入的 FormInstance ref
  */
 import { reactive, type Ref } from 'vue'
-import type { FormInstanceFunctions } from 'tdesign-vue-next'
+import type { FormInstance } from 'element-plus'
 import type { PartialWidget, FormData } from '@/components/WidgetRenderer/types'
 
 export interface UseFormDataReturn {

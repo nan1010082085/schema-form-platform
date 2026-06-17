@@ -2,7 +2,7 @@
  * Action 执行器
  * 顺序执行按钮动作链，支持确认、API 调用、路由跳转等
  */
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { SchemaAction, FormData } from '@/components/WidgetRenderer/types'
 import { apiClient } from './apiClient'
 import { useLogger } from '@/composables/useLogger'
@@ -30,25 +30,22 @@ export async function executeActions(
 
     // 确认提示
     if (action.confirm) {
-      const confirmed = await new Promise<boolean>((resolve) => {
-        const dialog = DialogPlugin.confirm({
-          header: '提示',
-          body: action.confirm,
-          theme: 'warning',
-          confirmBtn: '确定',
-          cancelBtn: '取消',
-          onConfirm: () => { resolve(true); dialog.destroy() },
-          onClose: () => { resolve(false); dialog.destroy() },
+      try {
+        await ElMessageBox.confirm(action.confirm, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
         })
-      })
-      if (!confirmed) return // 用户取消，中断整个链
+      } catch {
+        return // 用户取消，中断整个链
+      }
     }
 
     try {
       await executeAction(action, context)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : '操作失败'
-      MessagePlugin.error(message)
+      ElMessage.error(message)
       return // 出错中断
     }
   }

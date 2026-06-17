@@ -1,6 +1,6 @@
 /** 节点类型枚举 */
 import type { InjectionKey, ComputedRef } from 'vue'
-import type { FormRule } from 'tdesign-vue-next'
+import type { FormItemRule } from 'element-plus'
 import type { SchemaType } from '../../widgets/base/types'
 export type { SchemaType }
 
@@ -203,7 +203,7 @@ export interface SchemaButtonConfig {
 }
 
 /** Element Plus 表单校验规则 — 使用官方类型 */
-export type SchemaRules = FormRule[]
+export type SchemaRules = FormItemRule[]
 
 /** 通用组件 props — 用 unknown 约束，消费方按类型断言 */
 export type ComponentProps = Record<string, unknown>

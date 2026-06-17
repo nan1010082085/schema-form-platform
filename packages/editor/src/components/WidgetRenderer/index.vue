@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, provide, onMounted, watch, toRef } from 'vue'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
-import type { FormInstanceFunctions } from 'tdesign-vue-next'
-import zhCN from 'tdesign-vue-next/esm/locale/zh_CN'
-import enUS from 'tdesign-vue-next/esm/locale/en_US'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import SchemaRender from './SchemaRender.vue'
 import type { Widget } from '../../widgets/base/types'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
@@ -43,12 +40,6 @@ import { triggerWidgetEvent } from '@/engine/eventEngine'
 import styles from './style.module.scss'
 
 const logger = useLogger('WidgetRenderer')
-
-/** TDesign 语言包映射 */
-const tdLocaleMap: Record<FormGridLocale, typeof zhCN> = {
-  'zh-CN': zhCN,
-  'en-US': enUS,
-}
 
 const props = defineProps<FormGridProps & {
   /** 编辑器模式：启用容器拖放区域（Sprint 11） */
@@ -362,9 +353,6 @@ const currentLocale = computed(() => props.locale ?? 'zh-CN')
 const { t } = useLocale(currentLocale)
 provide(FORM_GRID_T_KEY, t)
 
-// TDesign 语言包（按需映射，避免全量加载）
-const tdLocale = computed(() => tdLocaleMap[currentLocale.value])
-
 /**
  * 对 API 返回数据应用字段映射
  * 将 API 返回的字段名转换为 formData 中的字段名
@@ -425,7 +413,7 @@ async function loadApiData(config: LoadApiConfig): Promise<void> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : '数据加载失败'
     logger.error('loadApi:', msg)
-    MessagePlugin.error(msg)
+    ElMessage.error(msg)
   } finally {
     loading.value = false
   }
@@ -495,7 +483,7 @@ async function submit() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : '数据转换失败'
       logger.error('transformBeforeSubmit:', msg)
-      MessagePlugin.error(msg)
+      ElMessage.error(msg)
       return
     }
   }
