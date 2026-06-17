@@ -27,7 +27,7 @@ import { getModelForTask } from './agentBase.js'
 import { callLLMWithFallback } from './agentErrorHandler.js'
 import { extractAgentContext } from './contextCarrier.js'
 import { getMetadata } from '../tools/toolHandlers.js'
-import { ROUTER_SYSTEM_PROMPT } from '@schema-form/shared-ai/promptBuilder'
+import { ROUTER_SYSTEM_PROMPT } from '@schema-form/ai-shared/promptBuilder'
 import { logger } from '../../utils/logger.js'
 
 // ────────────────────────────────────────────
