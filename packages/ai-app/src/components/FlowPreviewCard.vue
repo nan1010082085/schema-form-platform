@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, nextTick, ref } from 'vue'
-/* TDesign migration: components registered globally */
+import { computed, watch, nextTick } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -8,6 +7,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import type { FlowGraph, FlowNodeData } from '@/types'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import {
   PreviewStartEvent,
   PreviewEndEvent,
@@ -115,25 +115,6 @@ watch(
 function handleFitView() {
   fitView({ padding: 0.2 })
 }
-
-// ---- Node type labels ----
-
-const NODE_TYPE_LABELS: Record<string, string> = {
-  startEvent: '开始事件',
-  endEvent: '结束事件',
-  userTask: '用户任务',
-  serviceTask: '服务任务',
-  scriptTask: '脚本任务',
-  sendTask: '发送任务',
-  receiveTask: '接收任务',
-  exclusiveGateway: '排他网关',
-  parallelGateway: '并行网关',
-  inclusiveGateway: '包含网关',
-}
-
-function getNodeTypeLabel(bpmnType: string): string {
-  return NODE_TYPE_LABELS[bpmnType] ?? bpmnType
-}
 </script>
 
 <template>
@@ -142,17 +123,15 @@ function getNodeTypeLabel(bpmnType: string): string {
     <div :class="$style.head">
       <div :class="$style.headLeft">
         <div :class="$style.headIcon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-          </svg>
+          <AppIcon name="connection" :size="14" />
         </div>
         <span :class="$style.title">{{ title }}</span>
       </div>
       <div :class="$style.headRight">
         <span :class="$style.badge">{{ nodeCount }} 节点 / {{ edgeCount }} 连线</span>
-        <t-button :class="$style.fitBtn" title="适配画布" variant="text" @click="handleFitView">
-          &#x26F6;
-        </t-button>
+        <el-button :class="$style.fitBtn" title="适配画布" text @click="handleFitView">
+          <AppIcon name="full-screen" />
+        </el-button>
       </div>
     </div>
 
@@ -191,30 +170,25 @@ function getNodeTypeLabel(bpmnType: string): string {
 
     <!-- Actions -->
     <div v-if="primaryAction || secondaryAction" :class="$style.actions">
-      <t-button
+      <el-button
         v-if="secondaryAction"
         :class="$style.btnGhost"
         @click="emit('secondary-action')"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
+        <AppIcon name="edit" :size="12" />
         {{ secondaryAction }}
-      </t-button>
-      <t-button
+      </el-button>
+      <el-button
         v-if="primaryAction"
         :class="$style.btnPrimary"
-        theme="primary"
+        type="primary"
         @click="emit('primary-action')"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
+        <AppIcon name="check" :size="12" />
         {{ primaryAction }}
-      </t-button>
+      </el-button>
     </div>
   </div>
 </template>
 
-<style module src="./FlowPreviewCard.module.css" />
+<style module src="./FlowPreviewCard.module.scss" />
