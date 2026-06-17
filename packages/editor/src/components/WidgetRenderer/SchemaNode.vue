@@ -18,7 +18,7 @@
 import { computed, inject, provide, ref, onMounted, onUnmounted, type ComputedRef, type ComponentPublicInstance } from 'vue'
 import { widgetDataKey, widgetStyleKey, widgetRenderStateKey, formContextKey } from '../../widgets/base/types'
 import type { Widget, SchemaType, LinkageState } from '../../widgets/base/types'
-import type { PartialWidget, FormData } from './types'
+import type { FormData, EventExecutionContext } from './types'
 import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY, FORM_GRID_LINKAGE_KEY } from './types'
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
@@ -26,7 +26,7 @@ import { useEditorStore } from '../../stores/editor'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
-import EnhancedDialog from '../EnhancedDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import styles from './SchemaNode.module.scss'
 
 const props = defineProps<{
@@ -193,6 +193,29 @@ function buildEditorEventContext(): EventExecutionContext {
     },
     getFormData: () => formData.value,
     emit: (eventName: string, payload?: unknown) => logger.event('Emit:', eventName, payload),
+    confirm: (message: string) => {
+      return new Promise<void>((resolve, reject) => {
+        import('element-plus').then(({ ElMessageBox }) => {
+          ElMessageBox.confirm(message, '确认', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }).then(() => resolve()).catch(() => reject())
+        })
+      })
+    },
+    variables: {},
+    setVariable: (name: string, value: unknown) => {
+      logger.event(`Set variable: ${name} = ${value}`)
+    },
+    getVariable: (name: string) => undefined,
+    exposed: {},
+    triggerEvent: (targetId: string, eventName: string) => {
+      const target = widgetStore.findWidget(targetId)
+      if (target) {
+        triggerWidgetEvent(target, eventName, buildEditorEventContext())
+      }
+    },
   }
 }
 
@@ -325,7 +348,7 @@ const wrapperStyle = computed(() => {
       </div>
 
       <!-- 预览模式：EnhancedDialog（默认隐藏，通过事件打开） -->
-      <EnhancedDialog
+      <AppDialog
         v-else
         v-model="dialogVisible"
         :title="(widget.props?.title as string) || widget.label || '弹窗'"
@@ -344,14 +367,14 @@ const wrapperStyle = computed(() => {
           />
         </template>
         <template v-if="widget.props?.showFooter !== false" #footer>
-          <t-button @click="dialogVisible = false">
+          <el-button @click="dialogVisible = false">
             {{ (widget.props?.cancelText as string) || '取消' }}
-          </t-button>
-          <t-button theme="primary" @click="dialogVisible = false">
+          </el-button>
+          <el-button type="primary" @click="dialogVisible = false">
             {{ (widget.props?.confirmText as string) || '确定' }}
-          </t-button>
+          </el-button>
         </template>
-      </EnhancedDialog>
+      </AppDialog>
     </template>
 
     <!-- 其他容器组件：容器渲染 + 独立子部件层 -->
@@ -401,11 +424,11 @@ const wrapperStyle = computed(() => {
       @blur="INPUT_COMPONENT_TYPES.has(widget.type) && (isEditMode ? handleWidgetEvent('blur') : handlePreviewEvent('blur'))"
       @click="isEditMode && CLICKABLE_TYPES.has(widget.type) && handleWidgetEvent('click')"
     >
-      <!-- 表单校验：有 field + validationRules 时包裹 t-form-item -->
-      <t-form-item
+      <!-- 表单校验：有 field + validationRules 时包裹 el-form-item -->
+      <el-form-item
         v-if="needsFormItem"
         :label="widget.label"
-        :name="widget.field"
+        :prop="widget.field"
         :rules="widget.validationRules"
       >
         <component
@@ -413,7 +436,7 @@ const wrapperStyle = computed(() => {
           :is="resolvedComponent"
           :widget="widget"
         />
-      </t-form-item>
+      </el-form-item>
       <component
         v-else-if="resolvedComponent"
         :is="resolvedComponent"
