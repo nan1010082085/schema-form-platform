@@ -23,7 +23,6 @@ import { EVENT_CONTEXT_KEY, DIALOG_REGISTRY_KEY, FORM_GRID_LINKAGE_KEY } from '.
 import { getComponentMap } from '../../widgets/registry'
 import { useWidgetStore } from '../../stores/widget'
 import { useEditorStore } from '../../stores/editor'
-import { useBoardStore } from '../../stores/board'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
@@ -139,7 +138,6 @@ const filteredChildren = computed(() => {
 
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
-const boardStore = useBoardStore()
 
 /** 交互式容器空白区域点击 → 选中容器 */
 function handleInteractiveContainerClick() {
@@ -175,14 +173,8 @@ async function handlePreviewEvent(trigger: string, _value?: unknown) {
   await triggerWidgetEvent(props.widget, trigger, eventCtx)
 }
 
-/** 构建编辑器模式的事件执行上下文 */
+/** 构建编辑器模式的事件执行上下文（编辑器仅做配置验证，不实际执行复杂逻辑） */
 function buildEditorEventContext(): EventExecutionContext {
-  // 从 boardStore 获取画布级变量
-  const boardVars = boardStore.variables.reduce((acc, v) => {
-    acc[v.name] = v.defaultValue
-    return acc
-  }, {} as Record<string, unknown>)
-
   return {
     findWidget: (id: string) => widgetStore.findWidget(id) as Widget | undefined,
     updateWidget: (id: string, patch: Partial<Widget>) => widgetStore.updateWidget(id, patch),
@@ -202,30 +194,12 @@ function buildEditorEventContext(): EventExecutionContext {
     },
     getFormData: () => formData.value,
     emit: (eventName: string, payload?: unknown) => logger.event('Emit:', eventName, payload),
-    confirm: (message: string) => {
-      return new Promise<void>((resolve, reject) => {
-        import('element-plus').then(({ ElMessageBox }) => {
-          ElMessageBox.confirm(message, '确认', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-          }).then(() => resolve()).catch(() => reject())
-        })
-      })
-    },
-    variables: boardVars,
-    setVariable: (name: string, value: unknown) => {
-      boardStore.updateVariable(name, { defaultValue: value })
-      logger.event(`Set variable: ${name} = ${value}`)
-    },
-    getVariable: (name: string) => boardStore.variables.find(v => v.name === name)?.defaultValue,
+    confirm: (message: string) => Promise.resolve(),
+    variables: {},
+    setVariable: () => {},
+    getVariable: () => undefined,
     exposed: {},
-    triggerEvent: (targetId: string, eventName: string) => {
-      const target = widgetStore.findWidget(targetId)
-      if (target) {
-        triggerWidgetEvent(target, eventName, buildEditorEventContext())
-      }
-    },
+    triggerEvent: () => {},
   }
 }
 
