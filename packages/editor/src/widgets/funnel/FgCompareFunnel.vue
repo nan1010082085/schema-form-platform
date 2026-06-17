@@ -10,56 +10,42 @@ import styles from './style.module.scss'
 const widgetData = inject(widgetDataKey)!
 
 function buildOption(data: Record<string, unknown>[], props: Record<string, unknown>): Record<string, unknown> {
-  const xField = (props.xField as string) || 'category'
-  const yField = (props.yField as string) || 'value'
+  const nameField = (props.nameField as string) || 'name'
+  const seriesFields = (props.seriesFields as string[]) || ['value1', 'value2']
+  const seriesNames = (props.seriesNames as string[]) || ['流程A', '流程B']
   const title = props.title as string
   const showLegend = props.showLegend !== false
-  const legendPosition = (props.legendPosition as string) || 'bottom'
-  const showTooltip = props.showTooltip !== false
-  const showLabel = props.showLabel === true
-  const stack = props.stack === true
-  const horizontal = props.horizontal === true
-  const animation = props.animation !== false
+  const showLabel = props.showLabel !== false
   const colorScheme = (props.colorScheme as string) || 'default'
   const customColors = props.customColors as string[] | undefined
-  const xAxisName = props.xAxisName as string
-  const yAxisName = props.yAxisName as string
-
-  const xData = data.map(item => item[xField])
-  const seriesData = data.map(item => item[yField])
 
   const colorMap: Record<string, string[]> = {
-    default: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
-    dark: ['#dd6b66', '#759aa0', '#e69d87', '#8dc1a9', '#ea7e53', '#73a373', '#73b9bc', '#7289ab', '#91ca8c'],
-    light: ['#37A2DA', '#32C5E9', '#67E0E3', '#9FE6B8', '#FFDB5C', '#ff9f7f', '#fb7293', '#E690D1', '#e7bcf3'],
+    default: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
+    dark: ['#dd6b66', '#759aa0', '#e69d87', '#8dc1a9', '#ea7e53'],
+    light: ['#37A2DA', '#32C5E9', '#67E0E3', '#9FE6B8', '#FFDB5C'],
   }
 
   const colors = customColors && customColors.length > 0 ? customColors : (colorMap[colorScheme] || colorMap.default)
 
-  const legendConfig = showLegend ? { [legendPosition]: 0 } : undefined
-
-  const xAxis = horizontal
-    ? { type: 'value', name: yAxisName || undefined }
-    : { type: 'category', data: xData, name: xAxisName || undefined }
-  const yAxis = horizontal
-    ? { type: 'category', data: xData, name: xAxisName || undefined }
-    : { type: 'value', name: yAxisName || undefined }
+  const funnelSeries = seriesFields.map((field, idx) => ({
+    name: seriesNames[idx] || field,
+    type: 'funnel' as const,
+    left: idx === 0 ? '10%' : '55%',
+    width: '35%',
+    sort: 'descending' as const,
+    label: showLabel ? { show: true, position: 'inside' as const } : undefined,
+    data: data.map(item => ({
+      name: item[nameField],
+      value: item[field],
+    })),
+  }))
 
   return {
     color: colors,
     title: title ? { text: title, left: 'center' } : undefined,
-    tooltip: showTooltip ? { trigger: 'axis' } : undefined,
-    legend: legendConfig,
-    grid: { left: '3%', right: '4%', bottom: showLegend ? '12%' : '3%', containLabel: true },
-    xAxis,
-    yAxis,
-    animation,
-    series: [{
-      type: 'bar',
-      data: seriesData,
-      stack: stack ? 'total' : undefined,
-      label: showLabel ? { show: true, position: horizontal ? 'right' : 'top' } : undefined,
-    }],
+    tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c}' },
+    legend: showLegend ? { data: seriesNames, bottom: 0 } : undefined,
+    series: funnelSeries,
   }
 }
 
@@ -76,7 +62,6 @@ useExposeWidget(() => ({
 const chartRef = ref<HTMLDivElement>()
 let chartInstance: EChartsType | null = null
 
-// 懒加载：仅当容器进入视口后才初始化图表
 const { isVisible } = useChartLazyInit(chartRef)
 
 function initChart() {
@@ -91,7 +76,6 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-// 容器可见后初始化图表
 watch(isVisible, (visible) => {
   if (visible) {
     nextTick(() => initChart())
@@ -110,7 +94,6 @@ watch(chartOption, async (option) => {
 })
 
 onMounted(() => {
-  // 如果 IntersectionObserver 还没触发（首屏即可见），直接初始化
   if (isVisible.value) {
     initChart()
   }

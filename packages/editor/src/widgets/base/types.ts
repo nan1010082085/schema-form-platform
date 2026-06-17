@@ -41,8 +41,15 @@ export type BasicType =
   | 'tag-input'
   | 'autocomplete'
   | 'descriptions'
-  | 'bar-chart' | 'line-chart' | 'pie-chart' | 'scatter-chart'
-  | 'radar' | 'gauge' | 'heatmap' | 'funnel' | 'candlestick'
+  | 'bar-chart' | 'stacked-bar-chart' | 'horizontal-bar-chart'
+  | 'line-chart' | 'area-chart'
+  | 'pie-chart' | 'donut-chart'
+  | 'scatter-chart' | 'bubble-chart'
+  | 'radar' | 'filled-radar'
+  | 'gauge' | 'multi-gauge'
+  | 'heatmap'
+  | 'funnel' | 'compare-funnel'
+  | 'candlestick'
   | 'statistic'
 
 /** 所有组件类型 */
@@ -364,6 +371,7 @@ export interface PropertyPanelConfig {
 export interface WidgetConfig {
   name: string
   displayName: string
+  type?: SchemaType         // 组件类型（变体需要指定，基础组件可省略）
   description: string      // 部件描述，用于属性面板 tooltip
   author?: string          // 部件作者
   defaultStyle?: Record<string, unknown>

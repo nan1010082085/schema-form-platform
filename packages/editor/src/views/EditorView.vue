@@ -9,9 +9,9 @@
  * - useEditorStore — 选中、历史、模式
  * - useDragStore   — 拖拽状态
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
 import { useSnapshot } from '@/composables/useSnapshot'
@@ -29,20 +29,12 @@ import EventLogPanel from '@/components/Editor/EventLogPanel.vue'
 import { setLogCollector } from '@/composables/useLogger'
 import { useEventLog } from '@/composables/useEventLog'
 import type { Widget } from '@/widgets/base/types'
-import {
-  CopyIcon,
-  DeleteIcon,
-  EditIcon,
-  FullscreenIcon,
-  TimeIcon,
-  FileIcon,
-  BrowseIcon,
-  RefreshIcon,
-} from 'tdesign-icons-vue-next'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
 import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
+import SaveTemplateDialog from '@/components/Editor/SaveTemplateDialog.vue'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 // Register all widgets on first mount
 registerAllWidgets()
@@ -212,19 +204,23 @@ onMounted(async () => {
 
   // Socket: 监听 AI 推送事件
   connectSocket()
-  onAiApply((data: AiApplyEvent) => {
+  onAiApply(async (data: AiApplyEvent) => {
     if (data.type === 'schema' && Array.isArray(data.payload)) {
       const { widgets } = parseSchemaJson(data.payload)
       // 逐个插入到当前画布，而非替换
       for (const widget of widgets) {
         widgetStore.addWidget(widget)
       }
-      MessagePlugin.success(`已插入 ${widgets.length} 个组件到画布`)
+      ElMessage.success(`已插入 ${widgets.length} 个组件到画布`)
+
+      // 自动保存并生成缩略图
+      await nextTick()
+      await handleSave()
     }
   })
   onAiPublished((data: AiPublishedEvent) => {
     if (data.type === 'schema') {
-      MessagePlugin.success('AI 已发布 Schema')
+      ElMessage.success('AI 已发布 Schema')
     }
   })
 })
@@ -380,9 +376,9 @@ async function handleSave() {
       currentEditId.value = result.editId
       currentVersion.value = result.version
       editorStore.markClean()
-      MessagePlugin.success('已保存')
+      ElMessage.success('已保存')
     } else {
-      MessagePlugin.error(apiStore.error || '保存失败')
+      ElMessage.error(apiStore.error || '保存失败')
     }
   } finally {
     setTimeout(() => {
@@ -392,47 +388,66 @@ async function handleSave() {
   }
 }
 
-function handlePublish() {
+// ================================================================
+// Save as template
+// ================================================================
+
+const showSaveTemplateDialog = ref(false)
+
+function handleSaveCommand(command: string) {
+  if (command === 'save') {
+    handleSave()
+  } else if (command === 'saveAsTemplate') {
+    showSaveTemplateDialog.value = true
+  }
+}
+
+async function handlePublish() {
   if (!boardStore.id || _publishingLock) return
 
-  const confirmDia = DialogPlugin.confirm({
-    header: '发布确认',
-    body: '确认发布当前版本？',
-    theme: 'info',
-    confirmBtn: '发布',
-    onConfirm: async () => {
-      confirmDia.hide()
-      _publishingLock = true
-      publishing.value = true
-      try {
-        await handleSave()
-        if (!boardStore.id) return
-
-        const result = await apiStore.publishSchema(boardStore.id)
-        if (result) {
-          boardStore.status = 'published'
-          MessagePlugin.success('发布成功')
-        } else {
-          MessagePlugin.error(apiStore.error || '发布失败')
-        }
-      } finally {
-        setTimeout(() => {
-          _publishingLock = false
-          publishing.value = false
-        }, COOLDOWN_MS)
+  try {
+    await ElMessageBox.confirm(
+      '确认发布当前版本？',
+      '发布确认',
+      {
+        confirmButtonText: '发布',
+        cancelButtonText: '取消',
+        type: 'info',
       }
-    },
-  })
+    )
+
+    _publishingLock = true
+    publishing.value = true
+    try {
+      await handleSave()
+      if (!boardStore.id) return
+
+      const result = await apiStore.publishSchema(boardStore.id)
+      if (result) {
+        boardStore.status = 'published'
+        ElMessage.success('发布成功')
+      } else {
+        ElMessage.error(apiStore.error || '发布失败')
+      }
+    } finally {
+      setTimeout(() => {
+        _publishingLock = false
+        publishing.value = false
+      }, COOLDOWN_MS)
+    }
+  } catch {
+    // 用户取消
+  }
 }
 
 async function handleSavePreview(dataUrl: string) {
   if (!boardStore.id) {
-    MessagePlugin.warning('请先保存画布')
+    ElMessage.warning('请先保存画布')
     return
   }
   const result = await apiStore.updateSchema(boardStore.id, { thumbnail: dataUrl })
   if (result) {
-    MessagePlugin.success('预览图已保存')
+    ElMessage.success('预览图已保存')
   }
 }
 
@@ -490,15 +505,15 @@ async function handleLoadVersion(entry: VersionEntry) {
     currentVersion.value = entry.version
     editorStore.markClean()
     versionPopoverVisible.value = false
-    MessagePlugin.success(`已加载版本 ${formatVersion(entry.version)}`)
+    ElMessage.success(`已加载版本 ${formatVersion(entry.version)}`)
   } catch {
-    MessagePlugin.error('加载版本失败')
+    ElMessage.error('加载版本失败')
   }
 }
 
 async function handleOpenVersionCompare() {
   if (!currentEditId.value) {
-    MessagePlugin.warning('请先保存 Schema 后才能查看版本历史')
+    ElMessage.warning('请先保存 Schema 后才能查看版本历史')
     return
   }
   await schemaVersionStore.init(currentEditId.value, currentVersion.value)
@@ -526,10 +541,8 @@ function handleClearCanvas() {
     <div :class="['editor-view__toolbar', { 'editor-view__toolbar--preview': mode === 'preview' }]">
       <!-- Left: back + name -->
       <div class="editor-view__toolbar-left">
-        <button class="editor-view__icon-btn" title="返回" @click="router.push('/')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+        <button class="editor-view__icon-btn" title="返回列表" @click="router.push('/instances')">
+          <AppIcon name="arrow-left" :size="14" />
         </button>
         <div class="editor-view__divider" />
         <template v-if="mode === 'edit'">
@@ -546,64 +559,52 @@ function handleClearCanvas() {
 
       <!-- Center: panel toggles + operations + AI -->
       <div v-if="mode === 'edit'" class="editor-view__toolbar-center">
-        <t-popup :content="leftPanelVisible ? '隐藏部件面板' : '显示部件面板'" placement="bottom">
+        <el-tooltip :content="leftPanelVisible ? '隐藏部件面板' : '显示部件面板'" placement="bottom">
           <button
             class="editor-view__icon-btn"
             :class="{ 'editor-view__icon-btn--active': leftPanelVisible }"
             title="部件面板"
             @click="leftPanelVisible = !leftPanelVisible"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="2" width="14" height="12" rx="1" />
-              <line x1="5" y1="2" x2="5" y2="14" />
-            </svg>
+            <AppIcon name="grid" :size="14" />
           </button>
-        </t-popup>
+        </el-tooltip>
         <div class="editor-view__btn-group">
-          <t-popup content="撤销 (Ctrl+Z)" placement="bottom">
+          <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.canUndo" @click="handleUndo">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 3 2 7 6 11" />
-                <path d="M2 7h8a4 4 0 0 1 0 8H7" />
-              </svg>
+              <AppIcon name="back" :size="14" />
             </button>
-          </t-popup>
-          <t-popup content="重做 (Ctrl+Y)" placement="bottom">
+          </el-tooltip>
+          <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.canRedo" @click="handleRedo">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="10 3 14 7 10 11" />
-                <path d="M14 7H6a4 4 0 0 0 0 8h3" />
-              </svg>
+              <AppIcon name="refresh" :size="14" />
             </button>
-          </t-popup>
+          </el-tooltip>
         </div>
-        <t-popup :content="rightPanelVisible ? '隐藏属性面板' : '显示属性面板'" placement="bottom">
+        <el-tooltip :content="rightPanelVisible ? '隐藏属性面板' : '显示属性面板'" placement="bottom">
           <button
             class="editor-view__icon-btn"
             :class="{ 'editor-view__icon-btn--active': rightPanelVisible }"
             title="属性面板"
             @click="rightPanelVisible = !rightPanelVisible"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="2" width="14" height="12" rx="1" />
-              <line x1="11" y1="2" x2="11" y2="14" />
-            </svg>
+            <AppIcon name="setting" :size="14" />
           </button>
-        </t-popup>
+        </el-tooltip>
         <div class="editor-view__btn-group">
-          <t-popup content="复制部件 (Ctrl+C)" placement="bottom">
+          <el-tooltip content="复制部件 (Ctrl+C)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleCopyWidget">
-              <CopyIcon :size="14" />
+              <AppIcon name="copy-document" :size="14" />
             </button>
-          </t-popup>
-          <t-popup content="删除部件 (Del)" placement="bottom">
+          </el-tooltip>
+          <el-tooltip content="删除部件 (Del)" placement="bottom">
             <button class="editor-view__icon-btn" :disabled="!editorStore.selectedId" @click="handleDeleteWidget">
-              <DeleteIcon :size="14" />
+              <AppIcon name="delete" :size="14" />
             </button>
-          </t-popup>
+          </el-tooltip>
         </div>
         <div class="editor-view__divider" />
-        <t-popup content="AI 助手" placement="bottom">
+        <el-tooltip content="AI 助手" placement="bottom">
           <button
             class="editor-view__icon-btn editor-view__ai-btn"
             :class="{ 'editor-view__icon-btn--active': showAiDrawer }"
@@ -611,10 +612,10 @@ function handleClearCanvas() {
           >
             <span class="editor-view__ai-label">AI</span>
           </button>
-        </t-popup>
+        </el-tooltip>
         <div class="editor-view__divider" />
         <!-- 快捷键帮助 -->
-        <t-popup placement="bottom" :overlay-inner-style="{ width: '320px' }">
+        <el-tooltip placement="bottom" :width="320">
           <template #content>
             <div class="editor-view__shortcuts">
               <div class="editor-view__shortcuts-title">快捷键</div>
@@ -645,23 +646,19 @@ function handleClearCanvas() {
             </div>
           </template>
           <button class="editor-view__icon-btn" title="快捷键帮助">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="8" r="6.5" />
-              <path d="M5.5 6.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
-              <circle cx="8" cy="12" r="0.5" fill="currentColor" />
-            </svg>
+            <AppIcon name="question-filled" :size="14" />
           </button>
-        </t-popup>
+        </el-tooltip>
         <div class="editor-view__divider" />
-        <t-popup content="预览" placement="bottom">
+        <el-tooltip content="预览" placement="bottom">
           <button
             class="editor-view__icon-btn"
             title="预览"
             @click="editorStore.setMode('preview')"
           >
-            <BrowseIcon :size="14" />
+            <AppIcon name="view" :size="14" />
           </button>
-        </t-popup>
+        </el-tooltip>
       </div>
 
       <!-- Center: preview mode -->
@@ -673,14 +670,20 @@ function handleClearCanvas() {
       <div class="editor-view__toolbar-right">
         <template v-if="mode === 'edit'">
           <!-- Canvas size -->
-          <t-dropdown
-            :options="canvasSizePresets.map(p => ({ content: p.label, value: p.value }))"
-            @click="(data: any) => handleCanvasSizeChange(data.value)"
-          >
+          <el-dropdown trigger="click" @command="handleCanvasSizeChange">
             <button class="editor-view__icon-btn" title="画布尺寸">
-              <FullscreenIcon :size="14" />
+              <AppIcon name="full-screen" :size="14" />
             </button>
-          </t-dropdown>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="p in canvasSizePresets"
+                  :key="p.value"
+                  :command="p.value"
+                >{{ p.label }}</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <div class="editor-view__divider" />
           <!-- Zoom -->
           <div class="editor-view__zoom-group">
@@ -690,92 +693,104 @@ function handleClearCanvas() {
           </div>
           <div class="editor-view__divider" />
           <!-- Version history -->
-          <t-popup
-            :visible="versionPopoverVisible"
-            placement="bottom-right"
-            :overlay-inner-style="{ width: '320px' }"
+          <el-popover
+            v-model:visible="versionPopoverVisible"
+            placement="bottom-end"
+            :width="320"
             trigger="click"
-            @visible-change="(visible: boolean) => { versionPopoverVisible = visible; if (visible) loadVersionList() }"
+            @show="loadVersionList()"
           >
-            <template #content>
-              <div class="editor-view__version-panel">
-                <div class="editor-view__version-header">
-                  <span class="editor-view__version-title">版本历史</span>
-                  <t-button size="small" variant="text" @click="loadVersionList(versionPage)">
-                    <RefreshIcon />
-                  </t-button>
-                </div>
-                <div v-if="versionLoading" class="editor-view__version-loading">加载中...</div>
-                <div v-else-if="versionList.length === 0" class="editor-view__version-empty">暂无版本记录</div>
-                <div v-else class="editor-view__version-list">
-                  <div
-                    v-for="entry in versionList"
-                    :key="entry.version"
-                    class="editor-view__version-item"
-                    :class="{ 'editor-view__version-item--current': entry.version === currentVersion }"
-                  >
-                    <div class="editor-view__version-info">
-                      <span class="editor-view__version-time">{{ formatVersion(entry.version) }}</span>
-                      <div class="editor-view__version-tags">
-                        <t-tag v-if="entry.published" theme="success" size="small">已发布</t-tag>
-                        <t-tag v-if="entry.version === currentVersion" theme="primary" size="small">当前</t-tag>
-                      </div>
+            <div class="editor-view__version-panel">
+              <div class="editor-view__version-header">
+                <span class="editor-view__version-title">版本历史</span>
+                <el-button size="small" text @click="loadVersionList(versionPage)">
+                  <AppIcon name="refresh" />
+                </el-button>
+              </div>
+              <div v-if="versionLoading" class="editor-view__version-loading">加载中...</div>
+              <div v-else-if="versionList.length === 0" class="editor-view__version-empty">暂无版本记录</div>
+              <div v-else class="editor-view__version-list">
+                <div
+                  v-for="entry in versionList"
+                  :key="entry.version"
+                  class="editor-view__version-item"
+                  :class="{ 'editor-view__version-item--current': entry.version === currentVersion }"
+                >
+                  <div class="editor-view__version-info">
+                    <span class="editor-view__version-time">{{ formatVersion(entry.version) }}</span>
+                    <div class="editor-view__version-tags">
+                      <el-tag v-if="entry.published" type="success" size="small">已发布</el-tag>
+                      <el-tag v-if="entry.version === currentVersion" size="small">当前</el-tag>
                     </div>
-                    <t-button
-                      v-if="entry.version !== currentVersion"
-                      size="small"
-                      variant="text"
-                      theme="primary"
-                      @click="handleLoadVersion(entry)"
-                    >加载</t-button>
                   </div>
-                </div>
-                <div v-if="versionTotal > versionPageSize" class="editor-view__version-pagination">
-                  <t-pagination
-                    v-model:value="versionPage"
-                    :page-size="versionPageSize"
-                    :total="versionTotal"
+                  <el-button
+                    v-if="entry.version !== currentVersion"
                     size="small"
-                    @current-change="handleVersionPageChange"
-                  />
+                    text
+                    type="primary"
+                    @click="handleLoadVersion(entry)"
+                  >加载</el-button>
                 </div>
               </div>
+              <div v-if="versionTotal > versionPageSize" class="editor-view__version-pagination">
+                <el-pagination
+                  v-model:current-page="versionPage"
+                  :page-size="versionPageSize"
+                  :total="versionTotal"
+                  small
+                  layout="prev, pager, next"
+                  @current-change="handleVersionPageChange"
+                />
+              </div>
+            </div>
+            <template #reference>
+              <button class="editor-view__icon-btn" title="版本历史">
+                <AppIcon name="clock" :size="14" />
+              </button>
             </template>
-            <button class="editor-view__icon-btn" title="版本历史">
-              <TimeIcon :size="14" />
-            </button>
-          </t-popup>
+          </el-popover>
           <!-- Version compare -->
-          <t-popup content="版本对比" placement="bottom">
+          <el-tooltip content="版本对比" placement="bottom">
             <button
               class="editor-view__icon-btn"
               :disabled="!currentEditId"
               title="版本对比"
               @click="handleOpenVersionCompare"
             >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="2" width="5" height="12" rx="1" />
-                <rect x="10" y="2" width="5" height="12" rx="1" />
-                <line x1="6" y1="8" x2="10" y2="8" />
-                <polyline points="7.5 6 6 8 7.5 10" />
-                <polyline points="8.5 6 10 8 8.5 10" />
-              </svg>
+              <AppIcon name="switch" :size="14" />
             </button>
-          </t-popup>
-          <button class="editor-view__btn editor-view__btn--outline" @click="handleClearCanvas">清空</button>
-          <button class="editor-view__btn editor-view__btn--outline" :disabled="saving" @click="handleSave">
-            <RefreshIcon v-if="saving" class="is-loading" :size="14" />
-            {{ saving ? '保存中...' : '保存' }}
-          </button>
-          <button
+          </el-tooltip>
+          <el-button size="small" @click="handleClearCanvas">清空</el-button>
+          <el-dropdown trigger="click" @command="handleSaveCommand">
+            <el-button size="small" :loading="saving">
+              <span v-if="saving">保存中...</span>
+              <span v-else class="editor-view__save-btn-content">
+                保存
+                <AppIcon name="arrow-down" :size="10" />
+              </span>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="save" class="editor-view__dropdown-item">
+                  <AppIcon name="document" :size="14" />
+                  <span class="editor-view__dropdown-label">保存</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="saveAsTemplate" class="editor-view__dropdown-item">
+                  <AppIcon name="grid" :size="14" />
+                  <span class="editor-view__dropdown-label">保存为模板</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-button
             v-if="boardStore.id"
-            class="editor-view__btn editor-view__btn--primary"
-            :disabled="publishing"
+            type="primary"
+            size="small"
+            :loading="publishing"
             @click="handlePublish"
           >
-            <RefreshIcon v-if="publishing" class="is-loading" :size="14" />
             {{ publishing ? '发布中...' : '发布' }}
-          </button>
+          </el-button>
         </template>
         <template v-if="mode === 'preview'">
           <!-- Mode switch back to edit -->
@@ -785,7 +800,7 @@ function handleClearCanvas() {
             title="执行日志"
             @click="showLogPanel = !showLogPanel"
           >
-            <FileIcon :size="14" />
+            <AppIcon name="document" :size="14" />
           </button>
           <button
             class="editor-view__icon-btn"
@@ -793,17 +808,13 @@ function handleClearCanvas() {
             title="Store 数据"
             @click="showCodePanel = !showCodePanel"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="5 4 1 8 5 12" />
-              <polyline points="11 4 15 8 11 12" />
-              <line x1="9" y1="2" x2="7" y2="14" />
-            </svg>
+            <AppIcon name="data-line" :size="14" />
           </button>
           <div class="editor-view__divider" />
-          <button class="editor-view__btn editor-view__btn--outline" @click="editorStore.setMode('edit')">
-            <EditIcon :size="12" />
+          <el-button size="small" @click="editorStore.setMode('edit')">
+            <AppIcon name="edit" :size="12" />
             <span>退出预览</span>
-          </button>
+          </el-button>
         </template>
       </div>
     </div>
@@ -840,7 +851,7 @@ function handleClearCanvas() {
         <div v-if="mode === 'preview' && showCodePanel" class="editor-view__code-overlay">
           <div class="editor-view__code-header">
             <span class="editor-view__code-title">Store 数据</span>
-            <t-button theme="danger" variant="text" size="small" @click="showCodePanel = false">关闭</t-button>
+            <el-button type="danger" text size="small" @click="showCodePanel = false">关闭</el-button>
           </div>
           <div class="editor-view__code-scroll">
             <pre class="editor-view__code-pre">{{ storeSnapshot }}</pre>
@@ -874,10 +885,10 @@ function handleClearCanvas() {
     </div>
 
     <!-- 版本对比面板 -->
-    <t-drawer
-      v-model:visible="showVersionCompare"
-      header="版本对比"
-      placement="right"
+    <el-drawer
+      v-model="showVersionCompare"
+      title="版本对比"
+      direction="rtl"
       size="560px"
       :destroy-on-close="true"
     >
@@ -885,7 +896,15 @@ function handleClearCanvas() {
         @close="showVersionCompare = false"
         @version-loaded="handleVersionLoaded"
       />
-    </t-drawer>
+    </el-drawer>
+
+    <!-- 保存为模板对话框 -->
+    <SaveTemplateDialog
+      v-model:visible="showSaveTemplateDialog"
+      :widgets="widgetStore.widgets as any"
+      @close="showSaveTemplateDialog = false"
+      @saved="showSaveTemplateDialog = false"
+    />
   </div>
 </template>
 
@@ -920,6 +939,11 @@ function handleClearCanvas() {
     display: flex;
     align-items: center;
     gap: 4px;
+
+    // 去掉 el-button 左侧 margin
+    :deep(.el-button + .el-button) {
+      margin-left: 0;
+    }
   }
 
   &__toolbar-left { flex-shrink: 0; }
@@ -938,7 +962,7 @@ function handleClearCanvas() {
     width: 140px;
     padding: 4px 8px;
     border: 1px solid var(--border-color-base);
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--font-size-12);
     color: var(--text-color-primary);
     background: var(--bg-color-white);
     outline: none;
@@ -960,6 +984,22 @@ function handleClearCanvas() {
     border: 1px solid var(--border-color-light);
   }
 
+  &__save-btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  // 覆盖 Element Plus dropdown-item 内部样式
+  :deep(.el-dropdown-menu__item.editor-view__dropdown-item) {
+    display: flex;
+    align-items: center;
+  }
+
+  &__dropdown-label {
+    margin-left: 8px;
+  }
+
   &__icon-btn {
     position: relative;
     display: flex;
@@ -971,7 +1011,7 @@ function handleClearCanvas() {
     background: transparent;
     color: var(--text-color-secondary);
     cursor: pointer;
-    border-radius: var(--td-radius-small);
+    border-radius: var(--border-radius-sm);
     transition: all 0.15s;
     flex-shrink: 0;
     padding: 0;
@@ -1005,7 +1045,7 @@ function handleClearCanvas() {
   }
 
   &__zoom-value {
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--font-size-12);
     color: var(--text-color-secondary);
     min-width: 40px;
     text-align: center;
@@ -1018,7 +1058,7 @@ function handleClearCanvas() {
     color: var(--color-primary);
     padding: 3px 10px;
     background: var(--color-primary-bg-light);
-    border-radius: var(--td-radius-small);
+    border-radius: var(--border-radius-sm);
     border: 1px solid var(--color-primary-lighter);
   }
 
@@ -1027,7 +1067,7 @@ function handleClearCanvas() {
     align-items: center;
     gap: 4px;
     padding: 5px 12px;
-    font-size: var(--td-font-size-body-small);
+    font-size: var(--font-size-12);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
@@ -1060,7 +1100,7 @@ function handleClearCanvas() {
 
   &__auto-save-badge {
     font-size: 11px;
-    color: var(--td-success-color);
+    color: var(--color-success);
     white-space: nowrap;
     flex-shrink: 0;
     animation: autoSavePulse 1.5s ease-in-out infinite;
@@ -1068,7 +1108,7 @@ function handleClearCanvas() {
 
   &__dirty-badge {
     font-size: 11px;
-    color: var(--td-warning-color);
+    color: var(--color-warning);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -1120,7 +1160,7 @@ function handleClearCanvas() {
     align-items: center;
     justify-content: space-between;
     padding: 6px 8px;
-    border-radius: var(--td-radius-small);
+    border-radius: var(--border-radius-sm);
     transition: background 0.15s;
 
     &:hover { background: var(--bg-color-hover); }

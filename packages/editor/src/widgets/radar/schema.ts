@@ -1,14 +1,14 @@
 import { publicSchema } from '../base/publicSchema'
 import { radarConfig } from './config'
-import type { Widget } from '../base/types'
+import type { Widget, WidgetConfig } from '../base/types'
 
-export function createRadarWidget(id: string): Widget {
+export function createRadarWidget(id: string, config: WidgetConfig = radarConfig): Widget {
   return {
-    ...publicSchema(id, 'radar'),
-    name: radarConfig.name,
-    label: radarConfig.displayName,
+    ...publicSchema(id, config.type || 'radar'),
+    name: config.name,
+    label: config.displayName,
     position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
-    style: { ...radarConfig.defaultStyle },
-    props: { ...radarConfig.defaultProps },
+    style: { ...config.defaultStyle },
+    props: { ...config.defaultProps },
   }
 }

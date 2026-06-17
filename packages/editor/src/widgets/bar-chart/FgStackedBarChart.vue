@@ -11,22 +11,18 @@ const widgetData = inject(widgetDataKey)!
 
 function buildOption(data: Record<string, unknown>[], props: Record<string, unknown>): Record<string, unknown> {
   const xField = (props.xField as string) || 'category'
-  const yField = (props.yField as string) || 'value'
+  const seriesFields = (props.seriesFields as string[]) || ['value1', 'value2']
+  const seriesNames = (props.seriesNames as string[]) || seriesFields
   const title = props.title as string
   const showLegend = props.showLegend !== false
   const legendPosition = (props.legendPosition as string) || 'bottom'
   const showTooltip = props.showTooltip !== false
   const showLabel = props.showLabel === true
-  const stack = props.stack === true
-  const horizontal = props.horizontal === true
   const animation = props.animation !== false
   const colorScheme = (props.colorScheme as string) || 'default'
   const customColors = props.customColors as string[] | undefined
-  const xAxisName = props.xAxisName as string
-  const yAxisName = props.yAxisName as string
 
   const xData = data.map(item => item[xField])
-  const seriesData = data.map(item => item[yField])
 
   const colorMap: Record<string, string[]> = {
     default: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
@@ -38,12 +34,13 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
 
   const legendConfig = showLegend ? { [legendPosition]: 0 } : undefined
 
-  const xAxis = horizontal
-    ? { type: 'value', name: yAxisName || undefined }
-    : { type: 'category', data: xData, name: xAxisName || undefined }
-  const yAxis = horizontal
-    ? { type: 'category', data: xData, name: xAxisName || undefined }
-    : { type: 'value', name: yAxisName || undefined }
+  const series = seriesFields.map((field, idx) => ({
+    name: seriesNames[idx] || field,
+    type: 'bar' as const,
+    stack: 'total',
+    data: data.map(item => item[field]),
+    label: showLabel ? { show: true, position: 'top' as const } : undefined,
+  }))
 
   return {
     color: colors,
@@ -51,15 +48,10 @@ function buildOption(data: Record<string, unknown>[], props: Record<string, unkn
     tooltip: showTooltip ? { trigger: 'axis' } : undefined,
     legend: legendConfig,
     grid: { left: '3%', right: '4%', bottom: showLegend ? '12%' : '3%', containLabel: true },
-    xAxis,
-    yAxis,
+    xAxis: { type: 'category', data: xData },
+    yAxis: { type: 'value' },
     animation,
-    series: [{
-      type: 'bar',
-      data: seriesData,
-      stack: stack ? 'total' : undefined,
-      label: showLabel ? { show: true, position: horizontal ? 'right' : 'top' } : undefined,
-    }],
+    series,
   }
 }
 
@@ -76,7 +68,6 @@ useExposeWidget(() => ({
 const chartRef = ref<HTMLDivElement>()
 let chartInstance: EChartsType | null = null
 
-// 懒加载：仅当容器进入视口后才初始化图表
 const { isVisible } = useChartLazyInit(chartRef)
 
 function initChart() {
@@ -91,7 +82,6 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-// 容器可见后初始化图表
 watch(isVisible, (visible) => {
   if (visible) {
     nextTick(() => initChart())
@@ -110,7 +100,6 @@ watch(chartOption, async (option) => {
 })
 
 onMounted(() => {
-  // 如果 IntersectionObserver 还没触发（首屏即可见），直接初始化
   if (isVisible.value) {
     initChart()
   }

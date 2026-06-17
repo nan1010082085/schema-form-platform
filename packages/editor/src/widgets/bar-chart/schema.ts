@@ -1,14 +1,14 @@
 import { publicSchema } from '../base/publicSchema'
 import { barChartConfig } from './config'
-import type { Widget } from '../base/types'
+import type { Widget, WidgetConfig } from '../base/types'
 
-export function createBarChartWidget(id: string): Widget {
+export function createBarChartWidget(id: string, config: WidgetConfig = barChartConfig): Widget {
   return {
-    ...publicSchema(id, 'bar-chart'),
-    name: barChartConfig.name,
-    label: barChartConfig.displayName,
+    ...publicSchema(id, config.type || 'bar-chart'),
+    name: config.name,
+    label: config.displayName,
     position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
-    style: { ...barChartConfig.defaultStyle },
-    props: { ...barChartConfig.defaultProps },
+    style: { ...config.defaultStyle },
+    props: { ...config.defaultProps },
   }
 }

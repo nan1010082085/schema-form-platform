@@ -55,13 +55,21 @@ import { sliderConfig } from '@/widgets/slider/config'
 import { rateConfig } from '@/widgets/rate/config'
 import { colorPickerConfig } from '@/widgets/color-picker/config'
 import { barChartConfig } from '@/widgets/bar-chart/config'
+import { stackedBarChartConfig } from '@/widgets/bar-chart/config-stacked'
+import { horizontalBarChartConfig } from '@/widgets/bar-chart/config-horizontal'
 import { lineChartConfig } from '@/widgets/line-chart/config'
+import { areaChartConfig } from '@/widgets/line-chart/config-area'
 import { pieChartConfig } from '@/widgets/pie-chart/config'
+import { donutChartConfig } from '@/widgets/pie-chart/config-donut'
 import { scatterChartConfig } from '@/widgets/scatter-chart/config'
+import { bubbleChartConfig } from '@/widgets/scatter-chart/config-bubble'
 import { radarConfig } from '@/widgets/radar/config'
+import { filledRadarConfig } from '@/widgets/radar/config-filled'
 import { gaugeConfig } from '@/widgets/gauge/config'
+import { multiGaugeConfig } from '@/widgets/gauge/config-multi'
 import { heatmapConfig } from '@/widgets/heatmap/config'
 import { funnelConfig } from '@/widgets/funnel/config'
+import { compareFunnelConfig } from '@/widgets/funnel/config-compare'
 import { candlestickConfig } from '@/widgets/candlestick/config'
 import { statisticConfig } from '@/widgets/statistic/config'
 
@@ -91,8 +99,15 @@ const REGISTERED_TYPES: WidgetSchemaType[] = [
   'search-list', 'editable-table',
   'switch', 'cascader', 'time-picker',
   'slider', 'rate', 'color-picker',
-  'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
-  'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',
+  'bar-chart', 'stacked-bar-chart', 'horizontal-bar-chart',
+  'line-chart', 'area-chart',
+  'pie-chart', 'donut-chart',
+  'scatter-chart', 'bubble-chart',
+  'radar', 'filled-radar',
+  'gauge', 'multi-gauge',
+  'heatmap',
+  'funnel', 'compare-funnel',
+  'candlestick',
   'statistic',
 ]
 
@@ -134,13 +149,21 @@ const ALL_CONFIGS = [
   { name: 'rate', config: rateConfig },
   { name: 'color-picker', config: colorPickerConfig },
   { name: 'bar-chart', config: barChartConfig },
+  { name: 'stacked-bar-chart', config: stackedBarChartConfig },
+  { name: 'horizontal-bar-chart', config: horizontalBarChartConfig },
   { name: 'line-chart', config: lineChartConfig },
+  { name: 'area-chart', config: areaChartConfig },
   { name: 'pie-chart', config: pieChartConfig },
+  { name: 'donut-chart', config: donutChartConfig },
   { name: 'scatter-chart', config: scatterChartConfig },
+  { name: 'bubble-chart', config: bubbleChartConfig },
   { name: 'radar', config: radarConfig },
+  { name: 'filled-radar', config: filledRadarConfig },
   { name: 'gauge', config: gaugeConfig },
+  { name: 'multi-gauge', config: multiGaugeConfig },
   { name: 'heatmap', config: heatmapConfig },
   { name: 'funnel', config: funnelConfig },
+  { name: 'compare-funnel', config: compareFunnelConfig },
   { name: 'candlestick', config: candlestickConfig },
   { name: 'statistic', config: statisticConfig },
 ]
@@ -155,9 +178,9 @@ describe('Widget Registry & Loading', () => {
     registerAllWidgets()
   })
 
-  it('registers exactly 49 widget types', () => {
+  it('registers exactly 57 widget types', () => {
     const all = getAllWidgets()
-    expect(all).toHaveLength(49)
+    expect(all).toHaveLength(57)
   })
 
   it('getComponentMap returns a component for every registered type', () => {

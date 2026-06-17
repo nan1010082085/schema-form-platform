@@ -1,14 +1,14 @@
 import { publicSchema } from '../base/publicSchema'
 import { funnelConfig } from './config'
-import type { Widget } from '../base/types'
+import type { Widget, WidgetConfig } from '../base/types'
 
-export function createFunnelWidget(id: string): Widget {
+export function createFunnelWidget(id: string, config: WidgetConfig = funnelConfig): Widget {
   return {
-    ...publicSchema(id, 'funnel'),
-    name: funnelConfig.name,
-    label: funnelConfig.displayName,
+    ...publicSchema(id, config.type || 'funnel'),
+    name: config.name,
+    label: config.displayName,
     position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
-    style: { ...funnelConfig.defaultStyle },
-    props: { ...funnelConfig.defaultProps },
+    style: { ...config.defaultStyle },
+    props: { ...config.defaultProps },
   }
 }

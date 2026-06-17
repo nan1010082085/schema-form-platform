@@ -43,6 +43,15 @@ import { FgGauge, createGaugeWidget, gaugeConfig } from './gauge'
 import { FgHeatmap, createHeatmapWidget, heatmapConfig } from './heatmap'
 import { FgFunnel, createFunnelWidget, funnelConfig } from './funnel'
 import { FgCandlestick, createCandlestickWidget, candlestickConfig } from './candlestick'
+// 图表变体
+import { FgStackedBarChart, createStackedBarChartWidget, stackedBarChartConfig } from './bar-chart/stacked'
+import { FgHorizontalBarChart, createHorizontalBarChartWidget, horizontalBarChartConfig } from './bar-chart/horizontal'
+import { FgAreaChart, createAreaChartWidget, areaChartConfig } from './line-chart/area'
+import { FgDonutChart, createDonutChartWidget, donutChartConfig } from './pie-chart/donut'
+import { FgBubbleChart, createBubbleChartWidget, bubbleChartConfig } from './scatter-chart/bubble'
+import { FgFilledRadar, createFilledRadarWidget, filledRadarConfig } from './radar/filled'
+import { FgMultiGauge, createMultiGaugeWidget, multiGaugeConfig } from './gauge/multi'
+import { FgCompareFunnel, createCompareFunnelWidget, compareFunnelConfig } from './funnel/compare'
 import { FgStatistic, createStatisticWidget, statisticConfig } from './statistic'
 import { FgSingleCol, createSingleColWidget, singleColConfig } from './single-col'
 import { FgDoubleCol, createDoubleColWidget, doubleColConfig } from './double-col'
@@ -340,12 +349,20 @@ export function registerAllWidgets() {
 
   // Chart widgets (图表)
   registerWidget({ name: barChartConfig.name, displayName: barChartConfig.displayName, type: 'bar-chart', group: 'chart', component: FgBarChart, create: createBarChartWidget, config: barChartConfig })
+  registerWidget({ name: stackedBarChartConfig.name, displayName: stackedBarChartConfig.displayName, type: 'stacked-bar-chart', group: 'chart', component: FgStackedBarChart, create: createStackedBarChartWidget, config: stackedBarChartConfig })
+  registerWidget({ name: horizontalBarChartConfig.name, displayName: horizontalBarChartConfig.displayName, type: 'horizontal-bar-chart', group: 'chart', component: FgHorizontalBarChart, create: createHorizontalBarChartWidget, config: horizontalBarChartConfig })
   registerWidget({ name: lineChartConfig.name, displayName: lineChartConfig.displayName, type: 'line-chart', group: 'chart', component: FgLineChart, create: createLineChartWidget, config: lineChartConfig })
+  registerWidget({ name: areaChartConfig.name, displayName: areaChartConfig.displayName, type: 'area-chart', group: 'chart', component: FgAreaChart, create: createAreaChartWidget, config: areaChartConfig })
   registerWidget({ name: pieChartConfig.name, displayName: pieChartConfig.displayName, type: 'pie-chart', group: 'chart', component: FgPieChart, create: createPieChartWidget, config: pieChartConfig })
+  registerWidget({ name: donutChartConfig.name, displayName: donutChartConfig.displayName, type: 'donut-chart', group: 'chart', component: FgDonutChart, create: createDonutChartWidget, config: donutChartConfig })
   registerWidget({ name: scatterChartConfig.name, displayName: scatterChartConfig.displayName, type: 'scatter-chart', group: 'chart', component: FgScatterChart, create: createScatterChartWidget, config: scatterChartConfig })
+  registerWidget({ name: bubbleChartConfig.name, displayName: bubbleChartConfig.displayName, type: 'bubble-chart', group: 'chart', component: FgBubbleChart, create: createBubbleChartWidget, config: bubbleChartConfig })
   registerWidget({ name: radarConfig.name, displayName: radarConfig.displayName, type: 'radar', group: 'chart', component: FgRadar, create: createRadarWidget, config: radarConfig })
+  registerWidget({ name: filledRadarConfig.name, displayName: filledRadarConfig.displayName, type: 'filled-radar', group: 'chart', component: FgFilledRadar, create: createFilledRadarWidget, config: filledRadarConfig })
   registerWidget({ name: gaugeConfig.name, displayName: gaugeConfig.displayName, type: 'gauge', group: 'chart', component: FgGauge, create: createGaugeWidget, config: gaugeConfig })
+  registerWidget({ name: multiGaugeConfig.name, displayName: multiGaugeConfig.displayName, type: 'multi-gauge', group: 'chart', component: FgMultiGauge, create: createMultiGaugeWidget, config: multiGaugeConfig })
   registerWidget({ name: heatmapConfig.name, displayName: heatmapConfig.displayName, type: 'heatmap', group: 'chart', component: FgHeatmap, create: createHeatmapWidget, config: heatmapConfig })
   registerWidget({ name: funnelConfig.name, displayName: funnelConfig.displayName, type: 'funnel', group: 'chart', component: FgFunnel, create: createFunnelWidget, config: funnelConfig })
+  registerWidget({ name: compareFunnelConfig.name, displayName: compareFunnelConfig.displayName, type: 'compare-funnel', group: 'chart', component: FgCompareFunnel, create: createCompareFunnelWidget, config: compareFunnelConfig })
   registerWidget({ name: candlestickConfig.name, displayName: candlestickConfig.displayName, type: 'candlestick', group: 'chart', component: FgCandlestick, create: createCandlestickWidget, config: candlestickConfig })
 }

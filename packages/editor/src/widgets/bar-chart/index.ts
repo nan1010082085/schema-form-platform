@@ -1,3 +1,5 @@
 export { default as FgBarChart } from './FgBarChart.vue'
+export { default as FgStackedBarChart } from './FgStackedBarChart.vue'
+export { default as FgHorizontalBarChart } from './FgHorizontalBarChart.vue'
 export { createBarChartWidget } from './schema'
 export { barChartConfig } from './config'

@@ -1,25 +1,28 @@
 import type { WidgetConfig } from '../base/types'
 
-export const gaugeConfig: WidgetConfig = {
-  name: 'FgGauge',
-  displayName: '仪表盘',
-  description: '仪表盘组件，用于展示单个指标的完成度',
+export const compareFunnelConfig: WidgetConfig = {
+  name: 'FgCompareFunnel',
+  displayName: '对比漏斗图',
+  type: 'compare-funnel',
+  description: '对比漏斗图，用于展示两个流程的转化对比',
   author: 'yangdongnan',
   defaultStyle: { width: '100%', height: '400px' },
   defaultProps: {
     staticData: [
-      { value: 75 },
+      { name: '展示', value1: 100, value2: 100 },
+      { name: '点击', value1: 80, value2: 70 },
+      { name: '访问', value1: 60, value2: 50 },
+      { name: '咨询', value1: 40, value2: 30 },
+      { name: '订单', value1: 20, value2: 15 },
     ] as Record<string, unknown>[],
-    valueField: 'value',
-    min: 0,
-    max: 100,
-    unit: '',
+    nameField: 'name',
+    seriesFields: ['value1', 'value2'],
+    seriesNames: ['流程A', '流程B'],
     title: '',
-    showTooltip: true,
+    showLegend: true,
     showLabel: true,
     colorScheme: 'default',
     customColors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'] as string[],
-    animation: true,
     rawOption: null as Record<string, unknown> | null,
   },
   exposedValues: [
@@ -36,16 +39,16 @@ export const gaugeConfig: WidgetConfig = {
     style: ['margin', 'padding', 'backgroundColor', 'borderRadius'],
     props: [
       { key: 'staticData', label: '静态数据', type: 'array-editor', fields: [
-        { key: 'value', label: '值', type: 'number' },
+        { key: 'name', label: '名称', type: 'text' },
+        { key: 'value1', label: '流程A', type: 'number' },
+        { key: 'value2', label: '流程B', type: 'number' },
       ]},
-      { key: 'valueField', label: '值字段', type: 'text', placeholder: '如: value' },
-      { key: 'min', label: '最小值', type: 'number', default: 0 },
-      { key: 'max', label: '最大值', type: 'number', default: 100 },
-      { key: 'unit', label: '单位', type: 'text', placeholder: '如: %' },
+      { key: 'nameField', label: '名称字段', type: 'text', placeholder: '如: name' },
+      { key: 'seriesFields', label: '系列字段 (JSON)', type: 'json', placeholder: '["value1", "value2"]' },
+      { key: 'seriesNames', label: '系列名称 (JSON)', type: 'json', placeholder: '["流程A", "流程B"]' },
       { key: 'title', label: '图表标题', type: 'text' },
-      { key: 'showTooltip', label: '显示提示', type: 'switch', default: true },
+      { key: 'showLegend', label: '显示图例', type: 'switch', default: true },
       { key: 'showLabel', label: '显示标签', type: 'switch', default: true },
-      { key: 'animation', label: '动画', type: 'switch', default: true },
       { key: 'colorScheme', label: '颜色主题', type: 'select', options: [
         { label: '默认', value: 'default' },
         { label: '暗色', value: 'dark' },

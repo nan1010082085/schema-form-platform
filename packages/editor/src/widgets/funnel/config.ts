@@ -20,6 +20,7 @@ export const funnelConfig: WidgetConfig = {
     showLegend: true,
     showLabel: true,
     colorScheme: 'default',
+    customColors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'] as string[],
     rawOption: null as Record<string, unknown> | null,
   },
   exposedValues: [
@@ -49,6 +50,7 @@ export const funnelConfig: WidgetConfig = {
         { label: '暗色', value: 'dark' },
         { label: '浅色', value: 'light' },
       ]},
+      { key: 'customColors', label: '自定义颜色', type: 'color-array' },
       { key: 'rawOption', label: '高级配置 (JSON)', type: 'json' },
     ],
   },
