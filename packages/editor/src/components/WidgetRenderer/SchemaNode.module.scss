@@ -12,6 +12,12 @@
   height: 100% !important;
 }
 
+/* el-select 内部 wrapper 高度继承 */
+.nodeWrapper .el-select__wrapper {
+  min-height: inherit !important;
+  height: inherit !important;
+}
+
 /* 容器内部子部件的渲染容器 */
 .childrenLayer {
   position: absolute;
