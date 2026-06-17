@@ -81,7 +81,11 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     },
 
     async mount(props: { container?: HTMLElement }) {
-      console.log(`[${name}] mount`, props)
+      console.log(`[${name}] mount`, {
+        container: props.container,
+        containerId: props.container?.id,
+        poweredByQiankun: !!window.__POWERED_BY_QIANKUN__,
+      })
       render(props)
     },
 

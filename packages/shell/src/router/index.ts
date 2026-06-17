@@ -93,6 +93,23 @@ const router = createRouter({
       component: () => import('@/components/AppContainer.vue'),
       meta: { microApp: 'admin', withoutMenu: true },
     },
+    // Legacy paths without schema-platform prefix (redirect to correct path)
+    {
+      path: '/editor-legacy/:pathMatch(.*)*',
+      redirect: (to) => `/schema-platform/editor/${to.params.pathMatch || ''}`,
+    },
+    {
+      path: '/flow-legacy/:pathMatch(.*)*',
+      redirect: (to) => `/schema-platform/flow/${to.params.pathMatch || ''}`,
+    },
+    {
+      path: '/ai-legacy/:pathMatch(.*)*',
+      redirect: (to) => `/schema-platform/ai/${to.params.pathMatch || ''}`,
+    },
+    {
+      path: '/admin-legacy/:pathMatch(.*)*',
+      redirect: (to) => `/schema-platform/admin/${to.params.pathMatch || ''}`,
+    },
     // Catch-all redirect
     {
       path: '/:pathMatch(.*)*',

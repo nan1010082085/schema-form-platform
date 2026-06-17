@@ -5,13 +5,34 @@
  * Provides the #micro-container div where qiankun mounts child apps.
  * Shows loading state while qiankun is initializing.
  */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const isReady = ref(false)
+const microContainer = ref<HTMLElement | null>(null)
 
 onMounted(() => {
   // Qiankun will mount to #micro-container when route matches
   isReady.value = true
+  console.log('[MicroAppLoader] mounted', {
+    path: route.path,
+    microApp: route.meta?.microApp,
+    containerExists: !!document.getElementById('micro-container'),
+  })
+})
+
+// 监听路由变化
+watch(() => route.path, (newPath, oldPath) => {
+  console.log('[MicroAppLoader] route changed', {
+    from: oldPath,
+    to: newPath,
+    microApp: route.meta?.microApp,
+  })
+})
+
+onUnmounted(() => {
+  console.log('[MicroAppLoader] unmounted')
 })
 </script>
 

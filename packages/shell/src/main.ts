@@ -51,13 +51,13 @@ const microApps = Object.values(APP_CONFIGS)
 registerMicroApps(microApps, {
   beforeLoad: [
     (app) => {
-      console.log(`[shell] before load ${app.name}`)
+      console.log(`[shell] before load ${app.name}`, { entry: app.entry, activeRule: app.activeRule })
       return Promise.resolve()
     },
   ],
   beforeMount: [
     (app) => {
-      console.log(`[shell] before mount ${app.name}`)
+      console.log(`[shell] before mount ${app.name}`, { container: app.container })
       return Promise.resolve()
     },
   ],
@@ -67,15 +67,32 @@ registerMicroApps(microApps, {
       return Promise.resolve()
     },
   ],
+  beforeUnmount: [
+    (app) => {
+      console.log(`[shell] before unmount ${app.name}`)
+      return Promise.resolve()
+    },
+  ],
+  afterUnmount: [
+    (app) => {
+      console.log(`[shell] after unmount ${app.name}`)
+      return Promise.resolve()
+    },
+  ],
 })
 
 // 等待路由就绪后再启动 qiankun，避免 #micro-container 不存在的竞态
 router.isReady().then(() => {
+  console.log('[shell] starting qiankun', { microApps: microApps.map(m => m.name) })
   start({
     sandbox: {
       strictStyleIsolation: true,
       experimentalStyleIsolation: false,
     },
     // 不用 prefetch: 'all'，避免在组件挂载前就加载子应用
+  }).then(() => {
+    console.log('[shell] qiankun started')
+  }).catch((err) => {
+    console.error('[shell] qiankun start failed:', err)
   })
 })
