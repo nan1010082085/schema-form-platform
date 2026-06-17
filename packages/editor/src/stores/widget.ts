@@ -16,12 +16,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Widget, ContainerType } from '../widgets/base/types'
+import { getAllContainerTypes } from '../composables/useConstant'
 
-/** 容器组件类型集合 — 这些组件禁止被拖入其他容器 */
-const CONTAINER_TYPES: Set<string> = new Set<ContainerType>([
-  'form', 'card', 'tabs', 'dialog',
-  'single-col', 'double-col', 'triple-col', 'quad-col',
-])
+/** 获取容器组件类型集合（动态） */
+function getContainerTypes(): Set<string> {
+  return getAllContainerTypes() as Set<string>
+}
 
 /** 列容器类型 → 列数映射 */
 const COL_CONTAINER_COLUMNS: Record<string, number> = {
@@ -52,8 +52,9 @@ function sanitizeContainerNesting(widgets: Widget[]): Widget[] {
         w.children = walk(w.children)
         // 再把子节点中的容器提升到根级
         const kept: Widget[] = []
+        const containerTypes = getContainerTypes()
         for (const child of w.children) {
-          if (CONTAINER_TYPES.has(child.type)) {
+          if (containerTypes.has(child.type)) {
             // 容器禁止嵌套 — 提升到根级
             delete child.colIndex
             delete child.tabKey
@@ -188,8 +189,9 @@ export const useWidgetStore = defineStore('widget', () => {
     if (widget.children?.length) {
       const promoted: Widget[] = []
       const kept: Widget[] = []
+      const containerTypes = getContainerTypes()
       for (const child of widget.children) {
-        if (CONTAINER_TYPES.has(child.type)) {
+        if (containerTypes.has(child.type)) {
           delete child.colIndex
           delete child.tabKey
           promoted.push(child)
@@ -260,7 +262,7 @@ export const useWidgetStore = defineStore('widget', () => {
     if (!widget || !container) return
     if (widgetId === containerId) return
     // 容器禁止嵌套到其他容器中
-    if (CONTAINER_TYPES.has(widget.type)) return
+    if (getContainerTypes().has(widget.type)) return
     // 已经是目标容器的直接子节点
     if (container.children?.some((c) => c.id === widgetId)) return
 
@@ -358,7 +360,7 @@ export const useWidgetStore = defineStore('widget', () => {
     if (!widget || !target) return
     if (id === targetId) return
     // 容器禁止嵌套到其他容器中
-    if (CONTAINER_TYPES.has(widget.type)) return
+    if (getContainerTypes().has(widget.type)) return
     if (target.children?.some((c) => c.id === id)) return
 
     // tabs 容器：自动分配 tabKey
@@ -494,7 +496,9 @@ export const useWidgetStore = defineStore('widget', () => {
    * 批量替换所有 Widget（从 API 加载时使用）。
    */
   function loadWidgets(data: Widget[]): void {
-    widgets.value = sanitizeContainerNesting(data)
+    // 过滤掉 undefined 和 null 元素，确保数据干净
+    const validWidgets = (data || []).filter((w): w is Widget => w != null && typeof w === 'object' && 'id' in w)
+    widgets.value = sanitizeContainerNesting(validWidgets)
   }
 
   /**

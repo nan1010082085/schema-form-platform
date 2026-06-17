@@ -1,15 +1,15 @@
 import type { Widget } from '../widgets/base/types'
+import { getAllContainerTypes } from '../composables/useConstant'
 
 /**
  * 碰撞检测
  * 判断组件与容器的重叠面积是否超过 50%
  */
 
-/** 容器组件类型集合 */
-const CONTAINER_TYPES_SET = new Set([
-  'form', 'card', 'tabs', 'dialog',
-  'single-col', 'double-col', 'triple-col', 'quad-col',
-])
+/** 获取容器组件类型集合（动态） */
+function getContainerTypesSet() {
+  return getAllContainerTypes()
+}
 
 /** 计算两个矩形的重叠面积 */
 function overlapArea(
@@ -89,8 +89,9 @@ export function detectNestedContainerCollision(
 
 /** 获取所有根级容器（排除 widget 自身） */
 export function getRootContainers(widgets: Widget[], excludeId?: string): Widget[] {
+  const containerTypes = getContainerTypesSet()
   return widgets.filter(
-    (w) => CONTAINER_TYPES_SET.has(w.type) && w.id !== excludeId,
+    (w) => containerTypes.has(w.type) && w.id !== excludeId,
   )
 }
 
@@ -115,10 +116,11 @@ export function collectAllContainers(
   excludeId?: string,
 ): Array<Widget & { _canvasX: number; _canvasY: number; _depth: number }> {
   const result: Array<Widget & { _canvasX: number; _canvasY: number; _depth: number }> = []
+  const containerTypes = getContainerTypesSet()
   for (const w of widgets) {
     if (w.id === excludeId) continue
     if (!w.position) continue
-    if (CONTAINER_TYPES_SET.has(w.type)) {
+    if (containerTypes.has(w.type)) {
       const canvasX = offsetX + w.position.x
       const canvasY = offsetY + w.position.y
       result.push({ ...w, _canvasX: canvasX, _canvasY: canvasY, _depth: depth })

@@ -6,14 +6,14 @@ import { viewportToCanvas, constrainToCanvasBounds } from '../utils/coordinate'
 import { detectContainerCollision, getRootContainers, collectAllContainers, detectNestedContainerCollision } from '../utils/collision'
 import { calculateGuideLines, calculateContainerGuides, collectSiblingTargets } from '../utils/guidelines'
 import { createWidget, generateWidgetId } from '../widgets/registry'
+import { getAllContainerTypes } from './useConstant'
 import type { SchemaType, Widget } from '../widgets/base/types'
 import type { DropPreviewLine } from '../stores/drag'
 
-/** 容器组件类型集合 */
-const CONTAINER_TYPE_SET = new Set([
-  'form', 'card', 'tabs', 'dialog',
-  'single-col', 'double-col', 'triple-col', 'quad-col',
-])
+/** 获取容器组件类型集合（动态） */
+function getContainerTypeSet() {
+  return getAllContainerTypes()
+}
 
 /**
  * useDrag — 拖拽系统核心逻辑
@@ -66,8 +66,8 @@ export function useDrag() {
   }
 
   /**
-   * 计算嵌套容器内的画布绝对坐标偏移。
-   * 递归向上查找所有父容器的 position 偏移之和。
+   * 计算容器的所有父容器偏移量之和（不含容器自身的 position）。
+   * 用于将画布坐标转换为容器本地坐标：localPos = canvasPos - parentOffset - container.position
    */
   function findContainerCanvasOffset(containerId: string): { x: number; y: number } {
     const offsets: { x: number; y: number }[] = []
@@ -79,11 +79,7 @@ export function useDrag() {
         offsets.push({ x: parent.position.x, y: parent.position.y })
         currentId = parent.id
       } else {
-        // currentId 是根级容器
-        const rootWidget = widgetStore.findWidget(currentId)
-        if (rootWidget) {
-          offsets.push({ x: rootWidget.position.x, y: rootWidget.position.y })
-        }
+        // currentId 是根级组件（不是任何容器的子组件），不加入偏移
         break
       }
     }
@@ -294,7 +290,7 @@ export function useDrag() {
     // 碰撞检测（容器组件禁止嵌套，跳过检测）
     // 使用递归收集所有容器（含嵌套），支持深层嵌套拖拽
     const draggedType = dragStore.dragWidgetType || widgetStore.findWidget(dragStore.dragWidgetId || '')?.type
-    const isContainerDrag = draggedType && CONTAINER_TYPE_SET.has(draggedType)
+    const isContainerDrag = draggedType && getContainerTypeSet().has(draggedType)
 
     if (isContainerDrag) {
       dragStore.updateCollision(null)

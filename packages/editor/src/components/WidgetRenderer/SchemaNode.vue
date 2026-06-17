@@ -37,11 +37,12 @@ const props = defineProps<{
 /** 组件映射表 — 缓存版本，避免每次 mount 创建新对象 */
 const compMap = getComponentMap()
 
-/** 容器组件类型集合 */
-const CONTAINER_TYPES: ReadonlySet<SchemaType> = new Set([
-  'form', 'card', 'tabs', 'dialog',
-  'single-col', 'double-col', 'triple-col', 'quad-col',
-])
+import { getAllContainerTypes } from '../../composables/useConstant'
+
+/** 获取容器组件类型集合（动态） */
+function getContainerTypes() {
+  return getAllContainerTypes()
+}
 
 /**
  * 自渲染容器：组件内部自己渲染 children（通过 SchemaRender + inject），
@@ -102,7 +103,7 @@ const isEditMode = computed(() => props.mode === 'edit')
 
 /** 是否容器组件 */
 const isContainer = computed(() =>
-  CONTAINER_TYPES.has(props.widget.type),
+  getContainerTypes().has(props.widget.type),
 )
 
 /** 是否自渲染容器（内部已渲染 children，无需 childrenLayer） */
