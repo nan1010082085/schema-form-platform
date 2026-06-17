@@ -234,25 +234,6 @@ function handleTypeChange(action: UIAction, newType: UIActionType) {
 function handleChange() {
   emitChange()
 }
-
-/** 根据动作类型获取目标选项 */
-function getTargetOptions(type: UIActionType) {
-  switch (type) {
-    case 'open-dialog':
-      return dialogOptions.value
-    case 'hide':
-    case 'visible':
-    case 'disabled':
-    case 'show':
-      return showHideOptions.value
-    case 'switch-tab':
-      return tabsOptions.value
-    case 'refresh':
-      return allWidgetOptions.value
-    default:
-      return allWidgetOptions.value
-  }
-}
 </script>
 
 <template>
@@ -319,12 +300,38 @@ function getTargetOptions(type: UIActionType) {
             style="flex: 1"
             @update:model-value="handleChange"
           >
-            <el-option
-              v-for="opt in getTargetOptions(action.type)"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
+            <template v-if="action.type === 'open-dialog'">
+              <el-option
+                v-for="opt in dialogOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </template>
+            <template v-else-if="['hide', 'visible', 'disabled', 'show'].includes(action.type)">
+              <el-option
+                v-for="opt in showHideOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </template>
+            <template v-else-if="action.type === 'switch-tab'">
+              <el-option
+                v-for="opt in tabsOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </template>
+            <template v-else>
+              <el-option
+                v-for="opt in allWidgetOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </template>
           </el-select>
         </div>
       </template>
