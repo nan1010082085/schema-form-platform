@@ -1,0 +1,41 @@
+// Element Plus admin 全局组件样式
+
+@use '@schema-form/shared-styles/variables' as *;
+
+// ---- 按钮对齐修复 ----
+.el-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: $button-height;
+  padding: 8px 16px;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-14;
+  font-weight: $font-weight-medium;
+  font-family: $font-family-base;
+  gap: 8px;
+}
+
+// 文字/轮廓按钮重置
+.el-button.is-link,
+.el-button.is-text {
+  height: auto;
+  padding: 0;
+}
+
+// ---- 输入框 ----
+.el-input,
+.el-select,
+.el-date-editor,
+.el-input-number,
+.el-cascader {
+  width: 100%;
+}
+
+// ---- 表单标签居中 ----
+.el-form-item__label {
+  font-size: $font-size-14;
+  color: $text-color-secondary;
+  font-weight: 500;
+  text-align: center;
+}
