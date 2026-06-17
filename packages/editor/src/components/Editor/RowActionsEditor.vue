@@ -244,7 +244,6 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
           type="textarea"
           :model-value="action.navigateQuery ? JSON.stringify(action.navigateQuery, null, 2) : ''"
           :rows="2"
-          size="small"
           placeholder='{"from":"list"}'
           @update:model-value="updateAction(idx, 'navigateQuery', parseNavigateQuery($event))"
         />
@@ -276,7 +275,6 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             type="textarea"
             :model-value="action.dialogSchema ? JSON.stringify(action.dialogSchema, null, 2) : ''"
             :rows="4"
-            size="small"
             placeholder='[{"type":"input","field":"name","label":"Name"}]'
             @update:model-value="updateAction(idx, 'dialogSchema', $event ? parseDialogSchemaJson($event) : undefined)"
           />

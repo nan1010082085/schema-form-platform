@@ -173,7 +173,6 @@ function apiToText(api?: SchemaApiConfig): string {
           type="textarea"
           :model-value="linkage.condition"
           :rows="2"
-          size="small"
           placeholder='${field} === "value"'
           :class="{ 'is-error': !conditionStates[idx].valid }"
           @update:model-value="updateLinkage(idx, 'condition', $event)"
@@ -193,7 +192,6 @@ function apiToText(api?: SchemaApiConfig): string {
           type="textarea"
           :model-value="optionsToText(linkage.thenOptions)"
           :rows="3"
-          size="small"
           placeholder="选项A=opt_a&#10;选项B=opt_b"
           @update:model-value="updateLinkage(idx, 'thenOptions', parseOptionsText($event))"
         />
@@ -206,7 +204,6 @@ function apiToText(api?: SchemaApiConfig): string {
           type="textarea"
           :model-value="apiToText(linkage.thenApi)"
           :rows="3"
-          size="small"
           placeholder='{"url":"/api/options","method":"get"}'
           @update:model-value="updateLinkage(idx, 'thenApi', parseApiText($event))"
         />

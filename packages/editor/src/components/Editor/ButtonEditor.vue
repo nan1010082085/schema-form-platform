@@ -219,7 +219,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
               <el-input
                 type="textarea"
                 :model-value="eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] ?? jsonText(action.eventPayload)"
-                :rows="2" size="small" placeholder='{"key":"value"}'
+                :rows="2" placeholder='{"key":"value"}'
                 @update:model-value="(v: string) => { eventPayloadCache[cacheKey(btnIdx, aIdx, 'payload')] = v; updateAction(btnIdx, aIdx, { eventPayload: parseJson(v) as SchemaAction['eventPayload'] }) }"
               />
             </div>
@@ -240,7 +240,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
               <el-input
                 type="textarea"
                 :model-value="dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] ?? jsonText(action.dialogSchema)"
-                :rows="4" size="small" placeholder='[{"type":"input","field":"name","label":"Name"}]'
+                :rows="4" placeholder='[{"type":"input","field":"name","label":"Name"}]'
                 @update:model-value="(v: string) => { dialogSchemaCache[cacheKey(btnIdx, aIdx, 'schema')] = v; updateAction(btnIdx, aIdx, { dialogSchema: parseJson(v) as SchemaAction['dialogSchema'] }) }"
               />
             </div>
@@ -263,7 +263,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
               <el-input
                 type="textarea"
                 :model-value="apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] ?? (typeof action.apiParams === 'string' ? action.apiParams : jsonText(action.apiParams))"
-                :rows="2" size="small" placeholder='{"key":"value"} 或 "formData"'
+                :rows="2" placeholder='{"key":"value"} 或 "formData"'
                 @update:model-value="(v: string) => { apiParamsCache[cacheKey(btnIdx, aIdx, 'params')] = v; updateAction(btnIdx, aIdx, { apiParams: v === 'formData' ? 'formData' : (parseJson(v) as Record<string, unknown> | undefined) }) }"
               />
             </div>
@@ -280,7 +280,7 @@ function cacheKey(btnIdx: number, actionIdx: number, field: string) { return `${
               <el-input
                 type="textarea"
                 :model-value="navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] ?? jsonText(action.navigateQuery)"
-                :rows="2" size="small" placeholder='{"from":"list"}'
+                :rows="2" placeholder='{"from":"list"}'
                 @update:model-value="(v: string) => { navigateQueryCache[cacheKey(btnIdx, aIdx, 'query')] = v; updateAction(btnIdx, aIdx, { navigateQuery: parseJson(v) as Record<string, string> | undefined }) }"
               />
             </div>

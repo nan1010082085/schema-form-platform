@@ -228,7 +228,6 @@ function handleParamsChange(idx: number, text: string) {
             type="textarea"
             :model-value="optionsToText(field.options)"
             :rows="3"
-            size="small"
             placeholder="选项A=opt_a&#10;选项B=opt_b"
             @update:model-value="updateField(idx, 'options', parseOptionsText($event))"
           />
@@ -265,7 +264,6 @@ function handleParamsChange(idx: number, text: string) {
                 type="textarea"
                 :model-value="getParamsText(idx, field)"
                 :rows="2"
-                size="small"
                 placeholder='{"key": "value"}'
                 @update:model-value="handleParamsChange(idx, $event)"
               />

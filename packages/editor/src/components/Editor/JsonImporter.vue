@@ -215,7 +215,6 @@ defineExpose({ open })
               type="textarea"
               :rows="8"
               readonly
-              size="small"
             />
           </div>
         </div>

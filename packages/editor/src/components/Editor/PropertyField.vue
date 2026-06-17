@@ -214,7 +214,6 @@ function onJsonBlur() {
           v-model="jsonText"
           type="textarea"
           :rows="6"
-          size="small"
           placeholder="输入 JSON 数据"
           :class="[styles.jsonInput, jsonError ? styles.jsonInputError : '']"
           @focus="onJsonFocus"

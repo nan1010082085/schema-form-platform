@@ -237,7 +237,6 @@ function handleApiParamsChange(idx: number, text: string) {
           :model-value="colorMapToText(col.colorMap)"
           :rows="2"
           type="textarea"
-          size="small"
           placeholder='{"active":"success","inactive":"danger"}'
           @update:model-value="(v: string) => updateColorMap(idx, v)"
         />
@@ -275,7 +274,6 @@ function handleApiParamsChange(idx: number, text: string) {
               :model-value="getApiParamsText(idx)"
               :rows="2"
               type="textarea"
-              size="small"
               placeholder='{"key": "value"}'
               @update:model-value="(v: string) => handleApiParamsChange(idx, v)"
             />
