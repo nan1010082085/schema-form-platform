@@ -8,11 +8,11 @@
  * 使用虚拟滚动优化大量组件时的性能。
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { SearchIcon, ChevronDownIcon, ChevronRightIcon } from 'tdesign-icons-vue-next'
 import { pinyin } from 'pinyin-pro'
 import { getWidgetsByGroup, type WidgetRegistryItem } from '@/widgets/registry'
 import type { SchemaType } from '@/widgets/base/types'
 import styles from './ComponentPanel.module.scss'
+import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 
 const GROUP_LABELS: Record<string, string> = {
   layout: '布局部件',
@@ -23,6 +23,28 @@ const GROUP_LABELS: Record<string, string> = {
   static: '静态部件',
   business: '业务部件',
   chart: '图表部件',
+}
+
+// 部件类型图标映射
+const TYPE_ICONS: Record<string, string> = {
+  form: 'document', card: 'notebook', tabs: 'menu', dialog: 'chat-dot-round',
+  'single-col': 'grid', 'double-col': 'grid', 'triple-col': 'grid', 'quad-col': 'grid',
+  input: 'edit', select: 'arrow-down', number: 'sort', radio: 'circle-check', checkbox: 'check',
+  date: 'calendar', textarea: 'edit-pen', title: 'document',
+  divider: 'minus', spacer: 'rank', 'toolbar-buttons': 'set-up', table: 'grid', button: 'click',
+  // 图表部件
+  'bar-chart': 'data-board', 'stacked-bar-chart': 'data-board', 'horizontal-bar-chart': 'data-board',
+  'line-chart': 'trend-charts', 'area-chart': 'trend-charts',
+  'pie-chart': 'pie-chart', 'donut-chart': 'pie-chart',
+  'scatter-chart': 'aim', 'bubble-chart': 'aim',
+  'gauge': 'odometer', 'multi-gauge': 'odometer',
+  'funnel': 'sort', 'compare-funnel': 'sort',
+  'heatmap': 'grid', 'radar': 'cpu', 'filled-radar': 'cpu',
+  'candlestick': 'data-line',
+}
+
+function getIcon(type: string): string {
+  return TYPE_ICONS[type] ?? 'document'
 }
 
 interface ComponentGroup {
@@ -140,7 +162,7 @@ function handleDragStart(event: DragEvent, type: SchemaType, displayName: string
   ghost.textContent = displayName
   ghost.style.cssText = `
     padding: 6px 14px;
-    background: var(--td-brand-color);
+    background: var(--el-color-primary);
     color: white;
     font-size: 12px;
     font-weight: 500;
@@ -154,10 +176,8 @@ function handleDragStart(event: DragEvent, type: SchemaType, displayName: string
   `
   document.body.appendChild(ghost)
   event.dataTransfer!.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2)
-  // 拖拽结束后清理 ghost 元素
-  requestAnimationFrame(() => {
-    ghost.remove()
-  })
+  // 拖拽结束后清理 ghost 元素（延迟确保浏览器完成拖拽预览渲染）
+  setTimeout(() => ghost.remove(), 500)
 }
 
 // ============================================================
@@ -225,22 +245,43 @@ const flatList = computed<FlatItem[]>(() => {
 })
 
 // 计算每项的累计高度
+// 2列网格：连续 item 共享同一行，每行高度 ITEM_HEIGHT
 const itemAccumulatedHeights = computed(() => {
   const heights: number[] = []
   let accumulated = 0
+  let itemIndexInRow = 0
   for (const item of flatList.value) {
-    // header 高度 32px，item 高度按行计算（每行2列）
-    const height = item.type === 'header' ? 32 : ITEM_HEIGHT
-    accumulated += height
+    if (item.type === 'header') {
+      // 遇到 header 时，上一行的 item 如果是奇数个也要占一整行
+      itemIndexInRow = 0
+      accumulated += 32
+    } else {
+      if (itemIndexInRow === 0) {
+        // 新行的第一个 item，整行计入高度
+        accumulated += ITEM_HEIGHT
+      }
+      itemIndexInRow = (itemIndexInRow + 1) % COLUMNS_PER_ROW
+    }
     heights.push(accumulated)
   }
   return heights
 })
 
-// 计算总高度
+// 计算总高度 — 包含最后一行的完整高度
 const totalHeight = computed(() => {
   if (itemAccumulatedHeights.value.length === 0) return 0
-  return itemAccumulatedHeights.value[itemAccumulatedHeights.value.length - 1]
+  const lastHeight = itemAccumulatedHeights.value[itemAccumulatedHeights.value.length - 1]
+  // 检查最后一行是否完整
+  let itemIndexInRow = 0
+  for (const item of flatList.value) {
+    if (item.type === 'header') {
+      itemIndexInRow = 0
+    } else {
+      itemIndexInRow = (itemIndexInRow + 1) % COLUMNS_PER_ROW
+    }
+  }
+  // 如果最后一行不完整，加上 ITEM_HEIGHT 以确保完整显示
+  return itemIndexInRow === 0 ? lastHeight : lastHeight + ITEM_HEIGHT
 })
 
 // 计算可见区域的起始索引
@@ -261,7 +302,7 @@ const visibleItems = computed(() => {
   return flatList.value.slice(startIndex.value, endIndex.value + 1)
 })
 
-// 偏移量
+// 偏移量 — 用于 transform translateY
 const offsetY = computed(() => {
   if (startIndex.value === 0) return 0
   return itemAccumulatedHeights.value[startIndex.value - 1] || 0
@@ -282,16 +323,13 @@ function isGroupExpanded(groupKey: string): boolean {
 <template>
   <div :class="styles.panel">
     <div :class="styles.search">
-      <t-input
-        v-model:value="searchInput"
+      <el-input
+        v-model="searchInput"
         size="small"
         placeholder="搜索部件（支持拼音）..."
         clearable
-      >
-        <template #prefix-icon>
-          <SearchIcon />
-        </template>
-      </t-input>
+        :prefix-icon="Search"
+      />
     </div>
 
     <div
@@ -315,8 +353,8 @@ function isGroupExpanded(groupKey: string): boolean {
               @click="toggleGroup(flatItem.groupKey)"
             >
               <span :class="styles.arrow">
-                <ChevronDownIcon v-if="isGroupExpanded(flatItem.groupKey)" />
-                <ChevronRightIcon v-else />
+                <AppIcon v-if="isGroupExpanded(flatItem.groupKey)" name="arrow-down" :size="12" />
+                <AppIcon v-else name="arrow-right" :size="12" />
               </span>
               <span :class="styles.groupLabel">{{ flatItem.label }}</span>
               <span :class="styles.groupCount">{{ flatItem.count }}</span>
@@ -325,18 +363,15 @@ function isGroupExpanded(groupKey: string): boolean {
             <!-- 组件项 -->
             <div
               v-else-if="flatItem.type === 'item' && flatItem.item"
-              :class="styles.itemRow"
+              :class="styles.item"
+              draggable="true"
+              @dragstart="handleDragStart($event, flatItem.item!.type, flatItem.item!.displayName)"
             >
-              <div
-                :class="styles.item"
-                draggable="true"
-                @dragstart="handleDragStart($event, flatItem.item!.type, flatItem.item!.displayName)"
-              >
-                <span
-                  :class="styles.itemLabel"
-                  v-html="searchQuery ? highlightText(flatItem.item!.displayName) : flatItem.item!.displayName"
-                />
-              </div>
+              <AppIcon :name="getIcon(flatItem.item!.type)" :size="14" :class="styles.itemIcon" />
+              <span
+                :class="styles.itemLabel"
+                v-html="searchQuery ? highlightText(flatItem.item!.displayName) : flatItem.item!.displayName"
+              />
             </div>
           </template>
         </div>

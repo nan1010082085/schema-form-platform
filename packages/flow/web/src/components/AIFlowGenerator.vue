@@ -2,7 +2,7 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">
-        <AppIcon name="connection" :size="24" />
+        <AppIcon name="magic-stick" :size="24" />
         AI 流程生成器
       </h3>
       <p :class="$style.subtitle">描述你的流程需求，AI 帮你自动生成</p>
@@ -30,7 +30,7 @@
           :disabled="!flowDescription.trim()"
           @click="handleGenerate"
         >
-          <span v-if="!generating"><AppIcon name="connection" /> AI 生成流程</span>
+          <span v-if="!generating"><AppIcon name="magic-stick" /> AI 生成流程</span>
           <span v-else>生成中...</span>
         </el-button>
         <el-button size="large" @click="handleClear">清空</el-button>

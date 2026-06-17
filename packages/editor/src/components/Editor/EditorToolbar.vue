@@ -350,7 +350,7 @@ onUnmounted(() => { document.removeEventListener('keydown', handleKeydown) })
       <!-- 画布尺寸 -->
       <el-dropdown trigger="click" @command="(v: any) => emit('canvas-size-change', v)">
         <button class="editor-toolbar__icon-btn" title="画布尺寸">
-          <AppIcon name="full-screen" />
+          <AppIcon name="crop" />
         </button>
         <template #dropdown>
           <el-dropdown-menu>

@@ -14,6 +14,7 @@
         @input="$emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <span v-else :class="styles.titleText">{{ title || '未命名流程' }}</span>
+      <span v-if="currentVersion" :class="styles.versionBadge">v{{ currentVersion }}</span>
     </div>
 
     <!-- Center: panel toggles + undo/redo + export/import (hidden in preview) -->
@@ -30,12 +31,12 @@
       <div :class="styles.btnGroup">
         <el-tooltip content="撤销 (Ctrl+Z)" placement="bottom">
           <button :class="styles.iconBtn" title="撤销 (Ctrl+Z)" @click="$emit('undo')">
-            <AppIcon name="back" :size="14" />
+            <AppIcon name="refresh-left" :size="14" />
           </button>
         </el-tooltip>
         <el-tooltip content="重做 (Ctrl+Y)" placement="bottom">
           <button :class="styles.iconBtn" title="重做 (Ctrl+Y)" @click="$emit('redo')">
-            <AppIcon name="right" :size="14" />
+            <AppIcon name="refresh-right" :size="14" />
           </button>
         </el-tooltip>
       </div>
@@ -191,7 +192,7 @@
             :disabled="autoPlayActive"
             @click="$emit('step-forward')"
           >
-            <AppIcon name="video-play" :size="14" />
+            <AppIcon name="right" :size="14" />
           </button>
         </el-tooltip>
 
@@ -214,7 +215,7 @@
 
         <el-tooltip content="重置到开始节点" placement="bottom">
           <button :class="styles.simIconBtn" title="重置" @click="$emit('reset-simulation')">
-            <AppIcon name="refresh-right" :size="14" />
+            <AppIcon name="refresh-left" :size="14" />
           </button>
         </el-tooltip>
 
@@ -240,19 +241,47 @@
       <template v-if="!isPreview">
         <NotificationBell />
         <div :class="styles.divider" />
-        <el-tooltip content="版本历史" placement="bottom">
-          <button :class="styles.iconBtn" title="版本历史" @click="$emit('version-history')">
-            <AppIcon name="clock" :size="14" />
-          </button>
-        </el-tooltip>
+        <el-popover
+          placement="bottom"
+          :width="400"
+          trigger="click"
+          @show="$emit('version-history')"
+        >
+          <slot name="version-popover" />
+          <template #reference>
+            <button :class="styles.iconBtn" title="版本历史">
+              <AppIcon name="clock" :size="14" />
+            </button>
+          </template>
+        </el-popover>
         <el-tooltip content="校验流程" placement="bottom">
           <button :class="styles.iconBtn" title="校验" @click="$emit('validate')">
             <AppIcon name="circle-check" :size="14" />
           </button>
         </el-tooltip>
         <el-button size="small" @click="$emit('settings')">设置</el-button>
-        <el-button size="small" :loading="saving" @click="$emit('save')">{{ saving ? '保存中...' : '保存' }}</el-button>
-        <el-button size="small" @click="$emit('save-as-template')">存为模板</el-button>
+        <el-dropdown trigger="click" @command="handleSaveCommand">
+          <el-button size="small" :class="styles.saveBtn" :loading="saving">
+            <span>{{ saving ? '保存中...' : '保存' }}</span>
+            <el-icon :size="12"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="save">
+                <span :class="styles.dropdownItem">
+                  <AppIcon name="document" :size="14" />
+                  <span>保存流程</span>
+                </span>
+              </el-dropdown-item>
+              <el-dropdown-item command="save-as-template">
+                <span :class="styles.dropdownItem">
+                  <AppIcon name="copy" :size="14" />
+                  <span>保存为模板</span>
+                </span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button type="primary" size="small" :loading="saving" @click="$emit('publish')">{{ saving ? '发布中...' : '发布' }}</el-button>
       </template>
       <template v-else>
@@ -270,6 +299,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { ArrowDown, Refresh } from '@element-plus/icons-vue'
 import type { SimulationSpeed } from '../composables/useSimulation.js'
 import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
@@ -286,6 +316,7 @@ const props = defineProps<{
   showRightPanel?: boolean
   showAiDrawer?: boolean
   saving?: boolean
+  currentVersion?: string
   // Simulation props
   isSimulating?: boolean
   currentStep?: number
@@ -305,6 +336,18 @@ const speedLabel = computed(() => SPEED_LABELS[props.speed ?? 'normal'])
 function goToPortal() {
   const base = getAppUrl('flow', import.meta.env.DEV)
   window.location.href = `${base}list`
+}
+
+function handleSaveCommand(command: string) {
+  if (command === 'save') {
+    // 触发保存
+    const event = new CustomEvent('flow-save')
+    window.dispatchEvent(event)
+  } else if (command === 'save-as-template') {
+    // 触发保存为模板
+    const event = new CustomEvent('flow-save-as-template')
+    window.dispatchEvent(event)
+  }
 }
 
 defineEmits<{

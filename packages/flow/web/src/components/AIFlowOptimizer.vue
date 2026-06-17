@@ -2,7 +2,7 @@
   <div :class="$style.container">
     <div :class="$style.header">
       <h3 :class="$style.title">
-        <AppIcon name="operation" :size="20" />
+        <AppIcon name="magic-stick" :size="20" />
         AI 流程优化分析
       </h3>
       <p :class="$style.subtitle">分析当前流程，获取优化建议</p>
@@ -34,12 +34,12 @@
           <div :class="$style.metricLabel">平均执行时间</div>
         </div>
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon"><AppIcon name="refresh" :size="20" /></div>
+          <div :class="$style.metricIcon"><AppIcon name="connection" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.nodeCount }}</div>
           <div :class="$style.metricLabel">节点数量</div>
         </div>
         <div :class="$style.metricCard">
-          <div :class="$style.metricIcon"><AppIcon name="switch" :size="20" /></div>
+          <div :class="$style.metricIcon"><AppIcon name="share" :size="20" /></div>
           <div :class="$style.metricValue">{{ analysisResult.metrics.gatewayCount }}</div>
           <div :class="$style.metricLabel">网关数量</div>
         </div>
