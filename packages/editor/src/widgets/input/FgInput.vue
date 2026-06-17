@@ -13,6 +13,10 @@ useExposeWidget((wd) => ({
 }))
 
 const dynamicStyle = computed(() => ({
+  width: '100%',
+  height: `${widgetData.value.position?.h ?? 32}px`,
+  '--el-component-size': `${widgetData.value.position?.h ?? 32}px`,
+  '--el-component-size-small': `${widgetData.value.position?.h ?? 32}px`,
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
