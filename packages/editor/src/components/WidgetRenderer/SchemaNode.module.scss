@@ -12,6 +12,14 @@
   height: 100% !important;
 }
 
+/* el-select 内部结构需要更深的选择器来继承高度 */
+.nodeWrapper > .el-select {
+  .el-select__wrapper {
+    min-height: 100%;
+    height: 100%;
+  }
+}
+
 /* 容器内部子部件的渲染容器 */
 .childrenLayer {
   position: absolute;
@@ -22,12 +30,12 @@
 }
 
 .nodeWrapperEdit {
-  outline: 1px dashed rgba(0, 212, 255, 0.15);
+  outline: 1px dashed var(--color-primary-lighter);
   outline-offset: -1px;
 
   &:hover {
-    outline-color: rgba(0, 212, 255, 0.3);
-    box-shadow: 0 0 8px rgba(0, 212, 255, 0.08);
+    outline-color: var(--color-primary-light);
+    box-shadow: 0 0 8px var(--color-primary-lighter);
   }
 }
 
