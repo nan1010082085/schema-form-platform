@@ -12,11 +12,15 @@ useExposeWidget((wd) => ({
   get value() { return wd.value.defaultValue },
 }))
 
+const widgetHeight = computed(() => widgetData.value.position?.h ?? 32)
+const buttonHeight = computed(() => Math.floor(widgetHeight.value / 2))
+
 const dynamicStyle = computed(() => ({
   width: '100%',
-  height: `${widgetData.value.position?.h ?? 32}px`,
-  '--el-component-size': `${widgetData.value.position?.h ?? 32}px`,
-  '--el-component-size-small': `${widgetData.value.position?.h ?? 32}px`,
+  height: `${widgetHeight.value}px`,
+  '--el-component-size': `${widgetHeight.value}px`,
+  '--el-component-size-small': `${widgetHeight.value}px`,
+  '--number-btn-height': `${buttonHeight.value}px`,
   fontSize: widgetStyle.value?.fontSize as string,
   color: widgetStyle.value?.color as string,
 }))
@@ -52,5 +56,11 @@ function forwardNativeChange() {
 .el-input-number :deep(.el-input__wrapper) {
   min-height: inherit;
   height: inherit;
+}
+
+.el-input-number :deep(.el-input-number__increase),
+.el-input-number :deep(.el-input-number__decrease) {
+  height: var(--number-btn-height, 16px);
+  line-height: var(--number-btn-height, 16px);
 }
 </style>
