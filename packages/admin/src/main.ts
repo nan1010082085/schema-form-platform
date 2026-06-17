@@ -10,6 +10,11 @@ import { setTokenProvider } from './utils/apiClient'
 import { permissionDirective } from './directives/permission'
 import { setupElementPlus } from '@schema-form/shared-config/element'
 
+console.log('[admin] main.ts loaded', {
+  poweredByQiankun: !!window.__POWERED_BY_QIANKUN__,
+  hasAppElement: !!document.getElementById('app'),
+})
+
 // 设置 token 提供者：从 qiankun 全局状态读取
 const { getGlobalState } = useQiankun()
 setTokenProvider(() => {

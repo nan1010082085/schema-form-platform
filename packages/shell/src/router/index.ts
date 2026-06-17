@@ -130,8 +130,7 @@ router.beforeEach(async (to, _from, next) => {
     if (isPublic) {
       next()
     } else {
-      // 使用 to.href 确保包含完整的 base 路径
-      next({ path: '/login', query: { redirect: to.href } })
+      next({ path: '/login', query: { redirect: to.fullPath } })
     }
     return
   }
@@ -145,8 +144,7 @@ router.beforeEach(async (to, _from, next) => {
       if (isPublic) {
         next()
       } else {
-        // 使用 to.href 确保包含完整的 base 路径
-        next({ path: '/login', query: { redirect: to.href } })
+        next({ path: '/login', query: { redirect: to.fullPath } })
       }
       return
     }

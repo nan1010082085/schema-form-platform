@@ -38,6 +38,8 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
   function render(props: { container?: HTMLElement } = {}) {
     const { container } = props
 
+    console.log(`[${name}] render() called`, { hasContainer: !!container })
+
     // 注入 token
     if (getToken) {
       const token = getToken()
@@ -64,14 +66,24 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     // 挂载到指定容器或默认容器
     const mountEl = container
       ? container.querySelector('#app') || container
-      : document.getElementById('app')!
+      : document.getElementById('app')
+
+    console.log(`[${name}] mountEl`, { found: !!mountEl, id: mountEl?.id })
+
+    if (!mountEl) {
+      console.error(`[${name}] #app element not found, cannot mount`)
+      return
+    }
 
     app.mount(mountEl)
+    console.log(`[${name}] app mounted successfully`)
   }
 
   // 独立运行时直接渲染
   if (!window.__POWERED_BY_QIANKUN__) {
+    console.log(`[${name}] standalone mode, calling render()`)
     render()
+    console.log(`[${name}] render() completed`)
   }
 
   // Qiankun 生命周期钩子
