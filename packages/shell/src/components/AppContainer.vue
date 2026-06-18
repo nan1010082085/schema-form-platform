@@ -1,13 +1,12 @@
 <script setup lang="ts">
 /**
- * AppContainer -- micro-app container
+ * AppContainer — 微应用容器
  *
- * Renders the appropriate child app based on route meta.
- * Qiankun handles mounting/unmounting via route matching.
+ * 根据路由参数决定加载哪个微应用：
+ * - route.params.app → 微应用名称（editor / flow / ai / admin）
+ * - route.meta.microApp → 兼容直接指定的情况
  *
- * Layout modes controlled by route meta:
- * - meta.microApp: load as micro-app (full-screen or with-menu depending on app config)
- * - no meta.microApp: shell's own admin page placeholder
+ * qiankun 通过 activeRule 匹配后自动挂载到 #micro-container。
  */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -15,14 +14,16 @@ import MicroAppLoader from './MicroAppLoader.vue'
 
 const route = useRoute()
 
-const isMicroApp = computed(() => !!route.meta?.microApp)
+const microAppName = computed(() => {
+  return (route.params.app as string) || (route.meta?.microApp as string) || ''
+})
+
+const isMicroApp = computed(() => !!microAppName.value)
 </script>
 
 <template>
-  <!-- Micro-app mode: render child app container -->
   <MicroAppLoader v-if="isMicroApp" />
 
-  <!-- Admin page mode: placeholder for shell's own pages -->
   <div v-else :class="$style.placeholder">
     <div :class="$style.content">
       <h2 :class="$style.title">{{ route.meta?.title || '页面' }}</h2>

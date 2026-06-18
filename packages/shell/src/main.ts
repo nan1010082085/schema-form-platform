@@ -36,42 +36,30 @@ authStore.$subscribe((_mutation, state) => {
 
 // Register micro-apps after Vue app is mounted
 const isDev = import.meta.env.DEV
+const shellBase = APP_CONFIGS.shell.basePath
 
-// 带菜单容器的路径后缀映射
-const INLINE_SUFFIX: Record<string, string> = {
-  editor: 'editor-inline',
-  flow: 'flow-inline',
-  ai: 'ai-inline',
-  admin: 'admin-inline',
+// 激活规则：匹配 /app/{name}/ 和 /standalone/{name}/ 两种模式
+function makeActiveRule(appName: string): (location: Location) => boolean {
+  return (location: Location) => {
+    const path = location.pathname
+    // 带菜单: /schema-platform/app/editor/...
+    if (path.startsWith(`${shellBase}app/${appName}/`)) return true
+    // 独立页签: /schema-platform/standalone/editor/...
+    if (path.startsWith(`${shellBase}standalone/${appName}/`)) return true
+    return false
+  }
 }
 
-// 每个子应用注册两条激活规则：独立页签 + 带菜单容器
 const microApps = Object.values(APP_CONFIGS)
   .filter((config) => config.name !== 'shell')
-  .flatMap((config) => {
-    const entry = isDev
+  .map((config) => ({
+    name: config.name,
+    entry: isDev
       ? `//localhost:${config.devPort}${config.basePath}`
-      : `//${window.location.host}${config.basePath}`
-    const container = '#micro-container'
-
-    const apps = [
-      // 独立页签: /schema-platform/editor/
-      { name: config.name, entry, container, activeRule: config.basePath },
-    ]
-
-    // 带菜单容器: /schema-platform/editor-inline/
-    const inlineSuffix = INLINE_SUFFIX[config.name]
-    if (inlineSuffix) {
-      apps.push({
-        name: config.name,
-        entry,
-        container,
-        activeRule: `${APP_CONFIGS.shell.basePath}${inlineSuffix}/`,
-      })
-    }
-
-    return apps
-  })
+      : `//${window.location.host}${config.basePath}`,
+    container: '#micro-container',
+    activeRule: makeActiveRule(config.name),
+  }))
 
 registerMicroApps(microApps, {
   beforeLoad: [
