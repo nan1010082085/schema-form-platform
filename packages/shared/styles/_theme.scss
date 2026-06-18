@@ -183,11 +183,19 @@
   color: $text-color-primary;
 }
 
-.el-table__header th {
+// 表头全局样式：统一灰色底、加粗，避免仅操作列表头有颜色
+.el-table th.el-table__cell {
   font-size: $font-size-14;
   color: $text-color-primary;
   font-weight: $font-weight-medium;
-  background-color: $bg-color-gray;
+  background-color: $bg-color-gray !important;
+}
+
+// Element Plus 内部表头选择器也需要覆盖
+.el-table__header-wrapper {
+  th.el-table__cell {
+    background-color: $bg-color-gray !important;
+  }
 }
 
 // Tag 标签
