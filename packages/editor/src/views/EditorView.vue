@@ -49,12 +49,17 @@ const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
 
-// 自动保存：脏数据 60 秒后自动触发保存
+// 自动保存：脏数据 60 秒后自动触发保存（偏好持久化到 localStorage）
+const autoSaveEnabled = ref(localStorage.getItem('editor_auto_save') !== 'off')
 const { isAutoSaving } = useAutoSave({
   delayMs: 60_000,
-  enabled: true,
+  enabled: autoSaveEnabled,
   onSave: handleSave,
 })
+function toggleAutoSave() {
+  autoSaveEnabled.value = !autoSaveEnabled.value
+  localStorage.setItem('editor_auto_save', autoSaveEnabled.value ? 'on' : 'off')
+}
 
 // ================================================================
 // Layout state
@@ -552,6 +557,15 @@ function handleClearCanvas() {
             placeholder="未命名画布"
           />
           <span v-if="currentVersion" class="editor-view__version-badge">v{{ formatVersion(currentVersion) }}</span>
+          <el-tooltip :content="autoSaveEnabled ? '关闭自动保存' : '开启自动保存'" placement="bottom">
+            <button
+              class="editor-view__icon-btn editor-view__auto-save-toggle"
+              :class="{ 'editor-view__auto-save-toggle--on': autoSaveEnabled }"
+              @click="toggleAutoSave"
+            >
+              <AppIcon name="refresh" :size="14" />
+            </button>
+          </el-tooltip>
           <span v-if="isAutoSaving" class="editor-view__auto-save-badge">自动保存中...</span>
           <span v-else-if="editorStore.isDirty" class="editor-view__dirty-badge">未保存</span>
         </template>
@@ -1111,6 +1125,16 @@ function handleClearCanvas() {
     color: var(--color-warning);
     white-space: nowrap;
     flex-shrink: 0;
+  }
+
+  &__auto-save-toggle {
+    opacity: 0.5;
+    transition: opacity 0.2s, color 0.2s;
+
+    &--on {
+      opacity: 1;
+      color: var(--color-success);
+    }
   }
 
   &__version-panel {
