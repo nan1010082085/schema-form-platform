@@ -2,8 +2,13 @@ import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import { useQiankun } from '@schema-form/shared-qiankun'
 import { useAuthStore } from '../stores/auth'
 
-const isQiankun = () => !!window.__POWERED_BY_QIANKUN__
 const APP_BASE = import.meta.env.BASE_URL
+
+// 独立模式：使用 WebHistory（URL 可见）
+// qiankun 模式：使用 MemoryHistory（URL 由宿主控制）
+// 注意：vite-plugin-qiankun 的 useDevMode 会在 dev 下设置 __POWERED_BY_QIANKUN__=true，
+// 但 createQiankunApp 的 timeout 兜底仍会正常渲染，此处用 WebHistory 即可。
+const isQiankun = () => !!window.__POWERED_BY_QIANKUN__ && APP_BASE !== '/'
 
 const router = createRouter({
   history: isQiankun() ? createMemoryHistory() : createWebHistory(APP_BASE),
@@ -107,7 +112,7 @@ router.beforeEach(async (to) => {
     return true
   }
 
-  // 微前端模式下跳过登录检查（宿主已处理鉴权）
+  // 独立模式下检查登录（微前端模式由宿主处理鉴权）
   if (!isQiankun()) {
     const { getGlobalState } = useQiankun()
     const state = getGlobalState()

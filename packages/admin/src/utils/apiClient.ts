@@ -54,10 +54,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (response.status === 401 && path !== '/auth/login') {
     onUnauthorized?.()
     // 微前端模式下通知宿主处理鉴权，standalone 模式下跳转登录页
-    if (window.__POWERED_BY_QIANKUN__) {
+    const isRealQiankun = window.__POWERED_BY_QIANKUN__ && import.meta.env.BASE_URL !== '/'
+    if (isRealQiankun) {
       window.parent.postMessage({ type: 'auth:unauthorized' }, '*')
     } else {
-      window.location.href = '/schema-platform/login'
+      // 独立模式：跳转到自身的 /login
+      window.location.href = `${import.meta.env.BASE_URL}login`
     }
     throw new ApiError('Authentication required', 401)
   }

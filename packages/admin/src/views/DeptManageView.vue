@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiClient } from '@/utils/apiClient'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import { Search, Plus } from '@element-plus/icons-vue'
 
 interface Dept {
   id: string

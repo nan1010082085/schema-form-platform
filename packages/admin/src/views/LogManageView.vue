@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { apiClient } from '@/utils/apiClient'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 
 interface AuditLog {
   id: string
@@ -163,7 +163,7 @@ onMounted(() => {
           style="width: 200px"
         >
           <template #prefix>
-            <AppIcon name="search" />
+            <el-icon><Search /></el-icon>
           </template>
         </el-input>
         <el-input

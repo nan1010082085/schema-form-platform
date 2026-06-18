@@ -1,7 +1,15 @@
 /**
  * createQiankunApp - Qiankun 子应用工厂函数
  *
- * 简化子应用的创建和生命周期管理
+ * 简化子应用的创建和生命周期管理。
+ * 支持两种运行模式：
+ * - qiankun 模式：宿主调用 mount()/unmount() 生命周期
+ * - 独立模式：模块加载时自动渲染到 #app
+ *
+ * 独立模式检测：
+ * vite-plugin-qiankun 的 useDevMode 会在 dev 模式下设置 __POWERED_BY_QIANKUN__=true，
+ * 即使实际是独立运行。因此设置 500ms 兜底——如果 qiankun 没有在 500ms 内调用 mount()，
+ * 则视为独立模式，自动渲染。
  */
 import { createApp, type App, type Component } from 'vue'
 import { createPinia } from 'pinia'
@@ -34,6 +42,7 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
   } = options
 
   let app: App | null = null
+  let standaloneFallbackTimer: ReturnType<typeof setTimeout> | null = null
 
   function render(props: { container?: HTMLElement } = {}) {
     const { container } = props
@@ -79,11 +88,22 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     console.log(`[${name}] app mounted successfully`)
   }
 
-  // 独立运行时直接渲染
+  // 独立模式检测
   if (!window.__POWERED_BY_QIANKUN__) {
+    // 明确不是 qiankun 模式，直接渲染
     console.log(`[${name}] standalone mode, calling render()`)
     render()
-    console.log(`[${name}] render() completed`)
+  } else {
+    // __POWERED_BY_QIANKUN__ 为 true，可能是 qiankun 模式，
+    // 也可能是 vite-plugin-qiankun 的 useDevMode 误设。
+    // 设置 500ms 兜底：如果 qiankun 没有调用 mount()，自动渲染。
+    standaloneFallbackTimer = setTimeout(() => {
+      if (!app) {
+        console.warn(`[${name}] qiankun mount() not called within 500ms, falling back to standalone render`)
+        render()
+      }
+      standaloneFallbackTimer = null
+    }, 500)
   }
 
   // Qiankun 生命周期钩子
@@ -93,10 +113,15 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     },
 
     async mount(props: { container?: HTMLElement }) {
+      // qiankun 调用了 mount()，取消 standalone fallback
+      if (standaloneFallbackTimer) {
+        clearTimeout(standaloneFallbackTimer)
+        standaloneFallbackTimer = null
+      }
+
       console.log(`[${name}] mount`, {
         container: props.container,
         containerId: props.container?.id,
-        poweredByQiankun: !!window.__POWERED_BY_QIANKUN__,
       })
       render(props)
     },
