@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Kill processes on fixed development ports
-PORTS=(3001 5050 5100 5200 5300 5400)
+PORTS=(3001 5050 5100 5200 5300 5555)
 
 for port in "${PORTS[@]}"; do
   pid=$(lsof -ti :$port 2>/dev/null)
