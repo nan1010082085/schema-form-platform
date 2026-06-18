@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { WidgetTemplateModel } from '../models/WidgetTemplate.js'
 
 interface BuiltinTemplate {
@@ -152,6 +153,7 @@ export async function seedBuiltinTemplates(): Promise<void> {
 
   for (const tpl of BUILTIN_TEMPLATES) {
     await WidgetTemplateModel.create({
+      _id: uuidv4(),
       name: tpl.name,
       description: tpl.description,
       category: tpl.category,
