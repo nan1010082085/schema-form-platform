@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import { WidgetTemplateModel } from '../models/WidgetTemplate.js'
 
 interface BuiltinTemplate {
@@ -9,6 +8,12 @@ interface BuiltinTemplate {
   widgets: Record<string, unknown>[]
 }
 
+/** 生成 Widget ID：{type}_{5位随机hash} */
+function wid(type: string): string {
+  const hash = Math.random().toString(36).substring(2, 7)
+  return `${type}_${hash}`
+}
+
 const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     name: '用户注册表单',
@@ -16,11 +21,11 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'form',
     tags: ['用户', '注册', '基础'],
     widgets: [
-      { id: uuidv4(), type: 'input', props: { label: '用户名', placeholder: '请输入用户名', required: true, field: 'username' }, position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '邮箱', placeholder: '请输入邮箱', required: true, field: 'email' }, position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '手机号', placeholder: '请输入手机号', required: false, field: 'phone' }, position: { x: 50, y: 190, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '密码', placeholder: '请输入密码', required: true, field: 'password', inputType: 'password' }, position: { x: 50, y: 260, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'button', props: { label: '注册', type: 'primary' }, position: { x: 50, y: 340, w: 400, h: 50, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '用户名', field: 'username', props: { placeholder: '请输入用户名', required: true }, position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '邮箱', field: 'email', props: { placeholder: '请输入邮箱', required: true }, position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '手机号', field: 'phone', props: { placeholder: '请输入手机号' }, position: { x: 50, y: 190, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '密码', field: 'password', props: { placeholder: '请输入密码', required: true, showPassword: true }, position: { x: 50, y: 260, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('button'), type: 'button', name: 'FgButton', label: '注册', props: { type: 'primary' }, position: { x: 50, y: 340, w: 400, h: 50, zIndex: 1 } },
     ],
   },
   {
@@ -29,12 +34,12 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'search',
     tags: ['订单', '查询', '筛选'],
     widgets: [
-      { id: uuidv4(), type: 'input', props: { label: '订单号', placeholder: '请输入订单号', field: 'orderId' }, position: { x: 50, y: 50, w: 300, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'select', props: { label: '订单状态', placeholder: '请选择状态', field: 'status', options: [{ label: '待付款', value: 'pending' }, { label: '已付款', value: 'paid' }, { label: '已完成', value: 'completed' }, { label: '已取消', value: 'cancelled' }] }, position: { x: 370, y: 50, w: 300, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'date', props: { label: '开始日期', field: 'startDate' }, position: { x: 50, y: 120, w: 300, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'date', props: { label: '结束日期', field: 'endDate' }, position: { x: 370, y: 120, w: 300, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'button', props: { label: '查询', type: 'primary' }, position: { x: 50, y: 200, w: 140, h: 44, zIndex: 1 } },
-      { id: uuidv4(), type: 'button', props: { label: '重置', type: 'default' }, position: { x: 210, y: 200, w: 140, h: 44, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '订单号', field: 'orderId', props: { placeholder: '请输入订单号' }, position: { x: 50, y: 50, w: 300, h: 60, zIndex: 1 } },
+      { id: wid('select'), type: 'select', name: 'FgSelect', label: '订单状态', field: 'status', props: { placeholder: '请选择状态' }, options: [{ label: '待付款', value: 'pending' }, { label: '已付款', value: 'paid' }, { label: '已完成', value: 'completed' }, { label: '已取消', value: 'cancelled' }], position: { x: 370, y: 50, w: 300, h: 60, zIndex: 1 } },
+      { id: wid('date'), type: 'date', name: 'FgDate', label: '开始日期', field: 'startDate', position: { x: 50, y: 120, w: 300, h: 60, zIndex: 1 } },
+      { id: wid('date'), type: 'date', name: 'FgDate', label: '结束日期', field: 'endDate', position: { x: 370, y: 120, w: 300, h: 60, zIndex: 1 } },
+      { id: wid('button'), type: 'button', name: 'FgButton', label: '查询', props: { type: 'primary' }, position: { x: 50, y: 200, w: 140, h: 44, zIndex: 1 } },
+      { id: wid('button'), type: 'button', name: 'FgButton', label: '重置', props: { type: 'default' }, position: { x: 210, y: 200, w: 140, h: 44, zIndex: 1 } },
     ],
   },
   {
@@ -43,13 +48,13 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'form',
     tags: ['员工', 'HR', '信息录入'],
     widgets: [
-      { id: uuidv4(), type: 'input', props: { label: '姓名', placeholder: '请输入姓名', required: true, field: 'name' }, position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'select', props: { label: '性别', field: 'gender', options: [{ label: '男', value: 'male' }, { label: '女', value: 'female' }] }, position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'date', props: { label: '出生日期', field: 'birthday' }, position: { x: 50, y: 190, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '部门', placeholder: '请输入部门', field: 'department' }, position: { x: 50, y: 260, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '职位', placeholder: '请输入职位', field: 'position' }, position: { x: 50, y: 330, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '邮箱', placeholder: '请输入邮箱', field: 'email' }, position: { x: 50, y: 400, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'button', props: { label: '保存', type: 'primary' }, position: { x: 50, y: 480, w: 400, h: 50, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '姓名', field: 'name', props: { placeholder: '请输入姓名', required: true }, position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('select'), type: 'select', name: 'FgSelect', label: '性别', field: 'gender', options: [{ label: '男', value: 'male' }, { label: '女', value: 'female' }], position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('date'), type: 'date', name: 'FgDate', label: '出生日期', field: 'birthday', position: { x: 50, y: 190, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '部门', field: 'department', props: { placeholder: '请输入部门' }, position: { x: 50, y: 260, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '职位', field: 'position', props: { placeholder: '请输入职位' }, position: { x: 50, y: 330, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '邮箱', field: 'email', props: { placeholder: '请输入邮箱' }, position: { x: 50, y: 400, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('button'), type: 'button', name: 'FgButton', label: '保存', props: { type: 'primary' }, position: { x: 50, y: 480, w: 400, h: 50, zIndex: 1 } },
     ],
   },
   {
@@ -58,7 +63,7 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'table',
     tags: ['用户', '列表', '管理'],
     widgets: [
-      { id: uuidv4(), type: 'table', props: {
+      { id: wid('table'), type: 'table', name: 'FgTable', props: {
         columns: [
           { prop: 'name', label: '姓名', width: 120 },
           { prop: 'email', label: '邮箱', width: 200 },
@@ -80,7 +85,7 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'table',
     tags: ['订单', '列表', '交易'],
     widgets: [
-      { id: uuidv4(), type: 'table', props: {
+      { id: wid('table'), type: 'table', name: 'FgTable', props: {
         columns: [
           { prop: 'orderNo', label: '订单号', width: 180 },
           { prop: 'customer', label: '客户', width: 120 },
@@ -102,7 +107,7 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     category: 'table',
     tags: ['日志', '审计', '操作记录'],
     widgets: [
-      { id: uuidv4(), type: 'table', props: {
+      { id: wid('table'), type: 'table', name: 'FgTable', props: {
         columns: [
           { prop: 'operator', label: '操作人', width: 100 },
           { prop: 'action', label: '操作类型', width: 120 },
@@ -120,15 +125,15 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   },
   {
     name: '反馈意见表单',
-    description: '用户反馈收集表单，包含反馈类型、内容、附件',
+    description: '用户反馈收集表单，包含反馈类型、内容、联系方式',
     category: 'form',
     tags: ['反馈', '意见', '客服'],
     widgets: [
-      { id: uuidv4(), type: 'select', props: { label: '反馈类型', required: true, field: 'type', options: [{ label: '功能建议', value: 'feature' }, { label: 'Bug 报告', value: 'bug' }, { label: '体验问题', value: 'ux' }, { label: '其他', value: 'other' }] }, position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '标题', placeholder: '请简要描述问题', required: true, field: 'title' }, position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'textarea', props: { label: '详细描述', placeholder: '请详细描述您的反馈...', required: true, field: 'content', rows: 5 }, position: { x: 50, y: 190, w: 400, h: 140, zIndex: 1 } },
-      { id: uuidv4(), type: 'input', props: { label: '联系方式', placeholder: '手机号或邮箱（选填）', field: 'contact' }, position: { x: 50, y: 340, w: 400, h: 60, zIndex: 1 } },
-      { id: uuidv4(), type: 'button', props: { label: '提交反馈', type: 'primary' }, position: { x: 50, y: 420, w: 400, h: 50, zIndex: 1 } },
+      { id: wid('select'), type: 'select', name: 'FgSelect', label: '反馈类型', field: 'type', props: { required: true }, options: [{ label: '功能建议', value: 'feature' }, { label: 'Bug 报告', value: 'bug' }, { label: '体验问题', value: 'ux' }, { label: '其他', value: 'other' }], position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '标题', field: 'title', props: { placeholder: '请简要描述问题', required: true }, position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('textarea'), type: 'textarea', name: 'FgTextarea', label: '详细描述', field: 'content', props: { placeholder: '请详细描述您的反馈...', required: true, rows: 5 }, position: { x: 50, y: 190, w: 400, h: 140, zIndex: 1 } },
+      { id: wid('input'), type: 'input', name: 'FgInput', label: '联系方式', field: 'contact', props: { placeholder: '手机号或邮箱（选填）' }, position: { x: 50, y: 340, w: 400, h: 60, zIndex: 1 } },
+      { id: wid('button'), type: 'button', name: 'FgButton', label: '提交反馈', props: { type: 'primary' }, position: { x: 50, y: 420, w: 400, h: 50, zIndex: 1 } },
     ],
   },
 ]
@@ -145,7 +150,6 @@ export async function seedBuiltinTemplates(): Promise<void> {
     if (existing) continue
 
     await WidgetTemplateModel.create({
-      _id: uuidv4(),
       name: tpl.name,
       description: tpl.description,
       category: tpl.category,

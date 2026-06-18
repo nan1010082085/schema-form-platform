@@ -15,13 +15,22 @@ function escapeRegex(str: string): string {
 
 interface WidgetNode {
   id?: string
+  type?: string
   children?: WidgetNode[]
   [key: string]: unknown
 }
 
+/** 生成 Widget ID：{type}_{5位随机hash} */
+function generateWidgetId(type: string): string {
+  const hash = Math.random().toString(36).substring(2, 7)
+  return `${type}_${hash}`
+}
+
 function regenerateIds(nodes: WidgetNode[]): void {
   for (const node of nodes) {
-    node.id = uuidv4()
+    // 保留类型前缀，从旧 ID 或 type 字段提取
+    const type = node.type || (node.id ? node.id.split('_')[0] : 'widget')
+    node.id = generateWidgetId(type)
     if (node.children && Array.isArray(node.children)) {
       regenerateIds(node.children)
     }

@@ -12,6 +12,7 @@ import { useApiStore } from '@/stores/api'
 import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
 import { importSchema } from '@/utils/apiClient'
 import VersionHistoryDialog from '@/components/Editor/VersionHistoryDialog.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
 import type { SchemaListItem, SchemaDetail } from '@/types/api'
 import type { PartialWidget } from '@/widgets/base/types'
@@ -453,7 +454,7 @@ function handleVersionPublished() {
     </div>
 
     <!-- Create Dialog -->
-    <el-dialog v-model="createDialogVisible" title="新建实例" width="440px" :close-on-click-modal="false">
+    <AppDialog v-model="createDialogVisible" title="新建实例" width="440px">
       <el-form label-width="80px" @submit.prevent="confirmCreate">
         <el-form-item label="实例名称">
           <el-input v-model="createName" placeholder="请输入实例名称" maxlength="100" show-word-limit @keyup.enter="confirmCreate" />
@@ -469,10 +470,10 @@ function handleVersionPublished() {
         <el-button @click="createDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmCreate">创建并编辑</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
     <!-- Import Dialog -->
-    <el-dialog v-model="importDialogVisible" title="导入 Schema" width="440px" :close-on-click-modal="false">
+    <AppDialog v-model="importDialogVisible" title="导入 Schema" width="440px">
       <el-upload drag :auto-upload="false" accept=".json" :limit="1" :on-change="handleUploadChange">
         <AppIcon name="upload" class="el-icon--upload" :size="40" />
         <div class="el-upload__text">拖拽文件到此处，或 <em>点击选择</em></div>
@@ -484,7 +485,7 @@ function handleVersionPublished() {
         <el-button @click="importDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="importLoading" @click="confirmImport">导入</el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
 
     <!-- Version History Dialog -->
     <VersionHistoryDialog
