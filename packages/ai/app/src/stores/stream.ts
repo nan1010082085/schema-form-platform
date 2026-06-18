@@ -1,20 +1,22 @@
 /**
- * SSE 连接管理 Store
+ * 流式连接管理 Store
  *
  * 职责：WebSocket 连接、流式消息处理、重试逻辑
+ *
+ * 命名说明：使用 WebSocket (Socket.IO) 实现流式通信，
+ * 文件名 stream.ts 更准确地反映其职责。
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type {
   AIMessage,
-  SSEEvent,
-  SSEConnectionStatus,
   MentionReference,
   ChatContext,
   ChatSettings,
   Widget,
   FlowGraph,
 } from '@/types'
+import type { SSEEvent } from '@schema-form/ai-shared'
 import {
   emitChatSend,
   emitChatCancel,
@@ -22,9 +24,9 @@ import {
   onChatEvent,
 } from '@schema-form/socket'
 
-export const useSSEStore = defineStore('sse', () => {
+export const useStreamStore = defineStore('stream', () => {
   // ---- State ----
-  const sseStatus = ref<SSEConnectionStatus>('idle')
+  const streamStatus = ref<StreamConnectionStatus>('idle')
   const retryCount = ref(0)
   const lastMessagePayload = ref<{ content: string; mentions?: MentionReference[] } | null>(null)
   const loading = ref(false)
@@ -38,6 +40,10 @@ export const useSSEStore = defineStore('sse', () => {
   let activeDoneResolve: (() => void) | null = null
   /** 标记当前流是否被用户主动停止 */
   let streamStopped = false
+
+  // ---- Types ----
+
+  type StreamConnectionStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting'
 
   // ---- Actions ----
 
@@ -69,7 +75,7 @@ export const useSSEStore = defineStore('sse', () => {
   }
 
   /**
-   * 核心 WebSocket 流执行逻辑，支持自动重试。
+   * 核心流执行逻辑，支持自动重试。
    */
   async function executeStream(
     content: string,
@@ -77,7 +83,7 @@ export const useSSEStore = defineStore('sse', () => {
     assistantIndex: number,
     messages: AIMessage[],
     handlers: {
-      onSSEEvent: (event: SSEEvent, assistantIndex: number) => void
+      onStreamEvent: (event: SSEEvent, assistantIndex: number) => void
       onDone: (conversationId?: string) => void
       getContext: () => {
         context: ChatContext
@@ -91,7 +97,7 @@ export const useSSEStore = defineStore('sse', () => {
     let attempts = 0
 
     while (attempts <= MAX_AUTO_RETRIES) {
-      sseStatus.value = attempts === 0 ? 'connecting' : 'reconnecting'
+      streamStatus.value = attempts === 0 ? 'connecting' : 'reconnecting'
       retryCount.value = attempts
       streamStopped = false
 
@@ -117,7 +123,7 @@ export const useSSEStore = defineStore('sse', () => {
 
         if (!firstChunkReceived) {
           firstChunkReceived = true
-          sseStatus.value = 'connected'
+          streamStatus.value = 'connected'
         }
 
         const event = chatEvent as unknown as SSEEvent
@@ -125,7 +131,7 @@ export const useSSEStore = defineStore('sse', () => {
           doneEventReceived = true
           doneResolve?.()
         }
-        handlers.onSSEEvent(event, assistantIndex)
+        handlers.onStreamEvent(event, assistantIndex)
       })
 
       // 获取上下文
@@ -155,7 +161,7 @@ export const useSSEStore = defineStore('sse', () => {
       // 等待 done 事件
       await donePromise
 
-      sseStatus.value = 'idle'
+      streamStatus.value = 'idle'
 
       // 清理事件监听
       if (unsubscribeChatEvent) {
@@ -187,7 +193,7 @@ export const useSSEStore = defineStore('sse', () => {
     confirmed: boolean,
     messages: AIMessage[],
     handlers: {
-      onSSEEvent: (event: SSEEvent, assistantIndex: number) => void
+      onStreamEvent: (event: SSEEvent, assistantIndex: number) => void
       onDone: (conversationId?: string) => void
       getContext: () => {
         currentConversationId: string | null
@@ -206,7 +212,7 @@ export const useSSEStore = defineStore('sse', () => {
       status: 'streaming',
     })
 
-    sseStatus.value = 'connecting'
+    streamStatus.value = 'connecting'
 
     // 监听 chat events
     let doneEventReceived = false
@@ -221,13 +227,13 @@ export const useSSEStore = defineStore('sse', () => {
     }
 
     unsubscribeChatEvent = onChatEvent((chatEvent) => {
-      sseStatus.value = 'connected'
+      streamStatus.value = 'connected'
       const event = chatEvent as unknown as SSEEvent
       if (event.type === 'done') {
         doneEventReceived = true
         doneResolve?.()
       }
-      handlers.onSSEEvent(event, assistantIndex)
+      handlers.onStreamEvent(event, assistantIndex)
     })
 
     // 通过 WebSocket 恢复
@@ -236,7 +242,7 @@ export const useSSEStore = defineStore('sse', () => {
     // 等待 done 事件
     await donePromise
 
-    sseStatus.value = 'idle'
+    streamStatus.value = 'idle'
 
     if (unsubscribeChatEvent) {
       unsubscribeChatEvent()
@@ -255,7 +261,7 @@ export const useSSEStore = defineStore('sse', () => {
 
   return {
     // state
-    sseStatus,
+    streamStatus,
     retryCount,
     lastMessagePayload,
     loading,
@@ -269,3 +275,6 @@ export const useSSEStore = defineStore('sse', () => {
     executeResume,
   }
 })
+
+/** @deprecated 使用 useStreamStore 替代 */
+export const useSSEStore = useStreamStore

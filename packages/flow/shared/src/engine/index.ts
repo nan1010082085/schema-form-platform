@@ -14,3 +14,16 @@ export {
   resolveCrossNodeValues,
   collectReferencedNodeIds,
 } from './CrossNodeResolver.js'
+
+// FlowEngine
+export { FlowEngine, FlowEngineError } from './FlowEngine.js'
+export type {
+  FlowEngineConfig,
+  FlowEngineCallbacks,
+  FlowEngineAPI,
+  FlowPersistence,
+  ExecutionContext,
+  NodeExecutionResult,
+  NodeExecutor,
+  AIAssistRequest,
+} from './FlowEngine.js'

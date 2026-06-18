@@ -325,6 +325,13 @@ export const flowApi = {
   markAllNotificationsAsRead: () =>
     request<null>('/flow/notifications/read-all', { method: 'PUT' }),
 
+  // Instance Graph & State (for Editor embedding)
+  getInstanceGraph: (instanceId: string) =>
+    request<any>(`/flow/instances/${instanceId}/graph`),
+
+  getExecutionState: (instanceId: string) =>
+    request<{ currentNodeIds: string[]; completedNodeIds: string[]; tokens: any[] }>(`/flow/instances/${instanceId}/state`),
+
   // Export
   exportInstanceCsv: async (instanceId: string): Promise<Blob> => {
     const token = tokenProvider?.()

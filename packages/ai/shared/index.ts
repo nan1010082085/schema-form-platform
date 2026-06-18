@@ -13,12 +13,55 @@ export type {
   AIMetadata,
 } from './types.js'
 
+// 统一事件协议
+export type {
+  AgentEventType,
+  AgentType,
+  AgentEvent,
+  SSEEvent,
+  TextDeltaEvent,
+  ThinkingDeltaEvent,
+  SchemaStartEvent,
+  SchemaProgressEvent,
+  SchemaCompleteEvent,
+  SchemaDiffEvent,
+  FlowStartEvent,
+  FlowProgressEvent,
+  FlowCompleteEvent,
+  FlowDiffEvent,
+  ToolInfo,
+  ToolCallStartEvent,
+  ToolCallEndEvent,
+  ToolErrorEvent,
+  AgentSwitchEvent,
+  AgentCollaborationEvent,
+  TaskChainStep,
+  ChainStartEvent,
+  ChainStepEvent,
+  ChainCompleteEvent,
+  InterruptEvent,
+  ResumeEvent,
+  DoneEvent,
+  ErrorEvent,
+  SchemaBuildStep,
+} from './events.js'
+
 // Prompt 构建器
 export {
   buildEditorSystemPrompt,
   buildFlowSystemPrompt,
   ROUTER_SYSTEM_PROMPT,
 } from './promptBuilder.js'
+
+// Runtime Agent
+export { RuntimeAgent } from './runtimeAgent.js'
+export type {
+  RuntimeAIRequest,
+  ExecutionContext,
+  AssigneeRecommendation,
+  OutcomePrediction,
+  AnomalyDetection,
+} from './runtimeAgent.js'
 
 // 系统知识（事件、联动、变量、数据源）
 export {

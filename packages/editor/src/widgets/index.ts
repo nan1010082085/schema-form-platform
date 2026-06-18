@@ -3,6 +3,7 @@ import { FgForm, createFormWidget, formConfig } from './form'
 import { FgCard, createCardWidget, cardConfig } from './card'
 import { FgTabs, createTabsWidget, tabsConfig } from './tabs'
 import { FgDialog, createDialogWidget, dialogConfig } from './dialog'
+import { FgMicroAppContainer, microAppContainerConfig } from './micro-app-container'
 import { FgInput, createInputWidget, inputConfig } from './input'
 import { FgSelect, createSelectWidget, selectConfig } from './select'
 import { FgNumber, createNumberWidget, numberConfig } from './number'
@@ -159,6 +160,23 @@ export function registerAllWidgets() {
     component: FgDialog,
     create: createDialogWidget,
     config: dialogConfig,
+  })
+
+  registerWidget({
+    name: microAppContainerConfig.name,
+    displayName: microAppContainerConfig.displayName,
+    type: 'micro-app-container',
+    group: 'container',
+    component: FgMicroAppContainer,
+    create: (id: string) => ({
+      id,
+      type: 'micro-app-container',
+      name: microAppContainerConfig.name,
+      label: microAppContainerConfig.displayName,
+      props: { ...microAppContainerConfig.defaultProps },
+      position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
+    }),
+    config: microAppContainerConfig,
   })
 
   // Form widgets (表单控件)

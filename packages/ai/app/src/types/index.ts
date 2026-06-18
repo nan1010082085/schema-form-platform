@@ -150,9 +150,12 @@ export interface ChatSettings {
   }
 }
 
-// ---- SSE 连接状态 ----
+// ---- 流式连接状态 ----
 
-export type SSEConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+export type StreamConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
+
+/** @deprecated 使用 StreamConnectionStatus 替代 */
+export type SSEConnectionStatus = StreamConnectionStatus
 
 // ---- 对话请求 ----
 
@@ -173,39 +176,60 @@ export interface ChatRequest {
   currentFlow?: FlowGraph
 }
 
-// ---- SSE 事件 ----
+// ---- 流式事件 ----
 
-export type SSEEventType = 'text' | 'thinking' | 'tip' | 'schema' | 'flow' | 'tool_call' | 'tool_error' | 'task_chain' | 'agent_switch' | 'done' | 'error' | 'schema_diff' | 'flow_diff' | 'version_created' | 'schema_update' | 'schema_complete' | 'interrupt'
+export type StreamEventType =
+  | 'text_delta'
+  | 'thinking_delta'
+  | 'schema_start'
+  | 'schema_progress'
+  | 'schema_complete'
+  | 'schema_diff'
+  | 'flow_start'
+  | 'flow_progress'
+  | 'flow_complete'
+  | 'flow_diff'
+  | 'tool_call_start'
+  | 'tool_call_end'
+  | 'tool_error'
+  | 'agent_switch'
+  | 'agent_collaboration'
+  | 'chain_start'
+  | 'chain_step'
+  | 'chain_complete'
+  | 'interrupt'
+  | 'resume'
+  | 'done'
+  | 'error'
+
+/** @deprecated 使用 StreamEventType 替代 */
+export type SSEEventType = StreamEventType
 
 export interface SSEEvent {
-  type: SSEEventType
+  type: StreamEventType
   content?: string
   payload?: Widget[] | FlowGraph
   description?: string
   conversationId?: string
+  threadId?: string
+  agent?: string
   /** Tool call event data */
-  phase?: 'calling' | 'result'
   tools?: Array<{ id: string; name: string; arguments?: Record<string, unknown>; result?: unknown }>
   /** Task chain event data */
   steps?: TaskChainStep[]
   currentIndex?: number
-  /** Agent switch event data */
-  agent?: string
   /** Collaboration event data */
   collaboration?: boolean
-  /** Tool error event data (S4/S5) */
+  /** Tool error event data */
   toolName?: string
   runId?: string
   /** Diff event data */
   diff?: SchemaDiff | FlowDiff
-  /** Version created event data */
-  versionId?: string
-  version?: number
-  /** Schema update event data (streaming generation) */
+  /** Schema/Flow progress event data */
   step?: string
   schema?: Widget[]
+  flow?: FlowGraph
   /** Interrupt event data (HITL) */
-  threadId?: string
   interruptType?: string
   message?: string
   data?: unknown

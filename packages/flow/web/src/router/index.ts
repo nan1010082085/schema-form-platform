@@ -76,6 +76,27 @@ const routes = [
     name: 'flow-designer',
     component: () => import('@/components/FlowDesigner.vue'),
   },
+
+  // ────── 嵌入式功能块（供 Editor 微应用容器使用） ──────
+  {
+    path: '/embed/preview',
+    name: 'embed-preview',
+    component: () => import('@/views/embed/FlowPreviewView.vue'),
+    meta: { embedded: true, public: true },
+  },
+  {
+    path: '/embed/approval-log',
+    name: 'embed-approval-log',
+    component: () => import('@/views/embed/ApprovalLogView.vue'),
+    meta: { embedded: true, public: true },
+  },
+  {
+    path: '/embed/task-list',
+    name: 'embed-task-list',
+    component: () => import('@/views/embed/TaskListView.vue'),
+    meta: { embedded: true, public: true },
+  },
+
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
@@ -91,8 +112,8 @@ export function createFlowRouter() {
 
   // 路由守卫：独立访问时检查登录状态
   router.beforeEach((to) => {
-    // callback 和 login 页面不需要检查
-    if (to.name === 'auth-callback' || to.name === 'login') {
+    // callback、login、嵌入式页面不需要检查
+    if (to.name === 'auth-callback' || to.name === 'login' || to.meta?.embedded) {
       return true
     }
 

@@ -157,6 +157,9 @@ export interface ChatSendPayload {
 export interface ChatEvent {
   threadId: string
   type: string
+  agent?: string
+  content?: string
+  description?: string
   [key: string]: unknown
 }
 

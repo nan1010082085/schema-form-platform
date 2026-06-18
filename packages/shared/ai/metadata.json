@@ -1,6 +1,6 @@
 {
-  "version": "2026-06-17",
-  "generatedAt": "2026-06-17T18:22:37.903Z",
+  "version": "2026-06-18",
+  "generatedAt": "2026-06-18T03:25:25.084Z",
   "widgets": [
     {
       "type": "dialog",
@@ -15,6 +15,7 @@
         "cancelText": "取消",
         "destroyOnClose": true,
         "contentMode": "edit",
+        "microappMode": "iframe",
         "showFooter": true,
         "closeOnClickModal": false,
         "draggable": true,
@@ -636,6 +637,44 @@
       "configPanels": [
         "events",
         "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "micro-app-container",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "微应用容器",
+      "description": "嵌入微应用（iframe 或 qiankun 模式），支持 URL 模板变量",
+      "defaultProps": {
+        "microappMode": "iframe",
+        "microappUrl": "",
+        "microappBaseUrl": "",
+        "microappApp": "",
+        "height": "100%",
+        "variables": {}
+      },
+      "keyProps": [],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "containerRef",
+          "type": "object",
+          "description": "容器引用，可用于 postMessage"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "message",
+          "description": "接收微应用消息"
+        },
+        {
+          "name": "ready",
+          "description": "微应用加载完成"
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
         "variables"
       ]
     },

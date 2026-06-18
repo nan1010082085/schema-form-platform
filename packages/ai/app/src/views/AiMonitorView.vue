@@ -9,7 +9,7 @@
  * - 性能告警
  */
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { message } from '@schema-form/shared-utils/message'
 import {
   getMonitorSummary,
@@ -23,6 +23,10 @@ import type {
   AgentMetric,
   AgentAlert,
 } from '@/types'
+import MonitorSummaryCard from '@/components/monitor/MonitorSummary.vue'
+import AgentDistribution from '@/components/monitor/AgentDistribution.vue'
+import MetricTable from '@/components/monitor/MetricTable.vue'
+import AlertList from '@/components/monitor/AlertList.vue'
 
 // ---- State ----
 
@@ -35,6 +39,10 @@ const selectedHours = ref(24)
 const selectedAgent = ref<string>('')
 const selectedOperation = ref<string>('')
 
+// 自动刷新
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+const AUTO_REFRESH_INTERVAL = 30000
+
 // ---- Computed ----
 
 const agentNames = computed(() => {
@@ -45,6 +53,29 @@ const agentNames = computed(() => {
 const operations = computed(() => {
   const ops = new Set(stats.value.map((s) => s.operation))
   return Array.from(ops).sort()
+})
+
+const agentDistribution = computed(() => {
+  const agentStats = stats.value.reduce((acc, s) => {
+    if (!acc[s.agentName]) {
+      acc[s.agentName] = { totalCalls: 0, successRate: 0, avgDuration: 0, count: 0 }
+    }
+    acc[s.agentName].totalCalls += s.totalCalls
+    acc[s.agentName].successRate += s.successRate
+    acc[s.agentName].avgDuration += s.avgDuration
+    acc[s.agentName].count++
+    return acc
+  }, {} as Record<string, { totalCalls: number; successRate: number; avgDuration: number; count: number }>)
+
+  const total = Object.values(agentStats).reduce((sum, s) => sum + s.totalCalls, 0)
+
+  return Object.entries(agentStats).map(([agent, data]) => ({
+    agent,
+    count: data.totalCalls,
+    percentage: total > 0 ? Math.round((data.totalCalls / total) * 100) : 0,
+    successRate: data.count > 0 ? data.successRate / data.count : 0,
+    avgDuration: data.count > 0 ? data.avgDuration / data.count : 0,
+  }))
 })
 
 const filteredStats = computed(() => {
@@ -157,15 +188,43 @@ async function handleRefresh(): Promise<void> {
 
 function handleTimeRangeChange(val: string | number | boolean): void {
   selectedHours.value = val as number
-  getMonitorSummary(val as number).then((data) => {
-    summary.value = data
-  })
+  loadData()
+}
+
+function handleMetricFilterChange(agent?: string, status?: 'success' | 'failed'): void {
+  selectedAgent.value = agent ?? ''
+  // status filtering is handled by the component
+}
+
+function handleMetricPageChange(page: number): void {
+  // Pagination is handled by the component
+}
+
+function handleAlertPageChange(page: number): void {
+  // Pagination is handled by the component
+}
+
+function startAutoRefresh(): void {
+  stopAutoRefresh()
+  refreshTimer = setInterval(loadData, AUTO_REFRESH_INTERVAL)
+}
+
+function stopAutoRefresh(): void {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
 }
 
 // ---- Lifecycle ----
 
 onMounted(() => {
   loadData()
+  startAutoRefresh()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
 })
 </script>
 
@@ -180,30 +239,42 @@ onMounted(() => {
         </div>
       </div>
       <div :class="$style.topbarRight">
-        <t-select
-          v-model:value="selectedAgent"
+        <el-select
+          v-model="selectedAgent"
           placeholder="所有 Agent"
           clearable
           size="small"
           :class="$style.filterSelect"
-          :options="agentNames.map(name => ({ label: getAgentLabel(name), value: name }))"
-        />
-        <t-select
-          v-model:value="selectedOperation"
+        >
+          <el-option
+            v-for="name in agentNames"
+            :key="name"
+            :label="getAgentLabel(name)"
+            :value="name"
+          />
+        </el-select>
+        <el-select
+          v-model="selectedOperation"
           placeholder="所有操作"
           clearable
           size="small"
           :class="$style.filterSelect"
-          :options="operations.map(op => ({ label: getOperationLabel(op), value: op }))"
-        />
-        <t-button
-          theme="primary"
+        >
+          <el-option
+            v-for="op in operations"
+            :key="op"
+            :label="getOperationLabel(op)"
+            :value="op"
+          />
+        </el-select>
+        <el-button
+          type="primary"
           size="small"
           :loading="loading"
           @click="handleRefresh"
         >
           刷新
-        </t-button>
+        </el-button>
       </div>
     </div>
 
@@ -212,172 +283,134 @@ onMounted(() => {
       <!-- 时间范围选择 -->
       <div :class="$style.timeRange">
         <span :class="$style.timeLabel">时间范围：</span>
-        <t-radio-group
-          v-model:value="selectedHours"
+        <el-radio-group
+          v-model="selectedHours"
           size="small"
           @change="handleTimeRangeChange"
         >
-          <t-radio-button :value="1">1 小时</t-radio-button>
-          <t-radio-button :value="6">6 小时</t-radio-button>
-          <t-radio-button :value="24">24 小时</t-radio-button>
-          <t-radio-button :value="72">3 天</t-radio-button>
-          <t-radio-button :value="168">7 天</t-radio-button>
-        </t-radio-group>
+          <el-radio-button :value="1">1 小时</el-radio-button>
+          <el-radio-button :value="6">6 小时</el-radio-button>
+          <el-radio-button :value="24">24 小时</el-radio-button>
+          <el-radio-button :value="72">3 天</el-radio-button>
+          <el-radio-button :value="168">7 天</el-radio-button>
+        </el-radio-group>
       </div>
 
       <!-- 总览卡片 -->
-      <div v-if="summary" :class="$style.summaryGrid">
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">总调用次数</div>
-          <div :class="$style.summaryValue">{{ summary.totalCalls }}</div>
-        </div>
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">成功率</div>
-          <div :class="[$style.summaryValue, summary.successRate >= 95 ? $style.success : $style.warning]">
-            {{ summary.successRate }}%
-          </div>
-        </div>
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">平均响应时间</div>
-          <div :class="$style.summaryValue">{{ formatDuration(summary.avgDuration) }}</div>
-        </div>
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">最大响应时间</div>
-          <div :class="$style.summaryValue">{{ formatDuration(summary.maxDuration) }}</div>
-        </div>
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">Token 消耗</div>
-          <div :class="$style.summaryValue">{{ formatTokens(summary.totalTokens) }}</div>
-        </div>
-        <div :class="$style.summaryCard">
-          <div :class="$style.summaryLabel">慢响应 (>10s)</div>
-          <div :class="[$style.summaryValue, summary.slowCalls > 0 ? $style.warning : '']">
-            {{ summary.slowCalls }}
-          </div>
-        </div>
+      <MonitorSummaryCard :summary="summary" />
+
+      <!-- Agent 分布 -->
+      <div :class="$style.section">
+        <AgentDistribution :distribution="agentDistribution" />
       </div>
 
       <!-- 详细统计表格 -->
       <div :class="$style.section">
         <h3 :class="$style.sectionTitle">Agent 统计</h3>
-        <t-table
+        <el-table
           :data="filteredStats"
           :class="$style.table"
           stripe
           size="small"
-          :columns="[
-            { colKey: 'agentName', title: 'Agent', width: 100 },
-            { colKey: 'operation', title: '操作', width: 80 },
-            { colKey: 'totalCalls', title: '调用次数', width: 100, sorter: true },
-            { colKey: 'successRate', title: '成功率', width: 100, sorter: true },
-            { colKey: 'avgDuration', title: '平均耗时', width: 120, sorter: true },
-            { colKey: 'p95Duration', title: 'P95 耗时', width: 120, sorter: true },
-            { colKey: 'maxDuration', title: '最大耗时', width: 120, sorter: true },
-            { colKey: 'totalTokens', title: 'Token 消耗', width: 120, sorter: true },
-          ]"
         >
-          <template #agentName="{ row }">
-            <t-tag size="small" :theme="row.agentName === 'editor' ? 'primary' : row.agentName === 'flow' ? 'success' : 'default'">
-              {{ getAgentLabel(row.agentName) }}
-            </t-tag>
-          </template>
-          <template #operation="{ row }">
-            {{ getOperationLabel(row.operation) }}
-          </template>
-          <template #successRate="{ row }">
-            <span :class="row.successRate >= 95 ? $style.success : $style.warning">
-              {{ row.successRate }}%
-            </span>
-          </template>
-          <template #avgDuration="{ row }">
-            {{ formatDuration(row.avgDuration) }}
-          </template>
-          <template #p95Duration="{ row }">
-            {{ formatDuration(row.p95Duration) }}
-          </template>
-          <template #maxDuration="{ row }">
-            {{ formatDuration(row.maxDuration) }}
-          </template>
-          <template #totalTokens="{ row }">
-            {{ formatTokens(row.totalTokens) }}
-          </template>
-        </t-table>
+          <el-table-column label="Agent" width="100">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.agentName === 'editor' ? 'primary' : row.agentName === 'flow' ? 'success' : 'info'">
+                {{ getAgentLabel(row.agentName) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="{ row }">
+              {{ getOperationLabel(row.operation) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="调用次数" prop="totalCalls" width="100" sortable />
+          <el-table-column label="成功率" width="100" sortable>
+            <template #default="{ row }">
+              <span :class="row.successRate >= 95 ? 'text-success' : 'text-warning'">
+                {{ row.successRate }}%
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="平均耗时" width="120" sortable>
+            <template #default="{ row }">
+              {{ formatDuration(row.avgDuration) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="P95 耗时" width="120" sortable>
+            <template #default="{ row }">
+              {{ formatDuration(row.p95Duration) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="最大耗时" width="120" sortable>
+            <template #default="{ row }">
+              {{ formatDuration(row.maxDuration) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Token 消耗" width="120" sortable>
+            <template #default="{ row }">
+              {{ formatTokens(row.totalTokens) }}
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
 
       <!-- 性能告警 -->
-      <div v-if="alerts.length > 0" :class="$style.section">
-        <h3 :class="$style.sectionTitle">性能告警</h3>
-        <div :class="$style.alertsList">
-          <div
-            v-for="alert in alerts"
-            :key="alert.id"
-            :class="$style.alertItem"
-          >
-            <div :class="$style.alertHeader">
-              <t-tag
-                size="small"
-                :style="{ background: getAlertTypeColor(alert.alertType), color: '#fff' }"
-                variant="dark"
-              >
-                {{ getAlertTypeLabel(alert.alertType) }}
-              </t-tag>
-              <span :class="$style.alertAgent">{{ getAgentLabel(alert.agentName) }}</span>
-              <span :class="$style.alertTime">{{ formatTime(alert.createdAt) }}</span>
-            </div>
-            <div :class="$style.alertDetail">
-              <span>操作：{{ getOperationLabel(alert.operation) }}</span>
-              <span>耗时：{{ formatDuration(alert.duration) }}</span>
-              <span v-if="alert.tokenUsage?.total">
-                Token：{{ formatTokens(alert.tokenUsage.total) }}
-              </span>
-              <span v-if="alert.error" :class="$style.alertError">
-                错误：{{ alert.error }}
-              </span>
-            </div>
-          </div>
-        </div>
+      <div :class="$style.section">
+        <AlertList
+          :alerts="alerts"
+          :total="alerts.length"
+          :current-page="1"
+          :page-size="20"
+          @page-change="handleAlertPageChange"
+        />
       </div>
 
       <!-- 最近调用记录 -->
       <div :class="$style.section">
         <h3 :class="$style.sectionTitle">最近调用</h3>
-        <t-table
+        <el-table
           :data="filteredRecent"
           :class="$style.table"
           stripe
           size="small"
           max-height="400"
-          :columns="[
-            { colKey: 'createdAt', title: '时间', width: 100 },
-            { colKey: 'agentName', title: 'Agent', width: 80 },
-            { colKey: 'operation', title: '操作', width: 80 },
-            { colKey: 'duration', title: '耗时', width: 100, sorter: true },
-            { colKey: 'success', title: '状态', width: 80 },
-            { colKey: 'error', title: '错误', minWidth: 200 },
-          ]"
         >
-          <template #createdAt="{ row }">
-            {{ formatTime(row.createdAt) }}
-          </template>
-          <template #agentName="{ row }">
-            {{ getAgentLabel(row.agentName) }}
-          </template>
-          <template #operation="{ row }">
-            {{ getOperationLabel(row.operation) }}
-          </template>
-          <template #duration="{ row }">
-            {{ formatDuration(row.duration) }}
-          </template>
-          <template #success="{ row }">
-            <t-tag :theme="row.success ? 'success' : 'danger'" size="small">
-              {{ row.success ? '成功' : '失败' }}
-            </t-tag>
-          </template>
-          <template #error="{ row }">
-            <span v-if="row.error" :class="$style.errorText">{{ row.error }}</span>
-            <span v-else :class="$style.mutedText">-</span>
-          </template>
-        </t-table>
+          <el-table-column label="时间" width="100">
+            <template #default="{ row }">
+              {{ formatTime(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="Agent" width="80">
+            <template #default="{ row }">
+              {{ getAgentLabel(row.agentName) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="{ row }">
+              {{ getOperationLabel(row.operation) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="耗时" width="100" sortable>
+            <template #default="{ row }">
+              {{ formatDuration(row.duration) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag :type="row.success ? 'success' : 'danger'" size="small">
+                {{ row.success ? '成功' : '失败' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="错误" min-width="200">
+            <template #default="{ row }">
+              <span v-if="row.error" class="text-danger">{{ row.error }}</span>
+              <span v-else class="text-secondary">-</span>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </div>
   </div>
@@ -388,7 +421,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--td-bg-color-page, #f5f7fa);
+  background: var(--el-bg-color-page, #f5f7fa);
 }
 
 .topbar {
@@ -396,8 +429,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: var(--td-bg-color-container, #fff);
-  border-bottom: 1px solid var(--td-border-level-2-color, #e4e7ed);
+  background: var(--el-bg-color, #fff);
+  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
 }
 
 .topbarLeft {
@@ -419,7 +452,7 @@ onMounted(() => {
 .topbarBrand {
   font-size: 16px;
   font-weight: 600;
-  color: var(--td-text-color-primary, #303133);
+  color: var(--el-text-color-primary, #303133);
 }
 
 .topbarRight {
@@ -447,55 +480,21 @@ onMounted(() => {
 
 .timeLabel {
   font-size: 14px;
-  color: var(--td-text-color-secondary, #606266);
-}
-
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.summaryCard {
-  background: var(--td-bg-color-container, #fff);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: var(--td-shadow-1, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
-}
-
-.summaryLabel {
-  font-size: 12px;
-  color: var(--td-text-color-placeholder, #909399);
-  margin-bottom: 8px;
-}
-
-.summaryValue {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--td-text-color-primary, #303133);
-}
-
-.success {
-  color: var(--td-success-color, #67c23a);
-}
-
-.warning {
-  color: var(--td-warning-color, #e6a23c);
+  color: var(--el-text-color-secondary, #606266);
 }
 
 .section {
-  background: var(--td-bg-color-container, #fff);
+  background: var(--el-bg-color, #fff);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: var(--td-shadow-1, 0 2px 12px 0 rgba(0, 0, 0, 0.06));
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
 }
 
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: var(--td-text-color-primary, #303133);
+  color: var(--el-text-color-primary, #303133);
   margin: 0 0 16px 0;
 }
 
@@ -503,55 +502,19 @@ onMounted(() => {
   width: 100%;
 }
 
-.alertsList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+:global(.text-success) {
+  color: var(--el-color-success, #67c23a);
 }
 
-.alertItem {
-  background: var(--td-bg-color-secondarycontainer, #fafafa);
-  border-radius: 6px;
-  padding: 12px;
-  border-left: 3px solid var(--td-warning-color, #e6a23c);
+:global(.text-warning) {
+  color: var(--el-color-warning, #e6a23c);
 }
 
-.alertHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+:global(.text-danger) {
+  color: var(--el-color-danger, #f56c6c);
 }
 
-.alertAgent {
-  font-weight: 500;
-  color: var(--td-text-color-primary, #303133);
-}
-
-.alertTime {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--td-text-color-placeholder, #909399);
-}
-
-.alertDetail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  font-size: 13px;
-  color: var(--td-text-color-secondary, #606266);
-}
-
-.alertError {
-  color: var(--td-error-color, #f56c6c);
-}
-
-.errorText {
-  color: var(--td-error-color, #f56c6c);
-  font-size: 12px;
-}
-
-.mutedText {
-  color: var(--td-text-color-placeholder, #c0c4cc);
+:global(.text-secondary) {
+  color: var(--el-text-color-secondary, #909399);
 }
 </style>

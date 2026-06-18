@@ -4,7 +4,7 @@
  * 此文件保持向后兼容性，内部使用拆分后的 store。
  * 新代码应直接使用拆分后的 store：
  * - useConversationStore: 对话管理
- * - useSSEStore: SSE 连接
+ * - useStreamStore: 流式连接
  * - useSchemaStore: Schema 状态
  * - useLLMStore: LLM Provider
  * - useRAGStore: RAG 搜索
@@ -20,7 +20,6 @@ import type {
   ChatContext,
   Widget,
   FlowGraph,
-  SSEEvent,
   TaskChainStep,
   MentionReference,
   SearchResult,
@@ -28,6 +27,7 @@ import type {
   MentionSearchResult,
   FeedbackType,
 } from '@/types'
+import type { SSEEvent } from '@schema-form/ai-shared'
 import {
   searchConversations,
   mentionSearch,
@@ -35,7 +35,7 @@ import {
 } from '@/api/aiApi'
 
 import { useConversationStore } from './conversation'
-import { useSSEStore } from './sse'
+import { useStreamStore } from './stream'
 import { useSchemaStore } from './schema'
 import { useLLMStore } from './llm'
 import { useRAGStore } from './rag'
@@ -45,7 +45,7 @@ import { useHITLStore } from './hitl'
 export const useAiStore = defineStore('ai', () => {
   // ---- 内部 store 引用 ----
   const conversationStore = useConversationStore()
-  const sseStore = useSSEStore()
+  const streamStore = useStreamStore()
   const schemaStore = useSchemaStore()
   const llmStore = useLLMStore()
   const ragStore = useRAGStore()
@@ -58,9 +58,9 @@ export const useAiStore = defineStore('ai', () => {
   const taskChain = ref<TaskChainStep[]>([])
   const taskChainIndex = ref(0)
 
-  // ---- SSE 事件处理 ----
+  // ---- 流式事件处理 ----
 
-  function handleSSEEvent(event: SSEEvent, assistantIndex: number): void {
+  function handleStreamEvent(event: SSEEvent, assistantIndex: number): void {
     const msg = conversationStore.messages[assistantIndex]
 
     switch (event.type) {
@@ -74,60 +74,23 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
-      case 'thinking':
+      case 'thinking_delta':
         if (event.content) {
           msg.thinking = (msg.thinking ?? '') + event.content
         }
         break
 
-      case 'text':
+      case 'text_delta':
         if (event.content) {
           msg.content = (msg.content ?? '') + event.content
         }
         break
 
-      case 'tip':
-        if (event.content) {
-          msg.tip = event.content
-        }
+      case 'schema_start':
+        // Schema 开始生成
         break
 
-      case 'schema':
-        if (event.payload) {
-          schemaStore.updateSchema(event.payload as Widget[])
-          msg.schema = event.payload as Widget[]
-        }
-        if (event.description) {
-          msg.content = (msg.content ?? '') + event.description
-        }
-        break
-
-      case 'schema_diff':
-        if (event.diff) {
-          schemaStore.setSchemaDiff(event.diff as any, event.description)
-        }
-        break
-
-      case 'flow_diff':
-        if (event.diff) {
-          schemaStore.setFlowDiff(event.diff as any)
-        }
-        break
-
-      case 'version_created':
-        if (event.versionId && event.version) {
-          schemaStore.versionHistory.unshift({
-            id: event.versionId,
-            version: event.version,
-            type: schemaStore.currentSchema ? 'schema' : 'flow',
-            description: event.description,
-            createdAt: new Date().toISOString(),
-          })
-          schemaStore.currentVersionIndex = 0
-        }
-        break
-
-      case 'schema_update':
+      case 'schema_progress':
         if (event.step) {
           schemaStore.setBuildStep(event.step)
         }
@@ -158,19 +121,42 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
-      case 'flow':
-        if (event.payload) {
-          schemaStore.setCurrentFlow(event.payload as FlowGraph)
-          msg.flow = event.payload as FlowGraph
+      case 'schema_diff':
+        if (event.diff) {
+          schemaStore.setSchemaDiff(event.diff as any, event.description)
+        }
+        break
+
+      case 'flow_start':
+        // Flow 开始生成
+        break
+
+      case 'flow_progress':
+        if (event.step && event.description) {
+          const progressNote = `\n\n[流程生成] ${event.step}: ${event.description}`
+          msg.thinking = (msg.thinking ?? '') + progressNote
+        }
+        break
+
+      case 'flow_complete':
+        if (event.flow) {
+          schemaStore.setCurrentFlow(event.flow as FlowGraph)
+          msg.flow = event.flow as FlowGraph
         }
         if (event.description) {
           msg.content = (msg.content ?? '') + event.description
         }
         break
 
-      case 'tool_call':
+      case 'flow_diff':
+        if (event.diff) {
+          schemaStore.setFlowDiff(event.diff as any)
+        }
+        break
+
+      case 'tool_call_start':
         if (!msg.toolCalls) msg.toolCalls = []
-        if (event.phase === 'calling' && event.tools) {
+        if (event.tools) {
           for (const tool of event.tools) {
             msg.toolCalls.push({
               id: tool.id,
@@ -179,7 +165,10 @@ export const useAiStore = defineStore('ai', () => {
             })
           }
         }
-        if (event.phase === 'result' && event.tools) {
+        break
+
+      case 'tool_call_end':
+        if (msg.toolCalls && event.tools) {
           for (const tool of event.tools) {
             const existing = tool.id
               ? msg.toolCalls.find((t) => t.id === tool.id && !t.result)
@@ -211,11 +200,17 @@ export const useAiStore = defineStore('ai', () => {
         break
       }
 
-      case 'task_chain':
+      case 'chain_start':
+      case 'chain_step':
         if (event.steps) {
           taskChain.value = event.steps
           taskChainIndex.value = event.currentIndex ?? 0
         }
+        break
+
+      case 'chain_complete':
+        taskChain.value = []
+        taskChainIndex.value = 0
         break
 
       case 'done':
@@ -244,7 +239,7 @@ export const useAiStore = defineStore('ai', () => {
       }
 
       case 'error':
-        sseStore.error = event.content ?? 'Unknown error'
+        streamStore.error = event.content ?? 'Unknown error'
         if (msg.status === 'streaming') {
           const agentLabel = event.agent ? ` [${event.agent}]` : ''
           msg.content = (msg.content || msg.thinking || '')
@@ -263,11 +258,11 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   async function sendMessage(content: string, mentions?: MentionReference[]): Promise<void> {
-    sseStore.cancelCurrent()
-    sseStore.lastMessagePayload = { content, mentions }
-    sseStore.retryCount = 0
-    sseStore.loading = true
-    sseStore.error = null
+    streamStore.cancelCurrent()
+    streamStore.lastMessagePayload = { content, mentions }
+    streamStore.retryCount = 0
+    streamStore.loading = true
+    streamStore.error = null
 
     // 将 RAG context 注入消息内容
     const ragPrefix = ragStore.getRagContextContent()
@@ -290,8 +285,8 @@ export const useAiStore = defineStore('ai', () => {
       status: 'streaming',
     })
 
-    await sseStore.executeStream(enrichedContent, mentions, assistantIndex, conversationStore.messages, {
-      onSSEEvent: handleSSEEvent,
+    await streamStore.executeStream(enrichedContent, mentions, assistantIndex, conversationStore.messages, {
+      onStreamEvent: handleStreamEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -306,24 +301,24 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   async function retryLastMessage(): Promise<void> {
-    if (!sseStore.lastMessagePayload) return
+    if (!streamStore.lastMessagePayload) return
 
-    sseStore.cancelCurrent()
-    sseStore.retryCount = 0
-    sseStore.loading = true
-    sseStore.error = null
+    streamStore.cancelCurrent()
+    streamStore.retryCount = 0
+    streamStore.loading = true
+    streamStore.error = null
 
     const lastIdx = conversationStore.messages.length - 1
     if (lastIdx >= 0 && conversationStore.messages[lastIdx].role === 'assistant') {
       conversationStore.messages[lastIdx].content = ''
       conversationStore.messages[lastIdx].status = 'streaming'
-      await sseStore.executeStream(
-        sseStore.lastMessagePayload.content,
-        sseStore.lastMessagePayload.mentions,
+      await streamStore.executeStream(
+        streamStore.lastMessagePayload.content,
+        streamStore.lastMessagePayload.mentions,
         lastIdx,
         conversationStore.messages,
         {
-          onSSEEvent: handleSSEEvent,
+          onStreamEvent: handleSSEEvent,
           onDone: (conversationId) => {
             if (conversationId) conversationStore.loadConversations()
           },
@@ -359,13 +354,13 @@ export const useAiStore = defineStore('ai', () => {
     }
     if (!userContent) return
 
-    sseStore.cancelCurrent()
-    sseStore.loading = true
-    sseStore.error = null
+    streamStore.cancelCurrent()
+    streamStore.loading = true
+    streamStore.error = null
     msg.status = 'streaming'
 
-    await sseStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
-      onSSEEvent: handleSSEEvent,
+    await streamStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
+      onStreamEvent: handleSSEEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -383,12 +378,12 @@ export const useAiStore = defineStore('ai', () => {
     const interrupt = hitlStore.pendingInterrupt
     if (!interrupt) return
 
-    sseStore.loading = true
-    sseStore.error = null
+    streamStore.loading = true
+    streamStore.error = null
     hitlStore.clearInterrupt()
 
-    await sseStore.executeResume(interrupt.threadId, confirmed, conversationStore.messages, {
-      onSSEEvent: handleSSEEvent,
+    await streamStore.executeResume(interrupt.threadId, confirmed, conversationStore.messages, {
+      onStreamEvent: handleSSEEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -406,7 +401,7 @@ export const useAiStore = defineStore('ai', () => {
     const result = await conversationStore.loadConversation(id)
     if (result.schema) schemaStore.setCurrentSchema(result.schema)
     if (result.flow) schemaStore.setCurrentFlow(result.flow)
-    sseStore.error = null
+    streamStore.error = null
   }
 
   async function removeConversation(id: string): Promise<void> {
@@ -417,13 +412,13 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   function clearConversation(): void {
-    sseStore.cancelCurrent()
+    streamStore.cancelCurrent()
     conversationStore.clearConversation()
     schemaStore.clearSchemaState()
     hitlStore.clearInterrupt()
-    sseStore.sseStatus = 'idle'
-    sseStore.retryCount = 0
-    sseStore.lastMessagePayload = null
+    streamStore.streamStatus = 'idle'
+    streamStore.retryCount = 0
+    streamStore.lastMessagePayload = null
   }
 
   async function loadConversations(): Promise<void> {
@@ -494,9 +489,9 @@ export const useAiStore = defineStore('ai', () => {
     }
     if (!userContent) return
 
-    sseStore.cancelCurrent()
-    sseStore.loading = true
-    sseStore.error = null
+    streamStore.cancelCurrent()
+    streamStore.loading = true
+    streamStore.error = null
 
     msg.content = ''
     msg.thinking = undefined
@@ -507,8 +502,8 @@ export const useAiStore = defineStore('ai', () => {
     msg.feedback = null
     msg.status = 'streaming'
 
-    await sseStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
-      onSSEEvent: handleSSEEvent,
+    await streamStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
+      onStreamEvent: handleSSEEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -529,10 +524,10 @@ export const useAiStore = defineStore('ai', () => {
     messages: computed(() => conversationStore.messages),
     activeAgent,
     context,
-    loading: computed(() => sseStore.loading),
+    loading: computed(() => streamStore.loading),
     currentSchema: computed(() => schemaStore.currentSchema),
     currentFlow: computed(() => schemaStore.currentFlow),
-    error: computed(() => sseStore.error),
+    error: computed(() => streamStore.error),
     taskChain,
     taskChainIndex,
     schemaHistory: computed(() => schemaStore.schemaHistory),
@@ -541,8 +536,8 @@ export const useAiStore = defineStore('ai', () => {
     schemaUpdateDescription: computed(() => schemaStore.schemaUpdateDescription),
     versionHistory: computed(() => schemaStore.versionHistory),
     currentVersionIndex: computed(() => schemaStore.currentVersionIndex),
-    sseStatus: computed(() => sseStore.sseStatus),
-    retryCount: computed(() => sseStore.retryCount),
+    sseStatus: computed(() => streamStore.streamStatus),
+    retryCount: computed(() => streamStore.retryCount),
     llmProviders: computed(() => llmStore.llmProviders),
     llmDefaultProvider: computed(() => llmStore.llmDefaultProvider),
     llmDefaultStrategy: computed(() => llmStore.llmDefaultStrategy),
@@ -559,13 +554,13 @@ export const useAiStore = defineStore('ai', () => {
     currentConversation: computed(() => conversationStore.currentConversation),
     hasPreview: computed(() => schemaStore.hasPreview),
     canUndoSchema: computed(() => schemaStore.canUndoSchema),
-    MAX_AUTO_RETRIES: computed(() => sseStore.MAX_AUTO_RETRIES),
+    MAX_AUTO_RETRIES: computed(() => streamStore.MAX_AUTO_RETRIES),
 
     // actions
     sendMessage,
     retryLastMessage,
     retryToolCall,
-    stopGeneration: () => sseStore.stopGeneration(),
+    stopGeneration: () => streamStore.stopGeneration(),
     switchAgent,
     clearConversation,
     loadConversations,
