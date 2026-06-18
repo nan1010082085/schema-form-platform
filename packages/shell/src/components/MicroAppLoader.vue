@@ -10,7 +10,6 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const isReady = ref(false)
-const microContainer = ref<HTMLElement | null>(null)
 
 onMounted(() => {
   // Qiankun will mount to #micro-container when route matches

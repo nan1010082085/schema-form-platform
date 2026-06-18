@@ -37,27 +37,52 @@ authStore.$subscribe((_mutation, state) => {
 // Register micro-apps after Vue app is mounted
 const isDev = import.meta.env.DEV
 
+// 带菜单容器的路径后缀映射
+const INLINE_SUFFIX: Record<string, string> = {
+  editor: 'editor-inline',
+  flow: 'flow-inline',
+  ai: 'ai-inline',
+  admin: 'admin-inline',
+}
+
+// 每个子应用注册两条激活规则：独立页签 + 带菜单容器
 const microApps = Object.values(APP_CONFIGS)
-  .filter((config) => config.name !== 'shell') // Exclude shell (it's the host itself)
-  .map((config) => ({
-    name: config.name,
-    entry: isDev
+  .filter((config) => config.name !== 'shell')
+  .flatMap((config) => {
+    const entry = isDev
       ? `//localhost:${config.devPort}${config.basePath}`
-      : `//${window.location.host}${config.basePath}`,
-    container: '#micro-container',
-    activeRule: config.basePath,
-  }))
+      : `//${window.location.host}${config.basePath}`
+    const container = '#micro-container'
+
+    const apps = [
+      // 独立页签: /schema-platform/editor/
+      { name: config.name, entry, container, activeRule: config.basePath },
+    ]
+
+    // 带菜单容器: /schema-platform/editor-inline/
+    const inlineSuffix = INLINE_SUFFIX[config.name]
+    if (inlineSuffix) {
+      apps.push({
+        name: config.name,
+        entry,
+        container,
+        activeRule: `${APP_CONFIGS.shell.basePath}${inlineSuffix}/`,
+      })
+    }
+
+    return apps
+  })
 
 registerMicroApps(microApps, {
   beforeLoad: [
     (app) => {
-      console.log(`[shell] before load ${app.name}`, { entry: app.entry, activeRule: app.activeRule })
+      console.log(`[shell] before load ${app.name}`)
       return Promise.resolve()
     },
   ],
   beforeMount: [
     (app) => {
-      console.log(`[shell] before mount ${app.name}`, { container: app.container })
+      console.log(`[shell] before mount ${app.name}`)
       return Promise.resolve()
     },
   ],
@@ -84,15 +109,16 @@ registerMicroApps(microApps, {
 // 等待路由就绪后再启动 qiankun，避免 #micro-container 不存在的竞态
 router.isReady().then(() => {
   console.log('[shell] starting qiankun', { microApps: microApps.map(m => m.name) })
-  start({
-    sandbox: {
-      strictStyleIsolation: true,
-      experimentalStyleIsolation: false,
-    },
-    // 不用 prefetch: 'all'，避免在组件挂载前就加载子应用
-  }).then(() => {
+  try {
+    start({
+      sandbox: {
+        strictStyleIsolation: true,
+        experimentalStyleIsolation: false,
+      },
+      // 不用 prefetch: 'all'，避免在组件挂载前就加载子应用
+    })
     console.log('[shell] qiankun started')
-  }).catch((err) => {
+  } catch (err: unknown) {
     console.error('[shell] qiankun start failed:', err)
-  })
+  }
 })
