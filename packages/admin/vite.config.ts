@@ -6,7 +6,7 @@ const isProd = process.env.NODE_ENV === 'production'
 export default createViteConfig('admin', import.meta.url, {
   base: isProd ? '/schema-platform/admin/' : '/',
   plugins: [
-    qiankun('admin', { useDevMode: true }),
+    qiankun('admin', { useDevMode: false }),
   ],
   server: {
     port: 5555,
