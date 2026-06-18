@@ -1,132 +1,41 @@
-# FormGrid 数据库文档
+# 数据库配置
 
-## 环境
+## 连接
 
-| 项目 | 值 |
-|------|-----|
-| 数据库 | MongoDB 8 (Atlas / Docker) |
-| ORM | Mongoose 8.x |
-| 容器 | Docker Compose |
-| 端口 | 27017 |
-| 数据库名 | `your-database` |
-| 用户名 | `your-username` |
-| 密码 | `your-password` |
+MongoDB 8，通过 Mongoose ODM 连接。
 
-## 本地启动
+连接字符串由环境变量 `MONGODB_URI` 控制：
+
+| 环境 | 连接地址 |
+|------|----------|
+| 本地开发 | `mongodb://formgrid:***REMOVED***@***REMOVED***:27018/schema-form?authSource=admin` |
+| 本地 Docker | `mongodb://formgrid:formgrid@localhost:27017/formgrid` |
+| 生产 | `mongodb://127.0.0.1:27017/schema-form` |
+
+## Docker 本地开发
 
 ```bash
-cd packages/server
-pnpm db:up          # 启动 MongoDB 容器
-pnpm dev            # tsx watch 热重载开发
-pnpm db:down        # 停止容器
+pnpm db:up      # 启动 MongoDB 8 容器
+pnpm db:down    # 停止
+pnpm db:seed    # 种子数据（用户/角色/权限/菜单/模板/示例表单）
 ```
 
-## 集合结构
+Docker Compose 配置：`deploy/docker-compose.yml`
 
-### form_schemas
+## 种子数据
 
-Schema 定义主表。存储表单/列表的完整 JSON Schema。
+`pnpm db:seed` 执行 `packages/server/seed.ts`：
 
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| `_id` | `String` | PK (UUID) | 主键，UUID 字符串（非 ObjectId） |
-| `name` | `String` | required | Schema 名称 |
-| `type` | `String` | enum: `form` / `search_list` | Schema 类型，默认 `form` |
-| `status` | `String` | enum: `draft` / `published` | 发布状态，默认 `draft` |
-| `publishId` | `String` | unique, sparse, nullable | 首次发布时分配的唯一 ID |
-| `publishedAt` | `Date` | nullable | 发布时间 |
-| `json` | `Mixed` | required | 完整 `FormSchemaItem[]` JSON |
-| `createdAt` | `Date` | auto | 创建时间 |
-| `updatedAt` | `Date` | auto | 更新时间 |
+1. 创建权限（50+ 权限码）
+2. 创建角色（admin/flow_designer/flow_approver）
+3. 创建用户（admin/zhangsan/lisi/wangwu/zhaoliu）
+4. 创建 SSO 客户端
+5. 创建模型配置（DeepSeek/GPT/Claude）
+6. 创建内置模板（7 个：4 表单 + 3 表格）
+7. 创建示例表单
 
-### Mongoose Schema 定义
+内置模板每次启动时**强制更新**（删除旧数据后重新插入）。
 
-```typescript
-const formSchemaDef = new mongoose.Schema({
-  _id:       { type: String, required: true },
-  name:      { type: String, required: true },
-  type:      { type: String, enum: ['form', 'search_list'], default: 'form' },
-  status:    { type: String, enum: ['draft', 'published'], default: 'draft' },
-  publishId: { type: String, default: null, unique: true, sparse: true },
-  publishedAt: { type: Date, default: null },
-  json:      { type: mongoose.Schema.Types.Mixed, required: true },
-}, { timestamps: true })
-```
+## 多租户
 
-### 序列化
-
-序列化时 `_id` 和 `__v` 被移除，`id` 别名指向 `_id`：
-
-```typescript
-toJSON: {
-  transform(_doc, ret) {
-    ret.id = ret._id
-    delete ret._id
-    delete ret.__v
-  }
-}
-```
-
-### users
-
-用户表（模型已定义，认证路由待实现）。
-
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| `_id` | `String` | PK | 用户 ID |
-| `username` | `String` | unique, required | 用户名 |
-| `password` | `String` | required | bcrypt 加密密码 |
-| `displayName` | `String` | required | 显示名称 |
-| `role` | `String` | enum: `admin` / `editor` / `viewer` | 角色，默认 `viewer` |
-| `createdAt` | `Date` | auto | 创建时间 |
-| `updatedAt` | `Date` | auto | 更新时间 |
-
-## 连接配置
-
-```typescript
-// 本地: mongodb://localhost:27017/your-database
-// 生产: 通过 MONGODB_URI 环境变量指定 (MongoDB Atlas)
-await mongoose.connect(MONGODB_URI, {
-  maxPoolSize: 5,
-  minPoolSize: 1,
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 5000,
-})
-```
-
-## TypeScript 类型映射
-
-```typescript
-// 前端 API 响应类型 (packages/web/src/types/api.ts)
-interface SchemaListItem {
-  id: string
-  name: string
-  type: 'form' | 'search-list'
-  status: 'draft' | 'published'
-  publishId?: string | null
-  publishedAt?: string | null
-  json?: FormSchemaItem[]
-  createdAt: string  // ISO 8601
-  updatedAt: string
-}
-
-interface SchemaDetail extends SchemaListItem {
-  json: FormSchemaItem[]  // 完整 schema JSON
-}
-```
-
-## 查询示例
-
-```javascript
-// Mongoose 查询（后端 routes/schema.ts）
-// 按名称模糊搜索 + 分页
-FormSchemaModel.find({ name: { $regex: '审批', $options: 'i' } })
-  .skip(0).limit(20)
-  .sort({ updatedAt: -1 })
-
-// 按发布 ID 查找
-FormSchemaModel.findOne({ publishId: 'uuid' })
-
-// 统计
-FormSchemaModel.countDocuments({ type: 'form', status: 'published' })
-```
+通过 `tenantPlugin` Mongoose 插件实现，自动为查询添加 `tenantId` 过滤。
