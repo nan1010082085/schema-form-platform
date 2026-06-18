@@ -23,6 +23,31 @@ function getContainerTypes(): Set<string> {
   return getAllContainerTypes() as Set<string>
 }
 
+/** 默认 position */
+const DEFAULT_POSITION = { x: 0, y: 0, w: 240, h: 40, zIndex: 1 }
+
+/**
+ * 递归补全 widget 的 position 字段。
+ * 数据库中的旧数据可能缺少 position，导致渲染崩溃。
+ */
+function normalizePosition(widgets: Widget[]): Widget[] {
+  return widgets.map((w) => {
+    if (!w.position || typeof w.position !== 'object') {
+      w.position = { ...DEFAULT_POSITION }
+    } else {
+      w.position.x = w.position.x ?? 0
+      w.position.y = w.position.y ?? 0
+      w.position.w = w.position.w ?? 240
+      w.position.h = w.position.h ?? 40
+      if (w.position.zIndex === undefined) w.position.zIndex = 1
+    }
+    if (w.children?.length) {
+      w.children = normalizePosition(w.children) as Widget[]
+    }
+    return w
+  })
+}
+
 /**
  * 列容器容量检查与自动分配 colIndex
  * 返回 true 表示容量已满，无法添加
@@ -231,6 +256,10 @@ export const useWidgetStore = defineStore('widget', () => {
   // ================================================================
 
   function addWidget(widget: Widget): void {
+    // 补全 position（模板或拖入的 widget 可能缺失）
+    if (!widget.position || typeof widget.position !== 'object') {
+      widget.position = { ...DEFAULT_POSITION }
+    }
     widget.position.zIndex = getMaxZIndex() + 1
     // 容器禁止嵌套：将被添加容器的子容器提升到根级
     if (widget.children?.length) {
@@ -494,7 +523,9 @@ export const useWidgetStore = defineStore('widget', () => {
   function loadWidgets(data: Widget[]): void {
     // 过滤掉 undefined 和 null 元素，确保数据干净
     const validWidgets = (data || []).filter((w): w is Widget => w != null && typeof w === 'object' && 'id' in w)
-    widgets.value = sanitizeContainerNesting(validWidgets)
+    // 补全 position 字段（旧数据可能缺失）
+    const normalized = normalizePosition(validWidgets)
+    widgets.value = sanitizeContainerNesting(normalized)
   }
 
   /**

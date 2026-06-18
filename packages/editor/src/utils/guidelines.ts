@@ -39,11 +39,12 @@ function toRect(r: AlignTarget): Rect {
 }
 
 function widgetToAlignTarget(w: Widget, offsetX = 0, offsetY = 0): AlignTarget {
+  const pos = w.position ?? { x: 0, y: 0, w: 0, h: 0 }
   return {
-    left: offsetX + w.position.x,
-    right: offsetX + w.position.x + w.position.w,
-    top: offsetY + w.position.y,
-    bottom: offsetY + w.position.y + w.position.h,
+    left: offsetX + pos.x,
+    right: offsetX + pos.x + pos.w,
+    top: offsetY + pos.y,
+    bottom: offsetY + pos.y + pos.h,
   }
 }
 
@@ -60,13 +61,14 @@ export function calculateGuideLines(
   let snapX: number | null = null
   let snapY: number | null = null
 
+  const dPos = draggingWidget.position ?? { x: 0, y: 0, w: 0, h: 0 }
   const dragRect: Rect = {
-    left: draggingWidget.position.x,
-    right: draggingWidget.position.x + draggingWidget.position.w,
-    top: draggingWidget.position.y,
-    bottom: draggingWidget.position.y + draggingWidget.position.h,
-    centerX: draggingWidget.position.x + draggingWidget.position.w / 2,
-    centerY: draggingWidget.position.y + draggingWidget.position.h / 2,
+    left: dPos.x,
+    right: dPos.x + dPos.w,
+    top: dPos.y,
+    bottom: dPos.y + dPos.h,
+    centerX: dPos.x + dPos.w / 2,
+    centerY: dPos.y + dPos.h / 2,
   }
 
   // 画布边界对齐
