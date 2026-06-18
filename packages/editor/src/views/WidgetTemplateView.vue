@@ -274,16 +274,13 @@ onMounted(() => {
       <div v-if="previewTemplate" :class="styles.previewContent">
         <!-- 模式切换 -->
         <div :class="styles.previewModeBar">
-          <el-radio-group v-model="previewMode" size="small">
-            <el-radio-button value="render">
-              <AppIcon name="monitor" :size="14" />
-              渲染预览
-            </el-radio-button>
-            <el-radio-button value="json">
-              <AppIcon name="document" :size="14" />
-              JSON 源码
-            </el-radio-button>
-          </el-radio-group>
+          <FilterTabs
+            v-model="previewMode"
+            :options="[
+              { label: '渲染预览', value: 'render' },
+              { label: 'JSON 源码', value: 'json' },
+            ]"
+          />
         </div>
 
         <!-- 模板基本信息 -->
