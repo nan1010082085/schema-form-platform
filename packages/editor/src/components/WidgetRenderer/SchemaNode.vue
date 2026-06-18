@@ -276,7 +276,7 @@ const CSS_STYLE_KEYS: ReadonlySet<string> = new Set([
 ])
 
 const wrapperStyle = computed(() => {
-  const pos = props.widget.position
+  const pos = props.widget.position ?? { x: 0, y: 0, w: 240, h: 40 }
   const style: Record<string, string | number> = {
     position: 'absolute',
     left: `${pos.x}px`,

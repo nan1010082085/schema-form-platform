@@ -131,11 +131,9 @@ async function seed() {
   // --- Builtin templates ---
   await seedBuiltinTemplates()
 
-  // --- Sample schema ---
-  const existingSchema = await FormSchemaModel.findOne({ name: '示例表单' })
-  if (existingSchema) {
-    console.log('[seed] Sample schema already exists, skipping.')
-  } else {
+  // --- Sample schema（每次重新创建，确保数据结构正确） ---
+  await FormSchemaModel.deleteMany({ name: '示例表单' })
+  {
     await FormSchemaModel.create({
       _id: uuidv4(),
       editId: uuidv4(),
@@ -147,30 +145,31 @@ async function seed() {
           id: uuidv4(),
           type: 'card',
           props: { title: '基本信息' },
+          position: { x: 0, y: 0, w: 800, h: 400, zIndex: 1 },
           children: [
             {
               id: uuidv4(),
               type: 'input',
-              props: { label: '姓名', field: 'name', placeholder: '请输入姓名', required: true },
+              label: '姓名',
+              field: 'name',
+              props: { placeholder: '请输入姓名', required: true },
+              position: { x: 50, y: 50, w: 400, h: 60, zIndex: 1 },
             },
             {
               id: uuidv4(),
               type: 'select',
-              props: {
-                label: '部门',
-                field: 'department',
-                placeholder: '请选择部门',
-                dictCode: 'department',
-              },
+              label: '部门',
+              field: 'department',
+              props: { placeholder: '请选择部门', dictCode: 'department' },
+              position: { x: 50, y: 120, w: 400, h: 60, zIndex: 1 },
             },
             {
               id: uuidv4(),
               type: 'radio',
-              props: {
-                label: '状态',
-                field: 'status',
-                dictCode: 'status',
-              },
+              label: '状态',
+              field: 'status',
+              props: { dictCode: 'status' },
+              position: { x: 50, y: 190, w: 400, h: 60, zIndex: 1 },
             },
           ],
         },
