@@ -35,8 +35,8 @@ export function useResize() {
     resizeHandle.value = handle
     startX.value = clientX
     startY.value = clientY
-    startW.value = widget.position.w
-    startH.value = widget.position.h
+    startW.value = widget.position?.w ?? 240
+    startH.value = widget.position?.h ?? 40
   }
 
   /** 更新缩放（mousemove 时调用） */
@@ -59,8 +59,8 @@ export function useResize() {
     if (handle.includes('n')) newH = Math.max(20, startH.value - dy)
 
     // 限制不超出画布边界
-    const maxW = boardStore.canvas.width - widget.position.x
-    const maxH = boardStore.canvas.height - widget.position.y
+    const maxW = boardStore.canvas.width - (widget.position?.x ?? 0)
+    const maxH = boardStore.canvas.height - (widget.position?.y ?? 0)
     newW = Math.min(newW, maxW)
     newH = Math.min(newH, maxH)
 

@@ -41,9 +41,11 @@ export function useDrag() {
   function findParentOffset(widgetId: string, widgets: Widget[] = widgetStore.widgets, ox = 0, oy = 0): { x: number; y: number } | null {
     for (const w of widgets) {
       if (w.children?.length) {
+        const wx = w.position?.x ?? 0
+        const wy = w.position?.y ?? 0
         for (const child of w.children) {
-          if (child.id === widgetId) return { x: ox + w.position.x, y: oy + w.position.y }
-          const found = findParentOffset(child.id, w.children, ox + w.position.x, oy + w.position.y)
+          if (child.id === widgetId) return { x: ox + wx, y: oy + wy }
+          const found = findParentOffset(child.id, w.children, ox + wx, oy + wy)
           if (found) return found
         }
       }
@@ -76,7 +78,7 @@ export function useDrag() {
     while (currentId) {
       const parent = findParentContainer(currentId)
       if (parent) {
-        offsets.push({ x: parent.position.x, y: parent.position.y })
+        offsets.push({ x: parent.position?.x ?? 0, y: parent.position?.y ?? 0 })
         currentId = parent.id
       } else {
         // currentId 是根级组件（不是任何容器的子组件），不加入偏移
@@ -129,8 +131,9 @@ export function useDrag() {
       const container = widgetStore.findWidget(hoveredId)
       if (container?.children?.length && container.position) {
         const containerOff = findContainerCanvasOffset(hoveredId)
-        const cCanvasX = containerOff.x + container.position.x
-        const cCanvasY = containerOff.y + container.position.y
+        const cPos = container.position ?? { x: 0, y: 0, w: 0, h: 0 }
+        const cCanvasX = containerOff.x + cPos.x
+        const cCanvasY = containerOff.y + cPos.y
 
         // 找到最近的子组件
         let closestChild: Widget | null = null
@@ -138,9 +141,10 @@ export function useDrag() {
         let insertBefore = true
 
         for (const child of container.children) {
-          const childCanvasY = cCanvasY + child.position.y
-          const childBottom = childCanvasY + child.position.h
-          const childCenterY = childCanvasY + child.position.h / 2
+          const cPos2 = child.position ?? { x: 0, y: 0, w: 0, h: 0 }
+          const childCanvasY = cCanvasY + cPos2.y
+          const childBottom = childCanvasY + cPos2.h
+          const childCenterY = childCanvasY + cPos2.h / 2
 
           // 鼠标在子组件上方区域
           const distAbove = Math.abs(canvasY - childCanvasY)
@@ -174,14 +178,15 @@ export function useDrag() {
 
         if (closestChild) {
           const child = closestChild as Widget
+          const childPos = child.position ?? { x: 0, y: 0, w: 0, h: 0 }
           const previewY = insertBefore
-            ? cCanvasY + child.position.y
-            : cCanvasY + child.position.y + child.position.h
+            ? cCanvasY + childPos.y
+            : cCanvasY + childPos.y + childPos.h
           return {
             orientation: 'horizontal',
             position: previewY,
             start: cCanvasX + 4,
-            end: cCanvasX + container.position.w - 4,
+            end: cCanvasX + cPos.w - 4,
             targetContainerId: hoveredId,
           }
         }
@@ -189,9 +194,9 @@ export function useDrag() {
         // 容器内无子组件 — 显示容器中心的预览线
         return {
           orientation: 'horizontal',
-          position: cCanvasY + container.position.h / 2,
+          position: cCanvasY + cPos.h / 2,
           start: cCanvasX + 4,
-          end: cCanvasX + container.position.w - 4,
+          end: cCanvasX + cPos.w - 4,
           targetContainerId: hoveredId,
         }
       }
@@ -204,9 +209,10 @@ export function useDrag() {
 
     for (const w of widgetStore.widgets) {
       if (w.id === dragStore.dragWidgetId) continue
-      const wBottom = w.position.y + w.position.h
+      const wp = w.position ?? { x: 0, y: 0, w: 0, h: 0 }
+      const wBottom = wp.y + wp.h
 
-      const distAbove = Math.abs(canvasY - w.position.y)
+      const distAbove = Math.abs(canvasY - wp.y)
       const distBelow = Math.abs(canvasY - wBottom)
 
       if (distAbove < closestDist && distAbove < PREVIEW_THRESHOLD) {
@@ -220,8 +226,8 @@ export function useDrag() {
         insertBefore = false
       }
 
-      if (canvasY >= w.position.y && canvasY <= wBottom) {
-        const centerY = w.position.y + w.position.h / 2
+      if (canvasY >= wp.y && canvasY <= wBottom) {
+        const centerY = wp.y + wp.h / 2
         if (canvasY < centerY) {
           closestWidget = w
           insertBefore = true
@@ -235,9 +241,10 @@ export function useDrag() {
     }
 
     if (closestWidget) {
+      const cwp = closestWidget.position ?? { x: 0, y: 0, w: 0, h: 0 }
       const previewY = insertBefore
-        ? closestWidget.position.y
-        : closestWidget.position.y + closestWidget.position.h
+        ? cwp.y
+        : cwp.y + cwp.h
       return {
         orientation: 'horizontal',
         position: previewY,
@@ -362,17 +369,18 @@ export function useDrag() {
             const parentOff = findParentOffset(parentContainer.id)
             const cx = parentOff?.x ?? 0
             const cy = parentOff?.y ?? 0
+            const ppos = parentContainer.position ?? { x: 0, y: 0, w: 0, h: 0 }
             const siblings = collectSiblingTargets(
               parentContainer,
               dragStore.dragWidgetId!,
-              cx + parentContainer.position.x,
-              cy + parentContainer.position.y,
+              cx + ppos.x,
+              cy + ppos.y,
             )
             const containerRect = {
-              x: cx + parentContainer.position.x,
-              y: cy + parentContainer.position.y,
-              w: parentContainer.position.w,
-              h: parentContainer.position.h,
+              x: cx + ppos.x,
+              y: cy + ppos.y,
+              w: ppos.w,
+              h: ppos.h,
             }
             const { lines, snapX, snapY } = calculateContainerGuides(dragRect, siblings, containerRect)
             dragStore.updateGuideLines(lines)
@@ -449,8 +457,9 @@ export function useDrag() {
           // 对于嵌套容器，需要递归计算偏移
           const containerOffsets = findContainerCanvasOffset(hoveredContainerId)
           const container = widgetStore.findWidget(hoveredContainerId)
-          const containerCanvasX = containerOffsets.x + (container?.position.x ?? 0)
-          const containerCanvasY = containerOffsets.y + (container?.position.y ?? 0)
+          const cpos = container?.position ?? { x: 0, y: 0 }
+          const containerCanvasX = containerOffsets.x + cpos.x
+          const containerCanvasY = containerOffsets.y + cpos.y
           x -= containerCanvasX
           y -= containerCanvasY
         } else {
@@ -498,8 +507,9 @@ export function useDrag() {
           // 对于嵌套容器，需要递归计算偏移
           const containerOffsets = findContainerCanvasOffset(hoveredContainerId)
           const container = widgetStore.findWidget(hoveredContainerId)
-          const containerCanvasX = containerOffsets.x + (container?.position.x ?? 0)
-          const containerCanvasY = containerOffsets.y + (container?.position.y ?? 0)
+          const cpos2 = container?.position ?? { x: 0, y: 0 }
+          const containerCanvasX = containerOffsets.x + cpos2.x
+          const containerCanvasY = containerOffsets.y + cpos2.y
           const localX = finalCanvasX - containerCanvasX
           const localY = finalCanvasY - containerCanvasY
           widgetStore.reparentToContainer(dragWidgetId, hoveredContainerId, localX, localY)
