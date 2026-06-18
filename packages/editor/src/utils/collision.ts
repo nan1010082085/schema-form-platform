@@ -30,10 +30,11 @@ export function detectContainerCollision(
   widget: Widget,
   containers: Widget[],
 ): Widget | null {
-  const wx = widget.position.x
-  const wy = widget.position.y
-  const ww = widget.position.w
-  const wh = widget.position.h
+  const wp = widget.position ?? { x: 0, y: 0, w: 0, h: 0 }
+  const wx = wp.x
+  const wy = wp.y
+  const ww = wp.w
+  const wh = wp.h
   const widgetArea = ww * wh
 
   for (const container of containers) {
@@ -58,10 +59,11 @@ export function detectNestedContainerCollision(
   widget: Widget,
   containers: Array<Widget & { _canvasX: number; _canvasY: number }>,
 ): (Widget & { _canvasX: number; _canvasY: number }) | null {
-  const wx = widget.position.x
-  const wy = widget.position.y
-  const ww = widget.position.w
-  const wh = widget.position.h
+  const wp = widget.position ?? { x: 0, y: 0, w: 0, h: 0 }
+  const wx = wp.x
+  const wy = wp.y
+  const ww = wp.w
+  const wh = wp.h
   const widgetArea = ww * wh
 
   // 优先匹配最深层的容器（后遍历的通常是更深层的子容器）

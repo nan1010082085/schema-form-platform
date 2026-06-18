@@ -153,11 +153,11 @@ const propertySections = computed<PropertySection[]>(() => {
     key: 'position',
     label: '位置',
     items: [
-      { key: 'position.x', label: 'X', type: 'number', value: widget.position.x, desc: '水平位置' },
-      { key: 'position.y', label: 'Y', type: 'number', value: widget.position.y, desc: '垂直位置' },
-      { key: 'position.w', label: '宽度', type: 'number', value: widget.position.w, desc: '组件宽度' },
-      { key: 'position.h', label: '高度', type: 'number', value: widget.position.h, desc: '组件高度' },
-      { key: 'position.zIndex', label: '层级', type: 'number', value: widget.position.zIndex ?? 0, desc: 'Z轴层级' },
+      { key: 'position.x', label: 'X', type: 'number', value: widget.position?.x ?? 0, desc: '水平位置' },
+      { key: 'position.y', label: 'Y', type: 'number', value: widget.position?.y ?? 0, desc: '垂直位置' },
+      { key: 'position.w', label: '宽度', type: 'number', value: widget.position?.w ?? 240, desc: '组件宽度' },
+      { key: 'position.h', label: '高度', type: 'number', value: widget.position?.h ?? 40, desc: '组件高度' },
+      { key: 'position.zIndex', label: '层级', type: 'number', value: widget.position?.zIndex ?? 0, desc: 'Z轴层级' },
     ],
   })
 
