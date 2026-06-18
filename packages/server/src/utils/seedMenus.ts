@@ -36,15 +36,15 @@ const IDS = {
 const MENUS: MenuSeed[] = [
   // ── 系统管理 (目录) ──
   { _id: IDS.SYSTEM,    parentId: null,           name: '系统管理',  path: '',               icon: 'Setting',    type: 'menu', permission: '',              sort: 1,  microAppId: null },
-  { _id: IDS.MICROAPP,  parentId: IDS.SYSTEM,     name: '微应用管理', path: '/micro-apps', icon: 'Grid',       type: 'menu', permission: 'microapp:view', sort: 1,  microAppId: 'admin' },
-  { _id: IDS.MENU_MGMT, parentId: IDS.SYSTEM,     name: '菜单管理',  path: '/menus',     icon: 'Menu',       type: 'menu', permission: 'menu:view',     sort: 2,  microAppId: 'admin' },
-  { _id: IDS.USER,      parentId: IDS.SYSTEM,     name: '用户管理',  path: '/users',     icon: 'User',       type: 'menu', permission: 'user:view',     sort: 3,  microAppId: 'admin' },
-  { _id: IDS.ROLE,      parentId: IDS.SYSTEM,     name: '角色管理',  path: '/roles',     icon: 'UserFilled', type: 'menu', permission: 'role:view',     sort: 4,  microAppId: 'admin' },
-  { _id: IDS.DEPT,      parentId: IDS.SYSTEM,     name: '部门管理',  path: '/depts',     icon: 'OfficeBuilding', type: 'menu', permission: 'dept:view', sort: 5,  microAppId: 'admin' },
-  { _id: IDS.POST,      parentId: IDS.SYSTEM,     name: '岗位管理',  path: '/posts',     icon: 'Postcard',   type: 'menu', permission: 'post:view',     sort: 6,  microAppId: 'admin' },
-  { _id: IDS.DICT,      parentId: IDS.SYSTEM,     name: '字典管理',  path: '/dict',      icon: 'Collection', type: 'menu', permission: 'dict:view',     sort: 7,  microAppId: 'admin' },
-  { _id: IDS.CONFIG,    parentId: IDS.SYSTEM,     name: '参数设置',  path: '/config',    icon: 'Tools',      type: 'menu', permission: 'config:view',   sort: 8,  microAppId: 'admin' },
-  { _id: IDS.LOGS,      parentId: IDS.SYSTEM,     name: '操作日志',  path: '/logs',      icon: 'Document',   type: 'menu', permission: 'audit:view',    sort: 9,  microAppId: 'admin' },
+  { _id: IDS.MICROAPP,  parentId: IDS.SYSTEM,     name: '微应用管理', path: '/admin/micro-apps', icon: 'Grid',       type: 'menu', permission: 'microapp:view', sort: 1,  microAppId: 'admin' },
+  { _id: IDS.MENU_MGMT, parentId: IDS.SYSTEM,     name: '菜单管理',  path: '/admin/menus',     icon: 'Menu',       type: 'menu', permission: 'menu:view',     sort: 2,  microAppId: 'admin' },
+  { _id: IDS.USER,      parentId: IDS.SYSTEM,     name: '用户管理',  path: '/admin/users',     icon: 'User',       type: 'menu', permission: 'user:view',     sort: 3,  microAppId: 'admin' },
+  { _id: IDS.ROLE,      parentId: IDS.SYSTEM,     name: '角色管理',  path: '/admin/roles',     icon: 'UserFilled', type: 'menu', permission: 'role:view',     sort: 4,  microAppId: 'admin' },
+  { _id: IDS.DEPT,      parentId: IDS.SYSTEM,     name: '部门管理',  path: '/admin/depts',     icon: 'OfficeBuilding', type: 'menu', permission: 'dept:view', sort: 5,  microAppId: 'admin' },
+  { _id: IDS.POST,      parentId: IDS.SYSTEM,     name: '岗位管理',  path: '/admin/posts',     icon: 'Postcard',   type: 'menu', permission: 'post:view',     sort: 6,  microAppId: 'admin' },
+  { _id: IDS.DICT,      parentId: IDS.SYSTEM,     name: '字典管理',  path: '/admin/dict',      icon: 'Collection', type: 'menu', permission: 'dict:view',     sort: 7,  microAppId: 'admin' },
+  { _id: IDS.CONFIG,    parentId: IDS.SYSTEM,     name: '参数设置',  path: '/admin/config',    icon: 'Tools',      type: 'menu', permission: 'config:view',   sort: 8,  microAppId: 'admin' },
+  { _id: IDS.LOGS,      parentId: IDS.SYSTEM,     name: '操作日志',  path: '/admin/logs',      icon: 'Document',   type: 'menu', permission: 'audit:view',    sort: 9,  microAppId: 'admin' },
 
   // ── 表单设计器（新开页签） ──
   { _id: IDS.EDITOR,    parentId: null,           name: '表单设计器', path: '/editor',          icon: 'EditPen',    type: 'menu', permission: '',              sort: 2,  microAppId: 'editor',  target: '_blank' },

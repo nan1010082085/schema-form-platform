@@ -40,31 +40,6 @@ const router = createRouter({
           component: () => import('@/components/AppContainer.vue'),
           meta: { title: '首页' },
         },
-        // Admin pages rendered inside shell with sidebar
-        {
-          path: 'users',
-          name: 'users',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { title: '用户管理' },
-        },
-        {
-          path: 'roles',
-          name: 'roles',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { title: '角色管理' },
-        },
-        {
-          path: 'menus',
-          name: 'menus',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { title: '菜单管理' },
-        },
-        {
-          path: 'micro-apps',
-          name: 'micro-apps',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { title: '微应用管理' },
-        },
       ],
     },
     // Without-menu layout (full-screen micro-app, no sidebar)
