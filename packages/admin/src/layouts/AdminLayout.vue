@@ -31,7 +31,9 @@ async function fetchMenus() {
   try {
     // 先加载用户权限
     const authStore = useAuthStore()
-    await authStore.loadUser()
+    if (typeof authStore.loadUser === 'function') {
+      await authStore.loadUser()
+    }
 
     const data = await apiClient.get<MenuItem[]>('/menus?tree=true&type=menu&status=active')
     const all = Array.isArray(data) ? data : []

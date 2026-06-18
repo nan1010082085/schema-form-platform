@@ -113,12 +113,12 @@ router.beforeEach(async (to) => {
   }
 
   // 独立模式下检查登录（微前端模式由宿主处理鉴权）
-  if (!isQiankun()) {
+  // dev 模式跳过登录（本地开发不需要认证）
+  if (!isQiankun() && !import.meta.env.DEV) {
     const { getGlobalState } = useQiankun()
     const state = getGlobalState()
     const token = (state.token as string) || localStorage.getItem('sfp_access_token')
     if (!token) {
-      // 跳转到统一登录页，带上当前路径作为 redirect 参数
       return {
         name: 'login',
         query: { redirect: window.location.pathname },
@@ -129,10 +129,16 @@ router.beforeEach(async (to) => {
   // 权限检查：加载用户权限后验证路由权限
   const requiredPermission = to.meta.permission as string | undefined
   if (requiredPermission) {
-    const authStore = useAuthStore()
-    await authStore.loadUser()
-    if (!authStore.hasPermission(requiredPermission)) {
-      return { name: 'dashboard' }
+    try {
+      const authStore = useAuthStore()
+      if (typeof authStore.loadUser === 'function') {
+        await authStore.loadUser()
+      }
+      if (!authStore.hasPermission(requiredPermission)) {
+        return { name: 'dashboard' }
+      }
+    } catch {
+      // 加载用户信息失败，放行（避免阻塞导航）
     }
   }
 })
