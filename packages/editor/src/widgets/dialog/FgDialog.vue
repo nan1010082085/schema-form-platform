@@ -17,7 +17,11 @@ import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from '../../components/WidgetRenderer/SchemaRender.vue'
 import { useWidgetLifecycle } from '@/composables/useWidgetLifecycle'
 import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import MicroAppContainer from '@schema-form/shared-qiankun/MicroAppContainer.vue'
 import { useExposeWidget } from '@/composables/useExposeWidget'
+import { loadMicroApp } from 'qiankun'
+import type { AppName } from '@schema-form/shared-qiankun/config'
+import type { MicroAppMode } from '@schema-form/shared-qiankun/useMicroApp'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
@@ -55,10 +59,16 @@ onUnmounted(() => trigger('onUnmount'))
 
 // ---- 微应用模式 ----
 const contentMode = computed(() => (widgetData.value.props?.contentMode as string) ?? 'edit')
+const microappMode = computed(() => (widgetData.value.props?.microappMode as MicroAppMode) ?? 'iframe')
+const microappApp = computed(() => widgetData.value.props?.microappApp as AppName | undefined)
 const microappUrl = computed(() => {
   const publishId = widgetData.value.props?.publishId as string
   const baseUrl = (widgetData.value.props?.microappBaseUrl as string) || window.location.origin
   return publishId ? `${baseUrl}/view?id=${publishId}` : ''
+})
+const microappQuery = computed(() => {
+  const publishId = widgetData.value.props?.publishId as string
+  return publishId ? { id: publishId } : undefined
 })
 
 // ---- Provide form context（dialog 内部子组件使用） ----
@@ -127,13 +137,23 @@ async function handleCancel() {
 
   <!-- 预览/运行时模式 -->
   <template v-else>
-    <!-- 微应用模式（iframe 渲染） -->
+    <!-- 微应用模式 -->
     <div v-if="contentMode === 'microapp'" :class="styles.microappContainer">
-      <iframe
-        v-if="microappUrl"
+      <!-- qiankun entry 模式：通过子应用名称加载 -->
+      <MicroAppContainer
+        v-if="microappMode === 'qiankun' && microappApp"
+        :app-name="microappApp"
+        mode="qiankun"
+        :load-micro-app="loadMicroApp"
+        height="100%"
+      />
+      <!-- iframe 模式：通过 URL 加载（发布表单或自定义地址） -->
+      <MicroAppContainer
+        v-else-if="microappUrl"
+        :app-name="'editor'"
+        mode="iframe"
         :src="microappUrl"
-        :class="styles.microappIframe"
-        frameborder="0"
+        height="100%"
       />
     </div>
 

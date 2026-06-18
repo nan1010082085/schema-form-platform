@@ -6,5 +6,7 @@
 
 export { useQiankun } from './useQiankun'
 export { useQiankunEvent } from './useQiankunEvent'
+export { useMicroApp } from './useMicroApp'
 export { createQiankunApp } from './createQiankunApp'
 export type { QiankunLifecycle, QiankunProps, QiankunEvent } from './types'
+export type { MicroAppMode, UseMicroAppOptions, UseMicroAppReturn } from './useMicroApp'
