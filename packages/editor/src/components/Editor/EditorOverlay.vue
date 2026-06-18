@@ -157,17 +157,18 @@ const selectionStyle = computed(() => {
   // 递归查找子组件的画布绝对坐标（跳过自渲染容器内部）
   const findCanvasPos = (widgets: Widget[], targetId: string, ox = 0, oy = 0): { x: number; y: number } | null => {
     for (const widget of widgets) {
-      if (widget.id === targetId) return { x: ox + widget.position.x, y: oy + widget.position.y }
+      const wp = widget.position ?? { x: 0, y: 0, w: 0, h: 0 }
+      if (widget.id === targetId) return { x: ox + wp.x, y: oy + wp.y }
       if (widget.children?.length && !SELF_RENDERING_CONTAINERS.has(widget.type)) {
-        const found = findCanvasPos(widget.children, targetId, ox + widget.position.x, oy + widget.position.y)
+        const found = findCanvasPos(widget.children, targetId, ox + wp.x, oy + wp.y)
         if (found) return found
       }
     }
     return null
   }
   const pos = findCanvasPos(widgetStore.widgets, w.id)
-  const x = pos?.x ?? w.position.x
-  const y = pos?.y ?? w.position.y
+  const x = pos?.x ?? w.position?.x ?? 0
+  const y = pos?.y ?? w.position?.y ?? 0
   const delta = getStyleSizeDelta(w)
   return {
     position: 'absolute' as const,
@@ -264,8 +265,8 @@ const containerHighlightStyle = computed(() => {
     position: 'absolute' as const,
     left: `${canvasPos.x}px`,
     top: `${canvasPos.y}px`,
-    width: `${c.position.w}px`,
-    height: `${c.position.h}px`,
+    width: `${c.position?.w ?? 0}px`,
+    height: `${c.position?.h ?? 0}px`,
     border: '2px dashed var(--color-primary)',
     backgroundColor: 'rgba(64, 158, 255, 0.1)',
     pointerEvents: 'none' as const,
