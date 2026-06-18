@@ -139,16 +139,18 @@ const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 ]
 
 /**
- * 在启动时注入内置模板（幂等：已存在则跳过）
+ * 在启动时注入内置模板
+ *
+ * 策略：删除所有旧的内置模板，重新插入。
+ * 这样模板数据结构变更后能自动更新，无需手动清理数据库。
  */
 export async function seedBuiltinTemplates(): Promise<void> {
-  const existingCount = await WidgetTemplateModel.countDocuments({ isBuiltin: true })
-  if (existingCount >= BUILTIN_TEMPLATES.length) return
+  const deleted = await WidgetTemplateModel.deleteMany({ isBuiltin: true })
+  if (deleted.deletedCount > 0) {
+    console.log(`[seed] Cleared ${deleted.deletedCount} old builtin templates`)
+  }
 
   for (const tpl of BUILTIN_TEMPLATES) {
-    const existing = await WidgetTemplateModel.findOne({ name: tpl.name, isBuiltin: true })
-    if (existing) continue
-
     await WidgetTemplateModel.create({
       name: tpl.name,
       description: tpl.description,
@@ -159,5 +161,5 @@ export async function seedBuiltinTemplates(): Promise<void> {
       usageCount: 0,
     })
   }
-  console.log('[seed] Builtin templates ensured')
+  console.log(`[seed] ${BUILTIN_TEMPLATES.length} builtin templates inserted`)
 }

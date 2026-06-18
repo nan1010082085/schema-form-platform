@@ -10,6 +10,7 @@ import { PermissionModel } from './src/models/Permission.js'
 import { FormSchemaModel } from './src/models/FormSchema.js'
 import { seedModelConfigs } from './src/utils/seedModelConfigs.js'
 import { seedClients } from './src/utils/seedClients.js'
+import { seedBuiltinTemplates } from './src/utils/seedBuiltinTemplates.js'
 import { v4 as uuidv4 } from 'uuid'
 
 // --- 权限定义 ---
@@ -126,6 +127,9 @@ async function seed() {
 
   // --- SSO Clients ---
   await seedClients()
+
+  // --- Builtin templates ---
+  await seedBuiltinTemplates()
 
   // --- Sample schema ---
   const existingSchema = await FormSchemaModel.findOne({ name: '示例表单' })
