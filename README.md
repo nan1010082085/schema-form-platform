@@ -72,8 +72,6 @@ pnpm deploy:pack     # 本地编译打包
 pnpm deploy:run      # 上传服务器 + 启动
 ```
 
-服务器：`***REMOVED***`（前端 :8828 / API :30001）
-
 ## 环境变量
 
 | 变量 | 用途 |
