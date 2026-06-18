@@ -9,6 +9,6 @@ export default createViteConfig('admin', import.meta.url, {
     qiankun('admin', { useDevMode: true }),
   ],
   server: {
-    port: 5400,
+    port: 5555,
   },
 })

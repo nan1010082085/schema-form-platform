@@ -31,7 +31,7 @@ export const APP_CONFIGS: Record<AppName, AppConfig> = {
   editor:   { name: 'editor',   basePath: '/schema-platform/editor/',   devPort: 5100 },
   flow:     { name: 'flow',     basePath: '/schema-platform/flow/',     devPort: 5200 },
   ai:       { name: 'ai',       basePath: '/schema-platform/ai/',       devPort: 5300 },
-  admin:    { name: 'admin',    basePath: '/schema-platform/admin/',    devPort: 5400 },
+  admin:    { name: 'admin',    basePath: '/schema-platform/admin/',    devPort: 5555 },
 }
 
 /** API 服务端口 */
