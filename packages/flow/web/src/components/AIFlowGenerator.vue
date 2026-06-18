@@ -176,7 +176,7 @@ async function callAI(prompt: string): Promise<string> {
     throw new Error('请先登录')
   }
 
-  const API_BASE = '/schema-platform/api'
+  const API_BASE = import.meta.env.VITE_API_BASE_URL
   const response = await fetch(`${API_BASE}/ai/chat`, {
     method: 'POST',
     headers: {

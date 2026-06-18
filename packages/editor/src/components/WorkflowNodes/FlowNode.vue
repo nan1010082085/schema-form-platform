@@ -24,12 +24,13 @@ interface Props {
 const props = defineProps<Props>()
 
 function openFlowDesigner(): void {
+  const flowBase = import.meta.env.VITE_FLOW_URL || '/'
   if (props.data.config.flowId) {
     // 跳转到 Flow 设计器，编辑对应的流程
-    window.open(`/schema-platform/flow/designer?id=${props.data.config.flowId}`, '_blank')
+    window.open(`${flowBase}designer?id=${props.data.config.flowId}`, '_blank')
   } else {
     // 跳转到 Flow 列表页
-    window.open('/schema-platform/flow/list', '_blank')
+    window.open(`${flowBase}list`, '_blank')
   }
 }
 </script>

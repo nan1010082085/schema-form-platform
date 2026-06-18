@@ -254,7 +254,7 @@ function goToCreateSchema() {
 
 function goToCreateFlow() {
   // 跳转到 flow 项目创建页面
-  const flowUrl = import.meta.env.VITE_FLOW_URL || '/schema-platform/flow'
+  const flowUrl = import.meta.env.VITE_FLOW_URL || '/'
   window.open(`${flowUrl}/designer`, '_blank')
 }
 

@@ -84,7 +84,7 @@ async function fetchSchemas() {
       params.set('search', searchQuery.value)
     }
 
-    const API_BASE = '/schema-platform/api'
+    const API_BASE = import.meta.env.VITE_API_BASE_URL
     const response = await fetch(`${API_BASE}/schemas?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })

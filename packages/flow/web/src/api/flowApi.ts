@@ -32,7 +32,7 @@ import type {
   UpstreamNodeData,
 } from '@schema-form/flow-shared'
 
-const API_BASE = '/schema-platform/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL
 
 /** Token 提供者，由 main.ts 注入，避免 apiClient 直接耦合微前端框架 */
 let tokenProvider: (() => string | null) | null = null

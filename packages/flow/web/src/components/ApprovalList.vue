@@ -71,7 +71,7 @@ async function fetchApprovalList() {
   loading.value = true
   try {
     const token = localStorage.getItem('sfp_access_token')
-    const API_BASE = '/schema-platform/api'
+    const API_BASE = import.meta.env.VITE_API_BASE_URL
     const response = await fetch(`${API_BASE}/flow-tasks/approval-list?instanceId=${props.instanceId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
