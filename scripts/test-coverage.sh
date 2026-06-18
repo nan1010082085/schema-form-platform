@@ -42,7 +42,7 @@ generate_coverage() {
 generate_coverage "@schema-form/server" "packages/server"
 generate_coverage "@schema-form/editor-web" "packages/editor/web"
 generate_coverage "@schema-form/flow-web" "packages/flow/web"
-generate_coverage "@schema-form/ai-app" "packages/ai-app"
+generate_coverage "@schema-form/ai-app" "packages/ai/app"
 
 echo -e "${BLUE}=== 测试统计汇总 ===${NC}"
 echo ""
@@ -64,7 +64,7 @@ count_tests() {
 count_tests "packages/server" "服务端"
 count_tests "packages/editor/web" "编辑器"
 count_tests "packages/flow/web" "流程"
-count_tests "packages/ai-app" "AI 应用"
+count_tests "packages/ai/app" "AI 应用"
 
 echo -e "${BLUE}=== 覆盖率建议 ===${NC}"
 echo ""

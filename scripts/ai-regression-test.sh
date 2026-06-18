@@ -87,12 +87,12 @@ echo -e "\n${YELLOW}=== 前端测试 ===${NC}"
 
 if [[ "$SPRINT" == "all" || "$SPRINT" == "1" ]]; then
     run_test "F1: SSE 解析测试" \
-        "cd $PROJECT_ROOT && pnpm --filter @schema-form/ai-app test -- packages/ai-app/src/__tests__/aiApi.spec.ts"
+        "cd $PROJECT_ROOT && pnpm --filter @schema-form/ai-app test -- packages/ai/app/src/__tests__/aiApi.spec.ts"
 fi
 
 if [[ "$SPRINT" == "all" || "$SPRINT" == "2" || "$SPRINT" == "3" ]]; then
     run_test "F2-F6: Store 测试" \
-        "cd $PROJECT_ROOT && pnpm --filter @schema-form/ai-app test -- packages/ai-app/src/__tests__/aiStore.spec.ts"
+        "cd $PROJECT_ROOT && pnpm --filter @schema-form/ai-app test -- packages/ai/app/src/__tests__/aiStore.spec.ts"
 fi
 
 # ==========================================

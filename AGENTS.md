@@ -183,7 +183,7 @@ packages/shared/ai/
 ├── systemKnowledge.ts       # 系统知识
 └── types.ts                 # 类型定义
 
-packages/ai-app/src/
+packages/ai/app/src/
 ├── views/AiChatView.vue     # 完整页面
 ├── views/AiSidebarView.vue  # 抽屉模式
 ├── stores/ai.ts             # useAiStore
