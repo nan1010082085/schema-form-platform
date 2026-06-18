@@ -303,7 +303,6 @@ import { ArrowDown, Refresh } from '@element-plus/icons-vue'
 import type { SimulationSpeed } from '../composables/useSimulation.js'
 import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
-import { getAppUrl } from '@schema-form/shared-qiankun/config'
 import NotificationBell from './NotificationBell.vue'
 import styles from './FlowToolbar.module.scss'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
@@ -334,23 +333,18 @@ const layoutPopoverVisible = ref(false)
 const speedLabel = computed(() => SPEED_LABELS[props.speed ?? 'normal'])
 
 function goToPortal() {
-  const base = getAppUrl('flow', import.meta.env.DEV)
-  window.location.href = `${base}list`
+  window.location.href = `${import.meta.env.BASE_URL}list`
 }
 
 function handleSaveCommand(command: string) {
   if (command === 'save') {
-    // 触发保存
-    const event = new CustomEvent('flow-save')
-    window.dispatchEvent(event)
+    emit('save')
   } else if (command === 'save-as-template') {
-    // 触发保存为模板
-    const event = new CustomEvent('flow-save-as-template')
-    window.dispatchEvent(event)
+    emit('save-as-template')
   }
 }
 
-defineEmits<{
+const emit = defineEmits<{
   save: []
   undo: []
   redo: []
