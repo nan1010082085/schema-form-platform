@@ -45,7 +45,7 @@ export const useFlowTemplateStore = defineStore('flowTemplate', () => {
     return await flowApi.seedBuiltinTemplates()
   }
 
-  async function saveAsTemplate(definitionId: string, data?: { name?: string; description?: string; category?: string; tags?: string[] }) {
+  async function saveAsTemplate(definitionId: string, data?: { name?: string; description?: string; category?: string; tags?: string[]; thumbnail?: string }) {
     const template = await flowApi.saveAsTemplate(definitionId, data)
     templates.value.unshift(template)
     return template

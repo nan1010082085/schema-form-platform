@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" :class="styles.container">
+  <div ref="containerRef" :class="[styles.container, compact && styles.compact]">
     <div v-if="!hasNodes" :class="styles.empty">
       <el-empty description="暂无流程图数据" :image-size="80" />
     </div>
@@ -62,8 +62,8 @@
           <AnimatedEdge v-bind="edgeProps" />
         </template>
 
-        <Background :gap="20" :size="0.8" color="#d0d5dd" />
-        <Controls />
+        <Background v-if="!compact" :gap="20" :size="0.8" color="#d0d5dd" />
+        <Controls v-if="!compact" />
       </VueFlow>
     </template>
   </div>
@@ -119,9 +119,11 @@ const defaultEdgeOptions = {
 const props = withDefaults(defineProps<{
   graph?: FlowGraph | null
   highlightNodeIds?: string[]
+  compact?: boolean
 }>(), {
   graph: null,
   highlightNodeIds: () => [],
+  compact: false,
 })
 
 const containerRef = ref<HTMLDivElement>()

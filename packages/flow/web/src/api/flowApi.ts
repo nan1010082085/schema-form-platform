@@ -249,7 +249,7 @@ export const flowApi = {
   seedBuiltinTemplates: () =>
     request<{ created: number; skipped: number }>('/flow-templates/seed', { method: 'POST' }),
 
-  saveAsTemplate: (definitionId: string, data?: { name?: string; description?: string; category?: string; tags?: string[] }) =>
+  saveAsTemplate: (definitionId: string, data?: { name?: string; description?: string; category?: string; tags?: string[]; thumbnail?: string }) =>
     request<FlowTemplateData>(`/flow-templates/from-flow/${definitionId}`, {
       method: 'POST',
       body: JSON.stringify(data ?? {}),

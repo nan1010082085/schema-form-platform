@@ -343,12 +343,17 @@ router.post('/', requireAuth, validate(createFlowTemplateSchema), async (ctx) =>
 // Seed built-in templates (idempotent — skips if name already exists).
 // ────────────────────────────────────────────
 router.post('/seed', requireAuth, async (ctx) => {
-  const results = { created: 0, skipped: 0 }
+  const results = { created: 0, updated: 0 }
 
   for (const tpl of BUILTIN_TEMPLATES) {
     const existing = await FlowTemplateModel.findOne({ name: tpl.name, isBuiltin: true })
     if (existing) {
-      results.skipped++
+      // 更新已有内置模板的 graph 数据（确保节点坐标同步最新）
+      await FlowTemplateModel.updateOne(
+        { _id: existing._id },
+        { $set: { graph: tpl.graph, description: tpl.description, category: tpl.category, tags: tpl.tags } },
+      )
+      results.updated++
       continue
     }
     await FlowTemplateModel.create({
@@ -529,11 +534,12 @@ router.post('/:id/apply', requireAuth, validate(applyFlowTemplateSchema), async 
 // ────────────────────────────────────────────
 router.post('/from-flow/:definitionId', requireAuth, async (ctx) => {
   const { definitionId } = ctx.params
-  const { name, description, category, tags } = ctx.request.body as {
+  const { name, description, category, tags, thumbnail } = ctx.request.body as {
     name?: string
     description?: string
     category?: string
     tags?: string[]
+    thumbnail?: string
   }
 
   if (!uuidValidate(definitionId)) {
@@ -565,7 +571,7 @@ router.post('/from-flow/:definitionId', requireAuth, async (ctx) => {
     description: description ?? definition.description,
     category: category ?? definition.category ?? 'other',
     graph: latestVersion.graph,
-    thumbnail: '',
+    thumbnail: thumbnail ?? '',
     tags: tags ?? [],
     isBuiltin: false,
     createdBy: user?.id ?? '',

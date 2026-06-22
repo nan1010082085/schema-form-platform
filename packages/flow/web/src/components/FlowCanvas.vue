@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="canvasEl"
     :class="styles.canvas"
     @drop="onDrop"
     @dragover="onDragOver"
@@ -75,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -134,6 +135,7 @@ const readOnly = computed(() => props.readOnly ?? false)
 
 const designerStore = useFlowDesignerStore()
 const flowGraph = useFlowGraphStore()
+const canvasEl = ref<HTMLDivElement>()
 
 // Sync error highlight class onto nodes when errorNodeIds changes
 watch(
@@ -325,5 +327,6 @@ function selectAndZoomToNode(nodeId: string) {
 defineExpose({
   fitView,
   selectAndZoomToNode,
+  getContainerEl: () => canvasEl.value,
 })
 </script>

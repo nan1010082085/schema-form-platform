@@ -145,12 +145,10 @@ function formatDate(dateStr: string | Date) {
         :class="styles.card"
       >
         <div :class="styles.cardThumbnail">
-          <div v-if="tpl.thumbnail" :class="styles.thumbnailImg">
-            <img :src="tpl.thumbnail" :alt="tpl.name" />
-          </div>
+          <FlowGraphPreview v-if="tpl.graph?.nodes?.length" :graph="tpl.graph" compact />
           <div v-else :class="styles.thumbnailPlaceholder">
             <AppIcon name="document" :size="32" />
-            <span>流程预览</span>
+            <span>暂无流程图</span>
           </div>
         </div>
 
