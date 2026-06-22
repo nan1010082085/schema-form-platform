@@ -39,11 +39,25 @@ export interface AiPublishedEvent {
 let socket: Socket | null = null
 let connected = false
 
-/** 获取 WebSocket URL */
-function getWsUrl(): string {
-  if (typeof window === 'undefined') return ''
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}`
+/** 获取当前连接状态 */
+export function isConnected(): boolean {
+  return connected
+}
+
+/**
+ * 获取 Socket.IO 连接配置
+ *
+ * 开发环境：使用 /ws 路径（vite proxy 代理到 server）
+ * 生产环境：使用 /schema-platform/ws 路径（nginx 重写为 /ws）
+ */
+function getSocketConfig(): { url: string; path: string } {
+  if (typeof window === 'undefined') return { url: '', path: '' }
+
+  const isProd = import.meta.env?.PROD === true || import.meta.env?.MODE === 'production'
+  return {
+    url: window.location.origin,
+    path: isProd ? '/schema-platform/ws' : '/ws',
+  }
 }
 
 // ---- 公共 API ----
@@ -52,11 +66,11 @@ function getWsUrl(): string {
 export function connect(): void {
   if (socket) return
 
-  const url = getWsUrl()
+  const { url, path } = getSocketConfig()
   if (!url) return
 
   socket = io(url, {
-    path: '/schema-platform/ws',
+    path,
     transports: ['websocket', 'polling'],
     auth: {
       token: localStorage.getItem('sfp_access_token') || '',

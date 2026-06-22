@@ -19,7 +19,7 @@ import { registerChatHandlers } from './ai/chatStreamHandler.js'
 let io: Server | null = null
 
 export function initSocket(httpServer: HttpServer): Server {
-  const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:5400,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
+  const origins = process.env.CORS_ORIGINS || 'http://localhost:4000,http://localhost:5051,http://localhost:5100,http://localhost:5200,http://localhost:5300,http://localhost:5400,http://127.0.0.1:4000,https://schema-form-platform.vercel.app'
 
   io = new Server(httpServer, {
     path: '/ws',
