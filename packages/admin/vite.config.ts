@@ -1,14 +1,42 @@
-import { createViteConfig } from '@schema-form/shared-config/vite'
-import qiankun from 'vite-plugin-qiankun'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const isProd = process.env.NODE_ENV === 'production'
+const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
-export default createViteConfig('admin', import.meta.url, {
-  base: isProd ? '/schema-platform/admin/' : '/',
-  // dev 模式不加载 qiankun 插件（避免注入代码导致独立运行白屏）
-  // prod 模式加载（作为子应用被 shell 加载）
-  plugins: isProd ? [qiankun('admin')] : [],
+/**
+ * admin Vite 配置
+ *
+ * 通过环境变量 ADMIN_BASE_URL 控制 base 路径：
+ * - 本地独立运行：ADMIN_BASE_URL=/ （默认）
+ * - 生产/嵌入 shell：ADMIN_BASE_URL=/schema-platform/admin/
+ */
+export default defineConfig({
+  base: process.env.ADMIN_BASE_URL || '/',
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': `${rootDir}src`,
+    },
+  },
   server: {
     port: 5555,
+    strictPort: true,
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    proxy: {
+      '/schema-platform/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/schema-platform\/api/, '/api'),
+      },
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
 })

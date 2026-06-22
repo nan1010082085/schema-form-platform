@@ -84,6 +84,35 @@ export function useAuth() {
   }
 
   /**
+   * SSO login: exchange authorization code for tokens.
+   * On success: persist tokens + user, redirect to ?redirect= or /.
+   */
+  async function ssoLogin(code: string): Promise<void> {
+    store.setLoading('login', true)
+    try {
+      const res = await apiClient.post<{
+        accessToken: string
+        refreshToken: string
+        expiresIn: number
+      }>('/auth/sso/token', {
+        code,
+        client_id: 'shell',
+        redirect_uri: `${window.location.origin}/schema-platform/sso/callback`,
+      })
+      store.setToken(res.accessToken, res.refreshToken)
+      // Fetch user info after getting token
+      const userRes = await apiClient.get<AuthUser>('/auth/me')
+      store.setUser(userRes)
+      store.setUserKey(userRes.id)
+      scheduleRefresh(res.expiresIn)
+      const redirect = (route.query.redirect as string) || '/'
+      await router.push(redirect)
+    } finally {
+      store.setLoading('login', false)
+    }
+  }
+
+  /**
    * Username/password login.
    * On success: persist tokens + user, redirect to ?redirect= or /.
    */
@@ -153,6 +182,7 @@ export function useAuth() {
     loading,
     // methods
     login,
+    ssoLogin,
     fetchUser,
     logout,
     doRefresh,

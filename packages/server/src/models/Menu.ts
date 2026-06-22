@@ -16,6 +16,12 @@ export interface IMenu {
   component: string
   microAppId: string | null
   target: '_self' | '_blank'
+  /** 路由类型：schema=Schema页面, micro-app=微前端子应用, link=外部链接 */
+  routeType: 'schema' | 'micro-app' | 'link'
+  /** routeType=schema 时，关联的 FormSchema._id */
+  schemaId: string | null
+  /** routeType=link 时，外部 URL */
+  url: string
   createdAt: Date
   updatedAt: Date
 }
@@ -35,6 +41,9 @@ const menuSchema = new mongoose.Schema(
     component: { type: String, default: '' },
     microAppId: { type: String, default: null, index: true },
     target: { type: String, enum: ['_self', '_blank'], default: '_self' },
+    routeType: { type: String, enum: ['schema', 'micro-app', 'link'], default: 'micro-app' },
+    schemaId: { type: String, default: null },
+    url: { type: String, default: '' },
   },
   {
     timestamps: true,

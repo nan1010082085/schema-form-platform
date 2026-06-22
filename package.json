@@ -14,7 +14,7 @@
     "dev:editor": "no_proxy='*' pnpm --filter @schema-form/editor-web dev",
     "dev:flow": "no_proxy='*' pnpm --filter @schema-form/flow-web dev",
     "dev:ai": "no_proxy='*' pnpm --filter @schema-form/ai-app dev",
-    "dev:admin": "lsof -ti :5051 -ti :5555 | xargs kill -9 2>/dev/null; no_proxy='*' pnpm --filter @schema-form/admin dev",
+    "dev:admin": "lsof -ti :5555 | xargs kill -9 2>/dev/null; no_proxy='*' pnpm --filter @schema-form/admin dev",
     "kill-ports": "bash scripts/kill-ports.sh",
     "build": "pnpm -r build",
     "build:server": "pnpm extract:ai-metadata && pnpm --filter @schema-form/server build",

@@ -11,7 +11,7 @@ import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
 
-const PUBLIC_ROUTES = new Set(['/login'])
+const PUBLIC_ROUTES = new Set(['/login', '/sso/callback'])
 const base = APP_CONFIGS.shell.basePath
 
 const router = createRouter({
@@ -22,6 +22,14 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
+      meta: { public: true },
+    },
+
+    // ---- SSO 回调 ----
+    {
+      path: '/sso/callback',
+      name: 'sso-callback',
+      component: () => import('@/views/SSOCallbackView.vue'),
       meta: { public: true },
     },
 

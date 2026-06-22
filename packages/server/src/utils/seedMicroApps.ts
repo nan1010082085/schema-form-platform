@@ -4,9 +4,8 @@ import { DEFAULT_TENANT_ID } from './initDefaultTenant.js'
 const DEFAULT_MICRO_APPS = [
   { name: '表单设计器', activeRule: '/editor', layout: 'without-menu', icon: 'Edit', url: '', sort: 1 },
   { name: '流程设计器', activeRule: '/flow', layout: 'with-menu', icon: 'Flow', url: '', sort: 2 },
-  { name: '系统管理', activeRule: '/admin', layout: 'with-menu', icon: 'Setting', url: '', sort: 3 },
-  { name: '主应用', activeRule: '/', layout: 'with-menu', icon: 'Home', url: '', sort: 4 },
-  { name: 'AI 应用', activeRule: '/ai', layout: 'without-menu', icon: 'Robot', url: '', sort: 5 },
+  { name: '主应用', activeRule: '/', layout: 'with-menu', icon: 'Home', url: '', sort: 3 },
+  { name: 'AI 应用', activeRule: '/ai', layout: 'without-menu', icon: 'Robot', url: '', sort: 4 },
 ]
 
 /**

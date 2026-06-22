@@ -41,8 +41,16 @@ fetchMenus()
 
 /** Check if a menu node matches the current route */
 function isActive(node: MenuTreeNode): boolean {
-  if (!node.path) return false
   const p = route.path
+  const q = route.query
+  // Schema 页面匹配：/app/editor/view?id={schemaId}
+  if (node.routeType === 'schema' && node.schemaId) {
+    return p.includes('/editor/view') && q.id === node.schemaId
+  }
+  // 外部链接不激活
+  if (node.routeType === 'link') return false
+  // 默认：path 匹配
+  if (!node.path) return false
   return p === node.path || p.startsWith(node.path + '/')
 }
 
@@ -84,9 +92,32 @@ const APP_ID_MAP: Record<string, keyof typeof APP_CONFIGS> = {
 
 /** Navigate to a menu route */
 function navigateTo(node: MenuTreeNode): void {
+  const routeType = node.routeType || 'micro-app'
+
+  if (routeType === 'schema') {
+    // Schema 页面：直接路由到 editor 的 PublishView 渲染
+    if (node.schemaId) {
+      router.push(`/app/editor/view?id=${node.schemaId}`)
+    }
+    return
+  }
+
+  if (routeType === 'link') {
+    // 外部链接
+    const url = node.url || node.path
+    if (!url) return
+    if (node.target === '_blank') {
+      window.open(url, '_blank')
+    } else {
+      // _self: 当前页打开
+      window.location.href = url
+    }
+    return
+  }
+
+  // routeType === 'micro-app'（默认，兼容旧数据）
   if (!node.path) return
   if (node.target === '_blank') {
-    // 新开页签：开发环境子应用 base 为 /，生产环境用 basePath
     const isDev = import.meta.env.DEV
     const configKey = node.microAppId ? APP_ID_MAP[node.microAppId] : undefined
     if (configKey) {

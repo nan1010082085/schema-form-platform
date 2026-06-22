@@ -7,7 +7,13 @@ const DEFAULT_CLIENTS = [
   {
     clientId: 'shell',
     name: 'Shell 应用',
-    redirectUris: ['http://localhost:5050/auth/callback', `${PROD_ORIGIN}/auth/callback`],
+    redirectUris: [
+      'http://localhost:5050/auth/callback',
+      `${PROD_ORIGIN}/auth/callback`,
+      'http://localhost:5050/sso/callback',
+      'http://localhost:5050/schema-platform/sso/callback',
+      `${PROD_ORIGIN}/schema-platform/sso/callback`,
+    ],
     type: 'public' as const,
   },
   {
@@ -40,16 +46,7 @@ const DEFAULT_CLIENTS = [
     ],
     type: 'public' as const,
   },
-  {
-    clientId: 'admin',
-    name: '系统管理',
-    redirectUris: [
-      'http://localhost:5400/auth/callback',
-      'http://localhost:5400/schema-platform/admin/auth/callback',
-      `${PROD_ORIGIN}/schema-platform/admin/auth/callback`,
-    ],
-    type: 'public' as const,
-  },
+  // admin SSO client 待新 admin 壳应用完成后重新配置
 ]
 
 /**

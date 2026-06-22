@@ -25,6 +25,9 @@ interface MenuTreeNode {
   status: string
   component: string
   parentId: string | null
+  routeType: string
+  schemaId: string | null
+  url: string
   children: MenuTreeNode[]
   [key: string]: unknown
 }
@@ -188,6 +191,9 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     component: string
     microAppId: string | null
     target: '_self' | '_blank'
+    routeType: 'schema' | 'micro-app' | 'link'
+    schemaId: string | null
+    url: string
   }
 
   // Validate parentId exists if not null
@@ -218,6 +224,9 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     component: body.component,
     microAppId: body.microAppId ?? null,
     target: body.target ?? '_self',
+    routeType: body.routeType ?? 'micro-app',
+    schemaId: body.schemaId ?? null,
+    url: body.url ?? '',
   })
 
   ctx.status = 201
@@ -291,6 +300,9 @@ router.put('/:id', requireAuth, requirePermission('menu:edit'), validate(updateM
   if (body.component !== undefined) update.component = body.component
   if (body.microAppId !== undefined) update.microAppId = body.microAppId
   if (body.target !== undefined) update.target = body.target
+  if (body.routeType !== undefined) update.routeType = body.routeType
+  if (body.schemaId !== undefined) update.schemaId = body.schemaId
+  if (body.url !== undefined) update.url = body.url
 
   const menu = await MenuModel.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true })
 

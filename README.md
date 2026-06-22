@@ -7,9 +7,10 @@ Schema 驱动的可视化表单设计器与流程编排平台。
 ```
 packages/
 ├── shell/         # 微前端宿主（qiankun）
-├── editor/        # 可视化表单设计器（49 个 Widget）
+├── editor/        # 可视化表单设计器（49 个 Widget）+ Schema 渲染器
 ├── flow/          # BPMN 流程设计器
 ├── ai/            # AI 对话式生成
+├── admin/         # 系统管理壳（微前端宿主）
 ├── server/        # Koa.js 后端 + MongoDB
 └── shared/        # 共享包（组件/样式/工具/配置）
 ```
@@ -29,6 +30,7 @@ pnpm dev           # 启动所有服务
 | Editor | http://localhost:5100 | 表单设计器 |
 | Flow | http://localhost:5200 | 流程设计器 |
 | AI | http://localhost:5300 | AI 助手 |
+| Admin | http://localhost:5555 | 系统管理 |
 | API | http://localhost:3001 | 后端接口 |
 
 ## 常用命令

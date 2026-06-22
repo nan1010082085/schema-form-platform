@@ -8,7 +8,9 @@
     "./css-variables": "./_css-variables.scss",
     "./css-variables.scss": "./_css-variables.scss",
     "./theme": "./_theme.scss",
-    "./theme.scss": "./_theme.scss"
+    "./theme.scss": "./_theme.scss",
+    "./tokens.css": "./tokens.css",
+    "./design-tokens.css": "./design-tokens.css"
   },
   "dependencies": {
     "element-plus": "^2.9.0"

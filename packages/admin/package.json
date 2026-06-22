@@ -5,34 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "build": "ADMIN_BASE_URL=/schema-platform/admin/ vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.1",
-    "@iconify-icons/ep": "^1.2.12",
-    "@iconify/vue": "^5.0.1",
+    "@schema-form/editor-web": "workspace:*",
     "@schema-form/shared-components": "workspace:*",
     "@schema-form/shared-qiankun": "workspace:*",
+    "@schema-form/shared-stores": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
     "@schema-form/shared-utils": "workspace:*",
     "element-plus": "^2.9.7",
     "pinia": "^2.3.0",
+    "qiankun": "^2.10.16",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@schema-form/shared-config": "workspace:*",
     "@vitejs/plugin-vue": "^5.2.3",
-    "@vue/test-utils": "^2.4.10",
-    "jsdom": "^26.1.0",
     "typescript": "~5.7.3",
     "vite": "^6.3.2",
-    "vite-plugin-qiankun": "^1.0.15",
-    "vitest": "^4.1.8",
     "vue-tsc": "^2.2.8"
   }
 }
