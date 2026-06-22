@@ -94,8 +94,16 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-// 默认折叠（错误类型默认展开，便于用户立即看到错误信息）
-const collapsed = ref(props.type !== 'tool_error')
+// 默认展开逻辑：
+// - thinking: 运行中展开，完成后折叠
+// - tool_error: 始终展开（便于用户看到错误）
+// - tool_call: 运行中展开，完成后折叠
+// - 其他: 折叠
+const collapsed = computed(() => {
+  if (props.type === 'tool_error') return false
+  if (props.status === 'running') return false
+  return true
+})
 const jsonCollapsed = ref(false)
 
 const hasHeader = computed(() =>
@@ -237,7 +245,9 @@ const highlightedJson = computed(() => {
           <span>{{ statusLabel }}</span>
         </div>
         <!-- Thinking badge -->
-        <span v-if="type === 'thinking' && !isRunning" :class="$style.badgeThinking">思考完成</span>
+        <span v-if="type === 'thinking'" :class="$style.badgeThinking">
+          {{ isRunning ? '思考中...' : '已完成' }}
+        </span>
         <!-- Collapse toggle -->
         <div :class="[$style.toggle, { [$style.toggleExpanded]: !collapsed }]">
           <AppIcon name="arrow-down" :size="12" />

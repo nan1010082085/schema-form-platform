@@ -328,7 +328,7 @@ export interface Conversation {
 // ---- Step Card ----
 
 /** 步骤类型 */
-export type StepType = 'thinking' | 'tool_call' | 'tool_error' | 'result' | 'text' | 'code'
+export type StepType = 'thinking' | 'tool_call' | 'tool_error' | 'result' | 'text' | 'code' | 'requirement_confirm'
 
 /** 步骤状态 */
 export type StepStatus = 'pending' | 'running' | 'done' | 'error'
@@ -362,6 +362,32 @@ export interface StepData {
   timestamp?: Date
   /** 智能体类型 */
   agent?: 'editor' | 'flow' | 'page' | 'auto' | 'general'
+  /** 需求分析结果（requirement_confirm 类型） */
+  requirementAnalysis?: RequirementAnalysis
+}
+
+// ---- Requirement Analysis ----
+
+/** 需求分析结果 */
+export interface RequirementAnalysis {
+  intent: 'create' | 'modify' | 'query' | 'help'
+  type: 'form' | 'flow' | 'page' | 'mixed' | 'general'
+  complexity: 'simple' | 'medium' | 'complex'
+  completeness: {
+    score: number
+    missing: string[]
+    assumptions: string[]
+  }
+  confirmQuestions: Array<{
+    id: string
+    question: string
+    options?: string[]
+    required: boolean
+  }>
+  suggestedChain: Array<{
+    agent: string
+    description: string
+  }>
 }
 
 // ---- RAG ----

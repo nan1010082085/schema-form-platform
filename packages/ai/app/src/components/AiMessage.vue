@@ -7,6 +7,7 @@ import SchemaCard from './SchemaCard.vue'
 import SchemaPreviewCard from './SchemaPreviewCard.vue'
 import FlowCard from './FlowCard.vue'
 import FlowPreviewCard from './FlowPreviewCard.vue'
+import RequirementConfirmCard from './RequirementConfirmCard.vue'
 import type { SchemaField } from './SchemaCard.vue'
 import type { FlowNode } from './FlowCard.vue'
 import type { StepData, Widget, FlowGraph } from '@/types'
@@ -67,6 +68,8 @@ const emit = defineEmits<{
   'card-secondary-action': [cardIndex: number]
   'open-json-drawer': []
   'retry-tool': [toolIndex: number]
+  'requirement-confirm': [answers: Record<string, string>]
+  'requirement-skip': []
   copy: []
   regenerate: []
   feedback: [type: 'positive' | 'negative']
@@ -319,6 +322,22 @@ const steps = computed<StepData[]>(() => {
       const hasResult = tc.result !== undefined
       const status = hasError ? 'error' : hasResult ? 'done' : 'running'
 
+      // 需求确认卡片
+      if (tc.name === 'requirement_confirm' && tc.result) {
+        const resultData = tc.result as Record<string, unknown>
+        if (resultData.analysis) {
+          result.push({
+            type: 'requirement_confirm',
+            title: '需求分析',
+            status: 'done',
+            requirementAnalysis: resultData.analysis as import('@/types').RequirementAnalysis,
+            timestamp: now,
+            agent: props.agent,
+          })
+          continue
+        }
+      }
+
       result.push({
         type: hasError ? 'tool_error' : 'tool_call',
         title: formatToolName(tc.name),
@@ -429,6 +448,15 @@ const steps = computed<StepData[]>(() => {
                 <pre :class="$style.codeContent"><code>{{ formatJson(step.content) }}</code></pre>
               </div>
             </div>
+
+            <!-- Requirement Confirm: 需求确认卡片 -->
+            <RequirementConfirmCard
+              v-else-if="step.type === 'requirement_confirm' && step.requirementAnalysis"
+              :analysis="step.requirementAnalysis"
+              :waiting-confirmation="step.requirementAnalysis.confirmQuestions.length > 0"
+              @confirm="(answers) => emit('requirement-confirm', answers)"
+              @skip="emit('requirement-skip')"
+            />
 
             <!-- Thinking/Tool/Result: 用卡片包裹 -->
             <AiStepCard

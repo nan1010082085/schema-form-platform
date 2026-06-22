@@ -361,6 +361,8 @@ function handleHostData(data: Record<string, unknown>) {
         @card-primary-action="handleCardAction('primary')"
         @card-secondary-action="handleCardAction('secondary')"
         @retry-tool="(tci) => store.retryToolCall(idx, tci)"
+        @requirement-confirm="(answers) => store.confirmRequirement(answers)"
+        @requirement-skip="store.skipRequirement()"
       />
     </div>
 

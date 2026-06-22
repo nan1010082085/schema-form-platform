@@ -290,36 +290,54 @@ export const useAiStore = defineStore('ai', () => {
       case 'requirement_analysis_complete': {
         const analysis = event.analysis
         if (analysis) {
-          const complexityLabel = analysis.complexity === 'complex' ? '复杂' :
-            analysis.complexity === 'medium' ? '中等' : '简单'
-          const completenessLabel = analysis.completeness.score >= 80 ? '完整' : '需要补充'
+          // 如果需要确认，添加需求确认卡片
+          if (event.needsConfirmation && analysis.confirmQuestions.length > 0) {
+            const newToolCalls = [...(msg.toolCalls ?? [])]
+            newToolCalls.push({
+              name: 'requirement_confirm',
+              arguments: {},
+              result: {
+                analysis: analysis,
+                waitingConfirmation: true,
+              },
+            })
 
-          updateMessage({
-            thinking: (msg.thinking ?? '')
-              + `\n\n📊 需求分析完成`
-              + `\n- 意图：${analysis.intent}`
-              + `\n- 类型：${analysis.type}`
-              + `\n- 复杂度：${complexityLabel}`
-              + `\n- 完整性：${analysis.completeness.score}% (${completenessLabel})`
-              + (analysis.completeness.missing.length > 0
-                ? `\n- 缺失信息：${analysis.completeness.missing.join(', ')}`
-                : ''),
-          })
+            updateMessage({
+              thinking: (msg.thinking ?? '') + '\n\n📊 需求分析完成',
+              toolCalls: newToolCalls,
+            })
+          } else {
+            // 不需要确认，直接显示分析结果
+            const complexityLabel = analysis.complexity === 'complex' ? '复杂' :
+              analysis.complexity === 'medium' ? '中等' : '简单'
+
+            updateMessage({
+              thinking: (msg.thinking ?? '')
+                + `\n\n📊 需求分析完成`
+                + `\n- 意图：${analysis.intent}`
+                + `\n- 类型：${analysis.type}`
+                + `\n- 复杂度：${complexityLabel}`
+                + `\n- 完整性：${analysis.completeness.score}%`,
+            })
+          }
         }
         break
       }
 
-      case 'requirement_confirm_request': {
-        // 显示确认请求
-        const questions = event.questions || []
-        if (questions.length > 0) {
-          const questionsText = questions
-            .map((q, i) => `${i + 1}. ${q.question}${q.options ? ` (${q.options.join('/')})` : ''}`)
-            .join('\n')
-
-          updateMessage({
-            content: (msg.content ?? '') + `\n\n❓ 需要确认以下信息：\n${questionsText}`,
-          })
+      case 'requirement_confirm_response': {
+        // 用户确认了需求，更新消息状态
+        const newToolCalls = [...(msg.toolCalls ?? [])]
+        const confirmIndex = newToolCalls.findIndex(tc => tc.name === 'requirement_confirm')
+        if (confirmIndex >= 0) {
+          newToolCalls[confirmIndex] = {
+            ...newToolCalls[confirmIndex],
+            result: {
+              ...newToolCalls[confirmIndex].result as Record<string, unknown>,
+              waitingConfirmation: false,
+              userAnswers: event.answers,
+            },
+          }
+          updateMessage({ toolCalls: newToolCalls })
         }
         break
       }
@@ -595,6 +613,101 @@ export const useAiStore = defineStore('ai', () => {
     context.value = { ...context.value, ...ctx }
   }
 
+  // ---- 需求确认 ----
+
+  async function confirmRequirement(answers: Record<string, string>): Promise<void> {
+    // 更新消息中的需求确认状态
+    const lastAssistantIdx = conversationStore.messages.findLastIndex(m => m.role === 'assistant')
+    if (lastAssistantIdx < 0) return
+
+    const msg = conversationStore.messages[lastAssistantIdx]
+    if (!msg.toolCalls) return
+
+    const confirmIndex = msg.toolCalls.findIndex(tc => tc.name === 'requirement_confirm')
+    if (confirmIndex < 0) return
+
+    // 更新 toolCalls 中的确认状态
+    const newToolCalls = [...msg.toolCalls]
+    newToolCalls[confirmIndex] = {
+      ...newToolCalls[confirmIndex],
+      result: {
+        ...newToolCalls[confirmIndex].result as Record<string, unknown>,
+        waitingConfirmation: false,
+        userAnswers: answers,
+      },
+    }
+    msg.toolCalls = newToolCalls
+    triggerRef(conversationStore.messages)
+
+    // 发送确认响应到服务器
+    // 通过 WebSocket 发送 requirement_confirm_response 事件
+    const { emitChatSend } = await import('@schema-form/socket')
+    emitChatSend({
+      conversationId: conversationStore.currentConversationId ?? undefined,
+      message: JSON.stringify({ type: 'requirement_confirm_response', answers }),
+      context: {
+        ...context.value,
+        preferences: {
+          ...context.value.preferences,
+          replyLanguage: chatSettingsStore.chatSettings.preferences.replyLanguage,
+          replyStyle: chatSettingsStore.chatSettings.preferences.replyStyle,
+          codeComment: chatSettingsStore.chatSettings.preferences.codeComment,
+        },
+        historySummary: chatSettingsStore.chatSettings.historySummary.mode === 'manual'
+          ? chatSettingsStore.chatSettings.historySummary.manualSummary
+          : context.value.historySummary,
+        currentSchema: schemaStore.currentSchema ?? undefined,
+        currentFlow: schemaStore.currentFlow ?? undefined,
+      },
+    })
+  }
+
+  async function skipRequirement(): Promise<void> {
+    // 跳过需求确认，直接执行
+    const lastAssistantIdx = conversationStore.messages.findLastIndex(m => m.role === 'assistant')
+    if (lastAssistantIdx < 0) return
+
+    const msg = conversationStore.messages[lastAssistantIdx]
+    if (!msg.toolCalls) return
+
+    const confirmIndex = msg.toolCalls.findIndex(tc => tc.name === 'requirement_confirm')
+    if (confirmIndex < 0) return
+
+    // 更新 toolCalls 中的确认状态
+    const newToolCalls = [...msg.toolCalls]
+    newToolCalls[confirmIndex] = {
+      ...newToolCalls[confirmIndex],
+      result: {
+        ...newToolCalls[confirmIndex].result as Record<string, unknown>,
+        waitingConfirmation: false,
+        skipped: true,
+      },
+    }
+    msg.toolCalls = newToolCalls
+    triggerRef(conversationStore.messages)
+
+    // 发送跳过确认到服务器
+    const { emitChatSend } = await import('@schema-form/socket')
+    emitChatSend({
+      conversationId: conversationStore.currentConversationId ?? undefined,
+      message: JSON.stringify({ type: 'requirement_confirm_response', skipped: true }),
+      context: {
+        ...context.value,
+        preferences: {
+          ...context.value.preferences,
+          replyLanguage: chatSettingsStore.chatSettings.preferences.replyLanguage,
+          replyStyle: chatSettingsStore.chatSettings.preferences.replyStyle,
+          codeComment: chatSettingsStore.chatSettings.preferences.codeComment,
+        },
+        historySummary: chatSettingsStore.chatSettings.historySummary.mode === 'manual'
+          ? chatSettingsStore.chatSettings.historySummary.manualSummary
+          : context.value.historySummary,
+        currentSchema: schemaStore.currentSchema ?? undefined,
+        currentFlow: schemaStore.currentFlow ?? undefined,
+      },
+    })
+  }
+
   // ---- 搜索 ----
 
   async function searchConversationsAction(
@@ -747,5 +860,7 @@ export const useAiStore = defineStore('ai', () => {
     respondInterrupt,
     submitFeedback,
     regenerateMessage,
+    confirmRequirement,
+    skipRequirement,
   }
 })
