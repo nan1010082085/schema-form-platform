@@ -1,13 +1,13 @@
 {
   "version": "2026-06-22",
-  "generatedAt": "2026-06-22T00:51:28.518Z",
+  "generatedAt": "2026-06-22T08:34:06.718Z",
   "widgets": [
     {
       "type": "dialog",
       "group": "container",
       "canHaveChildren": true,
       "displayName": "弹窗容器",
-      "description": "弹窗容器，支持编辑模式和微前端模式，可配置标题、宽度、按钮",
+      "description": "弹窗容器，支持编辑模式和微应用模式，可配置标题、宽度、按钮",
       "defaultProps": {
         "title": "弹窗标题",
         "width": "600px",
@@ -15,7 +15,6 @@
         "cancelText": "取消",
         "destroyOnClose": true,
         "contentMode": "edit",
-        "microappMode": "iframe",
         "showFooter": true,
         "closeOnClickModal": false,
         "draggable": true,
@@ -645,12 +644,16 @@
       "group": "form",
       "canHaveChildren": false,
       "displayName": "微应用容器",
-      "description": "嵌入微应用（iframe 或 qiankun 模式），支持 URL 模板变量",
+      "description": "通过 qiankun loadMicroApp 动态加载子应用，支持沙箱隔离、参数传递、超时兜底",
       "defaultProps": {
-        "microappMode": "iframe",
-        "microappUrl": "",
-        "microappBaseUrl": "",
-        "microappApp": "",
+        "microappName": "",
+        "microappEntry": "",
+        "microappSandbox": true,
+        "microappStyleIsolation": "experimental",
+        "microappTimeout": 10000,
+        "microappFallback": "子应用加载失败",
+        "microappRouteBase": "",
+        "microappRoute": "",
         "height": "100%",
         "variables": {}
       },
@@ -671,6 +674,10 @@
         {
           "name": "ready",
           "description": "微应用加载完成"
+        },
+        {
+          "name": "error",
+          "description": "微应用加载失败"
         }
       ],
       "eventTargets": [],
