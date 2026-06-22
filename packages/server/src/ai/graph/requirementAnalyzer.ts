@@ -287,34 +287,48 @@ export async function requirementAnalyzerNode(
       })
 
       // 执行工具调用
-      const toolMessages: ToolMessage[] = []
+      const toolResults: Array<{ toolCallId: string; name: string; content: string }> = []
       for (const toolCall of firstResponse.tool_calls) {
         try {
           const tool = allTools.find(t => t.name === toolCall.name)
           if (tool) {
-            const result = await tool.invoke(toolCall.args)
-            toolMessages.push(new ToolMessage({
-              content: typeof result === 'string' ? result : JSON.stringify(result),
-              tool_call_id: toolCall.id!,
+            // 使用类型断言处理工具调用
+            const toolFn = tool as unknown as { invoke: (args: Record<string, unknown>) => Promise<string> }
+            const result = await toolFn.invoke(toolCall.args as Record<string, unknown>)
+            toolResults.push({
+              toolCallId: toolCall.id!,
               name: toolCall.name,
-            }))
+              content: typeof result === 'string' ? result : JSON.stringify(result),
+            })
           }
         } catch (err) {
           logger.error({ msg: `[requirementAnalyzer] Tool call failed: ${toolCall.name}`, error: err })
-          toolMessages.push(new ToolMessage({
-            content: JSON.stringify({ error: `工具调用失败: ${err}` }),
-            tool_call_id: toolCall.id!,
+          toolResults.push({
+            toolCallId: toolCall.id!,
             name: toolCall.name,
-          }))
+            content: JSON.stringify({ error: `工具调用失败: ${err}` }),
+          })
         }
       }
 
       // 将工具结果添加到消息中，让 LLM 继续分析
-      messages.push(firstResponse)
-      messages.push(...toolMessages)
+      const toolMessages = toolResults.map(r =>
+        new ToolMessage({
+          content: r.content,
+          tool_call_id: r.toolCallId,
+          name: r.name,
+        })
+      )
+
+      // 构建包含工具结果的消息数组
+      const messagesWithTools = [
+        new SystemMessage(REQUIREMENT_ANALYZER_PROMPT),
+        new HumanMessage(contextInfo),
+        ...toolMessages,
+      ]
 
       // 第二步：让 LLM 基于工具结果进行分析
-      const secondResponse = await model.invoke(messages)
+      const secondResponse = await model.invoke(messagesWithTools)
       const raw = typeof secondResponse.content === 'string' ? secondResponse.content : ''
 
       const analysis = parseAnalysisResponse(raw)
