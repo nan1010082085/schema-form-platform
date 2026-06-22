@@ -25,5 +25,4 @@ pnpm --filter @schema-form/editor-web test  # 运行测试
 - [属性面板](./property-panel.md) — 右侧属性配置面板机制
 - [Store 设计](./store-design.md) — 7 个 Pinia Store 的职责
 - [微前端集成](./qiankun-integration.md) — qiankun 子应用集成方式
-- [渲染器微应用](./renderer-microapp-design.md) — 独立渲染器设计、四层架构、子应用加载
 - [Schema 校验与测试](./schema-validation-testing.md) — 自动化校验体系、测试套件
