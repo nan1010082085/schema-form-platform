@@ -270,6 +270,18 @@ async function runChatStream(
         // ── Node execution start ──
         case 'on_chain_start': {
           const nodeName = event.name as string
+
+          // v2 节点事件
+          if (nodeName === 'requirementAnalyzer') {
+            sendEvent({ type: 'requirement_analysis_start' })
+            break
+          }
+          if (nodeName === 'taskPlanner') {
+            sendEvent({ type: 'task_plan_start' })
+            break
+          }
+
+          // 原有节点事件
           if (['editor', 'flow', 'page', 'general', 'summarizer'].includes(nodeName)) {
             currentAgent = nodeName === 'summarizer' ? 'general' : nodeName as typeof currentAgent
             sendEvent({ type: 'agent_switch', agent: currentAgent })
@@ -281,6 +293,33 @@ async function runChatStream(
         case 'on_chain_end': {
           const nodeName = event.name as string
 
+          // v2 节点完成事件
+          if (nodeName === 'requirementAnalyzer') {
+            const output = event.data?.output as Record<string, unknown> | undefined
+            const requirement = output?.requirement as Record<string, unknown> | undefined
+            if (requirement?.analysis) {
+              sendEvent({
+                type: 'requirement_analysis_complete',
+                analysis: requirement.analysis,
+                needsConfirmation: requirement.needsConfirmation,
+              })
+            }
+            break
+          }
+
+          if (nodeName === 'taskPlanner') {
+            const output = event.data?.output as Record<string, unknown> | undefined
+            const taskPlan = output?.taskPlan as Record<string, unknown> | undefined
+            if (taskPlan?.plan) {
+              sendEvent({
+                type: 'task_plan_complete',
+                plan: taskPlan.plan,
+              })
+            }
+            break
+          }
+
+          // 原有节点完成事件
           if (nodeName === 'router') {
             const output = event.data?.output as Record<string, unknown> | undefined
             const taskGroup = output?.task as Record<string, unknown> | undefined

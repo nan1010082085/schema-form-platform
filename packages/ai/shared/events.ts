@@ -39,6 +39,20 @@ export type AgentEventType =
   // 状态
   | 'done'
   | 'error'
+  // v2: 需求分析
+  | 'requirement_analysis_start'
+  | 'requirement_analysis_complete'
+  | 'requirement_confirm_request'
+  | 'requirement_confirm_response'
+  // v2: 任务规划
+  | 'task_plan_start'
+  | 'task_plan_complete'
+  // v2: 思考推理
+  | 'thinker_start'
+  | 'thinker_complete'
+  // v2: 质量检查
+  | 'quality_check_start'
+  | 'quality_check_complete'
 
 // ────────────────────────────────────────────
 // Agent 类型
@@ -241,6 +255,155 @@ export interface ErrorEvent extends AgentEvent {
 }
 
 // ────────────────────────────────────────────
+// v2: 需求分析事件
+// ────────────────────────────────────────────
+
+export interface RequirementAnalysisStartEvent extends AgentEvent {
+  type: 'requirement_analysis_start'
+}
+
+export interface RequirementAnalysisCompleteEvent extends AgentEvent {
+  type: 'requirement_analysis_complete'
+  analysis: {
+    intent: 'create' | 'modify' | 'query' | 'help'
+    type: 'form' | 'flow' | 'page' | 'mixed' | 'general'
+    complexity: 'simple' | 'medium' | 'complex'
+    entities: Record<string, unknown>
+    completeness: {
+      score: number
+      missing: string[]
+      assumptions: string[]
+    }
+    confirmQuestions: Array<{
+      id: string
+      question: string
+      options?: string[]
+      required: boolean
+    }>
+    suggestedChain: Array<{
+      agent: 'editor' | 'flow' | 'page'
+      description: string
+      priority: number
+      dependencies: string[]
+    }>
+  }
+  needsConfirmation: boolean
+}
+
+export interface RequirementConfirmRequestEvent extends AgentEvent {
+  type: 'requirement_confirm_request'
+  analysis: RequirementAnalysisCompleteEvent['analysis']
+  questions: Array<{
+    id: string
+    question: string
+    options?: string[]
+    required: boolean
+  }>
+  preview: {
+    summary: string
+    estimatedSteps: number
+    estimatedTime: string
+  }
+}
+
+export interface RequirementConfirmResponseEvent extends AgentEvent {
+  type: 'requirement_confirm_response'
+  confirmed: boolean
+  answers: Record<string, string>
+}
+
+// ────────────────────────────────────────────
+// v2: 任务规划事件
+// ────────────────────────────────────────────
+
+export interface TaskPlanStartEvent extends AgentEvent {
+  type: 'task_plan_start'
+}
+
+export interface TaskPlanCompleteEvent extends AgentEvent {
+  type: 'task_plan_complete'
+  plan: {
+    chain: Array<{
+      id: string
+      agent: 'editor' | 'flow' | 'page'
+      description: string
+      dependencies: string[]
+      priority: number
+    }>
+    strategy: {
+      mode: 'sequential' | 'parallel' | 'mixed'
+      retryPolicy: 'none' | 'simple' | 'exponential'
+      timeout: number
+    }
+  }
+}
+
+// ────────────────────────────────────────────
+// v2: 思考推理事件
+// ────────────────────────────────────────────
+
+export interface ThinkerStartEvent extends AgentEvent {
+  type: 'thinker_start'
+}
+
+export interface ThinkerCompleteEvent extends AgentEvent {
+  type: 'thinker_complete'
+  adjustments: {
+    skipSteps?: string[]
+    addSteps?: Array<{
+      id: string
+      agent: 'editor' | 'flow' | 'page'
+      description: string
+    }>
+    reorderSteps?: string[]
+  }
+  risks: Array<{
+    type: 'complexity' | 'ambiguity' | 'dependency'
+    description: string
+    mitigation: string
+  }>
+  suggestions: Array<{
+    type: 'optimize' | 'simplify' | 'split'
+    description: string
+    impact: 'low' | 'medium' | 'high'
+  }>
+}
+
+// ────────────────────────────────────────────
+// v2: 质量检查事件
+// ────────────────────────────────────────────
+
+export interface QualityCheckStartEvent extends AgentEvent {
+  type: 'quality_check_start'
+}
+
+export interface QualityCheckCompleteEvent extends AgentEvent {
+  type: 'quality_check_complete'
+  result: {
+    structure: {
+      valid: boolean
+      errors: string[]
+      warnings: string[]
+    }
+    completeness: {
+      score: number
+      missing: string[]
+    }
+    consistency: {
+      score: number
+      conflicts: string[]
+    }
+    suggestions: Array<{
+      type: 'fix' | 'improve' | 'add'
+      description: string
+      priority: 'low' | 'medium' | 'high'
+    }>
+    needsRetry: boolean
+    retryReason?: string
+  }
+}
+
+// ────────────────────────────────────────────
 // 联合类型
 // ────────────────────────────────────────────
 
@@ -267,6 +430,17 @@ export type SSEEvent =
   | ResumeEvent
   | DoneEvent
   | ErrorEvent
+  // v2 事件
+  | RequirementAnalysisStartEvent
+  | RequirementAnalysisCompleteEvent
+  | RequirementConfirmRequestEvent
+  | RequirementConfirmResponseEvent
+  | TaskPlanStartEvent
+  | TaskPlanCompleteEvent
+  | ThinkerStartEvent
+  | ThinkerCompleteEvent
+  | QualityCheckStartEvent
+  | QualityCheckCompleteEvent
 
 // ────────────────────────────────────────────
 // 兼容旧类型（过渡期）

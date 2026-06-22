@@ -111,6 +111,115 @@ export interface CollaborationRequest {
 }
 
 // ────────────────────────────────────────────
+// v2: Requirement Analysis types
+// ────────────────────────────────────────────
+
+export interface RequirementEntity {
+  name: string
+  purpose?: string
+  fields?: Array<{ name: string; type: string; required: boolean }>
+  nodes?: Array<{ type: string; name: string; assignee?: string }>
+  conditions?: Array<{ from: string; to: string; condition: string }>
+  type?: 'list' | 'detail' | 'dashboard'
+  components?: string[]
+}
+
+export interface RequirementAnalysis {
+  intent: 'create' | 'modify' | 'query' | 'help'
+  type: 'form' | 'flow' | 'page' | 'mixed' | 'general'
+  complexity: 'simple' | 'medium' | 'complex'
+  entities: {
+    forms?: RequirementEntity[]
+    flows?: RequirementEntity[]
+    pages?: RequirementEntity[]
+  }
+  completeness: {
+    score: number
+    missing: string[]
+    assumptions: string[]
+  }
+  confirmQuestions: Array<{
+    id: string
+    question: string
+    options?: string[]
+    required: boolean
+  }>
+  suggestedChain: Array<{
+    agent: 'editor' | 'flow' | 'page'
+    description: string
+    priority: number
+    dependencies: string[]
+  }>
+}
+
+export interface TaskPlanStep {
+  id: string
+  agent: 'editor' | 'flow' | 'page'
+  description: string
+  inputs: Record<string, unknown>
+  outputs: Record<string, unknown>
+  dependencies: string[]
+  priority: number
+  status: 'pending' | 'running' | 'done' | 'error'
+}
+
+export interface TaskPlan {
+  chain: TaskPlanStep[]
+  strategy: {
+    mode: 'sequential' | 'parallel' | 'mixed'
+    retryPolicy: 'none' | 'simple' | 'exponential'
+    timeout: number
+  }
+  contextFlow: Array<{
+    from: string
+    to: string
+    data: string[]
+  }>
+}
+
+export interface ThinkerOutput {
+  adjustments: {
+    skipSteps?: string[]
+    addSteps?: TaskPlanStep[]
+    reorderSteps?: string[]
+    changeAgent?: { stepId: string; newAgent: string }
+  }
+  risks: Array<{
+    type: 'complexity' | 'ambiguity' | 'dependency'
+    description: string
+    mitigation: string
+  }>
+  suggestions: Array<{
+    type: 'optimize' | 'simplify' | 'split'
+    description: string
+    impact: 'low' | 'medium' | 'high'
+  }>
+}
+
+export interface QualityCheckResult {
+  structure: {
+    valid: boolean
+    errors: string[]
+    warnings: string[]
+  }
+  completeness: {
+    score: number
+    missing: string[]
+  }
+  consistency: {
+    score: number
+    conflicts: string[]
+  }
+  suggestions: Array<{
+    type: 'fix' | 'improve' | 'add'
+    description: string
+    priority: 'low' | 'medium' | 'high'
+  }>
+  needsRetry: boolean
+  retryReason?: string
+}
+
+// ────────────────────────────────────────────
 // LangGraph State Annotation (nested structure)
 // ────────────────────────────────────────────
 
@@ -187,6 +296,70 @@ export const AgentStateAnnotation = Annotation.Root({
       historySummary: '',
       collaborationRequest: null,
       collaborationHistory: [],
+    }),
+  }),
+
+  // ── Group 6: Requirement Analysis (v2) ──
+  requirement: Annotation<{
+    analysis: RequirementAnalysis | null
+    userConfirmations: Record<string, string>
+    needsConfirmation: boolean
+    status: 'pending' | 'analyzed' | 'confirmed' | 'rejected'
+  }>({
+    reducer: (_, next) => next,
+    default: () => ({
+      analysis: null,
+      userConfirmations: {},
+      needsConfirmation: false,
+      status: 'pending' as const,
+    }),
+  }),
+
+  // ── Group 7: Task Plan (v2) ──
+  taskPlan: Annotation<{
+    plan: TaskPlan | null
+    currentStepId: string | null
+    executionLog: Array<{
+      stepId: string
+      startTime: Date
+      endTime?: Date
+      status: 'running' | 'done' | 'error'
+      result?: unknown
+    }>
+  }>({
+    reducer: (_, next) => next,
+    default: () => ({
+      plan: null,
+      currentStepId: null,
+      executionLog: [],
+    }),
+  }),
+
+  // ── Group 8: Thinking (v2) ──
+  thinking: Annotation<{
+    lastThinkTime: Date | null
+    adjustments: ThinkerOutput['adjustments']
+    risks: ThinkerOutput['risks']
+  }>({
+    reducer: (_, next) => next,
+    default: () => ({
+      lastThinkTime: null,
+      adjustments: {},
+      risks: [],
+    }),
+  }),
+
+  // ── Group 9: Quality Check (v2) ──
+  quality: Annotation<{
+    lastCheckTime: Date | null
+    result: QualityCheckResult | null
+    retryCount: number
+  }>({
+    reducer: (_, next) => next,
+    default: () => ({
+      lastCheckTime: null,
+      result: null,
+      retryCount: 0,
     }),
   }),
 })

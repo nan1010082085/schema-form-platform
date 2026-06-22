@@ -1,10 +1,35 @@
-# AI 架构文档 v1
+# AI 架构文档
 
 > packages/ai 项目的 Agent、MCP、Tool 架构说明
->
-> **注意**：v2 架构已设计完成，详见 [architecture-v2.md](./architecture-v2.md)
+
+**文档版本**：
+- v1 (2026-06-22) — 基础架构：Agent、Tool、MCP、事件协议
+- v2 (2026-06-22) — 新增需求分析、任务规划、思考推理、质量检查
+
+---
 
 ## 一、整体架构
+
+### 1.1 架构演进
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        v1 架构（基础）                          │
+├─────────────────────────────────────────────────────────────────┤
+│  START ──► router ──► agent ──► allTools ──► afterTools ──► END │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        v2 架构（增强）                          │
+├─────────────────────────────────────────────────────────────────┤
+│  START ──► router ──► analyzer ──► confirm ──► planner ──►     │
+│            thinker ──► taskChain ──► agent ──► tools ──►        │
+│            qualityCheck ──► summarizer ──► END                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 1.2 分层架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -19,8 +44,10 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      LangGraph 层                               │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
-│  │  Router  │  │  Editor  │  │   Flow   │  │  Page    │       │
-│  │  Agent   │  │  Agent   │  │  Agent   │  │  Agent   │       │
+│  │  Router  │  │ Analyzer │  │ Planner  │  │ Thinker  │       │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │  Editor  │  │   Flow   │  │   Page   │  │ General  │       │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -45,7 +72,7 @@
 
 ---
 
-## 二、Agent（智能体）
+## 二、v1 架构（基础）
 
 ### 2.1 Agent 类型
 
@@ -57,70 +84,382 @@
 | **Page** | 生成页面布局 | `@schema-form/ai-shared/promptBuilder` |
 | **General** | 通用问答，不涉及具体业务 | 固定 prompt |
 
-### 2.2 Agent 执行流程
+### 2.2 v1 Graph 结构
 
 ```
-用户消息
-    │
-    ▼
-┌─────────┐
-│ Router  │ ── 分析意图，选择 Agent
-└─────────┘
-    │
-    ▼
-┌─────────┐
-│ Agent   │ ── 调用 LLM 生成响应
-└─────────┘
-    │
-    ├── 无工具调用 ──► 返回文本响应
-    │
-    └── 有工具调用 ──► 执行工具 ──► 将结果反馈给 LLM ──► 继续生成
+START ──► router ──┬──► editor/flow/page ──► allTools ──┐
+                   │                                    │
+                   ├──► taskChain ──► agent ──► allTools ┤
+                   │                                    │
+                   └──► general ──► END                  │
+                                                        ▼
+                                     afterTools ──► router
+                                          │
+                                          ▼
+                                     summarizer ──► END
 ```
 
-### 2.3 Agent 基类 (SDK)
+### 2.3 循环层级
 
-`packages/ai/sdk/src/agent.ts` 提供了 `BaseAgent` 基类：
+| 循环 | 路径 | 作用 |
+|------|------|------|
+| **工具调用循环** | `agent → allTools → afterTools → router → agent` | Agent 调用工具后继续生成 |
+| **任务链循环** | `taskChain → agent → allTools → afterTools → taskChain` | 多步骤任务依次执行 |
+| **协作循环** | `afterTools → taskChain` (协作请求) | Agent 间协作 |
 
-```typescript
-abstract class BaseAgent {
-  // 核心能力
-  - LLM 调用（DeepSeek / OpenAI / 自定义）
-  - 工具注册与执行
-  - 多轮工具调用循环（最多 10 轮）
-  - 流式响应（AsyncGenerator）
-  - 消息历史管理（最多 20 条）
+### 2.4 v1 问题分析
 
-  // 公共 API
-  execute(userMessage, context, history?): Promise<AgentResult>
-  executeStream(userMessage, context, history?): AsyncGenerator<StreamEvent>
-  getTools(): Array<{ name, description }>
-}
+| 问题 | 表现 | 影响 |
+|------|------|------|
+| **Router 只做路由** | 关键词匹配 + 简单 LLM 分析 | 无法理解复杂需求 |
+| **缺少需求分析** | 用户说"创建审批流程"直接开始生成 | 生成结果不符合预期 |
+| **任务链是静态的** | Router 阶段确定，无法动态调整 | 复杂任务拆解不准确 |
+| **缺少确认环节** | 直接执行，无用户确认 | 错误累积，需要重新对话 |
+| **无思考推理** | 跳过分析直接执行 | 无法评估任务复杂度 |
+
+---
+
+## 三、v2 架构（增强）
+
+### 3.1 核心理念
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        v2 架构理念                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   用户需求 ──► 需求分析 ──► 需求确认 ──► 任务规划 ──► 执行     │
+│                    │            │            │          │       │
+│                    ▼            ▼            ▼          ▼       │
+│               理解意图      HITL 确认    动态拆解    工具调用   │
+│               提取实体      补充细节     生成链      生成结果   │
+│               评估复杂度    验证需求     优先排序     质量检查   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.4 LangGraph Agent (Server)
+### 3.2 新增节点
 
-`packages/server/src/ai/graph/` 目录下的 Agent 实现：
+| 节点 | 职责 | 输入 | 输出 |
+|------|------|------|------|
+| **requirementAnalyzer** | 需求分析 | 用户消息 | 需求结构化数据 |
+| **requirementConfirm** | 需求确认 | 需求数据 | 用户确认/补充 |
+| **taskPlanner** | 任务规划 | 确认后的需求 | 动态任务链 |
+| **thinker** | 思考推理 | 任务上下文 | 执行策略 |
+| **qualityCheck** | 质量检查 | 执行结果 | 质量报告 |
 
-```typescript
-// editorAgent.ts - Editor Agent 节点
-// - 使用 DeepSeek LLM
-// - System prompt 动态构建自 metadata
-// - 工具执行由 ToolNode 处理
-// - 支持 RAG 上下文注入
+### 3.3 v2 Graph 结构
 
-// flowAgent.ts - Flow Agent 节点
-// - 专门处理流程相关任务
-// - 共享统一工具集
-
-// pageAgent.ts - Page Agent 节点
-// - 处理页面布局生成
+```
+START ──► router
+              │
+              ▼
+    ┌─────────────────┐
+    │   requirement   │
+    │    Analyzer     │ ◄─── 分析需求，提取关键信息
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │   requirement   │ ◄─── HITL：等待用户确认
+    │     Confirm     │
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │   taskPlanner   │ ◄─── 生成动态任务链
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │     thinker     │ ◄─── 思考执行策略
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │  taskChain      │ ◄─── 任务链执行
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │  agent          │ ◄─── Agent 执行
+    │ (editor/flow/   │
+    │  page/general)  │
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │   allTools      │ ◄─── 工具调用
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │   afterTools    │ ◄─── 后处理
+    └─────────────────┘
+              │
+              ▼
+    ┌─────────────────┐
+    │   qualityCheck  │ ◄─── 质量检查
+    └─────────────────┘
+              │
+              ▼
+         summarizer ──► END
 ```
 
 ---
 
-## 三、Tool（工具）
+## 四、节点详细设计
 
-### 3.1 工具分类
+### 4.1 RequirementAnalyzer（需求分析器）
+
+**职责**：深度理解用户需求，提取结构化信息
+
+**输出接口**：
+```typescript
+interface RequirementAnalysis {
+  // 意图分类
+  intent: 'create' | 'modify' | 'query' | 'help'
+
+  // 需求类型
+  type: 'form' | 'flow' | 'page' | 'mixed' | 'general'
+
+  // 复杂度评估
+  complexity: 'simple' | 'medium' | 'complex'
+
+  // 提取的实体
+  entities: {
+    forms?: Array<{
+      name: string
+      purpose: string
+      fields: Array<{ name: string; type: string; required: boolean }>
+    }>
+    flows?: Array<{
+      name: string
+      nodes: Array<{ type: string; name: string; assignee?: string }>
+      conditions?: Array<{ from: string; to: string; condition: string }>
+    }>
+    pages?: Array<{
+      name: string
+      type: 'list' | 'detail' | 'dashboard'
+      components: string[]
+    }>
+  }
+
+  // 需求完整性
+  completeness: {
+    score: number              // 0-100
+    missing: string[]          // 缺失的信息
+    assumptions: string[]      // AI 做出的假设
+  }
+
+  // 确认问题
+  confirmQuestions: Array<{
+    id: string
+    question: string
+    options?: string[]
+    required: boolean
+  }>
+
+  // 建议的任务链
+  suggestedChain: Array<{
+    agent: 'editor' | 'flow' | 'page'
+    description: string
+    priority: number
+    dependencies: string[]
+  }>
+}
+```
+
+**实现**：
+```typescript
+async function requirementAnalyzerNode(state: AgentState): Promise<Partial<AgentState>> {
+  const lastMessage = state.messages[state.messages.length - 1]
+  const userContent = extractUserContent(lastMessage)
+
+  // 调用 LLM 进行需求分析
+  const analysis = await analyzeRequirement(userContent, state.context)
+
+  // 根据复杂度决定是否需要确认
+  const needsConfirmation = analysis.complexity !== 'simple' ||
+    analysis.completeness.score < 80
+
+  return {
+    requirement: {
+      analysis,
+      needsConfirmation,
+      status: 'analyzed',
+    },
+  }
+}
+```
+
+---
+
+### 4.2 RequirementConfirm（需求确认器）
+
+**职责**：与用户确认需求，支持 HITL
+
+**流程**：
+```
+需求分析结果
+    │
+    ▼
+┌─────────────────┐
+│ 是否需要确认？  │
+└─────────────────┘
+    │
+    ├── 否 ──► 直接进入 taskPlanner
+    │
+    └── 是 ──► 发送确认请求给用户
+                  │
+                  ▼
+              等待用户响应
+                  │
+                  ├── 确认 ──► 进入 taskPlanner
+                  │
+                  └── 补充 ──► 重新分析
+```
+
+**确认消息格式**：
+```typescript
+interface ConfirmRequest {
+  type: 'requirement_confirm'
+  analysis: RequirementAnalysis
+  questions: Array<{
+    id: string
+    question: string
+    options?: string[]
+    required: boolean
+  }>
+  preview: {
+    summary: string
+    estimatedSteps: number
+    estimatedTime: string
+  }
+}
+```
+
+---
+
+### 4.3 TaskPlanner（任务规划器）
+
+**职责**：根据确认后的需求生成动态任务链
+
+**输出接口**：
+```typescript
+interface TaskPlan {
+  // 任务链
+  chain: Array<{
+    id: string
+    agent: 'editor' | 'flow' | 'page'
+    description: string
+    inputs: Record<string, unknown>
+    outputs: Record<string, unknown>
+    dependencies: string[]
+    priority: number
+    status: 'pending' | 'running' | 'done' | 'error'
+  }>
+
+  // 执行策略
+  strategy: {
+    mode: 'sequential' | 'parallel' | 'mixed'
+    retryPolicy: 'none' | 'simple' | 'exponential'
+    timeout: number
+  }
+
+  // 上下文传递
+  contextFlow: Array<{
+    from: string
+    to: string
+    data: string[]
+  }>
+}
+```
+
+---
+
+### 4.4 Thinker（思考推理器）
+
+**职责**：在执行前进行推理，评估和调整执行策略
+
+**触发条件**：
+- 任务开始前
+- 工具调用失败后
+- 检测到需求变化时
+
+**输出接口**：
+```typescript
+interface ThinkerOutput {
+  // 执行策略调整
+  adjustments: {
+    skipSteps?: string[]
+    addSteps?: TaskStep[]
+    reorderSteps?: string[]
+    changeAgent?: { stepId: string; newAgent: string }
+  }
+
+  // 风险评估
+  risks: Array<{
+    type: 'complexity' | 'ambiguity' | 'dependency'
+    description: string
+    mitigation: string
+  }>
+
+  // 执行建议
+  suggestions: Array<{
+    type: 'optimize' | 'simplify' | 'split'
+    description: string
+    impact: 'low' | 'medium' | 'high'
+  }>
+}
+```
+
+---
+
+### 4.5 QualityCheck（质量检查器）
+
+**职责**：检查执行结果的质量
+
+**输出接口**：
+```typescript
+interface QualityCheckResult {
+  // 结构检查
+  structure: {
+    valid: boolean
+    errors: string[]
+    warnings: string[]
+  }
+
+  // 完整性检查
+  completeness: {
+    score: number
+    missing: string[]
+  }
+
+  // 一致性检查
+  consistency: {
+    score: number
+    conflicts: string[]
+  }
+
+  // 建议
+  suggestions: Array<{
+    type: 'fix' | 'improve' | 'add'
+    description: string
+    priority: 'low' | 'medium' | 'high'
+  }>
+
+  // 是否需要重新执行
+  needsRetry: boolean
+  retryReason?: string
+}
+```
+
+---
+
+## 五、Tool（工具）
+
+### 5.1 工具分类
 
 | 分类 | 工具名 | 功能 |
 |------|--------|------|
@@ -140,53 +479,7 @@ abstract class BaseAgent {
 | | `rag_index` | RAG 索引 |
 | **协作** | `request_collaboration` | 请求其他 Agent 协作 |
 
-### 3.2 工具定义
-
-`packages/ai/sdk/src/tool.ts` 提供了工具构建器：
-
-```typescript
-// 方式一：直接创建
-const searchTool = createTool({
-  name: 'search',
-  description: '搜索数据',
-  parameters: {
-    type: 'object',
-    properties: {
-      query: { type: 'string', description: '搜索关键词' }
-    },
-    required: ['query']
-  },
-  execute: async (params, context) => {
-    return await searchData(params.query as string)
-  }
-})
-
-// 方式二：使用构建器
-const searchTool = buildTool()
-  .name('search')
-  .description('搜索数据')
-  .parameters(b => b.string('query', '搜索关键词', { required: true }))
-  .execute(async (params, context) => {
-    return await searchData(params.query as string)
-  })
-  .build()
-```
-
-### 3.3 工具注册表
-
-```typescript
-class ToolRegistry {
-  register(tool: ToolDefinition): this
-  registerAll(tools: ToolDefinition[]): this
-  get(name: string): ToolDefinition | undefined
-  has(name: string): boolean
-  getAll(): ToolDefinition[]
-  toOpenAITools(): Array<{ type: 'function', function: { name, description, parameters } }>
-  execute(name, params, context): Promise<unknown>
-}
-```
-
-### 3.4 统一工具集
+### 5.2 统一工具集
 
 `packages/server/src/ai/tools/allTools.ts` 合并了所有工具：
 
@@ -197,14 +490,12 @@ export const allTools = [
   getSchemaDetailTool,
   validateSchemaTool,
   updateSchemaTool,
-  // ...
 
   // Flow 工具
   searchFlowsTool,
   getFlowDetailTool,
   validateFlowTool,
   updateFlowTool,
-  // ...
 
   // Widget 工具
   ...widgetTools,
@@ -217,17 +508,11 @@ export const allTools = [
 ]
 ```
 
-**设计原则**：所有 Agent 都可以访问所有工具，通过 `request_collaboration` 实现 Agent 间协作。
-
 ---
 
-## 四、MCP（Model Context Protocol）
+## 六、MCP（Model Context Protocol）
 
-### 4.1 MCP 是什么
-
-MCP 是一种协议，允许 AI Agent 通过标准化接口访问外部工具和数据源。
-
-### 4.2 MCP Server 实现
+### 6.1 MCP Server 实现
 
 `packages/server/src/ai/mcp/` 目录下有 3 个 MCP Server：
 
@@ -237,38 +522,7 @@ MCP 是一种协议，允许 AI Agent 通过标准化接口访问外部工具和
 | `flowServer.ts` | Flow 相关工具 | `flow__` |
 | `widgetServer.ts` | Widget 相关工具 | `widget__` |
 
-### 4.3 MCP 工具示例
-
-```typescript
-// schemaServer.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { z } from 'zod'
-
-export function createSchemaServer(): McpServer {
-  const server = new McpServer({
-    name: 'schema-form-schemas',
-    version: '2.0.0',
-  })
-
-  server.tool(
-    'schema__search',
-    '搜索表单 Schema 列表',
-    {
-      keyword: z.string().optional(),
-      type: z.enum(['form', 'search_list']).optional(),
-      limit: z.number().default(10),
-    },
-    async (params) => {
-      const result = await handleSchemaSearch(params)
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] }
-    },
-  )
-
-  return server
-}
-```
-
-### 4.4 MCP 与 LangGraph 工具的关系
+### 6.2 MCP 与 LangGraph 工具的关系
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -283,13 +537,11 @@ export function createSchemaServer(): McpServer {
 └─────────────────┘  └─────────────────┘  └─────────────────┘
 ```
 
-**关键点**：MCP Server 和 LangGraph 工具共享同一份 `toolHandlers` 业务逻辑，只是暴露方式不同。
-
 ---
 
-## 五、数据流
+## 七、数据流
 
-### 5.1 用户发送消息
+### 7.1 v1 数据流（基础）
 
 ```
 用户输入
@@ -305,15 +557,9 @@ useStreamStore.executeStream()
     │
     ▼
 emitChatSend() ── WebSocket ──► Server
-```
-
-### 5.2 服务端处理
-
-```
-chatStreamHandler.ts
     │
     ▼
-executeChatStream()
+chatStreamHandler.ts
     │
     ▼
 graph.streamEvents()
@@ -327,28 +573,44 @@ graph.streamEvents()
     └── 流式事件 ──► sendEvent() ──► WebSocket ──► Client
 ```
 
-### 5.3 前端渲染
+### 7.2 v2 数据流（增强）
 
 ```
-onChatEvent()
+用户输入
     │
     ▼
-handleStreamEvent()
+RequirementAnalyzer ──► 分析需求
     │
-    ├── text_delta ──► 更新消息内容
-    ├── thinking_delta ──► 更新思考过程
-    ├── tool_call_start ──► 显示工具调用
-    ├── tool_call_end ──► 显示工具结果
-    ├── schema_complete ──► 显示 Schema 预览
-    ├── flow_complete ──► 显示 Flow 预览
-    └── done ──► 完成
+    ▼
+RequirementConfirm ──► HITL 确认
+    │
+    ▼
+TaskPlanner ──► 生成任务链
+    │
+    ▼
+Thinker ──► 思考策略
+    │
+    ▼
+TaskChain ──► 执行任务
+    │
+    ▼
+Agent ──► 调用 LLM
+    │
+    ▼
+Tools ──► 执行工具
+    │
+    ▼
+QualityCheck ──► 质量检查
+    │
+    ▼
+Summarizer ──► 总结输出
 ```
 
 ---
 
-## 六、事件协议
+## 八、事件协议
 
-### 6.1 事件类型
+### 8.1 基础事件类型
 
 ```typescript
 type AgentEventType =
@@ -384,42 +646,250 @@ type AgentEventType =
   | 'error'
 ```
 
-### 6.2 事件流向
+### 8.2 v2 新增事件类型
 
-```
-Server                              Client
-   │                                   │
-   │──── chat:event ──────────────────►│
-   │     { type, content, ... }        │
-   │                                   │
-   │◄─── chat:send ───────────────────│
-   │     { message, context }          │
-   │                                   │
-   │◄─── chat:cancel ─────────────────│
-   │                                   │
-   │◄─── chat:resume ─────────────────│
-   │     { threadId, confirmed }       │
+```typescript
+type AgentEventTypeV2 = AgentEventType |
+  // 需求分析
+  | 'requirement_analysis_start'
+  | 'requirement_analysis_complete'
+  | 'requirement_confirm_request'
+  | 'requirement_confirm_response'
+  // 任务规划
+  | 'task_plan_start'
+  | 'task_plan_complete'
+  // 思考推理
+  | 'thinker_start'
+  | 'thinker_complete'
+  // 质量检查
+  | 'quality_check_start'
+  | 'quality_check_complete'
 ```
 
 ---
 
+## 九、完整流程示例
+
+### 9.1 示例：创建订单管理系统
+
+**用户输入**：
+```
+创建一个订单管理系统，包含订单录入、审批流程和订单列表
+```
+
+**流程**：
+
+```
+1. RequirementAnalyzer（需求分析）
+   │
+   ▼
+   分析结果：
+   - 意图：create
+   - 类型：mixed（表单 + 流程 + 页面）
+   - 复杂度：complex
+   - 实体：
+     - 表单：订单录入表单（订单号、客户、金额、日期）
+     - 流程：订单审批流程（提交 → 审批 → 完成）
+     - 页面：订单列表页（搜索、列表、详情）
+   - 完整性：60%（缺少字段细节、审批人、列表列配置）
+   - 确认问题：
+     1. 订单表单需要哪些字段？
+     2. 审批流程有几个节点？审批人是谁？
+     3. 订单列表需要显示哪些列？
+
+2. RequirementConfirm（需求确认）
+   │
+   ▼
+   发送确认请求，等待用户回答
+
+   用户回答：
+   - 字段：订单号(自动)、客户名称、金额、日期、备注
+   - 审批：提交 → 部门经理审批 → 财务审批 → 完成
+   - 列表：订单号、客户、金额、状态、日期
+
+3. TaskPlanner（任务规划）
+   │
+   ▼
+   生成任务链：
+   Step 1: editor - 生成订单录入表单
+   Step 2: flow - 生成订单审批流程（绑定表单）
+   Step 3: page - 生成订单列表页面
+
+4. Thinker（思考推理）
+   │
+   ▼
+   推理结果：
+   - 风险：表单和流程需要关联，需要先生成表单
+   - 建议：Step 2 依赖 Step 1 的输出
+   - 策略：顺序执行，确保依赖关系
+
+5. 执行任务链
+   │
+   ▼
+   Step 1: editor 生成表单 → allTools 执行 → 获得 schemaId
+   Step 2: flow 生成流程 → allTools 执行 → 绑定 schemaId
+   Step 3: page 生成列表 → allTools 执行 → 关联流程
+
+6. QualityCheck（质量检查）
+   │
+   ▼
+   检查结果：
+   - 结构：有效
+   - 完整性：95%
+   - 一致性：无冲突
+   - 建议：添加表单验证规则
+
+7. Summarizer（总结）
+   │
+   ▼
+   输出：已创建订单管理系统，包含：
+   - 订单录入表单（5 个字段）
+   - 订单审批流程（4 个节点）
+   - 订单列表页面（5 列）
+```
+
 ---
 
-## 八、目录结构
+## 十、State 扩展
+
+### 10.1 v2 新增 State 字段
+
+```typescript
+const AgentStateV2Annotation = Annotation.Root({
+  // ... 原有字段
+
+  // 需求分析
+  requirement: Annotation({
+    analysis: RequirementAnalysis | null
+    userConfirmations: Record<string, string>
+    needsConfirmation: boolean
+    status: 'pending' | 'analyzed' | 'confirmed' | 'rejected'
+  }),
+
+  // 任务计划
+  taskPlan: Annotation({
+    plan: TaskPlan | null
+    currentStepId: string | null
+    executionLog: Array<{
+      stepId: string
+      startTime: Date
+      endTime?: Date
+      status: 'running' | 'done' | 'error'
+      result?: unknown
+    }>
+  }),
+
+  // 思考推理
+  thinking: Annotation({
+    lastThinkTime: Date | null
+    adjustments: ThinkerOutput['adjustments']
+    risks: ThinkerOutput['risks']
+  }),
+
+  // 质量检查
+  quality: Annotation({
+    lastCheckTime: Date | null
+    result: QualityCheckResult | null
+    retryCount: number
+  }),
+})
+```
+
+---
+
+## 十一、实现优先级
+
+| Phase | 内容 | 复杂度 | 预计工时 | 状态 |
+|-------|------|--------|----------|------|
+| **P0** | RequirementAnalyzer 节点 | 中 | 4h | 待实现 |
+| **P0** | 前端确认卡片组件 | 中 | 3h | 待实现 |
+| **P1** | TaskPlanner 节点 | 高 | 6h | 待实现 |
+| **P1** | Thinker 节点 | 中 | 4h | 待实现 |
+| **P2** | QualityCheck 节点 | 中 | 4h | 待实现 |
+| **P2** | 动态任务链执行 | 高 | 6h | 待实现 |
+| **P3** | 并行任务执行 | 高 | 8h | 待实现 |
+
+**总计**：约 35h
+
+---
+
+## 十二、迁移策略
+
+### 12.1 向后兼容
+
+- v1 和 v2 共存，通过配置切换
+- 简单需求仍走 v1 快速路径
+- 复杂需求走 v2 完整流程
+
+### 12.2 配置开关
+
+```typescript
+const AI_CONFIG = {
+  // 启用需求分析
+  enableRequirementAnalysis: true,
+
+  // 启用需求确认（HITL）
+  enableRequirementConfirm: true,
+
+  // 启用动态任务规划
+  enableDynamicTaskPlanning: true,
+
+  // 启用思考推理
+  enableThinker: true,
+
+  // 启用质量检查
+  enableQualityCheck: true,
+
+  // 需求完整性阈值（低于此值需要确认）
+  completenessThreshold: 80,
+
+  // 最大重试次数
+  maxRetryCount: 3,
+}
+```
+
+---
+
+## 十三、目录结构
 
 ```
-packages/ai/docs/
-├── architecture.md       # 架构文档 v1（本文件）
-├── architecture-v2.md    # 架构文档 v2（新增需求分析和思考推理）
-├── agent.md              # Agent 详细说明
-├── tool.md               # Tool 详细说明
-├── mcp.md                # MCP 详细说明
-└── events.md             # 事件协议
+packages/ai/
+├── app/                    # AI 前端应用
+│   ├── src/
+│   │   ├── components/     # UI 组件
+│   │   │   ├── AiMessage.vue
+│   │   │   ├── AiStepCard.vue
+│   │   │   └── RequirementConfirmCard.vue (新增)
+│   │   ├── stores/         # Pinia Store
+│   │   │   ├── ai.ts
+│   │   │   ├── stream.ts
+│   │   │   └── requirement.ts (新增)
+│   │   └── views/
+│   │       └── AiSidebarView.vue
+│
+├── sdk/                    # AI SDK
+│   ├── src/
+│   │   ├── agent.ts        # Agent 基类
+│   │   ├── tool.ts         # 工具构建器
+│   │   └── types.ts        # 类型定义
+│
+├── shared/                 # 共享代码
+│   ├── events.ts           # 事件协议定义
+│   ├── promptBuilder.ts    # System Prompt 构建
+│   └── metadata.json       # Widget 元数据
+│
+└── docs/                   # 文档
+    ├── architecture.md     # 架构文档（本文件）
+    ├── agent.md            # Agent 详细说明
+    ├── tool.md             # Tool 详细说明
+    ├── mcp.md              # MCP 详细说明
+    └── events.md           # 事件协议
 ```
 
-## 九、相关文档
+---
 
-- [架构 v2](./architecture-v2.md) — 新增需求分析、任务规划、思考推理
+## 十四、相关文档
+
 - [Agent 详细说明](./agent.md) — Agent 类型、职责、执行流程
 - [Tool 详细说明](./tool.md) — 工具定义、注册、执行和扩展
 - [MCP 详细说明](./mcp.md) — Model Context Protocol 概念和实现

@@ -29,6 +29,8 @@ import { extractAgentContext } from './contextCarrier.js'
 import { getMetadata } from '../tools/toolHandlers.js'
 import { ROUTER_SYSTEM_PROMPT } from '@schema-form/ai-shared/promptBuilder'
 import { logger } from '../../utils/logger.js'
+import { requirementAnalyzerNode, routeAfterRequirementAnalyzer } from './requirementAnalyzer.js'
+import { taskPlannerNode, routeAfterTaskPlanner } from './taskPlanner.js'
 
 // ────────────────────────────────────────────
 // Tool nodes（带错误兜底）
@@ -641,7 +643,14 @@ export function afterToolsRoute(
 // Build and compile the graph
 // ────────────────────────────────────────────
 
+// v2 架构配置
+const V2_CONFIG = {
+  enableRequirementAnalysis: process.env.AI_ENABLE_REQUIREMENT_ANALYSIS !== 'false',
+  enableTaskPlanner: process.env.AI_ENABLE_TASK_PLANNER !== 'false',
+}
+
 const builder = new StateGraph(AgentStateAnnotation)
+  // 原有节点
   .addNode('router', routerNode)
   .addNode('taskChain', taskChainNode)
   .addNode('editor', editorAgentNode)
@@ -652,22 +661,50 @@ const builder = new StateGraph(AgentStateAnnotation)
   .addNode('afterTools', afterToolsNode)
   .addNode('summarizer', summarizerNode)
 
+  // v2 新增节点
+  .addNode('requirementAnalyzer', requirementAnalyzerNode)
+  .addNode('taskPlanner', taskPlannerNode)
+
+  // 边的连接
   .addEdge(START, 'router')
 
-  .addConditionalEdges('router', routeAfterRouter)
+  // router 之后：根据配置决定是否启用需求分析
+  .addConditionalEdges('router', (state) => {
+    // 显式模式或简单需求，跳过需求分析
+    if (state.context.source !== 'standalone' || !V2_CONFIG.enableRequirementAnalysis) {
+      console.log('[router] -> requirementAnalyzer (v2) or taskChain (v1)')
+      return V2_CONFIG.enableRequirementAnalysis ? 'requirementAnalyzer' : routeAfterRouter(state)
+    }
+
+    // 自动模式，启用需求分析
+    console.log('[router] -> requirementAnalyzer')
+    return 'requirementAnalyzer'
+  })
+
+  // requirementAnalyzer 之后
+  .addConditionalEdges('requirementAnalyzer', routeAfterRequirementAnalyzer)
+
+  // taskPlanner 之后
+  .addConditionalEdges('taskPlanner', routeAfterTaskPlanner)
+
+  // taskChain 之后
   .addConditionalEdges('taskChain', routeAfterTaskChain)
 
+  // agent 之后
   .addConditionalEdges('editor', afterAgent)
   .addConditionalEdges('flow', afterAgent)
   .addConditionalEdges('page', afterAgent)
 
+  // general 直接结束
   .addEdge('general', END)
 
+  // 工具调用链
   .addEdge('allTools', 'afterTools')
   .addConditionalEdges('afterTools', afterToolsRoute)
 
+  // 总结
   .addEdge('summarizer', END)
 
 const graph = builder.compile({ checkpointer: checkpointer as unknown as BaseCheckpointSaver })
 
-export { graph }
+export { graph, V2_CONFIG }

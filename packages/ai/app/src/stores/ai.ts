@@ -279,6 +279,130 @@ export const useAiStore = defineStore('ai', () => {
           })
         }
         break
+
+      // v2: 需求分析事件
+      case 'requirement_analysis_start':
+        updateMessage({
+          thinking: (msg.thinking ?? '') + '\n\n🔍 正在分析需求...',
+        })
+        break
+
+      case 'requirement_analysis_complete': {
+        const analysis = event.analysis
+        if (analysis) {
+          const complexityLabel = analysis.complexity === 'complex' ? '复杂' :
+            analysis.complexity === 'medium' ? '中等' : '简单'
+          const completenessLabel = analysis.completeness.score >= 80 ? '完整' : '需要补充'
+
+          updateMessage({
+            thinking: (msg.thinking ?? '')
+              + `\n\n📊 需求分析完成`
+              + `\n- 意图：${analysis.intent}`
+              + `\n- 类型：${analysis.type}`
+              + `\n- 复杂度：${complexityLabel}`
+              + `\n- 完整性：${analysis.completeness.score}% (${completenessLabel})`
+              + (analysis.completeness.missing.length > 0
+                ? `\n- 缺失信息：${analysis.completeness.missing.join(', ')}`
+                : ''),
+          })
+        }
+        break
+      }
+
+      case 'requirement_confirm_request': {
+        // 显示确认请求
+        const questions = event.questions || []
+        if (questions.length > 0) {
+          const questionsText = questions
+            .map((q, i) => `${i + 1}. ${q.question}${q.options ? ` (${q.options.join('/')})` : ''}`)
+            .join('\n')
+
+          updateMessage({
+            content: (msg.content ?? '') + `\n\n❓ 需要确认以下信息：\n${questionsText}`,
+          })
+        }
+        break
+      }
+
+      // v2: 任务规划事件
+      case 'task_plan_start':
+        updateMessage({
+          thinking: (msg.thinking ?? '') + '\n\n📋 正在规划任务...',
+        })
+        break
+
+      case 'task_plan_complete': {
+        const plan = event.plan
+        if (plan && plan.chain) {
+          const stepsText = plan.chain
+            .map((step, i) => `${i + 1}. [${step.agent}] ${step.description}`)
+            .join('\n')
+
+          updateMessage({
+            thinking: (msg.thinking ?? '')
+              + `\n\n📋 任务规划完成`
+              + `\n- 执行模式：${plan.strategy.mode}`
+              + `\n- 步骤数：${plan.chain.length}`
+              + `\n\n执行计划：\n${stepsText}`,
+          })
+        }
+        break
+      }
+
+      // v2: 思考推理事件
+      case 'thinker_start':
+        updateMessage({
+          thinking: (msg.thinking ?? '') + '\n\n🤔 正在思考执行策略...',
+        })
+        break
+
+      case 'thinker_complete': {
+        const { adjustments, risks, suggestions } = event
+        let thinkerText = '\n\n🤔 思考完成'
+
+        if (risks && risks.length > 0) {
+          thinkerText += `\n\n风险评估：${risks.map(r => `\n- ${r.description}`).join('')}`
+        }
+
+        if (suggestions && suggestions.length > 0) {
+          thinkerText += `\n\n建议：${suggestions.map(s => `\n- ${s.description}`).join('')}`
+        }
+
+        if (adjustments?.skipSteps && adjustments.skipSteps.length > 0) {
+          thinkerText += `\n\n调整：跳过步骤 ${adjustments.skipSteps.join(', ')}`
+        }
+
+        updateMessage({
+          thinking: (msg.thinking ?? '') + thinkerText,
+        })
+        break
+      }
+
+      // v2: 质量检查事件
+      case 'quality_check_start':
+        updateMessage({
+          thinking: (msg.thinking ?? '') + '\n\n✅ 正在检查质量...',
+        })
+        break
+
+      case 'quality_check_complete': {
+        const result = event.result
+        if (result) {
+          let qualityText = '\n\n✅ 质量检查完成'
+          qualityText += `\n- 结构有效：${result.structure.valid ? '是' : '否'}`
+          qualityText += `\n- 完整性：${result.completeness.score}%`
+          qualityText += `\n- 一致性：${result.consistency.score}%`
+
+          if (result.suggestions && result.suggestions.length > 0) {
+            qualityText += `\n\n改进建议：${result.suggestions.map(s => `\n- ${s.description}`).join('')}`
+          }
+
+          updateMessage({
+            thinking: (msg.thinking ?? '') + qualityText,
+          })
+        }
+        break
+      }
     }
   }
 
