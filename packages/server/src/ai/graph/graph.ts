@@ -670,14 +670,14 @@ const builder = new StateGraph(AgentStateAnnotation)
 
   // router 之后：根据配置决定是否启用需求分析
   .addConditionalEdges('router', (state) => {
-    // 显式模式或简单需求，跳过需求分析
-    if (state.context.source !== 'standalone' || !V2_CONFIG.enableRequirementAnalysis) {
-      console.log('[router] -> requirementAnalyzer (v2) or taskChain (v1)')
-      return V2_CONFIG.enableRequirementAnalysis ? 'requirementAnalyzer' : routeAfterRouter(state)
+    // 如果未启用需求分析，使用 v1 路由
+    if (!V2_CONFIG.enableRequirementAnalysis) {
+      console.log('[router] v1 mode -> routeAfterRouter')
+      return routeAfterRouter(state)
     }
 
-    // 自动模式，启用需求分析
-    console.log('[router] -> requirementAnalyzer')
+    // 所有模式都走需求分析（包括显式模式）
+    console.log(`[router] v2 mode -> requirementAnalyzer (source=${state.context.source})`)
     return 'requirementAnalyzer'
   })
 

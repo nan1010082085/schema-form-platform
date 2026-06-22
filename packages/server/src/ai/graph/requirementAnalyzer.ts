@@ -214,39 +214,8 @@ export async function requirementAnalyzerNode(
     source: state.context.source,
   })
 
-  // 如果是显式模式（用户已选择 editor/flow/page），简化分析
-  if (state.context.source !== 'standalone') {
-    const simplifiedAnalysis: RequirementAnalysis = {
-      intent: 'create',
-      type: state.context.source === 'editor' ? 'form' : state.context.source === 'flow' ? 'flow' : 'page',
-      complexity: 'simple',
-      entities: {},
-      completeness: { score: 90, missing: [], assumptions: ['用户已选择目标 Agent'] },
-      confirmQuestions: [],
-      suggestedChain: [{
-        agent: state.context.source,
-        description: `生成${state.context.source === 'editor' ? '表单' : state.context.source === 'flow' ? '流程' : '页面'}`,
-        priority: 1,
-        dependencies: [],
-      }],
-    }
-
-    logger.info({
-      msg: '[requirementAnalyzer] Explicit mode, simplified analysis',
-      source: state.context.source,
-    })
-
-    return {
-      requirement: {
-        analysis: simplifiedAnalysis,
-        userConfirmations: {},
-        needsConfirmation: false,
-        status: 'analyzed',
-      },
-    }
-  }
-
-  // 自动模式：调用 LLM 进行深度分析
+  // 所有模式都进行需求分析（包括显式模式）
+  // 显式模式会将用户选择的 Agent 作为上下文传入 LLM
   try {
     const model = await getLLM({
       model: getModelForTask('analyze'),
@@ -255,9 +224,27 @@ export async function requirementAnalyzerNode(
       jsonMode: true,
     })
 
+    // 构建上下文信息
+    let contextInfo = userContent
+
+    // 显式模式：告知 LLM 用户已选择的 Agent
+    if (state.context.source !== 'standalone') {
+      const agentLabel = state.context.source === 'editor' ? '表单编辑器' :
+        state.context.source === 'flow' ? '流程编辑器' : '页面编辑器'
+      contextInfo = `[用户已选择使用 ${agentLabel}]\n\n${userContent}`
+
+      // 如果有当前 Schema 或 Flow，也传入
+      if (state.context.currentSchema && state.context.currentSchema.length > 0) {
+        contextInfo += `\n\n[当前已有 Schema，包含 ${state.context.currentSchema.length} 个组件]`
+      }
+      if (state.context.currentFlow) {
+        contextInfo += `\n\n[当前已有 Flow，包含 ${state.context.currentFlow.nodes?.length || 0} 个节点]`
+      }
+    }
+
     const stream = await model.stream([
       new SystemMessage(REQUIREMENT_ANALYZER_PROMPT),
-      new HumanMessage(userContent),
+      new HumanMessage(contextInfo),
     ])
 
     let raw = ''
