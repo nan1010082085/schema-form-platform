@@ -13,7 +13,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, triggerRef } from 'vue'
 import type {
   AIMessage,
   AgentType,
@@ -62,27 +62,43 @@ export const useAiStore = defineStore('ai', () => {
 
   function handleStreamEvent(event: SSEEvent, assistantIndex: number): void {
     const msg = conversationStore.messages[assistantIndex]
+    if (!msg) {
+      console.warn('[ai] handleStreamEvent: msg not found at index', assistantIndex)
+      return
+    }
+
+    console.log('[ai] handleStreamEvent', event.type, event.content?.substring(0, 20))
+
+    // 强制触发响应式更新的辅助函数
+    function updateMessage(updates: Partial<AIMessage>): void {
+      Object.assign(msg, updates)
+      // 强制触发 ref 的响应式更新
+      triggerRef(conversationStore.messages)
+      console.log('[ai] updateMessage', updates, 'messages length:', conversationStore.messages.length)
+    }
 
     switch (event.type) {
       case 'agent_switch':
         if (event.agent) {
-          msg.agent = event.agent as 'editor' | 'flow' | 'general'
-          if (event.collaboration && event.description) {
-            const collaborationNote = `\n\n[协作] 请求 ${event.agent === 'editor' ? 'Editor' : 'Flow'} 专家协助：${event.description}`
-            msg.thinking = (msg.thinking ?? '') + collaborationNote
-          }
+          const collaborationNote = event.collaboration && event.description
+            ? `\n\n[协作] 请求 ${event.agent === 'editor' ? 'Editor' : 'Flow'} 专家协助：${event.description}`
+            : ''
+          updateMessage({
+            agent: event.agent as 'editor' | 'flow' | 'general',
+            thinking: (msg.thinking ?? '') + collaborationNote,
+          })
         }
         break
 
       case 'thinking_delta':
         if (event.content) {
-          msg.thinking = (msg.thinking ?? '') + event.content
+          updateMessage({ thinking: (msg.thinking ?? '') + event.content })
         }
         break
 
       case 'text_delta':
         if (event.content) {
-          msg.content = (msg.content ?? '') + event.content
+          updateMessage({ content: (msg.content ?? '') + event.content })
         }
         break
 
@@ -106,7 +122,7 @@ export const useAiStore = defineStore('ai', () => {
           }
           const stepLabel = stepLabels[event.step] ?? event.step
           const progressNote = `\n\n[生成进度] ${stepLabel}: ${event.description}`
-          msg.thinking = (msg.thinking ?? '') + progressNote
+          updateMessage({ thinking: (msg.thinking ?? '') + progressNote })
         }
         break
 
@@ -114,10 +130,14 @@ export const useAiStore = defineStore('ai', () => {
         schemaStore.setBuildStep(null)
         if (event.schema) {
           schemaStore.setCurrentSchema(event.schema as Widget[])
-          msg.schema = event.schema as Widget[]
         }
         if (event.description) {
-          msg.content = (msg.content ?? '') + event.description
+          updateMessage({
+            schema: event.schema as Widget[],
+            content: (msg.content ?? '') + event.description,
+          })
+        } else if (event.schema) {
+          updateMessage({ schema: event.schema as Widget[] })
         }
         break
 
@@ -134,17 +154,21 @@ export const useAiStore = defineStore('ai', () => {
       case 'flow_progress':
         if (event.step && event.description) {
           const progressNote = `\n\n[流程生成] ${event.step}: ${event.description}`
-          msg.thinking = (msg.thinking ?? '') + progressNote
+          updateMessage({ thinking: (msg.thinking ?? '') + progressNote })
         }
         break
 
       case 'flow_complete':
         if (event.flow) {
           schemaStore.setCurrentFlow(event.flow as FlowGraph)
-          msg.flow = event.flow as FlowGraph
         }
         if (event.description) {
-          msg.content = (msg.content ?? '') + event.description
+          updateMessage({
+            flow: event.flow as FlowGraph,
+            content: (msg.content ?? '') + event.description,
+          })
+        } else if (event.flow) {
+          updateMessage({ flow: event.flow as FlowGraph })
         }
         break
 
@@ -154,49 +178,55 @@ export const useAiStore = defineStore('ai', () => {
         }
         break
 
-      case 'tool_call_start':
-        if (!msg.toolCalls) msg.toolCalls = []
+      case 'tool_call_start': {
+        const newToolCalls = [...(msg.toolCalls ?? [])]
         if (event.tools) {
           for (const tool of event.tools) {
-            msg.toolCalls.push({
+            newToolCalls.push({
               id: tool.id,
               name: tool.name,
               arguments: tool.arguments ?? {},
             })
           }
         }
+        updateMessage({ toolCalls: newToolCalls })
         break
+      }
 
-      case 'tool_call_end':
-        if (msg.toolCalls && event.tools) {
+      case 'tool_call_end': {
+        const updatedToolCalls = [...(msg.toolCalls ?? [])]
+        if (event.tools) {
           for (const tool of event.tools) {
             const existing = tool.id
-              ? msg.toolCalls.find((t) => t.id === tool.id && !t.result)
-              : msg.toolCalls.find((t) => t.name === tool.name && !t.result)
+              ? updatedToolCalls.find((t) => t.id === tool.id && !t.result)
+              : updatedToolCalls.find((t) => t.name === tool.name && !t.result)
             if (existing) {
               existing.result = tool.result
             }
           }
         }
+        updateMessage({ toolCalls: updatedToolCalls })
         break
+      }
 
       case 'tool_error': {
-        if (!msg.toolCalls) msg.toolCalls = []
+        const errorToolCalls = [...(msg.toolCalls ?? [])]
         const errorMsg = event.content ?? '工具执行失败'
         const existing = event.runId
-          ? msg.toolCalls.find((t) => t.id === event.runId)
-          : msg.toolCalls.find((t) => t.name === (event.toolName ?? 'unknown') && !t.result)
+          ? errorToolCalls.find((t) => t.id === event.runId)
+          : errorToolCalls.find((t) => t.name === (event.toolName ?? 'unknown') && !t.result)
         if (existing) {
           existing.error = errorMsg
           existing.result = { error: errorMsg }
         } else {
-          msg.toolCalls.push({
+          errorToolCalls.push({
             name: event.toolName ?? 'unknown',
             arguments: {},
             result: { error: errorMsg },
             error: errorMsg,
           })
         }
+        updateMessage({ toolCalls: errorToolCalls })
         break
       }
 
@@ -242,9 +272,11 @@ export const useAiStore = defineStore('ai', () => {
         streamStore.error = event.content ?? 'Unknown error'
         if (msg.status === 'streaming') {
           const agentLabel = event.agent ? ` [${event.agent}]` : ''
-          msg.content = (msg.content || msg.thinking || '')
-            + `\n\n⚠️${agentLabel} ${event.content ?? '未知错误'}`
-          msg.status = 'error'
+          updateMessage({
+            content: (msg.content || msg.thinking || '')
+              + `\n\n⚠️${agentLabel} ${event.content ?? '未知错误'}`,
+            status: 'error',
+          })
         }
         break
     }

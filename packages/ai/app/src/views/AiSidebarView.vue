@@ -16,13 +16,34 @@ import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import { useQiankun } from '@schema-form/shared-qiankun'
 import { message } from '@schema-form/shared-utils/message'
-import { connect as connectSocket, emitAiApply, emitAiPublished } from '@schema-form/socket'
+import { connect as connectSocket, isConnected, emitAiApply, emitAiPublished } from '@schema-form/socket'
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
 import type { MessageEmbeddedCard } from '@/components/AiMessage.vue'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import { Clock } from '@element-plus/icons-vue'
 
 const store = useAiStore()
+
+// ---- WebSocket 状态 ----
+const wsConnected = ref(isConnected())
+
+// 定期检查连接状态
+let statusTimer: ReturnType<typeof setInterval> | null = null
+
+function startStatusCheck(): void {
+  statusTimer = setInterval(() => {
+    wsConnected.value = isConnected()
+  }, 1000)
+}
+
+// ---- History Dialog ----
+const historyVisible = ref(false)
+
+function handleOpenHistory(): void {
+  historyVisible.value = true
+  store.loadConversations()
+}
 
 // Agent 配置：从 URL query 读取初始值，支持切换
 const params = new URLSearchParams(window.location.search)
@@ -220,6 +241,7 @@ onMounted(() => {
 
   // 连接 Socket
   connectSocket()
+  startStatusCheck()
 
   // 监听宿主上下文（standalone 模式 postMessage）
   bridge.on('ai:set-context', (payload) => {
@@ -281,8 +303,21 @@ function handleHostData(data: Record<string, unknown>) {
       <div :class="$style.headerLeft">
         <div :class="$style.headerIcon">AI</div>
         <span :class="$style.headerTitle">智能助手</span>
+        <el-button
+          :class="$style.historyBtn"
+          title="历史记录"
+          link
+          @click="handleOpenHistory"
+        >
+          <el-icon :size="14"><Clock /></el-icon>
+        </el-button>
       </div>
       <div :class="$style.headerRight">
+        <!-- WebSocket 状态 -->
+        <div :class="[$style.wsStatus, wsConnected ? $style.wsConnected : $style.wsDisconnected]">
+          <span :class="$style.wsDot" />
+          <span>{{ wsConnected ? '已连接' : '未连接' }}</span>
+        </div>
         <div :class="$style.modelBadge">
           <span :class="$style.modelDot"></span>
           <span>DeepSeek</span>
@@ -308,7 +343,7 @@ function handleHostData(data: Record<string, unknown>) {
       <!-- Message list -->
       <AiMessage
         v-for="(msg, idx) in store.messages"
-        :key="idx"
+        :key="`${idx}-${msg.content?.length ?? 0}-${msg.toolCalls?.length ?? 0}`"
         :role="msg.role === 'system' ? 'assistant' : msg.role"
         :label="getLabel(msg)"
         :agent="selectedAgent"
@@ -378,6 +413,32 @@ function handleHostData(data: Record<string, unknown>) {
         </div>
       </div>
     </div>
+
+    <!-- History Dialog -->
+    <el-dialog
+      v-model="historyVisible"
+      title="对话历史"
+      width="400px"
+      :z-index="2000"
+    >
+      <div :class="$style.historyList">
+        <div
+          v-for="conv in store.conversations"
+          :key="conv.id"
+          :class="[$style.historyItem, { [$style.historyActive]: conv.id === store.currentConversationId }]"
+          @click="store.loadConversation(conv.id); historyVisible = false"
+        >
+          <div :class="$style.historyTitle">{{ conv.title }}</div>
+          <div :class="$style.historyMeta">
+            <span :class="$style.historyAgent">{{ conv.activeAgent }}</span>
+            <span :class="$style.historyTime">{{ new Date(conv.updatedAt).toLocaleString('zh-CN') }}</span>
+          </div>
+        </div>
+        <div v-if="store.conversations.length === 0" :class="$style.historyEmpty">
+          暂无对话记录
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 

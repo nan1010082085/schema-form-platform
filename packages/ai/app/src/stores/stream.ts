@@ -127,6 +127,8 @@ export const useStreamStore = defineStore('stream', () => {
         }
 
         const event = chatEvent as unknown as SSEEvent
+        console.log('[stream] received event', event.type, event.content?.substring(0, 20))
+
         if (event.type === 'done') {
           doneEventReceived = true
           doneResolve?.()
