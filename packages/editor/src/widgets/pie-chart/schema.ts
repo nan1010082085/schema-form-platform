@@ -7,7 +7,7 @@ export function createPieChartWidget(id: string, config: WidgetConfig = pieChart
     ...publicSchema(id, config.type || 'pie-chart'),
     name: config.name,
     label: config.displayName,
-    position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
+    position: { x: 0, y: 0, w: 300, h: 300, zIndex: 1 },
     style: { ...config.defaultStyle },
     props: { ...config.defaultProps },
   }

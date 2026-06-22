@@ -7,7 +7,7 @@ export function createCandlestickWidget(id: string): Widget {
     ...publicSchema(id, 'candlestick'),
     name: candlestickConfig.name,
     label: candlestickConfig.displayName,
-    position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
+    position: { x: 0, y: 0, w: 300, h: 300, zIndex: 1 },
     style: { ...candlestickConfig.defaultStyle },
     props: { ...candlestickConfig.defaultProps },
   }

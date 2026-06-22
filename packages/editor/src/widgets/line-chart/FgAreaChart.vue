@@ -67,6 +67,7 @@ useExposeWidget(() => ({
 
 const chartRef = ref<HTMLDivElement>()
 let chartInstance: EChartsType | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const { isVisible } = useChartLazyInit(chartRef)
 
@@ -103,11 +104,15 @@ onMounted(() => {
   if (isVisible.value) {
     initChart()
   }
-  window.addEventListener('resize', handleResize)
+  if (chartRef.value) {
+    resizeObserver = new ResizeObserver(() => handleResize())
+    resizeObserver.observe(chartRef.value)
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
+  resizeObserver?.disconnect()
+  resizeObserver = null
   chartInstance?.dispose()
   chartInstance = null
 })

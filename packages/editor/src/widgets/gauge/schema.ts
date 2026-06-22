@@ -7,7 +7,7 @@ export function createGaugeWidget(id: string, config: WidgetConfig = gaugeConfig
     ...publicSchema(id, config.type || 'gauge'),
     name: config.name,
     label: config.displayName,
-    position: { x: 0, y: 0, w: 600, h: 400, zIndex: 1 },
+    position: { x: 0, y: 0, w: 300, h: 300, zIndex: 1 },
     style: { ...config.defaultStyle },
     props: { ...config.defaultProps },
   }
