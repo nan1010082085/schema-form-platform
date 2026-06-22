@@ -5,10 +5,9 @@
  * 职责：
  * - 编辑模式：渲染容器 shell（header），子组件由 SchemaNode childrenLayer 渲染
  * - 预览模式：el-dialog 包裹，提供弹窗交互
- * - 提供 formContext 给内部子组件（dialog 自己的 formModel）
+ * - 微应用模式：qiankun loadMicroApp 动态加载
  * - 支持 confirm/cancel/open/close 事件
  * - destroyOnClose 关闭时清空 dialogModel
- * - 支持微应用模式（qiankun loadMicroApp 动态加载）
  */
 import { inject, ref, reactive, provide, watch, computed, onMounted, onUnmounted } from 'vue'
 import { widgetDataKey, formContextKey } from '../base/types'
@@ -42,14 +41,9 @@ const emit = defineEmits<{
   close: []
 }>()
 
-// ---- 弹窗状态 ----
 const visible = ref(false)
-
-// ---- Dialog 独立 formModel ----
 const dialogModel = reactive<Record<string, unknown>>({})
 const childFormRef = ref<any>()
-
-// ---- Lifecycle ----
 const { trigger } = useWidgetLifecycle(widgetData, dialogModel)
 
 onMounted(() => trigger('onMount'))
@@ -59,51 +53,91 @@ onUnmounted(() => trigger('onUnmount'))
 const contentMode = computed(() => (widgetData.value.props?.contentMode as string) ?? 'edit')
 const microappName = computed(() => widgetData.value.props?.microappName as string ?? '')
 const microappEntry = computed(() => widgetData.value.props?.microappEntry as string ?? '')
+const sandbox = computed(() => widgetData.value.props?.microappSandbox !== false)
+const styleIsolation = computed(() => (widgetData.value.props?.microappStyleIsolation as string) ?? 'experimental')
+const timeout = computed(() => (widgetData.value.props?.microappTimeout as number) ?? 10000)
+const fallbackText = computed(() => (widgetData.value.props?.microappFallback as string) ?? '子应用加载失败')
+const routeBase = computed(() => widgetData.value.props?.microappRouteBase as string ?? '')
 
 const microappContainerRef = ref<HTMLDivElement>()
+const microappLoading = ref(false)
+const microappError = ref('')
 let microAppInstance: MicroApp | null = null
+let timeoutTimer: ReturnType<typeof setTimeout> | null = null
+
+function getSandboxConfig() {
+  if (!sandbox.value) return false
+  switch (styleIsolation.value) {
+    case 'strict': return { strictStyleIsolation: true }
+    case 'none': return { sandbox: false }
+    default: return { experimentalStyleIsolation: true }
+  }
+}
 
 async function loadMicroAppDynamic() {
   if (!microappName.value || !microappEntry.value || !microappContainerRef.value) return
+
+  microappLoading.value = true
+  microappError.value = ''
+
   if (microAppInstance) {
-    await microAppInstance.unmount()
+    await microAppInstance.unmount().catch(() => {})
     microAppInstance = null
   }
-  microAppInstance = loadMicroApp(
-    { name: microappName.value, entry: microappEntry.value, container: microappContainerRef.value },
-    { sandbox: { experimentalStyleIsolation: true } },
-  )
-  microAppInstance.mount().catch(console.error)
+
+  if (timeoutTimer) clearTimeout(timeoutTimer)
+  timeoutTimer = setTimeout(() => {
+    if (microappLoading.value) {
+      microappError.value = `加载超时（${timeout.value}ms）`
+      microappLoading.value = false
+    }
+  }, timeout.value)
+
+  try {
+    const props: Record<string, unknown> = {}
+    if (routeBase.value) props.base = routeBase.value
+
+    microAppInstance = loadMicroApp(
+      { name: microappName.value, entry: microappEntry.value, container: microappContainerRef.value },
+      { sandbox: getSandboxConfig(), props },
+    )
+    await microAppInstance.mount()
+    microappLoading.value = false
+  } catch {
+    microappLoading.value = false
+    microappError.value = fallbackText.value
+  } finally {
+    if (timeoutTimer) {
+      clearTimeout(timeoutTimer)
+      timeoutTimer = null
+    }
+  }
 }
 
-watch([microappName, microappEntry, visible], () => {
-  if (visible.value && contentMode.value === 'microapp') {
-    // 弹窗打开且为微应用模式时加载
+// 弹窗打开时加载微应用
+watch(visible, (v) => {
+  if (v && contentMode.value === 'microapp') {
     setTimeout(() => loadMicroAppDynamic(), 50)
   }
 })
 
 onUnmounted(() => {
+  if (timeoutTimer) clearTimeout(timeoutTimer)
   microAppInstance?.unmount()
   microAppInstance = null
 })
 
-// ---- Provide form context（dialog 内部子组件使用） ----
+// ---- Provide form context ----
 provide(formContextKey, {
   formRef: childFormRef,
   formModel: dialogModel,
-  updateField: (field: string, value: unknown) => {
-    dialogModel[field] = value
-  },
+  updateField: (field: string, value: unknown) => { dialogModel[field] = value },
 })
 
-// ---- destroyOnClose 行为 ----
+// ---- destroyOnClose ----
 watch(visible, (newVal) => {
   if (!newVal && widgetData.value.props?.destroyOnClose) {
-    Object.keys(dialogModel).forEach(key => {
-      dialogModel[key] = undefined
-    })
-    // 微应用实例卸载
+    Object.keys(dialogModel).forEach(key => { dialogModel[key] = undefined })
     if (contentMode.value === 'microapp' && microAppInstance) {
       microAppInstance.unmount()
       microAppInstance = null
@@ -126,31 +160,24 @@ defineExpose({
   },
   validate: () => childFormRef.value?.validate() ?? Promise.resolve(true),
   getDialogData: () => ({ ...dialogModel }),
-  setDialogData: (data: Record<string, unknown>) => {
-    Object.assign(dialogModel, data)
-  },
+  setDialogData: (data: Record<string, unknown>) => { Object.assign(dialogModel, data) },
 })
 
-// ---- 确认/取消 ----
 async function handleConfirm() {
   visible.value = false
   emit('confirm', { ...dialogModel })
-  if (eventCtx) {
-    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'confirm')
-  }
+  if (eventCtx) await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'confirm')
 }
 
 async function handleCancel() {
   visible.value = false
   emit('cancel')
-  if (eventCtx) {
-    await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'cancel')
-  }
+  if (eventCtx) await triggerWidgetEvent(widgetData.value, 'click', eventCtx, 'cancel')
 }
 </script>
 
 <template>
-  <!-- 编辑模式：容器 shell（header），子组件由 childrenLayer 渲染在容器原点 -->
+  <!-- 编辑模式：容器 shell -->
   <div v-if="editable" :class="styles.dialogShell">
     <div :class="styles.dialogHeader">
       <span :class="styles.dialogTitle">{{ (widgetData.props?.title as string) || '弹窗标题' }}</span>
@@ -170,19 +197,17 @@ async function handleCancel() {
     >
       <!-- 微应用模式 -->
       <div v-if="contentMode === 'microapp'" style="height: 100%; min-height: 200px;">
-        <div v-if="!microappName || !microappEntry" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--el-text-color-secondary);">
+        <div v-if="!microappName || !microappEntry" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--el-text-color-secondary);">
           请配置子应用名称和入口地址
+        </div>
+        <div v-else-if="microappError" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--el-color-danger);background:var(--el-color-danger-light-9);">
+          {{ microappError }}
         </div>
         <div v-else ref="microappContainerRef" style="height: 100%;" />
       </div>
 
       <!-- 编辑模式：渲染子 Schema -->
-      <template v-else>
-        <SchemaRender
-          v-if="widgetData.children?.length"
-          :widgets="widgetData.children"
-        />
-      </template>
+      <SchemaRender v-else-if="widgetData.children?.length" :widgets="widgetData.children" />
 
       <template v-if="widgetData.props?.showFooter !== false" #footer>
         <div :class="styles.footer">

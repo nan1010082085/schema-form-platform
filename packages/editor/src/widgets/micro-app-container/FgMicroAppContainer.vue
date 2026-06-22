@@ -2,51 +2,121 @@
 /**
  * FgMicroAppContainer — 微应用容器 Widget
  *
- * 通过 qiankun loadMicroApp 加载子应用（editor/flow/ai）
- * 支持变量传参，与子应用通信（postMessage）
+ * 通过 qiankun loadMicroApp 动态加载子应用
+ * 支持：沙箱隔离、CSS 隔离、超时兜底、参数传递、路由前缀
  */
-import { inject, computed, ref } from 'vue'
+import { inject, computed, ref, watch, onUnmounted } from 'vue'
 import { widgetDataKey } from '../base/types'
-import MicroAppContainer from '@schema-form/shared-qiankun/MicroAppContainer.vue'
 import { loadMicroApp } from 'qiankun'
-import type { AppName } from '@schema-form/shared-qiankun/config'
+import type { MicroApp } from 'qiankun'
 import styles from './style.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 
-const microappApp = computed(() => widgetData.value.props?.microappApp as AppName | undefined)
-const containerHeight = computed(() => (widgetData.value.props?.height as string) || '100%')
-const contextVariables = computed(() => (widgetData.value.props?.variables as Record<string, string>) ?? {})
+const appName = computed(() => widgetData.value.props?.microappName as string ?? '')
+const appEntry = computed(() => widgetData.value.props?.microappEntry as string ?? '')
+const sandbox = computed(() => widgetData.value.props?.microappSandbox !== false)
+const styleIsolation = computed(() => (widgetData.value.props?.microappStyleIsolation as string) ?? 'experimental')
+const timeout = computed(() => (widgetData.value.props?.microappTimeout as number) ?? 10000)
+const fallbackText = computed(() => (widgetData.value.props?.microappFallback as string) ?? '子应用加载失败')
+const routeBase = computed(() => widgetData.value.props?.microappRouteBase as string ?? '')
+const height = computed(() => (widgetData.value.props?.height as string) || '100%')
+const variables = computed(() => (widgetData.value.props?.variables as Record<string, unknown>) ?? {})
 
 const emit = defineEmits<{
-  message: [data: any]
+  message: [data: unknown]
   ready: []
+  error: [err: unknown]
 }>()
 
-const containerRef = ref<any>(null)
+const containerRef = ref<HTMLDivElement>()
+const loading = ref(false)
+const error = ref('')
+let microApp: MicroApp | null = null
+let timeoutTimer: ReturnType<typeof setTimeout> | null = null
 
-function postMessage(data: any) {
-  containerRef.value?.postMessage?.(data)
+function getSandboxConfig() {
+  if (!sandbox.value) return false
+  switch (styleIsolation.value) {
+    case 'strict': return { strictStyleIsolation: true }
+    case 'none': return { sandbox: false }
+    default: return { experimentalStyleIsolation: true }
+  }
+}
+
+async function loadApp() {
+  if (!appName.value || !appEntry.value || !containerRef.value) return
+
+  loading.value = true
+  error.value = ''
+
+  // 卸载已有实例
+  if (microApp) {
+    await microApp.unmount().catch(() => {})
+    microApp = null
+  }
+
+  // 超时兜底
+  if (timeoutTimer) clearTimeout(timeoutTimer)
+  timeoutTimer = setTimeout(() => {
+    if (loading.value) {
+      error.value = `加载超时（${timeout.value}ms）`
+      loading.value = false
+      emit('error', new Error('timeout'))
+    }
+  }, timeout.value)
+
+  try {
+    const props = { ...variables.value }
+    if (routeBase.value) props.base = routeBase.value
+
+    microApp = loadMicroApp(
+      { name: appName.value, entry: appEntry.value, container: containerRef.value },
+      {
+        sandbox: getSandboxConfig(),
+        props,
+      },
+    )
+
+    await microApp.mount()
+    loading.value = false
+    emit('ready')
+  } catch (e) {
+    loading.value = false
+    error.value = fallbackText.value
+    emit('error', e)
+  } finally {
+    if (timeoutTimer) {
+      clearTimeout(timeoutTimer)
+      timeoutTimer = null
+    }
+  }
+}
+
+watch([appName, appEntry], () => loadApp(), { immediate: true })
+
+onUnmounted(() => {
+  if (timeoutTimer) clearTimeout(timeoutTimer)
+  microApp?.unmount()
+  microApp = null
+})
+
+function postMessage(data: unknown) {
+  containerRef.value?.querySelector('iframe')?.contentWindow?.postMessage(data, '*')
 }
 
 defineExpose({ postMessage })
 </script>
 
 <template>
-  <div :class="styles.container" :style="{ height: containerHeight }">
-    <MicroAppContainer
-      v-if="microappApp"
-      ref="containerRef"
-      :app-name="microappApp"
-      mode="qiankun"
-      :load-micro-app="loadMicroApp"
-      height="100%"
-      @ready="emit('ready')"
-      @message="emit('message', $event)"
-    />
-    <div v-else :class="$style.placeholder">
-      <span>请选择子应用</span>
+  <div :class="styles.container" :style="{ height }">
+    <div v-if="!appName || !appEntry" :class="$style.placeholder">
+      请配置子应用名称和入口地址
     </div>
+    <div v-else-if="error" :class="$style.error">
+      {{ error }}
+    </div>
+    <div v-else ref="containerRef" style="height: 100%;" />
   </div>
 </template>
 
@@ -59,5 +129,14 @@ defineExpose({ postMessage })
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-lighter);
   border: 1px dashed var(--el-border-color);
+}
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
+  border: 1px dashed var(--el-color-danger-light-5);
 }
 </style>
