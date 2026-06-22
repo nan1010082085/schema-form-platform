@@ -287,7 +287,7 @@ async function runChatStream(
             if (taskGroup?.chain && Array.isArray(taskGroup.chain) && taskGroup.chain.length > 0) {
               const steps = taskGroup.chain as Array<{ agent: string; description: string; status: string }>
               sendEvent({
-                type: 'task_chain',
+                type: 'chain_step',
                 steps: steps.map((s) => ({ agent: s.agent, description: s.description, status: s.status })),
                 currentIndex: (taskGroup.currentStepIndex as number) ?? 0,
               })
@@ -300,7 +300,7 @@ async function runChatStream(
             if (taskGroup?.chain && Array.isArray(taskGroup.chain)) {
               const steps = taskGroup.chain as Array<{ agent: string; description: string; status: string }>
               sendEvent({
-                type: 'task_chain',
+                type: 'chain_step',
                 steps: steps.map((s) => ({ agent: s.agent, description: s.description, status: s.status })),
                 currentIndex: (taskGroup.currentStepIndex as number) ?? 0,
               })
@@ -327,7 +327,7 @@ async function runChatStream(
 
           if (reasoningContent && typeof reasoningContent === 'string' && reasoningContent.trim().length > 0) {
             accumulatedThinking += reasoningContent
-            sendEvent({ type: 'thinking', content: reasoningContent })
+            sendEvent({ type: 'thinking_delta', content: reasoningContent })
             break
           }
 
@@ -342,14 +342,14 @@ async function runChatStream(
               thinkBuffer += content.slice(0, closeIdx)
               if (thinkBuffer.trim().length > 0) {
                 accumulatedThinking += thinkBuffer
-                sendEvent({ type: 'thinking', content: thinkBuffer })
+                sendEvent({ type: 'thinking_delta', content: thinkBuffer })
               }
               thinkBuffer = ''
               insideThinkTag = false
               const remaining = content.slice(closeIdx + 7).trim()
               if (remaining && currentAgent !== 'router') {
                 accumulatedContent += remaining
-                sendEvent({ type: 'text', content: remaining })
+                sendEvent({ type: 'text_delta', content: remaining })
               }
             } else {
               thinkBuffer += content
@@ -365,12 +365,12 @@ async function runChatStream(
               const thinkContent = afterOpen.slice(0, closeIdx)
               if (thinkContent.trim().length > 0) {
                 accumulatedThinking += thinkContent
-                sendEvent({ type: 'thinking', content: thinkContent })
+                sendEvent({ type: 'thinking_delta', content: thinkContent })
               }
               const remaining = afterOpen.slice(closeIdx + 7).trim()
               if (remaining && currentAgent !== 'router') {
                 accumulatedContent += remaining
-                sendEvent({ type: 'text', content: remaining })
+                sendEvent({ type: 'text_delta', content: remaining })
               }
             } else {
               insideThinkTag = true
@@ -378,7 +378,7 @@ async function runChatStream(
               const beforeThink = content.slice(0, thinkOpenIdx).trim()
               if (beforeThink && currentAgent !== 'router') {
                 accumulatedContent += beforeThink
-                sendEvent({ type: 'text', content: beforeThink })
+                sendEvent({ type: 'text_delta', content: beforeThink })
               }
             }
             break
@@ -387,7 +387,7 @@ async function runChatStream(
           if (currentAgent === 'router') break
 
           accumulatedContent += content
-          sendEvent({ type: 'text', content })
+          sendEvent({ type: 'text_delta', content })
           break
         }
 
@@ -403,8 +403,7 @@ async function runChatStream(
           })
 
           sendEvent({
-            type: 'tool_call',
-            phase: 'calling',
+            type: 'tool_call_start',
             tools: [{ id: event.run_id, name: toolName, arguments: toolArgs }],
           })
 
@@ -479,8 +478,7 @@ async function runChatStream(
             })
           } else {
             sendEvent({
-              type: 'tool_call',
-              phase: 'result',
+              type: 'tool_call_end',
               tools: [{ id: toolRunId, name: toolName, result: toolResult }],
             })
           }
@@ -490,7 +488,7 @@ async function runChatStream(
             const payload = pendingPayloads.get(toolRunId)
             if (payload) {
               accumulatedSchema = payload as Record<string, unknown>[]
-              sendEvent({ type: 'schema', payload, description: accumulatedContent })
+              sendEvent({ type: 'schema_complete', schema: payload, description: accumulatedContent })
               const v = await createVersion({
                 conversationId: convo._id, messageId: toolRunId, type: 'schema',
                 content: payload as Record<string, unknown>[], description: '生成 Schema',
@@ -505,7 +503,7 @@ async function runChatStream(
             const payload = pendingPayloads.get(toolRunId)
             if (payload) {
               accumulatedFlow = payload as Record<string, unknown>
-              sendEvent({ type: 'flow', payload, description: accumulatedContent })
+              sendEvent({ type: 'flow_complete', flow: payload, description: accumulatedContent })
               const v = await createVersion({
                 conversationId: convo._id, messageId: toolRunId, type: 'flow',
                 content: payload as Record<string, unknown>, description: '生成流程',
@@ -519,7 +517,7 @@ async function runChatStream(
             const result = toolResult as Record<string, unknown> | undefined
             const resultData = result?.data as Record<string, unknown> | undefined
             if (resultData?.widgets) {
-              sendEvent({ type: 'schema', payload: resultData.widgets, description: (resultData.summary as string) ?? '' })
+              sendEvent({ type: 'schema_complete', schema: resultData.widgets, description: (resultData.summary as string) ?? '' })
               const v = await createVersion({
                 conversationId: convo._id, messageId: toolRunId, type: 'schema',
                 content: resultData.widgets as Record<string, unknown>[], description: (resultData.summary as string) ?? '生成 Schema',
@@ -534,7 +532,7 @@ async function runChatStream(
             const result = toolResult as Record<string, unknown> | undefined
             const resultData = result?.data as Record<string, unknown> | undefined
             if (widgetsPayload) {
-              sendEvent({ type: 'schema', payload: widgetsPayload, description: (resultData?.description as string) ?? '' })
+              sendEvent({ type: 'schema_complete', schema: widgetsPayload, description: (resultData?.description as string) ?? '' })
               if (resultData?.diff) {
                 sendEvent({ type: 'schema_diff', diff: resultData.diff, description: (resultData?.description as string) ?? '' })
               }
@@ -551,7 +549,7 @@ async function runChatStream(
             const result = toolResult as Record<string, unknown> | undefined
             const resultData = result?.data as Record<string, unknown> | undefined
             if (resultData?.flow) {
-              sendEvent({ type: 'flow', payload: resultData.flow, description: (resultData.description as string) ?? '' })
+              sendEvent({ type: 'flow_complete', flow: resultData.flow, description: (resultData.description as string) ?? '' })
               if (resultData.diff) {
                 sendEvent({ type: 'flow_diff', diff: resultData.diff, description: (resultData.description as string) ?? '' })
               }
@@ -591,13 +589,13 @@ async function runChatStream(
           const parsed = JSON.parse(schemaMatch[1])
           if (parsed.type === 'flow_update' && parsed.flow) {
             accumulatedFlow = parsed.flow
-            sendEvent({ type: 'flow', payload: parsed.flow, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
+            sendEvent({ type: 'flow_complete', flow: parsed.flow, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
             const v = await createVersion({ conversationId: convo._id, messageId: `text-${Date.now()}`, type: 'flow', content: parsed.flow, description: 'AI 生成流程' })
             sendEvent({ type: 'version_created', versionId: v._id, version: v.version })
           } else if (parsed.type === 'schema_update' && parsed.widgets) {
             const adaptedWidgets = adaptWidgets(parsed.widgets)
             accumulatedSchema = adaptedWidgets
-            sendEvent({ type: 'schema', payload: adaptedWidgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
+            sendEvent({ type: 'schema_complete', schema: adaptedWidgets, description: accumulatedContent.replace(/<[\s\S]*?<\/schema>/, '').trim().slice(0, 200) })
             const v = await createVersion({ conversationId: convo._id, messageId: `text-${Date.now()}`, type: 'schema', content: adaptedWidgets, description: 'AI 生成 Schema' })
             sendEvent({ type: 'version_created', versionId: v._id, version: v.version })
           }
@@ -708,13 +706,13 @@ export function executeResumeStream(
         if (event.event === 'on_chat_model_stream') {
           const chunk = event.data?.chunk as { content?: unknown } | undefined
           if (chunk?.content && typeof chunk.content === 'string') {
-            send({ type: 'text', content: chunk.content })
+            send({ type: 'text_delta', content: chunk.content })
           }
         }
 
         if (event.event === 'on_tool_start') {
           send({
-            type: 'tool_call', phase: 'calling',
+            type: 'tool_call_start',
             tools: [{ id: event.run_id, name: event.name, arguments: event.data?.input }],
           })
         }
@@ -733,7 +731,7 @@ export function executeResumeStream(
               : String((toolResult as Record<string, unknown>)?.error ?? '')
             send({ type: 'tool_error', toolName, runId: toolRunId, content: rawError.trim() || '工具执行失败' })
           } else {
-            send({ type: 'tool_call', phase: 'result', tools: [{ id: toolRunId, name: toolName, result: toolResult }] })
+            send({ type: 'tool_call_end', tools: [{ id: toolRunId, name: toolName, result: toolResult }] })
           }
         }
       }

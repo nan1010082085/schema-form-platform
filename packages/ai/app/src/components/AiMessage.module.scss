@@ -70,6 +70,25 @@
   margin: 0;
 }
 
+// 表格滚动容器
+.markdownContent :global(.tableScroll) {
+  overflow-x: auto;
+  margin: 8px 0 12px;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color-base, #D5DDE3);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--text-color-muted, #909399);
+  }
+}
+
 .markdownContent p {
   margin: 0 0 10px;
 }
@@ -155,16 +174,18 @@
 
 .markdownContent table {
   border-collapse: collapse;
-  margin: 8px 0 12px;
-  width: 100%;
-  font-size: 13px;
+  margin: 0;
+  min-width: 100%;      // 最少占满容器，内容多时自动撑开
+  width: max-content;   // 根据内容自适应宽度
+  font-size: 12px;
 }
 
 .markdownContent th,
 .markdownContent td {
   border: 1px solid var(--border-color-light, #EBEDF3);
-  padding: 6px 10px;
+  padding: 5px 8px;
   text-align: left;
+  white-space: nowrap;  // 不折行
 }
 
 .markdownContent th {

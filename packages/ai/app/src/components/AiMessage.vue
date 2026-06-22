@@ -117,9 +117,8 @@ function flushContent() {
 
 watch(() => props.content, (newContent) => {
   latestContent = newContent ?? ''
-  if (!rafId) {
-    rafId = requestAnimationFrame(flushContent)
-  }
+  // 直接更新，不使用 requestAnimationFrame，确保流式响应实时显示
+  renderedContentRef.value = latestContent
 }, { immediate: true })
 
 onBeforeUnmount(() => {
@@ -181,7 +180,15 @@ import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 function renderMarkdown(content: string): string {
   if (!content) return ''
   const rawHtml = marked.parse(content, { breaks: true }) as string
-  return DOMPurify.sanitize(rawHtml)
+  // 给 <table> 包裹可滚动的 div，只让表格区域左右滚动
+  const wrappedHtml = rawHtml.replace(
+    /<table>/g,
+    '<div class="tableScroll"><table>',
+  ).replace(
+    /<\/table>/g,
+    '</table></div>',
+  )
+  return DOMPurify.sanitize(wrappedHtml, { ADD_ATTR: ['class'] })
 }
 
 function formatJson(content: string): string {
