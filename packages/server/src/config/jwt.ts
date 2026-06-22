@@ -7,4 +7,4 @@ if (!secret) {
   console.warn('[jwt] JWT_SECRET not set, using development fallback.')
 }
 
-export const JWT_SECRET = secret || '***REMOVED***'
+export const JWT_SECRET = secret || 'dev-only-jwt-secret-please-set-env-var'
