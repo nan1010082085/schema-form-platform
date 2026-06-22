@@ -203,11 +203,8 @@ onMounted(async () => {
     boardStore.name = '未命名画布'
   }
 
-  // 支持通过 mode 参数直接进入预览模式
-  const mode = route.query.mode as string | undefined
-  if (mode === 'preview') {
-    editorStore.setMode('preview')
-  }
+  // 从实例列表进入时，始终为编辑模式
+  editorStore.setMode('edit')
 
   // Socket: 监听 AI 推送事件
   connectSocket()
@@ -832,12 +829,12 @@ function handleClearCanvas() {
             placement="bottom-end"
             :width="420"
             trigger="click"
+            @before-enter="validation.runValidation()"
           >
             <template #reference>
               <button
                 class="editor-view__icon-btn"
                 title="Schema 校验"
-                @click="validation.runValidation()"
               >
                 <el-badge
                   v-if="validation.errorCount.value > 0"
@@ -850,10 +847,7 @@ function handleClearCanvas() {
                 <AppIcon v-else name="success" :size="14" />
               </button>
             </template>
-            <div v-if="validation.validatedAt.value === 0" style="text-align: center; padding: 20px; color: var(--text-color-secondary);">
-              点击按钮执行校验
-            </div>
-            <div v-else-if="validation.issues.value.length === 0" style="text-align: center; padding: 20px; color: var(--color-success);">
+            <div v-if="validation.issues.value.length === 0" style="text-align: center; padding: 20px; color: var(--color-success);">
               ✓ 校验通过，未发现问题
             </div>
             <div v-else style="max-height: 360px; overflow-y: auto;">
