@@ -9,7 +9,7 @@
  * - useEditorStore — 选中、历史、模式
  * - useDragStore   — 拖拽状态
  */
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
@@ -126,6 +126,9 @@ function handleCanvasSizeChange(preset: string) {
 // ================================================================
 // Load schema from API
 // ================================================================
+
+const currentEditId = ref('')
+const currentVersion = ref('')
 
 onMounted(async () => {
   // 接入事件日志收集器
@@ -502,8 +505,6 @@ async function handleSavePreview(dataUrl: string) {
 // Version management
 // ================================================================
 
-const currentEditId = ref('')
-const currentVersion = ref('')
 const versionPopoverVisible = ref(false)
 const versionList = ref<VersionEntry[]>([])
 const versionLoading = ref(false)
