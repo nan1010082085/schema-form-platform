@@ -13,6 +13,7 @@ import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
 import { getWidget } from '../../widgets/registry'
 import { publicStylePanel } from '../../widgets/base/publicSchema'
+import { evaluateExpression } from '../../utils/expression'
 import type { Widget, WidgetEvent, SchemaApiConfig, ConfigPanelType, ArrayFieldSchema, WidgetConfig } from '../../widgets/base/types'
 import PropertyField from './PropertyField.vue'
 import BorderEditor from './BorderEditor.vue'
@@ -90,6 +91,7 @@ interface PropertyItem {
   remoteUrl?: string
   labelField?: string
   valueField?: string
+  visibleOn?: string
 }
 
 interface PropertySection {
@@ -140,6 +142,7 @@ const propertySections = computed<PropertySection[]>(() => {
           desc: prop.desc,
           options: prop.options,
           fields: prop.fields,
+          visibleOn: prop.visibleOn,
         })
       }
     }
@@ -204,6 +207,7 @@ const propertySections = computed<PropertySection[]>(() => {
           remoteUrl: (prop as any).remoteUrl,
           labelField: (prop as any).labelField,
           valueField: (prop as any).valueField,
+          visibleOn: prop.visibleOn,
         })
       }
     }
@@ -214,6 +218,32 @@ const propertySections = computed<PropertySection[]>(() => {
 
   return sections
 })
+
+// ---- visibleOn 条件求值 ----
+
+function isItemVisible(item: PropertyItem): boolean {
+  if (!item.visibleOn) return true
+  const widget = selectedWidget.value
+  if (!widget) return true
+  try {
+    const ctx: Record<string, unknown> = {
+      props: widget.props ?? {},
+      field: widget.field,
+      type: widget.type,
+    }
+    return !!evaluateExpression(item.visibleOn, ctx)
+  } catch {
+    return true
+  }
+}
+
+// 过滤可见项的 section
+const visibleSections = computed(() =>
+  propertySections.value.map(section => ({
+    ...section,
+    items: section.items.filter(isItemVisible),
+  })).filter(section => section.items.length > 0),
+)
 
 // ---- 手风琴展开状态 ----
 
@@ -520,7 +550,7 @@ function updateBoardProperty(key: string, value: unknown) {
 
       <div :class="styles.scroll" style="overflow: auto; height: 100%;">
         <!-- 手风琴分区 -->
-        <div v-for="section in propertySections" :key="section.key" :class="styles.section">
+        <div v-for="section in visibleSections" :key="section.key" :class="styles.section">
           <div :class="styles.sectionHeader" @click="toggleSection(section.key)">
             <AppIcon v-if="expandedSections.has(section.key)" name="arrow-down" :size="12" :class="styles.arrow" />
             <AppIcon v-else name="arrow-right" :size="12" :class="styles.arrow" />
