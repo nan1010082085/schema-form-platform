@@ -680,41 +680,6 @@ function handleClearCanvas() {
       <!-- Center: preview mode -->
       <div v-if="mode === 'preview'" class="editor-view__toolbar-center">
         <span class="editor-view__preview-label">预览模式</span>
-        <el-popover
-          v-if="validation.issues.value.length > 0"
-          placement="bottom"
-          :width="400"
-          trigger="hover"
-        >
-          <template #reference>
-            <el-tag
-              :type="validation.errorCount.value > 0 ? 'danger' : 'warning'"
-              size="small"
-              style="cursor: pointer"
-            >
-              {{ validation.errorCount.value }} 错误 · {{ validation.warningCount.value }} 警告
-            </el-tag>
-          </template>
-          <div style="max-height: 300px; overflow-y: auto;">
-            <div
-              v-for="(issue, idx) in validation.issues.value"
-              :key="idx"
-              style="padding: 4px 0; font-size: 12px; border-bottom: 1px solid var(--border-color-lighter);"
-            >
-              <el-tag
-                :type="issue.severity === 'error' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info'"
-                size="small"
-                style="margin-right: 6px;"
-              >
-                {{ issue.severity }}
-              </el-tag>
-              <span style="color: var(--text-color-secondary);">{{ issue.message }}</span>
-            </div>
-          </div>
-        </el-popover>
-        <el-tag v-else-if="validation.validatedAt.value > 0" type="success" size="small">
-          校验通过
-        </el-tag>
       </div>
 
       <!-- Right: version + save + publish -->
@@ -742,6 +707,56 @@ function handleClearCanvas() {
             <span class="editor-view__zoom-value">{{ boardStore.canvas.zoom }}%</span>
             <button class="editor-view__icon-btn" :disabled="boardStore.canvas.zoom >= 200" @click="handleZoomIn">+</button>
           </div>
+          <div class="editor-view__divider" />
+          <!-- Schema validation -->
+          <el-popover
+            placement="bottom-end"
+            :width="420"
+            trigger="click"
+          >
+            <template #reference>
+              <button
+                class="editor-view__icon-btn"
+                title="Schema 校验"
+                @click="validation.runValidation()"
+              >
+                <el-badge
+                  v-if="validation.errorCount.value > 0"
+                  :value="validation.errorCount.value"
+                  :max="99"
+                  type="danger"
+                >
+                  <AppIcon name="warning" :size="14" />
+                </el-badge>
+                <AppIcon v-else name="success" :size="14" />
+              </button>
+            </template>
+            <div v-if="validation.validatedAt.value === 0" style="text-align: center; padding: 20px; color: var(--text-color-secondary);">
+              点击按钮执行校验
+            </div>
+            <div v-else-if="validation.issues.value.length === 0" style="text-align: center; padding: 20px; color: var(--color-success);">
+              ✓ 校验通过，未发现问题
+            </div>
+            <div v-else style="max-height: 360px; overflow-y: auto;">
+              <div style="padding: 0 0 8px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border-color-lighter); margin-bottom: 8px;">
+                {{ validation.errorCount.value }} 错误 · {{ validation.warningCount.value }} 警告
+              </div>
+              <div
+                v-for="(issue, idx) in validation.issues.value"
+                :key="idx"
+                style="padding: 6px 0; font-size: 12px; border-bottom: 1px solid var(--border-color-lighter);"
+              >
+                <el-tag
+                  :type="issue.severity === 'error' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info'"
+                  size="small"
+                  style="margin-right: 6px;"
+                >
+                  {{ issue.severity }}
+                </el-tag>
+                <span style="color: var(--text-color-secondary);">{{ issue.message }}</span>
+              </div>
+            </div>
+          </el-popover>
           <div class="editor-view__divider" />
           <!-- Version history -->
           <el-popover

@@ -1,22 +1,19 @@
 /**
- * useSchemaValidation — 预览时触发 Schema 校验
+ * useSchemaValidation — 手动触发 Schema 校验
  *
- * 非阻断式：校验结果以通知形式展示，不阻塞主流程。
- * 在进入预览模式时自动执行全量校验。
+ * 非阻断式：校验结果以 popover 形式展示，不阻塞主流程。
+ * 通过按钮手动触发，不自动执行。
  */
-import { ref, watch } from 'vue'
-import { useEditorStore } from '@/stores/editor'
+import { ref } from 'vue'
 import { useWidgetStore } from '@/stores/widget'
 import { validateSchema, type ValidationError, type ValidationResult } from '@/utils/schemaValidate'
 
 export function useSchemaValidation() {
-  const editorStore = useEditorStore()
   const widgetStore = useWidgetStore()
 
   const issues = ref<ValidationError[]>([])
   const lastResult = ref<ValidationResult | null>(null)
   const validatedAt = ref<number>(0)
-
   const errorCount = ref(0)
   const warningCount = ref(0)
 
@@ -31,15 +28,13 @@ export function useSchemaValidation() {
     return result
   }
 
-  // 进入预览模式时自动校验
-  watch(
-    () => editorStore.mode,
-    (mode) => {
-      if (mode === 'preview') {
-        runValidation()
-      }
-    },
-  )
+  function clearValidation() {
+    issues.value = []
+    lastResult.value = null
+    errorCount.value = 0
+    warningCount.value = 0
+    validatedAt.value = 0
+  }
 
   return {
     issues,
@@ -48,5 +43,6 @@ export function useSchemaValidation() {
     warningCount,
     validatedAt,
     runValidation,
+    clearValidation,
   }
 }
