@@ -48,8 +48,8 @@ function makeStartNode(id: string, x: number, y: number): FlowNodeData {
     shape: 'bpmn-start-event',
     x,
     y,
-    width: 40,
-    height: 40,
+    width: 200,
+    height: 44,
     data: { bpmnType: BpmnElementType.StartEvent, label: '开始' },
   }
 }
@@ -60,8 +60,8 @@ function makeEndNode(id: string, x: number, y: number): FlowNodeData {
     shape: 'bpmn-end-event',
     x,
     y,
-    width: 40,
-    height: 40,
+    width: 200,
+    height: 44,
     data: { bpmnType: BpmnElementType.EndEvent, label: '结束' },
   }
 }
@@ -79,8 +79,8 @@ function makeUserTaskNode(
     shape: 'bpmn-user-task',
     x,
     y,
-    width: 180,
-    height: 60,
+    width: 200,
+    height: 48,
     data: {
       bpmnType: BpmnElementType.UserTask,
       label,
@@ -103,8 +103,8 @@ function makeGatewayNode(
     shape: 'bpmn-exclusive-gateway',
     x,
     y,
-    width: 50,
-    height: 50,
+    width: 48,
+    height: 48,
     data: {
       bpmnType: BpmnElementType.ExclusiveGateway,
       label,
@@ -125,10 +125,10 @@ function makeEdge(id: string, source: string, target: string, label?: string): F
 
 function buildLeaveApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] } {
   const nodes = [
-    makeStartNode('start', 100, 200),
-    makeUserTaskNode('dept-approve', '部门经理审批', 240, 185, 'role', 'department_manager'),
-    makeUserTaskNode('hr-approve', 'HR 审批', 520, 185, 'role', 'hr'),
-    makeEndNode('end', 800, 200),
+    makeStartNode('start', 100, 178),
+    makeUserTaskNode('dept-approve', '部门经理审批', 340, 176, 'role', 'department_manager'),
+    makeUserTaskNode('hr-approve', 'HR 审批', 580, 176, 'role', 'hr'),
+    makeEndNode('end', 820, 178),
   ]
   const edges = [
     makeEdge('e1', 'start', 'dept-approve'),
@@ -140,12 +140,12 @@ function buildLeaveApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData
 
 function buildExpenseApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] } {
   const nodes = [
-    makeStartNode('start', 100, 200),
-    makeUserTaskNode('submit', '提交报销单', 240, 185, 'user', ''),
-    makeGatewayNode('gw-amount', '金额判断', 520, 190),
-    makeUserTaskNode('manager-approve', '经理审批', 700, 85, 'role', 'manager'),
-    makeUserTaskNode('finance-approve', '财务审批', 700, 285, 'role', 'finance'),
-    makeEndNode('end', 950, 190),
+    makeStartNode('start', 100, 178),
+    makeUserTaskNode('submit', '提交报销单', 340, 176, 'user', ''),
+    makeGatewayNode('gw-amount', '金额判断', 580, 176),
+    makeUserTaskNode('manager-approve', '经理审批', 668, 76, 'role', 'manager'),
+    makeUserTaskNode('finance-approve', '财务审批', 668, 276, 'role', 'finance'),
+    makeEndNode('end', 908, 178),
   ]
   const edges = [
     makeEdge('e1', 'start', 'submit'),
@@ -160,13 +160,13 @@ function buildExpenseApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeDa
 
 function buildPurchaseApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] } {
   const nodes = [
-    makeStartNode('start', 100, 200),
-    makeUserTaskNode('dept-apply', '部门申请', 240, 185, 'user', ''),
-    makeUserTaskNode('dept-approve', '部门经理审批', 470, 185, 'role', 'department_manager'),
-    makeGatewayNode('gw-amount', '金额判断', 700, 190),
-    makeUserTaskNode('vp-approve', 'VP 审批', 880, 85, 'role', 'vp'),
-    makeUserTaskNode('finance-confirm', '财务确认', 880, 285, 'role', 'finance'),
-    makeEndNode('end', 1120, 190),
+    makeStartNode('start', 100, 178),
+    makeUserTaskNode('dept-apply', '部门申请', 340, 176, 'user', ''),
+    makeUserTaskNode('dept-approve', '部门经理审批', 580, 176, 'role', 'department_manager'),
+    makeGatewayNode('gw-amount', '金额判断', 820, 176),
+    makeUserTaskNode('vp-approve', 'VP 审批', 908, 76, 'role', 'vp'),
+    makeUserTaskNode('finance-confirm', '财务确认', 908, 276, 'role', 'finance'),
+    makeEndNode('end', 1148, 178),
   ]
   const edges = [
     makeEdge('e1', 'start', 'dept-apply'),
@@ -182,12 +182,12 @@ function buildPurchaseApprovalGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeD
 
 function buildOnboardingGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] } {
   const nodes = [
-    makeStartNode('start', 100, 200),
-    makeUserTaskNode('hr-init', 'HR 发起入职', 240, 185, 'role', 'hr'),
-    makeUserTaskNode('it-setup', 'IT 配置账号', 470, 85, 'role', 'it'),
-    makeUserTaskNode('admin-setup', '行政准备工位', 470, 285, 'role', 'admin'),
-    makeUserTaskNode('manager-confirm', '部门经理确认', 700, 185, 'role', 'department_manager'),
-    makeEndNode('end', 940, 200),
+    makeStartNode('start', 100, 178),
+    makeUserTaskNode('hr-init', 'HR 发起入职', 340, 176, 'role', 'hr'),
+    makeUserTaskNode('it-setup', 'IT 配置账号', 580, 76, 'role', 'it'),
+    makeUserTaskNode('admin-setup', '行政准备工位', 580, 276, 'role', 'admin'),
+    makeUserTaskNode('manager-confirm', '部门经理确认', 820, 176, 'role', 'department_manager'),
+    makeEndNode('end', 1060, 178),
   ]
   const edges = [
     makeEdge('e1', 'start', 'hr-init'),
@@ -202,13 +202,13 @@ function buildOnboardingGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] 
 
 function buildResignationGraph(): { nodes: FlowNodeData[]; edges: FlowEdgeData[] } {
   const nodes = [
-    makeStartNode('start', 100, 200),
-    makeUserTaskNode('employee-submit', '员工提交离职', 240, 185, 'user', ''),
-    makeUserTaskNode('dept-approve', '部门经理审批', 470, 185, 'role', 'department_manager'),
-    makeUserTaskNode('hr-handover', 'HR 办理交接', 700, 85, 'role', 'hr'),
-    makeUserTaskNode('it-revoke', 'IT 回收权限', 700, 285, 'role', 'it'),
-    makeUserTaskNode('finance-settle', '财务结算', 930, 185, 'role', 'finance'),
-    makeEndNode('end', 1170, 200),
+    makeStartNode('start', 100, 178),
+    makeUserTaskNode('employee-submit', '员工提交离职', 340, 176, 'user', ''),
+    makeUserTaskNode('dept-approve', '部门经理审批', 580, 176, 'role', 'department_manager'),
+    makeUserTaskNode('hr-handover', 'HR 办理交接', 820, 76, 'role', 'hr'),
+    makeUserTaskNode('it-revoke', 'IT 回收权限', 820, 276, 'role', 'it'),
+    makeUserTaskNode('finance-settle', '财务结算', 1060, 176, 'role', 'finance'),
+    makeEndNode('end', 1300, 178),
   ]
   const edges = [
     makeEdge('e1', 'start', 'employee-submit'),
