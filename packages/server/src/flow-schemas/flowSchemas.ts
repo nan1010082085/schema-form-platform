@@ -15,6 +15,7 @@ export const updateFlowSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(1000).optional(),
   category: z.string().max(100).optional(),
+  thumbnail: z.string().optional(),
   permissions: z.object({
     editors: z.array(z.string()).optional(),
     launchers: z.array(z.string()).optional(),
