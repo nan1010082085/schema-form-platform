@@ -206,7 +206,7 @@ import { useFlowDefinitionStore } from '../stores/flowDefinition.js'
 import { useAutoLayout } from '../composables/useAutoLayout.js'
 import { flowApi } from '../api/flowApi.js'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
-import { captureThumbnail } from '../composables/useFlowThumbnail.js'
+import { generateThumbnail } from '../composables/useFlowThumbnail.js'
 import styles from './FlowDesigner.module.scss'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
@@ -528,13 +528,11 @@ async function onSave() {
       })) as { id: string }
       definitionId.value = def.id
     } else {
-      // Update definition metadata + thumbnail
-      const thumbnail = await captureThumbnail(canvasRef.value?.getContainerEl())
+      // Update definition metadata
       await flowApi.updateFlow(definitionId.value, {
         name: flowTitle.value,
         description: flowSettings.description,
         category: flowSettings.category,
-        thumbnail,
         permissions: flowSettings.permissions,
       })
     }
@@ -552,6 +550,12 @@ async function onSave() {
     // 更新当前版本号
     if (savedVersion?.version) {
       currentVersion.value = savedVersion.version
+    }
+
+    // 生成缩略图（从 graph 数据直接渲染 SVG，不依赖 DOM 截图）
+    const thumbnail = generateThumbnail(flowGraph)
+    if (thumbnail) {
+      await flowApi.updateFlow(definitionId.value, { thumbnail })
     }
 
     store.markClean()
@@ -673,7 +677,8 @@ async function onSaveAsTemplate() {
   }
 
   try {
-    const thumbnail = await captureThumbnail(canvasRef.value?.getContainerEl())
+    const flowGraph = graphStore.toFlowGraph()
+    const thumbnail = generateThumbnail(flowGraph)
     await templateStore.saveAsTemplate(definitionId.value, {
       name: templateName.trim(),
       description: flowSettings.description,
