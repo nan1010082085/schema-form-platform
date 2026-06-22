@@ -6,6 +6,7 @@ import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowTemplateView.module.scss'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import FlowGraphPreview from '../components/FlowGraphPreview.vue'
 
 const router = useRouter()
 const store = useFlowTemplateStore()
@@ -21,6 +22,12 @@ const previewTemplateId = ref<string | null>(null)
 const categories = computed(() => {
   const set = new Set(store.templates.map((t) => t.category).filter(Boolean))
   return Array.from(set)
+})
+
+const previewGraph = computed(() => {
+  if (!previewTemplateId.value) return null
+  const tpl = store.templates.find((t) => t.id === previewTemplateId.value)
+  return tpl?.graph ?? null
 })
 
 onMounted(async () => {
@@ -234,11 +241,11 @@ function formatDate(dateStr: string | Date) {
     <AppDialog
       v-model="previewDialogVisible"
       title="模板预览"
-      width="720px"
+      width="80%"
       destroy-on-close
     >
       <div :class="styles.previewContainer">
-        <el-empty description="流程图预览功能开发中" />
+        <FlowGraphPreview :graph="previewGraph" />
       </div>
       <template #footer>
         <el-button @click="previewDialogVisible = false">关闭</el-button>
