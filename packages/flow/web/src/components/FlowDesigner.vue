@@ -528,11 +528,13 @@ async function onSave() {
       })) as { id: string }
       definitionId.value = def.id
     } else {
-      // Update definition metadata
+      // Update definition metadata + thumbnail
+      const thumbnail = await captureThumbnail(canvasRef.value?.getContainerEl())
       await flowApi.updateFlow(definitionId.value, {
         name: flowTitle.value,
         description: flowSettings.description,
         category: flowSettings.category,
+        thumbnail,
         permissions: flowSettings.permissions,
       })
     }

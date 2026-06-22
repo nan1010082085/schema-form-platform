@@ -10,6 +10,7 @@ export interface FlowDefinitionData {
   category?: string
   status: FlowDefinitionStatus
   currentVersionId?: string
+  thumbnail?: string
   createdBy: string
   permissions?: FlowPermissions
   createdAt: Date

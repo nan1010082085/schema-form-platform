@@ -9,6 +9,7 @@ export interface IFlowDefinition {
   category?: string
   status: 'draft' | 'published' | 'archived'
   currentVersionId?: string
+  thumbnail?: string
   createdBy: string
   permissions: {
     editors: string[]
@@ -32,6 +33,7 @@ const flowDefinitionSchema = new mongoose.Schema(
       default: 'draft',
     },
     currentVersionId: { type: String, default: null },
+    thumbnail: { type: String, default: '' },
     createdBy: { type: String, required: true },
     permissions: {
       editors: { type: [String], default: [] },

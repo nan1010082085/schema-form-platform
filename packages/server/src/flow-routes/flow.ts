@@ -115,15 +115,17 @@ router.put('/:id', requireAuth, requireFlowDesign, validate(updateFlowSchema), a
   }
 
   const data: Record<string, unknown> = {}
-  const { name, description, category, permissions } = ctx.request.body as {
+  const { name, description, category, thumbnail, permissions } = ctx.request.body as {
     name?: string
     description?: string
     category?: string
+    thumbnail?: string
     permissions?: { editors?: string[]; launchers?: string[]; viewers?: string[] }
   }
   if (name !== undefined) data.name = name.trim()
   if (description !== undefined) data.description = description
   if (category !== undefined) data.category = category
+  if (thumbnail !== undefined) data.thumbnail = thumbnail
   if (permissions !== undefined) {
     data.permissions = {
       editors: permissions.editors ?? existing.permissions?.editors ?? [],

@@ -205,9 +205,10 @@ function fetchDefinitions() {
     <div v-else :class="styles.content">
       <div :class="styles.cardGrid">
         <div v-for="item in filteredDefinitions" :key="item.id" :class="styles.card">
-          <!-- 缩略图占位 -->
+          <!-- 缩略图 -->
           <div :class="styles.cardThumb" @click="handleEdit(item.id)">
-            <AppIcon name="connection" :size="32" :class="styles.thumbIcon" />
+            <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" :class="styles.thumbImg" />
+            <AppIcon v-else name="connection" :size="32" :class="styles.thumbIcon" />
           </div>
 
           <!-- 卡片内容 -->

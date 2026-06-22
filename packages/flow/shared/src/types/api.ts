@@ -14,6 +14,7 @@ export interface UpdateFlowDefinitionDto {
   name?: string
   description?: string
   category?: string
+  thumbnail?: string
   permissions?: FlowPermissions
 }
 
