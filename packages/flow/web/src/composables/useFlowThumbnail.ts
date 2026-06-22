@@ -1,7 +1,5 @@
 /**
- * useFlowThumbnail — 从 FlowGraph 数据生成 SVG 缩略图
- *
- * 不依赖 DOM 截图，直接根据节点坐标和类型渲染简化的 SVG。
+ * 从 FlowGraph 节点数据生成 SVG 缩略图 base64
  */
 import type { FlowGraph } from '@schema-form/flow-shared'
 
@@ -96,11 +94,4 @@ export function generateThumbnail(graph: FlowGraph): string {
     ? btoa(unescape(encodeURIComponent(svg)))
     : Buffer.from(svg).toString('base64')
   return `data:image/svg+xml;base64,${encoded}`
-}
-
-/**
- * 捕获 DOM 缩略图（降级方案，优先用 generateThumbnail）
- */
-export async function captureThumbnail(): Promise<string> {
-  return ''
 }
