@@ -10,7 +10,6 @@ packages/
 ├── editor/        # 可视化表单设计器（49 个 Widget）
 ├── flow/          # BPMN 流程设计器
 ├── ai/            # AI 对话式生成
-├── admin/         # 系统管理
 ├── server/        # Koa.js 后端 + MongoDB
 └── shared/        # 共享包（组件/样式/工具/配置）
 ```
@@ -30,7 +29,6 @@ pnpm dev           # 启动所有服务
 | Editor | http://localhost:5100 | 表单设计器 |
 | Flow | http://localhost:5200 | 流程设计器 |
 | AI | http://localhost:5300 | AI 助手 |
-| Admin | http://localhost:5555 | 系统管理 |
 | API | http://localhost:3001 | 后端接口 |
 
 ## 常用命令
@@ -57,13 +55,12 @@ pnpm db:seed          # 种子数据
 
 ## 文档
 
-各包文档位于 `packages/*/docs/`：
-
-- [Shell](./packages/shell/docs/) — 微前端容器、路由
-- [Editor](./packages/editor/docs/) — Widget 系统、渲染引擎
-- [Flow](./packages/flow/docs/) — 流程节点、运行时
-- [Server](./packages/server/docs/) — API 接口、数据模型
-- [Shared](./packages/shared/docs/) — 共享组件、样式
+- **[平台集成指南](./docs/integration-guide.md)** — Editor / Flow / AI 三平台外部集成说明
+- [Editor 文档](./packages/editor/docs/) — Widget 系统、渲染引擎、属性面板
+- [Flow 文档](./packages/flow/docs/) — 流程节点、运行时、配置
+- [AI 文档](./packages/ai/docs/) — Agent、MCP、工具、事件协议
+- [Server 文档](./packages/server/docs/) — API 接口、数据模型
+- [Shared 文档](./packages/shared/docs/) — 共享组件、样式
 
 ## 部署
 

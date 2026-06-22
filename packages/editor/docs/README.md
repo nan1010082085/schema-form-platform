@@ -10,6 +10,14 @@ pnpm build:editor  # 构建
 pnpm --filter @schema-form/editor-web test  # 运行测试
 ```
 
+## 外部集成
+
+参见 [平台集成指南](../../docs/integration-guide.md#一editor表单设计器)：
+- qiankun / micro-app 微前端接入
+- REST API 接口（Schema CRUD、发布）
+- Widget 渲染器独立使用
+- Schema JSON 数据结构
+
 ## 文档目录
 
 - [组件架构](./architecture.md) — Widget 系统、渲染引擎、编辑器核心
