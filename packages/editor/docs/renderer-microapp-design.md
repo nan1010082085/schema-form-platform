@@ -28,32 +28,58 @@
   → 宿主通过 qiankun 直接注册
 ```
 
-### 两种微前端，用途不同
+### 微前端方案：统一使用 qiankun
+
+项目**只使用 qiankun v2**，没有使用 `@micro-zoe/micro-app`（京东微前端）。
+
+qiankun 在项目中有两个用途：
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ 宿主应用（shell / admin / 第三方）                     │
+│ 宿主应用（shell）                                      │
 │                                                      │
-│  ① qiankun 加载的是：编辑器 / 渲染器（我们提供的）     │
+│  ① qiankun 注册子应用（编辑器/渲染器/flow/ai）         │
 │  ┌────────────────────────────────────────────────┐  │
-│  │ 渲染器（qiankun 子应用）                         │  │
+│  │ 编辑器（qiankun 子应用）                         │  │
 │  │                                                │  │
-│  │  Schema Widget 渲染时：                          │  │
-│  │  ② micro-app-container Widget                   │  │
-│  │    └── @micro-zoe/micro-app 加载外部应用         │  │
+│  │  Schema 中的 micro-app-container Widget:         │  │
+│  │  ② qiankun loadMicroApp 加载子应用              │  │
+│  │     模式 A: qiankun 模式 → loadMicroApp(app)    │  │
+│  │     模式 B: iframe 模式 → <iframe :src="url">   │  │
 │  │        ┌──────────────────────────────┐        │  │
-│  │        │ 外部子应用（审批流/仪表盘）    │        │  │
+│  │        │ 子应用（flow/ai/editor）      │        │  │
 │  │        └──────────────────────────────┘        │  │
 │  └────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────┘
 ```
 
-| | qiankun | @micro-zoe/micro-app |
-|---|---|---|
-| **用途** | 宿主加载编辑器/渲染器 | 编辑器/渲染器加载外部应用 |
-| **方向** | 宿主 → 我们 | 我们 → 外部 |
-| **场景** | shell 注册 editor/renderer | Schema 中 micro-app-container Widget |
-| **粒度** | 整个编辑器/渲染器 | 单个 Widget 内嵌 |
+| 用途 | 机制 | 场景 |
+|------|------|------|
+| **宿主加载编辑器/渲染器** | qiankun `registerMicroApps` | shell 注册 editor/renderer/flow/ai |
+| **编辑器内加载子应用** | qiankun `loadMicroApp` 或 iframe | Schema 中 micro-app-container Widget |
+
+### micro-app-container Widget 配置
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `microappMode` | `'iframe' \| 'qiankun'` | 嵌入模式，默认 iframe |
+| `microappUrl` | string | iframe 模式的 URL（支持 `${variable}` 模板） |
+| `microappBaseUrl` | string | 基础 URL |
+| `microappApp` | `'editor' \| 'flow' \| 'ai'` | qiankun 模式的子应用名 |
+| `height` | string | 容器高度 |
+| `variables` | object | URL 模板变量 |
+
+### 已有共享层：@schema-form/shared-qiankun
+
+| 模块 | 职责 |
+|------|------|
+| `config.ts` | AppName 类型 + APP_CONFIGS 配置表 + getAppUrl() |
+| `MicroAppContainer.vue` | 统一容器组件（iframe/qiankun 双模式） |
+| `useMicroApp.ts` | 微应用嵌入 composable（MicroAppMode, LoadMicroAppFn） |
+| `createQiankunApp.ts` | 子应用工厂（bootstrap/mount/unmount + 500ms 兜底） |
+| `useQiankun.ts` | 全局状态管理（setGlobalState/onGlobalStateChange） |
+| `useQiankunEvent.ts` | 子应用间事件通信（postMessage） |
+| `themeGuard.ts` | 主题守卫（MutationObserver 防 CSS 注入） |
 
 ---
 
@@ -230,20 +256,36 @@ registerMicroApps([{
 
 ### 3.3 场景三：渲染器内嵌子应用
 
-Schema 配置中包含 `micro-app-container`，渲染器自动加载：
+Schema 中包含 `micro-app-container` Widget，渲染器渲染时自动加载子应用：
 
 ```json
 {
   "type": "micro-app-container",
   "props": {
-    "url": "http://localhost:4000",
-    "name": "approval-flow",
-    "params": { "orderId": "123" }
+    "microappMode": "iframe",
+    "microappUrl": "http://localhost:4000?orderId=${orderId}",
+    "variables": { "orderId": "123" }
   }
 }
 ```
 
-渲染器渲染到这个 Widget 时，自动通过 `@micro-zoe/micro-app` 加载子应用。宿主无需额外配置。
+或 qiankun 模式：
+
+```json
+{
+  "type": "micro-app-container",
+  "props": {
+    "microappMode": "qiankun",
+    "microappApp": "flow"
+  }
+}
+```
+
+渲染器渲染到此 Widget 时：
+- **iframe 模式**：渲染 `<iframe :src="解析后的URL">`
+- **qiankun 模式**：调用 `loadMicroApp(appName)` 加载子应用
+
+宿主无需额外配置，Schema 驱动自动完成。
 
 ### 3.4 场景四：iframe 嵌入（postMessage）
 
