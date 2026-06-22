@@ -1,7 +1,7 @@
 import { ClientModel } from '../models/Client.js'
 import { DEFAULT_TENANT_ID } from './initDefaultTenant.js'
 
-const PROD_ORIGIN = 'http://***REMOVED***:8828'
+const PROD_ORIGIN = process.env.PROD_ORIGIN || 'http://localhost:8828'
 
 const DEFAULT_CLIENTS = [
   {

@@ -2,14 +2,17 @@
  * 删除数据库中的所有 Schema 实例数据
  *
  * 使用方式：
- *   node scripts/delete-schemas.js
+ *   MONGODB_URI=mongodb://user:pass@host:port/db node scripts/delete-schemas.js
  *
  * 注意：此操作不可逆，请确保已备份数据
  */
 const mongoose = require('mongoose')
 
-const MONGODB_URI = process.env.MONGODB_URI ||
-  'mongodb://formgrid:***REMOVED***@***REMOVED***:27018/schema-form?authSource=admin'
+const MONGODB_URI = process.env.MONGODB_URI
+if (!MONGODB_URI) {
+  console.error('Error: MONGODB_URI environment variable is required')
+  process.exit(1)
+}
 
 async function main() {
   console.log('Connecting to MongoDB...')

@@ -8,9 +8,11 @@ MongoDB 8，通过 Mongoose ODM 连接。
 
 | 环境 | 连接地址 |
 |------|----------|
-| 本地开发 | `mongodb://formgrid:***REMOVED***@***REMOVED***:27018/schema-form?authSource=admin` |
-| 本地 Docker | `mongodb://formgrid:formgrid@localhost:27017/formgrid` |
+| 本地开发 | `mongodb://user:pass@localhost:27017/schema-form?authSource=admin` |
+| 本地 Docker | `mongodb://user:pass@localhost:27017/formgrid` |
 | 生产 | `mongodb://127.0.0.1:27017/schema-form` |
+
+**注意**：请在 `.env` 文件中配置实际的连接字符串，不要硬编码在代码中。
 
 ## Docker 本地开发
 
