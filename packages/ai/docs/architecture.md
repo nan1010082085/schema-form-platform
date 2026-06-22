@@ -1,6 +1,8 @@
-# AI 架构文档
+# AI 架构文档 v1
 
 > packages/ai 项目的 Agent、MCP、Tool 架构说明
+>
+> **注意**：v2 架构已设计完成，详见 [architecture-v2.md](./architecture-v2.md)
 
 ## 一、整体架构
 
@@ -407,15 +409,17 @@ Server                              Client
 
 ```
 packages/ai/docs/
-├── architecture.md     # 架构文档（本文件）
-├── agent.md            # Agent 详细说明
-├── tool.md             # Tool 详细说明
-├── mcp.md              # MCP 详细说明
-└── events.md           # 事件协议
+├── architecture.md       # 架构文档 v1（本文件）
+├── architecture-v2.md    # 架构文档 v2（新增需求分析和思考推理）
+├── agent.md              # Agent 详细说明
+├── tool.md               # Tool 详细说明
+├── mcp.md                # MCP 详细说明
+└── events.md             # 事件协议
 ```
 
 ## 九、相关文档
 
+- [架构 v2](./architecture-v2.md) — 新增需求分析、任务规划、思考推理
 - [Agent 详细说明](./agent.md) — Agent 类型、职责、执行流程
 - [Tool 详细说明](./tool.md) — 工具定义、注册、执行和扩展
 - [MCP 详细说明](./mcp.md) — Model Context Protocol 概念和实现
