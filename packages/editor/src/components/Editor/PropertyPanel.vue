@@ -13,7 +13,6 @@ import { useWidgetStore } from '../../stores/widget'
 import { useBoardStore } from '../../stores/board'
 import { getWidget } from '../../widgets/registry'
 import { publicStylePanel } from '../../widgets/base/publicSchema'
-import { evaluateExpression } from '../../utils/expression'
 import type { Widget, WidgetEvent, SchemaApiConfig, ConfigPanelType, ArrayFieldSchema, WidgetConfig } from '../../widgets/base/types'
 import PropertyField from './PropertyField.vue'
 import BorderEditor from './BorderEditor.vue'
@@ -221,17 +220,27 @@ const propertySections = computed<PropertySection[]>(() => {
 
 // ---- visibleOn 条件求值 ----
 
+// 编译缓存
+const visibleOnCache = new Map<string, (props: Record<string, unknown>) => boolean>()
+
+function compileVisibleOn(expr: string): (props: Record<string, unknown>) => boolean {
+  const cached = visibleOnCache.get(expr)
+  if (cached) return cached
+
+  // 将 "props.xxx === 'yyy'" 转换为 Function
+  // 安全：visibleOn 来自 config.ts，非用户输入
+  const fn = new Function('props', `"use strict"; return (${expr})`) as (props: Record<string, unknown>) => boolean
+  visibleOnCache.set(expr, fn)
+  return fn
+}
+
 function isItemVisible(item: PropertyItem): boolean {
   if (!item.visibleOn) return true
   const widget = selectedWidget.value
   if (!widget) return true
   try {
-    const ctx: Record<string, unknown> = {
-      props: widget.props ?? {},
-      field: widget.field,
-      type: widget.type,
-    }
-    return !!evaluateExpression(item.visibleOn, ctx)
+    const fn = compileVisibleOn(item.visibleOn)
+    return !!fn(widget.props ?? {})
   } catch {
     return true
   }
