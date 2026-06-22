@@ -231,21 +231,21 @@ onMounted(() => {
         </div>
       </div>
       <div :class="$style.topbarRight">
-        <t-button
-          theme="primary"
+        <el-button
+          type="primary"
           size="small"
           :loading="reindexing"
           @click="handleReindexAll"
         >
           {{ reindexing ? '索引中...' : '批量重建索引' }}
-        </t-button>
-        <t-button
+        </el-button>
+        <el-button
           size="small"
           :loading="loading"
           @click="loadStatus"
         >
           刷新状态
-        </t-button>
+        </el-button>
       </div>
     </div>
 
@@ -290,76 +290,71 @@ onMounted(() => {
         <div :class="$style.sectionHeader">
           <h3 :class="$style.sectionTitle">未索引 Schema</h3>
           <div :class="$style.bulkActions">
-            <t-button
+            <el-button
               size="small"
-              :theme="bulkMode ? 'danger' : 'default'"
+              :type="bulkMode ? 'danger' : 'default'"
               @click="toggleBulkMode"
             >
               {{ bulkMode ? '取消' : '批量操作' }}
-            </t-button>
+            </el-button>
             <template v-if="bulkMode">
-              <t-button
+              <el-button
                 size="small"
-                theme="primary"
+                type="primary"
                 :disabled="selectedIds.size === 0"
                 :loading="bulkProcessing"
                 @click="handleBulkReindex"
               >
                 批量索引 ({{ selectedIds.size }})
-              </t-button>
-              <t-button
+              </el-button>
+              <el-button
                 size="small"
-                theme="danger"
+                type="danger"
                 :disabled="selectedIds.size === 0"
                 :loading="bulkProcessing"
                 @click="handleBulkDeleteEmbedding"
               >
                 批量删除索引 ({{ selectedIds.size }})
-              </t-button>
+              </el-button>
             </template>
           </div>
         </div>
-        <t-table
+        <el-table
           :data="status?.unindexedSchemas ?? []"
           :class="$style.table"
           stripe
           size="small"
           empty-text="所有 Schema 均已索引"
-          :columns="[
-            ...(bulkMode ? [{ colKey: 'select', title: '', width: 48 }] : []),
-            { colKey: 'name', title: '名称', minWidth: 200 },
-            { colKey: 'type', title: '类型', width: 120 },
-            { colKey: 'action', title: '操作', width: 160, fixed: 'right' },
-          ]"
         >
-          <template #select="{ row }">
-            <t-checkbox
-              :checked="selectedIds.has(row.id)"
-              @change="toggleSelect(row.id)"
-            />
-          </template>
-          <template #header-select>
-            <t-checkbox
-              :checked="allSelected"
-              @change="toggleSelectAll"
-            />
-          </template>
-          <template #type="{ row }">
-            <t-tag size="small" :theme="row.type === 'form' ? 'primary' : 'success'">
-              {{ getSchemaTypeLabel(row.type) }}
-            </t-tag>
-          </template>
-          <template #action="{ row }">
-            <t-button
-              theme="primary"
-              variant="text"
-              size="small"
-              @click="handleReindexSingle(row.id)"
-            >
-              建立索引
-            </t-button>
-          </template>
-        </t-table>
+          <el-table-column v-if="bulkMode" label="" width="48">
+            <template #default="{ row }">
+              <el-checkbox
+                :model-value="selectedIds.has(row.id)"
+                @change="toggleSelect(row.id)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="name" label="名称" min-width="200" />
+          <el-table-column prop="type" label="类型" width="120">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.type === 'form' ? 'primary' : 'success'">
+                {{ getSchemaTypeLabel(row.type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="160" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="handleReindexSingle(row.id)"
+              >
+                建立索引
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
 
       <!-- Search test -->
@@ -368,20 +363,20 @@ onMounted(() => {
           <h3 :class="$style.sectionTitle">语义搜索测试</h3>
         </div>
         <div :class="$style.searchArea">
-          <t-input
-            v-model:value="searchQuery"
+          <el-input
+            v-model="searchQuery"
             :class="$style.searchInput"
             placeholder="输入自然语言描述，如：用户注册表单"
             clearable
-            @enter="handleSearch"
+            @keyup.enter="handleSearch"
           />
-          <t-button
-            theme="primary"
+          <el-button
+            type="primary"
             :loading="searchLoading"
             @click="handleSearch"
           >
             搜索
-          </t-button>
+          </el-button>
         </div>
 
         <div :class="$style.searchResults">
