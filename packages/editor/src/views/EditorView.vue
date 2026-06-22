@@ -27,6 +27,7 @@ import EditorLeftPanel from '@/components/Editor/EditorLeftPanel.vue'
 import PropertyPanel from '@/components/Editor/PropertyPanel.vue'
 import EventLogPanel from '@/components/Editor/EventLogPanel.vue'
 import { setLogCollector } from '@/composables/useLogger'
+import { useSchemaValidation } from '@/composables/useSchemaValidation'
 import { useEventLog } from '@/composables/useEventLog'
 import type { Widget } from '@/widgets/base/types'
 import { fetchVersions, fetchVersion } from '@/utils/apiClient'
@@ -44,6 +45,7 @@ const router = useRouter()
 const boardStore = useBoardStore()
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()
+const validation = useSchemaValidation()
 const apiStore = useApiStore()
 const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
@@ -678,6 +680,41 @@ function handleClearCanvas() {
       <!-- Center: preview mode -->
       <div v-if="mode === 'preview'" class="editor-view__toolbar-center">
         <span class="editor-view__preview-label">预览模式</span>
+        <el-popover
+          v-if="validation.issues.value.length > 0"
+          placement="bottom"
+          :width="400"
+          trigger="hover"
+        >
+          <template #reference>
+            <el-tag
+              :type="validation.errorCount.value > 0 ? 'danger' : 'warning'"
+              size="small"
+              style="cursor: pointer"
+            >
+              {{ validation.errorCount.value }} 错误 · {{ validation.warningCount.value }} 警告
+            </el-tag>
+          </template>
+          <div style="max-height: 300px; overflow-y: auto;">
+            <div
+              v-for="(issue, idx) in validation.issues.value"
+              :key="idx"
+              style="padding: 4px 0; font-size: 12px; border-bottom: 1px solid var(--border-color-lighter);"
+            >
+              <el-tag
+                :type="issue.severity === 'error' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info'"
+                size="small"
+                style="margin-right: 6px;"
+              >
+                {{ issue.severity }}
+              </el-tag>
+              <span style="color: var(--text-color-secondary);">{{ issue.message }}</span>
+            </div>
+          </div>
+        </el-popover>
+        <el-tag v-else-if="validation.validatedAt.value > 0" type="success" size="small">
+          校验通过
+        </el-tag>
       </div>
 
       <!-- Right: version + save + publish -->
