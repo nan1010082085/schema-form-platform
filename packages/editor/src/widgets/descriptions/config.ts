@@ -57,7 +57,7 @@ export const descriptionsConfig: WidgetConfig = {
         { label: '4 列', value: 4 },
       ]},
       { key: 'border', label: '显示边框', type: 'switch', default: true },
-      { key: 'items', label: '字段列表', type: 'array', fields: [
+      { key: 'items', label: '字段列表', type: 'array-editor', itemLabel: 'label', fields: [
         { key: 'label', label: '标签', type: 'text', placeholder: '显示名称' },
         { key: 'field', label: '字段', type: 'text', placeholder: '数据字段名' },
         { key: 'type', label: '类型', type: 'select', default: 'text', options: [

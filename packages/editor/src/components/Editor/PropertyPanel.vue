@@ -544,6 +544,7 @@ function updateBoardProperty(key: string, value: unknown) {
                 <GenericArrayEditor
                   :value="(item.value as unknown[]) ?? []"
                   :fields="item.fields ?? []"
+                  :item-label="item.itemLabel"
                   @update="(v: unknown[]) => updateProperty(item.key, v)"
                 />
               </div>

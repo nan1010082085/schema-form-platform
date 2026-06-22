@@ -357,6 +357,7 @@ export type PropertyPanelItem =
       placeholder?: string
       options?: { label: string; value: string | number | boolean }[]
       fields?: ArrayFieldSchema[]
+      itemLabel?: string
       visibleOn?: string
     }
 

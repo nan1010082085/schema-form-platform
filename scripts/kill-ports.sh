@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Kill processes on fixed development ports
-PORTS=(3001 5050 5100 5200 5300 5555)
+# Kill processes on development ports
+ports=(3001 5051 5100 5173 5174 5175 5555)
 
-for port in "${PORTS[@]}"; do
+for port in "${ports[@]}"; do
   pid=$(lsof -ti :$port 2>/dev/null)
   if [ -n "$pid" ]; then
     echo "Killing process on port $port (PID: $pid)"
