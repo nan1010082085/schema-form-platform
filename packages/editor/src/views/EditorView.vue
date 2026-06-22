@@ -50,6 +50,7 @@ const apiStore = useApiStore()
 const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
+const aiIframeRef = ref<HTMLIFrameElement>()
 
 // 自动保存：脏数据 60 秒后自动触发保存（偏好持久化到 localStorage）
 const autoSaveEnabled = ref(localStorage.getItem('editor_auto_save') !== 'off')
@@ -228,6 +229,48 @@ onMounted(async () => {
     }
   })
 })
+
+// ================================================================
+// AI iframe 通信
+// ================================================================
+
+function sendContextToAi() {
+  const iframe = aiIframeRef.value
+  if (!iframe?.contentWindow) return
+
+  const context = {
+    type: 'ai:set-context',
+    payload: {
+      source: 'editor',
+      schemaId: boardStore.id,
+      editorMode: editorStore.mode,
+    },
+  }
+
+  const currentSchema = {
+    type: 'ai:current-schema',
+    payload: widgetStore.widgets,
+  }
+
+  iframe.contentWindow.postMessage(context, '*')
+  iframe.contentWindow.postMessage(currentSchema, '*')
+}
+
+function onAiIframeLoad() {
+  // 延迟发送，确保 AI sidebar 已准备好接收消息
+  setTimeout(sendContextToAi, 500)
+}
+
+// 监听 Schema 变化，实时更新 AI sidebar
+watch(
+  () => widgetStore.widgets,
+  () => {
+    if (showAiDrawer.value) {
+      sendContextToAi()
+    }
+  },
+  { deep: true },
+)
 
 // 页面刷新/关闭拦截
 function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -936,9 +979,11 @@ function handleClearCanvas() {
         <div class="editor-view__ai-inner">
           <iframe
             v-if="showAiDrawer"
+            ref="aiIframeRef"
             :src="aiBaseUrl + '?agent=editor'"
             class="editor-view__ai-iframe"
             frameborder="0"
+            @load="onAiIframeLoad"
           />
         </div>
       </div>

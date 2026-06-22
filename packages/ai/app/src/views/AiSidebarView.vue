@@ -252,6 +252,10 @@ onMounted(() => {
     store.setCurrentSchema(payload)
   })
 
+  bridge.on('ai:current-flow', (payload) => {
+    store.setCurrentFlow(payload)
+  })
+
   // qiankun 模式：从全局状态读取初始数据
   if (window.__POWERED_BY_QIANKUN__) {
     const { getGlobalState, onGlobalStateChange } = useQiankun()

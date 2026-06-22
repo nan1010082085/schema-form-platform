@@ -30,6 +30,7 @@ interface BridgeOutgoingEvents {
 interface BridgeIncomingEvents {
   'ai:set-context': { payload: Partial<ChatContext> }
   'ai:current-schema': { payload: Widget[] }
+  'ai:current-flow': { payload: FlowGraph }
 }
 
 type BridgeEventHandler<T> = (payload: T) => void

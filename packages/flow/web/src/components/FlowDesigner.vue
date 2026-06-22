@@ -265,9 +265,46 @@ function onAiIframeMessage(event: MessageEvent) {
   }
 }
 
+function sendContextToAi() {
+  const iframe = document.querySelector(`.${styles.aiIframe}`) as HTMLIFrameElement
+  if (!iframe?.contentWindow) return
+
+  const context = {
+    type: 'ai:set-context',
+    payload: {
+      source: 'flow',
+      flowId: definitionId.value || undefined,
+    },
+  }
+
+  const currentFlow = {
+    type: 'ai:current-flow',
+    payload: {
+      nodes: graphStore.nodes,
+      edges: graphStore.edges,
+    },
+  }
+
+  iframe.contentWindow.postMessage(context, '*')
+  iframe.contentWindow.postMessage(currentFlow, '*')
+}
+
 function onAiIframeLoad() {
   window.addEventListener('message', onAiIframeMessage)
+  // 延迟发送上下文，确保 AI sidebar 已准备好接收消息
+  setTimeout(sendContextToAi, 500)
 }
+
+// 监听 Flow 变化，实时更新 AI sidebar
+watch(
+  () => [graphStore.nodes, graphStore.edges],
+  () => {
+    if (showAiDrawer.value) {
+      sendContextToAi()
+    }
+  },
+  { deep: true },
+)
 
 const validationErrors = ref<ValidationError[]>([])
 const flowSettings = reactive({
