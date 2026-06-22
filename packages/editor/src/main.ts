@@ -81,12 +81,16 @@ export async function bootstrap() {
   console.log('[editor-web] bootstrap')
 }
 
-export async function mount(props: { container?: HTMLElement }) {
+export async function mount(props: { container?: HTMLElement; initialPath?: string }) {
   console.log('[editor-web] mount', props)
   app = createEditorApp()
   const container = props.container
   const mountEl = container?.querySelector('#app') ?? container ?? document.getElementById('app')!
   app.mount(mountEl)
+  // 支持宿主指定初始路由（admin 加载 Schema 渲染时使用）
+  if (props.initialPath) {
+    router.push(props.initialPath)
+  }
 }
 
 export async function unmount() {
