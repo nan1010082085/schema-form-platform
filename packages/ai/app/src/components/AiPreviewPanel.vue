@@ -313,15 +313,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
         </span>
       </div>
       <div :class="$style.headerActions">
-        <t-button
+        <el-button
           v-if="showCompareButton"
           :class="$style.headerBtn"
           title="对比模式"
-          variant="text"
+          link
           @click="emit('compare')"
         >
           &#x2194;
-        </t-button>
+        </el-button>
       </div>
     </div>
 
@@ -369,15 +369,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
             <span :class="$style.previewCardTitle">{{ schemaData.title }}</span>
             <div :class="$style.previewCardActions">
               <span :class="$style.badge">{{ schemaData.fields.length }} fields</span>
-              <t-button
+              <el-button
                 v-if="formWidgets.length > 0"
                 :class="$style.selectAllBtn"
-                variant="text"
+                link
                 size="small"
                 @click="handleSelectAll"
               >
                 全选
-              </t-button>
+              </el-button>
             </div>
           </div>
           <div :class="$style.formPreview">
@@ -395,7 +395,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                   @click="handleFieldClick(w)"
                 >
                   <!-- 选择框 -->
-                  <t-checkbox
+                  <el-checkbox
                     :model-value="interaction.selectedWidgetIds.value.has(w.id)"
                     :class="$style.fieldCheckbox"
                     @click.stop
@@ -409,8 +409,8 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                       <div :class="$style.inlineEditHeader">
                         <span :class="$style.inlineEditTitle">编辑组件</span>
                         <div :class="$style.inlineEditActions">
-                          <t-button :class="$style.inlineEditConfirm" title="确认" variant="text" size="small" @click.stop="handleCommitInlineEdit">&#x2713;</t-button>
-                          <t-button :class="$style.inlineEditCancel" title="取消" variant="text" size="small" @click.stop="handleCancelInlineEdit">&times;</t-button>
+                          <el-button :class="$style.inlineEditConfirm" title="确认" link size="small" @click.stop="handleCommitInlineEdit">&#x2713;</el-button>
+                          <el-button :class="$style.inlineEditCancel" title="取消" link size="small" @click.stop="handleCancelInlineEdit">&times;</el-button>
                         </div>
                       </div>
                       <div :class="$style.inlineEditFields">
@@ -420,7 +420,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                           :class="$style.inlineEditRow"
                         >
                           <label :class="$style.inlineEditLabel">{{ prop.label }}</label>
-                          <t-input
+                          <el-input
                             v-if="prop.type === 'input'"
                             :model-value="(interaction.inlineEditData.value[prop.key] as string) ?? ''"
                             size="small"
@@ -443,7 +443,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                         v-if="['input', 'number', 'date', 'textarea', 'richtext'].includes(w.type)"
                         :label="w.label ?? w.field ?? w.type"
                       >
-                        <t-input
+                        <el-input
                           :type="w.type === 'textarea' ? 'textarea' : 'text'"
                           :placeholder="getWidgetPlaceholder(w)"
                           :rows="w.type === 'textarea' ? 3 : undefined"
@@ -456,14 +456,14 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                         v-else-if="w.type === 'select'"
                         :label="w.label ?? w.field ?? 'select'"
                       >
-                        <t-select placeholder="请选择" disabled style="width: 100%">
+                        <el-select placeholder="请选择" disabled style="width: 100%">
                           <t-option
                             v-for="opt in getWidgetOptions(w)"
                             :key="opt.value"
                             :label="opt.label"
                             :value="opt.value"
                           />
-                        </t-select>
+                        </el-select>
                       </t-form-item>
 
                       <!-- Radio -->
@@ -487,15 +487,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                         v-else-if="w.type === 'checkbox'"
                         :label="w.label ?? w.field ?? 'checkbox'"
                       >
-                        <t-checkbox-group disabled>
-                          <t-checkbox
+                        <el-checkbox-group disabled>
+                          <el-checkbox
                             v-for="opt in getWidgetOptions(w)"
                             :key="opt.value"
                             :value="opt.value"
                           >
                             {{ opt.label }}
-                          </t-checkbox>
-                        </t-checkbox-group>
+                          </el-checkbox>
+                        </el-checkbox-group>
                       </t-form-item>
 
                       <!-- Switch -->
@@ -527,14 +527,14 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                         v-else-if="w.type === 'upload'"
                         :label="w.label ?? w.field ?? 'upload'"
                       >
-                        <t-button disabled>选择文件</t-button>
+                        <el-button disabled>选择文件</el-button>
                       </t-form-item>
 
                       <!-- Button -->
                       <t-form-item v-else-if="w.type === 'button'">
-                        <t-button type="primary" disabled>
+                        <el-button type="primary" disabled>
                           {{ (w.props as Record<string, unknown>)?.text as string ?? w.label ?? '提交' }}
-                        </t-button>
+                        </el-button>
                       </t-form-item>
 
                       <!-- Fallback: show as text field -->
@@ -542,31 +542,31 @@ function getNodeStatusColor(nodeId: string): string | undefined {
                         v-else
                         :label="w.label ?? w.field ?? w.type"
                       >
-                        <t-input placeholder="[不支持的组件类型]" disabled />
+                        <el-input placeholder="[不支持的组件类型]" disabled />
                       </t-form-item>
                     </template>
                   </div>
 
                   <!-- 操作按钮组 -->
                   <div :class="$style.fieldActionGroup">
-                    <t-button
+                    <el-button
                       :class="$style.fieldEditBtn"
                       title="内联编辑"
-                      variant="text"
+                      link
                       size="small"
                       @click.stop="handleStartInlineEdit(w)"
                     >
                       &#x270E;
-                    </t-button>
-                    <t-button
+                    </el-button>
+                    <el-button
                       :class="$style.fieldEditBtn"
                       title="编辑属性"
-                      variant="text"
+                      link
                       size="small"
                       @click.stop="handleFieldEdit(w)"
                     >
                       &#x2699;
-                    </t-button>
+                    </el-button>
                   </div>
                 </div>
               </template>
@@ -581,9 +581,9 @@ function getNodeStatusColor(nodeId: string): string | undefined {
         <div v-if="flowData.graph" :class="$style.flowCanvasWrapper">
           <div :class="$style.flowToolbar">
             <span :class="$style.flowStats">{{ nodeCount }} 节点 / {{ edgeCount }} 连线</span>
-            <t-button :class="$style.fitBtn" title="适配画布" variant="text" @click="handleFitView">
+            <el-button :class="$style.fitBtn" title="适配画布" link @click="handleFitView">
               &#x26F6;
-            </t-button>
+            </el-button>
           </div>
           <div :class="$style.flowCanvas">
             <VueFlow
@@ -621,12 +621,12 @@ function getNodeStatusColor(nodeId: string): string | undefined {
             <div :class="$style.nodeDetailHeader">
               <span :class="$style.nodeDetailTitle">{{ interaction.selectedNodeDetail.value.data.label }}</span>
               <div :class="$style.nodeDetailActions">
-                <t-button :class="$style.nodeEditBtn" title="编辑节点" variant="text" @click="handleNodeEdit">
+                <el-button :class="$style.nodeEditBtn" title="编辑节点" link @click="handleNodeEdit">
                   &#x270E;
-                </t-button>
-                <t-button :class="$style.nodeDetailClose" variant="text" @click="interaction.clearNodeSelection()">
+                </el-button>
+                <el-button :class="$style.nodeDetailClose" link @click="interaction.clearNodeSelection()">
                   &times;
-                </t-button>
+                </el-button>
               </div>
             </div>
             <div :class="$style.nodeDetailBody">
@@ -707,7 +707,7 @@ function getNodeStatusColor(nodeId: string): string | undefined {
     <div v-if="interaction.isFieldDetailVisible.value && interaction.selectedFieldDetail.value && activeTab === 'schema'" :class="$style.fieldDetail">
       <div :class="$style.fieldDetailHeader">
         <span :class="$style.fieldDetailTitle">组件详情</span>
-        <t-button :class="$style.fieldDetailClose" variant="text" @click="interaction.closeFieldDetail()">&times;</t-button>
+        <el-button :class="$style.fieldDetailClose" link @click="interaction.closeFieldDetail()">&times;</el-button>
       </div>
       <div :class="$style.fieldDetailBody">
         <div :class="$style.fieldDetailRow">
@@ -738,15 +738,15 @@ function getNodeStatusColor(nodeId: string): string | undefined {
       v-if="(activeTab === 'schema' && schemaData) || (activeTab === 'flow' && flowData)"
       :class="$style.actions"
     >
-      <t-button :class="$style.btnPrimary" theme="primary" @click="emit('primary-action')">
+      <el-button :class="$style.btnPrimary" theme="primary" @click="emit('primary-action')">
         {{ primaryAction }}
-      </t-button>
-      <t-button :class="$style.btnApply" @click="handleApplyToEditor">
+      </el-button>
+      <el-button :class="$style.btnApply" @click="handleApplyToEditor">
         {{ interaction.hasSelection.value ? `应用选中 (${interaction.selectedCount.value})` : '应用到编辑器' }}
-      </t-button>
-      <t-button :class="$style.btnGhost" @click="emit('secondary-action')">
+      </el-button>
+      <el-button :class="$style.btnGhost" @click="emit('secondary-action')">
         {{ secondaryAction }}
-      </t-button>
+      </el-button>
     </div>
 
     <!-- 字段编辑弹窗 -->

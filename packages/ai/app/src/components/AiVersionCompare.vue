@@ -239,9 +239,9 @@ function getStatusLabel(status: string): string {
   <div :class="$style.compare">
     <div :class="$style.header">
       <span :class="$style.title">版本对比</span>
-      <t-button :class="$style.closeBtn" @click="emit('close')">
+      <el-button :class="$style.closeBtn" @click="emit('close')">
         &times;
-      </t-button>
+      </el-button>
     </div>
 
     <!-- Summary -->

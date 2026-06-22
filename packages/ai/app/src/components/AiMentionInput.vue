@@ -221,7 +221,7 @@ function typeIcon(type: string): string {
     <div v-if="panelVisible" :class="$style.panel">
       <!-- Search input -->
       <div :class="$style.panelSearch">
-        <t-input
+        <el-input
           v-model:value="searchQuery"
           :class="$style.panelInput"
           placeholder="搜索引用..."
@@ -232,7 +232,7 @@ function typeIcon(type: string): string {
 
       <!-- Category tabs -->
       <div :class="$style.tabs">
-        <t-button
+        <el-button
           v-for="tab in TABS"
           :key="tab.key"
           :class="[$style.tab, { [$style.active]: activeTab === tab.key }]"
@@ -240,7 +240,7 @@ function typeIcon(type: string): string {
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
-        </t-button>
+        </el-button>
       </div>
 
       <!-- Results -->
@@ -282,7 +282,7 @@ function typeIcon(type: string): string {
       >
         <span :class="$style.chipIcon">{{ typeIcon(m.type) }}</span>
         <span>{{ m.label }}</span>
-        <t-button :class="$style.chipRemove" variant="text" size="small" @click="removeMention(idx)">&times;</t-button>
+        <el-button :class="$style.chipRemove" link size="small" @click="removeMention(idx)">&times;</el-button>
       </div>
     </div>
 

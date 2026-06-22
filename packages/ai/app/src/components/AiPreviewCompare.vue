@@ -282,9 +282,9 @@ function handleApplySelected() {
           修改 {{ summary.changed }}
         </span>
       </div>
-      <t-button :class="$style.closeBtn" variant="text" @click="emit('close')">
+      <el-button :class="$style.closeBtn" link @click="emit('close')">
         &times;
-      </t-button>
+      </el-button>
     </div>
 
     <!-- Diff 列表 -->
@@ -341,12 +341,12 @@ function handleApplySelected() {
 
     <!-- Actions -->
     <div v-if="hasDiffs" :class="$style.actions">
-      <t-button :class="$style.btnPrimary" theme="primary" @click="handleApplyAll">
+      <el-button :class="$style.btnPrimary" theme="primary" @click="handleApplyAll">
         应用全部变更
-      </t-button>
-      <t-button :class="$style.btnGhost" @click="handleApplySelected">
+      </el-button>
+      <el-button :class="$style.btnGhost" @click="handleApplySelected">
         部分应用
-      </t-button>
+      </el-button>
     </div>
   </div>
 </template>

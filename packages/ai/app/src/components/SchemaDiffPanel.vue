@@ -36,12 +36,12 @@ const changeCount = computed(() =>
       <span :class="$style.title">Schema 已更新</span>
       <span :class="$style.count">{{ changeCount }} 处变更</span>
       <div :class="$style.actions">
-        <t-button :class="$style.undoBtn" variant="text" @click="emit('undo')">
+        <el-button :class="$style.undoBtn" link @click="emit('undo')">
           撤销
-        </t-button>
-        <t-button :class="$style.dismissBtn" theme="primary" @click="emit('dismiss')">
+        </el-button>
+        <el-button :class="$style.dismissBtn" theme="primary" @click="emit('dismiss')">
           确认
-        </t-button>
+        </el-button>
       </div>
     </div>
 

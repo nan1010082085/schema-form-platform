@@ -106,12 +106,12 @@ function handleSave(): void {
           <!-- Header -->
           <div :class="$style.header">
             <span :class="$style.title">对话设置</span>
-            <t-button :class="$style.closeBtn" variant="text" @click="handleClose">
+            <el-button :class="$style.closeBtn" link @click="handleClose">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </t-button>
+            </el-button>
           </div>
 
           <!-- Body -->
@@ -164,7 +164,7 @@ function handleSave(): void {
                   <span :class="$style.statusText">暂无可用模型，请在管理后台配置</span>
                 </div>
                 <div v-else :class="$style.formItem">
-                  <t-select
+                  <el-select
                     v-model:value="selectedModelId"
                     placeholder="选择模型"
                     style="width: 100%"
@@ -265,8 +265,8 @@ function handleSave(): void {
 
           <!-- Footer -->
           <div :class="$style.footer">
-            <t-button :class="$style.cancelBtn" @click="handleClose">取消</t-button>
-            <t-button :class="$style.saveBtn" theme="primary" @click="handleSave">保存</t-button>
+            <el-button :class="$style.cancelBtn" @click="handleClose">取消</el-button>
+            <el-button :class="$style.saveBtn" theme="primary" @click="handleSave">保存</el-button>
           </div>
         </div>
       </div>

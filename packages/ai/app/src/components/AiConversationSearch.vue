@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       </div>
-      <t-input
+      <el-input
         v-model:value="query"
         :class="$style.searchInput"
         placeholder="搜索对话..."
@@ -141,24 +141,24 @@ onBeforeUnmount(() => {
         clearable
         @clear="handleClear"
       />
-      <t-button
+      <el-button
         :class="[$style.filterToggle, { [$style.filterToggleActive]: hasActiveFilters || filtersExpanded }]"
         title="筛选"
-        variant="text"
+        link
         size="small"
         @click="toggleFilters"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
-      </t-button>
+      </el-button>
     </div>
 
     <!-- Filter panel -->
     <div v-if="filtersExpanded" :class="$style.filterPanel">
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">来源</label>
-        <t-select v-model:value="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源" :options="SOURCE_OPTIONS" />
+        <el-select v-model:value="sourceFilter" :class="$style.filterSelect" size="small" placeholder="全部来源" :options="SOURCE_OPTIONS" />
       </div>
       <div :class="$style.filterRow">
         <label :class="$style.filterLabel">时间</label>

@@ -46,7 +46,7 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
   <div :class="$style.sidebar">
     <div :class="$style.header">
       <span :class="$style.title">对话列表</span>
-      <t-button :class="$style.newBtn" variant="text" @click="emit('new-conversation')">+</t-button>
+      <el-button :class="$style.newBtn" link @click="emit('new-conversation')">+</el-button>
     </div>
     <AiConversationSearch @select="(id) => emit('select', id)" />
     <t-scrollbar :class="$style.list">
@@ -73,20 +73,20 @@ async function handleExport(command: { id: string; format: ExportFormat }): Prom
             @click.stop
             @click-command="(cmd: string) => handleExport({ id: conv.id, format: cmd as ExportFormat })"
           >
-            <t-button :class="$style.iconBtn" title="导出对话" variant="text" @click.stop>
+            <el-button :class="$style.iconBtn" title="导出对话" link @click.stop>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            </t-button>
+            </el-button>
           </t-dropdown>
-          <t-button :class="$style.deleteBtn" variant="text" @click.stop="emit('delete', conv.id)" title="删除对话">
+          <el-button :class="$style.deleteBtn" link @click.stop="emit('delete', conv.id)" title="删除对话">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </t-button>
+          </el-button>
         </div>
       </div>
       <div v-if="conversations.length === 0" :class="$style.empty">

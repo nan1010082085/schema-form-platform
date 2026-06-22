@@ -66,7 +66,7 @@ function getScoreClass(score: number): string {
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
-      <t-input
+      <el-input
         v-model:value="searchQuery"
         :class="$style.searchInput"
         placeholder="智能匹配 Schema，如：用户注册表单..."
@@ -84,15 +84,15 @@ function getScoreClass(score: number): string {
         :class="$style.contextChip"
       >
         <span :class="$style.chipName">{{ item.name }}</span>
-        <t-button
+        <el-button
           :class="$style.chipRemove"
           title="移除"
-          variant="text"
+          link
           size="small"
           @click="handleRemove(item.id)"
         >
           &times;
-        </t-button>
+        </el-button>
       </span>
     </div>
 
@@ -141,7 +141,7 @@ function getScoreClass(score: number): string {
     <!-- Footer -->
     <div :class="$style.panelFooter">
       <span>{{ selectedContext.length > 0 ? `已选 ${selectedContext.length} 个 Schema 作为上下文` : '选择 Schema 注入对话上下文' }}</span>
-      <t-button :class="$style.closeBtn" @click="emit('close')">关闭</t-button>
+      <el-button :class="$style.closeBtn" @click="emit('close')">关闭</el-button>
     </div>
   </div>
 </template>

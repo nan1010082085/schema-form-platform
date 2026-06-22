@@ -103,14 +103,14 @@ function handleCancel() {
           :label="field.label"
         >
           <!-- Input -->
-          <t-input
+          <el-input
             v-if="field.type === 'input'"
             v-model:value="formData[field.key]"
             :placeholder="field.placeholder"
           />
 
           <!-- Select -->
-          <t-select
+          <el-select
             v-else-if="field.type === 'select'"
             v-model:value="formData[field.key]"
             placeholder="请选择"
@@ -135,8 +135,8 @@ function handleCancel() {
 
     <template #footer>
       <div :class="$style.footer">
-        <t-button @click="handleCancel">取消</t-button>
-        <t-button theme="primary" @click="handleSave">保存</t-button>
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button theme="primary" @click="handleSave">保存</el-button>
       </div>
     </template>
   </t-dialog>

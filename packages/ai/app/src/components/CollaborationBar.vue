@@ -71,23 +71,23 @@ function handleLeave(): void {
 
     <!-- 操作按钮 -->
     <div :class="$style.actions">
-      <t-button
+      <el-button
         v-if="conversationId"
         :class="$style.btn"
         title="复制邀请链接"
-        variant="text"
+        link
         @click="handleCopyInvite"
       >
         <svg :class="$style.icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
-      </t-button>
-      <t-button
+      </el-button>
+      <el-button
         v-if="isCollaborating"
         :class="[$style.btn, $style.btnLeave]"
         title="离开协作"
-        variant="text"
+        link
         @click="handleLeave"
       >
         <svg :class="$style.icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -95,7 +95,7 @@ function handleLeave(): void {
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
-      </t-button>
+      </el-button>
     </div>
   </div>
 </template>
