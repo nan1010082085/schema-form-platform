@@ -6,7 +6,10 @@ import { SSOClient } from '@schema-form/shared-utils/sso'
 // SSO 客户端配置
 const SSO_CLIENT_ID = 'ai'
 const TOKEN_KEY = 'sfp_access_token'
-const APP_BASE = APP_CONFIGS.ai.basePath
+
+// 开发环境使用 /，生产环境使用配置的 basePath
+const isDev = import.meta.env.DEV
+const APP_BASE = isDev ? '/' : APP_CONFIGS.ai.basePath
 
 function getSSOClient(): SSOClient {
   const origin = window.location.origin
