@@ -53,6 +53,7 @@ onUnmounted(() => trigger('onUnmount'))
 const contentMode = computed(() => (widgetData.value.props?.contentMode as string) ?? 'edit')
 const microappName = computed(() => widgetData.value.props?.microappName as string ?? '')
 const microappEntry = computed(() => widgetData.value.props?.microappEntry as string ?? '')
+const microappRoute = computed(() => widgetData.value.props?.microappRoute as string ?? '')
 const sandbox = computed(() => widgetData.value.props?.microappSandbox !== false)
 const styleIsolation = computed(() => (widgetData.value.props?.microappStyleIsolation as string) ?? 'experimental')
 const timeout = computed(() => (widgetData.value.props?.microappTimeout as number) ?? 10000)
@@ -96,6 +97,7 @@ async function loadMicroAppDynamic() {
   try {
     const props: Record<string, unknown> = {}
     if (routeBase.value) props.base = routeBase.value
+    if (microappRoute.value) props.route = microappRoute.value
 
     microAppInstance = loadMicroApp(
       { name: microappName.value, entry: microappEntry.value, container: microappContainerRef.value },

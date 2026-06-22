@@ -1,4 +1,6 @@
 import type { WidgetConfig } from '../base/types'
+import { microappDefaults, createMicroappPropertyItems } from '../base/microappConfig'
+
 export const dialogConfig: WidgetConfig = {
   name: 'FgDialog',
   displayName: '弹窗容器',
@@ -36,64 +38,8 @@ export const dialogConfig: WidgetConfig = {
         ],
         default: 'edit',
       },
-      {
-        key: 'microappName',
-        label: '子应用名称',
-        type: 'input',
-        default: '',
-        placeholder: '例：approval-flow',
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappEntry',
-        label: '入口地址',
-        type: 'input',
-        default: '',
-        placeholder: '例：http://localhost:6000',
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappSandbox',
-        label: '启用沙箱',
-        type: 'switch',
-        default: true,
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappStyleIsolation',
-        label: 'CSS 隔离',
-        type: 'select',
-        options: [
-          { label: '实验性隔离', value: 'experimental' },
-          { label: '严格隔离', value: 'strict' },
-          { label: '关闭', value: 'none' },
-        ],
-        default: 'experimental',
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappTimeout',
-        label: '加载超时（ms）',
-        type: 'number',
-        default: 10000,
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappFallback',
-        label: '加载失败文案',
-        type: 'input',
-        default: '子应用加载失败',
-        placeholder: '加载失败时显示的文案',
-        visibleOn: "props.contentMode === 'microapp'",
-      },
-      {
-        key: 'microappRouteBase',
-        label: '路由前缀',
-        type: 'input',
-        default: '',
-        placeholder: '留空自动匹配',
-        visibleOn: "props.contentMode === 'microapp'",
-      },
+      // 子应用配置区块 — 仅微应用模式可见
+      ...createMicroappPropertyItems("props.contentMode === 'microapp'"),
     ],
     style: [],
     props: [

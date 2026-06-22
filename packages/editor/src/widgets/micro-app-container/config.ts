@@ -1,4 +1,5 @@
 import type { WidgetConfig } from '../base/types'
+import { microappDefaults, createMicroappPropertyItems } from '../base/microappConfig'
 
 export const microAppContainerConfig: WidgetConfig = {
   name: 'FgMicroAppContainer',
@@ -7,69 +8,13 @@ export const microAppContainerConfig: WidgetConfig = {
   author: 'system',
   defaultStyle: {},
   defaultProps: {
-    microappName: '',
-    microappEntry: '',
-    microappSandbox: true,
-    microappStyleIsolation: 'experimental',
-    microappTimeout: 10000,
-    microappFallback: '子应用加载失败',
-    microappRouteBase: '',
+    ...microappDefaults,
     height: '100%',
     variables: {},
   },
   propertyPanel: {
     basic: [
-      {
-        key: 'microappName',
-        label: '子应用名称',
-        type: 'input',
-        default: '',
-        placeholder: '例：approval-flow',
-      },
-      {
-        key: 'microappEntry',
-        label: '入口地址',
-        type: 'input',
-        default: '',
-        placeholder: '例：http://localhost:6000',
-      },
-      {
-        key: 'microappSandbox',
-        label: '启用沙箱',
-        type: 'switch',
-        default: true,
-      },
-      {
-        key: 'microappStyleIsolation',
-        label: 'CSS 隔离',
-        type: 'select',
-        options: [
-          { label: '实验性隔离', value: 'experimental' },
-          { label: '严格隔离', value: 'strict' },
-          { label: '关闭', value: 'none' },
-        ],
-        default: 'experimental',
-      },
-      {
-        key: 'microappTimeout',
-        label: '加载超时（ms）',
-        type: 'number',
-        default: 10000,
-      },
-      {
-        key: 'microappFallback',
-        label: '加载失败文案',
-        type: 'input',
-        default: '子应用加载失败',
-        placeholder: '加载失败时显示的文案',
-      },
-      {
-        key: 'microappRouteBase',
-        label: '路由前缀',
-        type: 'input',
-        default: '',
-        placeholder: '留空自动匹配',
-      },
+      ...createMicroappPropertyItems('true'),
       {
         key: 'height',
         label: '容器高度',

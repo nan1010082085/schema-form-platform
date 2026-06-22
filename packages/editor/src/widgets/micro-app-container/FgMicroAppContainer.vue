@@ -15,6 +15,7 @@ const widgetData = inject(widgetDataKey)!
 
 const appName = computed(() => widgetData.value.props?.microappName as string ?? '')
 const appEntry = computed(() => widgetData.value.props?.microappEntry as string ?? '')
+const appRoute = computed(() => widgetData.value.props?.microappRoute as string ?? '')
 const sandbox = computed(() => widgetData.value.props?.microappSandbox !== false)
 const styleIsolation = computed(() => (widgetData.value.props?.microappStyleIsolation as string) ?? 'experimental')
 const timeout = computed(() => (widgetData.value.props?.microappTimeout as number) ?? 10000)
@@ -67,8 +68,9 @@ async function loadApp() {
   }, timeout.value)
 
   try {
-    const props = { ...variables.value }
+    const props: Record<string, unknown> = { ...variables.value }
     if (routeBase.value) props.base = routeBase.value
+    if (appRoute.value) props.route = appRoute.value
 
     microApp = loadMicroApp(
       { name: appName.value, entry: appEntry.value, container: containerRef.value },
