@@ -25,6 +25,7 @@ export async function resolveAllowedDeptIds(userId: string, roles: string[]): Pr
   if (scopes.some(s => s.scope === 'all')) return null
 
   const allowedIds = new Set<string>()
+  let hasSelf = false
 
   for (const { scope, deptIds } of scopes) {
     if (scope === 'dept') {
@@ -39,29 +40,44 @@ export async function resolveAllowedDeptIds(userId: string, roles: string[]): Pr
         for (const d of descendants) allowedIds.add(d)
       }
     } else if (scope === 'self') {
-      // self scope: the caller must filter by createdBy/initiatedBy = userId
-      // Return a sentinel that signals "self only"
-      return ['__self__']
+      hasSelf = true
     } else if (scope === 'custom') {
       for (const id of deptIds) allowedIds.add(id)
+      // Also include descendants of custom dept_ids
+      if (deptIds.length > 0) {
+        const descendants = await findDescendantDepts(deptIds)
+        for (const d of descendants) allowedIds.add(d)
+      }
     }
   }
 
-  return Array.from(allowedIds)
+  // If dept/custom scopes produced results, they are more permissive than self
+  if (allowedIds.size > 0) return Array.from(allowedIds)
+  // Only self scope applies
+  if (hasSelf) return ['__self__']
+  return []
 }
 
 /**
- * Recursively find all descendant department IDs.
+ * Iteratively find all descendant department IDs (BFS).
+ * Uses iterative approach to avoid stack overflow on deep hierarchies.
  */
-async function findDescendantDepts(deptId: string): Promise<string[]> {
-  const children = await DeptModel.find({ parentId: deptId }).select('_id').lean()
+async function findDescendantDepts(deptIds: string | string[]): Promise<string[]> {
+  const ids = Array.isArray(deptIds) ? deptIds : [deptIds]
   const result: string[] = []
-  for (const child of children) {
-    const childId = (child as { _id: string })._id
-    result.push(childId)
-    const sub = await findDescendantDepts(childId)
-    result.push(...sub)
+  let currentLevel = ids
+
+  while (currentLevel.length > 0) {
+    const children = await DeptModel.find({ parentId: { $in: currentLevel } }).select('_id').lean()
+    const nextLevel: string[] = []
+    for (const child of children) {
+      const childId = (child as { _id: string })._id
+      result.push(childId)
+      nextLevel.push(childId)
+    }
+    currentLevel = nextLevel
   }
+
   return result
 }
 

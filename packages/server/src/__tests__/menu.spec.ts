@@ -374,6 +374,19 @@ describe('Menu CRUD API', () => {
 })
 
 describe('GET /api/menus/route — dynamic route tree', () => {
+  beforeEach(async () => {
+    // Create dev user that auth middleware falls back to in non-production
+    await UserModel.create({
+      _id: 'dev',
+      username: 'dev',
+      password: 'dev',
+      displayName: 'Dev User',
+      roles: [],
+      tenantId: '000000',
+      status: 'active',
+    })
+  })
+
   it('returns empty tree when no menus exist', async () => {
     const { status, body } = await request('GET', '/api/menus/route')
 

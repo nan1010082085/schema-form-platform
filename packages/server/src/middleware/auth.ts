@@ -1,6 +1,7 @@
 import type { Middleware } from 'koa'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../config/jwt.js'
+import { tenantStorage } from './tenantContext.js'
 
 export interface JwtPayload {
   id: string
@@ -9,6 +10,21 @@ export interface JwtPayload {
   tenantId: string
   deptId: string | null
   tokenType: 'access' | 'refresh'
+}
+
+/**
+ * Sync tenantId from JWT payload into tenant context.
+ * Called after ctx.state.user is set by auth middleware.
+ */
+function syncTenantFromUser(ctx: { state: Record<string, unknown> }): void {
+  const user = ctx.state.user as JwtPayload | undefined
+  if (user?.tenantId) {
+    ctx.state.tenantId = user.tenantId
+    const store = tenantStorage.getStore()
+    if (store) {
+      store.tenantId = user.tenantId
+    }
+  }
 }
 
 export function authMiddleware(options?: { required?: boolean }): Middleware {
@@ -24,12 +40,14 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
           const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
           if (payload.tokenType !== 'refresh') {
             ctx.state.user = payload
+            syncTenantFromUser(ctx)
             await next()
             return
           }
         } catch { /* token invalid, use dev fallback */ }
       }
       ctx.state.user = { id: 'dev', username: 'dev', roles: [], tenantId: '000000', deptId: null }
+      syncTenantFromUser(ctx)
       await next()
       return
     }
@@ -54,6 +72,7 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
         return
       }
       ctx.state.user = payload
+      syncTenantFromUser(ctx)
     } catch {
       if (required) {
         ctx.status = 401

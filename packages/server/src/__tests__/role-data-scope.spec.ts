@@ -1,5 +1,5 @@
 /**
- * Role data_scope & getDataScopeFilter Tests
+ * Role data_scope & resolveAllowedDeptIds / buildDataScopeFilter Tests
  *
  * @vitest-environment node
  */
@@ -15,7 +15,7 @@ import rolesRouter from '../routes/roles.js'
 import { RoleModel, type DataScope } from '../models/Role.js'
 import { UserModel } from '../models/User.js'
 import { DeptModel } from '../models/Dept.js'
-import { getDataScopeFilter } from '../utils/dataScope.js'
+import { resolveAllowedDeptIds, buildDataScopeFilter } from '../middleware/dataScope.js'
 import { connectDatabase, mongoose } from '../config/database.js'
 
 const BASE = 'http://localhost:3008'
@@ -158,35 +158,34 @@ describe('Role API with data_scope', () => {
   })
 })
 
-// ── getDataScopeFilter utility ──
+// ── resolveAllowedDeptIds ──
 
-describe('getDataScopeFilter', () => {
-  // Scenario 1: data_scope = all
-  it('returns empty filter for scope=all', async () => {
+describe('resolveAllowedDeptIds', () => {
+  it('returns null for scope=all (no restriction)', async () => {
     const roleId = uuidv4()
-    const userId = uuidv4()
     await RoleModel.create({ _id: roleId, name: 'All', data_scope: 'all' })
-    await UserModel.create({ _id: userId, username: 'u1', password: 'p', displayName: 'U1', roles: [roleId] })
 
-    const filter = await getDataScopeFilter(userId)
+    const result = await resolveAllowedDeptIds(uuidv4(), [roleId])
 
-    expect(filter).toEqual({})
+    expect(result).toBeNull()
   })
 
-  // Scenario 2: data_scope = self
-  it('returns userId filter for scope=self', async () => {
+  it('returns null for empty roles (no restriction)', async () => {
+    const result = await resolveAllowedDeptIds(uuidv4(), [])
+
+    expect(result).toBeNull()
+  })
+
+  it('returns ["__self__"] for scope=self', async () => {
     const roleId = uuidv4()
-    const userId = uuidv4()
     await RoleModel.create({ _id: roleId, name: 'Self', data_scope: 'self' })
-    await UserModel.create({ _id: userId, username: 'u2', password: 'p', displayName: 'U2', roles: [roleId] })
 
-    const filter = await getDataScopeFilter(userId)
+    const result = await resolveAllowedDeptIds(uuidv4(), [roleId])
 
-    expect(filter).toEqual({ userId })
+    expect(result).toEqual(['__self__'])
   })
 
-  // Scenario 3: data_scope = dept
-  it('returns deptId filter with descendants for scope=dept', async () => {
+  it('returns dept + descendants for scope=dept', async () => {
     const roleId = uuidv4()
     const userId = uuidv4()
     const parentDeptId = uuidv4()
@@ -200,16 +199,13 @@ describe('getDataScopeFilter', () => {
       roles: [roleId], deptId: parentDeptId,
     })
 
-    const filter = await getDataScopeFilter(userId) as Record<string, unknown>
+    const result = await resolveAllowedDeptIds(userId, [roleId])
 
-    expect(filter.deptId).toBeDefined()
-    const deptIds = (filter.deptId as Record<string, unknown>).$in as string[]
-    expect(deptIds).toContain(parentDeptId)
-    expect(deptIds).toContain(childDeptId)
+    expect(result).toContain(parentDeptId)
+    expect(result).toContain(childDeptId)
   })
 
-  // Scenario 4: data_scope = custom
-  it('returns deptId filter from custom dept_ids with descendants', async () => {
+  it('returns custom dept_ids with descendants for scope=custom', async () => {
     const roleId = uuidv4()
     const userId = uuidv4()
     const deptA = uuidv4()
@@ -222,31 +218,14 @@ describe('getDataScopeFilter', () => {
     await RoleModel.create({ _id: roleId, name: 'Custom', data_scope: 'custom', dept_ids: [deptA, deptB] })
     await UserModel.create({ _id: userId, username: 'u4', password: 'p', displayName: 'U4', roles: [roleId] })
 
-    const filter = await getDataScopeFilter(userId) as Record<string, unknown>
+    const result = await resolveAllowedDeptIds(userId, [roleId])
 
-    expect(filter.deptId).toBeDefined()
-    const deptIds = (filter.deptId as Record<string, unknown>).$in as string[]
-    expect(deptIds).toContain(deptA)
-    expect(deptIds).toContain(deptAChild)
-    expect(deptIds).toContain(deptB)
+    expect(result).toContain(deptA)
+    expect(result).toContain(deptAChild)
+    expect(result).toContain(deptB)
   })
 
-  it('returns {_id: null} for user with no roles', async () => {
-    const userId = uuidv4()
-    await UserModel.create({ _id: userId, username: 'norole', password: 'p', displayName: 'No Role', roles: [] })
-
-    const filter = await getDataScopeFilter(userId)
-
-    expect(filter).toEqual({ _id: null })
-  })
-
-  it('returns {_id: null} for non-existent user', async () => {
-    const filter = await getDataScopeFilter(uuidv4())
-
-    expect(filter).toEqual({ _id: null })
-  })
-
-  it('uses most permissive scope when user has multiple roles', async () => {
+  it('returns null when any role has scope=all (most permissive wins)', async () => {
     const selfRoleId = uuidv4()
     const allRoleId = uuidv4()
     const userId = uuidv4()
@@ -255,21 +234,61 @@ describe('getDataScopeFilter', () => {
     await RoleModel.create({ _id: allRoleId, name: 'All', data_scope: 'all' })
     await UserModel.create({ _id: userId, username: 'multi', password: 'p', displayName: 'Multi', roles: [selfRoleId, allRoleId] })
 
-    const filter = await getDataScopeFilter(userId)
+    const result = await resolveAllowedDeptIds(userId, [selfRoleId, allRoleId])
 
-    // 'all' is more permissive than 'self', so filter should be empty
-    expect(filter).toEqual({})
+    expect(result).toBeNull()
   })
+})
 
-  it('returns {deptId: null} for custom scope with empty dept_ids', async () => {
+// ── buildDataScopeFilter ──
+
+describe('buildDataScopeFilter', () => {
+  it('returns null for scope=all', async () => {
     const roleId = uuidv4()
     const userId = uuidv4()
+    await RoleModel.create({ _id: roleId, name: 'All', data_scope: 'all' })
+    await UserModel.create({ _id: userId, username: 'u1', password: 'p', displayName: 'U1', roles: [roleId] })
 
-    await RoleModel.create({ _id: roleId, name: 'Empty Custom', data_scope: 'custom', dept_ids: [] })
-    await UserModel.create({ _id: userId, username: 'empty', password: 'p', displayName: 'Empty', roles: [roleId] })
+    const filter = await buildDataScopeFilter(userId, [roleId], 'createdBy')
 
-    const filter = await getDataScopeFilter(userId)
+    expect(filter).toBeNull()
+  })
 
-    expect(filter).toEqual({ deptId: null })
+  it('returns {createdBy: userId} for scope=self', async () => {
+    const roleId = uuidv4()
+    const userId = uuidv4()
+    await RoleModel.create({ _id: roleId, name: 'Self', data_scope: 'self' })
+    await UserModel.create({ _id: userId, username: 'u2', password: 'p', displayName: 'U2', roles: [roleId] })
+
+    const filter = await buildDataScopeFilter(userId, [roleId], 'createdBy')
+
+    expect(filter).toEqual({ createdBy: userId })
+  })
+
+  it('returns {createdBy: {$in: [...]}} for scope=dept', async () => {
+    const roleId = uuidv4()
+    const userId = uuidv4()
+    const parentDeptId = uuidv4()
+    const childDeptId = uuidv4()
+
+    await DeptModel.create({ _id: parentDeptId, name: 'Parent' })
+    await DeptModel.create({ _id: childDeptId, name: 'Child', parentId: parentDeptId })
+    await RoleModel.create({ _id: roleId, name: 'Dept', data_scope: 'dept' })
+    await UserModel.create({
+      _id: userId, username: 'u3', password: 'p', displayName: 'U3',
+      roles: [roleId], deptId: parentDeptId,
+    })
+
+    const filter = await buildDataScopeFilter(userId, [roleId], 'initiatedBy') as Record<string, unknown>
+
+    expect(filter.initiatedBy).toBeDefined()
+    const userIds = (filter.initiatedBy as Record<string, unknown>).$in as string[]
+    expect(userIds).toContain(userId) // user in parentDept
+  })
+
+  it('returns null for empty roles', async () => {
+    const filter = await buildDataScopeFilter(uuidv4(), [], 'createdBy')
+
+    expect(filter).toBeNull()
   })
 })
