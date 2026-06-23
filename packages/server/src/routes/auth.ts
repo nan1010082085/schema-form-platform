@@ -257,10 +257,10 @@ router.get('/me', authMiddleware({ required: true }), async (ctx) => {
  * 用户自主注册（开放接口，不需要 token）
  */
 router.post('/register', async (ctx) => {
-  const { username, password, nickname, phone } = ctx.request.body as {
+  const { username, password, displayName, phone } = ctx.request.body as {
     username: string
     password: string
-    nickname?: string
+    displayName?: string
     phone?: string
   }
 
@@ -287,14 +287,18 @@ router.post('/register', async (ctx) => {
     return
   }
 
-  // 创建用户（默认角色为空，需要管理员分配角色和权限）
+  // 查找默认"普通用户"角色
+  const defaultRole = await RoleModel.findOne({ name: '普通用户', tenantId })
+  const defaultRoles = defaultRole ? [defaultRole._id] : []
+
+  // 创建用户（自动分配普通用户角色）
   const user = await UserModel.create({
     _id: crypto.randomUUID(),
     username,
     password,
-    nickname: nickname || username,
+    displayName: nickname || username,
     phone: phone || '',
-    roles: [],
+    roles: defaultRoles,
     tenantId,
     status: 'active',
   })
@@ -305,7 +309,7 @@ router.post('/register', async (ctx) => {
     data: {
       id: user._id,
       username: user.username,
-      nickname: user.nickname,
+      displayName: user.displayName,
     },
   }
 })
