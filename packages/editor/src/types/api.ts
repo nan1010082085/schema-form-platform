@@ -25,7 +25,7 @@ export interface ApiErrorDetail {
 
 // ---- Schema 资源类型 ----
 
-export type SchemaTypeValue = 'form' | 'search-list'
+export type SchemaTypeValue = 'form' | 'search-list' | 'layout' | 'table' | 'chart' | 'business' | 'report' | 'other'
 export type SchemaStatusValue = 'draft'
 
 /** Schema 列表项（编辑表 — 仅草稿） */

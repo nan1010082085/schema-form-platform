@@ -32,7 +32,7 @@ const searchInput = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 // ---- Filter & Sort ----
-const activeTab = ref<'all' | 'form'>('all')
+const activeTab = ref<'all' | SchemaTypeValue>('all')
 const sortBy = ref<'newest' | 'oldest' | 'name'>('newest')
 const bulkMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
@@ -42,6 +42,13 @@ const COOLDOWN_MS = 2000
 const filterTabs = [
   { label: '全部', value: 'all' as const },
   { label: '表单', value: 'form' as const },
+  { label: '搜索列表', value: 'search-list' as const },
+  { label: '布局', value: 'layout' as const },
+  { label: '表格', value: 'table' as const },
+  { label: '图表', value: 'chart' as const },
+  { label: '业务', value: 'business' as const },
+  { label: '报表', value: 'report' as const },
+  { label: '其他', value: 'other' as const },
 ]
 
 const sortOptions = [
@@ -51,9 +58,15 @@ const sortOptions = [
 ]
 
 // ---- Schema type options ----
-const schemaTypeOptions = [
-  { label: '表单', value: 'form' as const },
-  { label: '搜索列表', value: 'search-list' as const },
+const schemaTypeOptions: { label: string; value: SchemaTypeValue }[] = [
+  { label: '表单', value: 'form' },
+  { label: '搜索列表', value: 'search-list' },
+  { label: '布局', value: 'layout' },
+  { label: '表格', value: 'table' },
+  { label: '图表', value: 'chart' },
+  { label: '业务', value: 'business' },
+  { label: '报表', value: 'report' },
+  { label: '其他', value: 'other' },
 ]
 
 // ---- Create Dialog ----
@@ -99,7 +112,10 @@ function handleSearch(val: string) {
 
 function buildFilter(): { type?: string } {
   const filter: { type?: string } = {}
-  if (activeTab.value === 'form') filter.type = 'form'
+  if (activeTab.value !== 'all') {
+    // 前端 search-list → 后端 search_list，其他类型名称一致
+    filter.type = activeTab.value === 'search-list' ? 'search_list' : activeTab.value
+  }
   return filter
 }
 
@@ -274,8 +290,34 @@ function formatDate(d: string) {
   return new Date(d).toLocaleString('zh-CN')
 }
 
+const TYPE_LABEL_MAP: Record<string, string> = {
+  form: '表单',
+  search_list: '搜索列表',
+  layout: '布局',
+  table: '表格',
+  chart: '图表',
+  business: '业务',
+  report: '报表',
+  other: '其他',
+}
+
+const TYPE_TAG_MAP: Record<string, 'info' | 'success' | 'warning' | 'danger'> = {
+  form: 'info',
+  search_list: 'success',
+  layout: 'info',
+  table: 'success',
+  chart: 'warning',
+  business: 'danger',
+  report: 'info',
+  other: '',
+}
+
 function typeLabel(type: string): string {
-  return type === 'form' ? '表单' : '搜索列表'
+  return TYPE_LABEL_MAP[type] ?? type
+}
+
+function typeTagType(type: string): 'info' | 'success' | 'warning' | 'danger' | '' {
+  return TYPE_TAG_MAP[type] ?? ''
 }
 
 const isFiltered = computed(() =>
@@ -346,7 +388,7 @@ function handleVersionPublished() {
         <div class="fg-instances__title-row">
           <div>
             <h1>实例管理</h1>
-            <p class="fg-instances__subtitle">管理所有表单和搜索列表实例</p>
+            <p class="fg-instances__subtitle">管理所有 Schema 实例</p>
           </div>
           <div class="fg-instances__header-actions">
             <el-button @click="openImportDialog">
@@ -414,7 +456,7 @@ function handleVersionPublished() {
           <AppIcon name="document" :size="64" />
         </div>
         <h2 class="fg-instances__empty-title">还没有 Schema 实例</h2>
-        <p class="fg-instances__empty-desc">创建您的第一个表单或搜索列表来开始使用</p>
+        <p class="fg-instances__empty-desc">创建您的第一个 Schema 实例来开始使用</p>
         <div class="fg-instances__empty-actions">
           <el-button type="primary" size="large" @click="openCreateDialog">
             <AppIcon name="plus" class="el-icon--left" />创建实例
@@ -445,7 +487,7 @@ function handleVersionPublished() {
             <div class="fg-instances-card__body">
               <h3 class="fg-instances-card__name">{{ item.name }}</h3>
               <div class="fg-instances-card__meta">
-                <el-tag size="small" :type="item.type === 'form' ? 'info' : 'success'">{{ typeLabel(item.type) }}</el-tag>
+                <el-tag size="small" :type="typeTagType(item.type)">{{ typeLabel(item.type) }}</el-tag>
                 <el-tag v-if="item.publishId" size="small" type="success">已发布</el-tag>
                 <span v-if="item.version" class="fg-instances-card__version">v{{ item.version }}</span>
                 <!-- Component count -->

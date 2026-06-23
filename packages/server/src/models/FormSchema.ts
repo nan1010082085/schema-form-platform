@@ -39,7 +39,7 @@ const formSchemaDef = new mongoose.Schema(
     editId: { type: String, required: true, unique: true, index: true },
     version: { type: String, required: true },
     name: { type: String, required: true },
-    type: { type: String, enum: ['form', 'search_list'], default: 'form' },
+    type: { type: String, enum: ['form', 'search_list', 'layout', 'table', 'chart', 'business', 'report', 'other'], default: 'form' },
     status: { type: String, enum: ['draft'], default: 'draft' },
     json: { type: mongoose.Schema.Types.Mixed, required: true },
     thumbnail: { type: String, default: '' },

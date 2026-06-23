@@ -520,9 +520,9 @@ router.put('/:id', requireAuth, requirePermission('schema:edit'), validate(updat
     data.status = status
   }
   if (type !== undefined) {
-    if (!['form', 'search_list'].includes(type as string)) {
+    if (!['form', 'search_list', 'layout', 'table', 'chart', 'business', 'report', 'other'].includes(type as string)) {
       ctx.status = 400
-      ctx.body = { success: false, error: { message: 'Field "type" must be "form" or "search_list".' } }
+      ctx.body = { success: false, error: { message: 'Field "type" must be one of: form, search_list, layout, table, chart, business, report, other.' } }
       return
     }
     data.type = type
