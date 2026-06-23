@@ -3,14 +3,16 @@
  *
  * HomeView 是布局壳（侧边栏 + 内容区），
  * 子路由在 HomeView 的 <router-view /> 中渲染。
+ *
+ * 路由 history 统一使用 createWebHistory（与浏览器 URL 同步）。
+ * qiankun 子应用模式下，shell 控制 URL，admin 的 basePath 从 APP_CONFIGS 读取。
  */
-import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
-
-const isQiankunSubApp = () => !!window.__POWERED_BY_QIANKUN__
+import { createRouter, createWebHistory } from 'vue-router'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 
 export function createAdminRouter() {
   return createRouter({
-    history: isQiankunSubApp() ? createMemoryHistory() : createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(APP_CONFIGS.admin.basePath),
     routes: [
       {
         path: '/',
