@@ -103,6 +103,7 @@ router.isReady().then(() => {
       sandbox: {
         experimentalStyleIsolation: true,
       },
+      prefetch: true,
     })
     console.log('[shell] qiankun started')
   } catch (err: unknown) {
