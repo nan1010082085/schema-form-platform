@@ -2,9 +2,11 @@
  * FlowDefinition — 流程定义模型
  */
 import mongoose, { Schema, type Document } from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IFlowDefinition extends Document {
   id: string
+  tenantId: string
   name: string
   description?: string
   graph: {
@@ -34,6 +36,7 @@ export interface IFlowDefinition extends Document {
 const FlowDefinitionSchema = new Schema<IFlowDefinition>(
   {
     id: { type: String, required: true, unique: true },
+    tenantId: { type: String, default: '000000', index: true },
     name: { type: String, required: true },
     description: { type: String },
     graph: {
@@ -61,5 +64,7 @@ const FlowDefinitionSchema = new Schema<IFlowDefinition>(
     timestamps: true,
   },
 )
+
+FlowDefinitionSchema.plugin(tenantPlugin)
 
 export const FlowDefinitionModel = mongoose.model<IFlowDefinition>('FlowDefinition', FlowDefinitionSchema)

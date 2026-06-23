@@ -93,6 +93,60 @@ const PERMISSION_DEFINITIONS: Array<{ code: string; name: string; module: string
   { code: 'webhook:edit', name: '编辑 Webhook', module: 'webhook', description: '修改 Webhook 配置' },
   { code: 'webhook:delete', name: '删除 Webhook', module: 'webhook', description: '删除 Webhook' },
 
+  // ── Credential (凭证) ──
+  { code: 'credential:view', name: '查看凭证', module: 'system', description: '查看凭证列表和详情' },
+  { code: 'credential:create', name: '创建凭证', module: 'system', description: '创建新凭证' },
+  { code: 'credential:edit', name: '编辑凭证', module: 'system', description: '修改凭证信息' },
+  { code: 'credential:delete', name: '删除凭证', module: 'system', description: '删除凭证' },
+
+  // ── ModelConfig (模型配置) ──
+  { code: 'model_config:view', name: '查看模型配置', module: 'system', description: '查看 AI 模型配置' },
+  { code: 'model_config:create', name: '创建模型配置', module: 'system', description: '创建新模型配置' },
+  { code: 'model_config:edit', name: '编辑模型配置', module: 'system', description: '修改模型配置' },
+  { code: 'model_config:delete', name: '删除模型配置', module: 'system', description: '删除模型配置' },
+
+  // ── Submission (表单提交) ──
+  { code: 'submission:view', name: '查看提交数据', module: 'schema', description: '查看表单提交数据' },
+  { code: 'submission:create', name: '提交表单', module: 'schema', description: '提交表单数据' },
+  { code: 'submission:delete', name: '删除提交数据', module: 'schema', description: '删除表单提交数据' },
+
+  // ── Template (模板) ──
+  { code: 'template:view', name: '查看模板', module: 'schema', description: '查看模板列表和详情' },
+  { code: 'template:create', name: '创建模板', module: 'schema', description: '创建新模板' },
+  { code: 'template:edit', name: '编辑模板', module: 'schema', description: '修改模板信息' },
+  { code: 'template:delete', name: '删除模板', module: 'schema', description: '删除模板' },
+
+  // ── Stats (统计) ──
+  { code: 'stats:view', name: '查看统计', module: 'system', description: '查看系统统计数据' },
+
+  // ── LoginLog (登录日志) ──
+  { code: 'loginlog:view', name: '查看登录日志', module: 'system', description: '查看登录日志列表' },
+  { code: 'loginlog:delete', name: '清空登录日志', module: 'system', description: '清空登录日志' },
+
+  // ── OnlineUser (在线用户) ──
+  { code: 'onlineuser:view', name: '查看在线用户', module: 'system', description: '查看在线用户列表' },
+  { code: 'onlineuser:kick', name: '强制下线', module: 'system', description: '强制用户下线' },
+
+  // ── UserImportExport (用户导入导出) ──
+  { code: 'user:export', name: '导出用户', module: 'system', description: '导出用户列表为 Excel' },
+  { code: 'user:import', name: '导入用户', module: 'system', description: '从 Excel 导入用户' },
+
+  // ── Flow Instance (流程实例) ──
+  { code: 'flow:cancel', name: '取消流程', module: 'flow', description: '取消流程实例' },
+
+  // ── Flow Template (流程模板) ──
+  { code: 'flow_template:view', name: '查看流程模板', module: 'flow', description: '查看流程模板列表和详情' },
+  { code: 'flow_template:create', name: '创建流程模板', module: 'flow', description: '创建新流程模板' },
+  { code: 'flow_template:edit', name: '编辑流程模板', module: 'flow', description: '修改流程模板' },
+  { code: 'flow_template:delete', name: '删除流程模板', module: 'flow', description: '删除流程模板' },
+
+  // ── Flow Version (流程版本) ──
+  { code: 'flow_version:view', name: '查看流程版本', module: 'flow', description: '查看流程版本历史' },
+
+  // ── Flow Export (流程导出) ──
+  { code: 'flow:export', name: '导出流程', module: 'flow', description: '导出流程定义' },
+  { code: 'flow:import', name: '导入流程', module: 'flow', description: '导入流程定义' },
+
 ]
 
 /**

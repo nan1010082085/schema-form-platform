@@ -2,9 +2,11 @@
  * FlowInstance — 流程实例模型
  */
 import mongoose, { Schema, type Document } from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface IFlowInstance extends Document {
   id: string
+  tenantId: string
   definitionId: string
   version: number
   status: 'running' | 'completed' | 'terminated' | 'suspended' | 'failed'
@@ -26,6 +28,7 @@ export interface IFlowInstance extends Document {
 const FlowInstanceSchema = new Schema<IFlowInstance>(
   {
     id: { type: String, required: true, unique: true },
+    tenantId: { type: String, default: '000000', index: true },
     definitionId: { type: String, required: true, index: true },
     version: { type: Number, required: true },
     status: {
@@ -53,5 +56,7 @@ const FlowInstanceSchema = new Schema<IFlowInstance>(
     timestamps: true,
   },
 )
+
+FlowInstanceSchema.plugin(tenantPlugin)
 
 export const FlowInstanceModel = mongoose.model<IFlowInstance>('FlowInstance', FlowInstanceSchema)

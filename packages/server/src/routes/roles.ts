@@ -3,7 +3,7 @@ import { RoleModel } from '../models/Role.js'
 import { UserModel } from '../models/User.js'
 import { PermissionModel } from '../models/Permission.js'
 import { authMiddleware } from '../middleware/auth.js'
-import { requirePermission } from '../middleware/permission.js'
+import { requirePermission, invalidatePermissionCache } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createRoleSchema, updateRoleSchema } from '../schemas/roleSchemas.js'
 
@@ -79,6 +79,7 @@ router.post('/', requireAuth, requirePermission('role:create'), validate(createR
     data_scope: body.data_scope,
     dept_ids: body.dept_ids,
   })
+  await invalidatePermissionCache()
   ctx.status = 201
   ctx.body = { success: true, data: role.toJSON() }
 })
@@ -108,6 +109,7 @@ router.put('/:id', requireAuth, requirePermission('role:edit'), validate(updateR
     return
   }
 
+  await invalidatePermissionCache()
   ctx.body = { success: true, data: role.toJSON() }
 })
 
@@ -127,6 +129,7 @@ router.delete('/:id', requireAuth, requirePermission('role:delete'), async (ctx)
   )
 
   await RoleModel.findByIdAndDelete(ctx.params.id)
+  await invalidatePermissionCache()
   ctx.body = { success: true, data: null }
 })
 

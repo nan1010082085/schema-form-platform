@@ -131,14 +131,13 @@ router.get('/route', requireAuth, async (ctx) => {
   // 获取目标用户的角色和权限
   const { UserModel } = await import('../models/User.js')
   const targetUser = await UserModel.findById(targetUserId)
-  if (!targetUser) {
-    ctx.status = 404
-    ctx.body = { success: false, error: { message: 'User not found.' } }
-    return
-  }
 
-  const roles = await RoleModel.find({ _id: { $in: targetUser.roles } })
-  const userPermissions = new Set(roles.flatMap(r => r.permissions))
+  // 用户不存在时（如 dev fallback 无对应记录），返回全部 active 菜单，跳过权限过滤
+  let userPermissions: Set<string> | null = null
+  if (targetUser) {
+    const roles = await RoleModel.find({ _id: { $in: targetUser.roles } })
+    userPermissions = new Set(roles.flatMap(r => r.permissions))
+  }
 
   // 构建查询条件
   const filter: Record<string, unknown> = { status: 'active' }
@@ -149,11 +148,11 @@ router.get('/route', requireAuth, async (ctx) => {
 
   const allMenus = await MenuModel.find(filter).sort({ sort: 1 })
 
-  // 过滤：仅菜单类型 + 权限检查
+  // 过滤：仅菜单类型 + 权限检查（userPermissions 为 null 时跳过权限过滤）
   const visibleMenus = allMenus
     .filter(m => {
       if (m.type !== 'menu') return false
-      if (!m.permission) return true
+      if (!userPermissions || !m.permission) return true
       return userPermissions.has(m.permission)
     })
     .map(m => m.toJSON())

@@ -133,6 +133,19 @@ function handleDelete(item: SchemaListItem) {
 }
 
 function handleEdit(id: string) {
+  // 打开表单填写/编辑视图，而非设计器
+  const item = store.schemas.find(s => s.id === id)
+  if (item?.publishId) {
+    // 已发布 → 用发布版本渲染表单（支持数据提交）
+    router.push({ path: '/view', query: { id: item.publishId, mode: 'edit' } })
+  } else {
+    // 未发布 → 先提示发布
+    ElMessage.warning('请先发布实例后再编辑表单内容')
+  }
+}
+
+function handleDesigner(id: string) {
+  // 跳转到设计器（原编辑按钮行为）
   router.push({ path: '/editor', query: { id } })
 }
 
@@ -398,7 +411,7 @@ function handleVersionPublished() {
             <div v-if="bulkMode" class="fg-instances-card__check">
               <el-checkbox :model-value="selectedIds.has(item.id)" @change="toggleSelect(item.id)" />
             </div>
-            <div class="fg-instances-card__preview" @click="handleEdit(item.id)">
+            <div class="fg-instances-card__preview" @click="handleDesigner(item.id)">
               <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" class="fg-instances-card__thumbnail" />
               <div v-else class="fg-instances-card__thumbnail-placeholder">
                 <AppIcon name="document" :size="32" />
@@ -418,8 +431,11 @@ function handleVersionPublished() {
               </div>
             </div>
             <div class="fg-instances-card__actions">
-              <el-tooltip content="编辑" placement="top" :show-after="300">
+              <el-tooltip content="编辑表单" placement="top" :show-after="300">
                 <el-button size="small" text type="primary" @click="handleEdit(item.id)"><AppIcon name="edit" /></el-button>
+              </el-tooltip>
+              <el-tooltip content="设计器" placement="top" :show-after="300">
+                <el-button size="small" text @click="handleDesigner(item.id)"><AppIcon name="setting" /></el-button>
               </el-tooltip>
               <el-tooltip :content="item.publishId ? '预览发布版本' : '预览编辑版本'" placement="top" :show-after="300">
                 <el-button size="small" text type="warning" @click="handlePreview(item)"><AppIcon name="view" /></el-button>

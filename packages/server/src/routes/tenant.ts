@@ -5,6 +5,7 @@ import { authMiddleware } from '../middleware/auth.js'
 import { requirePermission } from '../middleware/permission.js'
 import { validate } from '../middleware/validate.js'
 import { createTenantSchema, updateTenantSchema } from '../schemas/tenantSchemas.js'
+import { initTenantData } from '../utils/tenantInit.js'
 
 const requireAuth = authMiddleware({ required: true })
 
@@ -101,6 +102,11 @@ router.post('/', requireAuth, requirePermission('tenant:create'), validate(creat
       maxUsers: config?.maxUsers ?? 100,
       features: config?.features ?? [],
     },
+  })
+
+  // Initialize tenant with default roles, admin user, and menus (non-blocking)
+  initTenantData(tenant._id, name).catch((err: unknown) => {
+    console.error('[tenant] Failed to init tenant data:', err instanceof Error ? err.message : String(err))
   })
 
   ctx.status = 201

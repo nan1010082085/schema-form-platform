@@ -48,11 +48,19 @@ import webhookRouter from './routes/webhook.js'
 import webhookTriggerRouter from './routes/webhookTrigger.js'
 import credentialRouter from './routes/credential.js'
 import modelConfigRouter from './routes/modelConfig.js'
+import loginLogRouter from './routes/loginLog.js'
+import onlineUsersRouter from './routes/onlineUsers.js'
+import userImportExportRouter from './routes/userImportExport.js'
+import filesRouter from './routes/files.js'
 import { auditLogMiddleware } from './middleware/auditLog.js'
+import { connectRedis } from './config/redis.js'
 import { validateApiKey } from './ai/graph/agentBase.js'
 
 // ── Startup validation ──
 validateApiKey()
+
+// ── Redis (non-blocking, optional in dev) ──
+connectRedis().catch(() => { /* handled in connectRedis */ })
 
 const app = new Koa()
 
@@ -205,5 +213,13 @@ app.use(credentialRouter.routes())
 app.use(credentialRouter.allowedMethods())
 app.use(modelConfigRouter.routes())
 app.use(modelConfigRouter.allowedMethods())
+app.use(loginLogRouter.routes())
+app.use(loginLogRouter.allowedMethods())
+app.use(onlineUsersRouter.routes())
+app.use(onlineUsersRouter.allowedMethods())
+app.use(userImportExportRouter.routes())
+app.use(userImportExportRouter.allowedMethods())
+app.use(filesRouter.routes())
+app.use(filesRouter.allowedMethods())
 
 export default app

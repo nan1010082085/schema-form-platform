@@ -64,8 +64,8 @@ async function startMicroApp(schemaId: string): Promise<void> {
       },
       {
         sandbox: {
-          strictStyleIsolation: true,
-          experimentalStyleIsolation: false,
+          strictStyleIsolation: false,
+          experimentalStyleIsolation: true,
         },
       },
     )

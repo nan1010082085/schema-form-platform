@@ -7,6 +7,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 import { resolveIconName } from '@schema-form/shared-utils/iconResolver'
 
@@ -16,6 +17,7 @@ interface MenuItem {
   path: string
   icon: string
   routeType: string
+  microAppId?: string
   schemaId?: string
   url?: string
   target?: string
@@ -44,6 +46,14 @@ async function loadMenus(): Promise<void> {
   }
 }
 
+/** 将菜单 path 转换为 admin 内部路由 */
+function toAdminRoute(path: string): string {
+  // 新格式：/system/xxx → system/xxx
+  if (path.startsWith('/system/')) return path.slice(1)
+  // 旧格式：/app/admin/xxx → system/xxx
+  return path.replace(/^\/app\/admin\//, 'system/')
+}
+
 function navigateTo(node: MenuItem): void {
   activeId.value = node.id
   const routeType = node.routeType || 'micro-app'
@@ -58,8 +68,16 @@ function navigateTo(node: MenuItem): void {
     return
   }
 
+  // micro-app
   if (node.path) {
-    window.open(`/schema-platform/app${node.path}`, '_blank')
+    if (node.microAppId === 'admin') {
+      // admin 自己的菜单 → 内部路由
+      router.push(`/${toAdminRoute(node.path)}`)
+    } else {
+      // 其他子应用 → 导航到 shell，由 qiankun 加载
+      const shellBase = APP_CONFIGS.shell.basePath
+      window.location.href = `${shellBase}${node.path.startsWith('/') ? node.path.slice(1) : node.path}`
+    }
   }
 }
 

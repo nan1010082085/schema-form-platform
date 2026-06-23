@@ -111,8 +111,24 @@ export async function mount(props?: { container?: Element }): Promise<void> {
   if (!appInstance) {
     const { app, router } = createAdminApp()
     appInstance = app
+
+    // qiankun 子应用模式：挂载到宿主提供的容器
+    // 独立模式：挂载到自身的 #app
     const container = props?.container
-    app.mount(container ? container.querySelector('#app') || '#app' : '#app')
+    const mountEl = container
+      ? (() => {
+          // 宿主容器内没有 #app，需要创建一个
+          let el = container.querySelector('#app')
+          if (!el) {
+            el = document.createElement('div')
+            el.id = 'app'
+            container.appendChild(el)
+          }
+          return el
+        })()
+      : '#app'
+
+    app.mount(mountEl)
 
     loadAndRegisterMicroApps().then(() => {
       router.isReady().then(() => {

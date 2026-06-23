@@ -2,9 +2,11 @@
  * TaskInstance — 任务实例模型
  */
 import mongoose, { Schema, type Document } from 'mongoose'
+import { tenantPlugin } from '../middleware/tenantPlugin.js'
 
 export interface ITaskInstance extends Document {
   id: string
+  tenantId: string
   instanceId: string
   nodeId: string
   nodeName: string
@@ -32,6 +34,7 @@ export interface ITaskInstance extends Document {
 const TaskInstanceSchema = new Schema<ITaskInstance>(
   {
     id: { type: String, required: true, unique: true },
+    tenantId: { type: String, default: '000000', index: true },
     instanceId: { type: String, required: true, index: true },
     nodeId: { type: String, required: true },
     nodeName: { type: String, required: true },
@@ -66,5 +69,7 @@ const TaskInstanceSchema = new Schema<ITaskInstance>(
     timestamps: true,
   },
 )
+
+TaskInstanceSchema.plugin(tenantPlugin)
 
 export const TaskInstanceModel = mongoose.model<ITaskInstance>('TaskInstance', TaskInstanceSchema)

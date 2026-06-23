@@ -13,6 +13,7 @@ export interface IUser {
   password: string
   displayName: string
   roles: string[]  // 角色ID数组
+  postIds: string[]  // 岗位ID数组
   tenantId: string
   deptId: string | null
   email: string | null
@@ -30,6 +31,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     displayName: { type: String, required: true },
     roles: { type: [String], default: [] },  // 角色ID数组
+    postIds: { type: [String], default: [] },  // 岗位ID数组
     tenantId: { type: String, default: '000000', index: true },
     deptId: { type: String, default: null },
     email: { type: String, default: null },

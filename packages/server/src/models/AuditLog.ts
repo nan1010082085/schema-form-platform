@@ -16,8 +16,11 @@ export interface IAuditLog {
   ip: string
   userAgent: string
   requestBody: Record<string, unknown> | null
+  responseBody: Record<string, unknown> | null
+  controllerMethod: string
   status: 'success' | 'fail'
   errorMsg: string
+  errorStack: string
   duration: number
   createdAt: Date
   updatedAt: Date
@@ -43,8 +46,11 @@ const auditLogSchema = new mongoose.Schema(
     ip: { type: String, default: '' },
     userAgent: { type: String, default: '' },
     requestBody: { type: mongoose.Schema.Types.Mixed, default: null },
+    responseBody: { type: mongoose.Schema.Types.Mixed, default: null },
+    controllerMethod: { type: String, default: '' },
     status: { type: String, enum: ['success', 'fail'], default: 'success', index: true },
     errorMsg: { type: String, default: '' },
+    errorStack: { type: String, default: '' },
     duration: { type: Number, default: 0 },
   },
   {

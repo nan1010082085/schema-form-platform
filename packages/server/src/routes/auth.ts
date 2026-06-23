@@ -5,13 +5,30 @@ import { UserModel } from '../models/User.js'
 import { RoleModel } from '../models/Role.js'
 import { TenantModel } from '../models/Tenant.js'
 import { SSOSessionModel } from '../models/SSOSession.js'
+import { LoginLogModel } from '../models/LoginLog.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
 import { loginSchema, refreshSchema } from '../schemas/authSchemas.js'
 import { JWT_SECRET } from '../config/jwt.js'
 import type { JwtPayload } from '../middleware/auth.js'
+import { cacheSet, cacheExists } from '../utils/cache.js'
+import { createHash } from 'node:crypto'
+import { validatePassword } from '../utils/passwordPolicy.js'
 
 const router = new Router({ prefix: '/api/auth' })
+
+/** Record login attempt (async, non-blocking) */
+function recordLoginLog(tenantId: string, username: string, status: 'success' | 'fail', message: string, ctx: { ip: string; get: (name: string) => string }) {
+  LoginLogModel.create({
+    tenantId,
+    username,
+    status,
+    ip: ctx.ip,
+    userAgent: ctx.get('User-Agent') || '',
+    message,
+    loginTime: new Date(),
+  }).catch(() => { /* ignore write errors */ })
+}
 
 /** Token expiry constants */
 const ACCESS_TOKEN_EXPIRY = '15m'
@@ -42,6 +59,7 @@ router.post('/login', validate(loginSchema), async (ctx) => {
     // Resolve tenantCode to tenantId
     const tenant = await TenantModel.findOne({ code: tenantCode, status: 'active' })
     if (!tenant) {
+      recordLoginLog(DEFAULT_TENANT_ID, username, 'fail', '租户不存在', ctx)
       ctx.status = 401
       ctx.body = { success: false, error: { message: 'Invalid tenant.' } }
       return
@@ -54,6 +72,7 @@ router.post('/login', validate(loginSchema), async (ctx) => {
   // Query user scoped to tenant
   const user = await UserModel.findOne({ username, tenantId })
   if (!user) {
+    recordLoginLog(tenantId, username, 'fail', '用户不存在', ctx)
     ctx.status = 401
     ctx.body = { success: false, error: { message: 'Invalid username or password.' } }
     return
@@ -61,6 +80,7 @@ router.post('/login', validate(loginSchema), async (ctx) => {
 
   const valid = await user.comparePassword(password)
   if (!valid) {
+    recordLoginLog(tenantId, username, 'fail', '密码错误', ctx)
     ctx.status = 401
     ctx.body = { success: false, error: { message: 'Invalid username or password.' } }
     return
@@ -74,14 +94,17 @@ router.post('/login', validate(loginSchema), async (ctx) => {
     deptId: user.deptId,
   }
 
+  const accessJti = crypto.randomUUID()
+  const refreshJti = crypto.randomUUID()
+
   const accessToken = jwt.sign(
-    { ...basePayload, tokenType: 'access' },
+    { ...basePayload, tokenType: 'access', jti: accessJti },
     JWT_SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRY },
   )
 
   const refreshToken = jwt.sign(
-    { ...basePayload, tokenType: 'refresh' },
+    { ...basePayload, tokenType: 'refresh', jti: refreshJti },
     JWT_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY },
   )
@@ -95,6 +118,9 @@ router.post('/login', validate(loginSchema), async (ctx) => {
     ip: ctx.ip,
     expiresAt: new Date(Date.now() + SSO_SESSION_EXPIRY_MS),
   })
+
+  // 记录登录成功日志
+  recordLoginLog(tenantId, username, 'success', '', ctx)
 
   // 设置 SSO 会话 cookie
   // 注意：secure 只在 HTTPS 下启用，当前服务器是 HTTP 所以关闭
@@ -175,6 +201,18 @@ router.post('/refresh', validate(refreshSchema), async (ctx) => {
  * POST /api/auth/logout
  */
 router.post('/logout', async (ctx) => {
+  // 将当前 access token 加入黑名单
+  const authHeader = ctx.get('Authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const payload = jwt.verify(authHeader.slice(7), JWT_SECRET) as JwtPayload
+      if (payload.jti) {
+        // Blacklist for the remaining token lifetime (max 15min)
+        await cacheSet(`token:blacklist:${payload.jti}`, '1', 900)
+      }
+    } catch { /* token already invalid, skip */ }
+  }
+
   // 删除 SSO 会话
   const sessionToken = ctx.cookies.get(SSO_SESSION_COOKIE)
   if (sessionToken) {
@@ -270,9 +308,10 @@ router.post('/register', async (ctx) => {
     return
   }
 
-  if (password.length < 8) {
+  const passwordCheck = validatePassword(password)
+  if (!passwordCheck.valid) {
     ctx.status = 400
-    ctx.body = { success: false, error: { message: '密码至少 8 位。' } }
+    ctx.body = { success: false, error: { message: passwordCheck.message } }
     return
   }
 
@@ -296,7 +335,7 @@ router.post('/register', async (ctx) => {
     _id: crypto.randomUUID(),
     username,
     password,
-    displayName: nickname || username,
+    displayName: displayName || username,
     phone: phone || '',
     roles: defaultRoles,
     tenantId,
@@ -332,9 +371,10 @@ router.post('/change-password', authMiddleware({ required: true }), async (ctx) 
     return
   }
 
-  if (newPassword.length < 8) {
+  const passwordCheck = validatePassword(newPassword)
+  if (!passwordCheck.valid) {
     ctx.status = 400
-    ctx.body = { success: false, error: { message: '新密码至少 8 位。' } }
+    ctx.body = { success: false, error: { message: passwordCheck.message } }
     return
   }
 

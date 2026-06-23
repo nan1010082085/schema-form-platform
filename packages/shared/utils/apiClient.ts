@@ -1,11 +1,12 @@
 /**
- * apiClient -- 共享 HTTP 客户端
+ * apiClient -- 共享 HTTP 客户端（基于 axios）
  *
  * 所有子项目（shell、editor、flow、ai-app、admin）统一使用此客户端。
- * - 自动附加 Authorization header（通过 tokenProvider 注入）
- * - 非成功响应抛出 ApiError
- * - 401 触发 unauthorizedHandler 回调并跳转登录页
+ * - 请求拦截器：自动附加 Authorization header
+ * - 响应拦截器：统一错误处理，401 触发 unauthorizedHandler
  */
+import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
+
 export class ApiError extends Error {
   public readonly status: number
   public readonly details: unknown
@@ -41,45 +42,69 @@ export function setUnauthorizedHandler(handler: () => void): void {
   onUnauthorized = handler
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = {}
-  if (body !== undefined) {
-    headers['Content-Type'] = 'application/json'
-  }
+// ── axios 实例 ──
 
-  const token = tokenProvider?.()
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
+const instance: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30_000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
+// ── 请求拦截器：自动附加 token ──
 
-  // 401 清除认证状态并跳转登录页
-  if (response.status === 401 && path !== '/auth/login') {
-    onUnauthorized?.()
-    window.location.href = '/login'
-    throw new ApiError('Authentication required', 401)
-  }
+instance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = tokenProvider?.()
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error),
+)
 
-  const json = (await response.json()) as ApiResponse<T>
+// ── 响应拦截器：统一错误处理 ──
 
-  if (!json.success) {
-    throw new ApiError(json.error?.message ?? 'Request failed', response.status, json.error?.details)
-  }
+instance.interceptors.response.use(
+  (response: AxiosResponse<ApiResponse<unknown>>) => {
+    const json = response.data
+    if (!json.success) {
+      return Promise.reject(
+        new ApiError(json.error?.message ?? 'Request failed', response.status, json.error?.details),
+      )
+    }
+    return response
+  },
+  (error) => {
+    if (axios.isAxiosError(error) && error.response) {
+      const { status, data } = error.response
 
-  return json.data
-}
+      // 401 清除认证状态并跳转登录页
+      if (status === 401 && error.config?.url !== '/auth/login') {
+        onUnauthorized?.()
+        window.location.href = '/login'
+        return Promise.reject(new ApiError('Authentication required', 401))
+      }
+
+      const message = (data as ApiResponse<unknown>)?.error?.message ?? error.message
+      return Promise.reject(new ApiError(message, status))
+    }
+
+    // 网络错误等
+    return Promise.reject(new ApiError(error.message ?? 'Network error', 0))
+  },
+)
+
+// ── 对外 API ──
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>('GET', path),
-  post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
-  put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
-  patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
-  delete: <T>(path: string) => request<T>('DELETE', path),
+  get: <T>(path: string) => instance.get<ApiResponse<T>>(path).then((r) => r.data.data as T),
+  post: <T>(path: string, body?: unknown) => instance.post<ApiResponse<T>>(path, body).then((r) => r.data.data as T),
+  put: <T>(path: string, body?: unknown) => instance.put<ApiResponse<T>>(path, body).then((r) => r.data.data as T),
+  patch: <T>(path: string, body?: unknown) => instance.patch<ApiResponse<T>>(path, body).then((r) => r.data.data as T),
+  delete: <T>(path: string) => instance.delete<ApiResponse<T>>(path).then((r) => r.data.data as T),
 }
 
 export interface PaginatedResponse<T> {

@@ -2,6 +2,7 @@ import type { Middleware } from 'koa'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../config/jwt.js'
 import { tenantStorage } from './tenantContext.js'
+import { cacheExists } from '../utils/cache.js'
 
 export interface JwtPayload {
   id: string
@@ -10,6 +11,7 @@ export interface JwtPayload {
   tenantId: string
   deptId: string | null
   tokenType: 'access' | 'refresh'
+  jti?: string
 }
 
 /**
@@ -27,6 +29,14 @@ function syncTenantFromUser(ctx: { state: Record<string, unknown> }): void {
   }
 }
 
+/**
+ * Check if a token's jti is in the blacklist (logged out).
+ */
+async function isTokenBlacklisted(jti?: string): Promise<boolean> {
+  if (!jti) return false
+  return cacheExists(`token:blacklist:${jti}`)
+}
+
 export function authMiddleware(options?: { required?: boolean }): Middleware {
   const required = options?.required ?? true
 
@@ -39,6 +49,12 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
           const token = authHeader.slice(7)
           const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
           if (payload.tokenType !== 'refresh') {
+            // Check blacklist
+            if (await isTokenBlacklisted(payload.jti)) {
+              ctx.status = 401
+              ctx.body = { success: false, error: { message: 'Token has been revoked.' } }
+              return
+            }
             ctx.state.user = payload
             syncTenantFromUser(ctx)
             await next()
@@ -69,6 +85,12 @@ export function authMiddleware(options?: { required?: boolean }): Middleware {
       if (payload.tokenType === 'refresh') {
         ctx.status = 401
         ctx.body = { success: false, error: { message: 'Access token required. Refresh token cannot be used for API access.' } }
+        return
+      }
+      // Check blacklist
+      if (await isTokenBlacklisted(payload.jti)) {
+        ctx.status = 401
+        ctx.body = { success: false, error: { message: 'Token has been revoked.' } }
         return
       }
       ctx.state.user = payload

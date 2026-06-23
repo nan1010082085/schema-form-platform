@@ -78,6 +78,19 @@ export const auditLogMiddleware: Middleware = async (ctx, next) => {
     const module = auditState.module || extractModule(ctx.url)
     const action = auditState.action || METHOD_ACTION_MAP[method] || 'other'
 
+    // Extract response body for logging (only for errors, to avoid logging sensitive data)
+    let responseBody: Record<string, unknown> | null = null
+    let errorMsg = ''
+    let errorStack = ''
+    if (ctx.status >= 400 && ctx.body && typeof ctx.body === 'object') {
+      const body = ctx.body as Record<string, unknown>
+      errorMsg = (body.error as { message?: string })?.message || ''
+      responseBody = { success: body.success, error: body.error }
+    }
+
+    // Extract controller method from route path
+    const controllerMethod = auditState.action || ctx._matchedRoute || ''
+
     // 异步写入，不阻塞响应
     AuditLogModel.create({
       userId: user?.id || '',
@@ -91,8 +104,11 @@ export const auditLogMiddleware: Middleware = async (ctx, next) => {
       ip: ctx.ip,
       userAgent: ctx.get('User-Agent') || '',
       requestBody: sanitizeBody(ctx.request.body as Record<string, unknown> | undefined),
+      responseBody,
+      controllerMethod,
       status: ctx.status < 400 ? 'success' : 'fail',
-      errorMsg: ctx.status >= 400 ? (ctx.body as { error?: { message?: string } })?.error?.message || '' : '',
+      errorMsg,
+      errorStack,
       duration,
     }).catch((err: unknown) => {
       console.error('[auditLog] Failed to write audit log:', err instanceof Error ? err.message : String(err))
