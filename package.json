@@ -6,7 +6,7 @@
   "author": "yangdongnan",
   "description": "Schema 驱动的低代码表单引擎与流程引擎 — 可视化设计器 + BPMN 流程编排 + AI 对话式生成 + SaaS Workflow",
   "scripts": {
-    "extract:ai-metadata": "pnpm --filter @schema-form/server exec tsx ../../scripts/extract-ai-metadata.ts",
+    "extract:ai-metadata": "pnpm --filter @schema-form/server exec tsx ../../../scripts/extract-ai-metadata.ts",
     "dev": "bash scripts/kill-ports.sh && pnpm dev:server & bash scripts/wait-for-server.sh && pnpm dev:web",
     "dev:server": "lsof -ti :3001 | xargs kill -9 2>/dev/null; pnpm extract:ai-metadata && no_proxy='*' pnpm --filter @schema-form/server dev",
     "dev:web": "no_proxy='*' pnpm --parallel --filter @schema-form/shell --filter @schema-form/editor-web --filter @schema-form/flow-web --filter @schema-form/ai-app --filter @schema-form/admin dev",
