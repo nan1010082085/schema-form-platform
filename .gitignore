@@ -21,9 +21,9 @@ packages/*/.env
 packages/*/.env.*
 packages/**/.env
 packages/**/.env.*
-deploy/output/
-deploy/nginx-*.conf
-deploy/nginx.conf
+
+# Deploy (local only)
+deploy/
 
 # IDE
 .idea/
@@ -49,6 +49,5 @@ coverage/
 packages/web/src/docs/runtime/
 .ai/
 CLAUDE.md
-deploy/output/
-deploy/nginx-*.conf
-deploy/nginx.conf
+# Added by code-review-graph
+.code-review-graph/
