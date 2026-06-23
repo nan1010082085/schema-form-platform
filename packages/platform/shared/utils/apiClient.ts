@@ -84,7 +84,8 @@ instance.interceptors.response.use(
       // 401 清除认证状态并跳转登录页
       if (status === 401 && error.config?.url !== '/auth/login') {
         onUnauthorized?.()
-        window.location.href = '/login'
+        // 使用 shell basePath 确保跳转到正确的登录路径
+        window.location.href = '/schema-platform/login'
         return Promise.reject(new ApiError('Authentication required', 401))
       }
 
