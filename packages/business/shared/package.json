@@ -11,6 +11,7 @@
     "./utils/*": "./utils/*"
   },
   "dependencies": {
+    "@schema-form/platform-shared": "workspace:*",
     "vue": "^3.5.13",
     "pinia": "^2.3.1",
     "vue-router": "^4.5.0",

@@ -1,0 +1,168 @@
+/* ============================================================
+ * 统一设计令牌 — 所有项目共享的 CSS 变量
+ *
+ * 使用方式：在各项目的 main.ts 中 import '@schema-form/shared/styles/tokens.css'
+ *
+ * 变量命名规则：
+ *   --{category}-{name}[-{variant}]
+ *   例：--color-primary-hover, --text-color-muted
+ * ============================================================ */
+
+:root {
+  /* ---------- 字体系统 ---------- */
+  --font-family-base: 'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-family-semibold: 'Microsoft YaHei', '微软雅黑', 'Microsoft YaHei Semibold', 'MicrosoftYaHeiSemibold', 'PingFang SC', sans-serif;
+  --font-family-number: 'Microsoft YaHei', '微软雅黑', 'DIN Alternate', Arial, sans-serif;
+  --font-family-mono: Consolas, Monaco, monospace;
+
+  /* 字体大小 */
+  --font-size-12: 12px;
+  --font-size-13: 13px;
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-20: 20px;
+  --font-size-24: 24px;
+
+  /* 字重 */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* 行高 */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ---------- 颜色系统 ---------- */
+  /* 主色系 */
+  --color-primary: #0060A2;
+  --color-primary-hover: #4581E9;
+  --color-primary-light: #4581E9;
+  --color-primary-lighter: #EEF5FF;
+  --color-primary-dark: #0060A2;
+  --color-primary-bg-light: #EEF5FF;
+  --color-primary-rgb: 0, 96, 162;
+
+  /* 功能色 - 成功 */
+  --color-success: #26A036;
+  --color-success-light: #36B37E;
+  --color-success-bg: rgba(82, 196, 26, 0.1);
+  --color-success-rgb: 38, 160, 54;
+
+  /* 功能色 - 警告 */
+  --color-warning: #F09700;
+  --color-warning-light: #FF6010;
+  --color-warning-bg: rgba(255, 191, 0, 0.1);
+
+  /* 功能色 - 危险/错误 */
+  --color-danger: #E50113;
+  --color-danger-light: #FF6B55;
+  --color-danger-bg: rgba(255, 1, 1, 0.08);
+
+  /* 功能色 - 信息 */
+  --color-info: #4581E9;
+  --color-info-light: #E5EFF6;
+  --color-info-bg: rgba(22, 119, 255, 0.08);
+
+  /* ---------- 文字色 ---------- */
+  --text-color-title: #303133;
+  --text-color-primary: #333333;
+  --text-color-regular: #606266;
+  --text-color-secondary: #666666;
+  --text-color-muted: #909399;
+  --text-color-placeholder: #969FA8;
+  --text-color-disabled: #C0C4CC;
+  --text-color-inverse: #FFFFFF;
+
+  /* ---------- 背景色 ---------- */
+  --bg-color-white: #FFFFFF;
+  --bg-color-page: #F5F6FA;
+  --bg-color-gray-light: #FAFAFA;
+  --bg-color-gray: #F5F7FA;
+  --bg-color-gray-dark: #E4E7ED;
+  --bg-color-gray-darker: #E8E8E8;
+  --bg-color-hover: #E5EFF6;
+  --bg-color-surface: #FAFBFC;
+  --bg-color-canvas-dot: #D0D5DD;
+
+  /* 侧边栏背景（深色主题） */
+  --sidebar-bg: #001529;
+  --sidebar-bg-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-bg-active: #1677ff;
+  --sidebar-text-color: rgba(255, 255, 255, 0.65);
+  --sidebar-text-color-active: #FFFFFF;
+  --sidebar-border-color: rgba(255, 255, 255, 0.08);
+
+  /* ---------- 边框色 ---------- */
+  --border-color-base: #D5DDE3;
+  --border-color-light: #EBEDF3;
+  --border-color-dark: #D5DDE3;
+
+  /* 输入框 */
+  --input-border-default: #EBEDF3;
+  --input-border-hover: #4581E9;
+  --input-border-focus: #1369C1;
+  --input-border-disabled: #E0E0E6;
+  --input-bg-disabled: #E0E0E6;
+  --input-border-error: #C4040F;
+
+  /* 状态色 */
+  --color-pending: #FFBF00;
+  --color-approved: #52C41A;
+  --color-rejected: #FF6010;
+
+  /* ---------- 阴影 ---------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+
+  /* 节点专用阴影 */
+  --shadow-node: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-node-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-node-selected: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+  /* ---------- 尺寸系统 ---------- */
+  --button-height: 32px;
+  --button-height-lg: 40px;
+  --input-height: 32px;
+  --detail-item-height: 48px;
+  --dialog-footer-height: 60px;
+  --border-radius-sm: 2px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 10px;
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-10px: 10px;
+  --spacing-20px: 20px;
+
+  /* ---------- Workflow 节点专用变量 ---------- */
+  /* 节点强调色 — 用于变量分组、节点标签、类型标识 */
+  --node-accent-trigger: #f59e0b;   /* 触发器：琥珀黄 */
+  --node-accent-editor: #10b981;    /* Editor 输出：翡翠绿 */
+  --node-accent-flow: #6366f1;      /* Flow 输出：靛蓝 */
+  --node-accent-ai: #8b5cf6;        /* AI 输出：紫罗兰 */
+  --node-accent-system: #64748b;    /* 系统：石板灰 */
+
+  /* 节点背景色 */
+  --node-bg-trigger: #fef3c7;
+  --node-bg-editor: #d1fae5;
+  --node-bg-flow: #e0e7ff;
+  --node-bg-ai: #ede9fe;
+  --node-bg-system: #f1f5f9;
+
+  /* 条件网关 */
+  --node-accent-condition: #f97316;
+  --node-bg-condition: #ffedd5;
+
+  /* 通知节点 */
+  --node-accent-notify: #ec4899;
+  --node-bg-notify: #fce7f3;
+}
