@@ -87,8 +87,7 @@ if (!window.__POWERED_BY_QIANKUN__) {
       try {
         start({
           sandbox: {
-            strictStyleIsolation: true,
-            experimentalStyleIsolation: false,
+            experimentalStyleIsolation: true,
           },
         })
         console.log('[admin] qiankun started')
@@ -136,7 +135,6 @@ export async function mount(props?: { container?: Element }): Promise<void> {
           start({
             sandbox: {
               strictStyleIsolation: true,
-              experimentalStyleIsolation: false,
             },
           })
           console.log('[admin] qiankun started')

@@ -5,7 +5,7 @@
  * 通过 qiankun loadMicroApp 手动加载 editor 子应用，
  * 将 schemaId 传给 editor 的 PublishView（/view?id=xxx）。
  */
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { loadMicroApp } from 'qiankun'
 import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
@@ -23,15 +23,22 @@ function getEditorEntry(): string {
   const config = APP_CONFIGS.editor
   const isDev = import.meta.env.DEV
   if (isDev) {
-    return `//localhost:${config.devPort}${config.basePath}`
+    return `//localhost:${config.devPort}/`
   }
   return `${window.location.origin}${config.basePath}`
 }
 
 async function startMicroApp(schemaId: string): Promise<void> {
+  console.log('[SchemaPage] startMicroApp, schemaId:', schemaId)
+
   // 清理上一个实例
   if (microApp) {
-    microApp.unmount()
+    console.log('[SchemaPage] unmounting previous micro-app')
+    try {
+      await microApp.unmount()
+    } catch (e) {
+      console.warn('[SchemaPage] unmount error (ignored):', e)
+    }
     microApp = null
   }
 
@@ -39,23 +46,23 @@ async function startMicroApp(schemaId: string): Promise<void> {
   error.value = ''
   ready.value = false
 
-  // 等待 DOM 渲染完成（containerRef 出现）
+  // 等待 DOM 渲染完成
   await nextTick()
 
   if (!containerRef.value) {
     error.value = '渲染容器未就绪'
     loading.value = false
+    console.error('[SchemaPage] containerRef is null')
     return
   }
 
-  loading.value = false
-
   const entry = getEditorEntry()
+  console.log('[SchemaPage] loading micro-app, entry:', entry, 'container:', containerRef.value)
 
   try {
     microApp = loadMicroApp(
       {
-        name: 'editor-schema-renderer',
+        name: `editor-${schemaId}`,
         entry,
         container: containerRef.value,
         props: {
@@ -64,19 +71,26 @@ async function startMicroApp(schemaId: string): Promise<void> {
       },
       {
         sandbox: {
-          strictStyleIsolation: false,
           experimentalStyleIsolation: true,
         },
       },
     )
 
+    console.log('[SchemaPage] micro-app created, waiting for mount...')
+
     microApp.mountPromise.then(() => {
+      console.log('[SchemaPage] micro-app mounted')
       ready.value = true
+      loading.value = false
     }).catch((err: unknown) => {
+      console.error('[SchemaPage] mount failed:', err)
       error.value = err instanceof Error ? err.message : '加载渲染器失败'
+      loading.value = false
     })
   } catch (err: unknown) {
+    console.error('[SchemaPage] loadMicroApp failed:', err)
     error.value = err instanceof Error ? err.message : '加载渲染器失败'
+    loading.value = false
   }
 }
 
@@ -88,6 +102,13 @@ watch(
   },
   { immediate: true },
 )
+
+onUnmounted(() => {
+  if (microApp) {
+    microApp.unmount().catch(() => {})
+    microApp = null
+  }
+})
 </script>
 
 <template>
@@ -102,7 +123,7 @@ watch(
       <span :style="{ color: 'var(--color-danger)' }">{{ error }}</span>
     </div>
 
-    <!-- qiankun 子应用挂载容器（始终渲染，loading 时隐藏） -->
+    <!-- qiankun 子应用挂载容器 -->
     <div
       ref="containerRef"
       :class="$style.container"

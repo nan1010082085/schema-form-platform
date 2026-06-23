@@ -41,6 +41,7 @@ export type BasicType =
   | 'tag-input'
   | 'autocomplete'
   | 'descriptions'
+  | 'advanced-table'
   | 'bar-chart' | 'stacked-bar-chart' | 'horizontal-bar-chart'
   | 'line-chart' | 'area-chart'
   | 'pie-chart' | 'donut-chart'

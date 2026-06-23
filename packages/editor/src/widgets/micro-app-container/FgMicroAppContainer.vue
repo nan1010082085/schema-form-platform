@@ -41,7 +41,7 @@ function getSandboxConfig() {
   switch (styleIsolation.value) {
     case 'strict': return { strictStyleIsolation: true }
     case 'none': return { sandbox: false }
-    default: return { experimentalStyleIsolation: true }
+    default: return {}
   }
 }
 

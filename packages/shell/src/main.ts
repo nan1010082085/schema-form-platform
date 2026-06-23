@@ -101,7 +101,6 @@ router.isReady().then(() => {
     start({
       sandbox: {
         strictStyleIsolation: true,
-        experimentalStyleIsolation: false,
       },
       // 不用 prefetch: 'all'，避免在组件挂载前就加载子应用
     })

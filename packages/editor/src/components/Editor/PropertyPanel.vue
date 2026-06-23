@@ -20,6 +20,10 @@ import BorderRadiusEditor from './BorderRadiusEditor.vue'
 import SpacingEditor from './SpacingEditor.vue'
 import TableColumnsEditor from './TableColumnsEditor.vue'
 import type { TableColumn } from '../../widgets/table/config'
+import AdvancedColumnsEditor from './AdvancedColumnsEditor.vue'
+import type { AdvancedTableColumn } from '../../widgets/advanced-table/config'
+import ActionButtonsEditor from './ActionButtonsEditor.vue'
+import type { ActionButton } from '../../widgets/advanced-table/config'
 import GenericArrayEditor from './GenericArrayEditor.vue'
 import OptionsEditor from './OptionsEditor.vue'
 import RulesEditor from './RulesEditor.vue'
@@ -575,6 +579,22 @@ function updateBoardProperty(key: string, value: unknown) {
                 <TableColumnsEditor
                   :columns="(item.value as TableColumn[]) ?? []"
                   @update:columns="(v: TableColumn[]) => updateProperty(item.key, v)"
+                />
+              </div>
+              <!-- 高级列配置：AdvancedColumnsEditor -->
+              <div v-else-if="item.type === 'advanced-columns'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
+                <AdvancedColumnsEditor
+                  :columns="(item.value as AdvancedTableColumn[]) ?? []"
+                  @update:columns="(v: AdvancedTableColumn[]) => updateProperty(item.key, v)"
+                />
+              </div>
+              <!-- 操作按钮配置：ActionButtonsEditor -->
+              <div v-else-if="item.type === 'action-buttons'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
+                <ActionButtonsEditor
+                  :buttons="(item.value as ActionButton[]) ?? []"
+                  @update:buttons="(v: ActionButton[]) => updateProperty(item.key, v)"
                 />
               </div>
               <!-- 通用数组编辑器 -->
