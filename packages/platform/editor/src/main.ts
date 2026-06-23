@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import 'element-plus/dist/index.css'
-import '@schema-form/shared-styles/theme.scss'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/theme.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 
 import { setupElementPlus } from '@schema-form/platform-shared/config/element'
 

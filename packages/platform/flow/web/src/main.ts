@@ -1,6 +1,6 @@
 import 'element-plus/dist/index.css'
-import '@schema-form/shared-styles/theme.scss'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/theme.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 import './styles/variables.scss'
 import './styles/theme.scss'
 import { createQiankunApp } from '@schema-form/platform-shared/qiankun/createQiankunApp'

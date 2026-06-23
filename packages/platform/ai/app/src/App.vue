@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 import AiLayout from './components/AiLayout.vue'
 
 const route = useRoute()

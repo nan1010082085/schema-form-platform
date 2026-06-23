@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "author": "yangdongnan",
-  "description": "AI 对话式 Schema/Flow 生成微应用",
+  "description": "AI \u5bf9\u8bdd\u5f0f Schema/Flow \u751f\u6210\u5fae\u5e94\u7528",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -17,7 +17,6 @@
     "@iconify-icons/ep": "^1.2.12",
     "@iconify/vue": "^5.0.1",
     "@schema-form/platform-shared": "workspace:*",
-    "@schema-form/shared-styles": "workspace:*",
     "@schema-form/socket": "workspace:*",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",

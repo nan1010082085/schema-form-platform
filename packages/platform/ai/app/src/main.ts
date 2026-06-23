@@ -8,8 +8,8 @@
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import '@schema-form/shared-styles/theme.scss'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/theme.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 
 import App from './App.vue'
 import { createAiRouter } from './router'

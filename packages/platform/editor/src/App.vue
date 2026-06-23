@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 import { useAppStore } from '@/stores/app'
 import { fetchCurrentUser } from '@/utils/apiClient'
 

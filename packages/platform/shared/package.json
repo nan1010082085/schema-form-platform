@@ -10,6 +10,11 @@
     "./qiankun": "./qiankun/index.ts",
     "./qiankun/*": "./qiankun/*",
     "./socket": "./socket/index.ts",
+    "./styles/theme.scss": "./styles/_theme.scss",
+    "./styles/css-variables.scss": "./styles/_css-variables.scss",
+    "./styles/variables.scss": "./styles/_variables.scss",
+    "./styles/tokens.css": "./styles/tokens.css",
+    "./styles/design-tokens.css": "./styles/design-tokens.css",
     "./config/element": "./config/element.ts",
     "./config/vite": "./config/vite.ts"
   },

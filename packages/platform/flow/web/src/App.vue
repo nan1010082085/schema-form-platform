@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import '@schema-form/shared-styles/css-variables.scss'
+import '@schema-form/platform-shared/styles/css-variables.scss'
 </script>
 
 <template>

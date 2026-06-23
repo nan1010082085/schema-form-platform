@@ -26,9 +26,6 @@ importers:
       '@schema-form/platform-shared':
         specifier: workspace:*
         version: link:../../platform/shared
-      '@schema-form/shared-styles':
-        specifier: workspace:*
-        version: link:../../shared/styles
       element-plus:
         specifier: ^2.9.7
         version: 2.14.2(vue@3.5.34(typescript@5.7.3))
@@ -97,9 +94,6 @@ importers:
       '@schema-form/platform-shared':
         specifier: workspace:*
         version: link:../../platform/shared
-      '@schema-form/shared-styles':
-        specifier: workspace:*
-        version: link:../../shared/styles
       element-plus:
         specifier: ^2.9.7
         version: 2.14.2(vue@3.5.34(typescript@5.7.3))
@@ -143,9 +137,6 @@ importers:
       '@schema-form/platform-shared':
         specifier: workspace:*
         version: link:../../shared
-      '@schema-form/shared-styles':
-        specifier: workspace:*
-        version: link:../../../shared/styles
       '@schema-form/socket':
         specifier: workspace:*
         version: link:../../../shared/socket
@@ -254,9 +245,6 @@ importers:
       '@schema-form/platform-shared':
         specifier: workspace:*
         version: link:../shared
-      '@schema-form/shared-styles':
-        specifier: workspace:*
-        version: link:../../shared/styles
       '@schema-form/socket':
         specifier: workspace:*
         version: link:../../shared/socket
@@ -363,9 +351,6 @@ importers:
       '@schema-form/platform-shared':
         specifier: workspace:*
         version: link:../../shared
-      '@schema-form/shared-styles':
-        specifier: workspace:*
-        version: link:../../../shared/styles
       '@schema-form/socket':
         specifier: workspace:*
         version: link:../../../shared/socket
