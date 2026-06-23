@@ -1,9 +1,10 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
     "noEmit": false,
+    "module": "ESNext",
     "allowImportingTsExtensions": false
   },
   "include": ["./**/*.ts"]
