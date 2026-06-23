@@ -3,6 +3,8 @@ packages:
   - 'packages/ai/*'
   - 'packages/flow/*'
   - 'packages/shared/*'
+  - 'packages/business/*'
+  - 'packages/platform/*'
 allowBuilds:
   '@parcel/watcher': set this to true or false
   esbuild: set this to true or false

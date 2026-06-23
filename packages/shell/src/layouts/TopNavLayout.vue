@@ -11,7 +11,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMenu } from '@/composables/useMenu'
 import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
-import LayoutSwitcher from '@schema-form/shared-components/LayoutSwitcher.vue'
+import LayoutSwitcher from '@schema-form/business-shared/components/LayoutSwitcher.vue'
 import type { MenuTreeNode } from '@/types/menu'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
 

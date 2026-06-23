@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useLayoutStore } from '@schema-form/shared-stores/layout'
+import { useLayoutStore } from '@schema-form/business-shared/stores/layout'
 import SideMenu from '@/components/SideMenu.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import UserDropdown from '@/components/UserDropdown.vue'

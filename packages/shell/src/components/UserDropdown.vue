@@ -6,7 +6,7 @@
  */
 import { useAuth } from '@/composables/useAuth'
 import { useMenu } from '@/composables/useMenu'
-import SharedUserDropdown from '@schema-form/shared-components/navigation/UserDropdown.vue'
+import SharedUserDropdown from '@schema-form/business-shared/components/UserDropdown.vue'
 
 const { user, logout } = useAuth()
 const { reset: resetMenu } = useMenu()

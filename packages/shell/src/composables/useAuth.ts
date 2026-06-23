@@ -17,7 +17,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@schema-form/shared-utils/apiClient'
-import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/shared-utils/authTypes'
+import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/business-shared/utils/authTypes'
 
 /** Whether tokenProvider has been injected (once globally) */
 let providerInitialized = false
