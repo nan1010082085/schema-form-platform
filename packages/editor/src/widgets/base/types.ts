@@ -23,8 +23,6 @@ export type BasicType =
   | 'slider'
   | 'rate'
   | 'table'
-  | 'search-list'
-  | 'editable-table'
   | 'title'
   | 'divider'
   | 'spacer'
@@ -585,8 +583,6 @@ export const FULL_WIDTH_TYPES = [
   'banner',
   'tree-layout',
   'file-list',
-  'search-list',
-  'editable-table',
   'descriptions',
   'bar-chart', 'line-chart', 'pie-chart', 'scatter-chart',
   'radar', 'gauge', 'heatmap', 'funnel', 'candlestick',

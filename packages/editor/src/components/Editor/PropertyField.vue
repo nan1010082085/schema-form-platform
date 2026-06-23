@@ -141,7 +141,7 @@ function onJsonBlur() {
     <div :class="styles.control">
       <!-- 文本输入 -->
       <el-input
-        v-if="type === 'text'"
+        v-if="type === 'text' || type === 'input'"
         :model-value="String(value ?? '')"
         size="small"
         @update:model-value="handleUpdate"

@@ -172,7 +172,7 @@ defineExpose({
 
     <!-- Pagination -->
     <el-pagination
-      v-if="paginationConfig.enabled && listApiConfig.url"
+      v-if="paginationConfig.enabled"
       :class="styles.pagination"
       :total="total"
       :current-page="currentPage"

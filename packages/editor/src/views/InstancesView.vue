@@ -10,7 +10,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useApiStore } from '@/stores/api'
 import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
-import { importSchema } from '@/utils/apiClient'
+import { importSchema, updateSchema } from '@/utils/apiClient'
+import type { SchemaTypeValue } from '@/types/api'
 import VersionHistoryDialog from '@/components/Editor/VersionHistoryDialog.vue'
 import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
@@ -31,7 +32,7 @@ const searchInput = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 // ---- Filter & Sort ----
-const activeTab = ref<'all' | 'form' | 'search-list'>('all')
+const activeTab = ref<'all' | 'form'>('all')
 const sortBy = ref<'newest' | 'oldest' | 'name'>('newest')
 const bulkMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
@@ -41,7 +42,6 @@ const COOLDOWN_MS = 2000
 const filterTabs = [
   { label: '全部', value: 'all' as const },
   { label: '表单', value: 'form' as const },
-  { label: '搜索列表', value: 'search-list' as const },
 ]
 
 const sortOptions = [
@@ -50,13 +50,20 @@ const sortOptions = [
   { label: '名称 A-Z', value: 'name' as const },
 ]
 
+// ---- Schema type options ----
+const schemaTypeOptions = [
+  { label: '表单', value: 'form' as const },
+  { label: '搜索列表', value: 'search-list' as const },
+]
+
 // ---- Create Dialog ----
 const createDialogVisible = ref(false)
-const createType = ref<'form' | 'search-list'>('form')
 const createName = ref('')
+const createType = ref<SchemaTypeValue>('form')
 
 function openCreateDialog() {
   createName.value = ''
+  createType.value = 'form'
   createDialogVisible.value = true
 }
 
@@ -69,7 +76,7 @@ async function confirmCreate() {
   const result = await store.createSchema({ name, type: createType.value, json: [] })
   if (result) {
     createDialogVisible.value = false
-    ElMessage.success(`${createType.value === 'form' ? '表单' : '搜索列表'}创建成功`)
+    ElMessage.success('创建成功')
     router.push({ path: '/editor', query: { id: result.id } })
   } else {
     ElMessage.error(store.error || '创建失败')
@@ -93,7 +100,6 @@ function handleSearch(val: string) {
 function buildFilter(): { type?: string } {
   const filter: { type?: string } = {}
   if (activeTab.value === 'form') filter.type = 'form'
-  else if (activeTab.value === 'search-list') filter.type = 'search_list'
   return filter
 }
 
@@ -130,18 +136,6 @@ function handleDelete(item: SchemaListItem) {
     if (ok) ElMessage.success('已删除')
     else ElMessage.error(store.error || '删除失败')
   }).catch(() => {})
-}
-
-function handleEdit(id: string) {
-  // 打开表单填写/编辑视图，而非设计器
-  const item = store.schemas.find(s => s.id === id)
-  if (item?.publishId) {
-    // 已发布 → 用发布版本渲染表单（支持数据提交）
-    router.push({ path: '/view', query: { id: item.publishId, mode: 'edit' } })
-  } else {
-    // 未发布 → 先提示发布
-    ElMessage.warning('请先发布实例后再编辑表单内容')
-  }
 }
 
 function handleDesigner(id: string) {
@@ -287,6 +281,37 @@ function typeLabel(type: string): string {
 const isFiltered = computed(() =>
   activeTab.value !== 'all' || (searchInput.value && searchInput.value.trim().length > 0),
 )
+
+// ---- Edit Instance ----
+const editDialogVisible = ref(false)
+const editId = ref<string | null>(null)
+const editName = ref('')
+const editType = ref<SchemaTypeValue>('form')
+const editSaving = ref(false)
+
+function handleEdit(id: string) {
+  const item = store.schemas.find(s => s.id === id)
+  if (!item) return
+  editId.value = item.id
+  editName.value = item.name
+  editType.value = (item.type as SchemaTypeValue) ?? 'form'
+  editDialogVisible.value = true
+}
+
+async function confirmEdit() {
+  if (!editId.value || !editName.value.trim()) return
+  editSaving.value = true
+  try {
+    await updateSchema(editId.value, { name: editName.value.trim(), type: editType.value })
+    ElMessage.success('已更新')
+    editDialogVisible.value = false
+    store.fetchSchemas()
+  } catch {
+    ElMessage.error('更新失败')
+  } finally {
+    editSaving.value = false
+  }
+}
 
 // ---- Version History ----
 const versionDialogVisible = ref(false)
@@ -477,8 +502,7 @@ function handleVersionPublished() {
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="createType" style="width:100%">
-            <el-option label="表单 (Form)" value="form" />
-            <el-option label="搜索列表 (Search List)" value="search-list" />
+            <el-option v-for="opt in schemaTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -512,6 +536,24 @@ function handleVersionPublished() {
       @load-version="handleLoadVersion"
       @published="handleVersionPublished"
     />
+
+    <!-- Edit Instance Dialog -->
+    <AppDialog v-model="editDialogVisible" title="编辑实例" width="440px">
+      <el-form label-width="80px" @submit.prevent="confirmEdit">
+        <el-form-item label="实例名称">
+          <el-input v-model="editName" placeholder="请输入实例名称" maxlength="100" show-word-limit @keyup.enter="confirmEdit" />
+        </el-form-item>
+        <el-form-item label="类型">
+          <el-select v-model="editType" style="width:100%">
+            <el-option v-for="opt in schemaTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="editSaving" @click="confirmEdit">保存</el-button>
+      </template>
+    </AppDialog>
   </div>
 </template>
 

@@ -34,6 +34,7 @@ export const descriptionsConfig: WidgetConfig = {
   defaultStyle: { width: '100%' },
   exposedValues: [
     { key: 'data', type: 'object', description: '描述列表数据对象' },
+    { key: 'loading', type: 'boolean', description: '加载状态' },
   ],
   configPanels: ['events', 'api', 'variables'],
   defaultProps: {

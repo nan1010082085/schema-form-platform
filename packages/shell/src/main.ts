@@ -38,12 +38,13 @@ authStore.$subscribe((_mutation, state) => {
 const isDev = import.meta.env.DEV
 const shellBase = APP_CONFIGS.shell.basePath
 
-// 激活规则：匹配 /app/{name}/ 和 /standalone/{name}/ 两种模式
+// 激活规则：匹配 /{appName}/ 和 /standalone/{appName}/ 两种模式
+// 必须与 router 的 path 规则一致：'/:app/*' 和 '/standalone/:app/*'
 function makeActiveRule(appName: string): (location: Location) => boolean {
   return (location: Location) => {
     const path = location.pathname
-    // 带菜单: /schema-platform/app/editor/...
-    if (path.startsWith(`${shellBase}app/${appName}/`)) return true
+    // 带菜单: /schema-platform/editor/...
+    if (path.startsWith(`${shellBase}${appName}/`)) return true
     // 独立页签: /schema-platform/standalone/editor/...
     if (path.startsWith(`${shellBase}standalone/${appName}/`)) return true
     return false
@@ -55,8 +56,8 @@ const microApps = Object.values(APP_CONFIGS)
   .map((config) => ({
     name: config.name,
     entry: isDev
-      ? `//localhost:${config.devPort}${config.basePath}`
-      : `//${window.location.host}${config.basePath}`,
+      ? `http://localhost:${config.devPort}${config.basePath}`
+      : `${window.location.origin}${config.basePath}`,
     container: '#micro-container',
     activeRule: makeActiveRule(config.name),
   }))

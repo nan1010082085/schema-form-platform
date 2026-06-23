@@ -9,6 +9,7 @@ import { ElMessage } from 'element-plus'
 import { fetchVersions, publishSchema } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
 import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -93,14 +94,11 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
 </script>
 
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="visible"
     @update:model-value="emit('update:visible', $event)"
     :title="`版本历史 — ${schemaName || ''}`"
-    width="50%"
-    :close-on-click-modal="false"
-    :append-to-body="true"
-    destroy-on-close
+    width="700px"
   >
     <div v-if="loading" class="version-history__loading">
       <AppIcon name="loading" class="version-history__spinning" />
@@ -183,7 +181,7 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
     <template #footer>
       <el-button @click="emit('update:visible', false)">关闭</el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <style scoped lang="scss">

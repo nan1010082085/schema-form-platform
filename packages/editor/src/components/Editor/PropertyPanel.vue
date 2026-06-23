@@ -24,6 +24,7 @@ import AdvancedColumnsEditor from './AdvancedColumnsEditor.vue'
 import type { AdvancedTableColumn } from '../../widgets/advanced-table/config'
 import ActionButtonsEditor from './ActionButtonsEditor.vue'
 import type { ActionButton } from '../../widgets/advanced-table/config'
+import NumberArrayEditor from './NumberArrayEditor.vue'
 import GenericArrayEditor from './GenericArrayEditor.vue'
 import OptionsEditor from './OptionsEditor.vue'
 import RulesEditor from './RulesEditor.vue'
@@ -202,7 +203,7 @@ const propertySections = computed<PropertySection[]>(() => {
           key: `props.${prop.key}`,
           label: prop.label,
           type: prop.type,
-          value: widget.props?.[prop.key] ?? prop.default,
+          value: getNestedValue(widget.props, prop.key) ?? prop.default,
           desc: prop.desc,
           placeholder: (prop as any).placeholder,
           options: prop.options,
@@ -274,16 +275,30 @@ function toggleSection(key: string) {
 
 const TOP_LEVEL_KEYS = new Set(['field', 'label', 'defaultValue', 'hidden', 'options', 'validationRules'])
 
+function setNestedValue(obj: Record<string, unknown>, path: string[], value: unknown): Record<string, unknown> {
+  if (path.length === 1) {
+    return { ...obj, [path[0]]: value }
+  }
+  const [head, ...rest] = path
+  return {
+    ...obj,
+    [head]: setNestedValue((obj[head] as Record<string, unknown>) ?? {}, rest, value),
+  }
+}
+
+function getNestedValue(obj: Record<string, unknown> | undefined, path: string): unknown {
+  if (!obj) return undefined
+  return path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], obj)
+}
+
 function updateProperty(key: string, value: unknown) {
   if (!selectedWidget.value) return
 
   const parts = key.split('.')
   if (parts.length === 1) {
     if (TOP_LEVEL_KEYS.has(key)) {
-      // field / label 是 Widget 顶层属性
       widgetStore.updateWidget(selectedWidget.value.id, { [key]: value })
     } else {
-      // 其他无前缀 key 默认写入 widget.props
       widgetStore.updateWidget(selectedWidget.value.id, {
         props: { ...(selectedWidget.value.props ?? {}), [key]: value },
       })
@@ -297,8 +312,9 @@ function updateProperty(key: string, value: unknown) {
       style: { ...(selectedWidget.value.style ?? {}), [parts[1]]: value },
     })
   } else if (parts[0] === 'props') {
+    // 支持嵌套路径：props.selection.enabled → props.selection.enabled
     widgetStore.updateWidget(selectedWidget.value.id, {
-      props: { ...(selectedWidget.value.props ?? {}), [parts[1]]: value },
+      props: setNestedValue(selectedWidget.value.props ?? {}, parts.slice(1), value),
     })
   }
 }
@@ -411,9 +427,9 @@ function handleEventSave(events: WidgetEvent[]) {
   widgetStore.updateWidget(selectedWidget.value.id, { events })
 }
 
-function handleRuleSave(events: WidgetEvent[]) {
+function handleRuleSave(rules: WidgetEvent[]) {
   if (!selectedWidget.value) return
-  widgetStore.updateWidget(selectedWidget.value.id, { events })
+  widgetStore.updateWidget(selectedWidget.value.id, { rules })
 }
 
 function handleApiSave(api: SchemaApiConfig | undefined) {
@@ -597,6 +613,16 @@ function updateBoardProperty(key: string, value: unknown) {
                   @update:buttons="(v: ActionButton[]) => updateProperty(item.key, v)"
                 />
               </div>
+              <!-- 数字数组编辑器：布局容器列宽 -->
+              <div v-else-if="item.type === 'number-array'" :class="styles.columnsSection">
+                <div :class="styles.columnsLabel">{{ item.label }}</div>
+                <NumberArrayEditor
+                  :value="(item.value as number[]) ?? []"
+                  :min="0"
+                  :max="100"
+                  @update="(v: number[]) => updateProperty(item.key, v)"
+                />
+              </div>
               <!-- 通用数组编辑器 -->
               <div v-else-if="item.type === 'array-editor'" :class="styles.columnsSection">
                 <div :class="styles.columnsLabel">{{ item.label }}</div>
@@ -684,7 +710,7 @@ function updateBoardProperty(key: string, value: unknown) {
 
       <LinkageConfigDialog
         :visible="ruleDialogVisible"
-        :events="selectedWidget.events ?? []"
+        :events="selectedWidget.rules ?? []"
         @update:visible="ruleDialogVisible = $event"
         @save="handleRuleSave"
       />

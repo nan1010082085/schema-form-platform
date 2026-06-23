@@ -18,7 +18,7 @@ import type { Widget } from '@/widgets/base/types'
 
 defineProps<{
   schemaStatus: 'draft' | 'published'
-  schemaType: 'form' | 'search-list'
+  schemaType: 'form'
   schemaId: string | null
 }>()
 
@@ -88,8 +88,8 @@ async function handleApplyTemplate(template: TemplateItem) {
       <span class="left-panel__status-tag" :class="`left-panel__status-tag--${schemaStatus}`">
         {{ schemaStatus === 'published' ? '已发布' : '草稿' }}
       </span>
-      <span class="left-panel__status-tag" :class="`left-panel__status-tag--${schemaType}`">
-        {{ schemaType === 'form' ? '表单' : '搜索列表' }}
+      <span class="left-panel__status-tag left-panel__status-tag--form">
+        表单
       </span>
     </div>
   </aside>

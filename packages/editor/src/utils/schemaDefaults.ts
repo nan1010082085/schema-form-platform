@@ -116,49 +116,8 @@ export function createDefaultSchema(type: SchemaType): PartialWidget {
     case 'transfer':
       item = { type: 'transfer', props: { titles: ['待选', '已选'], filterable: true } }
       break
-    case 'editable-table':
-      item = { ...base, label: '可编辑表格', props: { title: '可编辑表格', addButtonText: '添加行', showAddButton: true, showDeleteButton: true, maxRows: 0 } }
-      break
     case 'table':
       item = { ...base, label: 'Table', props: { columnSchema: [], showActions: true } }
-      break
-    case 'search-list':
-      item = {
-        type: 'search-list',
-        label: 'Search List',
-        props: {
-          pageSize: 10,
-          rowKey: 'id',
-          showSelection: false,
-          showIndex: true,
-          border: true,
-          stripe: true,
-        },
-        listApi: {
-          url: '/api/list',
-          method: 'post',
-        },
-        searchFields: [
-          { type: 'input', field: 'keyword', label: 'Keyword', span: 6 },
-          { type: 'date-range', field: 'dateRange', label: 'Date', span: 8 },
-        ],
-        columns: [
-          { prop: 'name', label: 'Name', width: 120 },
-          {
-            prop: 'status',
-            label: 'Status',
-            width: 100,
-            render: 'tag',
-            colorMap: { active: 'success', inactive: 'danger' },
-          },
-        ],
-        rowActions: [
-          { label: 'Edit', type: 'emit', emitEvent: 'edit-row' },
-        ],
-        buttons: [
-          { text: 'Add', buttonType: 'primary', actions: [{ type: 'emit', eventName: 'add-item' }] },
-        ],
-      }
       break
     default:
       item = { type, field }

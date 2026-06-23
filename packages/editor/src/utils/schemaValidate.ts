@@ -20,7 +20,7 @@ const FALLBACK_SCHEMA_TYPES = new Set([
   'button-list', 'title', 'divider', 'spacer', 'toolbar-buttons', 'button',
   'table', 'richtext', 'upload', 'banner', 'tree-layout', 'date-time-slot', 'time-picker',
   'file-list', 'transfer', 'cascader', 'rate', 'color-picker',
-  'search-list', 'editable-table', 'tag-input', 'autocomplete',
+  'tag-input', 'autocomplete',
 ])
 
 /** Valid SchemaType values — lazily generated from widget registry */
@@ -48,7 +48,7 @@ function getComponentCategory(type: string): 'basic' | 'business' | 'layout' {
 }
 
 /** Types that don't require a `field` property even though they're not layout types */
-const NO_FIELD_TYPES = new Set<string>(['button', 'toolbar-buttons', 'title', 'banner', 'file-list', 'search-list'])
+const NO_FIELD_TYPES = new Set<string>(['button', 'toolbar-buttons', 'title', 'banner', 'file-list'])
 
 /** Types that typically have options (select/radio/checkbox) */
 const OPTION_TYPES = new Set<string>(['select', 'radio', 'checkbox'])

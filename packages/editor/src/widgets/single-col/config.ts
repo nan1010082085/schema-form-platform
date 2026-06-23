@@ -20,10 +20,7 @@ export const singleColConfig: WidgetConfig = {
       {
         key: 'colWidths',
         label: '列宽(%)',
-        type: 'array',
-        fields: [
-          { key: 'width', label: '宽度(%)', type: 'number', default: 100 },
-        ],
+        type: 'number-array',
       },
     ],
     style: ['margin', 'padding'],

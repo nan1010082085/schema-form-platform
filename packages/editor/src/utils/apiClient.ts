@@ -369,12 +369,19 @@ export async function fetchPublishedSchema(editId: string): Promise<PublishedSch
   }
 }
 
+function normalizeSchemaPayload<T extends { type?: string }>(payload: T): T {
+  if (payload.type === 'search-list') {
+    return { ...payload, type: 'search_list' }
+  }
+  return payload
+}
+
 export async function createSchema(payload: SchemaCreatePayload): Promise<SchemaDetail> {
   if (apiClient.isMockEnabled()) {
     const { mockCreateSchema } = await import('./mockApi')
     return mockCreateSchema(payload)
   }
-  return apiClient.post<SchemaDetail>('/schemas', payload)
+  return apiClient.post<SchemaDetail>('/schemas', normalizeSchemaPayload(payload))
 }
 
 export async function updateSchema(
@@ -385,7 +392,7 @@ export async function updateSchema(
     const { mockUpdateSchema } = await import('./mockApi')
     return mockUpdateSchema(id, payload)
   }
-  return apiClient.put<SchemaDetail>(`/schemas/${encodeURIComponent(id)}`, payload)
+  return apiClient.put<SchemaDetail>(`/schemas/${encodeURIComponent(id)}`, normalizeSchemaPayload(payload))
 }
 
 export async function deleteSchema(id: string): Promise<null> {

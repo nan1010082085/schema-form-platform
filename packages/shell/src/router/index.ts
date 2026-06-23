@@ -1,10 +1,9 @@
 /**
  * Shell router
  *
- * 两种微应用容器模式：
- * 1. 带菜单 — /app/{appName}/* — 嵌入在 DynamicLayout 内，需注册
- * 2. open 页签 — /standalone/{appName}/* — StandaloneLayout，完全无壳
- *    支持 entry 模式：/standalone?entry=url — iframe 直接请求 entry
+ * 子应用路由匹配规则（qiankun activeRule 必须与实际 URL 一致）：
+ * - 带菜单：/{appName}/* — 嵌入 DynamicLayout，qiankun 自动挂载
+ * - 独立页签：/standalone/{appName}/*
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
@@ -44,8 +43,10 @@ const router = createRouter({
           component: () => import('@/components/AppContainer.vue'),
           meta: { title: '首页' },
         },
+        // 子应用路由：/{appName}/*
+        // qiankun activeRule 匹配此路径后自动挂载对应子应用到 #micro-container
         {
-          path: 'app/:app/:pathMatch(.*)*',
+          path: ':app/:pathMatch(.*)*',
           name: 'app-embed',
           component: () => import('@/components/AppContainer.vue'),
           meta: { withMenu: true },
@@ -64,7 +65,6 @@ const router = createRouter({
           component: () => import('@/components/AppContainer.vue'),
         },
         {
-          // entry 模式：/standalone?entry=url
           path: '',
           name: 'standalone-entry',
           component: () => import('@/components/StandaloneEntry.vue'),

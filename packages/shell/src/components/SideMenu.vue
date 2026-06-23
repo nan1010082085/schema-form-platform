@@ -95,9 +95,9 @@ function navigateTo(node: MenuTreeNode): void {
   const routeType = node.routeType || 'micro-app'
 
   if (routeType === 'schema') {
-    // Schema 页面：直接路由到 editor 的 PublishView 渲染
+    // Schema 页面：路由到 editor 的 PublishView 渲染
     if (node.schemaId) {
-      router.push(`/app/editor/view?id=${node.schemaId}`)
+      router.push(`/editor/view?id=${node.schemaId}`)
     }
     return
   }
@@ -109,13 +109,12 @@ function navigateTo(node: MenuTreeNode): void {
     if (node.target === '_blank') {
       window.open(url, '_blank')
     } else {
-      // _self: 当前页打开
       window.location.href = url
     }
     return
   }
 
-  // routeType === 'micro-app'（默认，兼容旧数据）
+  // routeType === 'micro-app'
   if (!node.path) return
   if (node.target === '_blank') {
     const isDev = import.meta.env.DEV
@@ -123,14 +122,20 @@ function navigateTo(node: MenuTreeNode): void {
     if (configKey) {
       const config = APP_CONFIGS[configKey]
       const url = isDev
-        ? `//localhost:${config.devPort}/`
+        ? `http://localhost:${config.devPort}/`
         : `${window.location.origin}${config.basePath}`
       window.open(url, '_blank')
     } else {
       window.open(node.path, '_blank')
     }
   } else {
-    router.push(node.path)
+    // 嵌入模式：/{appName}/{path}
+    const appId = node.microAppId
+    if (appId) {
+      router.push(`/${appId}${node.path}`)
+    } else {
+      router.push(node.path)
+    }
   }
 }
 
