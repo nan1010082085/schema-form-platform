@@ -21,6 +21,7 @@
     "@vitejs/plugin-vue": "^5.2.3",
     "typescript": "~5.7.3",
     "vite": "^6.3.2",
+    "vite-plugin-qiankun": "^1.0.15",
     "vue-tsc": "^2.2.8"
   }
 }
