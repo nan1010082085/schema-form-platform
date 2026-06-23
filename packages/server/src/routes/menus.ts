@@ -28,6 +28,7 @@ interface MenuTreeNode {
   routeType: string
   schemaId: string | null
   url: string
+  app: string
   children: MenuTreeNode[]
   [key: string]: unknown
 }
@@ -106,35 +107,61 @@ router.get('/', requireAuth, requirePermission('menu:view'), async (ctx) => {
 
 // ────────────────────────────────────────────
 // GET /api/menus/route
-// Returns the menu tree visible to the current user (for frontend dynamic routing).
-// Filters: only type='menu', status='active', and user has matching permission.
+//
+// 返回当前用户可见的菜单树（前端动态路由用）。
+//
+// 查询参数：
+//   app     — 所属应用过滤（admin=系统管理, shell=主应用, 空=不过滤）
+//   userId  — 指定用户 ID（管理员查看其他用户的菜单视图）
+//
+// 过滤逻辑：
+//   1. type='menu'（排除 button）
+//   2. status='active'
+//   3. 用户角色包含菜单所需权限（无 permission 的菜单对所有已认证用户可见）
+//   4. app 参数过滤（如有指定）
+//   5. 裁剪无可见子节点的空分支
 // ────────────────────────────────────────────
 router.get('/route', requireAuth, async (ctx) => {
   const user = ctx.state.user as JwtPayload
+  const { app, userId } = ctx.query
 
-  // Fetch user's roles and collect all permissions
-  const roles = await RoleModel.find({ _id: { $in: user.roles } })
+  // 确定目标用户（管理员可查看其他用户的菜单）
+  const targetUserId = (userId as string) || user.id
+
+  // 获取目标用户的角色和权限
+  const { UserModel } = await import('../models/User.js')
+  const targetUser = await UserModel.findById(targetUserId)
+  if (!targetUser) {
+    ctx.status = 404
+    ctx.body = { success: false, error: { message: 'User not found.' } }
+    return
+  }
+
+  const roles = await RoleModel.find({ _id: { $in: targetUser.roles } })
   const userPermissions = new Set(roles.flatMap(r => r.permissions))
 
-  // Fetch all active menus
-  const allMenus = await MenuModel.find({ status: 'active' }).sort({ sort: 1 })
+  // 构建查询条件
+  const filter: Record<string, unknown> = { status: 'active' }
+  if (app && typeof app === 'string') {
+    // 返回指定 app 的菜单 + 未标记 app 的菜单（向后兼容）
+    filter.$or = [{ app }, { app: { $in: [null, ''] } }]
+  }
 
-  // Filter: only menu type (not button), and permission check
-  // If menu has no permission, it's visible to all authenticated users
+  const allMenus = await MenuModel.find(filter).sort({ sort: 1 })
+
+  // 过滤：仅菜单类型 + 权限检查
   const visibleMenus = allMenus
     .filter(m => {
       if (m.type !== 'menu') return false
-      if (!m.permission) return true  // no permission required
+      if (!m.permission) return true
       return userPermissions.has(m.permission)
     })
     .map(m => m.toJSON())
 
-  // Also include parent menus that are needed for tree structure
-  // even if the user doesn't have direct permission (the children have it)
+  // 包含父菜单（保持树结构完整）
   const visibleIds = new Set(visibleMenus.map(m => m.id as string))
   const allMenusJson = allMenus.map(m => m.toJSON())
 
-  // Build full tree, then prune branches with no visible descendants
   function pruneTree(nodes: MenuTreeNode[]): MenuTreeNode[] {
     return nodes
       .map(node => {
@@ -194,6 +221,7 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     routeType: 'schema' | 'micro-app' | 'link'
     schemaId: string | null
     url: string
+    app: string
   }
 
   // Validate parentId exists if not null
@@ -227,6 +255,7 @@ router.post('/', requireAuth, requirePermission('menu:create'), validate(createM
     routeType: body.routeType ?? 'micro-app',
     schemaId: body.schemaId ?? null,
     url: body.url ?? '',
+    app: body.app ?? '',
   })
 
   ctx.status = 201
@@ -303,6 +332,7 @@ router.put('/:id', requireAuth, requirePermission('menu:edit'), validate(updateM
   if (body.routeType !== undefined) update.routeType = body.routeType
   if (body.schemaId !== undefined) update.schemaId = body.schemaId
   if (body.url !== undefined) update.url = body.url
+  if (body.app !== undefined) update.app = body.app
 
   const menu = await MenuModel.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true })
 

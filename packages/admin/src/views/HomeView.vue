@@ -32,9 +32,11 @@ async function loadMenus(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const tree = await apiClient.get<MenuItem[]>('/menus/route')
+    // admin 只加载 app=admin 的菜单（系统管理目录及其子菜单）
+    const tree = await apiClient.get<MenuItem[]>('/menus/route?app=admin')
+    // 过滤掉目录节点，只显示子菜单
     const systemDir = tree.find(n => n.name === '系统管理')
-    menuTree.value = systemDir?.children || []
+    menuTree.value = systemDir?.children || tree.filter(n => n.name !== '系统管理')
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : '加载菜单失败'
   } finally {

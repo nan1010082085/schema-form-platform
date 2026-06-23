@@ -22,6 +22,8 @@ export interface IMenu {
   schemaId: string | null
   /** routeType=link 时，外部 URL */
   url: string
+  /** 所属应用：shell=主应用菜单, admin=系统管理, 空字符串=通用 */
+  app: string
   createdAt: Date
   updatedAt: Date
 }
@@ -44,6 +46,7 @@ const menuSchema = new mongoose.Schema(
     routeType: { type: String, enum: ['schema', 'micro-app', 'link'], default: 'micro-app' },
     schemaId: { type: String, default: null },
     url: { type: String, default: '' },
+    app: { type: String, default: '', index: true },
   },
   {
     timestamps: true,

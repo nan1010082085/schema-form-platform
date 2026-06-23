@@ -15,6 +15,7 @@ export const createMenuSchema = z.object({
   routeType: z.enum(['schema', 'micro-app', 'link']).default('micro-app'),
   schemaId: z.string().max(100).nullable().default(null),
   url: z.string().max(500, 'URL最多500个字符').default(''),
+  app: z.string().max(50, '应用标识最多50个字符').default(''),
 }).strict()
 
 export const updateMenuSchema = z.object({
@@ -32,6 +33,7 @@ export const updateMenuSchema = z.object({
   routeType: z.enum(['schema', 'micro-app', 'link']).optional(),
   schemaId: z.string().max(100).nullable().optional(),
   url: z.string().max(500).optional(),
+  app: z.string().max(50).optional(),
 }).strict().refine((data) => Object.keys(data).length > 0, {
   message: 'At least one field is required.',
 })

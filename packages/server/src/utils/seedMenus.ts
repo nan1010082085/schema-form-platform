@@ -15,6 +15,7 @@ interface MenuSeed {
   routeType?: 'schema' | 'micro-app' | 'link'
   schemaId?: string | null
   url?: string
+  app?: string
 }
 
 // Stable UUIDs for each menu item
@@ -26,23 +27,24 @@ const IDS = {
 } as const
 
 const MENUS: MenuSeed[] = [
-  // ── 系统管理 (目录) ──
-  { _id: IDS.SYSTEM,       parentId: null,   name: '系统管理',   path: '',            icon: 'Setting',    type: 'menu', permission: '', sort: 1, microAppId: null },
+  // ── 系统管理 (目录) — app=admin ──
+  { _id: IDS.SYSTEM,       parentId: null,   name: '系统管理',   path: '',            icon: 'Setting',    type: 'menu', permission: '', sort: 1, microAppId: null, app: 'admin' },
 
-  // ── 系统管理 / 菜单管理 ──
-  { _id: IDS.MENU_MANAGE,  parentId: IDS.SYSTEM, name: '菜单管理', path: '/app/admin/menus', icon: 'Menu', type: 'menu', permission: '', sort: 1, microAppId: 'admin', target: '_self' },
+  // ── 系统管理 / 菜单管理 — app=admin ──
+  { _id: IDS.MENU_MANAGE,  parentId: IDS.SYSTEM, name: '菜单管理', path: '/app/admin/menus', icon: 'Menu', type: 'menu', permission: '', sort: 1, microAppId: 'admin', target: '_self', app: 'admin' },
 
-  // ── 表单设计器（新开页签） ──
-  { _id: IDS.EDITOR,       parentId: null,   name: '表单设计器', path: '/editor',     icon: 'EditPen',    type: 'menu', permission: '', sort: 2, microAppId: 'editor', target: '_blank' },
+  // ── 表单设计器（新开页签） — app=shell ──
+  { _id: IDS.EDITOR,       parentId: null,   name: '表单设计器', path: '/editor',     icon: 'EditPen',    type: 'menu', permission: '', sort: 2, microAppId: 'editor', target: '_blank', app: 'shell' },
 
-  // ── 流程管理（新开页签） ──
-  { _id: IDS.FLOW,         parentId: null,   name: '流程管理',   path: '/flow/design', icon: 'Connection', type: 'menu', permission: '', sort: 3, microAppId: 'flow',  target: '_blank' },
+  // ── 流程管理（新开页签） — app=shell ──
+  { _id: IDS.FLOW,         parentId: null,   name: '流程管理',   path: '/flow/design', icon: 'Connection', type: 'menu', permission: '', sort: 3, microAppId: 'flow',  target: '_blank', app: 'shell' },
 ]
 
 /**
  * 种子数据：默认菜单树
  *
  * 使用 upsert 保证幂等，根据 _id 判断存在性。
+ * 同时为现有菜单补充 app 字段（向后兼容迁移）。
  */
 export async function seedMenus(): Promise<void> {
   let created = 0
@@ -61,4 +63,29 @@ export async function seedMenus(): Promise<void> {
 
   const skipped = MENUS.length - created - updated
   console.log(`[seed] Menus: ${created} created, ${updated} updated, ${skipped} unchanged`)
+
+  // ── 迁移：为现有菜单补充 app 字段 ──
+  const systemDir = await MenuModel.findOne({ _id: IDS.SYSTEM })
+  if (systemDir) {
+    // 系统管理目录下的子菜单 → app=admin
+    const adminChildren = await MenuModel.updateMany(
+      { parentId: systemDir._id, app: { $in: [null, ''] } },
+      { $set: { app: 'admin' } },
+    )
+    // microAppId=admin 的菜单 → app=admin
+    const adminMicroApp = await MenuModel.updateMany(
+      { microAppId: 'admin', app: { $in: [null, ''] } },
+      { $set: { app: 'admin' } },
+    )
+    // microAppId=editor/flow 的菜单 → app=shell
+    const shellMicroApp = await MenuModel.updateMany(
+      { microAppId: { $in: ['editor', 'flow'] }, app: { $in: [null, ''] } },
+      { $set: { app: 'shell' } },
+    )
+
+    const migrated = adminChildren.modifiedCount + adminMicroApp.modifiedCount + shellMicroApp.modifiedCount
+    if (migrated > 0) {
+      console.log(`[seed] Migrated ${migrated} menus with app field`)
+    }
+  }
 }

@@ -22,5 +22,7 @@ export interface MenuTreeNode {
   schemaId?: string
   /** routeType=link 时，外部 URL */
   url?: string
+  /** 所属应用：shell=主应用, admin=系统管理, 空=通用 */
+  app?: string
   children: MenuTreeNode[]
 }
