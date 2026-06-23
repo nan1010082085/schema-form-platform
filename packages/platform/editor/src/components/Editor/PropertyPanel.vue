@@ -36,7 +36,7 @@ import type { WidgetVariable } from '../../widgets/base/types'
 import { usePropertyAdapters } from '../../composables/usePropertyAdapters'
 import { useClipboard } from '../../composables/useClipboard'
 import styles from './style.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const editorStore = useEditorStore()
 const widgetStore = useWidgetStore()

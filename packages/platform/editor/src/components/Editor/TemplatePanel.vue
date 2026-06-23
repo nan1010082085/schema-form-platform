@@ -12,7 +12,7 @@ import { fetchTemplates, deleteTemplate } from '@/utils/apiClient'
 import type { TemplateItem as WidgetTemplateItem, TemplateCategory } from '@/utils/apiClient'
 import type { PaginatedResponse } from '@/types/api'
 import styles from './TemplatePanel.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   form: '表单',

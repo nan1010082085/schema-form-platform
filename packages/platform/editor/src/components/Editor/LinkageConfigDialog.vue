@@ -13,14 +13,14 @@ import type {
   WidgetEvent,
   SchemaEventAction,
 } from '../../widgets/base/types'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import ConditionBuilder from '@/components/Editor/ConditionBuilder.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 import FlowPreview from '@/components/Editor/FlowPreview.vue'
 import type { FlowItem } from '@/components/Editor/FlowPreview.vue'
 import styles from './LinkageConfigDialog.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean

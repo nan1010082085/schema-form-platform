@@ -5,7 +5,7 @@
  * Placeholder component for global search functionality.
  */
 import { ref } from 'vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const searchQuery = ref('')
 const isExpanded = ref(false)

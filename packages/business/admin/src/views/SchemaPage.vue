@@ -7,7 +7,7 @@
  */
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 
 const route = useRoute()
 const loading = ref(true)

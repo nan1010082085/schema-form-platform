@@ -7,7 +7,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import styles from './AppLayout.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -6,10 +6,10 @@
  */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import { resolveIconName } from '@schema-form/shared-utils/iconResolver'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import { resolveIconName } from '@schema-form/platform-shared/utils/iconResolver'
 
 interface MenuItem {
   id: string

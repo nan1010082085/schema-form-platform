@@ -4,8 +4,8 @@ import { flowApi } from '../api/flowApi.js'
 import { useFlowExport } from '../composables/useFlowExport.js'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
 import styles from './FlowExportView.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/platform-shared/components/common/FilterTabs.vue'
 
 const flows = ref<FlowDefinitionData[]>([])
 const { exporting, exportFiltered } = useFlowExport()

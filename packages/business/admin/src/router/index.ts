@@ -8,7 +8,7 @@
  * qiankun 子应用模式下，shell 控制 URL，admin 的 basePath 从 APP_CONFIGS 读取。
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 
 export function createAdminRouter() {
   return createRouter({

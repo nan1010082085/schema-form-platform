@@ -10,7 +10,7 @@
  */
 
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { message } from '@schema-form/shared-utils/message'
+import { message } from '@schema-form/platform-shared/utils/message'
 import {
   getMonitorSummary,
   getMonitorStats,

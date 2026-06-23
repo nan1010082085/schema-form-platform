@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { message } from '@schema-form/shared-utils/message'
+import { message } from '@schema-form/platform-shared/utils/message'
 import { analyzeImage } from '@/api/aiApi'
 
 const emit = defineEmits<{

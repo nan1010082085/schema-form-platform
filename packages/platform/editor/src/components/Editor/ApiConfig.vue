@@ -11,7 +11,7 @@ import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSche
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import type { SchemaApiConfig, PartialWidget } from '@/components/WidgetRenderer/types'
 import styles from './ApiConfig.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   api: SchemaApiConfig | undefined

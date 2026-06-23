@@ -208,8 +208,8 @@ import { flowApi } from '../api/flowApi.js'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import { generateThumbnail } from '../composables/useFlowThumbnail.js'
 import styles from './FlowDesigner.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 
 const canvasRef = ref<InstanceType<typeof FlowCanvas>>()
 const store = useFlowDesignerStore()

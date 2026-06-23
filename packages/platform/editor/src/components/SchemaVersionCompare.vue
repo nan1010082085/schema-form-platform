@@ -21,7 +21,7 @@ import { useEditorStore } from '@/stores/editor'
 import { useBoardStore } from '@/stores/board'
 import { parseSchemaJson } from '@/utils/parseSchemaJson'
 import type { VersionEntry } from '@/types/api'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const versionStore = useSchemaVersionStore()
 const widgetStore = useWidgetStore()

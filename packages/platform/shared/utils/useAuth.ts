@@ -1,23 +1,23 @@
 /**
- * useAuth -- authentication business logic
+ * useAuth -- 共享认证业务逻辑
  *
- * Responsibilities:
- * - Call /api/auth/login, /api/auth/me, /api/auth/refresh, /api/auth/logout
- * - Coordinate useAuthStore loading/token/user state
- * - Auto-refresh access token before expiry
- * - Post-login redirect, post-logout redirect
+ * 所有子应用（admin、editor、flow、ai、shell）统一使用此 composable。
+ * - 调用 /api/auth/login、/api/auth/me、/api/auth/refresh、/api/auth/logout
+ * - 协调 useAuthStore 的 loading/token/user 状态
+ * - 自动刷新 access token（过期前 60s）
+ * - 登录后跳转、登出后跳转
  *
  * Dependencies:
- * - useAuthStore (state holder)
+ * - useAuthStore (状态持有)
  * - apiClient (HTTP)
- * - vue-router (navigation)
+ * - vue-router (导航)
  */
 import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@schema-form/platform-shared/utils/apiClient'
-import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/business-shared/utils/authTypes'
+import { useAuthStore } from './stores/authStore'
+import { apiClient, setTokenProvider, setUnauthorizedHandler } from './apiClient'
+import type { LoginPayload, LoginResponse, AuthUser } from './authTypes'
 
 /** Whether tokenProvider has been injected (once globally) */
 let providerInitialized = false
@@ -29,11 +29,11 @@ export function useAuth() {
   const store = useAuthStore()
   const router = useRouter()
   const route = useRoute()
-  const { user, token, refreshToken, isAuthenticated, loading } = storeToRefs(store)
+  const { user, accessToken, refreshToken, isAuthenticated, loading } = storeToRefs(store)
 
   // Inject tokenProvider + 401 handler so apiClient auto-attaches Authorization header
   if (!providerInitialized) {
-    setTokenProvider(() => store.token)
+    setTokenProvider(() => store.accessToken)
     setUnauthorizedHandler(() => {
       cancelRefresh()
       store.reset()
@@ -74,7 +74,7 @@ export function useAuth() {
       const res = await apiClient.post<{ accessToken: string; expiresIn: number }>('/auth/refresh', {
         refreshToken: rt,
       })
-      store.setToken(res.accessToken)
+      store.setTokens(res.accessToken)
       scheduleRefresh(res.expiresIn)
     } catch {
       // Refresh failed -- clear auth state, user must re-login
@@ -84,48 +84,28 @@ export function useAuth() {
   }
 
   /**
-   * SSO login: exchange authorization code for tokens.
-   * On success: persist tokens + user, redirect to ?redirect= or /.
-   */
-  async function ssoLogin(code: string): Promise<void> {
-    store.setLoading('login', true)
-    try {
-      const res = await apiClient.post<{
-        accessToken: string
-        refreshToken: string
-        expiresIn: number
-      }>('/auth/sso/token', {
-        code,
-        client_id: 'shell',
-        redirect_uri: `${window.location.origin}/schema-platform/sso/callback`,
-      })
-      store.setToken(res.accessToken, res.refreshToken)
-      // Fetch user info after getting token
-      const userRes = await apiClient.get<AuthUser>('/auth/me')
-      store.setUser(userRes)
-      store.setUserKey(userRes.id)
-      scheduleRefresh(res.expiresIn)
-      const redirect = (route.query.redirect as string) || '/'
-      await router.push(redirect)
-    } finally {
-      store.setLoading('login', false)
-    }
-  }
-
-  /**
    * Username/password login.
    * On success: persist tokens + user, redirect to ?redirect= or /.
+   *
+   * @param payload - { username, password }
+   * @param onSuccess - 可选的成功回调，用于自定义跳转逻辑
    */
-  async function login(payload: LoginPayload): Promise<void> {
+  async function login(payload: LoginPayload, onSuccess?: (redirect: string) => void): Promise<void> {
     store.setLoading('login', true)
     try {
       const res = await apiClient.post<LoginResponse>('/auth/login', payload)
-      store.setToken(res.accessToken, res.refreshToken)
+      store.setTokens(res.accessToken, res.refreshToken)
       store.setUser(res.user)
       store.setUserKey(res.user.id)
       scheduleRefresh(res.expiresIn)
+
       const redirect = (route.query.redirect as string) || '/'
-      await router.push(redirect)
+
+      if (onSuccess) {
+        onSuccess(redirect)
+      } else {
+        await router.push(redirect)
+      }
     } finally {
       store.setLoading('login', false)
     }
@@ -136,7 +116,7 @@ export function useAuth() {
    * Used to restore login state after page refresh.
    */
   async function fetchUser(): Promise<void> {
-    if (!token.value) return
+    if (!accessToken.value) return
 
     store.setLoading('fetchUser', true)
     try {
@@ -169,20 +149,19 @@ export function useAuth() {
 
   // Cleanup on component unmount
   onUnmounted(() => {
-    // Do NOT cancel refresh here -- it should persist across component mounts.
+    // DO NOT cancel refresh here -- it should persist across component mounts.
     // Only logout() and 401 handler cancel it.
   })
 
   return {
     // state (storeToRefs preserves reactivity)
     user,
-    token,
+    accessToken,
     refreshToken,
     isAuthenticated,
     loading,
     // methods
     login,
-    ssoLogin,
     fetchUser,
     logout,
     doRefresh,

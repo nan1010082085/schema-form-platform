@@ -14,7 +14,7 @@
 import { storeToRefs } from 'pinia'
 import { useMenuStore } from '@/stores/menu'
 import { useAuthStore } from '@/stores/auth'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import type { MenuTreeNode } from '@/types/menu'
 
 export function useMenu() {

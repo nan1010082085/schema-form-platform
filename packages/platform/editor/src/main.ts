@@ -4,7 +4,7 @@ import 'element-plus/dist/index.css'
 import '@schema-form/shared-styles/theme.scss'
 import '@schema-form/shared-styles/css-variables.scss'
 
-import { setupElementPlus } from '@schema-form/shared-config/element'
+import { setupElementPlus } from '@schema-form/platform-shared/config/element'
 
 import '@/styles/variables.scss'
 

@@ -3,7 +3,7 @@
  * 字典管理 — 字典类型 + 字典数据
  */
 import { ref, onMounted, watch } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface DictType {

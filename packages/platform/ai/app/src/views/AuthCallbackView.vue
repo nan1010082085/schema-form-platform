@@ -9,7 +9,7 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Loading } from '@element-plus/icons-vue'
-import { SSOClient } from '@schema-form/shared-utils/sso'
+import { SSOClient } from '@schema-form/platform-shared/utils/sso'
 
 const router = useRouter()
 const route = useRoute()

@@ -6,7 +6,7 @@
  * Each action type shows conditional fields for its specific properties.
  */
 import type { SchemaButtonConfig, SchemaAction, ActionType } from '@/components/WidgetRenderer/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   buttons: SchemaButtonConfig[]

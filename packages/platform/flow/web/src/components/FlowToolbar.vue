@@ -305,8 +305,8 @@ import { SPEED_LABELS } from '../composables/useSimulation.js'
 import type { LayoutDirection } from '../composables/useAutoLayout.js'
 import NotificationBell from './NotificationBell.vue'
 import styles from './FlowToolbar.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/platform-shared/components/common/FilterTabs.vue'
 
 const props = defineProps<{
   title?: string

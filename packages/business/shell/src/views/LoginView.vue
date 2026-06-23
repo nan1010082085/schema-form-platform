@@ -7,7 +7,7 @@
  */
 import { reactive, ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import styles from './LoginView.module.scss'
 
 const { login, loading } = useAuth()

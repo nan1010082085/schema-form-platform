@@ -9,7 +9,7 @@
 import { ref, computed } from 'vue'
 import type { VariableLeaf, VariableSource } from '../composables/useVariableDefinitions'
 import styles from './VariableHighlightInput.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 interface VariableSegment {
   type: 'text' | 'variable'

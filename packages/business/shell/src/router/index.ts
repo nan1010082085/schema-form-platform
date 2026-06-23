@@ -6,7 +6,7 @@
  * - 独立页签：/standalone/{appName}/*
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
 

@@ -6,7 +6,7 @@
  */
 import PropertyPanel from './PropertyPanel.vue'
 import type { PartialWidget } from '@/components/WidgetRenderer/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 defineProps<{
   selectedSchema: PartialWidget | null

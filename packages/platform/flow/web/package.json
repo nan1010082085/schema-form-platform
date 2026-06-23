@@ -23,10 +23,8 @@
     "@iconify-icons/ep": "^1.2.12",
     "@iconify/vue": "^5.0.1",
     "@schema-form/flow-shared": "workspace:*",
-    "@schema-form/shared-components": "workspace:*",
-    "@schema-form/shared-qiankun": "workspace:*",
+    "@schema-form/platform-shared": "workspace:*",
     "@schema-form/shared-styles": "workspace:*",
-    "@schema-form/shared-utils": "workspace:*",
     "@schema-form/socket": "workspace:*",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
@@ -39,7 +37,6 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@schema-form/shared-config": "workspace:*",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/test-utils": "^2.4.10",
     "jsdom": "^26.1.0",

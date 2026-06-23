@@ -5,8 +5,8 @@
  * 供 Editor / Flow 通过 qiankun 或 iframe 嵌入。
  */
 
-import { createQiankunApp } from '@schema-form/shared-qiankun/createQiankunApp'
-import { useQiankun } from '@schema-form/shared-qiankun'
+import { createQiankunApp } from '@schema-form/platform-shared/qiankun/createQiankunApp'
+import { useQiankun } from '@schema-form/platform-shared/qiankun'
 import './styles/theme-tech.css'
 
 import AiSidebarView from './views/AiSidebarView.vue'

@@ -3,7 +3,7 @@
  * 租户管理
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const tenants = ref<any[]>([])

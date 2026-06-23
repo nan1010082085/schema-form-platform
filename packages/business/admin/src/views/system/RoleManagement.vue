@@ -3,7 +3,7 @@
  * 角色管理 — 表格 + 权限分配弹窗
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface Role {

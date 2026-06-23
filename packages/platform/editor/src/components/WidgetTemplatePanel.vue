@@ -16,7 +16,7 @@ import { useTemplateStore } from '@/stores/template'
 import type { TemplateCategory } from '@/utils/apiClient'
 import type { Widget } from '@/widgets/base/types'
 import styles from './WidgetTemplatePanel.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const emit = defineEmits<{
   'apply-template': [widgets: Record<string, unknown>[]]

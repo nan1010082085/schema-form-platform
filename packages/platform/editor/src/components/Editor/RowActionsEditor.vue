@@ -6,7 +6,7 @@
  * Conditional fields shown based on action type (emit/api/navigate/dialog).
  */
 import type { SearchListRowAction } from '@/components/WidgetRenderer/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   rowActions: SearchListRowAction[]

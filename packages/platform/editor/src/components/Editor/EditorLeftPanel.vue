@@ -7,7 +7,7 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import ComponentPanel from './ComponentPanel.vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import WidgetTree from './WidgetTree.vue'
 import TemplatePanel from './TemplatePanel.vue'
 import { useWidgetStore } from '@/stores/widget'

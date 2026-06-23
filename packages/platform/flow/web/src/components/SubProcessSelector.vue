@@ -3,8 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { flowApi } from '../api/flowApi.js'
 import styles from './SubProcessSelector.module.scss'
 import type { FlowDefinitionData } from '@schema-form/flow-shared'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 
 const props = withDefaults(defineProps<{
   modelValue?: string

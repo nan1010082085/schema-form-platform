@@ -26,7 +26,7 @@ import { useEditorStore } from '../../stores/editor'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import { useLogger } from '../../composables/useLogger'
 import SchemaRender from './SchemaRender.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import styles from './SchemaNode.module.scss'
 
 const props = defineProps<{

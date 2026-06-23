@@ -3,7 +3,7 @@
  * 用户管理 — 表格 + 弹窗
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface User {

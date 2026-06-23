@@ -35,7 +35,7 @@ import type { VersionEntry } from '@/types/api'
 import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
 import SaveTemplateDialog from '@/components/Editor/SaveTemplateDialog.vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 // Register all widgets on first mount
 registerAllWidgets()

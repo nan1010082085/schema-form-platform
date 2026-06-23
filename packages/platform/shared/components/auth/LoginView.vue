@@ -11,8 +11,8 @@
  *   - onSuccess: 登录成功后的回调（用于自定义跳转）
  */
 import { reactive, ref, computed } from 'vue'
-import { useAuth } from '@schema-form/shared-utils/useAuth'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { useAuth } from '@schema-form/platform-shared/utils/useAuth'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 
 interface Props {
   title?: string

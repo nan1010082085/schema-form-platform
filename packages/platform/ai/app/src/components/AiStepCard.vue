@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { StepType, StepStatus } from '@/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 export interface AiStepCardProps {
   /** 步骤序号（从 1 开始） */

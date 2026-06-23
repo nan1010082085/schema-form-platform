@@ -3,7 +3,7 @@
  * 操作日志 — 只读表格
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage } from 'element-plus'
 
 const logs = ref<any[]>([])

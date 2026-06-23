@@ -9,9 +9,9 @@ import { flowApi } from '../api/flowApi.js'
 import { useCrossNodeData } from '../composables/useCrossNodeData.js'
 import MicroFormEmbed from '../components/MicroFormEmbed.vue'
 import UserPicker from '../components/UserPicker.vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
-import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
+import FilterTabs from '@schema-form/platform-shared/components/common/FilterTabs.vue'
 import styles from './TaskInboxView.module.scss'
 
 const router = useRouter()

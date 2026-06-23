@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowTemplateStore } from '../stores/flowTemplate.js'
 import styles from './FlowTemplateView.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import FlowGraphPreview from '../components/FlowGraphPreview.vue'
 
 const router = useRouter()

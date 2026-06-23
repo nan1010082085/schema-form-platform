@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { message } from '@schema-form/shared-utils/message'
+import { message } from '@schema-form/platform-shared/utils/message'
 import { downloadConversation } from '@/api/aiApi'
 import AiConversationSearch from './AiConversationSearch.vue'
 import type { Conversation } from '@/types'

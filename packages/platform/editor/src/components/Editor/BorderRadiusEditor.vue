@@ -9,7 +9,7 @@
  */
 import { ref, computed } from 'vue'
 import styles from './BorderRadiusEditor.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   value?: Record<string, string>

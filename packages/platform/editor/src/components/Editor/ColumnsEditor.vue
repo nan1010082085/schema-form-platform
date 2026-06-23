@@ -6,7 +6,7 @@
  * Each column row has up/down reorder and delete buttons.
  */
 import type { SearchListColumnSchema, SchemaApiConfig } from '@/components/WidgetRenderer/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   columns: SearchListColumnSchema[]

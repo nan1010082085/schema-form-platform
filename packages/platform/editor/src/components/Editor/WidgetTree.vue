@@ -13,7 +13,7 @@ import { useEditorStore } from '../../stores/editor'
 import type { Widget } from '../../widgets/base/types'
 import { getWidget } from '../../widgets/registry'
 import styles from './WidgetTree.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const widgetStore = useWidgetStore()
 const editorStore = useEditorStore()

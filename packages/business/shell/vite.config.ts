@@ -1,4 +1,4 @@
-import { createViteConfig } from '@schema-form/shared-config/vite'
+import { createViteConfig } from '@schema-form/platform-shared/config/vite'
 
 export default createViteConfig('shell', import.meta.url, {
   server: {

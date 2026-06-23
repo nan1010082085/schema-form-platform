@@ -13,11 +13,11 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMenu } from '@/composables/useMenu'
-import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
-import { resolveIconName } from '@schema-form/shared-utils/iconResolver'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
+import { resolveIconName } from '@schema-form/platform-shared/utils/iconResolver'
 import type { MenuTreeNode } from '@/types/menu'
 import styles from './SideMenu.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 /** 根据图标名获取 Element Plus 图标组件 */
 function resolveIcon(name?: string): string {

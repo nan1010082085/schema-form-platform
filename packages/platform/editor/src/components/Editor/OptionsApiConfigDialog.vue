@@ -8,7 +8,7 @@
 import { ref, watch } from 'vue'
 import type { SchemaApiConfig } from '../../widgets/base/types'
 import ApiConfig from './ApiConfig.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import styles from './OptionsApiConfigDialog.module.scss'
 
 const props = defineProps<{

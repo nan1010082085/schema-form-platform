@@ -3,7 +3,7 @@
  * 在线用户
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const users = ref<any[]>([])

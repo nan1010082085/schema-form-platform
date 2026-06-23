@@ -12,7 +12,7 @@ import '@schema-form/shared-styles/tokens.css'
 import '@schema-form/shared-styles/design-tokens.css'
 import '@schema-form/shared-styles/theme.scss'
 import '@schema-form/shared-styles/css-variables.scss'
-import { setupElementPlus } from '@schema-form/shared-config/element'
+import { setupElementPlus } from '@schema-form/platform-shared/config/element'
 
 import AppRoot from './App.vue'
 import { createAdminRouter } from './router'

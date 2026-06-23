@@ -7,9 +7,9 @@
  */
 import { ref, watch, computed } from 'vue'
 import type { WidgetVariable } from '../../widgets/base/types'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import styles from './VariableConfigDialog.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   visible: boolean

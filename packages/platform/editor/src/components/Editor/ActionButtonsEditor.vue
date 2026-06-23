@@ -8,7 +8,7 @@
 import { ref } from 'vue'
 import type { ActionButton, ButtonEventConfig } from '@/widgets/advanced-table/config'
 import type { SchemaEventAction } from '@/widgets/base/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
 

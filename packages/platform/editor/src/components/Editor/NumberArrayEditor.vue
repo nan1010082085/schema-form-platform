@@ -5,7 +5,7 @@
  * 用于布局容器的 colWidths 配置，如 [50, 50] 或 [33, 34, 33]
  * 支持增减列、拖动排序、数值输入
  */
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   value: number[]

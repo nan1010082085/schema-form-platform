@@ -13,7 +13,7 @@ import '@schema-form/shared-styles/css-variables.scss'
 
 import App from './App.vue'
 import { createAiRouter } from './router'
-import { setupElementPlus } from '@schema-form/shared-config/element'
+import { setupElementPlus } from '@schema-form/platform-shared/config/element'
 import { setTokenProvider } from './api/aiApi'
 
 // 设置 token 提供者

@@ -11,8 +11,8 @@ import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
 import { useApiStore } from '@/stores/api'
-import { getAppUrl } from '@schema-form/shared-qiankun/config'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import { getAppUrl } from '@schema-form/platform-shared/qiankun/config'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   mode: InteractionMode

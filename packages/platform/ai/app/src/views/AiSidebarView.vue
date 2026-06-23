@@ -14,13 +14,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
-import { useQiankun } from '@schema-form/shared-qiankun'
-import { message } from '@schema-form/shared-utils/message'
+import { useQiankun } from '@schema-form/platform-shared/qiankun'
+import { message } from '@schema-form/platform-shared/utils/message'
 import { connect as connectSocket, isConnected, emitAiApply, emitAiPublished } from '@schema-form/socket'
 import AiMessage from '@/components/AiMessage.vue'
 import type { AgentType, Widget, FlowGraph } from '@/types'
 import type { MessageEmbeddedCard } from '@/components/AiMessage.vue'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import { Clock } from '@element-plus/icons-vue'
 
 const store = useAiStore()

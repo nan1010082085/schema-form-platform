@@ -18,7 +18,7 @@
 import { ref, onMounted } from 'vue'
 import { SSOClient, SSOError } from '../../utils/sso.js'
 import { useAuthStore } from '../../utils/stores/authStore.js'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   /** SSO 客户端实例 */

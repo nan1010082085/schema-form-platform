@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
-import { message } from '@schema-form/shared-utils/message'
+import { message } from '@schema-form/platform-shared/utils/message'
 import AiStepCard from './AiStepCard.vue'
 import AiLoadingDots from './AiLoadingDots.vue'
 import SchemaCard from './SchemaCard.vue'
@@ -178,7 +178,7 @@ function formatToolName(name: string): string {
 
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 function renderMarkdown(content: string): string {
   if (!content) return ''

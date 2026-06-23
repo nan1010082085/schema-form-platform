@@ -7,7 +7,7 @@
  */
 import type { TableColumn } from '../../widgets/table/config'
 import styles from './TableColumnsEditor.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const props = defineProps<{
   columns: TableColumn[]

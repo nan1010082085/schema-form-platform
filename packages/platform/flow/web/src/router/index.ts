@@ -8,7 +8,7 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@schema-form/shared-components/auth/LoginView.vue'),
+    component: () => import('@schema-form/platform-shared/components/auth/LoginView.vue'),
     props: {
       title: '流程设计器',
       subtitle: 'Schema Form Platform',

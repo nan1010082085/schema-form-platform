@@ -1,4 +1,4 @@
-import { createViteConfig } from '@schema-form/shared-config/vite'
+import { createViteConfig } from '@schema-form/platform-shared/config/vite'
 import qiankun from 'vite-plugin-qiankun'
 
 const isProd = process.env.NODE_ENV === 'production'

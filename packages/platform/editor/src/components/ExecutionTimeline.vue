@@ -7,7 +7,7 @@
  */
 import { ref } from 'vue'
 import styles from './ExecutionTimeline.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 // ── Types ──
 export interface NodeLog {

@@ -6,7 +6,7 @@
  * 右侧：选中节点的编辑表单
  */
 import { ref, onMounted, computed } from 'vue'
-import { apiClient } from '@schema-form/shared-utils/apiClient'
+import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 

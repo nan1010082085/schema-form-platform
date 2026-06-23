@@ -13,11 +13,11 @@ import { downloadSchemaJson, parseImportFile } from '@/utils/schemaExport'
 import { importSchema, updateSchema } from '@/utils/apiClient'
 import type { SchemaTypeValue } from '@/types/api'
 import VersionHistoryDialog from '@/components/Editor/VersionHistoryDialog.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
-import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
+import FilterTabs from '@schema-form/platform-shared/components/common/FilterTabs.vue'
 import type { SchemaListItem, SchemaDetail } from '@/types/api'
 import type { PartialWidget } from '@/widgets/base/types'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const router = useRouter()
 const store = useApiStore()

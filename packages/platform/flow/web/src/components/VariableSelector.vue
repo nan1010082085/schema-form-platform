@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import type { VariableGroup, VariableLeaf, VariableSource } from '../composables/useVariableDefinitions.js'
 import styles from './VariableSelector.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 type AnyVariableSource = VariableSource
 type AnyVariableGroup = VariableGroup

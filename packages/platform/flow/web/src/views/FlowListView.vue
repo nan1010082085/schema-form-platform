@@ -5,8 +5,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFlowDefinitionStore } from '../stores/flowDefinition.js'
 import { useFlowInstanceStore } from '../stores/flowInstance.js'
 import styles from './FlowListView.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import FilterTabs from '@schema-form/shared-components/common/FilterTabs.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import FilterTabs from '@schema-form/platform-shared/components/common/FilterTabs.vue'
 
 const router = useRouter()
 const store = useFlowDefinitionStore()

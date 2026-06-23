@@ -8,8 +8,8 @@ import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchVersions, publishSchema } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 
 const props = defineProps<{
   visible: boolean

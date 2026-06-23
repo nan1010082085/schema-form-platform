@@ -6,9 +6,9 @@
  * 支持 URL、Method、Headers、Response Data Path 配置。
  */
 import { ref, watch } from 'vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 import styles from './RequestConfigDialog.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 interface RequestConfig {
   apiUrl: string

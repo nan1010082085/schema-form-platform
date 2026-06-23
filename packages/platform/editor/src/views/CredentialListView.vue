@@ -11,7 +11,7 @@ import CredentialFormDialog from '@/components/Credential/CredentialFormDialog.v
 import type { CredentialItem, CredentialDetail, CredentialType } from '@/types/credential'
 import { CREDENTIAL_TYPE_LABELS } from '@/types/credential'
 import styles from './CredentialListView.module.scss'
-import AppIcon from '@schema-form/shared-components/common/AppIcon.vue'
+import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
 const credentialStore = useCredentialStore()
 

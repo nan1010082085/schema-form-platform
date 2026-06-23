@@ -22,7 +22,7 @@ import { EVENT_CONTEXT_KEY, FORM_GRID_LINKAGE_KEY, DIALOG_REGISTRY_KEY } from '.
 import { getComponentMap } from '../../widgets/registry'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
 import SchemaRender from './SchemaRender.vue'
-import AppDialog from '@schema-form/shared-components/common/AppDialog.vue'
+import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
 
 const props = defineProps<{
   widget: PartialWidget
