@@ -11,6 +11,27 @@ import type { UserConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { type AppName, APP_CONFIGS, getApiProxyTarget } from '../qiankun/config.ts'
 
+// 修复 vite-plugin-qiankun createDeffer 竞态问题的 Vite 插件
+// 问题：createDeffer 同步执行时 window.proxy 可能未定义，导致 promise 永远不 resolve → bootstrap 超时
+// 修复：将 window.proxy && 赋值改为轮询等待
+function fixQiankunLifecyclePlugin(): Plugin {
+  return {
+    name: 'vite-plugin-fix-qiankun-lifecycle',
+    enforce: 'post',
+    transformIndexHtml(html) {
+      const brokenPattern = /window\.proxy && \(window\.proxy\[`vite\$\{hookName\}`\] = resolve\)/
+      if (brokenPattern.test(html)) {
+        const fixed = html.replace(
+          brokenPattern,
+          `function tryBind() { if (window.proxy) { window.proxy['vite' + hookName] = resolve; } else { setTimeout(tryBind, 10); } } tryBind()`,
+        )
+        return fixed
+      }
+      return html
+    },
+  }
+}
+
 // 监视 workspace 包源码的 Vite 插件
 // Vite 的 chokidar watcher 默认忽略 node_modules，导致 pnpm workspace 符号链接指向的源码变更无法触发 HMR
 function workspaceWatchPlugin(monorepoRoot: string): Plugin {
@@ -225,3 +246,6 @@ function mergeConfig(base: UserConfig, overrides: UserConfig): UserConfig {
 
   return result
 }
+
+// 导出修复插件，供子应用 vite.config.ts 使用
+export { fixQiankunLifecyclePlugin }

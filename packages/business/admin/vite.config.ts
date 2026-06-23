@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import qiankun from 'vite-plugin-qiankun'
+import { fixQiankunLifecyclePlugin } from '@schema-form/platform-shared/config/vite'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -15,7 +16,7 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url))
  */
 export default defineConfig({
   base: process.env.ADMIN_BASE_URL || '/',
-  plugins: [vue(), qiankun('admin', { useDevMode: true })],
+  plugins: [vue(), qiankun('admin', { useDevMode: true }), fixQiankunLifecyclePlugin()],
   resolve: {
     alias: {
       '@': `${rootDir}src`,
