@@ -1,14 +1,11 @@
 /**
  * Admin 壳应用入口
  *
- * 定位：微前端宿主 + 扩展子应用管理
- * Schema 页面渲染由 editor 的 PublishView 完成，admin 不做渲染。
- *
- * 支持两种运行模式：
- * 1. qiankun 子应用模式（嵌入 shell）— 等待宿主调用 mount()
- * 2. 独立运行模式（开发调试）— 直接挂载
+ * 运行模式：
+ * 1. 独立运行（开发调试）— document 中已有 #app，直接挂载
+ * 2. qiankun 子应用（嵌入 shell）— 由宿主调用 mount()
  */
-import { createApp } from 'vue'
+import { createApp, type App } from 'vue'
 import { createPinia } from 'pinia'
 import 'element-plus/dist/index.css'
 import '@schema-form/shared-styles/tokens.css'
@@ -20,21 +17,21 @@ import { registerMicroApps, start } from 'qiankun'
 import { apiClient } from '@schema-form/shared-utils/apiClient'
 import { APP_CONFIGS } from '@schema-form/shared-qiankun/config'
 
-import App from './App.vue'
+import AppRoot from './App.vue'
 import { createAdminRouter } from './router'
 
-declare global {
-  interface Window {
-    __POWERED_BY_QIANKUN__?: boolean
-  }
-}
+// ============================================================
+// 状态
+// ============================================================
+let appInstance: App | null = null
+let qiankunStarted = false
 
 // ============================================================
 // Vue 应用工厂
 // ============================================================
 function createAdminApp() {
   const router = createAdminRouter()
-  const app = createApp(App)
+  const app = createApp(AppRoot)
   const pinia = createPinia()
 
   app.use(pinia)
@@ -45,7 +42,7 @@ function createAdminApp() {
 }
 
 // ============================================================
-// 动态注册扩展子应用
+// 扩展子应用注册
 // ============================================================
 const BUILTIN_APPS = new Set(Object.keys(APP_CONFIGS))
 
@@ -71,85 +68,81 @@ async function loadAndRegisterMicroApps(): Promise<void> {
 }
 
 // ============================================================
-// 启动
+// 启动 qiankun（只执行一次）
 // ============================================================
-let appInstance: ReturnType<typeof createApp> | null = null
+function startQiankunOnce(): void {
+  if (qiankunStarted) return
+  qiankunStarted = true
 
-// 独立运行时直接挂载
-if (!window.__POWERED_BY_QIANKUN__) {
-  const { app, router } = createAdminApp()
-  appInstance = app
-  app.mount('#app')
-
-  // 独立模式下也加载扩展微应用
   loadAndRegisterMicroApps().then(() => {
-    router.isReady().then(() => {
-      try {
-        start({
-          sandbox: {
-            experimentalStyleIsolation: true,
-          },
-        })
-        console.log('[admin] qiankun started')
-      } catch (err: unknown) {
-        console.error('[admin] qiankun start failed:', err)
-      }
-    })
+    try {
+      start({
+        sandbox: {
+          experimentalStyleIsolation: true,
+        },
+      })
+      console.log('[admin] qiankun started')
+    } catch (err: unknown) {
+      console.error('[admin] qiankun start failed:', err)
+    }
   })
 }
 
 // ============================================================
-// Qiankun 生命周期钩子
+// 独立运行模式
+// ============================================================
+const isStandalone = !window.__POWERED_BY_QIANKUN__
+
+if (isStandalone) {
+  console.log('[admin] standalone mode')
+  const { app, router } = createAdminApp()
+  appInstance = app
+  app.mount('#app')
+  router.isReady().then(startQiankunOnce)
+}
+
+// ============================================================
+// Qiankun 生命周期
 // ============================================================
 export async function bootstrap(): Promise<void> {
   console.log('[admin] bootstrap')
 }
 
 export async function mount(props?: { container?: Element }): Promise<void> {
-  console.log('[admin] mount', props)
-  if (!appInstance) {
-    const { app, router } = createAdminApp()
-    appInstance = app
+  console.log('[admin] mount')
 
-    // qiankun 子应用模式：挂载到宿主提供的容器
-    // 独立模式：挂载到自身的 #app
-    const container = props?.container
-    const mountEl = container
-      ? (() => {
-          // 宿主容器内没有 #app，需要创建一个
-          let el = container.querySelector('#app')
-          if (!el) {
-            el = document.createElement('div')
-            el.id = 'app'
-            container.appendChild(el)
-          }
-          return el
-        })()
-      : '#app'
-
-    app.mount(mountEl)
-
-    loadAndRegisterMicroApps().then(() => {
-      router.isReady().then(() => {
-        try {
-          start({
-            sandbox: {
-              strictStyleIsolation: true,
-            },
-          })
-          console.log('[admin] qiankun started')
-        } catch (err: unknown) {
-          console.error('[admin] qiankun start failed:', err)
-        }
-      })
-    })
+  if (appInstance) {
+    console.warn('[admin] already mounted, skip')
+    return
   }
+
+  const { app, router } = createAdminApp()
+  appInstance = app
+
+  // 宿主提供的容器
+  const hostContainer = props?.container
+  if (hostContainer) {
+    // 在宿主容器内创建挂载点
+    const mountEl = document.createElement('div')
+    mountEl.id = 'admin-root'
+    hostContainer.appendChild(mountEl)
+    app.mount(mountEl)
+  } else {
+    app.mount('#app')
+  }
+
+  router.isReady().then(startQiankunOnce)
 }
 
 export async function unmount(): Promise<void> {
   console.log('[admin] unmount')
   if (appInstance) {
-    appInstance.unmount()
+    try {
+      appInstance.unmount()
+    } catch (e) {
+      console.warn('[admin] unmount error:', e)
+    }
     appInstance = null
+    qiankunStarted = false
   }
 }
