@@ -4,7 +4,6 @@ import type { Node, Edge } from '@vue-flow/core'
 import { useFlowGraphStore } from '@/stores/flowGraph.js'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
-import HintText from './HintText.vue'
 import styles from './ExclusiveGatewayPanel.module.scss'
 
 const props = defineProps<{ node: Node }>()
@@ -89,17 +88,13 @@ function toggleEdgeDefault(edge: Edge, value: boolean) {
         />
       </FieldRow>
 
-      <FieldRow label="条件表达式">
+      <FieldRow label="条件表达式" hint="JUEL 语法：${变量名 运算符 值}">
         <el-input
           :model-value="edge.data?.conditionExpression ?? ''"
           placeholder="${amount > 10000}"
           @input="updateEdgeCondition(edge, $event)"
         />
       </FieldRow>
-    </div>
-
-    <div :class="styles.hintRow">
-      <HintText>表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}</HintText>
     </div>
   </SectionToggle>
 

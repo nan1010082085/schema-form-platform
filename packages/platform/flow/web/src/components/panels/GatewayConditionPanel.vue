@@ -4,7 +4,6 @@ import type { Node, Edge } from '@vue-flow/core'
 import { useFlowGraphStore } from '@/stores/flowGraph.js'
 import SectionToggle from '../nodePanels/SectionToggle.vue'
 import FieldRow from '../nodePanels/FieldRow.vue'
-import HintText from '../nodePanels/HintText.vue'
 import styles from './GatewayConditionPanel.module.scss'
 
 const props = defineProps<{ node: Node }>()
@@ -31,6 +30,11 @@ const conditionPlaceholder = computed(() => {
   if (isExclusive.value) return '${amount > 10000}'
   if (isParallel.value) return '(并行网关无条件，所有分支同时执行)'
   return '${status == \'active\'}'
+})
+const gatewayHint = computed(() => {
+  if (isParallel.value) return `${gatewayLabel.value}：所有出线将同时执行，无需配置条件`
+  if (isExclusive.value) return `${gatewayLabel.value}：所有出线中，第一个条件为 true 的分支将被执行`
+  return '包含网关：允许多个条件同时为 true，所有匹配的分支都会执行'
 })
 
 /* --- Outgoing edges --- */
@@ -69,21 +73,13 @@ function targetLabel(edge: Edge): string {
       />
     </FieldRow>
 
-    <FieldRow label="网关描述">
+    <FieldRow label="网关描述" :hint="gatewayHint">
       <el-input
         :model-value="description"
         placeholder="网关描述（可选）"
         @input="update('description', $event)"
       />
     </FieldRow>
-
-    <div :class="styles.hintRow">
-      <HintText>
-        <template v-if="isParallel">{{ gatewayLabel }}：所有出线将同时执行，无需配置条件。</template>
-        <template v-else-if="isExclusive">{{ gatewayLabel }}：所有出线中，第一个条件为 true 的分支将被执行。</template>
-        <template v-else>包含网关：允许多个条件同时为 true，所有匹配的分支都会执行。</template>
-      </HintText>
-    </div>
   </SectionToggle>
 
   <!-- Outgoing edge conditions -->
@@ -118,17 +114,13 @@ function targetLabel(edge: Edge): string {
         />
       </FieldRow>
 
-      <FieldRow label="条件表达式">
+      <FieldRow label="条件表达式" hint="JUEL 语法：${变量名 运算符 值}">
         <el-input
           :model-value="edge.data?.conditionExpression ?? ''"
           :placeholder="conditionPlaceholder"
           @input="updateEdgeCondition(edge, $event)"
         />
       </FieldRow>
-    </div>
-
-    <div :class="styles.hintRow">
-      <HintText>表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}</HintText>
     </div>
   </SectionToggle>
 

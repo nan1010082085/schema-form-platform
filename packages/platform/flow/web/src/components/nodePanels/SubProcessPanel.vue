@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Node } from '@vue-flow/core'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
-import HintText from './HintText.vue'
 import SubProcessSelector from '../SubProcessSelector.vue'
 import { flowApi } from '../../api/flowApi'
 import styles from './SubProcessPanel.module.scss'
@@ -286,7 +285,7 @@ function statusLabel(status: string): string {
 
     <!-- KV mode -->
     <template v-if="mappingMode === 'kv'">
-      <FieldRow label="输入变量映射">
+      <FieldRow label="输入变量映射" hint="将父流程变量传入子流程，支持 ${variable} 表达式">
         <div :class="styles['mapping-section']">
           <div
             v-for="(entry, i) in inputEntries"
@@ -383,9 +382,5 @@ function statusLabel(status: string): string {
         />
       </FieldRow>
     </template>
-
-    <div :class="styles['hint-row']">
-      <HintText>输入映射将父流程变量传入子流程；输出映射将子流程结果传回父流程。支持 <code>${variable}</code> 表达式。</HintText>
-    </div>
   </SectionToggle>
 </template>
