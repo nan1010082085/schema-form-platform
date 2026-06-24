@@ -5,6 +5,7 @@
  * Sprint 18: Replaces "configured in JSON view" with structured form.
  * Each rule row: required switch -> type -> min/max -> pattern -> message -> trigger.
  */
+import styles from './RulesEditor.module.scss'
 
 interface FormRule {
   required?: boolean
@@ -69,26 +70,26 @@ function setRequired(index: number, val: boolean) {
 </script>
 
 <template>
-  <div class="rules-editor">
-    <div v-if="!rules?.length" class="rules-editor__empty">未配置校验规则。</div>
+  <div :class="styles['rules-editor']">
+    <div v-if="!rules?.length" :class="styles['rules-editor__empty']">未配置校验规则。</div>
 
-    <div v-for="(rule, idx) in (rules ?? [])" :key="idx" class="rules-editor__item">
-      <div class="rules-editor__item-header">
-        <span class="rules-editor__item-title">规则 {{ idx + 1 }}</span>
+    <div v-for="(rule, idx) in (rules ?? [])" :key="idx" :class="styles['rules-editor__item']">
+      <div :class="styles['rules-editor__item-header']">
+        <span :class="styles['rules-editor__item-title']">规则 {{ idx + 1 }}</span>
         <el-button type="danger" size="small" text @click="removeRule(idx)">
           <AppIcon name="delete" />
         </el-button>
       </div>
 
       <!-- Required -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">必填</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">必填</label>
         <el-switch :model-value="rule.required === true" @update:model-value="setRequired(idx, $event)" />
       </div>
 
       <!-- Type -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">类型</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">类型</label>
         <el-select
           :model-value="rule.type ?? ''"
           size="small"
@@ -101,8 +102,8 @@ function setRequired(index: number, val: boolean) {
       </div>
 
       <!-- Min -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">最小值</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">最小值</label>
         <el-input-number
           :model-value="rule.min as number ?? undefined"
           size="small"
@@ -114,8 +115,8 @@ function setRequired(index: number, val: boolean) {
       </div>
 
       <!-- Max -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">最大值</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">最大值</label>
         <el-input-number
           :model-value="rule.max as number ?? undefined"
           size="small"
@@ -127,8 +128,8 @@ function setRequired(index: number, val: boolean) {
       </div>
 
       <!-- Pattern -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">正则表达式</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">正则表达式</label>
         <el-input
           :model-value="rule.pattern ? String(rule.pattern) : ''"
           size="small"
@@ -138,8 +139,8 @@ function setRequired(index: number, val: boolean) {
       </div>
 
       <!-- Message -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">错误提示</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">错误提示</label>
         <el-input
           :model-value="rule.message ?? ''"
           size="small"
@@ -149,8 +150,8 @@ function setRequired(index: number, val: boolean) {
       </div>
 
       <!-- Trigger -->
-      <div class="rules-editor__field">
-        <label class="rules-editor__label">触发方式</label>
+      <div :class="styles['rules-editor__field']">
+        <label :class="styles['rules-editor__label']">触发方式</label>
         <el-select
           :model-value="rule.trigger ?? 'blur'"
           size="small"
@@ -169,13 +170,3 @@ function setRequired(index: number, val: boolean) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.rules-editor {
-  &__empty { text-align: center; color: #909399; font-size: 12px; padding: 12px 0; }
-  &__item { border: 1px solid #ebeef5; border-radius: 4px; padding: 10px; margin-bottom: 10px; background: #fafafa; }
-  &__item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  &__item-title { font-size: 12px; font-weight: 600; color: #303133; }
-  &__field { margin-bottom: 8px; &:last-child { margin-bottom: 0; } }
-  &__label { display: block; font-size: 11px; font-weight: 500; color: #606266; margin-bottom: 3px; }
-}
-</style>

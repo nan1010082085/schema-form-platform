@@ -10,6 +10,7 @@ import type { SchemaApiConfig } from '@/components/WidgetRenderer/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
+import styles from './AdvancedColumnsEditor.module.scss'
 
 const props = defineProps<{
   columns: AdvancedTableColumn[]
@@ -221,20 +222,20 @@ function toggleButtonEvents(key: string) {
 </script>
 
 <template>
-  <div class="adv-columns-editor">
-    <div v-if="columns.length === 0" class="adv-columns-editor__empty">
+  <div :class="styles['adv-columns-editor']">
+    <div v-if="columns.length === 0" :class="styles['adv-columns-editor__empty']">
       未配置列。
     </div>
 
     <div
       v-for="(col, idx) in columns"
       :key="idx"
-      class="adv-columns-editor__item"
+      :class="styles['adv-columns-editor__item']"
     >
       <!-- Header -->
-      <div class="adv-columns-editor__item-header">
-        <span class="adv-columns-editor__item-title">列 {{ idx + 1 }}{{ col.label ? ` — ${col.label}` : '' }}</span>
-        <div class="adv-columns-editor__item-actions">
+      <div :class="styles['adv-columns-editor__item-header']">
+        <span :class="styles['adv-columns-editor__item-title']">列 {{ idx + 1 }}{{ col.label ? ` — ${col.label}` : '' }}</span>
+        <div :class="styles['adv-columns-editor__item-actions']">
           <el-button size="small" text :disabled="idx === 0" @click="moveUp(idx)">
             <AppIcon name="arrow-up" />
           </el-button>
@@ -248,111 +249,111 @@ function toggleButtonEvents(key: string) {
       </div>
 
       <!-- Basic fields -->
-      <div class="adv-columns-editor__row">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">字段名</label>
+      <div :class="styles['adv-columns-editor__row']">
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">字段名</label>
           <el-input :model-value="col.prop" size="small" placeholder="prop" @update:model-value="(v: string) => updateColumn(idx, 'prop', v)" />
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">标签</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">标签</label>
           <el-input :model-value="col.label" size="small" placeholder="label" @update:model-value="(v: string) => updateColumn(idx, 'label', v)" />
         </div>
       </div>
 
-      <div class="adv-columns-editor__row">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">宽度</label>
+      <div :class="styles['adv-columns-editor__row']">
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">宽度</label>
           <el-input :model-value="col.width ?? ''" size="small" placeholder="120" @update:model-value="(v: string) => updateColumn(idx, 'width', v ? Number(v) : undefined)" />
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">最小宽度</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">最小宽度</label>
           <el-input :model-value="col.minWidth ?? ''" size="small" placeholder="80" @update:model-value="(v: string) => updateColumn(idx, 'minWidth', v ? Number(v) : undefined)" />
         </div>
       </div>
 
-      <div class="adv-columns-editor__row">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">渲染方式</label>
+      <div :class="styles['adv-columns-editor__row']">
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">渲染方式</label>
           <el-select :model-value="col.render ?? 'text'" size="small" style="width:100%" @update:model-value="(v: string) => updateColumn(idx, 'render', v)">
             <el-option v-for="opt in renderOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">对齐</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">对齐</label>
           <el-select :model-value="col.align ?? 'left'" size="small" style="width:100%" @update:model-value="(v: string) => updateColumn(idx, 'align', v)">
             <el-option v-for="opt in alignOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </div>
       </div>
 
-      <div class="adv-columns-editor__row">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">固定列</label>
+      <div :class="styles['adv-columns-editor__row']">
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">固定列</label>
           <el-select :model-value="col.fixed" size="small" style="width:100%" clearable @update:model-value="(v: string) => updateColumn(idx, 'fixed', v)">
             <el-option v-for="opt in fixedOptions" :key="String(opt.value)" :label="opt.label" :value="opt.value" />
           </el-select>
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">排序</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">排序</label>
           <el-switch :model-value="col.sortable ?? false" @update:model-value="(v: boolean) => updateColumn(idx, 'sortable', v)" />
         </div>
       </div>
 
       <!-- Tooltip -->
-      <div class="adv-columns-editor__row">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">溢出省略提示</label>
+      <div :class="styles['adv-columns-editor__row']">
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">溢出省略提示</label>
           <el-switch :model-value="col.showTooltip ?? false" @update:model-value="(v: boolean) => updateColumn(idx, 'showTooltip', v)" />
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">提示字段</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">提示字段</label>
           <el-input :model-value="col.tooltipField ?? ''" size="small" placeholder="tooltipField" @update:model-value="(v: string) => updateColumn(idx, 'tooltipField', v || undefined)" />
         </div>
       </div>
 
       <!-- Filterable -->
-      <div class="adv-columns-editor__field">
-        <label class="adv-columns-editor__label">列筛选</label>
+      <div :class="styles['adv-columns-editor__field']">
+        <label :class="styles['adv-columns-editor__label']">列筛选</label>
         <el-switch :model-value="col.filterable ?? false" @update:model-value="(v: boolean) => updateColumn(idx, 'filterable', v)" />
       </div>
 
       <!-- link render fields -->
-      <div v-if="col.render === 'link'" class="adv-columns-editor__field">
-        <label class="adv-columns-editor__label">链接事件名</label>
+      <div v-if="col.render === 'link'" :class="styles['adv-columns-editor__field']">
+        <label :class="styles['adv-columns-editor__label']">链接事件名</label>
         <el-input :model-value="col.linkEvent ?? ''" size="small" placeholder="如: view" @update:model-value="(v: string) => updateColumn(idx, 'linkEvent', v || undefined)" />
       </div>
 
       <!-- tag/badge render fields -->
       <template v-if="col.render === 'tag' || col.render === 'badge'">
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">颜色映射 (JSON)</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">颜色映射 (JSON)</label>
           <el-input :model-value="colorMapToText(col.colorMap)" :rows="2" type="textarea" placeholder='{"启用":"success","停用":"danger"}' @update:model-value="(v: string) => updateColorMap(idx, v)" />
         </div>
-        <div class="adv-columns-editor__field">
-          <label class="adv-columns-editor__label">静态选项 (JSON)</label>
+        <div :class="styles['adv-columns-editor__field']">
+          <label :class="styles['adv-columns-editor__label']">静态选项 (JSON)</label>
           <el-input :model-value="optionsToText(col.options)" :rows="2" type="textarea" placeholder='[{"label":"启用","value":"启用"}]' @update:model-value="(v: string) => updateOptions(idx, v)" />
         </div>
-        <div class="adv-columns-editor__api-section">
-          <div class="adv-columns-editor__field">
-            <label class="adv-columns-editor__label">动态选项接口</label>
+        <div :class="styles['adv-columns-editor__api-section']">
+          <div :class="styles['adv-columns-editor__field']">
+            <label :class="styles['adv-columns-editor__label']">动态选项接口</label>
             <el-input :model-value="col.api?.url ?? ''" size="small" placeholder="/api/options" @update:model-value="(v: string) => updateColumnApi(idx, { url: v || '' })" />
           </div>
           <template v-if="col.api?.url">
-            <div class="adv-columns-editor__row">
-              <div class="adv-columns-editor__field" style="flex:1">
-                <label class="adv-columns-editor__label">方法</label>
+            <div :class="styles['adv-columns-editor__row']">
+              <div :class="styles['adv-columns-editor__field']" style="flex:1">
+                <label :class="styles['adv-columns-editor__label']">方法</label>
                 <el-select :model-value="col.api?.method ?? 'get'" size="small" style="width:100%" @update:model-value="(v: string) => updateColumnApi(idx, { method: v as 'get' | 'post' })">
                   <el-option label="GET" value="get" />
                   <el-option label="POST" value="post" />
                 </el-select>
               </div>
-              <div class="adv-columns-editor__field" style="flex:1">
-                <label class="adv-columns-editor__label">数据路径</label>
+              <div :class="styles['adv-columns-editor__field']" style="flex:1">
+                <label :class="styles['adv-columns-editor__label']">数据路径</label>
                 <el-input :model-value="col.api?.dataPath ?? ''" size="small" placeholder="data" @update:model-value="(v: string) => updateColumnApi(idx, { dataPath: v || undefined })" />
               </div>
             </div>
-            <div class="adv-columns-editor__field">
-              <label class="adv-columns-editor__label">参数 (JSON)</label>
+            <div :class="styles['adv-columns-editor__field']">
+              <label :class="styles['adv-columns-editor__label']">参数 (JSON)</label>
               <el-input :model-value="getApiParamsText(idx)" :rows="2" type="textarea" placeholder='{"key":"value"}' @update:model-value="(v: string) => handleApiParamsChange(idx, v)" />
             </div>
             <el-button size="small" type="danger" plain style="width:100%" @click="removeColumnApi(idx)">移除 API</el-button>
@@ -361,65 +362,65 @@ function toggleButtonEvents(key: string) {
       </template>
 
       <!-- image render fields -->
-      <div v-if="col.render === 'image'" class="adv-columns-editor__field">
-        <label class="adv-columns-editor__label">图片宽度 (px)</label>
+      <div v-if="col.render === 'image'" :class="styles['adv-columns-editor__field']">
+        <label :class="styles['adv-columns-editor__label']">图片宽度 (px)</label>
         <el-input-number :model-value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" @update:model-value="(v: number) => updateColumn(idx, 'imageWidth', v)" />
       </div>
 
       <!-- custom render fields -->
-      <div v-if="col.render === 'custom'" class="adv-columns-editor__field">
-        <label class="adv-columns-editor__label">渲染函数名</label>
+      <div v-if="col.render === 'custom'" :class="styles['adv-columns-editor__field']">
+        <label :class="styles['adv-columns-editor__label']">渲染函数名</label>
         <el-input :model-value="col.renderFn ?? ''" size="small" placeholder="renderFn" @update:model-value="(v: string) => updateColumn(idx, 'renderFn', v || undefined)" />
       </div>
 
       <!-- buttons render: row action buttons editor -->
-      <div v-if="col.render === 'buttons'" class="adv-columns-editor__buttons-section">
-        <label class="adv-columns-editor__label">行内按钮</label>
-        <div v-if="!col.buttons?.length" class="adv-columns-editor__empty-hint">暂无按钮</div>
+      <div v-if="col.render === 'buttons'" :class="styles['adv-columns-editor__buttons-section']">
+        <label :class="styles['adv-columns-editor__label']">行内按钮</label>
+        <div v-if="!col.buttons?.length" :class="styles['adv-columns-editor__empty-hint']">暂无按钮</div>
         <div
           v-for="(btn, bi) in col.buttons"
           :key="bi"
-          class="adv-columns-editor__btn-item"
+          :class="styles['adv-columns-editor__btn-item']"
         >
-          <div class="adv-columns-editor__btn-header">
-            <span class="adv-columns-editor__btn-title">{{ btn.label || btn.key }}</span>
+          <div :class="styles['adv-columns-editor__btn-header']">
+            <span :class="styles['adv-columns-editor__btn-title']">{{ btn.label || btn.key }}</span>
             <el-button type="danger" size="small" text @click="removeRowButton(idx, bi)">
               <AppIcon name="delete" />
             </el-button>
           </div>
-          <div class="adv-columns-editor__row">
-            <div class="adv-columns-editor__field">
-              <label class="adv-columns-editor__label">key</label>
+          <div :class="styles['adv-columns-editor__row']">
+            <div :class="styles['adv-columns-editor__field']">
+              <label :class="styles['adv-columns-editor__label']">key</label>
               <el-input :model-value="btn.key" size="small" @update:model-value="(v: string) => updateRowButton(idx, bi, 'key', v)" />
             </div>
-            <div class="adv-columns-editor__field">
-              <label class="adv-columns-editor__label">文字</label>
+            <div :class="styles['adv-columns-editor__field']">
+              <label :class="styles['adv-columns-editor__label']">文字</label>
               <el-input :model-value="btn.label" size="small" @update:model-value="(v: string) => updateRowButton(idx, bi, 'label', v)" />
             </div>
           </div>
-          <div class="adv-columns-editor__row">
-            <div class="adv-columns-editor__field">
-              <label class="adv-columns-editor__label">类型</label>
+          <div :class="styles['adv-columns-editor__row']">
+            <div :class="styles['adv-columns-editor__field']">
+              <label :class="styles['adv-columns-editor__label']">类型</label>
               <el-select :model-value="btn.type || ''" size="small" style="width:100%" @update:model-value="(v: string) => updateRowButton(idx, bi, 'type', v)">
                 <el-option v-for="opt in buttonTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
               </el-select>
             </div>
-            <div class="adv-columns-editor__field">
-              <label class="adv-columns-editor__label">确认提示</label>
+            <div :class="styles['adv-columns-editor__field']">
+              <label :class="styles['adv-columns-editor__label']">确认提示</label>
               <el-input :model-value="btn.confirm ?? ''" size="small" placeholder="可选" @update:model-value="(v: string) => updateRowButton(idx, bi, 'confirm', v || undefined)" />
             </div>
           </div>
-          <div class="adv-columns-editor__field">
-            <label class="adv-columns-editor__label">显示条件</label>
+          <div :class="styles['adv-columns-editor__field']">
+            <label :class="styles['adv-columns-editor__label']">显示条件</label>
             <el-input :model-value="btn.visibleCondition ?? ''" size="small" placeholder="如: row.status === 'draft'" @update:model-value="(v: string) => updateRowButton(idx, bi, 'visibleCondition', v || undefined)" />
           </div>
 
           <!-- Button events -->
-          <div class="adv-columns-editor__btn-events-toggle" @click="toggleButtonEvents(`${idx}-${bi}`)">
+          <div :class="styles['adv-columns-editor__btn-events-toggle']" @click="toggleButtonEvents(`${idx}-${bi}`)">
             <AppIcon :name="expandedButtonEvents === `${idx}-${bi}` ? 'arrow-down' : 'arrow-right'" />
             <span>事件配置 ({{ btn.events?.length || 0 }})</span>
           </div>
-          <div v-if="expandedButtonEvents === `${idx}-${bi}`" class="adv-columns-editor__btn-events">
+          <div v-if="expandedButtonEvents === `${idx}-${bi}`" :class="styles['adv-columns-editor__btn-events']">
             <ActionListEditor
               :actions="btn.events?.[0]?.actions ?? []"
               :action-types="actionTypeOptions"
@@ -441,123 +442,3 @@ function toggleButtonEvents(key: string) {
     </el-button>
   </div>
 </template>
-
-<style scoped lang="scss">
-.adv-columns-editor {
-  &__empty {
-    text-align: center;
-    color: #909399;
-    font-size: 12px;
-    padding: 12px 0;
-  }
-
-  &__empty-hint {
-    text-align: center;
-    color: #c0c4cc;
-    font-size: 11px;
-    padding: 6px 0;
-  }
-
-  &__item {
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  &__item-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__item-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  &__row {
-    display: flex;
-    gap: 8px;
-    > * { flex: 1; }
-  }
-
-  &__field {
-    margin-bottom: 8px;
-    &:last-child { margin-bottom: 0; }
-  }
-
-  &__label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 3px;
-  }
-
-  &__api-section {
-    margin-top: 4px;
-    padding: 8px;
-    border: 1px dashed #dcdfe6;
-    border-radius: 4px;
-    background: #fff;
-  }
-
-  &__buttons-section {
-    margin-top: 4px;
-    padding: 8px;
-    border: 1px dashed #dcdfe6;
-    border-radius: 4px;
-    background: #fff;
-  }
-
-  &__btn-item {
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
-    padding: 8px;
-    margin-top: 6px;
-    background: #f5f7fa;
-  }
-
-  &__btn-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
-  &__btn-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__btn-events-toggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: #409eff;
-    cursor: pointer;
-    margin-top: 4px;
-    user-select: none;
-  }
-
-  &__btn-events {
-    margin-top: 6px;
-    padding: 6px;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
-    background: #fff;
-  }
-}
-</style>

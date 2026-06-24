@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import './FgTimePicker.module.scss'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 
@@ -35,8 +36,3 @@ const dynamicStyle = computed(() => ({
   />
 </template>
 
-<style scoped>
-:deep(.el-time-picker) {
-  width: 100%;
-}
-</style>

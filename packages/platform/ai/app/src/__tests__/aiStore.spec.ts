@@ -20,7 +20,7 @@ import { getConversations, deleteConversation, publish } from '@/api/aiApi'
 let chatEventHandler: ((event: Record<string, unknown>) => void) | null = null
 let lastChatSendPayload: Record<string, unknown> | null = null
 
-vi.mock('@schema-form/socket', () => ({
+vi.mock('@schema-form/platform-shared/socket', () => ({
   emitChatSend: vi.fn((payload: Record<string, unknown>) => {
     lastChatSendPayload = payload
   }),
@@ -32,7 +32,7 @@ vi.mock('@schema-form/socket', () => ({
   }),
 }))
 
-import { emitChatSend, emitChatCancel } from '@schema-form/socket'
+import { emitChatSend, emitChatCancel } from '@schema-form/platform-shared/socket'
 
 /** 模拟服务端推送事件到客户端 */
 function pushChatEvent(event: Record<string, unknown>) {

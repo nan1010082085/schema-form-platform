@@ -10,6 +10,7 @@ import { fetchVersions, publishSchema } from '@/utils/apiClient'
 import type { VersionEntry } from '@/types/api'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import AppDialog from '@schema-form/platform-shared/components/common/AppDialog.vue'
+import styles from './VersionHistoryDialog.module.scss'
 
 const props = defineProps<{
   visible: boolean
@@ -88,7 +89,7 @@ function formatDate(d: string) {
 }
 
 function tableRowClassName({ row }: { row: VersionEntry }) {
-  if (row.published) return 'version-history__row-published'
+  if (row.published) return styles['version-history__row-published']
   return ''
 }
 </script>
@@ -100,12 +101,12 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
     :title="`版本历史 — ${schemaName || ''}`"
     width="700px"
   >
-    <div v-if="loading" class="version-history__loading">
-      <AppIcon name="loading" class="version-history__spinning" />
+    <div v-if="loading" :class="styles['version-history__loading']">
+      <AppIcon name="loading" :class="styles['version-history__spinning']" />
       <span>加载中...</span>
     </div>
 
-    <div v-else-if="versions.length === 0" class="version-history__empty">
+    <div v-else-if="versions.length === 0" :class="styles['version-history__empty']">
       暂无版本记录
     </div>
 
@@ -119,7 +120,7 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
       >
         <el-table-column prop="version" label="版本号" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            <span :class="{ 'version-history__current': row.version === currentVersion, 'version-history__published': row.published }">
+            <span :class="{ [styles['version-history__current']]: row.version === currentVersion, [styles['version-history__published']]: row.published }">
               {{ formatVersion(row.version) }}
             </span>
           </template>
@@ -127,7 +128,7 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
 
         <el-table-column prop="status" label="状态" width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="version-history__status-cell">
+            <div :class="styles['version-history__status-cell']">
               <el-tag v-if="row.version === currentVersion" type="primary" size="small" effect="plain">当前</el-tag>
               <el-tag v-if="row.published" type="success" size="small">已发布</el-tag>
               <el-tag v-if="!row.published && row.version !== currentVersion" type="info" size="small" effect="plain">草稿</el-tag>
@@ -166,7 +167,7 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
         </el-table-column>
       </el-table>
 
-      <div v-if="total > 0" class="version-history__pagination">
+      <div v-if="total > 0" :class="styles['version-history__pagination']">
         <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
@@ -183,58 +184,3 @@ function tableRowClassName({ row }: { row: VersionEntry }) {
     </template>
   </AppDialog>
 </template>
-
-<style scoped lang="scss">
-.version-history {
-  &__loading,
-  &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 32px 0;
-    color: #999;
-    font-size: 14px;
-  }
-
-  &__spinning {
-    animation: version-history-spin 1s linear infinite;
-  }
-
-  &__status-cell {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-  }
-
-  &__current {
-    font-weight: 600;
-    color: #409eff;
-  }
-
-  &__published {
-    font-weight: 600;
-    color: #67c23a;
-  }
-
-  &__pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 16px;
-  }
-
-  :deep(.version-history__row-published) {
-    background-color: #f0f9eb !important;
-
-    &:hover > td {
-      background-color: #f0f9eb !important;
-    }
-  }
-
-  @keyframes version-history-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-}
-</style>

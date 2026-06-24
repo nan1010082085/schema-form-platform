@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, ref } from 'vue'
 import { widgetDataKey } from '../base/types'
+import './FgDateTimeSlot.module.scss'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 
 const widgetData = inject(widgetDataKey)!
@@ -27,9 +28,3 @@ function forwardNativeChange() {
   />
 </template>
 
-<style scoped>
-:deep(.el-date-editor) {
-  width: 100% !important;
-  height: 100%;
-}
-</style>

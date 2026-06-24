@@ -13,7 +13,7 @@ vi.mock('../api/flowApi', () => ({
   },
 }))
 
-vi.mock('@schema-form/socket', () => ({
+vi.mock('@schema-form/platform-shared/socket', () => ({
   connect: vi.fn(),
   identify: vi.fn(),
   onFlowNotification: vi.fn().mockReturnValue(() => {}),

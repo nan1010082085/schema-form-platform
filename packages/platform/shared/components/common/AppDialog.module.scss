@@ -1,0 +1,44 @@
+.app-dialog {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  &__fullscreen-btn,
+  &__close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    color: #fff !important;
+
+    &:hover {
+      background: transparent !important;
+      color: #fff !important;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 20px;
+  }
+}

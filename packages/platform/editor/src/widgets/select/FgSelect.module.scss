@@ -1,0 +1,10 @@
+:global {
+  .el-select {
+    width: 100%;
+  }
+
+  .el-select .el-select__wrapper {
+    min-height: inherit;
+    height: inherit;
+  }
+}

@@ -1,0 +1,16 @@
+:global {
+  .el-input-number {
+    width: 100%;
+  }
+
+  .el-input-number .el-input__wrapper {
+    min-height: inherit;
+    height: inherit;
+  }
+
+  .el-input-number .el-input-number__increase,
+  .el-input-number .el-input-number__decrease {
+    height: var(--number-btn-height, 16px);
+    line-height: var(--number-btn-height, 16px);
+  }
+}

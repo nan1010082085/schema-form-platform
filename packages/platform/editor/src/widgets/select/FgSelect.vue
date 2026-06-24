@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import './FgSelect.module.scss'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useDynamicOptions } from '../../composables/useDynamicOptions'
 import { useExposeWidget } from '../../composables/useExposeWidget'
@@ -61,13 +62,3 @@ function forwardNativeChange() {
   </el-select>
 </template>
 
-<style scoped>
-.el-select {
-  width: 100%;
-}
-
-.el-select :deep(.el-select__wrapper) {
-  min-height: inherit;
-  height: inherit;
-}
-</style>

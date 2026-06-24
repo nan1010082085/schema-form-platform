@@ -7,6 +7,7 @@
  */
 import type { SearchListRowAction } from '@/components/WidgetRenderer/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './RowActionsEditor.module.scss'
 
 const props = defineProps<{
   rowActions: SearchListRowAction[]
@@ -94,19 +95,19 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 </script>
 
 <template>
-  <div class="row-actions-editor">
-    <div v-if="rowActions.length === 0" class="row-actions-editor__empty">
+  <div :class="styles['row-actions-editor']">
+    <div v-if="rowActions.length === 0" :class="styles['row-actions-editor__empty']">
       未配置行操作。
     </div>
 
     <div
       v-for="(action, idx) in rowActions"
       :key="idx"
-      class="row-actions-editor__item"
+      :class="styles['row-actions-editor__item']"
     >
-      <div class="row-actions-editor__item-header">
-        <span class="row-actions-editor__item-title">操作 {{ idx + 1 }}</span>
-        <div class="row-actions-editor__item-actions">
+      <div :class="styles['row-actions-editor__item-header']">
+        <span :class="styles['row-actions-editor__item-title']">操作 {{ idx + 1 }}</span>
+        <div :class="styles['row-actions-editor__item-actions']">
           <el-button
             size="small"
             text
@@ -134,8 +135,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </div>
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">标签</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">标签</label>
         <el-input
           :model-value="action.label"
           size="small"
@@ -144,8 +145,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         />
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">按钮类型</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">按钮类型</label>
         <el-select
           :model-value="action.buttonType ?? ''"
           size="small"
@@ -161,8 +162,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </el-select>
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">图标</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">图标</label>
         <el-input
           :model-value="action.icon ?? ''"
           size="small"
@@ -171,8 +172,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         />
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">操作类型</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">操作类型</label>
         <el-select
           :model-value="action.type"
           size="small"
@@ -189,8 +190,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       </div>
 
       <!-- Emit type: event name -->
-      <div v-if="action.type === 'emit'" class="row-actions-editor__field">
-        <label class="row-actions-editor__label">触发事件</label>
+      <div v-if="action.type === 'emit'" :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">触发事件</label>
         <el-input
           :model-value="action.emitEvent ?? ''"
           size="small"
@@ -201,8 +202,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <!-- API type: url and method -->
       <template v-if="action.type === 'api'">
-        <div class="row-actions-editor__field">
-          <label class="row-actions-editor__label">接口地址</label>
+        <div :class="styles['row-actions-editor__field']">
+          <label :class="styles['row-actions-editor__label']">接口地址</label>
           <el-input
             :model-value="action.apiUrl ?? ''"
             size="small"
@@ -210,8 +211,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             @update:model-value="updateAction(idx, 'apiUrl', $event || undefined)"
           />
         </div>
-        <div class="row-actions-editor__field">
-          <label class="row-actions-editor__label">请求方法</label>
+        <div :class="styles['row-actions-editor__field']">
+          <label :class="styles['row-actions-editor__label']">请求方法</label>
           <el-select
             :model-value="action.apiMethod ?? 'get'"
             size="small"
@@ -229,8 +230,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
       </template>
 
       <!-- Navigate type: path + query -->
-      <div v-if="action.type === 'navigate'" class="row-actions-editor__field">
-        <label class="row-actions-editor__label">跳转路径</label>
+      <div v-if="action.type === 'navigate'" :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">跳转路径</label>
         <el-input
           :model-value="action.navigatePath ?? ''"
           size="small"
@@ -238,8 +239,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
           @update:model-value="updateAction(idx, 'navigatePath', $event || undefined)"
         />
       </div>
-      <div v-if="action.type === 'navigate'" class="row-actions-editor__field">
-        <label class="row-actions-editor__label">跳转参数 (JSON)</label>
+      <div v-if="action.type === 'navigate'" :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">跳转参数 (JSON)</label>
         <el-input
           type="textarea"
           :model-value="action.navigateQuery ? JSON.stringify(action.navigateQuery, null, 2) : ''"
@@ -251,8 +252,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
 
       <!-- Dialog type: title, width, and schema -->
       <template v-if="action.type === 'dialog'">
-        <div class="row-actions-editor__field">
-          <label class="row-actions-editor__label">弹窗标题</label>
+        <div :class="styles['row-actions-editor__field']">
+          <label :class="styles['row-actions-editor__label']">弹窗标题</label>
           <el-input
             :model-value="action.dialogTitle ?? ''"
             size="small"
@@ -260,8 +261,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             @update:model-value="updateAction(idx, 'dialogTitle', $event || undefined)"
           />
         </div>
-        <div class="row-actions-editor__field">
-          <label class="row-actions-editor__label">弹窗宽度</label>
+        <div :class="styles['row-actions-editor__field']">
+          <label :class="styles['row-actions-editor__label']">弹窗宽度</label>
           <el-input
             :model-value="action.dialogWidth ?? ''"
             size="small"
@@ -269,8 +270,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
             @update:model-value="updateAction(idx, 'dialogWidth', $event || undefined)"
           />
         </div>
-        <div class="row-actions-editor__field">
-          <label class="row-actions-editor__label">弹窗 Schema (JSON)</label>
+        <div :class="styles['row-actions-editor__field']">
+          <label :class="styles['row-actions-editor__label']">弹窗 Schema (JSON)</label>
           <el-input
             type="textarea"
             :model-value="action.dialogSchema ? JSON.stringify(action.dialogSchema, null, 2) : ''"
@@ -281,8 +282,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         </div>
       </template>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">确认提示</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">确认提示</label>
         <el-input
           :model-value="action.confirm ?? ''"
           size="small"
@@ -291,8 +292,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         />
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">显示条件 (表达式)</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">显示条件 (表达式)</label>
         <el-input
           :model-value="action.visibleOn ?? ''"
           size="small"
@@ -301,8 +302,8 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
         />
       </div>
 
-      <div class="row-actions-editor__field">
-        <label class="row-actions-editor__label">禁用条件 (表达式)</label>
+      <div :class="styles['row-actions-editor__field']">
+        <label :class="styles['row-actions-editor__label']">禁用条件 (表达式)</label>
         <el-input
           :model-value="action.disabledOn ?? ''"
           size="small"
@@ -325,56 +326,3 @@ function parseNavigateQuery(text: string): Record<string, string> | undefined {
   </div>
 </template>
 
-<style scoped lang="scss">
-.row-actions-editor {
-  &__empty {
-    text-align: center;
-    color: #909399;
-    font-size: 12px;
-    padding: 12px 0;
-  }
-
-  &__item {
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  &__item-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__item-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  &__field {
-    margin-bottom: 8px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 3px;
-  }
-}
-</style>

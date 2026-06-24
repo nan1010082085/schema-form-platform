@@ -1,82 +1,62 @@
-.bellIcon {
-  cursor: pointer;
-  color: var(--text-color-secondary);
-  transition: color 0.2s;
-
-  &:hover {
-    color: var(--color-primary);
-  }
-}
-
-.header {
+.notification-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-bottom: 12px;
+  justify-content: space-between;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border-color-lighter);
   margin-bottom: 8px;
 }
 
-.title {
-  font-size: 16px;
+.notification-title {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-color-primary);
 }
 
-.list {
+.notification-list {
   max-height: 400px;
   overflow-y: auto;
 }
 
-.item {
-  padding: 12px;
-  border-radius: 8px;
+.notification-item {
+  padding: 8px;
+  border-radius: 4px;
   transition: background-color 0.2s;
 
   &:hover {
     background-color: var(--bg-color-secondary);
   }
 
-  & + & {
-    margin-top: 8px;
+  &--unread {
+    background-color: var(--color-primary-lighter);
   }
-}
 
-.itemUnread {
-  background-color: var(--color-primary-light);
-
-  &:hover {
-    background-color: var(--color-primary-light);
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
   }
-}
 
-.itemHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
+  &-time {
+    font-size: 12px;
+    color: var(--text-color-secondary);
+  }
 
-.itemTime {
-  font-size: 12px;
-  color: var(--text-color-placeholder);
-}
+  &-title {
+    font-size: 13px;
+    color: var(--text-color-primary);
+    margin-bottom: 4px;
+  }
 
-.itemTitle {
-  font-size: 14px;
-  color: var(--text-color-primary);
-  margin-bottom: 4px;
-  line-height: 1.4;
-}
+  &-content {
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    margin-bottom: 4px;
+  }
 
-.itemContent {
-  font-size: 13px;
-  color: var(--text-color-secondary);
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.itemActions {
-  display: flex;
-  justify-content: flex-end;
+  &-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
 }

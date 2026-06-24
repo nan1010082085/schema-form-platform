@@ -13,6 +13,7 @@
 import { reactive, ref, computed } from 'vue'
 import { useAuth } from '@schema-form/platform-shared/utils/useAuth'
 import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import styles from './LoginView.module.scss'
 
 interface Props {
   title?: string
@@ -163,29 +164,29 @@ function switchMode(newMode: ViewMode) {
 </script>
 
 <template>
-  <div class="login-page">
-    <div class="login-card">
-      <div class="login-header">
-        <h1 class="login-logo">{{ title }}</h1>
-        <p class="login-subtitle">{{ subtitle }}</p>
+  <div :class="styles['login-page']">
+    <div :class="styles['login-card']">
+      <div :class="styles['login-header']">
+        <h1 :class="styles['login-logo']">{{ title }}</h1>
+        <p :class="styles['login-subtitle']">{{ subtitle }}</p>
       </div>
 
-      <div v-if="errorMsg" class="login-alert login-alert-error">
+      <div v-if="errorMsg" :class="styles['login-alert'] + ' ' + styles['login-alert-error']">
         {{ errorMsg }}
       </div>
 
-      <div v-if="successMsg" class="login-alert login-alert-success">
+      <div v-if="successMsg" :class="styles['login-alert'] + ' ' + styles['login-alert-success']">
         {{ successMsg }}
       </div>
 
-      <div class="login-form">
+      <div :class="styles['login-form']">
         <!-- 用户名（登录和注册都需要） -->
         <input
           v-if="mode !== 'changePassword'"
           v-model="form.username"
           type="text"
           placeholder="用户名"
-          class="login-input"
+          :class="styles['login-input']"
           @keyup.enter="handleSubmit"
         />
 
@@ -195,7 +196,7 @@ function switchMode(newMode: ViewMode) {
           v-model="form.nickname"
           type="text"
           placeholder="昵称（选填）"
-          class="login-input"
+          :class="styles['login-input']"
         />
 
         <!-- 手机号（仅注册） -->
@@ -204,7 +205,7 @@ function switchMode(newMode: ViewMode) {
           v-model="form.phone"
           type="text"
           placeholder="手机号（选填）"
-          class="login-input"
+          :class="styles['login-input']"
         />
 
         <!-- 旧密码（仅修改密码） -->
@@ -213,7 +214,7 @@ function switchMode(newMode: ViewMode) {
           v-model="form.oldPassword"
           type="password"
           placeholder="当前密码"
-          class="login-input"
+          :class="styles['login-input']"
           @keyup.enter="handleSubmit"
         />
 
@@ -222,7 +223,7 @@ function switchMode(newMode: ViewMode) {
           v-model="form.password"
           type="password"
           :placeholder="mode === 'changePassword' ? '新密码' : '密码'"
-          class="login-input"
+          :class="styles['login-input']"
           @keyup.enter="handleSubmit"
         />
 
@@ -232,12 +233,12 @@ function switchMode(newMode: ViewMode) {
           v-model="form.confirmPassword"
           type="password"
           placeholder="确认密码"
-          class="login-input"
+          :class="styles['login-input']"
           @keyup.enter="handleSubmit"
         />
 
         <button
-          class="login-button"
+          :class="styles['login-button']"
           :disabled="loading.login"
           @click="handleSubmit"
         >
@@ -246,138 +247,16 @@ function switchMode(newMode: ViewMode) {
       </div>
 
       <!-- 底部链接 -->
-      <div class="login-links">
+      <div :class="styles['login-links']">
         <template v-if="mode === 'login'">
-          <a class="login-link" @click="switchMode('register')">注册账号</a>
-          <a class="login-link" @click="switchMode('changePassword')">修改密码</a>
+          <a :class="styles['login-link']" @click="switchMode('register')">注册账号</a>
+          <a :class="styles['login-link']" @click="switchMode('changePassword')">修改密码</a>
         </template>
         <template v-else>
-          <a class="login-link" @click="switchMode('login')">返回登录</a>
+          <a :class="styles['login-link']" @click="switchMode('login')">返回登录</a>
         </template>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 40px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.login-logo {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-}
-
-.login-subtitle {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
-.login-alert {
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.login-alert-error {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-.login-alert-success {
-  background: #d1fae5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.login-input {
-  width: 100%;
-  padding: 14px 16px;
-  font-size: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
-}
-
-.login-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.login-input::placeholder {
-  color: #9ca3af;
-}
-
-.login-button {
-  width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.login-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.login-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.login-links {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.login-link {
-  font-size: 14px;
-  color: #667eea;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.login-link:hover {
-  text-decoration: underline;
-}
-</style>

@@ -6,6 +6,53 @@
   background: var(--glass-bg, rgba(17, 24, 32, 0.8));
   backdrop-filter: var(--glass-blur, blur(20px));
   -webkit-backdrop-filter: var(--glass-blur, blur(20px));
+
+  /* 属性面板内所有 small 尺寸输入组件统一高度 32px */
+  :global(.el-input--small) {
+    --el-component-size-small: 32px;
+
+    .el-input__wrapper {
+      height: 32px;
+      min-height: 32px;
+    }
+
+    .el-input__inner {
+      height: 32px;
+    }
+  }
+
+  :global(.el-select--small) {
+    --el-component-size-small: 32px;
+
+    .el-select__wrapper {
+      min-height: 32px;
+    }
+  }
+
+  :global(.el-input-number--small) {
+    --el-component-size-small: 32px;
+    height: 32px;
+
+    .el-input-number__decrease,
+    .el-input-number__increase {
+      height: 16px;
+      line-height: 16px;
+    }
+
+    .el-input-number__increase {
+      border-left: 1px solid var(--el-border-color);
+    }
+
+    .el-input__wrapper {
+      height: 32px;
+      min-height: 32px;
+    }
+
+    .el-input__inner {
+      height: 32px;
+      line-height: 32px;
+    }
+  }
 }
 
 .header {

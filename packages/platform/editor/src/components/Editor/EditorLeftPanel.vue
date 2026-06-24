@@ -15,6 +15,7 @@ import { useEditorStore } from '@/stores/editor'
 import { applyTemplate } from '@/utils/apiClient'
 import type { TemplateItem } from '@/utils/apiClient'
 import type { Widget } from '@/widgets/base/types'
+import styles from './EditorLeftPanel.module.scss'
 
 defineProps<{
   schemaStatus: 'draft' | 'published'
@@ -43,28 +44,25 @@ async function handleApplyTemplate(template: TemplateItem) {
 </script>
 
 <template>
-  <aside class="left-panel">
+  <aside :class="styles['left-panel']">
     <!-- Tabs -->
-    <div class="left-panel__tabs">
+    <div :class="styles['left-panel__tabs']">
       <button
-        class="left-panel__tab"
-        :class="{ 'left-panel__tab--active': activeTab === 'components' }"
+        :class="[styles['left-panel__tab'], { [styles['left-panel__tab--active']]: activeTab === 'components' }]"
         @click="activeTab = 'components'"
       >
         <AppIcon name="grid" :size="14" />
         <span>部件库</span>
       </button>
       <button
-        class="left-panel__tab"
-        :class="{ 'left-panel__tab--active': activeTab === 'structure' }"
+        :class="[styles['left-panel__tab'], { [styles['left-panel__tab--active']]: activeTab === 'structure' }]"
         @click="activeTab = 'structure'"
       >
         <AppIcon name="list" :size="14" />
         <span>结构</span>
       </button>
       <button
-        class="left-panel__tab"
-        :class="{ 'left-panel__tab--active': activeTab === 'templates' }"
+        :class="[styles['left-panel__tab'], { [styles['left-panel__tab--active']]: activeTab === 'templates' }]"
         @click="activeTab = 'templates'"
       >
         <AppIcon name="document" :size="14" />
@@ -73,7 +71,7 @@ async function handleApplyTemplate(template: TemplateItem) {
     </div>
 
     <!-- Content -->
-    <div class="left-panel__content">
+    <div :class="styles['left-panel__content']">
       <ComponentPanel v-show="activeTab === 'components'" />
       <WidgetTree v-show="activeTab === 'structure'" />
       <TemplatePanel
@@ -84,86 +82,13 @@ async function handleApplyTemplate(template: TemplateItem) {
     </div>
 
     <!-- Status bar -->
-    <div v-if="schemaId" class="left-panel__status">
-      <span class="left-panel__status-tag" :class="`left-panel__status-tag--${schemaStatus}`">
+    <div v-if="schemaId" :class="styles['left-panel__status']">
+      <span :class="[styles['left-panel__status-tag'], styles[`left-panel__status-tag--${schemaStatus}`]]">
         {{ schemaStatus === 'published' ? '已发布' : '草稿' }}
       </span>
-      <span class="left-panel__status-tag left-panel__status-tag--form">
+      <span :class="[styles['left-panel__status-tag'], styles['left-panel__status-tag--form']]">
         表单
       </span>
     </div>
   </aside>
 </template>
-
-<style scoped lang="scss">
-.left-panel {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  background: var(--glass-bg, rgba(17, 24, 32, 0.8));
-  backdrop-filter: var(--glass-blur, blur(20px));
-  -webkit-backdrop-filter: var(--glass-blur, blur(20px));
-  border-right: 1px solid var(--color-primary-lighter);
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-
-  &__tabs {
-    display: flex;
-    border-bottom: 1px solid var(--color-primary-lighter);
-    flex-shrink: 0;
-  }
-
-  &__tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 8px 4px;
-    font-size: var(--el-font-size-extra-small, 12px);
-    font-weight: 500;
-    color: var(--text-color-secondary);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover { color: var(--color-primary); background: var(--color-primary-lighter); }
-    &--active {
-      color: var(--color-primary);
-      border-bottom-color: var(--color-primary);
-      background: var(--color-primary-lighter);
-    }
-  }
-
-  &__content {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  &__status {
-    display: flex;
-    gap: 6px;
-    padding: 8px 12px;
-    border-top: 1px solid var(--color-primary-lighter);
-    flex-shrink: 0;
-  }
-
-  &__status-tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 3px;
-    white-space: nowrap;
-
-    &--draft { background: var(--text-color-disabled); color: var(--text-color-placeholder); }
-    &--published { background: rgba(0, 230, 118, 0.1); color: #00e676; }
-    &--form { background: var(--color-primary-bg-light); color: var(--color-primary); }
-    &--search-list { background: var(--color-primary-bg-light); color: var(--color-primary); }
-  }
-}
-</style>

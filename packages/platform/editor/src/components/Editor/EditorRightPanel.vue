@@ -7,6 +7,7 @@
 import PropertyPanel from './PropertyPanel.vue'
 import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './EditorRightPanel.module.scss'
 
 defineProps<{
   selectedSchema: PartialWidget | null
@@ -25,13 +26,13 @@ function getDisplayLabel(item: PartialWidget): string {
 </script>
 
 <template>
-  <aside class="right-panel">
+  <aside :class="styles['right-panel']">
     <!-- Header -->
-    <div class="right-panel__header">
+    <div :class="styles['right-panel__header']">
       <AppIcon name="setting" :size="14" />
       <span v-if="selectedSchema">{{ getDisplayLabel(selectedSchema) }} 配置</span>
       <span v-else>编辑器配置</span>
-      <button class="right-panel__close" @click="emit('close')">
+      <button :class="styles['right-panel__close']" @click="emit('close')">
         <AppIcon name="close" :size="12" />
       </button>
     </div>
@@ -45,65 +46,9 @@ function getDisplayLabel(item: PartialWidget): string {
     />
 
     <!-- Global config hint -->
-    <div v-else class="right-panel__hint">
+    <div v-else :class="styles['right-panel__hint']">
       <p>选择画布中的组件查看和编辑属性</p>
     </div>
   </aside>
 </template>
 
-<style scoped lang="scss">
-.right-panel {
-  width: 280px;
-  flex-shrink: 0;
-  background: #fff;
-  border-left: 1px solid #e4e7ed;
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-  overflow: hidden;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #303133;
-    border-bottom: 1px solid #f0f2f5;
-    flex-shrink: 0;
-  }
-
-  &__close {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: none;
-    background: transparent;
-    color: #909399;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.15s;
-
-    &:hover {
-      background: #f0f2f5;
-      color: #606266;
-    }
-  }
-
-  &__hint {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    text-align: center;
-    color: #c0c4cc;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-}
-</style>

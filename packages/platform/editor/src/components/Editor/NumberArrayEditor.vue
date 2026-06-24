@@ -6,6 +6,7 @@
  * 支持增减列、拖动排序、数值输入
  */
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './NumberArrayEditor.module.scss'
 
 const props = defineProps<{
   value: number[]
@@ -61,13 +62,13 @@ function moveDown(index: number) {
 </script>
 
 <template>
-  <div class="number-array-editor">
+  <div :class="styles['number-array-editor']">
     <div
       v-for="(w, idx) in value"
       :key="idx"
-      class="number-array-editor__item"
+      :class="styles['number-array-editor__item']"
     >
-      <span class="number-array-editor__item-label">列 {{ idx + 1 }}</span>
+      <span :class="styles['number-array-editor__item-label']">列 {{ idx + 1 }}</span>
       <el-input-number
         :model-value="w"
         :min="min ?? 0"
@@ -77,7 +78,7 @@ function moveDown(index: number) {
         style="flex: 1"
         @update:model-value="(v: number) => updateWidth(idx, v)"
       />
-      <div class="number-array-editor__item-actions">
+      <div :class="styles['number-array-editor__item-actions']">
         <el-button size="small" text :disabled="idx === 0" @click="moveUp(idx)">
           <AppIcon name="arrow-up" />
         </el-button>
@@ -100,27 +101,3 @@ function moveDown(index: number) {
     </el-button>
   </div>
 </template>
-
-<style scoped lang="scss">
-.number-array-editor {
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  &__item-label {
-    font-size: 11px;
-    color: #606266;
-    white-space: nowrap;
-    min-width: 36px;
-  }
-
-  &__item-actions {
-    display: flex;
-    align-items: center;
-    gap: 0;
-  }
-}
-</style>

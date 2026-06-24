@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import './FgNumber.module.scss'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 
@@ -48,19 +49,3 @@ function forwardNativeChange() {
   />
 </template>
 
-<style scoped>
-.el-input-number {
-  width: 100%;
-}
-
-.el-input-number :deep(.el-input__wrapper) {
-  min-height: inherit;
-  height: inherit;
-}
-
-.el-input-number :deep(.el-input-number__increase),
-.el-input-number :deep(.el-input-number__decrease) {
-  height: var(--number-btn-height, 16px);
-  line-height: var(--number-btn-height, 16px);
-}
-</style>

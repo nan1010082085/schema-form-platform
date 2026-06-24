@@ -174,8 +174,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Location } from '@element-plus/icons-vue'
 import { loadMicroApp } from 'qiankun'
 import type { MicroApp } from 'qiankun'
-import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
-import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
+import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/platform-shared/socket'
+import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/platform-shared/socket'
 import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import {
   exportToBpmnXml,

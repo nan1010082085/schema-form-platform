@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import styles from './FgToolbarButtons.module.scss'
 import { EVENT_CONTEXT_KEY } from '../../components/WidgetRenderer/types'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { triggerWidgetEvent } from '../../engine/eventEngine'
@@ -28,7 +29,7 @@ async function handleClick(idx: number) {
 </script>
 
 <template>
-  <div :style="dynamicStyle">
+  <div :class="styles.toolbar" :style="dynamicStyle">
     <el-button
       v-for="(btn, idx) in buttons"
       :key="idx"
@@ -41,10 +42,3 @@ async function handleClick(idx: number) {
   </div>
 </template>
 
-<style scoped>
-div {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-</style>

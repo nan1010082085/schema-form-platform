@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import './FgTransfer.module.scss'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
@@ -39,17 +40,3 @@ const transferStyle = computed(() => ({
   />
 </template>
 
-<style scoped>
-:deep(.el-transfer) {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-:deep(.el-transfer__buttons) {
-  padding: 0 8px;
-  flex-shrink: 0;
-}
-:deep(.el-transfer-panel) {
-  width: var(--transfer-panel-width) !important;
-}
-</style>

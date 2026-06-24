@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { flowApi } from '../api/flowApi.js'
-import { connect, identify, onFlowNotification } from '@schema-form/socket'
-import type { FlowNotificationEvent } from '@schema-form/socket'
+import { connect, identify, onFlowNotification } from '@schema-form/platform-shared/socket'
+import type { FlowNotificationEvent } from '@schema-form/platform-shared/socket'
 
 export interface Notification {
   id: string

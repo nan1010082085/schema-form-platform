@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useNotificationStore } from '../stores/notification.js'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './NotificationBell.module.scss'
 
 const store = useNotificationStore()
 
@@ -59,8 +60,8 @@ onUnmounted(() => {
       </el-badge>
     </template>
 
-    <div class="notification-header">
-      <span class="notification-title">通知</span>
+    <div :class="styles['notification-header']">
+      <span :class="styles['notification-title']">通知</span>
       <el-button
         v-if="store.unreadCount > 0"
         type="primary"
@@ -72,22 +73,22 @@ onUnmounted(() => {
       </el-button>
     </div>
 
-    <div class="notification-list" v-loading="store.loading">
+    <div :class="styles['notification-list']" v-loading="store.loading">
       <template v-if="store.notifications.length > 0">
         <div
           v-for="item in store.notifications"
           :key="item.id"
-          :class="['notification-item', { 'notification-item--unread': !item.isRead }]"
+          :class="[styles['notification-item'], { [styles['notification-item--unread']]: !item.isRead }]"
         >
-          <div class="notification-item-header">
+          <div :class="styles['notification-item-header']">
             <el-tag :type="notificationTypeTag(item.type).theme as any" size="small" effect="light">
               {{ notificationTypeTag(item.type).label }}
             </el-tag>
-            <span class="notification-item-time">{{ formatTime(item.createdAt) }}</span>
+            <span :class="styles['notification-item-time']">{{ formatTime(item.createdAt) }}</span>
           </div>
-          <div class="notification-item-title">{{ item.title }}</div>
-          <div v-if="item.content" class="notification-item-content">{{ item.content }}</div>
-          <div v-if="!item.isRead" class="notification-item-actions">
+          <div :class="styles['notification-item-title']">{{ item.title }}</div>
+          <div v-if="item.content" :class="styles['notification-item-content']">{{ item.content }}</div>
+          <div v-if="!item.isRead" :class="styles['notification-item-actions']">
             <el-button type="primary" link size="small" @click="store.markAsRead(item.id)">
               标为已读
             </el-button>
@@ -99,67 +100,3 @@ onUnmounted(() => {
   </el-popover>
 </template>
 
-<style scoped>
-.notification-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color-lighter);
-  margin-bottom: 8px;
-}
-
-.notification-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color-primary);
-}
-
-.notification-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notification-item {
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.notification-item:hover {
-  background-color: var(--bg-color-secondary);
-}
-
-.notification-item--unread {
-  background-color: var(--color-primary-lighter);
-}
-
-.notification-item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.notification-item-time {
-  font-size: 12px;
-  color: var(--text-color-secondary);
-}
-
-.notification-item-title {
-  font-size: 13px;
-  color: var(--text-color-primary);
-  margin-bottom: 4px;
-}
-
-.notification-item-content {
-  font-size: 12px;
-  color: var(--text-color-secondary);
-  margin-bottom: 4px;
-}
-
-.notification-item-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-</style>

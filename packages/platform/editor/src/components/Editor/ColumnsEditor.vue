@@ -7,6 +7,7 @@
  */
 import type { SearchListColumnSchema, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './ColumnsEditor.module.scss'
 
 const props = defineProps<{
   columns: SearchListColumnSchema[]
@@ -134,19 +135,19 @@ function handleApiParamsChange(idx: number, text: string) {
 </script>
 
 <template>
-  <div class="columns-editor">
-    <div v-if="columns.length === 0" class="columns-editor__empty">
+  <div :class="styles['columns-editor']">
+    <div v-if="columns.length === 0" :class="styles['columns-editor__empty']">
       未配置列。
     </div>
 
     <div
       v-for="(col, idx) in columns"
       :key="idx"
-      class="columns-editor__item"
+      :class="styles['columns-editor__item']"
     >
-      <div class="columns-editor__item-header">
-        <span class="columns-editor__item-title">列 {{ idx + 1 }}</span>
-        <div class="columns-editor__item-actions">
+      <div :class="styles['columns-editor__item-header']">
+        <span :class="styles['columns-editor__item-title']">列 {{ idx + 1 }}</span>
+        <div :class="styles['columns-editor__item-actions']">
           <el-button
             size="small"
             text
@@ -174,8 +175,8 @@ function handleApiParamsChange(idx: number, text: string) {
         </div>
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">字段名</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">字段名</label>
         <el-input
           :model-value="col.prop"
           size="small"
@@ -184,8 +185,8 @@ function handleApiParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">标签</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">标签</label>
         <el-input
           :model-value="col.label"
           size="small"
@@ -194,8 +195,8 @@ function handleApiParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">宽度</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">宽度</label>
         <el-input
           :model-value="col.width ?? ''"
           size="small"
@@ -204,8 +205,8 @@ function handleApiParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">最小宽度</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">最小宽度</label>
         <el-input
           :model-value="col.minWidth ?? ''"
           size="small"
@@ -214,8 +215,8 @@ function handleApiParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">渲染方式</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">渲染方式</label>
         <el-select
           :model-value="col.render ?? 'text'"
           size="small"
@@ -231,8 +232,8 @@ function handleApiParamsChange(idx: number, text: string) {
         </el-select>
       </div>
 
-      <div v-if="needsColorMap(col.render)" class="columns-editor__field">
-        <label class="columns-editor__label">颜色映射 (JSON)</label>
+      <div v-if="needsColorMap(col.render)" :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">颜色映射 (JSON)</label>
         <el-input
           :model-value="colorMapToText(col.colorMap)"
           :rows="2"
@@ -243,9 +244,9 @@ function handleApiParamsChange(idx: number, text: string) {
       </div>
 
       <!-- Column API config (for value-label mapping from remote) -->
-      <div v-if="needsColorMap(col.render)" class="columns-editor__api-section">
-        <div class="columns-editor__field">
-          <label class="columns-editor__label">接口地址 (动态选项)</label>
+      <div v-if="needsColorMap(col.render)" :class="styles['columns-editor__api-section']">
+        <div :class="styles['columns-editor__field']">
+          <label :class="styles['columns-editor__label']">接口地址 (动态选项)</label>
           <el-input
             :model-value="col.api?.url ?? ''"
             size="small"
@@ -255,8 +256,8 @@ function handleApiParamsChange(idx: number, text: string) {
         </div>
 
         <template v-if="col.api?.url">
-          <div class="columns-editor__field">
-            <label class="columns-editor__label">请求方法</label>
+          <div :class="styles['columns-editor__field']">
+            <label :class="styles['columns-editor__label']">请求方法</label>
             <el-select
               :model-value="col.api?.method ?? 'get'"
               size="small"
@@ -268,8 +269,8 @@ function handleApiParamsChange(idx: number, text: string) {
             </el-select>
           </div>
 
-          <div class="columns-editor__field">
-            <label class="columns-editor__label">参数 (JSON)</label>
+          <div :class="styles['columns-editor__field']">
+            <label :class="styles['columns-editor__label']">参数 (JSON)</label>
             <el-input
               :model-value="getApiParamsText(idx)"
               :rows="2"
@@ -279,8 +280,8 @@ function handleApiParamsChange(idx: number, text: string) {
             />
           </div>
 
-          <div class="columns-editor__field">
-            <label class="columns-editor__label">数据路径</label>
+          <div :class="styles['columns-editor__field']">
+            <label :class="styles['columns-editor__label']">数据路径</label>
             <el-input
               :model-value="col.api?.dataPath ?? ''"
               size="small"
@@ -289,9 +290,9 @@ function handleApiParamsChange(idx: number, text: string) {
             />
           </div>
 
-          <div class="columns-editor__field api-config__field--row">
+          <div :class="[styles['columns-editor__field'], styles['api-config__field--row']]">
             <div style="flex: 1">
-              <label class="columns-editor__label">标签字段</label>
+              <label :class="styles['columns-editor__label']">标签字段</label>
               <el-input
                 :model-value="col.api?.labelKey ?? 'label'"
                 size="small"
@@ -300,7 +301,7 @@ function handleApiParamsChange(idx: number, text: string) {
               />
             </div>
             <div style="flex: 1">
-              <label class="columns-editor__label">值字段</label>
+              <label :class="styles['columns-editor__label']">值字段</label>
               <el-input
                 :model-value="col.api?.valueKey ?? 'value'"
                 size="small"
@@ -317,36 +318,36 @@ function handleApiParamsChange(idx: number, text: string) {
       </div>
 
       <!-- Render-specific fields -->
-      <div v-if="col.render === 'tooltip'" class="columns-editor__field">
-        <label class="columns-editor__label">提示字段</label>
+      <div v-if="col.render === 'tooltip'" :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">提示字段</label>
         <el-input :model-value="col.tooltipField ?? ''" size="small" placeholder="提示内容的字段名" @update:model-value="(v: string) => updateColumn(idx, 'tooltipField', v || undefined)" />
       </div>
 
-      <div v-if="col.render === 'link'" class="columns-editor__field">
-        <label class="columns-editor__label">链接事件</label>
+      <div v-if="col.render === 'link'" :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">链接事件</label>
         <el-input :model-value="col.linkEvent ?? ''" size="small" placeholder="事件名 例如: view" @update:model-value="(v: string) => updateColumn(idx, 'linkEvent', v || undefined)" />
       </div>
 
-      <div v-if="col.render === 'image'" class="columns-editor__field">
-        <label class="columns-editor__label">图片宽度 (px)</label>
+      <div v-if="col.render === 'image'" :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">图片宽度 (px)</label>
         <el-input-number :model-value="col.imageWidth ?? 40" :min="20" :max="400" size="small" style="width:100%" @update:model-value="(v: number) => updateColumn(idx, 'imageWidth', v)" />
       </div>
 
-      <div v-if="col.render === 'custom'" class="columns-editor__field">
-        <label class="columns-editor__label">渲染函数名</label>
+      <div v-if="col.render === 'custom'" :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">渲染函数名</label>
         <el-input :model-value="col.renderFn ?? ''" size="small" placeholder="自定义渲染函数名" @update:model-value="(v: string) => updateColumn(idx, 'renderFn', v || undefined)" />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">可排序</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">可排序</label>
         <el-switch
           :model-value="col.sortable ?? false"
           @update:model-value="(v: boolean) => updateColumn(idx, 'sortable', v)"
         />
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">固定列</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">固定列</label>
         <el-select
           :model-value="col.fixed"
           size="small"
@@ -362,8 +363,8 @@ function handleApiParamsChange(idx: number, text: string) {
         </el-select>
       </div>
 
-      <div class="columns-editor__field">
-        <label class="columns-editor__label">对齐方式</label>
+      <div :class="styles['columns-editor__field']">
+        <label :class="styles['columns-editor__label']">对齐方式</label>
         <el-select
           :model-value="col.align ?? 'left'"
           size="small"
@@ -393,69 +394,3 @@ function handleApiParamsChange(idx: number, text: string) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.columns-editor {
-  &__empty {
-    text-align: center;
-    color: #909399;
-    font-size: 12px;
-    padding: 12px 0;
-  }
-
-  &__item {
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  &__item-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__item-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  &__field {
-    margin-bottom: 8px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 3px;
-  }
-
-  &__api-section {
-    margin-top: 4px;
-    padding: 8px;
-    border: 1px dashed #dcdfe6;
-    border-radius: 4px;
-    background: #fff;
-  }
-}
-
-.api-config__field--row {
-  display: flex;
-  gap: 8px;
-}
-</style>

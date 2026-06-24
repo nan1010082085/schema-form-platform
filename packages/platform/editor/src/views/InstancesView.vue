@@ -18,6 +18,7 @@ import FilterTabs from '@schema-form/platform-shared/components/common/FilterTab
 import type { SchemaListItem, SchemaDetail } from '@/types/api'
 import type { PartialWidget } from '@/widgets/base/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './InstancesView.module.scss'
 
 const router = useRouter()
 const store = useApiStore()
@@ -381,16 +382,16 @@ function handleVersionPublished() {
 </script>
 
 <template>
-  <div class="fg-instances">
-    <div class="fg-instances__scrollbar">
+  <div :class="styles['fg-instances']">
+    <div :class="styles['fg-instances__scrollbar']">
       <!-- Header -->
-      <div class="fg-instances__header">
-        <div class="fg-instances__title-row">
+      <div :class="styles['fg-instances__header']">
+        <div :class="styles['fg-instances__title-row']">
           <div>
             <h1>实例管理</h1>
-            <p class="fg-instances__subtitle">管理所有 Schema 实例</p>
+            <p :class="styles['fg-instances__subtitle']">管理所有 Schema 实例</p>
           </div>
-          <div class="fg-instances__header-actions">
+          <div :class="styles['fg-instances__header-actions']">
             <el-button @click="openImportDialog">
               <AppIcon name="upload" class="el-icon--left" />导入
             </el-button>
@@ -401,10 +402,10 @@ function handleVersionPublished() {
         </div>
 
         <!-- Filter bar -->
-        <div class="fg-instances__toolbar">
+        <div :class="styles['fg-instances__toolbar']">
           <FilterTabs v-model="activeTab" :options="filterTabs" />
-          <div class="fg-instances__toolbar-right">
-            <el-input v-model="searchInput" placeholder="搜索名称..." clearable class="fg-instances__search" :prefix-icon="Search" @input="handleSearch" @clear="handleSearch('')" />
+          <div :class="styles['fg-instances__toolbar-right']">
+            <el-input v-model="searchInput" placeholder="搜索名称..." clearable :class="styles['fg-instances__search']" :prefix-icon="Search" @input="handleSearch" @clear="handleSearch('')" />
             <el-dropdown @command="(cmd: string) => sortBy = cmd as any">
               <el-button size="small">
                 <AppIcon name="sort" class="el-icon--left" />
@@ -431,18 +432,18 @@ function handleVersionPublished() {
       </div>
 
       <!-- Loading -->
-      <div v-if="store.loading && !store.hasSchemas" class="fg-instances__content">
-        <div class="fg-instances__skeleton">
-          <div v-for="i in 6" :key="i" class="fg-instances__skeleton-card">
-            <div class="fg-instances__skeleton-preview" />
-            <div class="fg-instances__skeleton-title" />
-            <div class="fg-instances__skeleton-text" />
+      <div v-if="store.loading && !store.hasSchemas" :class="styles['fg-instances__content']">
+        <div :class="styles['fg-instances__skeleton']">
+          <div v-for="i in 6" :key="i" :class="styles['fg-instances__skeleton-card']">
+            <div :class="styles['fg-instances__skeleton-preview']" />
+            <div :class="styles['fg-instances__skeleton-title']" />
+            <div :class="styles['fg-instances__skeleton-text']" />
           </div>
         </div>
       </div>
 
       <!-- Error -->
-      <div v-else-if="store.hasError && !store.hasSchemas" class="fg-instances__content">
+      <div v-else-if="store.hasError && !store.hasSchemas" :class="styles['fg-instances__content']">
         <el-alert :title="store.error ?? ''" type="error" show-icon :closable="false">
           <template #default>
             <el-button size="small" @click="store.fetchSchemas()">重试</el-button>
@@ -451,13 +452,13 @@ function handleVersionPublished() {
       </div>
 
       <!-- Empty (global) -->
-      <div v-else-if="store.isEmpty" class="fg-instances__state--empty">
-        <div class="fg-instances__empty-icon">
+      <div v-else-if="store.isEmpty" :class="styles['fg-instances__state--empty']">
+        <div :class="styles['fg-instances__empty-icon']">
           <AppIcon name="document" :size="64" />
         </div>
-        <h2 class="fg-instances__empty-title">还没有 Schema 实例</h2>
-        <p class="fg-instances__empty-desc">创建您的第一个 Schema 实例来开始使用</p>
-        <div class="fg-instances__empty-actions">
+        <h2 :class="styles['fg-instances__empty-title']">还没有 Schema 实例</h2>
+        <p :class="styles['fg-instances__empty-desc']">创建您的第一个 Schema 实例来开始使用</p>
+        <div :class="styles['fg-instances__empty-actions']">
           <el-button type="primary" size="large" @click="openCreateDialog">
             <AppIcon name="plus" class="el-icon--left" />创建实例
           </el-button>
@@ -465,39 +466,39 @@ function handleVersionPublished() {
       </div>
 
       <!-- No search results -->
-      <div v-else-if="isFiltered && sortedSchemas.length === 0 && !store.loading" class="fg-instances__state--no-results">
+      <div v-else-if="isFiltered && sortedSchemas.length === 0 && !store.loading" :class="styles['fg-instances__state--no-results']">
         <p>未找到匹配的实例</p>
         <el-button @click="activeTab = 'all'; searchInput = ''; store.fetchSchemas()">清除筛选</el-button>
       </div>
 
       <!-- Card Grid -->
-      <div v-else class="fg-instances__content">
-        <div class="fg-instances__cards">
-          <div v-for="item in sortedSchemas" :key="item.id" class="fg-instances-card">
+      <div v-else :class="styles['fg-instances__content']">
+        <div :class="styles['fg-instances__cards']">
+          <div v-for="item in sortedSchemas" :key="item.id" :class="styles['fg-instances-card']">
             <!-- Bulk select checkbox -->
-            <div v-if="bulkMode" class="fg-instances-card__check">
+            <div v-if="bulkMode" :class="styles['fg-instances-card__check']">
               <el-checkbox :model-value="selectedIds.has(item.id)" @change="toggleSelect(item.id)" />
             </div>
-            <div class="fg-instances-card__preview" @click="handleDesigner(item.id)">
-              <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" class="fg-instances-card__thumbnail" />
-              <div v-else class="fg-instances-card__thumbnail-placeholder">
+            <div :class="styles['fg-instances-card__preview']" @click="handleDesigner(item.id)">
+              <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" :class="styles['fg-instances-card__thumbnail']" />
+              <div v-else :class="styles['fg-instances-card__thumbnail-placeholder']">
                 <AppIcon name="document" :size="32" />
               </div>
             </div>
-            <div class="fg-instances-card__body">
-              <h3 class="fg-instances-card__name">{{ item.name }}</h3>
-              <div class="fg-instances-card__meta">
+            <div :class="styles['fg-instances-card__body']">
+              <h3 :class="styles['fg-instances-card__name']">{{ item.name }}</h3>
+              <div :class="styles['fg-instances-card__meta']">
                 <el-tag size="small" :type="typeTagType(item.type)">{{ typeLabel(item.type) }}</el-tag>
                 <el-tag v-if="item.publishId" size="small" type="success">已发布</el-tag>
-                <span v-if="item.version" class="fg-instances-card__version">v{{ item.version }}</span>
+                <span v-if="item.version" :class="styles['fg-instances-card__version']">v{{ item.version }}</span>
                 <!-- Component count -->
-                <span v-if="getJsonLength(item.json)" class="fg-instances-card__count">
+                <span v-if="getJsonLength(item.json)" :class="styles['fg-instances-card__count']">
                   {{ getJsonLength(item.json) }} 个组件
                 </span>
-                <span class="fg-instances-card__date">{{ formatDate(item.updatedAt) }}</span>
+                <span :class="styles['fg-instances-card__date']">{{ formatDate(item.updatedAt) }}</span>
               </div>
             </div>
-            <div class="fg-instances-card__actions">
+            <div :class="styles['fg-instances-card__actions']">
               <el-tooltip content="编辑表单" placement="top" :show-after="300">
                 <el-button size="small" text type="primary" @click="handleEdit(item.id)"><AppIcon name="edit" /></el-button>
               </el-tooltip>
@@ -524,7 +525,7 @@ function handleVersionPublished() {
         </div>
 
         <!-- Pagination -->
-        <div v-if="store.pagination.total > 0" class="fg-instances__pagination">
+        <div v-if="store.pagination.total > 0" :class="styles['fg-instances__pagination']">
           <el-pagination
             v-model:current-page="store.pagination.page"
             :page-size="store.pagination.pageSize"
@@ -598,273 +599,3 @@ function handleVersionPublished() {
     </AppDialog>
   </div>
 </template>
-
-<style scoped lang="scss">
-.fg-instances {
-  height: 100%;
-  background: var(--el-bg-color-page);
-
-  &__scrollbar {
-    height: 100%;
-    overflow: auto;
-  }
-
-  // ---- Header ----
-  &__header {
-    padding: 28px 24px 0;
-  }
-
-  &__title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
-
-    h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; color: var(--el-text-color-primary); }
-  }
-
-  &__subtitle {
-    margin: 0;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-
-  &__header-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  // ---- Toolbar (tabs + search + sort) ----
-  &__toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-    flex-wrap: wrap;
-  }
-
-  &__toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  &__search {
-    width: 200px;
-    :deep(.el-input__wrapper) { height: 32px; }
-  }
-
-  // ---- Loading skeleton ----
-  &__skeleton {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 300px));
-    gap: 12px;
-  }
-
-  &__skeleton-card {
-    background: #fff;
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 10px;
-    padding: 12px 16px;
-  }
-
-  &__skeleton-preview {
-    height: 140px;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 6px;
-    margin-bottom: 10px;
-  }
-
-  &__skeleton-title {
-    height: 16px;
-    width: 60%;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-    margin-bottom: 8px;
-  }
-
-  &__skeleton-text {
-    height: 12px;
-    width: 40%;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-  }
-
-  // ---- Content area ----
-  &__content {
-    padding: 20px 24px 0;
-  }
-
-  // ---- States ----
-  &__state--empty {
-    padding: 100px 24px 0;
-    text-align: center;
-  }
-
-  &__empty-icon {
-    color: var(--el-border-color);
-    margin-bottom: 20px;
-  }
-
-  &__empty-title {
-    font-size: 18px;
-    color: var(--el-text-color-primary);
-    margin: 0 0 8px;
-  }
-
-  &__empty-desc {
-    font-size: 14px;
-    color: var(--el-text-color-secondary);
-    margin: 0 0 24px;
-  }
-
-  &__empty-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-
-  &__state--no-results {
-    padding: 60px 24px 0;
-    text-align: center;
-    color: var(--el-text-color-secondary);
-    font-size: 15px;
-
-    p { margin: 0 0 16px; }
-  }
-
-  // ---- Cards ----
-  &__cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 300px));
-    gap: 12px;
-    contain: layout style;
-  }
-
-  &__pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 28px;
-    padding-bottom: 32px;
-  }
-}
-
-// ---- Card ----
-.fg-instances-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: #fff;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 10px;
-  padding: 12px 16px;
-  position: relative;
-  contain: layout style paint;
-
-  animation: cardFadeIn 0.35s ease backwards;
-  @for $i from 1 through 30 {
-    &:nth-child(#{$i}) { animation-delay: #{$i * 0.04}s; }
-  }
-
-  &__check {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 2;
-  }
-
-  &__preview {
-    margin: -12px -16px 10px;
-    border-radius: 10px 10px 0 0;
-    overflow: hidden;
-    background: var(--el-bg-color-page);
-    aspect-ratio: 16 / 9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  &__thumbnail {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  &__thumbnail-placeholder {
-    color: var(--el-border-color);
-  }
-
-  &__body { margin-bottom: 8px; }
-
-  &__name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-    margin: 0 0 6px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  &__count {
-    font-size: 11px;
-    color: var(--el-text-color-placeholder);
-    margin-left: auto;
-  }
-
-  &__date {
-    font-size: 12px;
-    color: var(--el-text-color-placeholder);
-    margin-left: auto;
-  }
-
-  &__version {
-    font-size: 11px;
-    color: var(--el-text-color-secondary);
-    font-family: monospace;
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 2px;
-    padding-top: 12px;
-    border-top: 1px solid var(--el-border-color-lighter);
-    flex-wrap: wrap;
-    overflow: visible;
-
-    .el-button {
-      padding: 4px 6px;
-      font-size: 12px;
-    }
-  }
-}
-
-@keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-</style>

@@ -24,7 +24,6 @@
     "@iconify/vue": "^5.0.1",
     "@schema-form/flow-shared": "workspace:*",
     "@schema-form/platform-shared": "workspace:*",
-    "@schema-form/socket": "workspace:*",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",

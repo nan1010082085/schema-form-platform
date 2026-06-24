@@ -11,6 +11,7 @@ import type { SchemaEventAction } from '@/widgets/base/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import ActionListEditor from '@/components/Editor/ActionListEditor.vue'
 import type { ActionTypeOption } from '@/components/Editor/ActionListEditor.vue'
+import styles from './ActionButtonsEditor.module.scss'
 
 const props = defineProps<{
   buttons: ActionButton[]
@@ -93,51 +94,51 @@ function toggleEvents(index: number) {
 </script>
 
 <template>
-  <div class="action-buttons-editor">
-    <div v-if="buttons.length === 0" class="action-buttons-editor__empty">
+  <div :class="styles['action-buttons-editor']">
+    <div v-if="buttons.length === 0" :class="styles['action-buttons-editor__empty']">
       暂无按钮，点击下方添加。
     </div>
 
     <div
       v-for="(btn, idx) in buttons"
       :key="idx"
-      class="action-buttons-editor__item"
+      :class="styles['action-buttons-editor__item']"
     >
       <!-- Header -->
-      <div class="action-buttons-editor__item-header">
-        <span class="action-buttons-editor__item-title">{{ btn.label || btn.key }}</span>
+      <div :class="styles['action-buttons-editor__item-header']">
+        <span :class="styles['action-buttons-editor__item-title']">{{ btn.label || btn.key }}</span>
         <el-button type="danger" size="small" text @click="removeButton(idx)">
           <AppIcon name="delete" />
         </el-button>
       </div>
 
       <!-- Basic fields -->
-      <div class="action-buttons-editor__row">
-        <div class="action-buttons-editor__field">
-          <label class="action-buttons-editor__label">key</label>
+      <div :class="styles['action-buttons-editor__row']">
+        <div :class="styles['action-buttons-editor__field']">
+          <label :class="styles['action-buttons-editor__label']">key</label>
           <el-input :model-value="btn.key" size="small" @update:model-value="(v: string) => updateButton(idx, 'key', v)" />
         </div>
-        <div class="action-buttons-editor__field">
-          <label class="action-buttons-editor__label">文字</label>
+        <div :class="styles['action-buttons-editor__field']">
+          <label :class="styles['action-buttons-editor__label']">文字</label>
           <el-input :model-value="btn.label" size="small" @update:model-value="(v: string) => updateButton(idx, 'label', v)" />
         </div>
       </div>
 
-      <div class="action-buttons-editor__row">
-        <div class="action-buttons-editor__field">
-          <label class="action-buttons-editor__label">类型</label>
+      <div :class="styles['action-buttons-editor__row']">
+        <div :class="styles['action-buttons-editor__field']">
+          <label :class="styles['action-buttons-editor__label']">类型</label>
           <el-select :model-value="btn.type || ''" size="small" style="width:100%" @update:model-value="(v: string) => updateButton(idx, 'type', v)">
             <el-option v-for="opt in buttonTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </div>
-        <div class="action-buttons-editor__field">
-          <label class="action-buttons-editor__label">图标</label>
+        <div :class="styles['action-buttons-editor__field']">
+          <label :class="styles['action-buttons-editor__label']">图标</label>
           <el-input :model-value="btn.icon ?? ''" size="small" placeholder="图标名" @update:model-value="(v: string) => updateButton(idx, 'icon', v || undefined)" />
         </div>
       </div>
 
-      <div class="action-buttons-editor__field">
-        <label class="action-buttons-editor__label">显示条件</label>
+      <div :class="styles['action-buttons-editor__field']">
+        <label :class="styles['action-buttons-editor__label']">显示条件</label>
         <el-input
           :model-value="btn.visibleCondition ?? ''"
           size="small"
@@ -146,8 +147,8 @@ function toggleEvents(index: number) {
         />
       </div>
 
-      <div class="action-buttons-editor__field">
-        <label class="action-buttons-editor__label">确认提示</label>
+      <div :class="styles['action-buttons-editor__field']">
+        <label :class="styles['action-buttons-editor__label']">确认提示</label>
         <el-input
           :model-value="btn.confirm ?? ''"
           size="small"
@@ -157,14 +158,14 @@ function toggleEvents(index: number) {
       </div>
 
       <!-- Events toggle -->
-      <div class="action-buttons-editor__events-toggle" @click="toggleEvents(idx)">
+      <div :class="styles['action-buttons-editor__events-toggle']" @click="toggleEvents(idx)">
         <AppIcon :name="expandedEvents === idx ? 'arrow-down' : 'arrow-right'" />
         <span>事件配置 ({{ btn.events?.length || 0 }} 个事件)</span>
       </div>
 
       <!-- Events editor -->
-      <div v-if="expandedEvents === idx" class="action-buttons-editor__events">
-        <div v-if="!btn.events?.length" class="action-buttons-editor__events-hint">
+      <div v-if="expandedEvents === idx" :class="styles['action-buttons-editor__events']">
+        <div v-if="!btn.events?.length" :class="styles['action-buttons-editor__events-hint']">
           暂无事件。点击下方添加动作，支持 API 调用、设置变量、路由跳转等 18 种动作。
         </div>
         <ActionListEditor
@@ -181,79 +182,3 @@ function toggleEvents(index: number) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.action-buttons-editor {
-  &__empty {
-    text-align: center;
-    color: #909399;
-    font-size: 12px;
-    padding: 12px 0;
-  }
-
-  &__item {
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  &__item-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__row {
-    display: flex;
-    gap: 8px;
-    > * { flex: 1; }
-  }
-
-  &__field {
-    margin-bottom: 8px;
-    &:last-child { margin-bottom: 0; }
-  }
-
-  &__label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 3px;
-  }
-
-  &__events-toggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: #409eff;
-    cursor: pointer;
-    margin-top: 4px;
-    user-select: none;
-  }
-
-  &__events {
-    margin-top: 6px;
-    padding: 6px;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
-    background: #fff;
-  }
-
-  &__events-hint {
-    text-align: center;
-    color: #c0c4cc;
-    font-size: 11px;
-    padding: 8px 0;
-  }
-}
-</style>

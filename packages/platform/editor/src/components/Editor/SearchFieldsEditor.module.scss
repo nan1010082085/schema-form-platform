@@ -1,0 +1,64 @@
+.search-fields-editor {
+  &__empty {
+    text-align: center;
+    color: #909399;
+    font-size: 12px;
+    padding: 12px 0;
+  }
+
+  &__item {
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fafafa;
+  }
+
+  &__item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  &__item-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  &__item-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__field {
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: #606266;
+    margin-bottom: 3px;
+  }
+
+  &__api-section {
+    margin-top: 4px;
+    padding: 8px;
+    border: 1px dashed #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+  }
+}
+
+.api-config__field--row {
+  display: flex;
+  gap: 8px;
+}

@@ -8,6 +8,7 @@
  */
 import type { SearchFieldSchema, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import styles from './SearchFieldsEditor.module.scss'
 
 const props = defineProps<{
   searchFields: SearchFieldSchema[]
@@ -124,19 +125,19 @@ function handleParamsChange(idx: number, text: string) {
 </script>
 
 <template>
-  <div class="search-fields-editor">
-    <div v-if="searchFields.length === 0" class="search-fields-editor__empty">
+  <div :class="styles['search-fields-editor']">
+    <div v-if="searchFields.length === 0" :class="styles['search-fields-editor__empty']">
       未配置搜索字段。
     </div>
 
     <div
       v-for="(field, idx) in searchFields"
       :key="idx"
-      class="search-fields-editor__item"
+      :class="styles['search-fields-editor__item']"
     >
-      <div class="search-fields-editor__item-header">
-        <span class="search-fields-editor__item-title">字段 {{ idx + 1 }}</span>
-        <div class="search-fields-editor__item-actions">
+      <div :class="styles['search-fields-editor__item-header']">
+        <span :class="styles['search-fields-editor__item-title']">字段 {{ idx + 1 }}</span>
+        <div :class="styles['search-fields-editor__item-actions']">
           <el-button
             size="small"
             :icon="ArrowUp"
@@ -161,8 +162,8 @@ function handleParamsChange(idx: number, text: string) {
         </div>
       </div>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">类型</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">类型</label>
         <el-select
           :model-value="field.type"
           size="small"
@@ -178,8 +179,8 @@ function handleParamsChange(idx: number, text: string) {
         </el-select>
       </div>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">字段</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">字段</label>
         <el-input
           :model-value="field.field"
           size="small"
@@ -188,8 +189,8 @@ function handleParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">标签</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">标签</label>
         <el-input
           :model-value="field.label"
           size="small"
@@ -198,8 +199,8 @@ function handleParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">栅格 (1-24)</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">栅格 (1-24)</label>
         <el-input-number
           :model-value="field.span ?? 8"
           :min="1"
@@ -211,8 +212,8 @@ function handleParamsChange(idx: number, text: string) {
         />
       </div>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">占位符</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">占位符</label>
         <el-input
           :model-value="field.placeholder ?? ''"
           size="small"
@@ -222,8 +223,8 @@ function handleParamsChange(idx: number, text: string) {
       </div>
 
       <template v-if="needsOptions(field.type)">
-        <div class="search-fields-editor__field">
-          <label class="search-fields-editor__label">选项 (label=value, 每行一个)</label>
+        <div :class="styles['search-fields-editor__field']">
+          <label :class="styles['search-fields-editor__label']">选项 (label=value, 每行一个)</label>
           <el-input
             type="textarea"
             :model-value="optionsToText(field.options)"
@@ -233,9 +234,9 @@ function handleParamsChange(idx: number, text: string) {
           />
         </div>
 
-        <div class="search-fields-editor__api-section">
-          <div class="search-fields-editor__field">
-            <label class="search-fields-editor__label">接口地址</label>
+        <div :class="styles['search-fields-editor__api-section']">
+          <div :class="styles['search-fields-editor__field']">
+            <label :class="styles['search-fields-editor__label']">接口地址</label>
             <el-input
               :model-value="field.api?.url ?? ''"
               size="small"
@@ -245,8 +246,8 @@ function handleParamsChange(idx: number, text: string) {
           </div>
 
           <template v-if="field.api?.url">
-            <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">请求方法</label>
+            <div :class="styles['search-fields-editor__field']">
+              <label :class="styles['search-fields-editor__label']">请求方法</label>
               <el-select
                 :model-value="field.api?.method ?? 'get'"
                 size="small"
@@ -258,8 +259,8 @@ function handleParamsChange(idx: number, text: string) {
               </el-select>
             </div>
 
-            <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">参数 (JSON)</label>
+            <div :class="styles['search-fields-editor__field']">
+              <label :class="styles['search-fields-editor__label']">参数 (JSON)</label>
               <el-input
                 type="textarea"
                 :model-value="getParamsText(idx, field)"
@@ -269,8 +270,8 @@ function handleParamsChange(idx: number, text: string) {
               />
             </div>
 
-            <div class="search-fields-editor__field">
-              <label class="search-fields-editor__label">数据路径 (点号分隔)</label>
+            <div :class="styles['search-fields-editor__field']">
+              <label :class="styles['search-fields-editor__label']">数据路径 (点号分隔)</label>
               <el-input
                 :model-value="field.api?.dataPath ?? ''"
                 size="small"
@@ -279,9 +280,9 @@ function handleParamsChange(idx: number, text: string) {
               />
             </div>
 
-            <div class="search-fields-editor__field api-config__field--row">
+            <div :class="[styles['search-fields-editor__field'], styles['api-config__field--row']]">
               <div style="flex: 1">
-                <label class="search-fields-editor__label">标签字段</label>
+                <label :class="styles['search-fields-editor__label']">标签字段</label>
                 <el-input
                   :model-value="field.api?.labelKey ?? 'label'"
                   size="small"
@@ -290,7 +291,7 @@ function handleParamsChange(idx: number, text: string) {
                 />
               </div>
               <div style="flex: 1">
-                <label class="search-fields-editor__label">值字段</label>
+                <label :class="styles['search-fields-editor__label']">值字段</label>
                 <el-input
                   :model-value="field.api?.valueKey ?? 'value'"
                   size="small"
@@ -307,8 +308,8 @@ function handleParamsChange(idx: number, text: string) {
         </div>
       </template>
 
-      <div class="search-fields-editor__field">
-        <label class="search-fields-editor__label">默认值</label>
+      <div :class="styles['search-fields-editor__field']">
+        <label :class="styles['search-fields-editor__label']">默认值</label>
         <el-input
           :model-value="String(field.defaultValue ?? '')"
           size="small"
@@ -330,69 +331,3 @@ function handleParamsChange(idx: number, text: string) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.search-fields-editor {
-  &__empty {
-    text-align: center;
-    color: #909399;
-    font-size: 12px;
-    padding: 12px 0;
-  }
-
-  &__item {
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #fafafa;
-  }
-
-  &__item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  &__item-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  &__item-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  &__field {
-    margin-bottom: 8px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: #606266;
-    margin-bottom: 3px;
-  }
-
-  &__api-section {
-    margin-top: 4px;
-    padding: 8px;
-    border: 1px dashed #dcdfe6;
-    border-radius: 4px;
-    background: #fff;
-  }
-}
-
-.api-config__field--row {
-  display: flex;
-  gap: 8px;
-}
-</style>

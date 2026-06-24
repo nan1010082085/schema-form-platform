@@ -1,0 +1,52 @@
+.version-history {
+  &__loading,
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 0;
+    color: #999;
+    font-size: 14px;
+  }
+
+  &__spinning {
+    animation: version-history-spin 1s linear infinite;
+  }
+
+  &__status-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  &__current {
+    font-weight: 600;
+    color: #409eff;
+  }
+
+  &__published {
+    font-weight: 600;
+    color: #67c23a;
+  }
+
+  &__pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  :global(.version-history__row-published) {
+    background-color: #f0f9eb !important;
+
+    &:hover > td {
+      background-color: #f0f9eb !important;
+    }
+  }
+
+  @keyframes version-history-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+}

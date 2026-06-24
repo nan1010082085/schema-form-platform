@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import './FgCascader.module.scss'
 import { useWidgetRenderState } from '../../composables/useWidgetRenderState'
 import { useExposeWidget } from '../../composables/useExposeWidget'
 
@@ -48,8 +49,3 @@ function forwardNativeChange() {
   />
 </template>
 
-<style scoped>
-:deep(.el-cascader) {
-  width: 100%;
-}
-</style>

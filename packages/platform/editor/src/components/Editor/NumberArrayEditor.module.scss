@@ -1,0 +1,21 @@
+.number-array-editor {
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  &__item-label {
+    font-size: 11px;
+    color: #606266;
+    white-space: nowrap;
+    min-width: 36px;
+  }
+
+  &__item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+}

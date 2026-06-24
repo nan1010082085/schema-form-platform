@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, type CSSProperties } from 'vue'
 import { widgetDataKey, widgetStyleKey } from '../base/types'
+import styles from './FgTitle.module.scss'
 
 const widgetData = inject(widgetDataKey)!
 const widgetStyle = inject(widgetStyleKey)!
@@ -24,17 +25,8 @@ const content = computed(() => {
 </script>
 
 <template>
-  <component :is="tag" :style="dynamicStyle">
+  <component :is="tag" :class="styles.title" :style="dynamicStyle">
     {{ content }}
   </component>
 </template>
 
-<style scoped>
-h1, h2, h3, h4 {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  margin: 0;
-}
-</style>

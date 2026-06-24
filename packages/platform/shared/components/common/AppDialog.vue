@@ -13,17 +13,17 @@
     @close="handleClose"
   >
     <template #header>
-      <div class="app-dialog__header">
-        <span class="app-dialog__title">{{ title }}</span>
-        <div class="app-dialog__header-right">
+      <div :class="styles['app-dialog__header']">
+        <span :class="styles['app-dialog__title']">{{ title }}</span>
+        <div :class="styles['app-dialog__header-right']">
           <el-button
-            class="app-dialog__fullscreen-btn"
+            :class="styles['app-dialog__fullscreen-btn']"
             :icon="isFullscreen ? ScaleToOriginal : FullScreen"
             text
             @click="toggleFullscreen"
           />
           <el-button
-            class="app-dialog__close-btn"
+            :class="styles['app-dialog__close-btn']"
             :icon="Close"
             text
             @click="emit('update:modelValue', false)"
@@ -33,7 +33,7 @@
     </template>
     <slot />
     <template #footer>
-      <div class="app-dialog__footer">
+      <div :class="styles['app-dialog__footer']">
         <slot name="footer">
           <el-button @click="handleCancel">取消</el-button>
           <el-button type="primary" :loading="loading" @click="handleConfirm">确定</el-button>
@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { FullScreen, ScaleToOriginal, Close } from '@element-plus/icons-vue'
+import styles from './AppDialog.module.scss'
 
 withDefaults(defineProps<{
   modelValue: boolean
@@ -90,48 +91,3 @@ function handleClose() {
 }
 </script>
 
-<style scoped>
-.app-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 16px;
-}
-
-.app-dialog__title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-dialog__header-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.app-dialog__fullscreen-btn,
-.app-dialog__close-btn {
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  color: #fff !important;
-}
-
-.app-dialog__fullscreen-btn:hover,
-.app-dialog__close-btn:hover {
-  background: transparent !important;
-  color: #fff !important;
-}
-
-.app-dialog__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 20px;
-}
-</style>

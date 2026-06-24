@@ -13,6 +13,7 @@ import {
   type FieldInference,
 } from '@/utils/jsonToSchema'
 import type { PartialWidget, SchemaType } from '@/components/WidgetRenderer/types'
+import styles from './JsonImporter.module.scss'
 
 const emit = defineEmits<{
   'import': [schema: PartialWidget[]]
@@ -152,19 +153,17 @@ defineExpose({ open })
     @close="visible = false"
   >
     <!-- Step 1: Paste JSON or Fetch from URL -->
-    <div v-if="step === 'input'" class="json-importer__input">
+    <div v-if="step === 'input'" :class="styles['json-importer__input']">
       <!-- Input mode tabs -->
-      <div class="json-importer__mode-tabs">
+      <div :class="styles['json-importer__mode-tabs']">
         <button
-          class="json-importer__mode-tab"
-          :class="{ 'json-importer__mode-tab--active': inputMode === 'paste' }"
+          :class="[styles['json-importer__mode-tab'], { [styles['json-importer__mode-tab--active']]: inputMode === 'paste' }]"
           @click="inputMode = 'paste'"
         >
           粘贴 JSON
         </button>
         <button
-          class="json-importer__mode-tab"
-          :class="{ 'json-importer__mode-tab--active': inputMode === 'url' }"
+          :class="[styles['json-importer__mode-tab'], { [styles['json-importer__mode-tab--active']]: inputMode === 'url' }]"
           @click="inputMode = 'url'"
         >
           从 URL 获取
@@ -185,13 +184,13 @@ defineExpose({ open })
   "created_at": "2024-01-15T10:30:00"
 }'
         />
-        <div v-if="parseError" class="json-importer__error">{{ parseError }}</div>
+        <div v-if="parseError" :class="styles['json-importer__error']">{{ parseError }}</div>
       </template>
 
       <!-- URL fetch mode -->
       <template v-else>
-        <div class="json-importer__url-section">
-          <div class="json-importer__url-row">
+        <div :class="styles['json-importer__url-section']">
+          <div :class="styles['json-importer__url-row']">
             <el-input
               v-model="fetchUrl"
               size="small"
@@ -207,9 +206,9 @@ defineExpose({ open })
               获取
             </el-button>
           </div>
-          <div v-if="fetchError" class="json-importer__error">{{ fetchError }}</div>
-          <div v-if="jsonText" class="json-importer__fetched-preview">
-            <label class="json-importer__label">获取的响应:</label>
+          <div v-if="fetchError" :class="styles['json-importer__error']">{{ fetchError }}</div>
+          <div v-if="jsonText" :class="styles['json-importer__fetched-preview']">
+            <label :class="styles['json-importer__label']">获取的响应:</label>
             <el-input
               :model-value="jsonText"
               type="textarea"
@@ -222,8 +221,8 @@ defineExpose({ open })
     </div>
 
     <!-- Step 2: Preview & Override -->
-    <div v-else class="json-importer__preview">
-      <p class="json-importer__summary">
+    <div v-else :class="styles['json-importer__preview']">
+      <p :class="styles['json-importer__summary']">
         {{ inferences.length }} 个字段被检测到。如需要可覆盖推断的类型。
       </p>
       <el-table :data="inferences" border size="small" max-height="400">
@@ -248,7 +247,7 @@ defineExpose({ open })
         </el-table-column>
         <el-table-column label="示例值" min-width="160">
           <template #default="{ row }">
-            <span class="json-importer__sample">
+            <span :class="styles['json-importer__sample']">
               {{ typeof row.sample === 'object' ? JSON.stringify(row.sample) : String(row.sample ?? '') }}
             </span>
           </template>
@@ -268,75 +267,3 @@ defineExpose({ open })
     </template>
   </el-dialog>
 </template>
-
-<style scoped lang="scss">
-.json-importer {
-  &__mode-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 12px;
-    border-bottom: 2px solid #e4e7ed;
-  }
-
-  &__mode-tab {
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #909399;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      color: var(--el-color-primary);
-    }
-
-    &--active {
-      color: var(--el-color-primary);
-      border-bottom-color: var(--el-color-primary);
-    }
-  }
-
-  &__error {
-    color: #f56c6c;
-    font-size: 13px;
-    margin-top: 8px;
-  }
-
-  &__url-section {
-    padding: 4px 0;
-  }
-
-  &__url-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  &__fetched-preview {
-    margin-top: 12px;
-  }
-
-  &__label {
-    display: block;
-    font-size: 12px;
-    color: #606266;
-    margin-bottom: 4px;
-  }
-
-  &__summary {
-    font-size: 13px;
-    color: #606266;
-    margin-bottom: 12px;
-  }
-
-  &__sample {
-    font-size: 12px;
-    color: #909399;
-    word-break: break-all;
-  }
-}
-</style>
