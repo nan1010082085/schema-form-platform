@@ -9,6 +9,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { pinyin } from 'pinyin-pro'
+import { Search } from '@element-plus/icons-vue'
 import { getWidgetsByGroup, type WidgetRegistryItem } from '@/widgets/registry'
 import type { SchemaType } from '@/widgets/base/types'
 import styles from './ComponentPanel.module.scss'

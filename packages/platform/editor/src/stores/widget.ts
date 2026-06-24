@@ -14,7 +14,7 @@
  * 这是 Widget 数据的唯一 source of truth。
  */
 import { defineStore } from 'pinia'
-import { ref, computed, shallowRef } from 'vue'
+import { ref, computed, shallowRef, triggerRef } from 'vue'
 import type { Widget, ContainerType } from '../widgets/base/types'
 import { getAllContainerTypes } from '../composables/useConstant'
 
@@ -308,6 +308,7 @@ export const useWidgetStore = defineStore('widget', () => {
     if (widget) {
       widget.position.x = x
       widget.position.y = y
+      triggerRef(widgets)
     }
   }
 
@@ -316,6 +317,7 @@ export const useWidgetStore = defineStore('widget', () => {
     if (widget) {
       widget.position.w = Math.max(20, w)
       widget.position.h = Math.max(20, h)
+      triggerRef(widgets)
     }
   }
 
@@ -323,6 +325,7 @@ export const useWidgetStore = defineStore('widget', () => {
     const widget = findWidget(id)
     if (widget) {
       widget.position.zIndex = Math.max(1, zIndex)
+      triggerRef(widgets)
     }
   }
 

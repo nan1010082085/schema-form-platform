@@ -539,7 +539,7 @@ function updateBoardProperty(key: string, value: unknown) {
       <div v-if="configPanels.length" :class="styles.configActions">
         <div style="overflow: auto;">
           <div :class="styles.configButtons">
-            <el-popover placement="bottom-left" :width="280" trigger="click">
+            <el-popover placement="bottom-start" :width="280" trigger="click">
               <template #default>
                 <div :class="styles.helpContent" v-html="configHelpText" />
               </template>
