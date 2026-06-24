@@ -268,7 +268,7 @@ function statusLabel(status: string): string {
       </div>
     </template>
 
-    <HintText v-else>选择一个已发布的流程作为子流程，子流程将在运行时被动态调用。</HintText>
+    <div v-else :class="styles['hint-text']">选择一个已发布的流程作为子流程，子流程将在运行时被动态调用。</div>
   </SectionToggle>
 
   <!-- 参数映射 -->
@@ -384,6 +384,8 @@ function statusLabel(status: string): string {
       </FieldRow>
     </template>
 
-    <HintText>输入映射将父流程变量传入子流程；输出映射将子流程结果传回父流程。支持 <code>${variable}</code> 表达式。</HintText>
+    <div :class="styles['hint-row']">
+      <HintText>输入映射将父流程变量传入子流程；输出映射将子流程结果传回父流程。支持 <code>${variable}</code> 表达式。</HintText>
+    </div>
   </SectionToggle>
 </template>

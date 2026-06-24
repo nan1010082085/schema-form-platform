@@ -98,14 +98,12 @@ function toggleEdgeDefault(edge: Edge, value: boolean) {
       </FieldRow>
     </div>
 
-    <HintText>
-      表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}
-    </HintText>
+    <div :class="styles.hintRow">
+      <HintText>表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}</HintText>
+    </div>
   </SectionToggle>
 
   <SectionToggle v-else title="出线条件" :count="0">
-    <HintText :indent="false">
-      暂无出线。从该网关拖出连线后，可在此配置每条出线的条件表达式。
-    </HintText>
+    <div :class="styles.hintText">暂无出线。从该网关拖出连线后，可在此配置每条出线的条件表达式。</div>
   </SectionToggle>
 </template>

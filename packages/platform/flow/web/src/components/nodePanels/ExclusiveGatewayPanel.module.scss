@@ -29,3 +29,17 @@
 .defaultCheck {
   flex-shrink: 0;
 }
+
+.hintRow {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  padding-left: 70px;
+}
+
+.hintText {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-placeholder);
+  line-height: 1.5;
+  padding-left: 70px;
+}

@@ -77,17 +77,13 @@ function targetLabel(edge: Edge): string {
       />
     </FieldRow>
 
-    <HintText>
-      <template v-if="isParallel">
-        {{ gatewayLabel }}：所有出线将同时执行，无需配置条件。
-      </template>
-      <template v-else-if="isExclusive">
-        {{ gatewayLabel }}：所有出线中，第一个条件为 true 的分支将被执行。
-      </template>
-      <template v-else>
-        包含网关：允许多个条件同时为 true，所有匹配的分支都会执行。
-      </template>
-    </HintText>
+    <div :class="styles.hintRow">
+      <HintText>
+        <template v-if="isParallel">{{ gatewayLabel }}：所有出线将同时执行，无需配置条件。</template>
+        <template v-else-if="isExclusive">{{ gatewayLabel }}：所有出线中，第一个条件为 true 的分支将被执行。</template>
+        <template v-else>包含网关：允许多个条件同时为 true，所有匹配的分支都会执行。</template>
+      </HintText>
+    </div>
   </SectionToggle>
 
   <!-- Outgoing edge conditions -->
@@ -131,14 +127,12 @@ function targetLabel(edge: Edge): string {
       </FieldRow>
     </div>
 
-    <HintText>
-      表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}
-    </HintText>
+    <div :class="styles.hintRow">
+      <HintText>表达式使用 JUEL 语法：${变量名 运算符 值}，例如 ${amount &gt; 10000}、${status == 'approved'}</HintText>
+    </div>
   </SectionToggle>
 
   <SectionToggle v-else title="出线条件" :count="0">
-    <HintText :indent="false">
-      暂无出线。从该网关拖出连线后，可在此配置每条出线的条件表达式。
-    </HintText>
+    <div :class="styles.hintText">暂无出线。从该网关拖出连线后，可在此配置每条出线的条件表达式。</div>
   </SectionToggle>
 </template>

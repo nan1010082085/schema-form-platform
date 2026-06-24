@@ -63,6 +63,8 @@
 }
 
 .mapping-section {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   margin-top: 4px;
   // FieldRow control 是 flex + align-items:center，需要顶部对齐避免多行被挤压
@@ -109,4 +111,18 @@
 
 .mapping-json {
   margin-top: 4px;
+}
+
+.hintRow {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  padding-left: 70px;
+}
+
+.hintText {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-placeholder);
+  line-height: 1.5;
+  padding-left: 70px;
 }
