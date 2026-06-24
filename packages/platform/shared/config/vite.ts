@@ -13,18 +13,29 @@ import { type AppName, APP_CONFIGS, getApiProxyTarget } from '../qiankun/config.
 
 // 修复 vite-plugin-qiankun createDeffer 竞态问题的 Vite 插件
 // 问题：createDeffer 同步执行时 window.proxy 可能未定义，导致 promise 永远不 resolve → bootstrap 超时
-// 修复：将 window.proxy && 赋值改为轮询等待
+// 修复：替换整个 createDeffer 函数，使用轮询等待 window.proxy 就绪
 function fixQiankunLifecyclePlugin(): Plugin {
   return {
     name: 'vite-plugin-fix-qiankun-lifecycle',
     enforce: 'post',
     transformIndexHtml(html) {
-      const brokenPattern = /window\.proxy && \(window\.proxy\[`vite\$\{hookName\}`\] = resolve\)/
+      // 匹配原始 createDeffer 函数
+      const brokenPattern = /const createDeffer = \(hookName\) => \{[\s\S]*?\}\s*\n\s*const bootstrap/
       if (brokenPattern.test(html)) {
-        const fixed = html.replace(
-          brokenPattern,
-          `function tryBind() { if (window.proxy) { window.proxy['vite' + hookName] = resolve; } else { setTimeout(tryBind, 10); } } tryBind()`,
-        )
+        const fixedCreateDeffer = `const createDeffer = (hookName) => {
+        let resolveFn = null;
+        const d = new Promise((resolve) => { resolveFn = resolve; });
+        function tryBind() {
+          if (window.proxy) {
+            window.proxy['vite' + hookName] = resolveFn;
+          } else {
+            setTimeout(tryBind, 10);
+          }
+        }
+        tryBind();
+        return props => d.then(fn => fn(props));
+      }`
+        const fixed = html.replace(brokenPattern, fixedCreateDeffer + '\n  const bootstrap')
         return fixed
       }
       return html
