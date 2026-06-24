@@ -75,19 +75,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.mapping-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   margin-bottom: 6px;
   margin-top: 8px;
 
   &:first-child {
     margin-top: 0;
   }
+}
+
+.mapping-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .mapping-label-text {

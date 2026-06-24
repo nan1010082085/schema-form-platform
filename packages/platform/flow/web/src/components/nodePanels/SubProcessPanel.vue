@@ -287,9 +287,20 @@ function statusLabel(status: string): string {
     <!-- KV mode -->
     <template v-if="mappingMode === 'kv'">
       <!-- 输入变量映射 -->
-      <div :class="styles['mapping-label']">
-        <span :class="styles['mapping-label-text']">输入变量映射</span>
-        <HintText>将父流程变量传入子流程，支持 ${variable} 表达式</HintText>
+      <div :class="styles['mapping-header']">
+        <div :class="styles['mapping-label']">
+          <span :class="styles['mapping-label-text']">输入变量映射</span>
+          <HintText>将父流程变量传入子流程，支持 ${variable} 表达式</HintText>
+        </div>
+        <el-button
+          size="small"
+          link
+          type="primary"
+          @click="addInputEntry"
+        >
+          <AppIcon name="plus" />
+          添加映射
+        </el-button>
       </div>
       <div :class="styles['mapping-section']">
         <div
@@ -313,21 +324,22 @@ function statusLabel(status: string): string {
           />
           <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeInputEntry(i)" />
         </div>
+      </div>
+
+      <!-- 输出变量映射 -->
+      <div :class="styles['mapping-header']">
+        <div :class="styles['mapping-label']">
+          <span :class="styles['mapping-label-text']">输出变量映射</span>
+        </div>
         <el-button
-          :class="styles['mapping-add']"
           size="small"
           link
           type="primary"
-          @click="addInputEntry"
+          @click="addOutputEntry"
         >
           <AppIcon name="plus" />
           添加映射
         </el-button>
-      </div>
-
-      <!-- 输出变量映射 -->
-      <div :class="styles['mapping-label']">
-        <span :class="styles['mapping-label-text']">输出变量映射</span>
       </div>
       <div :class="styles['mapping-section']">
         <div
@@ -351,16 +363,6 @@ function statusLabel(status: string): string {
           />
           <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeOutputEntry(i)" />
         </div>
-        <el-button
-          :class="styles['mapping-add']"
-          size="small"
-          link
-          type="primary"
-          @click="addOutputEntry"
-        >
-          <AppIcon name="plus" />
-          添加映射
-        </el-button>
       </div>
     </template>
 
