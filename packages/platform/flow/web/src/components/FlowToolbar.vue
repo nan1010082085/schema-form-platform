@@ -55,48 +55,46 @@
         :width="240"
         trigger="click"
       >
-        <template #content>
-          <div :class="styles.layoutPopover">
-            <div :class="styles.layoutRow">
-              <span :class="styles.layoutLabel">方向</span>
-              <FilterTabs
-                :model-value="layoutDirection ?? 'TB'"
-                :options="[{ label: '垂直', value: 'TB' }, { label: '水平', value: 'LR' }]"
-                @update:model-value="$emit('update:layoutDirection', $event as LayoutDirection)"
-              />
-            </div>
-            <div :class="styles.layoutRow">
-              <span :class="styles.layoutLabel">节点间距</span>
-              <el-slider
-                :model-value="layoutNodeSep ?? 60"
-                :min="20"
-                :max="200"
-                :step="10"
-                size="small"
-                @update:model-value="$emit('update:layoutNodeSep', $event as number)"
-              />
-            </div>
-            <div :class="styles.layoutRow">
-              <span :class="styles.layoutLabel">层级间距</span>
-              <el-slider
-                :model-value="layoutRankSep ?? 80"
-                :min="30"
-                :max="300"
-                :step="10"
-                size="small"
-                @update:model-value="$emit('update:layoutRankSep', $event as number)"
-              />
-            </div>
-            <el-button
-              type="primary"
-              size="small"
-              :class="styles.layoutApplyBtn"
-              @click="$emit('auto-layout'); layoutPopoverVisible = false"
-            >
-              应用布局
-            </el-button>
+        <div :class="styles.layoutPopover">
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">方向</span>
+            <FilterTabs
+              :model-value="layoutDirection ?? 'TB'"
+              :options="[{ label: '垂直', value: 'TB' }, { label: '水平', value: 'LR' }]"
+              @update:model-value="$emit('update:layoutDirection', $event as LayoutDirection)"
+            />
           </div>
-        </template>
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">节点间距</span>
+            <el-slider
+              :model-value="layoutNodeSep ?? 60"
+              :min="20"
+              :max="200"
+              :step="10"
+              size="small"
+              @update:model-value="$emit('update:layoutNodeSep', $event as number)"
+            />
+          </div>
+          <div :class="styles.layoutRow">
+            <span :class="styles.layoutLabel">层级间距</span>
+            <el-slider
+              :model-value="layoutRankSep ?? 80"
+              :min="30"
+              :max="300"
+              :step="10"
+              size="small"
+              @update:model-value="$emit('update:layoutRankSep', $event as number)"
+            />
+          </div>
+          <el-button
+            type="primary"
+            size="small"
+            :class="styles.layoutApplyBtn"
+            @click="$emit('auto-layout'); layoutPopoverVisible = false"
+          >
+            应用布局
+          </el-button>
+        </div>
         <template #reference>
           <button :class="styles.iconBtn" title="自动布局">
             <AppIcon name="rank" :size="14" />
@@ -132,39 +130,37 @@
       </el-tooltip>
       <!-- 快捷键帮助 -->
       <el-popover placement="bottom" :width="300" trigger="click">
-        <template #content>
-          <div :class="styles.shortcuts">
-            <div :class="styles.shortcutsTitle">快捷键</div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">撤销</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">重做</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">复制节点</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">粘贴节点</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">复制并粘贴</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>D</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">删除</span>
-              <span :class="styles.shortcutKeys"><kbd>Delete</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">保存</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
-            </div>
+        <div :class="styles.shortcuts">
+          <div :class="styles.shortcutsTitle">快捷键</div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">撤销</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
           </div>
-        </template>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">重做</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">复制节点</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">粘贴节点</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">复制并粘贴</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>D</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">删除</span>
+            <span :class="styles.shortcutKeys"><kbd>Delete</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">保存</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+          </div>
+        </div>
         <template #reference>
           <button :class="styles.iconBtn" title="快捷键帮助">
             <AppIcon name="question-filled" :size="14" />
