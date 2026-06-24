@@ -243,40 +243,40 @@ function handleClearCanvas() {
       </el-tooltip>
       <div :class="styles.divider" />
       <!-- 快捷键帮助 -->
-      <el-tooltip placement="bottom" :width="320">
-        <template #content>
-          <div :class="styles.shortcuts">
-            <div :class="styles.shortcutsTitle">快捷键</div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">撤销</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">重做</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">复制部件</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">粘贴部件</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">删除部件</span>
-              <span :class="styles.shortcutKeys"><kbd>Delete</kbd></span>
-            </div>
-            <div :class="styles.shortcutRow">
-              <span :class="styles.shortcutLabel">保存</span>
-              <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
-            </div>
+      <el-popover placement="bottom" :width="300" trigger="click">
+        <div :class="styles.shortcuts">
+          <div :class="styles.shortcutsTitle">快捷键</div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">撤销</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
           </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">重做</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">复制部件</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">粘贴部件</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">删除部件</span>
+            <span :class="styles.shortcutKeys"><kbd>Delete</kbd></span>
+          </div>
+          <div :class="styles.shortcutRow">
+            <span :class="styles.shortcutLabel">保存</span>
+            <span :class="styles.shortcutKeys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+          </div>
+        </div>
+        <template #reference>
+          <button :class="styles.iconBtn" title="快捷键帮助">
+            <AppIcon name="question-filled" :size="14" />
+          </button>
         </template>
-        <button :class="styles.iconBtn" title="快捷键帮助">
-          <AppIcon name="question-filled" :size="14" />
-        </button>
-      </el-tooltip>
+      </el-popover>
       <div :class="styles.divider" />
       <el-tooltip content="预览" placement="bottom">
         <button
