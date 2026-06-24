@@ -4,7 +4,7 @@ import qiankun from 'vite-plugin-qiankun'
 const isProd = process.env.NODE_ENV === 'production'
 
 export default createViteConfig('ai', import.meta.url, {
-  base: isProd ? '/schema-platform/ai/' : '/',
+  base: isProd ? '/schema-platform/micro/ai/' : '/',
   plugins: [
     qiankun('ai', { useDevMode: true }),
     fixQiankunLifecyclePlugin(),

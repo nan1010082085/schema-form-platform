@@ -3,19 +3,8 @@
  * 部门管理 — 树形表格
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadDeptTree, createDept, updateDept, deleteDept, type Dept } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-interface Dept {
-  id: string
-  name: string
-  parentId: string | null
-  sort: number
-  status: string
-  leader: string
-  children?: Dept[]
-  createdAt: string
-}
 
 const deptTree = ref<Dept[]>([])
 const loading = ref(false)
@@ -33,7 +22,7 @@ const deptForm = ref({
 async function loadDepts() {
   loading.value = true
   try {
-    deptTree.value = await apiClient.get<Dept[]>('/depts?tree=true')
+    deptTree.value = await loadDeptTree()
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '加载部门失败')
   } finally {
@@ -72,10 +61,10 @@ async function handleSave() {
   }
   try {
     if (editingDept.value) {
-      await apiClient.put(`/depts/${editingDept.value.id}`, deptForm.value)
+      await updateDept(editingDept.value.id, deptForm.value)
       ElMessage.success('更新成功')
     } else {
-      await apiClient.post('/depts', deptForm.value)
+      await createDept(deptForm.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -88,7 +77,7 @@ async function handleSave() {
 async function handleDelete(dept: Dept) {
   try {
     await ElMessageBox.confirm(`确定删除部门 "${dept.name}" 吗？`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/depts/${dept.id}`)
+    await deleteDept(dept.id)
     ElMessage.success('删除成功')
     await loadDepts()
   } catch (e: unknown) {

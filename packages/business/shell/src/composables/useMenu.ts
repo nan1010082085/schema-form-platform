@@ -14,7 +14,7 @@
 import { storeToRefs } from 'pinia'
 import { useMenuStore } from '@/stores/menu'
 import { useAuthStore } from '@/stores/auth'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { fetchMenuRoute } from '@/api/menuApi'
 import type { MenuTreeNode } from '@/types/menu'
 
 export function useMenu() {
@@ -34,7 +34,7 @@ export function useMenu() {
     menuStore.setLoading(true)
     menuStore.setError(null)
     try {
-      const tree = await apiClient.get<MenuTreeNode[]>('/menus/route')
+      const tree = await fetchMenuRoute()
       menuStore.setMenuTree(tree)
     } catch (e: unknown) {
       menuStore.setError(e instanceof Error ? e.message : '加载菜单失败')

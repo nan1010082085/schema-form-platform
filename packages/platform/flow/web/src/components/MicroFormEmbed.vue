@@ -2,19 +2,16 @@
   <div :class="styles.wrapper">
     <div v-if="!publishId" :class="styles.empty">未绑定表单</div>
     <div v-else :class="styles.container">
-      <iframe
-        ref="iframeRef"
-        :key="publishId"
-        :src="iframeSrc"
-        :class="styles.iframe"
-        @load="onIframeLoad"
-      />
+      <div ref="containerRef" :class="styles.microContainer" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { loadMicroApp } from 'qiankun'
+import type { MicroApp } from 'qiankun'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import styles from './MicroFormEmbed.module.scss'
 
 const props = defineProps<{
@@ -36,20 +33,16 @@ const emit = defineEmits<{
   validationError: [errors: unknown]
 }>()
 
-const iframeRef = ref<HTMLIFrameElement>()
+const containerRef = ref<HTMLDivElement>()
+let microApp: MicroApp | null = null
 
-const editorBaseUrl = computed(() => {
-  const base = import.meta.env.VITE_EDITOR_BASE_URL as string | undefined
-  return base || window.location.origin
-})
-
-const iframeSrc = computed(() => {
-  if (!props.publishId) return ''
-  const url = new URL(`${editorBaseUrl.value}/view`)
-  url.searchParams.set('id', props.publishId)
-  url.searchParams.set('mode', props.mode ?? 'edit')
-  return url.toString()
-})
+const editorEntry = (() => {
+  const config = APP_CONFIGS.editor
+  const isDev = import.meta.env.DEV
+  return isDev
+    ? `http://localhost:${config.devPort}/`
+    : `${window.location.origin}${config.basePath}`
+})()
 
 // Pending request callbacks for command-response pattern
 type PendingRequest = {
@@ -62,9 +55,9 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Send command to child iframe via postMessage
+// Send command to child micro-app iframe via postMessage
 function sendToChild(msg: Record<string, unknown>) {
-  iframeRef.value?.contentWindow?.postMessage(msg, '*')
+  containerRef.value?.querySelector('iframe')?.contentWindow?.postMessage(msg, '*')
 }
 
 // Host message handler — receives responses from child via postMessage
@@ -100,31 +93,66 @@ function handleHostMessage(event: MessageEvent) {
   }
 }
 
-function onIframeLoad() {
-  window.addEventListener('message', handleHostMessage)
-  emit('ready')
+async function mountMicroApp() {
+  if (!props.publishId || !containerRef.value) return
 
-  // 向子 iframe 发送表单模式配置
-  // 延迟一帧确保子 iframe 的 message listener 已就绪
-  requestAnimationFrame(() => {
-    sendToChild({
-      type: 'fg:set-mode',
-      id: props.publishId,
-      mode: props.mode ?? 'edit',
-      editableFields: props.editableFields,
-      readonlyFields: props.readonlyFields,
-    })
+  // 卸载已有实例
+  if (microApp) {
+    await microApp.unmount().catch(() => {})
+    microApp = null
+  }
 
-    // 如果有初始数据，一并发送
-    if (props.initialData) {
+  try {
+    microApp = loadMicroApp(
+      {
+        name: 'editor-form-preview',
+        entry: editorEntry,
+        container: containerRef.value,
+      },
+      {
+        sandbox: { experimentalStyleIsolation: true },
+        props: {
+          basePath: `/view?id=${props.publishId}&mode=${props.mode ?? 'edit'}`,
+        },
+      },
+    )
+
+    await microApp.mountPromise
+
+    window.addEventListener('message', handleHostMessage)
+    emit('ready')
+
+    // 向子应用发送表单模式配置
+    requestAnimationFrame(() => {
       sendToChild({
-        type: 'fg:set-data',
+        type: 'fg:set-mode',
         id: props.publishId,
-        data: props.initialData,
+        mode: props.mode ?? 'edit',
+        editableFields: props.editableFields,
+        readonlyFields: props.readonlyFields,
       })
-    }
-  })
+
+      if (props.initialData) {
+        sendToChild({
+          type: 'fg:set-data',
+          id: props.publishId,
+          data: props.initialData,
+        })
+      }
+    })
+  } catch (err) {
+    console.error('[MicroFormEmbed] Failed to mount editor:', err)
+  }
 }
+
+onMounted(() => {
+  mountMicroApp()
+})
+
+// 监听 publishId 变化重新加载
+watch(() => props.publishId, () => {
+  nextTick(() => mountMicroApp())
+})
 
 function sendCommand(type: string, payload?: unknown): Promise<unknown> {
   const requestId = generateRequestId()
@@ -173,5 +201,7 @@ defineExpose({ getValues, setValues, validate, submit, sendCommand })
 onUnmounted(() => {
   window.removeEventListener('message', handleHostMessage)
   pendingRequests.clear()
+  microApp?.unmount()
+  microApp = null
 })
 </script>

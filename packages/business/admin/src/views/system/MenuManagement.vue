@@ -6,29 +6,9 @@
  * 右侧：选中节点的编辑表单
  */
 import { ref, onMounted, computed } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadMenuTree, createMenu, updateMenu, deleteMenu, type MenuItem } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
-
-interface MenuItem {
-  id: string
-  parentId: string | null
-  name: string
-  path: string
-  icon: string
-  type: 'menu' | 'button'
-  permission: string
-  sort: number
-  status: string
-  component: string
-  microAppId: string | null
-  target: '_self' | '_blank'
-  routeType: 'schema' | 'micro-app' | 'link'
-  schemaId: string | null
-  url: string
-  app: string
-  children?: MenuItem[]
-}
 
 const menuTree = ref<MenuItem[]>([])
 const loading = ref(false)
@@ -66,7 +46,7 @@ const targetOptions = [
 async function loadMenus() {
   loading.value = true
   try {
-    menuTree.value = await apiClient.get<MenuItem[]>('/menus?tree=true')
+    menuTree.value = await loadMenuTree()
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '加载菜单失败')
   } finally {
@@ -115,11 +95,11 @@ async function handleSave() {
   try {
     if (selectedNode.value) {
       // 更新
-      await apiClient.put(`/menus/${selectedNode.value.id}`, formData.value)
+      await updateMenu(selectedNode.value.id, formData.value)
       ElMessage.success('更新成功')
     } else {
       // 新增
-      await apiClient.post('/menus', formData.value)
+      await createMenu(formData.value)
       ElMessage.success('创建成功')
     }
     await loadMenus()
@@ -138,7 +118,7 @@ async function handleDelete() {
     await ElMessageBox.confirm('确定删除该菜单吗？删除后不可恢复。', '确认删除', {
       type: 'warning',
     })
-    await apiClient.delete(`/menus/${selectedNode.value.id}`)
+    await deleteMenu(selectedNode.value.id)
     ElMessage.success('删除成功')
     await loadMenus()
     isEditing.value = false

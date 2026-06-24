@@ -6,23 +6,10 @@
  */
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadAdminMenuRoute, type MenuItem } from '@/api/adminApi'
 import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import { resolveIconName } from '@schema-form/platform-shared/utils/iconResolver'
-
-interface MenuItem {
-  id: string
-  name: string
-  path: string
-  icon: string
-  routeType: string
-  microAppId?: string
-  schemaId?: string
-  url?: string
-  target?: string
-  children?: MenuItem[]
-}
 
 const router = useRouter()
 const menuTree = ref<MenuItem[]>([])
@@ -35,7 +22,7 @@ async function loadMenus(): Promise<void> {
   error.value = ''
   try {
     // admin 只加载 app=admin 的菜单（系统管理目录及其子菜单）
-    const tree = await apiClient.get<MenuItem[]>('/menus/route?app=admin')
+    const tree = await loadAdminMenuRoute()
     // 过滤掉目录节点，只显示子菜单
     const systemDir = tree.find(n => n.name === '系统管理')
     menuTree.value = systemDir?.children || tree.filter(n => n.name !== '系统管理')

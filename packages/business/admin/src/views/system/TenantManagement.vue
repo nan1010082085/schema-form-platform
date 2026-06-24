@@ -3,7 +3,7 @@
  * 租户管理
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadTenants, createTenant, updateTenant, deleteTenant } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const tenants = ref<any[]>([])
@@ -14,7 +14,7 @@ const form = ref({ name: '', code: '', status: 'active', config: { maxUsers: 100
 
 async function load() {
   loading.value = true
-  try { const d = await apiClient.get('/tenants'); tenants.value = d.items } catch { } finally { loading.value = false }
+  try { const d = await loadTenants(); tenants.value = d.items } catch { } finally { loading.value = false }
 }
 
 function openCreate() { editingTenant.value = null; form.value = { name: '', code: '', status: 'active', config: { maxUsers: 100, features: [] } }; dialogVisible.value = true }
@@ -23,8 +23,8 @@ function openEdit(tenant: any) { editingTenant.value = tenant; form.value = { na
 async function handleSave() {
   if (!form.value.name || !form.value.code) { ElMessage.warning('请填写必填字段'); return }
   try {
-    if (editingTenant.value) await apiClient.put(`/tenants/${editingTenant.value.id}`, form.value)
-    else await apiClient.post('/tenants', form.value)
+    if (editingTenant.value) await updateTenant(editingTenant.value.id, form.value)
+    else await createTenant(form.value)
     ElMessage.success('保存成功'); dialogVisible.value = false; await load()
   } catch (e: any) { ElMessage.error(e?.message || '保存失败') }
 }
@@ -32,7 +32,7 @@ async function handleSave() {
 async function handleDelete(tenant: any) {
   try {
     await ElMessageBox.confirm(`确定删除租户 "${tenant.name}" 吗？此操作不可恢复。`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/tenants/${tenant.id}`); ElMessage.success('删除成功'); await load()
+    await deleteTenant(tenant.id); ElMessage.success('删除成功'); await load()
   } catch (e: any) { if (e !== 'cancel') ElMessage.error(e?.message || '删除失败') }
 }
 

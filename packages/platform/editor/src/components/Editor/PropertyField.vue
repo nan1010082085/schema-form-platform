@@ -6,7 +6,7 @@
  * 所有输入事件统一通过 'update' emit 向上传递。
  */
 import { ref, computed, watch, onMounted } from 'vue'
-import { apiClient } from '@/utils/apiClient'
+import { fetchRemoteOptions as apiFetchRemoteOptions } from '@/api/widgetApi'
 import styles from './PropertyField.module.scss'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 
@@ -75,12 +75,11 @@ async function fetchRemoteOptions() {
   if (!props.remoteUrl) return
   remoteLoading.value = true
   try {
-    const data = await apiClient.get<{ items: Record<string, unknown>[] }>(props.remoteUrl)
-    const items = data?.items ?? []
-    remoteOptions.value = items.map(item => ({
-      label: String(item[props.labelField ?? 'name'] ?? ''),
-      value: String(item[props.valueField ?? 'id'] ?? ''),
-    }))
+    remoteOptions.value = await apiFetchRemoteOptions(
+      props.remoteUrl,
+      props.labelField ?? 'name',
+      props.valueField ?? 'id',
+    )
   } catch {
     remoteOptions.value = []
   } finally {
@@ -141,7 +140,7 @@ function onJsonBlur() {
     <div :class="styles.control">
       <!-- 文本输入 -->
       <el-input
-        v-if="type === 'text' || type === 'input'"
+        v-if="type === 'text'"
         :model-value="String(value ?? '')"
         size="small"
         @update:model-value="handleUpdate"

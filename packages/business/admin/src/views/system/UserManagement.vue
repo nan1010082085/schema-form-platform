@@ -3,29 +3,11 @@
  * 用户管理 — 表格 + 弹窗
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadUsers as apiLoadUsers, loadRolesSimple, createUser, updateUser, deleteUser, resetUserPassword, type User, type RoleSimple } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-interface User {
-  id: string
-  username: string
-  displayName: string
-  email: string | null
-  phone: string | null
-  avatar: string
-  status: string
-  roles: string[]
-  deptId: string | null
-  createdAt: string
-}
-
-interface Role {
-  id: string
-  name: string
-}
-
 const users = ref<User[]>([])
-const roles = ref<Role[]>([])
+const roles = ref<RoleSimple[]>([])
 const loading = ref(false)
 const total = ref(0)
 const page = ref(1)
@@ -55,7 +37,7 @@ async function loadUsers() {
     if (searchQuery.value) params.set('q', searchQuery.value)
     if (statusFilter.value) params.set('status', statusFilter.value)
 
-    const data = await apiClient.get<{ items: User[]; total: number }>(`/users?${params}`)
+    const data = await apiLoadUsers(params.toString())
     users.value = data.items
     total.value = data.total
   } catch (e: unknown) {
@@ -67,7 +49,7 @@ async function loadUsers() {
 
 async function loadRoles() {
   try {
-    const data = await apiClient.get<{ items: Role[] }>('/roles')
+    const data = await loadRolesSimple()
     roles.value = data.items
   } catch { /* ignore */ }
 }
@@ -117,14 +99,14 @@ async function handleSave() {
         roles: userForm.value.roles,
         status: userForm.value.status,
       }
-      await apiClient.put(`/users/${editingUser.value.id}`, updateData)
+      await updateUser(editingUser.value.id!, updateData)
       ElMessage.success('更新成功')
     } else {
       if (!userForm.value.password) {
         ElMessage.warning('请输入密码')
         return
       }
-      await apiClient.post('/users', userForm.value)
+      await createUser(userForm.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -137,7 +119,7 @@ async function handleSave() {
 async function handleDelete(user: User) {
   try {
     await ElMessageBox.confirm(`确定删除用户 "${user.displayName}" 吗？`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/users/${user.id}`)
+    await deleteUser(user.id)
     ElMessage.success('删除成功')
     await loadUsers()
   } catch (e: unknown) {
@@ -148,7 +130,7 @@ async function handleDelete(user: User) {
 async function handleResetPassword(user: User) {
   try {
     await ElMessageBox.confirm(`确定重置用户 "${user.displayName}" 的密码为 Temp123456 吗？`, '重置密码', { type: 'warning' })
-    await apiClient.put(`/users/${user.id}/password`, { password: 'Temp123456' })
+    await resetUserPassword(user.id, 'Temp123456')
     ElMessage.success('密码已重置为 Temp123456')
   } catch (e: unknown) {
     if (e !== 'cancel') ElMessage.error(e instanceof Error ? e.message : '重置失败')

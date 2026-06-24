@@ -3,7 +3,7 @@
  * 岗位管理
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadPosts, createPost, updatePost, deletePost } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const posts = ref<any[]>([])
@@ -14,7 +14,7 @@ const form = ref({ name: '', code: '', sort: 0, status: 'active' })
 
 async function load() {
   loading.value = true
-  try { const d = await apiClient.get('/posts'); posts.value = d.items } catch { } finally { loading.value = false }
+  try { const d = await loadPosts(); posts.value = d.items } catch { } finally { loading.value = false }
 }
 
 function openCreate() { editingPost.value = null; form.value = { name: '', code: '', sort: 0, status: 'active' }; dialogVisible.value = true }
@@ -23,8 +23,8 @@ function openEdit(post: any) { editingPost.value = post; form.value = { name: po
 async function handleSave() {
   if (!form.value.name || !form.value.code) { ElMessage.warning('请填写必填字段'); return }
   try {
-    if (editingPost.value) await apiClient.put(`/posts/${editingPost.value.id}`, form.value)
-    else await apiClient.post('/posts', form.value)
+    if (editingPost.value) await updatePost(editingPost.value.id, form.value)
+    else await createPost(form.value)
     ElMessage.success('保存成功'); dialogVisible.value = false; await load()
   } catch (e: any) { ElMessage.error(e?.message || '保存失败') }
 }
@@ -32,7 +32,7 @@ async function handleSave() {
 async function handleDelete(post: any) {
   try {
     await ElMessageBox.confirm(`确定删除岗位 "${post.name}" 吗？`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/posts/${post.id}`); ElMessage.success('删除成功'); await load()
+    await deletePost(post.id); ElMessage.success('删除成功'); await load()
   } catch (e: any) { if (e !== 'cancel') ElMessage.error(e?.message || '删除失败') }
 }
 

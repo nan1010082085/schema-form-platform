@@ -3,25 +3,8 @@
  * 字典管理 — 字典类型 + 字典数据
  */
 import { ref, onMounted, watch } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadDictTypes, loadDictData, createDictType, updateDictType, deleteDictType, createDictData, updateDictData, deleteDictData, type DictType, type DictData } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-interface DictType {
-  id: string
-  name: string
-  code: string
-  status: string
-  remark: string
-}
-
-interface DictData {
-  id: string
-  dictTypeCode: string
-  label: string
-  value: string
-  sort: number
-  status: string
-}
 
 const dictTypes = ref<DictType[]>([])
 const dictData = ref<DictData[]>([])
@@ -38,7 +21,7 @@ const dataForm = ref({ label: '', value: '', sort: 0, status: 'active' })
 async function loadTypes() {
   loading.value = true
   try {
-    const data = await apiClient.get<{ items: DictType[] }>('/dict/types')
+    const data = await loadDictTypes()
     dictTypes.value = data.items
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '加载字典类型失败')
@@ -49,7 +32,7 @@ async function loadTypes() {
 
 async function loadData(typeCode: string) {
   try {
-    const data = await apiClient.get<{ items: DictData[] }>(`/dict/data?dictTypeCode=${typeCode}`)
+    const data = await loadDictData(typeCode)
     dictData.value = data.items
   } catch { dictData.value = [] }
 }
@@ -72,9 +55,9 @@ async function handleSaveType() {
   if (!typeForm.value.name || !typeForm.value.code) { ElMessage.warning('请填写必填字段'); return }
   try {
     if (editingType.value) {
-      await apiClient.put(`/dict/types/${editingType.value.id}`, typeForm.value)
+      await updateDictType(editingType.value.id, typeForm.value)
     } else {
-      await apiClient.post('/dict/types', typeForm.value)
+      await createDictType(typeForm.value)
     }
     ElMessage.success('保存成功')
     typeDialogVisible.value = false
@@ -85,7 +68,7 @@ async function handleSaveType() {
 async function handleDeleteType(type: DictType) {
   try {
     await ElMessageBox.confirm(`确定删除字典类型 "${type.name}" 吗？`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/dict/types/${type.id}`)
+    await deleteDictType(type.id)
     ElMessage.success('删除成功')
     if (selectedType.value?.id === type.id) { selectedType.value = null; dictData.value = [] }
     await loadTypes()
@@ -108,9 +91,9 @@ async function handleSaveData() {
   if (!selectedType.value || !dataForm.value.label || !dataForm.value.value) { ElMessage.warning('请填写必填字段'); return }
   try {
     if (editingData.value) {
-      await apiClient.put(`/dict/data/${editingData.value.id}`, { ...dataForm.value, dictTypeCode: selectedType.value.code })
+      await updateDictData(editingData.value.id, { ...dataForm.value, dictTypeCode: selectedType.value.code })
     } else {
-      await apiClient.post('/dict/data', { ...dataForm.value, dictTypeCode: selectedType.value.code })
+      await createDictData({ ...dataForm.value, dictTypeCode: selectedType.value.code })
     }
     ElMessage.success('保存成功')
     dataDialogVisible.value = false
@@ -121,7 +104,7 @@ async function handleSaveData() {
 async function handleDeleteData(data: DictData) {
   try {
     await ElMessageBox.confirm(`确定删除字典数据 "${data.label}" 吗？`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/dict/data/${data.id}`)
+    await deleteDictData(data.id)
     ElMessage.success('删除成功')
     if (selectedType.value) await loadData(selectedType.value.code)
   } catch (e: unknown) { if (e !== 'cancel') ElMessage.error(e instanceof Error ? e.message : '删除失败') }

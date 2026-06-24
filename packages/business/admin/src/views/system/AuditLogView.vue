@@ -3,7 +3,7 @@
  * 操作日志 — 只读表格
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadAuditLogs } from '@/api/adminApi'
 import { ElMessage } from 'element-plus'
 
 const logs = ref<any[]>([])
@@ -23,7 +23,7 @@ async function load() {
     if (filters.value.status) params.set('status', filters.value.status)
     if (filters.value.startTime) params.set('startTime', filters.value.startTime)
     if (filters.value.endTime) params.set('endTime', filters.value.endTime)
-    const d = await apiClient.get(`/audit-logs?${params}`)
+    const d = await loadAuditLogs(params.toString())
     logs.value = d.items; total.value = d.total
   } catch { } finally { loading.value = false }
 }

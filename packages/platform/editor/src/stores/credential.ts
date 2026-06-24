@@ -7,7 +7,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, reactive, computed } from 'vue'
-import { ApiError, apiClient } from '@/utils/apiClient'
+import { ApiError } from '@/utils/apiClient'
 import type { PaginatedResponse } from '@/types/api'
 import type {
   CredentialItem,
@@ -16,6 +16,13 @@ import type {
   CredentialCreatePayload,
   CredentialUpdatePayload,
 } from '@/types/credential'
+import {
+  fetchCredentials as apiFetchCredentials,
+  fetchCredentialById as apiFetchCredentialById,
+  createCredential as apiCreateCredential,
+  updateCredential as apiUpdateCredential,
+  deleteCredential as apiDeleteCredential,
+} from '@/api/dataApi'
 
 const DEFAULT_PAGE_SIZE = 20
 
@@ -79,7 +86,7 @@ export const useCredentialStore = defineStore('credential', () => {
     if (type) queryParams.type = type
 
     const result = await withLoading(() =>
-      apiClient.get<PaginatedResponse<CredentialItem>>('/credentials', queryParams),
+      apiFetchCredentials({ page, pageSize, search: search || undefined, type: type || undefined }),
     )
 
     if (result) {
@@ -96,23 +103,17 @@ export const useCredentialStore = defineStore('credential', () => {
   }
 
   async function fetchCredentialById(id: string): Promise<CredentialDetail | null> {
-    return withLoading(() =>
-      apiClient.get<CredentialDetail>(`/credentials/${encodeURIComponent(id)}`),
-    )
+    return withLoading(() => apiFetchCredentialById(id))
   }
 
   async function createCredential(payload: CredentialCreatePayload): Promise<CredentialItem | null> {
-    const result = await withLoading(() =>
-      apiClient.post<CredentialItem>('/credentials', payload),
-    )
+    const result = await withLoading(() => apiCreateCredential(payload))
     if (result) await fetchCredentials({ page: 1 })
     return result
   }
 
   async function updateCredential(id: string, payload: CredentialUpdatePayload): Promise<CredentialItem | null> {
-    const result = await withLoading(() =>
-      apiClient.put<CredentialItem>(`/credentials/${encodeURIComponent(id)}`, payload),
-    )
+    const result = await withLoading(() => apiUpdateCredential(id, payload))
     if (result) {
       const idx = credentials.value.findIndex((c) => c.id === id)
       if (idx >= 0) credentials.value[idx] = result
@@ -123,7 +124,7 @@ export const useCredentialStore = defineStore('credential', () => {
   async function deleteCredential(id: string): Promise<boolean> {
     clearError()
     try {
-      await apiClient.delete<null>(`/credentials/${encodeURIComponent(id)}`)
+      await apiDeleteCredential(id)
       credentials.value = credentials.value.filter((c) => c.id !== id)
       pagination.total = Math.max(0, pagination.total - 1)
       pagination.totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize))

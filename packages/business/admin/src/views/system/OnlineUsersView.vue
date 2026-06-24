@@ -3,7 +3,7 @@
  * 在线用户
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadOnlineUsers, kickOnlineUser } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const users = ref<any[]>([])
@@ -14,7 +14,7 @@ const page = ref(1)
 async function load() {
   loading.value = true
   try {
-    const d = await apiClient.get(`/online-users?page=${page.value}&pageSize=20`)
+    const d = await loadOnlineUsers(page.value)
     users.value = d.items; total.value = d.total
   } catch { } finally { loading.value = false }
 }
@@ -22,7 +22,7 @@ async function load() {
 async function handleKick(session: any) {
   try {
     await ElMessageBox.confirm(`确定强制用户 "${session.user?.displayName || session.userId}" 下线吗？`, '强制下线', { type: 'warning' })
-    await apiClient.delete(`/online-users/${session.id}`)
+    await kickOnlineUser(session.id)
     ElMessage.success('已强制下线'); await load()
   } catch { /* cancel */ }
 }

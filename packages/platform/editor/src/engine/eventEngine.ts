@@ -9,6 +9,7 @@ import { getWidget } from '../widgets/registry'
 import { useLogger } from '@/composables/useLogger'
 import { checkSecurity } from '@/utils/expression'
 import { apiClient } from '@/utils/apiClient'
+import { startFlow, terminateFlow } from '@/api/dataApi'
 
 const logger = useLogger('EventEngine')
 
@@ -219,10 +220,7 @@ export async function executeEventAction(
       if (!action.definitionId) break
       logger.api(`发起流程: definitionId=${action.definitionId}`)
       try {
-        const response = await apiClient.requestUrl<unknown>('post', '/flow-instances', {
-          definitionId: action.definitionId,
-          variables: action.variables ?? {},
-        })
+        const response = await startFlow(action.definitionId, action.variables ?? {})
         logger.api('流程发起成功', response)
         ctx.emit('flow-started', { definitionId: action.definitionId, response })
       } catch (err) {
@@ -235,11 +233,7 @@ export async function executeEventAction(
       if (!action.instanceId) break
       logger.api(`结束流程: instanceId=${action.instanceId}`)
       try {
-        const response = await apiClient.requestUrl<unknown>(
-          'post',
-          `/flow-instances/${action.instanceId}/terminate`,
-          action.reason ? { reason: action.reason } : undefined,
-        )
+        const response = await terminateFlow(action.instanceId, action.reason)
         logger.api('流程结束成功', response)
         ctx.emit('flow-ended', { instanceId: action.instanceId, response })
       } catch (err) {

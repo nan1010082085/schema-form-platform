@@ -7,7 +7,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, reactive, computed } from 'vue'
-import { ApiError, apiClient } from '@/utils/apiClient'
+import { ApiError } from '@/utils/apiClient'
 import type { PaginatedResponse } from '@/types/api'
 import type {
   TenantItem,
@@ -15,6 +15,12 @@ import type {
   TenantCreatePayload,
   TenantUpdatePayload,
 } from '@/types/tenant'
+import {
+  fetchTenants as apiFetchTenants,
+  createTenant as apiCreateTenant,
+  updateTenant as apiUpdateTenant,
+  deleteTenant as apiDeleteTenant,
+} from '@/api/dataApi'
 
 const DEFAULT_PAGE_SIZE = 20
 
@@ -82,7 +88,7 @@ export const useTenantStore = defineStore('tenant', () => {
     if (status) queryParams.status = status
 
     const result = await withLoading(() =>
-      apiClient.get<PaginatedResponse<TenantItem>>('/tenants', queryParams),
+      apiFetchTenants({ page, pageSize, search: search || undefined, status: status || undefined }),
     )
 
     if (result) {
@@ -100,17 +106,13 @@ export const useTenantStore = defineStore('tenant', () => {
 
   // ── CRUD ──
   async function createTenant(payload: TenantCreatePayload): Promise<TenantItem | null> {
-    const result = await withLoading(() =>
-      apiClient.post<TenantItem>('/tenants', payload),
-    )
+    const result = await withLoading(() => apiCreateTenant(payload))
     if (result) await fetchTenants({ page: 1 })
     return result
   }
 
   async function updateTenant(id: string, payload: TenantUpdatePayload): Promise<TenantItem | null> {
-    const result = await withLoading(() =>
-      apiClient.put<TenantItem>(`/tenants/${encodeURIComponent(id)}`, payload),
-    )
+    const result = await withLoading(() => apiUpdateTenant(id, payload))
     if (result) {
       const idx = tenants.value.findIndex((t) => t.id === id)
       if (idx >= 0) tenants.value[idx] = result
@@ -121,7 +123,7 @@ export const useTenantStore = defineStore('tenant', () => {
   async function deleteTenant(id: string): Promise<boolean> {
     clearError()
     try {
-      await apiClient.delete<null>(`/tenants/${encodeURIComponent(id)}`)
+      await apiDeleteTenant(id)
       tenants.value = tenants.value.filter((t) => t.id !== id)
       pagination.total = Math.max(0, pagination.total - 1)
       pagination.totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize))

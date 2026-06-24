@@ -3,25 +3,8 @@
  * 角色管理 — 表格 + 权限分配弹窗
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadRoles, loadPermissions, loadMenuTree, createRole, updateRole, deleteRole, type Role, type Permission } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-interface Role {
-  id: string
-  name: string
-  description: string
-  permissions: string[]
-  data_scope: string
-  dept_ids: string[]
-  createdAt: string
-}
-
-interface Permission {
-  id: string
-  code: string
-  name: string
-  module: string
-}
 
 interface MenuNode {
   id: string
@@ -60,10 +43,10 @@ const dataScopeOptions = [
   { label: '自定义', value: 'custom' },
 ]
 
-async function loadRoles() {
+async function loadAllRoles() {
   loading.value = true
   try {
-    const data = await apiClient.get<{ items: Role[] }>('/roles')
+    const data = await loadRoles()
     roles.value = data.items
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '加载角色失败')
@@ -72,15 +55,15 @@ async function loadRoles() {
   }
 }
 
-async function loadPermissions() {
+async function loadAllPermissions() {
   try {
-    permissions.value = await apiClient.get<Permission[]>('/roles/permissions')
+    permissions.value = await loadPermissions()
   } catch { /* ignore */ }
 }
 
-async function loadMenuTree() {
+async function loadAllMenuTree() {
   try {
-    menuTree.value = await apiClient.get<MenuNode[]>('/menus?tree=true')
+    menuTree.value = await loadMenuTree()
   } catch { /* ignore */ }
 }
 
@@ -120,14 +103,14 @@ async function handleSave() {
 
   try {
     if (editingRole.value) {
-      await apiClient.put(`/roles/${editingRole.value.id}`, roleForm.value)
+      await updateRole(editingRole.value.id, roleForm.value)
       ElMessage.success('更新成功')
     } else {
-      await apiClient.post('/roles', roleForm.value)
+      await createRole(roleForm.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
-    await loadRoles()
+    await loadAllRoles()
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '保存失败')
   }
@@ -136,9 +119,9 @@ async function handleSave() {
 async function handleDelete(role: Role) {
   try {
     await ElMessageBox.confirm(`确定删除角色 "${role.name}" 吗？关联用户的此角色将被移除。`, '确认删除', { type: 'warning' })
-    await apiClient.delete(`/roles/${role.id}`)
+    await deleteRole(role.id)
     ElMessage.success('删除成功')
-    await loadRoles()
+    await loadAllRoles()
   } catch (e: unknown) {
     if (e !== 'cancel') ElMessage.error(e instanceof Error ? e.message : '删除失败')
   }
@@ -160,14 +143,14 @@ async function handleSavePermissions() {
   if (!editingRole.value) return
 
   try {
-    await apiClient.put(`/roles/${editingRole.value.id}`, {
+    await updateRole(editingRole.value.id, {
       permissions: permForm.value.permissions,
       data_scope: permForm.value.data_scope,
       dept_ids: permForm.value.dept_ids,
     })
     ElMessage.success('权限更新成功')
     permDialogVisible.value = false
-    await loadRoles()
+    await loadAllRoles()
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '更新失败')
   }
@@ -195,7 +178,7 @@ function selectNone() {
   permForm.value.permissions = []
 }
 
-onMounted(loadRoles)
+onMounted(loadAllRoles)
 </script>
 
 <template>

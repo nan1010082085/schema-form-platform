@@ -7,7 +7,7 @@
  */
 import { reactive, ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { register as apiRegister, changePassword as apiChangePassword } from '@/api/authApi'
 import styles from './LoginView.module.scss'
 
 const { login, loading } = useAuth()
@@ -80,7 +80,7 @@ async function handleRegister(): Promise<void> {
     return
   }
   try {
-    await apiClient.post('/auth/register', {
+    await apiRegister({
       username: form.username,
       password: form.password,
       nickname: form.nickname || undefined,
@@ -115,7 +115,7 @@ async function handleChangePassword(): Promise<void> {
     return
   }
   try {
-    await apiClient.post('/auth/change-password', {
+    await apiChangePassword({
       oldPassword: form.oldPassword,
       newPassword: form.password,
     })

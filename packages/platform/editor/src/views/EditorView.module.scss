@@ -1,0 +1,575 @@
+// EditorView.module.scss
+// CSS Module: 所有样式从 EditorView.vue scoped 样式迁移而来
+
+@keyframes autoSavePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// ================================================================
+// Root layout
+// ================================================================
+
+.editorView {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-color-page);
+}
+
+// ================================================================
+// Toolbar
+// ================================================================
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px;
+  background: var(--bg-color-white);
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+  gap: 4px;
+  z-index: 100;
+}
+
+.toolbarPreview {
+  background: var(--color-primary-bg-light);
+  border-bottom-color: var(--color-primary-lighter);
+}
+
+.toolbarLeft,
+.toolbarCenter,
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.toolbarLeft {
+  flex-shrink: 0;
+}
+
+.toolbarCenter {
+  flex: 1;
+  justify-content: center;
+  gap: 2px;
+}
+
+.toolbarRight {
+  flex-shrink: 0;
+}
+
+// ================================================================
+// Common elements
+// ================================================================
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color-light);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.nameInput {
+  width: 140px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color-base);
+  font-size: var(--font-size-12);
+  color: var(--text-color-primary);
+  background: var(--bg-color-white);
+  outline: none;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+  border-radius: 4px;
+
+  &:focus {
+    border-color: var(--color-primary);
+  }
+
+  &::placeholder {
+    color: var(--text-color-placeholder);
+  }
+}
+
+.btnGroup {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px 3px;
+  background: var(--bg-color-gray);
+  border-radius: 6px;
+  border: 1px solid var(--border-color-light);
+}
+
+.saveBtnContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+}
+
+.dropdownLabel {
+  margin-left: 8px;
+}
+
+.iconBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-color-hover);
+    color: var(--text-color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}
+
+.iconBtnActive {
+  color: var(--color-primary);
+  background: var(--color-primary-bg-light);
+
+  &:hover {
+    background: var(--color-primary-lighter);
+  }
+}
+
+// ================================================================
+// Zoom controls
+// ================================================================
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px 3px;
+  background: var(--bg-color-gray);
+  border-radius: 6px;
+  border: 1px solid var(--border-color-light);
+}
+
+.zoomValue {
+  font-size: var(--font-size-12);
+  color: var(--text-color-secondary);
+  min-width: 40px;
+  text-align: center;
+  user-select: none;
+}
+
+// ================================================================
+// Preview mode
+// ================================================================
+
+.previewLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary);
+  padding: 3px 10px;
+  background: var(--color-primary-bg-light);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-primary-lighter);
+}
+
+// ================================================================
+// Generic button variants
+// ================================================================
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: var(--font-size-12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btnOutline {
+  background: var(--bg-color-white);
+  border: 1px solid var(--border-color-base);
+  color: var(--text-color-regular);
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+.btnPrimary {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+}
+
+// ================================================================
+// Version & status badges
+// ================================================================
+
+.versionBadge {
+  font-size: 11px;
+  color: var(--text-color-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.autoSaveBadge {
+  font-size: 11px;
+  color: var(--color-success);
+  white-space: nowrap;
+  flex-shrink: 0;
+  animation: autoSavePulse 1.5s ease-in-out infinite;
+}
+
+.dirtyBadge {
+  font-size: 11px;
+  color: var(--color-warning);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.autoSaveToggle {
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.autoSaveToggleOn {
+  opacity: 1;
+  color: var(--color-success);
+}
+
+// ================================================================
+// Version history panel
+// ================================================================
+
+.versionPanel {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.versionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color-light);
+  margin-bottom: 8px;
+}
+
+.versionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.versionPagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color-light);
+}
+
+.versionLoading,
+.versionEmpty {
+  padding: 16px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-color-muted);
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.versionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--border-radius-sm);
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--bg-color-hover);
+  }
+}
+
+.versionItemCurrent {
+  background: var(--color-primary-bg-light);
+  border: 1px solid var(--color-primary-lighter);
+}
+
+.versionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.versionTime {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+  font-family: monospace;
+}
+
+.versionTags {
+  display: flex;
+  gap: 4px;
+}
+
+// ================================================================
+// Body layout
+// ================================================================
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.left,
+.right,
+.aiDrawer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-color-white);
+}
+
+.left {
+  width: 260px;
+  border-right: 1px solid var(--border-color-light);
+
+  > * {
+    min-width: 260px;
+  }
+}
+
+.leftClosed {
+  width: 0;
+  border-right: none;
+}
+
+.center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-color-page);
+  position: relative;
+}
+
+.canvasScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.right {
+  width: 300px;
+  border-left: 1px solid var(--border-color-light);
+
+  > * {
+    min-width: 300px;
+  }
+}
+
+.rightClosed {
+  width: 0;
+  border-left: none;
+}
+
+// ================================================================
+// AI drawer
+// ================================================================
+
+.aiBtn {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.aiLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.aiDrawer {
+  width: 400px;
+  border-left: 1px solid var(--border-color-light);
+}
+
+.aiDrawerOpen {
+  width: 400px;
+}
+
+.aiDrawer:not(.aiDrawerOpen) {
+  width: 0;
+  border-left: none;
+}
+
+.aiInner {
+  width: 400px;
+  height: 100%;
+}
+
+.aiIframe {
+  width: 400px;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+// ================================================================
+// Code overlay (preview mode)
+// ================================================================
+
+.codeOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color-white);
+  z-index: 50;
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+.codeTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+}
+
+.codeScroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.codePre {
+  margin: 0;
+  padding: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-color-regular);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+// ================================================================
+// Shortcuts tooltip
+// ================================================================
+
+.shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcutsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color-light);
+  margin-bottom: 4px;
+}
+
+.shortcutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.shortcutLabel {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.shortcutKeys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--text-color-muted);
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--text-color-regular);
+    background: var(--bg-color-gray);
+    border: 1px solid var(--border-color-base);
+    border-radius: 3px;
+  }
+}

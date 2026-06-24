@@ -3,7 +3,7 @@
  * 登录日志
  */
 import { ref, onMounted } from 'vue'
-import { apiClient } from '@schema-form/platform-shared/utils/apiClient'
+import { loadLoginLogs, clearLoginLogs } from '@/api/adminApi'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const logs = ref<any[]>([])
@@ -22,7 +22,7 @@ async function load() {
     if (filters.value.status) params.set('status', filters.value.status)
     if (filters.value.startTime) params.set('startTime', filters.value.startTime)
     if (filters.value.endTime) params.set('endTime', filters.value.endTime)
-    const d = await apiClient.get(`/login-logs?${params}`)
+    const d = await loadLoginLogs(params.toString())
     logs.value = d.items; total.value = d.total
   } catch { } finally { loading.value = false }
 }
@@ -30,7 +30,7 @@ async function load() {
 async function handleClear() {
   try {
     await ElMessageBox.confirm('确定清空所有登录日志吗？', '确认清空', { type: 'warning' })
-    await apiClient.delete('/login-logs')
+    await clearLoginLogs()
     ElMessage.success('已清空'); await load()
   } catch { /* cancel */ }
 }

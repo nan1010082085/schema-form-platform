@@ -16,7 +16,8 @@ import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { apiClient, setTokenProvider, setUnauthorizedHandler } from '@schema-form/platform-shared/utils/apiClient'
+import { setTokenProvider, setUnauthorizedHandler } from '@schema-form/platform-shared/utils/apiClient'
+import { login as apiLogin, fetchCurrentUser, refreshToken as apiRefreshToken, ssoToken, logout as apiLogout } from '@/api/authApi'
 import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/business-shared/utils/authTypes'
 
 /** Whether tokenProvider has been injected (once globally) */
@@ -71,9 +72,7 @@ export function useAuth() {
     if (!rt) return
 
     try {
-      const res = await apiClient.post<{ accessToken: string; expiresIn: number }>('/auth/refresh', {
-        refreshToken: rt,
-      })
+      const res = await apiRefreshToken(rt)
       store.setToken(res.accessToken)
       scheduleRefresh(res.expiresIn)
     } catch {
@@ -90,18 +89,10 @@ export function useAuth() {
   async function ssoLogin(code: string): Promise<void> {
     store.setLoading('login', true)
     try {
-      const res = await apiClient.post<{
-        accessToken: string
-        refreshToken: string
-        expiresIn: number
-      }>('/auth/sso/token', {
-        code,
-        client_id: 'shell',
-        redirect_uri: `${window.location.origin}/schema-platform/sso/callback`,
-      })
+      const res = await ssoToken(code, 'shell', `${window.location.origin}/schema-platform/sso/callback`)
       store.setToken(res.accessToken, res.refreshToken)
       // Fetch user info after getting token
-      const userRes = await apiClient.get<AuthUser>('/auth/me')
+      const userRes = await fetchCurrentUser()
       store.setUser(userRes)
       store.setUserKey(userRes.id)
       scheduleRefresh(res.expiresIn)
@@ -119,7 +110,7 @@ export function useAuth() {
   async function login(payload: LoginPayload): Promise<void> {
     store.setLoading('login', true)
     try {
-      const res = await apiClient.post<LoginResponse>('/auth/login', payload)
+      const res = await apiLogin(payload)
       store.setToken(res.accessToken, res.refreshToken)
       store.setUser(res.user)
       store.setUserKey(res.user.id)
@@ -140,7 +131,7 @@ export function useAuth() {
 
     store.setLoading('fetchUser', true)
     try {
-      const res = await apiClient.get<AuthUser>('/auth/me')
+      const res = await fetchCurrentUser()
       store.setUser(res)
       // Re-schedule refresh (we don't know original expiresIn after page reload,
       // assume 15min = 900s from now as the token was issued at login)
@@ -160,7 +151,7 @@ export function useAuth() {
   async function logout(): Promise<void> {
     cancelRefresh()
     try {
-      await apiClient.post('/auth/logout')
+      await apiLogout()
     } finally {
       store.reset()
       await router.push('/login')
