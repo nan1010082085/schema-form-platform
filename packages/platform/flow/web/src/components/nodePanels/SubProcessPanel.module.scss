@@ -78,6 +78,24 @@
   margin-bottom: 4px;
 }
 
+.mapping-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  margin-top: 8px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.mapping-label-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color-regular);
+}
+
 
 .mapping-row {
   display: flex;

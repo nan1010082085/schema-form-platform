@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { Node } from '@vue-flow/core'
 import SectionToggle from './SectionToggle.vue'
 import FieldRow from './FieldRow.vue'
+import HintText from './HintText.vue'
 import SubProcessSelector from '../SubProcessSelector.vue'
 import { flowApi } from '../../api/flowApi'
 import styles from './SubProcessPanel.module.scss'
@@ -285,77 +286,82 @@ function statusLabel(status: string): string {
 
     <!-- KV mode -->
     <template v-if="mappingMode === 'kv'">
-      <FieldRow label="输入变量映射" hint="将父流程变量传入子流程，支持 ${variable} 表达式">
-        <div :class="styles['mapping-section']">
-          <div
-            v-for="(entry, i) in inputEntries"
-            :key="i"
-            :class="styles['mapping-row']"
-          >
-            <el-input
-              :model-value="entry.key"
-              placeholder="子流程变量"
-              size="small"
-              :class="styles['mapping-key']"
-              @input="updateInputKey(i, $event)"
-            />
-            <el-input
-              :model-value="entry.value"
-              placeholder="${parentVar}"
-              size="small"
-              :class="styles['mapping-value']"
-              @input="updateInputValue(i, $event)"
-            />
-            <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeInputEntry(i)" />
-          </div>
-          <el-button
-            :class="styles['mapping-add']"
+      <!-- 输入变量映射 -->
+      <div :class="styles['mapping-label']">
+        <span :class="styles['mapping-label-text']">输入变量映射</span>
+        <HintText>将父流程变量传入子流程，支持 ${variable} 表达式</HintText>
+      </div>
+      <div :class="styles['mapping-section']">
+        <div
+          v-for="(entry, i) in inputEntries"
+          :key="i"
+          :class="styles['mapping-row']"
+        >
+          <el-input
+            :model-value="entry.key"
+            placeholder="子流程变量"
             size="small"
-            link
-            type="primary"
-            @click="addInputEntry"
-          >
-            <AppIcon name="plus" />
-            添加映射
-          </el-button>
+            :class="styles['mapping-key']"
+            @input="updateInputKey(i, $event)"
+          />
+          <el-input
+            :model-value="entry.value"
+            placeholder="${parentVar}"
+            size="small"
+            :class="styles['mapping-value']"
+            @input="updateInputValue(i, $event)"
+          />
+          <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeInputEntry(i)" />
         </div>
-      </FieldRow>
+        <el-button
+          :class="styles['mapping-add']"
+          size="small"
+          link
+          type="primary"
+          @click="addInputEntry"
+        >
+          <AppIcon name="plus" />
+          添加映射
+        </el-button>
+      </div>
 
-      <FieldRow label="输出变量映射">
-        <div :class="styles['mapping-section']">
-          <div
-            v-for="(entry, i) in outputEntries"
-            :key="i"
-            :class="styles['mapping-row']"
-          >
-            <el-input
-              :model-value="entry.key"
-              placeholder="父流程变量"
-              size="small"
-              :class="styles['mapping-key']"
-              @input="updateOutputKey(i, $event)"
-            />
-            <el-input
-              :model-value="entry.value"
-              placeholder="${childOutput}"
-              size="small"
-              :class="styles['mapping-value']"
-              @input="updateOutputValue(i, $event)"
-            />
-            <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeOutputEntry(i)" />
-          </div>
-          <el-button
-            :class="styles['mapping-add']"
+      <!-- 输出变量映射 -->
+      <div :class="styles['mapping-label']">
+        <span :class="styles['mapping-label-text']">输出变量映射</span>
+      </div>
+      <div :class="styles['mapping-section']">
+        <div
+          v-for="(entry, i) in outputEntries"
+          :key="i"
+          :class="styles['mapping-row']"
+        >
+          <el-input
+            :model-value="entry.key"
+            placeholder="父流程变量"
             size="small"
-            link
-            type="primary"
-            @click="addOutputEntry"
-          >
-            <AppIcon name="plus" />
-            添加映射
-          </el-button>
+            :class="styles['mapping-key']"
+            @input="updateOutputKey(i, $event)"
+          />
+          <el-input
+            :model-value="entry.value"
+            placeholder="${childOutput}"
+            size="small"
+            :class="styles['mapping-value']"
+            @input="updateOutputValue(i, $event)"
+          />
+          <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeOutputEntry(i)" />
         </div>
-      </FieldRow>
+        <el-button
+          :class="styles['mapping-add']"
+          size="small"
+          link
+          type="primary"
+          @click="addOutputEntry"
+        >
+          <AppIcon name="plus" />
+          添加映射
+        </el-button>
+      </div>
     </template>
 
     <!-- JSON mode -->
