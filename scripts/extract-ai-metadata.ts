@@ -1,6 +1,6 @@
 /**
  * 构建时提取脚本 — 从 editor widget configs 和 flow node definitions
- * 提取 AI 所需的元数据，生成 packages/shared/ai/metadata.json
+ * 提取 AI 所需的元数据，生成 packages/platform/ai/shared/metadata.json
  *
  * 运行：pnpm extract:ai-metadata
  * 自动接入：build:server 和 dev:server 前自动执行
@@ -109,7 +109,7 @@ async function loadWidgetConfigs(): Promise<WidgetAIMetadata[]> {
   const widgets: WidgetAIMetadata[] = []
 
   // 用 fs 扫描 widget 目录
-  const widgetsDir = join(ROOT, 'packages/editor/src/widgets')
+  const widgetsDir = join(ROOT, 'packages/platform/editor/src/widgets')
   const entries = readdirSync(widgetsDir, { withFileTypes: true })
 
   for (const entry of entries) {
@@ -202,8 +202,8 @@ async function loadFlowNodeMetadata(): Promise<FlowNodeAIMetadata[]> {
   const nodes: FlowNodeAIMetadata[] = []
 
   // 从 flow/shared 导入类型定义
-  const bpmn = await import('../packages/flow/shared/src/types/bpmn.js')
-  const constants = await import('../packages/flow/shared/src/engine/constants.js')
+  const bpmn = await import('../packages/platform/flow/shared/src/types/bpmn.js')
+  const constants = await import('../packages/platform/flow/shared/src/engine/constants.js')
 
   const BpmnElementType = bpmn.BpmnElementType
   const DEFAULT_NODE_SIZES = constants.DEFAULT_NODE_SIZES
@@ -328,8 +328,8 @@ async function main() {
     systems: extractSystemTypes(),
   }
 
-  // 输出到 packages/shared/ai/metadata.json
-  const outDir = resolve(ROOT, 'packages/shared/ai')
+  // 输出到 packages/platform/ai/shared/metadata.json
+  const outDir = resolve(ROOT, 'packages/platform/ai/shared')
   mkdirSync(outDir, { recursive: true })
 
   const outPath = resolve(outDir, 'metadata.json')

@@ -1,13 +1,13 @@
 {
-  "version": "2026-06-17",
-  "generatedAt": "2026-06-17T08:05:35.182Z",
+  "version": "2026-06-24",
+  "generatedAt": "2026-06-24T05:43:01.527Z",
   "widgets": [
     {
       "type": "dialog",
       "group": "container",
       "canHaveChildren": true,
       "displayName": "弹窗容器",
-      "description": "弹窗容器，支持编辑模式和微前端模式，可配置标题、宽度、按钮",
+      "description": "弹窗容器，支持编辑模式和微应用模式，可配置标题、宽度、按钮",
       "defaultProps": {
         "title": "弹窗标题",
         "width": "600px",
@@ -320,6 +320,150 @@
       ]
     },
     {
+      "type": "advanced-table",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "高级表格",
+      "description": "业务数据表格，支持列渲染、行内按钮、工具栏、批量操作、事件绑定、参数传递",
+      "defaultProps": {
+        "columns": [
+          {
+            "prop": "name",
+            "label": "姓名",
+            "width": 120,
+            "render": "text"
+          },
+          {
+            "prop": "status",
+            "label": "状态",
+            "width": 100,
+            "render": "tag",
+            "colorMap": {
+              "启用": "success",
+              "停用": "danger"
+            }
+          },
+          {
+            "prop": "action",
+            "label": "操作",
+            "width": 160,
+            "fixed": "right",
+            "render": "buttons",
+            "buttons": [
+              {
+                "key": "edit",
+                "label": "编辑",
+                "type": "primary",
+                "size": "small"
+              },
+              {
+                "key": "delete",
+                "label": "删除",
+                "type": "danger",
+                "size": "small",
+                "confirm": "确认删除？"
+              }
+            ]
+          }
+        ],
+        "toolbar": [
+          {
+            "key": "add",
+            "label": "新增",
+            "type": "primary",
+            "icon": "plus"
+          },
+          {
+            "key": "batchDelete",
+            "label": "批量删除",
+            "type": "danger",
+            "visibleCondition": "selectedRows.length > 0"
+          }
+        ],
+        "stripe": true,
+        "border": true,
+        "height": 350,
+        "sortable": false,
+        "pagination": {
+          "enabled": true,
+          "pageSize": 20,
+          "pageSizes": [
+            10,
+            20,
+            50,
+            100
+          ]
+        },
+        "selection": {
+          "enabled": true
+        }
+      },
+      "keyProps": [
+        "columns",
+        "toolbar",
+        "selection.enabled",
+        "stripe",
+        "border",
+        "height",
+        "sortable",
+        "pagination.enabled",
+        "pagination.pageSize"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "表格数据"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "当前选中的行数据"
+        },
+        {
+          "key": "selectedCount",
+          "type": "number",
+          "description": "选中行数"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "重新加载表格数据"
+        },
+        {
+          "name": "set-data",
+          "description": "设置表格数据",
+          "params": {
+            "data": "数据数组"
+          }
+        },
+        {
+          "name": "set-search-params",
+          "description": "设置搜索参数",
+          "params": {
+            "params": "参数对象"
+          }
+        },
+        {
+          "name": "clear-selection",
+          "description": "清空行选择"
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "api",
+        "variables"
+      ]
+    },
+    {
       "type": "autocomplete",
       "group": "form",
       "canHaveChildren": false,
@@ -588,6 +732,11 @@
           "key": "data",
           "type": "object",
           "description": "描述列表数据对象"
+        },
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
         }
       ],
       "receivableEvents": [],
@@ -636,6 +785,52 @@
       "configPanels": [
         "events",
         "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "micro-app-container",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "微应用容器",
+      "description": "通过 qiankun loadMicroApp 动态加载子应用，支持沙箱隔离、参数传递、超时兜底",
+      "defaultProps": {
+        "microappName": "",
+        "microappEntry": "",
+        "microappSandbox": true,
+        "microappStyleIsolation": "experimental",
+        "microappTimeout": 10000,
+        "microappFallback": "子应用加载失败",
+        "microappRouteBase": "",
+        "microappRoute": "",
+        "height": "100%",
+        "variables": {}
+      },
+      "keyProps": [],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "containerRef",
+          "type": "object",
+          "description": "容器引用，可用于 postMessage"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "message",
+          "description": "接收微应用消息"
+        },
+        {
+          "name": "ready",
+          "description": "微应用加载完成"
+        },
+        {
+          "name": "error",
+          "description": "微应用加载失败"
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
         "variables"
       ]
     },
@@ -1259,144 +1454,6 @@
       "eventTargets": [],
       "configPanels": [
         "events"
-      ]
-    },
-    {
-      "type": "editable-table",
-      "group": "table",
-      "canHaveChildren": false,
-      "displayName": "可编辑表格",
-      "description": "可编辑表格，支持动态增删行、列配置",
-      "defaultProps": {
-        "title": "可编辑表格",
-        "addButtonText": "添加行",
-        "showAddButton": true,
-        "showDeleteButton": true,
-        "maxRows": 0
-      },
-      "keyProps": [
-        "title",
-        "addButtonText",
-        "showAddButton",
-        "columns"
-      ],
-      "defaultSize": {
-        "w": 600,
-        "h": 300
-      },
-      "exposedValues": [
-        {
-          "key": "tableData",
-          "type": "array",
-          "description": "表格数据"
-        }
-      ],
-      "receivableEvents": [],
-      "eventTargets": [],
-      "configPanels": [
-        "events",
-        "rules",
-        "variables"
-      ]
-    },
-    {
-      "type": "search-list",
-      "group": "table",
-      "canHaveChildren": false,
-      "displayName": "搜索列表",
-      "description": "搜索列表复合组件，包含搜索表单、数据表格、分页、行选择、批量操作",
-      "defaultProps": {
-        "title": "列表",
-        "pageSize": 10,
-        "showPagination": true,
-        "stripe": true,
-        "border": true,
-        "searchFields": [],
-        "columns": [],
-        "sortable": false,
-        "selection": {
-          "enabled": false
-        },
-        "batchActions": []
-      },
-      "keyProps": [
-        "title",
-        "searchFields",
-        "columns",
-        "sortable",
-        "pageSize",
-        "showPagination",
-        "stripe",
-        "border",
-        "selection.enabled",
-        "batchActions"
-      ],
-      "defaultSize": {
-        "w": 600,
-        "h": 500
-      },
-      "exposedValues": [
-        {
-          "key": "loading",
-          "type": "boolean",
-          "description": "加载状态"
-        },
-        {
-          "key": "tableData",
-          "type": "array",
-          "description": "列表数据"
-        },
-        {
-          "key": "selectedRows",
-          "type": "array",
-          "description": "已选行数据"
-        },
-        {
-          "key": "selectedCount",
-          "type": "number",
-          "description": "已选行数"
-        }
-      ],
-      "receivableEvents": [
-        {
-          "name": "refresh",
-          "description": "重新加载列表数据"
-        },
-        {
-          "name": "reset-search",
-          "description": "重置搜索条件并刷新"
-        },
-        {
-          "name": "clear-selection",
-          "description": "清空行选择"
-        }
-      ],
-      "eventTargets": [
-        {
-          "id": "search",
-          "label": "搜索按钮",
-          "description": "点击搜索时触发"
-        },
-        {
-          "id": "reset",
-          "label": "重置按钮",
-          "description": "点击重置时触发"
-        },
-        {
-          "id": "selection-change",
-          "label": "行选择变化",
-          "description": "行选择状态变化时触发"
-        },
-        {
-          "id": "sort-change",
-          "label": "排序变化",
-          "description": "点击排序时触发"
-        }
-      ],
-      "configPanels": [
-        "events",
-        "api",
-        "variables"
       ]
     },
     {
