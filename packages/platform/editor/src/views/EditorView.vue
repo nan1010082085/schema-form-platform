@@ -12,8 +12,11 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { loadMicroApp } from 'qiankun'
+import type { MicroApp } from 'qiankun'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import { useSnapshot } from '@/composables/useSnapshot'
 import { useAutoSave } from '@/composables/useAutoSave'
 import { useBoardStore } from '@/stores/board'
@@ -50,7 +53,7 @@ const apiStore = useApiStore()
 const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
-const aiIframeRef = ref<HTMLIFrameElement>()
+const aiContainerRef = ref<HTMLElement>()
 
 // 自动保存：脏数据 60 秒后自动触发保存（偏好持久化到 localStorage）
 const autoSaveEnabled = ref(localStorage.getItem('editor_auto_save') !== 'off')
@@ -74,7 +77,16 @@ const showLogPanel = ref(false)
 const showCodePanel = ref(false)
 const showAiDrawer = ref(false)
 const showVersionCompare = ref(false)
-const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
+
+// AI micro-app 配置
+const aiEntryUrl = (() => {
+  const config = APP_CONFIGS.ai
+  const isDev = import.meta.env.DEV
+  return isDev
+    ? `http://localhost:${config.devPort}/`
+    : `${window.location.origin}${config.basePath}`
+})()
+let aiMicroApp: MicroApp | null = null
 
 // ================================================================
 // Mode
@@ -234,35 +246,49 @@ onMounted(async () => {
 })
 
 // ================================================================
-// AI iframe 通信
+// AI micro-app 管理
 // ================================================================
 
 function sendContextToAi() {
-  const iframe = aiIframeRef.value
-  if (!iframe?.contentWindow) return
-
-  const context = {
+  window.postMessage({
     type: 'ai:set-context',
     payload: {
       source: 'editor',
       schemaId: boardStore.id,
       editorMode: editorStore.mode,
     },
-  }
-
-  const currentSchema = {
+  }, '*')
+  window.postMessage({
     type: 'ai:current-schema',
     payload: widgetStore.widgets,
+  }, '*')
+}
+
+// 监听 AI drawer 开关，动态加载/卸载 micro-app
+watch(showAiDrawer, async (open) => {
+  if (open) {
+    await nextTick()
+    if (aiContainerRef.value && !aiMicroApp) {
+      aiMicroApp = loadMicroApp({
+        name: 'ai-sidebar',
+        entry: aiEntryUrl,
+        container: aiContainerRef.value,
+        props: { agent: 'editor' },
+      }, {
+        sandbox: { experimentalStyleIsolation: true },
+      })
+      // micro-app 加载后发送上下文
+      aiMicroApp.mountPromise.then(() => {
+        setTimeout(sendContextToAi, 300)
+      })
+    }
+  } else {
+    if (aiMicroApp) {
+      aiMicroApp.unmount()
+      aiMicroApp = null
+    }
   }
-
-  iframe.contentWindow.postMessage(context, '*')
-  iframe.contentWindow.postMessage(currentSchema, '*')
-}
-
-function onAiIframeLoad() {
-  // 延迟发送，确保 AI sidebar 已准备好接收消息
-  setTimeout(sendContextToAi, 500)
-}
+})
 
 // 监听 Schema 变化，实时更新 AI sidebar
 watch(
@@ -285,6 +311,11 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 window.addEventListener('beforeunload', handleBeforeUnload)
 onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  // 卸载 AI micro-app
+  if (aiMicroApp) {
+    aiMicroApp.unmount()
+    aiMicroApp = null
+  }
 })
 
 // ================================================================
@@ -977,16 +1008,7 @@ function handleClearCanvas() {
         v-if="mode === 'edit'"
         :class="['editor-view__ai-drawer', { 'editor-view__ai-drawer--open': showAiDrawer }]"
       >
-        <div class="editor-view__ai-inner">
-          <iframe
-            v-if="showAiDrawer"
-            ref="aiIframeRef"
-            :src="aiBaseUrl + '?agent=editor'"
-            class="editor-view__ai-iframe"
-            frameborder="0"
-            @load="onAiIframeLoad"
-          />
-        </div>
+        <div ref="aiContainerRef" class="editor-view__ai-inner" />
       </div>
     </div>
 
@@ -1407,13 +1429,6 @@ function handleClearCanvas() {
   &__ai-inner {
     width: 400px;
     height: 100%;
-  }
-
-  &__ai-iframe {
-    width: 400px;
-    height: 100%;
-    border: none;
-    display: block;
   }
 
   &__code-overlay {

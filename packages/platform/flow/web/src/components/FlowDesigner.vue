@@ -83,14 +83,7 @@
         v-if="store.mode === 'design'"
         :class="[styles.drawer, styles.aiDrawer, { [styles.drawerClosed]: !showAiDrawer }]"
       >
-        <div :class="styles.aiDrawerInner">
-          <iframe
-            v-if="showAiDrawer"
-            :src="aiBaseUrl + '?agent=flow'"
-            :class="styles.aiIframe"
-            @load="onAiIframeLoad"
-          />
-        </div>
+        <div ref="aiContainerRef" :class="styles.aiDrawerInner" />
       </div>
     </div>
 
@@ -175,12 +168,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Location } from '@element-plus/icons-vue'
+import { loadMicroApp } from 'qiankun'
+import type { MicroApp } from 'qiankun'
 import { connect as connectSocket, onAiApply, onAiPublished } from '@schema-form/socket'
 import type { AiApplyEvent, AiPublishedEvent } from '@schema-form/socket'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import {
   exportToBpmnXml,
   importFromBpmnXml,
@@ -241,59 +237,59 @@ const currentVersion = ref('')
 const showLeftPanel = ref(true)
 const showRightPanel = ref(true)
 const showAiDrawer = ref(false)
-const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
+const aiContainerRef = ref<HTMLElement>()
 
-function handleAiDataChange(data: Record<string, unknown>) {
-  const { type, payload } = data as { type: string; payload: unknown }
-  if (type === 'ai:published' && payload) {
-    ElMessage.success('AI 已发布流程')
-  }
-  if (type === 'ai:open-in-editor' && payload) {
-    const { flow } = payload as { flow: FlowGraph | null }
-    if (flow && flow.nodes && flow.edges) {
-      graphStore.loadFromFlowGraph(flow)
-      ElMessage.success('已加载 AI 生成的流程')
-    }
-  }
-}
-
-function onAiIframeMessage(event: MessageEvent) {
-  const data = event.data as Record<string, unknown> | undefined
-  if (!data || typeof data !== 'object') return
-  if (data.type === 'ai:datachange') {
-    handleAiDataChange(data.payload as Record<string, unknown>)
-  }
-}
+// AI micro-app 配置
+const aiEntryUrl = (() => {
+  const config = APP_CONFIGS.ai
+  const isDev = import.meta.env.DEV
+  return isDev
+    ? `http://localhost:${config.devPort}/`
+    : `${window.location.origin}${config.basePath}`
+})()
+let aiMicroApp: MicroApp | null = null
 
 function sendContextToAi() {
-  const iframe = document.querySelector(`.${styles.aiIframe}`) as HTMLIFrameElement
-  if (!iframe?.contentWindow) return
-
-  const context = {
+  window.postMessage({
     type: 'ai:set-context',
     payload: {
       source: 'flow',
       flowId: definitionId.value || undefined,
     },
-  }
-
-  const currentFlow = {
+  }, '*')
+  window.postMessage({
     type: 'ai:current-flow',
     payload: {
       nodes: graphStore.nodes,
       edges: graphStore.edges,
     },
+  }, '*')
+}
+
+// 监听 AI drawer 开关，动态加载/卸载 micro-app
+watch(showAiDrawer, async (open) => {
+  if (open) {
+    await nextTick()
+    if (aiContainerRef.value && !aiMicroApp) {
+      aiMicroApp = loadMicroApp({
+        name: 'ai-sidebar',
+        entry: aiEntryUrl,
+        container: aiContainerRef.value,
+        props: { agent: 'flow' },
+      }, {
+        sandbox: { experimentalStyleIsolation: true },
+      })
+      aiMicroApp.mountPromise.then(() => {
+        setTimeout(sendContextToAi, 300)
+      })
+    }
+  } else {
+    if (aiMicroApp) {
+      aiMicroApp.unmount()
+      aiMicroApp = null
+    }
   }
-
-  iframe.contentWindow.postMessage(context, '*')
-  iframe.contentWindow.postMessage(currentFlow, '*')
-}
-
-function onAiIframeLoad() {
-  window.addEventListener('message', onAiIframeMessage)
-  // 延迟发送上下文，确保 AI sidebar 已准备好接收消息
-  setTimeout(sendContextToAi, 500)
-}
+})
 
 // 监听 Flow 变化，实时更新 AI sidebar
 watch(
@@ -427,7 +423,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('flow:save', handleFlowSave)
-  window.removeEventListener('message', onAiIframeMessage)
+  // 卸载 AI micro-app
+  if (aiMicroApp) {
+    aiMicroApp.unmount()
+    aiMicroApp = null
+  }
 })
 
 // Socket: 监听 AI 推送事件

@@ -27,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. 所有公共逻辑、工具方法、业务能力统一使用组合式 API（useXXX）
 3. 彻底废弃零散独立 utils 函数
 4. UI 组件只做渲染，不写复杂业务逻辑
+5. 每个项目的 API 接口必须聚合到 `src/api/` 目录下统一定义（如 `authApi.ts`、`menuApi.ts`），组件/stores/composables 禁止直接调用 `fetch()` 或 `apiClient`，只能 import `src/api/` 下导出的函数。标杆：`platform/ai/app/src/api/aiApi.ts`
 
 ### 开发质量强制规则
 

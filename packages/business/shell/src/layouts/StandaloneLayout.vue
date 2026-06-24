@@ -1,16 +1,47 @@
 <script setup lang="ts">
 /**
- * StandaloneLayout — 独立页签布局
+ * StandaloneLayout — full-screen micro-app container
  *
- * 完全无壳容器：无侧边栏、无顶部导航、无面包屑。
- * 适用于新标签页打开微应用，或嵌入外部系统的场景。
- * 仅渲染 <router-view />，由 AppContainer 决定加载哪个微应用。
+ * No sidebar, no header, no chrome.
+ * Mounts a micro-app directly via loadMicroApp.
+ * Used for apps configured with layout: 'without-menu' in standalone mode.
  */
+import { computed } from 'vue'
+import { useMicroAppStore } from '@/stores/microApp'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
+import MicroAppContainer from '@/components/MicroAppContainer.vue'
+
+const props = defineProps<{
+  appName: string
+}>()
+
+const microAppStore = useMicroAppStore()
+
+const appEntry = computed(() => {
+  const entry = microAppStore.getAppEntry(props.appName)
+  if (entry) return entry
+  // Fallback to APP_CONFIGS
+  const config = APP_CONFIGS[props.appName as keyof typeof APP_CONFIGS]
+  if (config) {
+    const isDev = import.meta.env.DEV
+    return isDev
+      ? `//localhost:${config.devPort}${config.basePath}`
+      : `//${window.location.host}${config.basePath}`
+  }
+  return ''
+})
 </script>
 
 <template>
   <div :class="$style.standalone">
-    <router-view />
+    <MicroAppContainer
+      v-if="props.appName && appEntry"
+      :app-name="props.appName"
+      :entry="appEntry"
+    />
+    <div v-else :class="$style.notFound">
+      <p>应用 "{{ props.appName }}" 未找到</p>
+    </div>
   </div>
 </template>
 
@@ -20,5 +51,15 @@
   height: 100vh;
   overflow: hidden;
   background: var(--bg-color-page);
+}
+
+.notFound {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-color-secondary);
+  font-size: 16px;
 }
 </style>

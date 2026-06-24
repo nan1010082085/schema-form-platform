@@ -1,9 +1,14 @@
 /**
  * Shell router
  *
- * 子应用路由匹配规则（qiankun activeRule 必须与实际 URL 一致）：
- * - 带菜单：/{appName}/* — 嵌入 DynamicLayout，qiankun 自动挂载
- * - 独立页签：/standalone/{appName}/*
+ * Route structure:
+ * - /              → DynamicLayout → HomeView (sidebar shell)
+ * - /app/:app/*    → DynamicLayout → ClassicSidebarLayout + MicroAppContainer
+ * - /standalone/:app/* → DynamicLayout → StandaloneLayout + MicroAppContainer
+ * - /login         → LoginView (public)
+ * - /sso/callback  → SSOCallbackView (public)
+ *
+ * Layout selection is driven by micro-app config (with-menu / without-menu).
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
@@ -24,7 +29,7 @@ const router = createRouter({
       meta: { public: true },
     },
 
-    // ---- SSO 回调 ----
+    // ---- SSO callback ----
     {
       path: '/sso/callback',
       name: 'sso-callback',
@@ -32,7 +37,7 @@ const router = createRouter({
       meta: { public: true },
     },
 
-    // ---- 带菜单容器 ----
+    // ---- Dynamic layout (handles all app routes) ----
     {
       path: '/',
       component: () => import('@/layouts/DynamicLayout.vue'),
@@ -40,39 +45,22 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { title: '首页' },
+          component: () => import('@/views/HomeView.vue'),
         },
-        // 子应用路由：/{appName}/*
-        // qiankun activeRule 匹配此路径后自动挂载对应子应用到 #micro-container
         {
-          path: ':app/:pathMatch(.*)*',
+          path: 'app/:app/:pathMatch(.*)*',
           name: 'app-embed',
-          component: () => import('@/components/AppContainer.vue'),
-          meta: { withMenu: true },
+          component: () => import('@/views/HomeView.vue'),
         },
-      ],
-    },
-
-    // ---- 独立页签容器 ----
-    {
-      path: '/standalone',
-      component: () => import('@/layouts/StandaloneLayout.vue'),
-      children: [
         {
-          path: ':app/:pathMatch(.*)*',
+          path: 'standalone/:app/:pathMatch(.*)*',
           name: 'standalone-app',
-          component: () => import('@/components/AppContainer.vue'),
-        },
-        {
-          path: '',
-          name: 'standalone-entry',
-          component: () => import('@/components/StandaloneEntry.vue'),
+          component: () => import('@/views/HomeView.vue'),
         },
       ],
     },
 
-    // ---- 兜底 ----
+    // ---- Catch-all ----
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',

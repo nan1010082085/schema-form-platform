@@ -1,27 +1,51 @@
 /**
- * 经典侧边栏布局
+ * ClassicSidebarLayout — classic sidebar layout
  *
- * 风格 A: 深色侧边栏 + 顶部 Header + 内容区
- * 适用于管理后台、B 端系统
+ * Style: dark sidebar + top header + content area.
+ * When withoutMenu is true, renders full-screen micro-app without sidebar/header.
+ * The withoutMenu prop is controlled by DynamicLayout based on micro-app config.
  */
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLayoutStore } from '@schema-form/business-shared/stores/layout'
+import { useMicroAppStore } from '@/stores/microApp'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import SideMenu from '@/components/SideMenu.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import UserDropdown from '@/components/UserDropdown.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
+import MicroAppContainer from '@/components/MicroAppContainer.vue'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+
+const props = defineProps<{
+  withoutMenu?: boolean
+}>()
 
 const route = useRoute()
 const layoutStore = useLayoutStore()
+const microAppStore = useMicroAppStore()
 
-// 恢复折叠状态
 layoutStore.restoreCollapsed()
 
-const withoutMenu = computed(() => route.meta?.withoutMenu === true)
+const currentApp = computed(() => route.params.app as string || '')
+
+const appEntry = computed(() => {
+  if (!currentApp.value) return ''
+  // Try micro-app store first
+  const entry = microAppStore.getAppEntry(currentApp.value)
+  if (entry) return entry
+  // Fallback to APP_CONFIGS
+  const config = APP_CONFIGS[currentApp.value as keyof typeof APP_CONFIGS]
+  if (config) {
+    const isDev = import.meta.env.DEV
+    return isDev
+      ? `//localhost:${config.devPort}${config.basePath}`
+      : `//${window.location.host}${config.basePath}`
+  }
+  return ''
+})
 
 function toggleCollapse() {
   layoutStore.toggleCollapse()
@@ -29,27 +53,28 @@ function toggleCollapse() {
 </script>
 
 <template>
-  <!-- 无菜单模式：全屏微应用 -->
-  <div v-if="withoutMenu" :class="$style.layout">
+  <!-- Without menu: full-screen micro-app -->
+  <div v-if="props.withoutMenu" :class="$style.layout">
     <main :class="$style.main">
-      <router-view />
+      <MicroAppContainer
+        v-if="currentApp && appEntry"
+        :app-name="currentApp"
+        :entry="appEntry"
+      />
+      <router-view v-else />
     </main>
   </div>
 
-  <!-- 侧边栏布局 -->
+  <!-- Sidebar layout -->
   <div v-else :class="$style.layout">
-    <!-- 深色侧边栏 -->
     <SideMenu
       :collapsed="layoutStore.collapsed"
       @toggle-collapse="toggleCollapse"
     />
 
-    <!-- 内容区 -->
     <div :class="$style.contentArea">
-      <!-- 顶部 Header -->
       <header :class="$style.header">
         <div :class="$style.headerLeft">
-          <!-- 移动端菜单按钮 -->
           <el-button
             :class="$style.mobileMenuBtn"
             text
@@ -57,23 +82,22 @@ function toggleCollapse() {
           >
             <AppIcon name="menu" :size="18" />
           </el-button>
-
-          <!-- 面包屑 -->
           <Breadcrumb />
         </div>
 
         <div :class="$style.headerRight">
-          <!-- 全局搜索 -->
           <GlobalSearch />
-
-          <!-- 用户下拉 -->
           <UserDropdown />
         </div>
       </header>
 
-      <!-- 主内容区 -->
       <main :class="$style.main">
-        <router-view />
+        <MicroAppContainer
+          v-if="currentApp && appEntry"
+          :app-name="currentApp"
+          :entry="appEntry"
+        />
+        <router-view v-else />
       </main>
     </div>
   </div>
@@ -128,7 +152,6 @@ function toggleCollapse() {
   background: var(--bg-color-page);
 }
 
-/* 响应式：移动端 */
 @media (max-width: 900px) {
   .mobileMenuBtn {
     display: flex;

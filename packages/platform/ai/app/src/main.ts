@@ -1,46 +1,41 @@
 /**
  * AI 应用主入口
  *
- * 独立运行时使用路由，展示所有配置页面。
- * qiankun 模式下使用 AiSidebarView。
+ * 使用 createQiankunApp 统一注册，支持 qiankun 和 standalone 两种模式。
  */
-
-import { createApp } from 'vue'
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import '@schema-form/platform-shared/styles/theme.scss'
 import '@schema-form/platform-shared/styles/css-variables.scss'
 
+import { createQiankunApp } from '@schema-form/platform-shared/qiankun/createQiankunApp'
+import { useQiankun } from '@schema-form/platform-shared/qiankun'
+import { setupElementPlus } from '@schema-form/platform-shared/config/element'
+
 import App from './App.vue'
 import { createAiRouter } from './router'
-import { setupElementPlus } from '@schema-form/platform-shared/config/element'
 import { setTokenProvider } from './api/aiApi'
 
-// 设置 token 提供者
-setTokenProvider(() => localStorage.getItem('sfp_access_token'))
+const { getGlobalState } = useQiankun()
 
-// 创建应用
-const app = createApp(App)
+// 设置 token 提供者：从 qiankun 全局状态读取
+setTokenProvider(() => {
+  const state = getGlobalState()
+  return (state.token as string) || localStorage.getItem('sfp_access_token')
+})
 
-// 设置 Element Plus
-setupElementPlus(app)
-
-// 创建路由
 const router = createAiRouter()
-app.use(router)
 
-// 挂载应用
-app.mount('#app')
+const { bootstrap, mount, unmount } = createQiankunApp({
+  name: 'ai',
+  rootComponent: App,
+  plugins: [router],
+  getToken: () => {
+    const state = getGlobalState()
+    return (state.token as string) || null
+  },
+  extraSetup: (app) => {
+    setupElementPlus(app)
+  },
+})
 
-// 导出 qiankun 生命周期（如果需要）
-export function bootstrap() {
-  console.log('[ai] bootstrap')
-}
-
-export function mount() {
-  console.log('[ai] mount')
-}
-
-export function unmount() {
-  console.log('[ai] unmount')
-}
+export { bootstrap, mount, unmount }
