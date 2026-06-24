@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { ChatSettings, ReplyLanguage, ReplyStyle, CodeCommentMode, HistorySummaryMode } from '@/types'
-import { checkAIHealth, getModelConfigs, type AIHealthResponse, type ModelConfigItem } from '@/api/aiApi'
+import { checkAIHealth, type AIHealthResponse } from '@/api/aiApi'
 
 export interface AiChatSettingsProps {
   visible: boolean
@@ -18,30 +18,10 @@ const emit = defineEmits<{
 // Local copy for editing
 const localSettings = ref<ChatSettings>(JSON.parse(JSON.stringify(props.settings)))
 
-// Model config state
-const modelConfigs = ref<ModelConfigItem[]>([])
-const modelConfigsLoading = ref(false)
-const selectedModelId = ref<string>('')
-
 // AI health state
 const healthData = ref<AIHealthResponse | null>(null)
 const healthLoading = ref(false)
 const healthError = ref(false)
-
-async function fetchModelConfigs(): Promise<void> {
-  modelConfigsLoading.value = true
-  try {
-    modelConfigs.value = await getModelConfigs()
-    const defaultConfig = modelConfigs.value.find(c => c.isDefault)
-    if (!selectedModelId.value && defaultConfig) {
-      selectedModelId.value = defaultConfig.id
-    }
-  } catch {
-    modelConfigs.value = []
-  } finally {
-    modelConfigsLoading.value = false
-  }
-}
 
 async function fetchHealth(): Promise<void> {
   healthLoading.value = true
@@ -60,9 +40,7 @@ async function fetchHealth(): Promise<void> {
 watch(() => props.visible, (val) => {
   if (val) {
     localSettings.value = JSON.parse(JSON.stringify(props.settings))
-    selectedModelId.value = (props.settings as unknown as Record<string, unknown>).selectedModelId as string ?? ''
     fetchHealth()
-    fetchModelConfigs()
   }
 })
 
@@ -91,9 +69,7 @@ function handleClose(): void {
 }
 
 function handleSave(): void {
-  const saved = JSON.parse(JSON.stringify(localSettings.value)) as Record<string, unknown>
-  saved.selectedModelId = selectedModelId.value
-  emit('update:settings', saved as unknown as ChatSettings)
+  emit('update:settings', JSON.parse(JSON.stringify(localSettings.value)))
   emit('update:visible', false)
 }
 </script>
@@ -148,31 +124,6 @@ function handleSave(): void {
                       <span :class="$style.providerModel">{{ p.model }}</span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card: Model Selection -->
-            <div :class="$style.card">
-              <div :class="$style.cardTitle">模型选择</div>
-              <div :class="$style.cardBody">
-                <div v-if="modelConfigsLoading" :class="$style.statusRow">
-                  <span :class="[$style.statusDot, $style.statusChecking]" />
-                  <span :class="$style.statusText">加载模型列表...</span>
-                </div>
-                <div v-else-if="modelConfigs.length === 0" :class="$style.statusRow">
-                  <span :class="$style.statusText">暂无可用模型，请在管理后台配置</span>
-                </div>
-                <div v-else :class="$style.formItem">
-                  <el-select
-                    v-model:value="selectedModelId"
-                    placeholder="选择模型"
-                    style="width: 100%"
-                    :options="modelConfigs.map(config => ({
-                      label: `${config.name} (${config.model})`,
-                      value: config.id,
-                    }))"
-                  />
                 </div>
               </div>
             </div>
