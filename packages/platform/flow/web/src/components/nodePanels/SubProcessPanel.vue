@@ -277,11 +277,10 @@ function statusLabel(status: string): string {
       <el-radio-group
         :model-value="mappingMode"
         size="small"
-        :class="styles['mapping-mode-switch']"
         @change="onMappingModeChange"
       >
-        <el-radio-button value="kv">键值对</el-radio-button>
-        <el-radio-button value="json">JSON</el-radio-button>
+        <el-radio value="kv">键值对</el-radio>
+        <el-radio value="json">JSON</el-radio>
       </el-radio-group>
     </div>
 
