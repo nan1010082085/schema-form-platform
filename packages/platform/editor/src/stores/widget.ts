@@ -14,7 +14,7 @@
  * 这是 Widget 数据的唯一 source of truth。
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import type { Widget, ContainerType } from '../widgets/base/types'
 import { getAllContainerTypes } from '../composables/useConstant'
 
@@ -151,7 +151,7 @@ export const useWidgetStore = defineStore('widget', () => {
   // 数据
   // ================================================================
 
-  const widgets = ref<Widget[]>([])
+  const widgets = shallowRef<Widget[]>([])
 
   // ================================================================
   // Widget 索引（O(1) 查找，避免递归 DFS）
@@ -260,7 +260,9 @@ export const useWidgetStore = defineStore('widget', () => {
     if (!widget.position || typeof widget.position !== 'object') {
       widget.position = { ...DEFAULT_POSITION }
     }
-    widget.position.zIndex = getMaxZIndex() + 1
+    const toAdd: Widget[] = [widget]
+    let nextZ = getMaxZIndex() + 1
+    widget.position.zIndex = nextZ++
     // 容器禁止嵌套：将被添加容器的子容器提升到根级
     if (widget.children?.length) {
       const promoted: Widget[] = []
@@ -276,18 +278,18 @@ export const useWidgetStore = defineStore('widget', () => {
         }
       }
       widget.children = kept
-      widgets.value.push(widget)
       for (const p of promoted) {
-        p.position.zIndex = getMaxZIndex() + 1
-        widgets.value.push(p)
+        p.position.zIndex = nextZ++
+        toAdd.push(p)
       }
-    } else {
-      widgets.value.push(widget)
     }
+    widgets.value = [...widgets.value, ...toAdd]
   }
 
   function removeWidget(id: string): void {
-    removeFromList(id, widgets.value)
+    const newList = [...widgets.value]
+    removeFromList(id, newList)
+    widgets.value = newList
   }
 
   function updateWidget(id: string, patch: Partial<Widget>): void {
@@ -355,7 +357,9 @@ export const useWidgetStore = defineStore('widget', () => {
       if (checkAndAssignColIndex(widget, container, colContainerColumns)) return
     }
 
-    removeFromList(widgetId, widgets.value)
+    const newList = [...widgets.value]
+    removeFromList(widgetId, newList)
+    widgets.value = newList
 
     if (colContainerColumns > 0) {
       calculateColPosition(widget, container, colContainerColumns)
@@ -384,7 +388,7 @@ export const useWidgetStore = defineStore('widget', () => {
     }
 
     // 放回根级
-    widgets.value.push(widget)
+    widgets.value = [...widgets.value, widget]
   }
 
   /**
@@ -396,8 +400,10 @@ export const useWidgetStore = defineStore('widget', () => {
     if (!widget) return
     if (isRootWidget(id)) return
 
-    removeFromList(id, widgets.value)
-    widgets.value.push(widget)
+    const newList = [...widgets.value]
+    removeFromList(id, newList)
+    newList.push(widget)
+    widgets.value = newList
   }
 
   /**
@@ -426,7 +432,9 @@ export const useWidgetStore = defineStore('widget', () => {
       if (checkAndAssignColIndex(widget, target, colContainerColumns)) return
     }
 
-    removeFromList(id, widgets.value)
+    const newList = [...widgets.value]
+    removeFromList(id, newList)
+    widgets.value = newList
 
     widget.position.x = x
     widget.position.y = y

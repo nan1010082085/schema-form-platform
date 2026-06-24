@@ -37,11 +37,11 @@ const MENUS: MenuSeed[] = [
   // ── 表单设计器（新开页签） — app=shell ──
   { _id: IDS.EDITOR,       parentId: null,   name: '表单设计器', path: '/editor',     icon: 'EditPen',    type: 'menu', permission: '', sort: 2, microAppId: 'editor', target: '_blank', app: 'shell' },
 
-  // ── 流程管理（新开页签） — app=shell ──
-  { _id: IDS.FLOW,         parentId: null,   name: '流程管理',   path: '/flow/design', icon: 'Connection', type: 'menu', permission: '', sort: 3, microAppId: 'flow',  target: '_blank', app: 'shell' },
+  // ── 流程设计器（新开页签） — app=shell ──
+  { _id: IDS.FLOW,         parentId: null,   name: '流程设计器', path: '/flow/design', icon: 'Connection', type: 'menu', permission: '', sort: 3, microAppId: 'flow',  target: '_blank', app: 'shell' },
 
-  // ── 智能对话（新开页签） — app=shell ──
-  { _id: IDS.AI,           parentId: null,   name: '智能对话',   path: '/ai',          icon: 'ChatDotRound', type: 'menu', permission: '', sort: 4, microAppId: 'ai', target: '_blank', app: 'shell' },
+  // ── AI 应用（新开页签） — app=shell ──
+  { _id: IDS.AI,           parentId: null,   name: 'AI 应用',    path: '/ai',          icon: 'ChatDotRound', type: 'menu', permission: '', sort: 4, microAppId: 'ai', target: '_blank', app: 'shell' },
 ]
 
 /**
@@ -49,8 +49,26 @@ const MENUS: MenuSeed[] = [
  *
  * 使用 upsert 保证幂等，根据 _id 判断存在性。
  * 同时为现有菜单补充 app 字段（向后兼容迁移）。
+ * 清理重复菜单记录（同名 + 同 app 但不同 _id 的冗余记录）。
  */
 export async function seedMenus(): Promise<void> {
+  // ── 清理重复菜单：保留种子 _id，删除同名同 app 的其他记录 ──
+  let deduped = 0
+  for (const menu of MENUS) {
+    const duplicates = await MenuModel.find({
+      _id: { $ne: menu._id },
+      name: menu.name,
+      app: menu.app || { $in: [null, ''] },
+    })
+    if (duplicates.length > 0) {
+      await MenuModel.deleteMany({ _id: { $in: duplicates.map(d => d._id) } })
+      deduped += duplicates.length
+    }
+  }
+  if (deduped > 0) {
+    console.log(`[seed] Cleaned ${deduped} duplicate menu entries`)
+  }
+
   let created = 0
   let updated = 0
 

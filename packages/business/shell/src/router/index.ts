@@ -13,7 +13,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import { useAuthStore } from '@/stores/auth'
-import { useAuth } from '@/composables/useAuth'
 
 const PUBLIC_ROUTES = new Set(['/login', '/sso/callback'])
 const base = APP_CONFIGS.shell.basePath
@@ -69,10 +68,10 @@ const router = createRouter({
 })
 
 // Global navigation guard
-router.beforeEach(async (to, _from, next) => {
+// 只检查 token 存在性，不调用 fetchUser（避免 401 硬跳转导致导航卡死）
+// 用户信息恢复由 main.ts 的 restoreSession() 统一处理
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
-  const { fetchUser } = useAuth()
-
   const isPublic = to.meta?.public === true || PUBLIC_ROUTES.has(to.path)
 
   if (!authStore.token) {
@@ -80,13 +79,7 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  if (!authStore.user) {
-    try { await fetchUser() } catch {
-      if (isPublic) { next() } else { next({ path: '/login', query: { redirect: to.fullPath } }) }
-      return
-    }
-  }
-
+  // 已登录用户访问登录页 → 重定向首页
   if (to.path === '/login') { next({ path: '/' }); return }
 
   next()

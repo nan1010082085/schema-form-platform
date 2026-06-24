@@ -32,7 +32,7 @@ import EventLogPanel from '@/components/Editor/EventLogPanel.vue'
 import { setLogCollector } from '@/composables/useLogger'
 import { useEventLog } from '@/composables/useEventLog'
 import type { Widget } from '@/widgets/base/types'
-import { fetchVersion } from '@/utils/apiClient'
+import { fetchVersion } from '@/api/schemaApi'
 import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
 import SaveTemplateDialog from '@/components/Editor/SaveTemplateDialog.vue'
@@ -245,7 +245,7 @@ function onAiIframeLoad() {
   setTimeout(sendContextToAi, 500)
 }
 
-// 监听 Schema 变化，实时更新 AI sidebar
+// 监听 Schema 引用变化，实时更新 AI sidebar（shallowRef，仅整体替换时触发）
 watch(
   () => widgetStore.widgets,
   () => {
@@ -253,7 +253,6 @@ watch(
       sendContextToAi()
     }
   },
-  { deep: true },
 )
 
 // 页面刷新/关闭拦截
@@ -320,23 +319,12 @@ function handleOpenApi(widget: Widget) { editorStore.openConfigDialog(widget, 'a
 function handleOpenVariables(widget: Widget) { editorStore.openConfigDialog(widget, 'variables') }
 
 // ================================================================
-// Toolbar actions (keyboard shortcut handlers — duplicate of toolbar's for global hotkeys)
+// Toolbar actions (委托给 editorStore 组合操作，消除重复代码)
 // ================================================================
 
-function handleUndo() {
-  const snapshot = editorStore.undo()
-  if (snapshot) widgetStore.widgets = snapshot
-}
-
-function handleRedo() {
-  const snapshot = editorStore.redo()
-  if (snapshot) widgetStore.widgets = snapshot
-}
-
-function handleCopyWidget() {
-  const widget = widgetStore.findWidget(editorStore.selectedId ?? '')
-  if (widget) editorStore.copy(widget)
-}
+function handleUndo() { editorStore.performUndo() }
+function handleRedo() { editorStore.performRedo() }
+function handleCopyWidget() { editorStore.performCopyWidget() }
 
 function handlePasteWidget() {
   const pasted = editorStore.paste()
@@ -348,12 +336,7 @@ function handlePasteWidget() {
   }
 }
 
-function handleDeleteWidget() {
-  if (!editorStore.selectedId) return
-  widgetStore.removeWidget(editorStore.selectedId)
-  editorStore.clearSelection()
-  editorStore.pushHistory([...widgetStore.widgets])
-}
+function handleDeleteWidget() { editorStore.performDeleteWidget() }
 
 // ================================================================
 // Save

@@ -248,6 +248,8 @@ const aiEntryUrl = (() => {
     : `${window.location.origin}${config.basePath}`
 })()
 let aiMicroApp: MicroApp | null = null
+let offAiApply: (() => void) | undefined
+let offAiPublished: (() => void) | undefined
 
 function sendContextToAi() {
   window.postMessage({
@@ -385,6 +387,60 @@ function handleFlowSave() { onSave() }
 
 onMounted(async () => {
   window.addEventListener('flow:save', handleFlowSave)
+
+  // Socket: 监听 AI 推送事件
+  connectSocket()
+  offAiApply = onAiApply((data: AiApplyEvent) => {
+    if (data.type === 'flow' && data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload)) {
+      const { nodes, edges } = data.payload as { nodes?: unknown[]; edges?: unknown[] }
+      if (nodes && edges) {
+        // 生成 ID 映射，避免与现有节点冲突
+        const idMap = new Map<string, string>()
+        const newNodes = nodes.map((n: any) => {
+          const newId = `node-${crypto.randomUUID()}`
+          idMap.set(n.id, newId)
+          // 从 data.bpmnType 推断节点类型
+          const bpmnType = n.data?.bpmnType
+          const nodeType = bpmnType === 'startEvent' ? 'start' : bpmnType === 'endEvent' ? 'end' : 'task'
+          return {
+            id: newId,
+            type: nodeType,
+            position: { x: n.x ?? 0, y: n.y ?? 0 },
+            data: n.data,
+          } as Node
+        })
+        const newEdges = edges.map((e: any) => {
+          const sourceId = idMap.get(e.source?.cell ?? '') ?? e.source?.cell ?? ''
+          const targetId = idMap.get(e.target?.cell ?? '') ?? e.target?.cell ?? ''
+          return {
+            id: `edge-${crypto.randomUUID()}`,
+            source: sourceId,
+            target: targetId,
+            label: e.data?.label,
+            data: {
+              conditionExpression: e.data?.conditionExpression,
+              isDefault: e.data?.isDefault,
+            },
+          } as Edge
+        })
+        // 逐个插入，保留当前画布已有的节点和边
+        for (const node of newNodes) {
+          graphStore.addNode(node)
+        }
+        for (const edge of newEdges) {
+          graphStore.addEdge(edge)
+        }
+        ElMessage.success(`已插入 ${newNodes.length} 个节点到流程`)
+        setTimeout(() => canvasRef.value?.fitView(), 100)
+      }
+    }
+  })
+  offAiPublished = onAiPublished((data: AiPublishedEvent) => {
+    if (data.type === 'flow') {
+      ElMessage.success('AI 已发布流程')
+    }
+  })
+
   if (!definitionId.value) return
   try {
     await definitionStore.fetchDefinition(definitionId.value)
@@ -423,63 +479,13 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('flow:save', handleFlowSave)
+  // 移除 Socket 监听器
+  offAiApply?.()
+  offAiPublished?.()
   // 卸载 AI micro-app
   if (aiMicroApp) {
     aiMicroApp.unmount()
     aiMicroApp = null
-  }
-})
-
-// Socket: 监听 AI 推送事件
-connectSocket()
-onAiApply((data: AiApplyEvent) => {
-  if (data.type === 'flow' && data.payload && typeof data.payload === 'object' && !Array.isArray(data.payload)) {
-    const { nodes, edges } = data.payload as { nodes?: unknown[]; edges?: unknown[] }
-    if (nodes && edges) {
-      // 生成 ID 映射，避免与现有节点冲突
-      const idMap = new Map<string, string>()
-      const newNodes = nodes.map((n: any) => {
-        const newId = `node-${crypto.randomUUID()}`
-        idMap.set(n.id, newId)
-        // 从 data.bpmnType 推断节点类型
-        const bpmnType = n.data?.bpmnType
-        const nodeType = bpmnType === 'startEvent' ? 'start' : bpmnType === 'endEvent' ? 'end' : 'task'
-        return {
-          id: newId,
-          type: nodeType,
-          position: { x: n.x ?? 0, y: n.y ?? 0 },
-          data: n.data,
-        } as Node
-      })
-      const newEdges = edges.map((e: any) => {
-        const sourceId = idMap.get(e.source?.cell ?? '') ?? e.source?.cell ?? ''
-        const targetId = idMap.get(e.target?.cell ?? '') ?? e.target?.cell ?? ''
-        return {
-          id: `edge-${crypto.randomUUID()}`,
-          source: sourceId,
-          target: targetId,
-          label: e.data?.label,
-          data: {
-            conditionExpression: e.data?.conditionExpression,
-            isDefault: e.data?.isDefault,
-          },
-        } as Edge
-      })
-      // 逐个插入，保留当前画布已有的节点和边
-      for (const node of newNodes) {
-        graphStore.addNode(node)
-      }
-      for (const edge of newEdges) {
-        graphStore.addEdge(edge)
-      }
-      ElMessage.success(`已插入 ${newNodes.length} 个节点到流程`)
-      setTimeout(() => canvasRef.value?.fitView(), 100)
-    }
-  }
-})
-onAiPublished((data: AiPublishedEvent) => {
-  if (data.type === 'flow') {
-    ElMessage.success('AI 已发布流程')
   }
 })
 

@@ -11,36 +11,32 @@
  * - useAuthStore (state holder)
  * - apiClient (HTTP)
  * - vue-router (navigation)
+ *
+ * Note: tokenProvider + 401 handler are initialized once in main.ts
  */
 import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { setTokenProvider, setUnauthorizedHandler } from '@schema-form/platform-shared/utils/apiClient'
 import { login as apiLogin, fetchCurrentUser, refreshToken as apiRefreshToken, ssoToken, logout as apiLogout } from '@/api/authApi'
-import type { LoginPayload, LoginResponse, AuthUser } from '@schema-form/business-shared/utils/authTypes'
-
-/** Whether tokenProvider has been injected (once globally) */
-let providerInitialized = false
+import type { LoginPayload } from '@schema-form/business-shared/utils/authTypes'
 
 /** Auto-refresh timer handle */
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Cancel pending auto-refresh (exported for 401 handler in main.ts) */
+export function cancelAutoRefresh(): void {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer)
+    refreshTimer = null
+  }
+}
 
 export function useAuth() {
   const store = useAuthStore()
   const router = useRouter()
   const route = useRoute()
   const { user, token, refreshToken, isAuthenticated, loading } = storeToRefs(store)
-
-  // Inject tokenProvider + 401 handler so apiClient auto-attaches Authorization header
-  if (!providerInitialized) {
-    setTokenProvider(() => store.token)
-    setUnauthorizedHandler(() => {
-      cancelRefresh()
-      store.reset()
-    })
-    providerInitialized = true
-  }
 
   /**
    * Schedule automatic token refresh 60s before expiry.
@@ -57,10 +53,7 @@ export function useAuth() {
 
   /** Cancel pending auto-refresh */
   function cancelRefresh(): void {
-    if (refreshTimer) {
-      clearTimeout(refreshTimer)
-      refreshTimer = null
-    }
+    cancelAutoRefresh()
   }
 
   /**

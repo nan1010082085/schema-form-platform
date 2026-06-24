@@ -102,6 +102,9 @@ async function mountMicroApp() {
     microApp = null
   }
 
+  // 移除旧监听器，避免重复注册
+  window.removeEventListener('message', handleHostMessage)
+
   try {
     microApp = loadMicroApp(
       {

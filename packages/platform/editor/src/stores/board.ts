@@ -13,6 +13,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { CanvasConfig, BoardVariable, BoardEvent } from '../widgets/base/types'
 
+/** 统一缩放阈值，EditorViewToolbar 和 setZoom 共用 */
+export const MIN_ZOOM = 50
+export const MAX_ZOOM = 200
+
 export const useBoardStore = defineStore('board', () => {
   // ================================================================
   // 实例信息
@@ -55,7 +59,7 @@ export const useBoardStore = defineStore('board', () => {
   }
 
   function setZoom(zoom: number): void {
-    canvas.value.zoom = Math.min(150, Math.max(100, zoom))
+    canvas.value.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom))
   }
 
   // ================================================================

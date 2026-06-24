@@ -32,7 +32,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { WarningFilled } from '@element-plus/icons-vue'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import { flowApi } from '../api/flowApi.js'
 
 const props = defineProps<{
   schemaId?: string
@@ -64,27 +66,20 @@ async function loadSchema() {
   error.value = ''
 
   try {
-    const token = localStorage.getItem('sfp_access_token')
-    const url = props.publishId
-      ? `/api/schemas/published/${props.publishId}`
-      : `/api/schemas/${props.schemaId}`
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await response.json()
-
-    if (data.success) {
-      schema.value = data.data.json || data.data.schema
-      schemaName.value = data.data.name || ''
-      if (props.initialData) {
-        formData.value = { ...props.initialData }
-      }
-    } else {
-      error.value = data.error?.message || '加载失败'
+    if (props.publishId) {
+      const data = await flowApi.getPublishedFormSchema(props.publishId)
+      schema.value = (data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema
+      schemaName.value = data.name || ''
+    } else if (props.schemaId) {
+      const data = await flowApi.getFlow(props.schemaId)
+      schema.value = (data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema
+      schemaName.value = data.name || ''
+    }
+    if (props.initialData) {
+      formData.value = { ...props.initialData }
     }
   } catch (err) {
-    error.value = '网络错误'
+    error.value = err instanceof Error ? err.message : '加载失败'
     console.error('Failed to load schema:', err)
   } finally {
     loading.value = false

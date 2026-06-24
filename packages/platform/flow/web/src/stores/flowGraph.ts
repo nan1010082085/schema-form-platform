@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, type Ref } from 'vue'
+import { shallowRef, type ShallowRef } from 'vue'
 import type { Node, Edge } from '@vue-flow/core'
 import type { FlowGraph, FlowNodeData, FlowEdgeData } from '@schema-form/flow-shared'
 import { BpmnElementType, DEFAULT_NODE_SIZES } from '@schema-form/flow-shared'
@@ -26,9 +26,9 @@ const BPMN_TO_VF: Record<string, string> = Object.fromEntries(
 
 export const useFlowGraphStore = defineStore('flowGraph', () => {
   // === State (single source of truth) ===
-  // Use explicit Ref cast to avoid TS2589 from VueFlow's deep generic inference
-  const nodes = ref([]) as Ref<Node[]>
-  const edges = ref([]) as Ref<Edge[]>
+  // Use shallowRef for performance — VueFlow handles its own reactivity
+  const nodes = shallowRef<Node[]>([])
+  const edges = shallowRef<Edge[]>([])
 
   // === Node CRUD ===
   function addNode(node: Node) {

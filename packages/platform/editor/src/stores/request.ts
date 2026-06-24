@@ -14,7 +14,7 @@
  *   可作为集中式替代方案使用
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import { apiClient } from '@/utils/apiClient'
 import { useCache } from '@/composables/useCache'
 import type { PartialWidget, DictItem, SchemaApiConfig } from '@/components/WidgetRenderer/types'
@@ -34,13 +34,13 @@ export const useRequestStore = defineStore('request', () => {
    * 正在进行的请求映射。
    * key = `method:url:JSON(params)` → AbortController
    */
-  const pendingRequests = ref(new Map<string, AbortController>())
+  const pendingRequests = shallowRef(new Map<string, AbortController>())
 
   /**
    * 响应缓存。
    * key = `url:JSON(params)` → CacheEntry
    */
-  const requestCache = ref(new Map<string, CacheEntry>())
+  const requestCache = shallowRef(new Map<string, CacheEntry>())
 
   /**
    * 预取队列 — 从 schema 树收集的待加载 API 任务。

@@ -13,7 +13,6 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMenu } from '@/composables/useMenu'
-import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import { resolveIconName } from '@schema-form/platform-shared/utils/iconResolver'
 import type { MenuTreeNode } from '@/types/menu'
 import styles from './SideMenu.module.scss'
@@ -82,14 +81,6 @@ watch(() => props.collapsed, (val) => {
   if (val) openedMenus.value = new Set()
 })
 
-/** microAppId → APP_CONFIGS key 映射 */
-const APP_ID_MAP: Record<string, keyof typeof APP_CONFIGS> = {
-  editor: 'editor',
-  flow: 'flow',
-  'ai-app': 'ai',
-  admin: 'admin',
-}
-
 /** Navigate to a menu route */
 function navigateTo(node: MenuTreeNode): void {
   const routeType = node.routeType || 'micro-app'
@@ -117,10 +108,14 @@ function navigateTo(node: MenuTreeNode): void {
   // routeType === 'micro-app'
   if (!node.path) return
   if (node.target === '_blank') {
-    // 新页签：使用 /standalone/{appName}/ 路由（无菜单全屏模式）
+    // 新页签：使用 /standalone/{appName}/{subPath} 路由（无菜单全屏模式）
+    // node.path 类似 /flow/design，需要去掉 appId 前缀避免路径重复
     const appId = node.microAppId
     if (appId) {
-      const url = `/schema-platform/standalone/${appId}${node.path}`
+      const subPath = appId && node.path.startsWith(`/${appId}/`)
+        ? node.path.slice(appId.length + 1)
+        : node.path
+      const url = `/schema-platform/standalone/${appId}${subPath}`
       window.open(url, '_blank')
     } else {
       window.open(node.path, '_blank')

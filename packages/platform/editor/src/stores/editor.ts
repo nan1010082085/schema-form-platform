@@ -14,8 +14,9 @@
  * 性能优化：统一深拷贝函数，集中管理快照序列化逻辑。
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import type { Widget } from '../widgets/base/types'
+import { useWidgetStore } from './widget'
 
 const MAX_HISTORY = 30
 
@@ -46,7 +47,7 @@ export const useEditorStore = defineStore('editor', () => {
   // 撤销/重做（主画布）
   // ================================================================
 
-  const history = ref<Widget[][]>([])
+  const history = shallowRef<Widget[][]>([])
   const historyIndex = ref(-1)
 
   const canUndo = computed(() => historyIndex.value > 0)
@@ -57,7 +58,7 @@ export const useEditorStore = defineStore('editor', () => {
   // ================================================================
 
   const editingDialogId = ref<string | null>(null)
-  const dialogHistory = ref<Widget[][]>([])
+  const dialogHistory = shallowRef<Widget[][]>([])
   const dialogHistoryIndex = ref(-1)
 
   const canUndoDialog = computed(() => dialogHistoryIndex.value > 0)
@@ -138,15 +139,16 @@ export const useEditorStore = defineStore('editor', () => {
    */
   function pushHistory(widgets: Widget[]): void {
     const snapshot = deepClone(widgets)
-    history.value = history.value.slice(0, historyIndex.value + 1)
-    history.value.push(snapshot)
-    if (history.value.length > MAX_HISTORY) {
-      history.value.shift()
+    let newHistory = history.value.slice(0, historyIndex.value + 1)
+    newHistory.push(snapshot)
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory = newHistory.slice(1)
       if (savedHistoryIndex.value >= 0) {
         savedHistoryIndex.value = Math.max(0, savedHistoryIndex.value - 1)
       }
     }
-    historyIndex.value = history.value.length - 1
+    history.value = newHistory
+    historyIndex.value = newHistory.length - 1
     markDirty()
   }
 
@@ -218,12 +220,13 @@ export const useEditorStore = defineStore('editor', () => {
    */
   function pushDialogHistory(widgets: Widget[]): void {
     const snapshot = deepClone(widgets)
-    dialogHistory.value = dialogHistory.value.slice(0, dialogHistoryIndex.value + 1)
-    dialogHistory.value.push(snapshot)
-    if (dialogHistory.value.length > MAX_HISTORY) {
-      dialogHistory.value.shift()
+    let newHistory = dialogHistory.value.slice(0, dialogHistoryIndex.value + 1)
+    newHistory.push(snapshot)
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory = newHistory.slice(1)
     }
-    dialogHistoryIndex.value = dialogHistory.value.length - 1
+    dialogHistory.value = newHistory
+    dialogHistoryIndex.value = newHistory.length - 1
   }
 
   /**
@@ -242,6 +245,36 @@ export const useEditorStore = defineStore('editor', () => {
     if (dialogHistoryIndex.value >= dialogHistory.value.length - 1) return null
     dialogHistoryIndex.value++
     return deepClone(dialogHistory.value[dialogHistoryIndex.value])
+  }
+
+  // ================================================================
+  // 组合操作（消除 EditorView / EditorViewToolbar 重复代码）
+  // ================================================================
+
+  function performUndo(): void {
+    const widgetStore = useWidgetStore()
+    const snapshot = undo()
+    if (snapshot) widgetStore.widgets = snapshot
+  }
+
+  function performRedo(): void {
+    const widgetStore = useWidgetStore()
+    const snapshot = redo()
+    if (snapshot) widgetStore.widgets = snapshot
+  }
+
+  function performCopyWidget(): void {
+    const widgetStore = useWidgetStore()
+    const widget = widgetStore.findWidget(selectedId.value ?? '')
+    if (widget) copy(widget)
+  }
+
+  function performDeleteWidget(): void {
+    if (!selectedId.value) return
+    const widgetStore = useWidgetStore()
+    widgetStore.removeWidget(selectedId.value)
+    clearSelection()
+    pushHistory([...widgetStore.widgets])
   }
 
   // ================================================================
@@ -294,5 +327,10 @@ export const useEditorStore = defineStore('editor', () => {
     pushDialogHistory,
     undoDialog,
     redoDialog,
+    // 组合操作
+    performUndo,
+    performRedo,
+    performCopyWidget,
+    performDeleteWidget,
   }
 })

@@ -9,11 +9,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
-import { useBoardStore } from '@/stores/board'
+import { useBoardStore, MIN_ZOOM, MAX_ZOOM } from '@/stores/board'
 import { useEditorStore } from '@/stores/editor'
 import { useWidgetStore } from '@/stores/widget'
 import { useSchemaValidation } from '@/composables/useSchemaValidation'
-import { fetchVersions, fetchVersion } from '@/utils/apiClient'
+import { fetchVersions, fetchVersion } from '@/api/schemaApi'
 import { parseSchemaJson } from '@/utils/parseSchemaJson'
 import type { VersionEntry } from '@/types/api'
 import styles from './EditorView.module.scss'
@@ -137,30 +137,13 @@ async function handleLoadVersion(entry: VersionEntry) {
 }
 
 // ================================================================
-// Toolbar-local actions (delegate to stores directly)
+// Toolbar-local actions (委托给 editorStore 组合操作)
 // ================================================================
 
-function handleUndo() {
-  const snapshot = editorStore.undo()
-  if (snapshot) widgetStore.widgets = snapshot
-}
-
-function handleRedo() {
-  const snapshot = editorStore.redo()
-  if (snapshot) widgetStore.widgets = snapshot
-}
-
-function handleCopyWidget() {
-  const widget = widgetStore.findWidget(editorStore.selectedId ?? '')
-  if (widget) editorStore.copy(widget)
-}
-
-function handleDeleteWidget() {
-  if (!editorStore.selectedId) return
-  widgetStore.removeWidget(editorStore.selectedId)
-  editorStore.clearSelection()
-  editorStore.pushHistory([...widgetStore.widgets])
-}
+function handleUndo() { editorStore.performUndo() }
+function handleRedo() { editorStore.performRedo() }
+function handleCopyWidget() { editorStore.performCopyWidget() }
+function handleDeleteWidget() { editorStore.performDeleteWidget() }
 
 function handleZoomIn() {
   boardStore.setZoom(boardStore.canvas.zoom + 10)
@@ -332,9 +315,9 @@ function handleClearCanvas() {
         <div :class="styles.divider" />
         <!-- Zoom -->
         <div :class="styles.zoomGroup">
-          <button :class="styles.iconBtn" :disabled="boardStore.canvas.zoom <= 50" @click="handleZoomOut">-</button>
+          <button :class="styles.iconBtn" :disabled="boardStore.canvas.zoom <= MIN_ZOOM" @click="handleZoomOut">-</button>
           <span :class="styles.zoomValue">{{ boardStore.canvas.zoom }}%</span>
-          <button :class="styles.iconBtn" :disabled="boardStore.canvas.zoom >= 200" @click="handleZoomIn">+</button>
+          <button :class="styles.iconBtn" :disabled="boardStore.canvas.zoom >= MAX_ZOOM" @click="handleZoomIn">+</button>
         </div>
         <div :class="styles.divider" />
         <!-- Version history -->

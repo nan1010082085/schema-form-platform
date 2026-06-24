@@ -13,6 +13,7 @@ import type {
   FlowVersionData,
   FlowInstanceData,
   TaskInstanceData,
+  FlowGraph,
 
   FlowDefinitionListData,
   FlowVersionListData,
@@ -327,10 +328,10 @@ export const flowApi = {
 
   // Instance Graph & State (for Editor embedding)
   getInstanceGraph: (instanceId: string) =>
-    request<any>(`/flow/instances/${instanceId}/graph`),
+    request<FlowGraph>(`/flow/instances/${instanceId}/graph`),
 
   getExecutionState: (instanceId: string) =>
-    request<{ currentNodeIds: string[]; completedNodeIds: string[]; tokens: any[] }>(`/flow/instances/${instanceId}/state`),
+    request<{ currentNodeIds: string[]; completedNodeIds: string[]; tokens: Array<{ nodeId: string; status: string }> }>(`/flow/instances/${instanceId}/state`),
 
   // Export
   exportInstanceCsv: async (instanceId: string): Promise<Blob> => {

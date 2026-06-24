@@ -18,7 +18,8 @@ export const useMicroAppStore = defineStore('microApp', () => {
   }
 
   function getApp(name: string): MicroAppConfig | undefined {
-    return apps.value.find(a => a.name === name || a.activeRule.includes(name))
+    // 优先按 activeRule 精确匹配（如 '/editor'、'/flow'），再按 name 匹配
+    return apps.value.find(a => a.activeRule === `/${name}` || a.activeRule === name || a.name === name)
   }
 
   function getAppEntry(name: string): string {
