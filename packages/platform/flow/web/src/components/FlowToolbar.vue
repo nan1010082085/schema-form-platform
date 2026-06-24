@@ -97,9 +97,11 @@
             </el-button>
           </div>
         </template>
-        <button :class="styles.iconBtn" title="自动布局">
-          <AppIcon name="rank" :size="14" />
-        </button>
+        <template #reference>
+          <button :class="styles.iconBtn" title="自动布局">
+            <AppIcon name="rank" :size="14" />
+          </button>
+        </template>
       </el-popover>
       <div :class="styles.btnGroup">
         <el-tooltip content="导出 BPMN" placement="bottom">
@@ -163,9 +165,11 @@
             </div>
           </div>
         </template>
-        <button :class="styles.iconBtn" title="快捷键帮助">
-          <AppIcon name="question-filled" :size="14" />
-        </button>
+        <template #reference>
+          <button :class="styles.iconBtn" title="快捷键帮助">
+            <AppIcon name="question-filled" :size="14" />
+          </button>
+        </template>
       </el-popover>
     </div>
 

@@ -31,10 +31,22 @@
   flex: 1;
   justify-content: center;
   gap: 2px;
+
+  // el-popover #reference 插槽会包裹一层 span，需要对齐 flex 布局
+  :global(.el-popover__reference-wrapper) {
+    display: flex;
+    align-items: center;
+  }
 }
 
 .right {
   flex-shrink: 0;
+
+  // el-popover #reference 插槽会包裹一层 span，需要对齐 flex 布局
+  :global(.el-popover__reference-wrapper) {
+    display: flex;
+    align-items: center;
+  }
 
   // 铃铛按钮与其他图标按钮对齐
   :global(.el-badge) {
