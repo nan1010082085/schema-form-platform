@@ -4,9 +4,10 @@
 
 ```
 src/
-├── views/           # 页面视图（EditorView、InstancesView 等）
+├── api/             # API 聚合层（schemaApi/authApi/dataApi/widgetApi）
+├── views/           # 页面视图（EditorView 拆分为 4 个子组件）
 ├── components/      # 通用组件
-│   ├── Editor/      # 编辑器子模块（35 个）
+│   ├── Editor/      # 编辑器子模块（39 个）
 │   └── WidgetRenderer/  # Schema 渲染引擎
 ├── widgets/         # Widget 定义（49 个组件）
 │   ├── base/        # 类型定义、公共 schema
@@ -19,10 +20,22 @@ src/
 │   ├── business/    # 业务组件
 │   └── chart/       # 图表组件
 ├── composables/     # 组合式 API（32 个）
-├── stores/          # Pinia Store（7 个）
+├── stores/          # Pinia Store（7 个，shallowRef 优化）
 ├── engine/          # 事件引擎
 └── utils/           # 工具函数
 ```
+
+## EditorView 拆分
+
+EditorView.vue（原 1517 行）拆分为：
+
+| 组件 | 职责 |
+|---|---|
+| `EditorView.vue`（607 行） | 组装组件，协调子组件 |
+| `EditorViewToolbar.vue`（510 行） | 工具栏：保存/发布/撤销/重做/缩放 |
+| `EditorViewLeftPanel.vue`（27 行） | 左侧面板包装器 |
+| `EditorViewRightPanel.vue`（20 行） | 右侧属性面板包装器 |
+| `EditorView.module.scss`（575 行） | 独立样式文件 |
 
 ## Widget 系统
 
