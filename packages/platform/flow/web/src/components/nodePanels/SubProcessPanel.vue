@@ -273,7 +273,7 @@ function statusLabel(status: string): string {
 
   <!-- 参数映射 -->
   <SectionToggle title="参数映射">
-    <div :class="styles['mapping-header']">
+    <div :class="styles['mode-switch']">
       <el-radio-group
         :model-value="mappingMode"
         size="small"
@@ -287,82 +287,60 @@ function statusLabel(status: string): string {
     <!-- KV mode -->
     <template v-if="mappingMode === 'kv'">
       <!-- 输入变量映射 -->
-      <div :class="styles['mapping-header']">
-        <div :class="styles['mapping-label']">
-          <span :class="styles['mapping-label-text']">输入变量映射</span>
+      <div :class="styles['mapping-row-header']">
+        <span :class="styles['mapping-title']">
+          输入变量映射
           <HintText>将父流程变量传入子流程，支持 ${variable} 表达式</HintText>
-        </div>
-        <el-button
-          size="small"
-          link
-          type="primary"
-          @click="addInputEntry"
-        >
-          <AppIcon name="plus" />
-          添加映射
+        </span>
+        <el-button size="small" link type="primary" @click="addInputEntry">
+          <AppIcon name="plus" />添加映射
         </el-button>
       </div>
-      <div :class="styles['mapping-section']">
-        <div
-          v-for="(entry, i) in inputEntries"
-          :key="i"
-          :class="styles['mapping-row']"
-        >
-          <el-input
-            :model-value="entry.key"
-            placeholder="子流程变量"
-            size="small"
-            :class="styles['mapping-key']"
-            @input="updateInputKey(i, $event)"
-          />
-          <el-input
-            :model-value="entry.value"
-            placeholder="${parentVar}"
-            size="small"
-            :class="styles['mapping-value']"
-            @input="updateInputValue(i, $event)"
-          />
-          <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeInputEntry(i)" />
-        </div>
+      <div
+        v-for="(entry, i) in inputEntries"
+        :key="'in-' + i"
+        :class="styles['mapping-entry']"
+      >
+        <el-input
+          :model-value="entry.key"
+          placeholder="子流程变量"
+          size="small"
+          @input="updateInputKey(i, $event)"
+        />
+        <el-input
+          :model-value="entry.value"
+          placeholder="${parentVar}"
+          size="small"
+          @input="updateInputValue(i, $event)"
+        />
+        <AppIcon name="delete" :class="styles['mapping-delete']" @click="removeInputEntry(i)" />
       </div>
 
       <!-- 输出变量映射 -->
-      <div :class="styles['mapping-header']">
-        <div :class="styles['mapping-label']">
-          <span :class="styles['mapping-label-text']">输出变量映射</span>
-        </div>
-        <el-button
-          size="small"
-          link
-          type="primary"
-          @click="addOutputEntry"
-        >
-          <AppIcon name="plus" />
-          添加映射
+      <div :class="styles['mapping-row-header']">
+        <span :class="styles['mapping-title']">输出变量映射</span>
+        <el-button size="small" link type="primary" @click="addOutputEntry">
+          <AppIcon name="plus" />添加映射
         </el-button>
       </div>
-      <div :class="styles['mapping-section']">
-        <div
-          v-for="(entry, i) in outputEntries"
-          :key="i"
-          :class="styles['mapping-row']"
-        >
-          <el-input
-            :model-value="entry.key"
-            placeholder="父流程变量"
-            size="small"
-            :class="styles['mapping-key']"
-            @input="updateOutputKey(i, $event)"
-          />
-          <el-input
-            :model-value="entry.value"
-            placeholder="${childOutput}"
-            size="small"
-            :class="styles['mapping-value']"
-            @input="updateOutputValue(i, $event)"
-          />
-          <AppIcon name="delete" :class="styles['mapping-remove']" @click="removeOutputEntry(i)" />
-        </div>
+      <div
+        v-for="(entry, i) in outputEntries"
+        :key="'out-' + i"
+        :class="styles['mapping-entry']"
+      >
+        <el-input
+          :model-value="entry.key"
+          placeholder="父流程变量"
+          size="small"
+          @input="updateOutputKey(i, $event)"
+        />
+        <el-input
+          :model-value="entry.value"
+          placeholder="${childOutput}"
+          size="small"
+          @input="updateOutputValue(i, $event)"
+        />
+        <AppIcon name="delete" :class="styles['mapping-delete']" @click="removeOutputEntry(i)" />
       </div>
     </template>
 

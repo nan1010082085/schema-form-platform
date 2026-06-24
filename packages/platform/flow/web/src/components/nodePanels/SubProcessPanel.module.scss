@@ -27,10 +27,6 @@
   gap: 8px;
   font-size: 12px;
   line-height: 1.8;
-
-  &:first-child {
-    margin-top: 0;
-  }
 }
 
 .flow-detail-label {
@@ -62,57 +58,44 @@
   }
 }
 
-.mapping-section {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-top: 4px;
-  // FieldRow control 是 flex + align-items:center，需要顶部对齐避免多行被挤压
-  align-self: flex-start;
+.hint-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-placeholder);
+  line-height: 1.5;
 }
 
-.mapping-header {
+// ---- 参数映射 ----
+
+.mode-switch {
+  margin-bottom: 8px;
+}
+
+.mapping-row-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 10px;
   margin-bottom: 6px;
-  margin-top: 8px;
-
-  &:first-child {
-    margin-top: 0;
-  }
 }
 
-.mapping-label {
-  display: flex;
+.mapping-title {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.mapping-label-text {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-color-regular);
 }
 
-
-.mapping-row {
+.mapping-entry {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 4px;
 }
 
-.mapping-key {
-  flex: 0 0 40%;
-}
-
-.mapping-value {
-  flex: 1;
-}
-
-.mapping-remove {
-  flex: 0 0 auto;
+.mapping-delete {
+  flex-shrink: 0;
   cursor: pointer;
   color: var(--text-color-placeholder);
   padding: 2px;
@@ -120,10 +103,6 @@
   &:hover {
     color: var(--color-danger);
   }
-}
-
-.mapping-add {
-  margin-top: 2px;
 }
 
 .mapping-json {
