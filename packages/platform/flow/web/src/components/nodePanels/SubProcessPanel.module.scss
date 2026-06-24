@@ -63,7 +63,10 @@
 }
 
 .mapping-section {
+  width: 100%;
   margin-top: 4px;
+  // FieldRow control 是 flex + align-items:center，需要顶部对齐避免多行被挤压
+  align-self: flex-start;
 }
 
 .mapping-header {
