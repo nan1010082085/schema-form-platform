@@ -15,8 +15,8 @@ import type {
   ChatSettings,
   Widget,
   FlowGraph,
+  SSEEvent,
 } from '@/types'
-import type { SSEEvent } from '@schema-form/ai-shared'
 import {
   emitChatSend,
   emitChatCancel,
@@ -154,8 +154,8 @@ export const useStreamStore = defineStore('stream', () => {
           historySummary: ctx.chatSettings.historySummary.mode === 'manual'
             ? ctx.chatSettings.historySummary.manualSummary
             : ctx.context.historySummary,
-          currentSchema: ctx.currentSchema ?? undefined,
-          currentFlow: ctx.currentFlow ?? undefined,
+          currentSchema: (ctx.currentSchema ?? undefined) as Record<string, unknown>[] | undefined,
+          currentFlow: (ctx.currentFlow ?? undefined) as { nodes: Record<string, unknown>[]; edges: Record<string, unknown>[] } | undefined,
         },
         mentions: mentions && mentions.length > 0 ? mentions : undefined,
       })

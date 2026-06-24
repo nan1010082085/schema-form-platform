@@ -1,0 +1,28 @@
+.container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.nodeContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nodeIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.menuIcon {
+  color: var(--el-color-primary);
+}
+
+.buttonIcon {
+  color: var(--el-color-warning);
+}
+
+.label {
+  line-height: 1.4;
+}

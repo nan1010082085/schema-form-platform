@@ -22,7 +22,7 @@ export class MongoFlowPersistence implements FlowPersistence {
   async getDefinition(id: string): Promise<FlowGraph | null> {
     const doc = await FlowDefinitionModel.findOne({ id }).lean()
     if (!doc) return null
-    return doc.graph as FlowGraph
+    return doc.graph as unknown as FlowGraph
   }
 
   // ────── 流程实例 ──────

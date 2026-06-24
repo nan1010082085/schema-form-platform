@@ -1,0 +1,71 @@
+.iconPicker {
+  width: 100%;
+}
+
+.trigger {
+  width: 100%;
+  cursor: pointer;
+}
+
+.popover {
+  width: 320px;
+  padding: 4px;
+}
+
+.searchInput {
+  margin-bottom: 8px;
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.iconItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  min-height: 56px;
+
+  &:hover {
+    background-color: var(--el-fill-color-light);
+  }
+
+  &.active {
+    background-color: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+  }
+}
+
+.iconSvg {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.iconName {
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  color: var(--el-text-color-secondary);
+}
+
+.emptyText {
+  text-align: center;
+  color: var(--el-text-color-placeholder);
+  padding: 20px 0;
+  font-size: 13px;
+}

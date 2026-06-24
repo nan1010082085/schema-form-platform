@@ -1,0 +1,512 @@
+{
+  "name": "用户管理",
+  "type": "search_list",
+  "json": [
+    {
+      "id": "card_search_a3f2b",
+      "type": "card",
+      "name": "FgCard",
+      "label": "搜索区域",
+      "position": { "x": 0, "y": 0, "w": 1200, "h": 120, "zIndex": 1 },
+      "props": {},
+      "style": { "padding": "16px", "marginBottom": "16px" },
+      "children": [
+        {
+          "id": "input_username_c7d1e",
+          "type": "input",
+          "name": "FgInput",
+          "label": "用户名",
+          "field": "username",
+          "position": { "x": 0, "y": 0, "w": 240, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请输入用户名", "clearable": true },
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "input_phone_e5f8a",
+          "type": "input",
+          "name": "FgInput",
+          "label": "手机号",
+          "field": "phone",
+          "position": { "x": 256, "y": 0, "w": 240, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请输入手机号", "clearable": true },
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "select_status_b9c4d",
+          "type": "select",
+          "name": "FgSelect",
+          "label": "状态",
+          "field": "status",
+          "position": { "x": 512, "y": 0, "w": 200, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请选择状态", "clearable": true },
+          "options": [
+            { "label": "启用", "value": 1 },
+            { "label": "停用", "value": 0 }
+          ],
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "btn_search_d2a6f",
+          "type": "button",
+          "name": "FgButton",
+          "label": "搜索",
+          "position": { "x": 728, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "props": { "text": "搜索", "buttonType": "primary" },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "refresh",
+                  "target": "table_users_f1e2d"
+                }
+              ]
+            }
+          ],
+          "style": { "marginRight": "8px" }
+        },
+        {
+          "id": "btn_reset_g8h3j",
+          "type": "button",
+          "name": "FgButton",
+          "label": "重置",
+          "position": { "x": 816, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "set-value",
+                  "target": "input_username_c7d1e",
+                  "value": ""
+                },
+                {
+                  "type": "set-value",
+                  "target": "input_phone_e5f8a",
+                  "value": ""
+                },
+                {
+                  "type": "set-value",
+                  "target": "select_status_b9c4d",
+                  "value": null
+                },
+                {
+                  "type": "refresh",
+                  "target": "table_users_f1e2d"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table_users_f1e2d",
+      "type": "advanced-table",
+      "name": "FgAdvancedTable",
+      "label": "用户列表",
+      "position": { "x": 0, "y": 136, "w": 1200, "h": 500, "zIndex": 1 },
+      "props": {
+        "columns": [
+          { "prop": "username", "label": "用户名", "width": 120, "render": "text" },
+          { "prop": "nickname", "label": "昵称", "width": 120, "render": "text" },
+          { "prop": "department", "label": "部门", "width": 120, "render": "text" },
+          { "prop": "phone", "label": "手机号", "width": 140, "render": "text" },
+          {
+            "prop": "status",
+            "label": "状态",
+            "width": 90,
+            "render": "tag",
+            "colorMap": { "1": "success", "0": "danger" },
+            "options": [
+              { "label": "启用", "value": 1 },
+              { "label": "停用", "value": 0 }
+            ]
+          },
+          { "prop": "createdAt", "label": "创建时间", "width": 180, "render": "text" },
+          {
+            "prop": "action",
+            "label": "操作",
+            "width": 220,
+            "fixed": "right",
+            "render": "buttons",
+            "buttons": [
+              { "key": "edit", "label": "编辑", "type": "primary", "size": "small" },
+              { "key": "delete", "label": "删除", "type": "danger", "size": "small" },
+              { "key": "resetPwd", "label": "重置密码", "type": "warning", "size": "small" }
+            ]
+          }
+        ],
+        "toolbar": [
+          { "key": "add", "label": "新增用户", "type": "primary", "icon": "plus" }
+        ],
+        "stripe": true,
+        "border": true,
+        "height": 400,
+        "sortable": false,
+        "pagination": {
+          "enabled": true,
+          "pageSize": 20,
+          "pageSizes": [10, 20, 50, 100]
+        },
+        "selection": {
+          "enabled": false
+        }
+      },
+      "api": {
+        "url": "/api/users",
+        "method": "get",
+        "dataPath": "data.items"
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventTarget": "toolbar-add",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "input_form_username_k4l5m",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_nickname_n6o7p",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_password_q8r9s",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_phone_t0u1v",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_email_w2x3y",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "treeselect_form_dept_z4a5b",
+              "value": null
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_c6d7e",
+              "value": true
+            },
+            {
+              "type": "show",
+              "target": "input_form_password_q8r9s"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "add"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": ""
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_user_f8g9h"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-edit",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "input_form_username_k4l5m",
+              "value": "${row.username}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_nickname_n6o7p",
+              "value": "${row.nickname}"
+            },
+            {
+              "type": "hide",
+              "target": "input_form_password_q8r9s"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_phone_t0u1v",
+              "value": "${row.phone}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_email_w2x3y",
+              "value": "${row.email}"
+            },
+            {
+              "type": "set-value",
+              "target": "treeselect_form_dept_z4a5b",
+              "value": "${row.departmentId}"
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_c6d7e",
+              "value": "${row.status}"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "edit"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_user_f8g9h"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-delete",
+          "confirm": "确认删除该用户？删除后不可恢复。",
+          "actions": [
+            {
+              "type": "set-variable",
+              "variable": "_deleteId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_confirm_i0j1k"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-resetPwd",
+          "confirm": "确认重置该用户密码？",
+          "actions": [
+            {
+              "type": "api",
+              "apiUrl": "/api/users/${row._id}/reset-password",
+              "apiMethod": "post",
+              "apiParams": {}
+            },
+            {
+              "type": "refresh",
+              "target": "table_users_f1e2d"
+            }
+          ]
+        }
+      ],
+      "style": { "width": "100%" }
+    },
+    {
+      "id": "dialog_user_f8g9h",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "用户表单弹窗",
+      "position": { "x": 0, "y": 0, "w": 600, "h": 500, "zIndex": 100 },
+      "props": {
+        "title": "用户信息",
+        "width": "600px",
+        "confirmText": "确定",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false,
+        "draggable": true
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "submit"
+            },
+            {
+              "type": "api",
+              "apiUrl": "/api/users",
+              "apiMethod": "post",
+              "apiParams": "formData"
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_users_f1e2d"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "form_user_l2m3n",
+          "type": "form",
+          "name": "FgForm",
+          "label": "用户表单",
+          "position": { "x": 0, "y": 0, "w": 560, "h": 400, "zIndex": 1 },
+          "props": {
+            "labelWidth": "100px",
+            "labelPosition": "right"
+          },
+          "children": [
+            {
+              "id": "input_form_username_k4l5m",
+              "type": "input",
+              "name": "FgInput",
+              "label": "用户名",
+              "field": "username",
+              "position": { "x": 0, "y": 0, "w": 520, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入用户名", "clearable": true },
+              "validationRules": [
+                { "required": true, "message": "请输入用户名", "trigger": "blur" },
+                { "min": 2, "max": 30, "message": "长度 2-30 个字符", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "input_form_nickname_n6o7p",
+              "type": "input",
+              "name": "FgInput",
+              "label": "昵称",
+              "field": "nickname",
+              "position": { "x": 0, "y": 56, "w": 520, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入昵称", "clearable": true },
+              "validationRules": [
+                { "required": true, "message": "请输入昵称", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "input_form_password_q8r9s",
+              "type": "input",
+              "name": "FgInput",
+              "label": "密码",
+              "field": "password",
+              "position": { "x": 0, "y": 112, "w": 520, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入密码", "clearable": true, "showPassword": true },
+              "validationRules": [
+                { "required": true, "message": "请输入密码", "trigger": "blur" },
+                { "min": 6, "max": 30, "message": "长度 6-30 个字符", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "input_form_phone_t0u1v",
+              "type": "input",
+              "name": "FgInput",
+              "label": "手机号",
+              "field": "phone",
+              "position": { "x": 0, "y": 168, "w": 520, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入手机号", "clearable": true }
+            },
+            {
+              "id": "input_form_email_w2x3y",
+              "type": "input",
+              "name": "FgInput",
+              "label": "邮箱",
+              "field": "email",
+              "position": { "x": 0, "y": 224, "w": 520, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入邮箱", "clearable": true }
+            },
+            {
+              "id": "treeselect_form_dept_z4a5b",
+              "type": "tree-select",
+              "name": "FgTreeSelect",
+              "label": "部门",
+              "field": "departmentId",
+              "position": { "x": 0, "y": 280, "w": 520, "h": 40, "zIndex": 1 },
+              "props": {
+                "placeholder": "请选择部门",
+                "clearable": true,
+                "checkStrictly": true
+              },
+              "api": {
+                "url": "/api/departments/tree",
+                "method": "get",
+                "dataPath": "data",
+                "labelKey": "name",
+                "valueKey": "_id",
+                "childrenKey": "children"
+              }
+            },
+            {
+              "id": "switch_form_status_c6d7e",
+              "type": "switch",
+              "name": "FgSwitch",
+              "label": "状态",
+              "field": "status",
+              "position": { "x": 0, "y": 336, "w": 200, "h": 40, "zIndex": 1 },
+              "props": {
+                "activeText": "启用",
+                "inactiveText": "停用",
+                "activeValue": 1,
+                "inactiveValue": 0
+              },
+              "defaultValue": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dialog_confirm_i0j1k",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "删除确认弹窗",
+      "position": { "x": 0, "y": 0, "w": 420, "h": 200, "zIndex": 200 },
+      "props": {
+        "title": "确认删除",
+        "width": "420px",
+        "confirmText": "确认删除",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "api",
+              "apiUrl": "/api/users/${_deleteId}",
+              "apiMethod": "delete",
+              "apiParams": {}
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_users_f1e2d"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "text_confirm_l0m1n",
+          "type": "title",
+          "name": "FgTitle",
+          "label": "确认提示",
+          "position": { "x": 0, "y": 0, "w": 380, "h": 60, "zIndex": 1 },
+          "props": {
+            "text": "确认删除该用户？删除后不可恢复。",
+            "level": 4
+          }
+        }
+      ]
+    }
+  ]
+}

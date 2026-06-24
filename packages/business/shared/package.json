@@ -7,8 +7,10 @@
     ".": "./index.ts",
     "./components/*": "./components/*",
     "./stores/*": "./stores/*",
+    "./stores/layout": "./stores/layout.ts",
     "./composables/*": "./composables/*",
-    "./utils/*": "./utils/*"
+    "./utils/*": "./utils/*",
+    "./utils/authTypes": "./utils/authTypes.ts"
   },
   "dependencies": {
     "@schema-form/platform-shared": "workspace:*",

@@ -50,7 +50,7 @@ const imageUpload = multer({
     if (allowed.test(path.extname(file.originalname))) {
       cb(null, true)
     } else {
-      cb(new Error('只允许上传图片文件（jpg/png/gif/webp/svg）'))
+      cb(new Error('只允许上传图片文件（jpg/png/gif/webp/svg）'), false)
     }
   },
 })

@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+
+  .searchInput {
+    width: 240px;
+  }
+}
+
+.tableWrap {
+  flex: 1;
+  overflow: hidden;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}

@@ -1,0 +1,666 @@
+{
+  "name": "菜单管理",
+  "type": "search_list",
+  "json": [
+    {
+      "id": "card_search_m0a1b",
+      "type": "card",
+      "name": "FgCard",
+      "label": "搜索区域",
+      "position": { "x": 0, "y": 0, "w": 1200, "h": 120, "zIndex": 1 },
+      "props": {},
+      "style": { "padding": "16px", "marginBottom": "16px" },
+      "children": [
+        {
+          "id": "input_search_name_m2c3d",
+          "type": "input",
+          "name": "FgInput",
+          "label": "菜单名称",
+          "field": "name",
+          "position": { "x": 0, "y": 0, "w": 240, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请输入菜单名称", "clearable": true },
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "select_search_status_m4e5f",
+          "type": "select",
+          "name": "FgSelect",
+          "label": "状态",
+          "field": "status",
+          "position": { "x": 256, "y": 0, "w": 200, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请选择状态", "clearable": true },
+          "options": [
+            { "label": "启用", "value": 1 },
+            { "label": "停用", "value": 0 }
+          ],
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "btn_search_m6g7h",
+          "type": "button",
+          "name": "FgButton",
+          "label": "搜索",
+          "position": { "x": 472, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "props": { "text": "搜索", "buttonType": "primary" },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "refresh",
+                  "target": "table_menus_m8i9j"
+                }
+              ]
+            }
+          ],
+          "style": { "marginRight": "8px" }
+        },
+        {
+          "id": "btn_reset_m0k1l",
+          "type": "button",
+          "name": "FgButton",
+          "label": "重置",
+          "position": { "x": 560, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "set-value",
+                  "target": "input_search_name_m2c3d",
+                  "value": ""
+                },
+                {
+                  "type": "set-value",
+                  "target": "select_search_status_m4e5f",
+                  "value": null
+                },
+                {
+                  "type": "refresh",
+                  "target": "table_menus_m8i9j"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table_menus_m8i9j",
+      "type": "advanced-table",
+      "name": "FgAdvancedTable",
+      "label": "菜单列表",
+      "position": { "x": 0, "y": 136, "w": 1200, "h": 560, "zIndex": 1 },
+      "props": {
+        "columns": [
+          { "prop": "name", "label": "菜单名称", "width": 200, "render": "text" },
+          {
+            "prop": "icon",
+            "label": "图标",
+            "width": 80,
+            "render": "custom"
+          },
+          { "prop": "sort", "label": "排序", "width": 80, "render": "text", "align": "center" },
+          { "prop": "permissionKey", "label": "权限标识", "width": 150, "render": "text" },
+          { "prop": "path", "label": "路由地址", "width": 180, "render": "text" },
+          {
+            "prop": "routeType",
+            "label": "路由类型",
+            "width": 120,
+            "render": "tag",
+            "colorMap": {
+              "schema": "primary",
+              "micro-app": "success",
+              "link": "warning",
+              "route": "info"
+            },
+            "options": [
+              { "label": "Schema", "value": "schema" },
+              { "label": "微应用", "value": "micro-app" },
+              { "label": "外链", "value": "link" },
+              { "label": "路由", "value": "route" }
+            ]
+          },
+          {
+            "prop": "status",
+            "label": "状态",
+            "width": 90,
+            "render": "tag",
+            "colorMap": { "1": "success", "0": "danger" },
+            "options": [
+              { "label": "启用", "value": 1 },
+              { "label": "停用", "value": 0 }
+            ]
+          },
+          {
+            "prop": "action",
+            "label": "操作",
+            "width": 160,
+            "fixed": "right",
+            "render": "buttons",
+            "buttons": [
+              { "key": "edit", "label": "编辑", "type": "primary", "size": "small" },
+              { "key": "delete", "label": "删除", "type": "danger", "size": "small" }
+            ]
+          }
+        ],
+        "toolbar": [
+          { "key": "add", "label": "新增菜单", "type": "primary", "icon": "plus" }
+        ],
+        "tree": {
+          "enabled": true,
+          "rowKey": "_id",
+          "childrenKey": "children"
+        },
+        "stripe": false,
+        "border": true,
+        "height": 500,
+        "sortable": false,
+        "pagination": {
+          "enabled": false,
+          "pageSize": 100,
+          "pageSizes": [100]
+        },
+        "selection": {
+          "enabled": false
+        }
+      },
+      "api": {
+        "url": "/api/menus",
+        "method": "get",
+        "dataPath": "data"
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventTarget": "toolbar-add",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "treeselect_form_parent_m2n3o",
+              "value": null
+            },
+            {
+              "type": "set-value",
+              "target": "select_form_type_m4p5q",
+              "value": "menu"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_name_m6r7s",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "iconpicker_form_icon_m8t9u",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "number_form_sort_m0v1w",
+              "value": 0
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_path_m2x3y",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "select_form_routeType_m4z5a",
+              "value": "route"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_schemaId_m6b7c",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_microAppId_m8d9e",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_permissionKey_m0f1g",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_m2h3i",
+              "value": 1
+            },
+            {
+              "type": "hide",
+              "target": "input_form_schemaId_m6b7c"
+            },
+            {
+              "type": "hide",
+              "target": "input_form_microAppId_m8d9e"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "add"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": ""
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_menu_m4j5k"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-edit",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "treeselect_form_parent_m2n3o",
+              "value": "${row.parentId}"
+            },
+            {
+              "type": "set-value",
+              "target": "select_form_type_m4p5q",
+              "value": "${row.type}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_name_m6r7s",
+              "value": "${row.name}"
+            },
+            {
+              "type": "set-value",
+              "target": "iconpicker_form_icon_m8t9u",
+              "value": "${row.icon}"
+            },
+            {
+              "type": "set-value",
+              "target": "number_form_sort_m0v1w",
+              "value": "${row.sort}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_path_m2x3y",
+              "value": "${row.path}"
+            },
+            {
+              "type": "set-value",
+              "target": "select_form_routeType_m4z5a",
+              "value": "${row.routeType}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_schemaId_m6b7c",
+              "value": "${row.schemaId}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_microAppId_m8d9e",
+              "value": "${row.microAppId}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_permissionKey_m0f1g",
+              "value": "${row.permissionKey}"
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_m2h3i",
+              "value": "${row.status}"
+            },
+            {
+              "type": "condition",
+              "condition": "${row.routeType === 'schema'}",
+              "then": [
+                {
+                  "type": "show",
+                  "target": "input_form_schemaId_m6b7c"
+                },
+                {
+                  "type": "hide",
+                  "target": "input_form_microAppId_m8d9e"
+                }
+              ],
+              "else": [
+                {
+                  "type": "condition",
+                  "condition": "${row.routeType === 'micro-app'}",
+                  "then": [
+                    {
+                      "type": "hide",
+                      "target": "input_form_schemaId_m6b7c"
+                    },
+                    {
+                      "type": "show",
+                      "target": "input_form_microAppId_m8d9e"
+                    }
+                  ],
+                  "else": [
+                    {
+                      "type": "hide",
+                      "target": "input_form_schemaId_m6b7c"
+                    },
+                    {
+                      "type": "hide",
+                      "target": "input_form_microAppId_m8d9e"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "edit"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_menu_m4j5k"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-delete",
+          "confirm": "确认删除该菜单？子菜单将一并删除。",
+          "actions": [
+            {
+              "type": "set-variable",
+              "variable": "_deleteId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_confirm_m6l7m"
+            }
+          ]
+        }
+      ],
+      "style": { "width": "100%" }
+    },
+    {
+      "id": "dialog_menu_m4j5k",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "菜单表单弹窗",
+      "position": { "x": 0, "y": 0, "w": 600, "h": 580, "zIndex": 100 },
+      "props": {
+        "title": "菜单信息",
+        "width": "600px",
+        "confirmText": "确定",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false,
+        "draggable": true
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "submit"
+            },
+            {
+              "type": "condition",
+              "condition": "${_editMode === 'add'}",
+              "then": [
+                {
+                  "type": "api",
+                  "apiUrl": "/api/menus",
+                  "apiMethod": "post",
+                  "apiParams": "formData"
+                }
+              ],
+              "else": [
+                {
+                  "type": "api",
+                  "apiUrl": "/api/menus/${_editId}",
+                  "apiMethod": "put",
+                  "apiParams": "formData"
+                }
+              ]
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_menus_m8i9j"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "form_menu_m8n9o",
+          "type": "form",
+          "name": "FgForm",
+          "label": "菜单表单",
+          "position": { "x": 0, "y": 0, "w": 560, "h": 500, "zIndex": 1 },
+          "props": {
+            "labelWidth": "100px",
+            "labelPosition": "right"
+          },
+          "children": [
+            {
+              "id": "treeselect_form_parent_m2n3o",
+              "type": "tree-select",
+              "name": "FgTreeSelect",
+              "label": "父菜单",
+              "field": "parentId",
+              "position": { "x": 0, "y": 0, "w": 460, "h": 40, "zIndex": 1 },
+              "props": {
+                "placeholder": "请选择父菜单（留空为顶级）",
+                "clearable": true,
+                "checkStrictly": true
+              },
+              "api": {
+                "url": "/api/menus",
+                "method": "get",
+                "dataPath": "data",
+                "labelKey": "name",
+                "valueKey": "_id",
+                "childrenKey": "children"
+              }
+            },
+            {
+              "id": "select_form_type_m4p5q",
+              "type": "select",
+              "name": "FgSelect",
+              "label": "菜单类型",
+              "field": "type",
+              "position": { "x": 0, "y": 56, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请选择菜单类型", "clearable": true },
+              "options": [
+                { "label": "菜单", "value": "menu" },
+                { "label": "按钮", "value": "button" }
+              ],
+              "defaultValue": "menu",
+              "validationRules": [
+                { "required": true, "message": "请选择菜单类型", "trigger": "change" }
+              ]
+            },
+            {
+              "id": "input_form_name_m6r7s",
+              "type": "input",
+              "name": "FgInput",
+              "label": "菜单名称",
+              "field": "name",
+              "position": { "x": 0, "y": 112, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入菜单名称", "clearable": true },
+              "validationRules": [
+                { "required": true, "message": "请输入菜单名称", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "iconpicker_form_icon_m8t9u",
+              "type": "icon-picker",
+              "name": "FgIconPicker",
+              "label": "图标",
+              "field": "icon",
+              "position": { "x": 0, "y": 168, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请选择图标", "clearable": true }
+            },
+            {
+              "id": "number_form_sort_m0v1w",
+              "type": "number",
+              "name": "FgNumber",
+              "label": "排序",
+              "field": "sort",
+              "position": { "x": 0, "y": 224, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "min": 0, "max": 9999, "step": 1 },
+              "defaultValue": 0
+            },
+            {
+              "id": "input_form_path_m2x3y",
+              "type": "input",
+              "name": "FgInput",
+              "label": "路由地址",
+              "field": "path",
+              "position": { "x": 0, "y": 280, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入路由地址", "clearable": true }
+            },
+            {
+              "id": "select_form_routeType_m4z5a",
+              "type": "select",
+              "name": "FgSelect",
+              "label": "路由类型",
+              "field": "routeType",
+              "position": { "x": 0, "y": 336, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请选择路由类型", "clearable": true },
+              "options": [
+                { "label": "Schema 页面", "value": "schema" },
+                { "label": "微应用", "value": "micro-app" },
+                { "label": "外链", "value": "link" },
+                { "label": "路由", "value": "route" }
+              ],
+              "defaultValue": "route",
+              "linkages": [
+                {
+                  "type": "visible",
+                  "watchFields": ["routeType"],
+                  "condition": "values.routeType === 'schema'",
+                  "targetFields": ["input_form_schemaId_m6b7c"]
+                },
+                {
+                  "type": "visible",
+                  "watchFields": ["routeType"],
+                  "condition": "values.routeType === 'micro-app'",
+                  "targetFields": ["input_form_microAppId_m8d9e"]
+                }
+              ]
+            },
+            {
+              "id": "input_form_schemaId_m6b7c",
+              "type": "input",
+              "name": "FgInput",
+              "label": "Schema ID",
+              "field": "schemaId",
+              "position": { "x": 0, "y": 392, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入 Schema ID", "clearable": true },
+              "hidden": true
+            },
+            {
+              "id": "input_form_microAppId_m8d9e",
+              "type": "input",
+              "name": "FgInput",
+              "label": "子应用ID",
+              "field": "microAppId",
+              "position": { "x": 0, "y": 392, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入子应用ID", "clearable": true },
+              "hidden": true
+            },
+            {
+              "id": "input_form_permissionKey_m0f1g",
+              "type": "input",
+              "name": "FgInput",
+              "label": "权限标识",
+              "field": "permissionKey",
+              "position": { "x": 0, "y": 448, "w": 460, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入权限标识，如 system:menu:list", "clearable": true }
+            },
+            {
+              "id": "switch_form_status_m2h3i",
+              "type": "switch",
+              "name": "FgSwitch",
+              "label": "状态",
+              "field": "status",
+              "position": { "x": 0, "y": 504, "w": 200, "h": 40, "zIndex": 1 },
+              "props": {
+                "activeText": "启用",
+                "inactiveText": "停用",
+                "activeValue": 1,
+                "inactiveValue": 0
+              },
+              "defaultValue": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dialog_confirm_m6l7m",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "删除确认弹窗",
+      "position": { "x": 0, "y": 0, "w": 420, "h": 200, "zIndex": 200 },
+      "props": {
+        "title": "确认删除",
+        "width": "420px",
+        "confirmText": "确认删除",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "api",
+              "apiUrl": "/api/menus/${_deleteId}",
+              "apiMethod": "delete",
+              "apiParams": {}
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_menus_m8i9j"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "text_confirm_m8o9p",
+          "type": "title",
+          "name": "FgTitle",
+          "label": "确认提示",
+          "position": { "x": 0, "y": 0, "w": 380, "h": 60, "zIndex": 1 },
+          "props": {
+            "text": "确认删除该菜单？子菜单将一并删除，操作不可恢复。",
+            "level": 4
+          }
+        }
+      ]
+    }
+  ]
+}

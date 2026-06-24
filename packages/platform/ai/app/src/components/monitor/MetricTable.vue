@@ -82,10 +82,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import type { AgentMetric } from '@/types'
 
-const props = defineProps<{
+defineProps<{
   metrics: AgentMetric[]
   total: number
   currentPage: number

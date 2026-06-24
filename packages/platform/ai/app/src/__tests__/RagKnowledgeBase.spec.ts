@@ -23,7 +23,7 @@ import {
 
 const mockGetRagStatus = vi.mocked(getRagStatus)
 const mockReindexAllRag = vi.mocked(reindexAllRag)
-const mockReindexSingleRag = vi.mocked(reindexSingleRag)
+vi.mocked(reindexSingleRag)
 const mockSearchRag = vi.mocked(searchRag)
 
 // Stub Element Plus components

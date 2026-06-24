@@ -50,20 +50,6 @@ function toggleSelect(id: string) {
   selectedIds.value = next
 }
 
-function toggleSelectAll() {
-  const items = status.value?.unindexedSchemas ?? []
-  if (selectedIds.value.size === items.length) {
-    selectedIds.value.clear()
-  } else {
-    selectedIds.value = new Set(items.map((s: { id: string }) => s.id))
-  }
-}
-
-const allSelected = computed(() => {
-  const items = status.value?.unindexedSchemas ?? []
-  return items.length > 0 && selectedIds.value.size === items.length
-})
-
 async function handleBulkReindex() {
   if (selectedIds.value.size === 0) return
   bulkProcessing.value = true
@@ -165,16 +151,6 @@ async function handleReindexSingle(schemaId: string): Promise<void> {
     await loadStatus()
   } catch {
     message.error('索引重建失败')
-  }
-}
-
-async function handleDeleteEmbedding(schemaId: string): Promise<void> {
-  try {
-    await deleteRagEmbedding(schemaId)
-    message.success('索引已删除')
-    await loadStatus()
-  } catch {
-    message.error('删除索引失败')
   }
 }
 

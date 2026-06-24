@@ -68,11 +68,11 @@ async function loadSchema() {
   try {
     if (props.publishId) {
       const data = await flowApi.getPublishedFormSchema(props.publishId)
-      schema.value = (data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema
+      schema.value = ((data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema) as Record<string, unknown> | null
       schemaName.value = data.name || ''
     } else if (props.schemaId) {
       const data = await flowApi.getFlow(props.schemaId)
-      schema.value = (data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema
+      schema.value = ((data as { json?: unknown; schema?: unknown }).json || (data as { json?: unknown; schema?: unknown }).schema) as Record<string, unknown> | null
       schemaName.value = data.name || ''
     }
     if (props.initialData) {

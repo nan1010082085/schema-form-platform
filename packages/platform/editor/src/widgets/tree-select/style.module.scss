@@ -1,0 +1,10 @@
+:global {
+  .fg-tree-select {
+    width: 100%;
+  }
+
+  .fg-tree-select .el-select__wrapper {
+    min-height: inherit;
+    height: inherit;
+  }
+}

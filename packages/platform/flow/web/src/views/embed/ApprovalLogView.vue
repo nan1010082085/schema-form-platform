@@ -49,7 +49,8 @@ async function loadLogs() {
 
   loading.value = true
   try {
-    logs.value = await flowApi.getApprovalLogs(instanceId.value)
+    const res = await flowApi.getApprovalLogs(instanceId.value)
+    logs.value = res.items ?? res as unknown as any[]
   } catch (err) {
     console.error('Failed to load approval logs:', err)
   } finally {

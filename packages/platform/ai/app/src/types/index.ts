@@ -201,6 +201,16 @@ export type StreamEventType =
   | 'resume'
   | 'done'
   | 'error'
+  | 'requirement_analysis_start'
+  | 'requirement_analysis_complete'
+  | 'requirement_confirm_request'
+  | 'requirement_confirm_response'
+  | 'task_plan_start'
+  | 'task_plan_complete'
+  | 'thinker_start'
+  | 'thinker_complete'
+  | 'quality_check_start'
+  | 'quality_check_complete'
 
 /** @deprecated 使用 StreamEventType 替代 */
 export type SSEEventType = StreamEventType
@@ -233,6 +243,42 @@ export interface SSEEvent {
   interruptType?: string
   message?: string
   data?: unknown
+  /** v2: requirement analysis event data */
+  analysis?: RequirementAnalysis
+  needsConfirmation?: boolean
+  answers?: Record<string, string>
+  /** v2: task plan event data */
+  plan?: {
+    chain: Array<{
+      id: string
+      agent: 'editor' | 'flow' | 'page'
+      description: string
+      dependencies: string[]
+      priority: number
+    }>
+    strategy: {
+      mode: 'sequential' | 'parallel' | 'mixed'
+      retryPolicy: 'none' | 'simple' | 'exponential'
+      timeout: number
+    }
+  }
+  /** v2: thinker event data */
+  adjustments?: {
+    skipSteps?: string[]
+    addSteps?: Array<{ id: string; agent: string; description: string }>
+    reorderSteps?: string[]
+  }
+  risks?: Array<{ type: string; description: string; mitigation: string }>
+  suggestions?: Array<{ type: string; description: string; impact: string }>
+  /** v2: quality check event data */
+  result?: {
+    structure: { valid: boolean; errors: string[]; warnings: string[] }
+    completeness: { score: number; missing: string[] }
+    consistency: { score: number; conflicts: string[] }
+    suggestions: Array<{ type: string; description: string; priority: string }>
+    needsRetry: boolean
+    retryReason?: string
+  }
 }
 
 // ---- 任务链 ----

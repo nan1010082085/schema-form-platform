@@ -11,7 +11,7 @@
  * - 有上下文条（Schema / Node 信息）
  */
 
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAiStore } from '@/stores/ai'
 import { bridge } from '@/utils/bridge'
 import { useQiankun } from '@schema-form/platform-shared/qiankun'
@@ -266,6 +266,13 @@ onMounted(() => {
     onGlobalStateChange((newState) => {
       handleHostData(newState)
     })
+  }
+})
+
+onUnmounted(() => {
+  if (statusTimer) {
+    clearInterval(statusTimer)
+    statusTimer = null
   }
 })
 

@@ -111,12 +111,12 @@ async function mountMicroApp() {
         name: 'editor-form-preview',
         entry: editorEntry,
         container: containerRef.value,
-      },
-      {
-        sandbox: { experimentalStyleIsolation: true },
         props: {
           basePath: `/view?id=${props.publishId}&mode=${props.mode ?? 'edit'}`,
         },
+      },
+      {
+        sandbox: { experimentalStyleIsolation: true },
       },
     )
 

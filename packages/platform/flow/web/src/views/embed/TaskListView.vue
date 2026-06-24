@@ -94,7 +94,6 @@ async function loadTasks() {
   try {
     const result = await flowApi.getMyTasks(currentPage.value, pageSize, {
       status: statusFilter.value || undefined,
-      assignee: assignee.value || undefined,
     })
     tasks.value = result.items
     total.value = result.total

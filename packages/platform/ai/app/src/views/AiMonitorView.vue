@@ -25,7 +25,6 @@ import type {
 } from '@/types'
 import MonitorSummaryCard from '@/components/monitor/MonitorSummary.vue'
 import AgentDistribution from '@/components/monitor/AgentDistribution.vue'
-import MetricTable from '@/components/monitor/MetricTable.vue'
 import AlertList from '@/components/monitor/AlertList.vue'
 
 // ---- State ----
@@ -139,24 +138,6 @@ function getOperationLabel(operation: string): string {
   return labels[operation] ?? operation
 }
 
-function getAlertTypeLabel(alertType: string): string {
-  const labels: Record<string, string> = {
-    failure: '失败',
-    slow: '慢响应',
-    high_token: '高 Token',
-  }
-  return labels[alertType] ?? alertType
-}
-
-function getAlertTypeColor(alertType: string): string {
-  const colors: Record<string, string> = {
-    failure: '#f56c6c',
-    slow: '#e6a23c',
-    high_token: '#409eff',
-  }
-  return colors[alertType] ?? '#909399'
-}
-
 // ---- Data Loading ----
 
 async function loadData(): Promise<void> {
@@ -191,16 +172,7 @@ function handleTimeRangeChange(val: string | number | boolean): void {
   loadData()
 }
 
-function handleMetricFilterChange(agent?: string, status?: 'success' | 'failed'): void {
-  selectedAgent.value = agent ?? ''
-  // status filtering is handled by the component
-}
-
-function handleMetricPageChange(page: number): void {
-  // Pagination is handled by the component
-}
-
-function handleAlertPageChange(page: number): void {
+function handleAlertPageChange(_page: number): void {
   // Pagination is handled by the component
 }
 

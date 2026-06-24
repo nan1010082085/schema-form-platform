@@ -13,7 +13,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed, triggerRef } from 'vue'
+import { ref, computed } from 'vue'
 import type {
   AIMessage,
   AgentType,
@@ -22,12 +22,14 @@ import type {
   FlowGraph,
   TaskChainStep,
   MentionReference,
+  SSEEvent,
+} from '@/types'
+import type {
   SearchResult,
   MentionType,
   MentionSearchResult,
   FeedbackType,
-} from '@/types'
-import type { SSEEvent } from '@schema-form/ai-shared'
+} from '@/api/aiApi'
 import {
   searchConversations,
   mentionSearch,
@@ -72,8 +74,6 @@ export const useAiStore = defineStore('ai', () => {
     // 强制触发响应式更新的辅助函数
     function updateMessage(updates: Partial<AIMessage>): void {
       Object.assign(msg, updates)
-      // 强制触发 ref 的响应式更新
-      triggerRef(conversationStore.messages)
       console.log('[ai] updateMessage', updates, 'messages length:', conversationStore.messages.length)
     }
 
@@ -492,7 +492,7 @@ export const useAiStore = defineStore('ai', () => {
         lastIdx,
         conversationStore.messages,
         {
-          onStreamEvent: handleSSEEvent,
+          onStreamEvent: handleStreamEvent,
           onDone: (conversationId) => {
             if (conversationId) conversationStore.loadConversations()
           },
@@ -534,7 +534,7 @@ export const useAiStore = defineStore('ai', () => {
     msg.status = 'streaming'
 
     await streamStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
-      onStreamEvent: handleSSEEvent,
+      onStreamEvent: handleStreamEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -557,7 +557,7 @@ export const useAiStore = defineStore('ai', () => {
     hitlStore.clearInterrupt()
 
     await streamStore.executeResume(interrupt.threadId, confirmed, conversationStore.messages, {
-      onStreamEvent: handleSSEEvent,
+      onStreamEvent: handleStreamEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },
@@ -637,7 +637,6 @@ export const useAiStore = defineStore('ai', () => {
       },
     }
     msg.toolCalls = newToolCalls
-    triggerRef(conversationStore.messages)
 
     // 发送确认响应到服务器
     // 通过 WebSocket 发送 requirement_confirm_response 事件
@@ -684,7 +683,6 @@ export const useAiStore = defineStore('ai', () => {
       },
     }
     msg.toolCalls = newToolCalls
-    triggerRef(conversationStore.messages)
 
     // 发送跳过确认到服务器
     const { emitChatSend } = await import('@schema-form/platform-shared/socket')
@@ -772,7 +770,7 @@ export const useAiStore = defineStore('ai', () => {
     msg.status = 'streaming'
 
     await streamStore.executeStream(userContent, userMentions, messageIndex, conversationStore.messages, {
-      onStreamEvent: handleSSEEvent,
+      onStreamEvent: handleStreamEvent,
       onDone: (conversationId) => {
         if (conversationId) conversationStore.loadConversations()
       },

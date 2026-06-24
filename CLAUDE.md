@@ -44,6 +44,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 编码
 
 - 使用兜底写法时，应该分析上下文，分析兜底写法是否是必要的
+- **禁止简化业务需求**：复杂场景必须完整实现，不逃避设计。先理解完整业务需求，再设计完整方案，最后实现。
+- **必须使用专家智能体**：所有实现任务必须指派给对应角色的 Agent（前端架构师、组件工程师、服务端工程师），不要自己光杆做。
+- **能力不够就扩展，不绕过**：Widget 不满足就创建新 Widget，Flow 缺功能就扩展引擎，Server API 不够就新增端点。绝对不允许用硬编码替代平台能力。
+
+### Git 提交规则
+
+- **提交前必须审查**：`git status` 检查所有待提交文件，确认没有本地专用文件（deploy/、.env.local、output/、dist/ 等）
+- **检查 .gitignore**：新目录必须在 .gitignore 中有对应规则才能提交
+- **deploy 目录禁止提交**：部署配置、打包产物、nginx 配置等仅本地使用，绝对不能进入 git
 
 ## 项目概览
 
@@ -55,8 +64,7 @@ pnpm monorepo：Schema 驱动的可视化自由布局设计器与渲染器。三
 ```
 schema-form-platform/
 ├── business/                    # ═══ 业务层 ═══
-│   ├── shell/                   #   @schema-form/shell — 主宿主应用
-│   ├── admin/                   #   @schema-form/admin — 系统管理
+│   ├── shell/                   #   @schema-form/shell — 主宿主应用（唯一容器）
 │   └── shared/                  #   @schema-form/business-shared — 业务公共组件
 │
 ├── platform/                    # ═══ 能力层 ═══

@@ -1,0 +1,537 @@
+{
+  "name": "角色管理",
+  "type": "search_list",
+  "json": [
+    {
+      "id": "card_search_r0a1b",
+      "type": "card",
+      "name": "FgCard",
+      "label": "搜索区域",
+      "position": { "x": 0, "y": 0, "w": 1200, "h": 120, "zIndex": 1 },
+      "props": {},
+      "style": { "padding": "16px", "marginBottom": "16px" },
+      "children": [
+        {
+          "id": "input_search_name_c2d3e",
+          "type": "input",
+          "name": "FgInput",
+          "label": "角色名称",
+          "field": "name",
+          "position": { "x": 0, "y": 0, "w": 240, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请输入角色名称", "clearable": true },
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "input_search_key_e4f5g",
+          "type": "input",
+          "name": "FgInput",
+          "label": "权限字符",
+          "field": "permissionKey",
+          "position": { "x": 256, "y": 0, "w": 240, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请输入权限字符", "clearable": true },
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "select_search_status_h6i7j",
+          "type": "select",
+          "name": "FgSelect",
+          "label": "状态",
+          "field": "status",
+          "position": { "x": 512, "y": 0, "w": 200, "h": 40, "zIndex": 1 },
+          "props": { "placeholder": "请选择状态", "clearable": true },
+          "options": [
+            { "label": "启用", "value": 1 },
+            { "label": "停用", "value": 0 }
+          ],
+          "style": { "marginRight": "16px" }
+        },
+        {
+          "id": "btn_search_k8l9m",
+          "type": "button",
+          "name": "FgButton",
+          "label": "搜索",
+          "position": { "x": 728, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "props": { "text": "搜索", "buttonType": "primary" },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "refresh",
+                  "target": "table_roles_n0o1p"
+                }
+              ]
+            }
+          ],
+          "style": { "marginRight": "8px" }
+        },
+        {
+          "id": "btn_reset_q2r3s",
+          "type": "button",
+          "name": "FgButton",
+          "label": "重置",
+          "position": { "x": 816, "y": 0, "w": 80, "h": 40, "zIndex": 1 },
+          "events": [
+            {
+              "trigger": "click",
+              "actions": [
+                {
+                  "type": "set-value",
+                  "target": "input_search_name_c2d3e",
+                  "value": ""
+                },
+                {
+                  "type": "set-value",
+                  "target": "input_search_key_e4f5g",
+                  "value": ""
+                },
+                {
+                  "type": "set-value",
+                  "target": "select_search_status_h6i7j",
+                  "value": null
+                },
+                {
+                  "type": "refresh",
+                  "target": "table_roles_n0o1p"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table_roles_n0o1p",
+      "type": "advanced-table",
+      "name": "FgAdvancedTable",
+      "label": "角色列表",
+      "position": { "x": 0, "y": 136, "w": 1200, "h": 500, "zIndex": 1 },
+      "props": {
+        "columns": [
+          { "prop": "name", "label": "角色名称", "width": 150, "render": "text" },
+          { "prop": "permissionKey", "label": "权限字符", "width": 160, "render": "text" },
+          { "prop": "sort", "label": "排序", "width": 80, "render": "text", "align": "center" },
+          {
+            "prop": "status",
+            "label": "状态",
+            "width": 90,
+            "render": "tag",
+            "colorMap": { "1": "success", "0": "danger" },
+            "options": [
+              { "label": "启用", "value": 1 },
+              { "label": "停用", "value": 0 }
+            ]
+          },
+          { "prop": "createdAt", "label": "创建时间", "width": 180, "render": "text" },
+          {
+            "prop": "action",
+            "label": "操作",
+            "width": 240,
+            "fixed": "right",
+            "render": "buttons",
+            "buttons": [
+              { "key": "edit", "label": "编辑", "type": "primary", "size": "small" },
+              { "key": "assignPerm", "label": "分配权限", "type": "success", "size": "small" },
+              { "key": "delete", "label": "删除", "type": "danger", "size": "small" }
+            ]
+          }
+        ],
+        "toolbar": [
+          { "key": "add", "label": "新增角色", "type": "primary", "icon": "plus" }
+        ],
+        "stripe": true,
+        "border": true,
+        "height": 400,
+        "sortable": false,
+        "pagination": {
+          "enabled": true,
+          "pageSize": 20,
+          "pageSizes": [10, 20, 50, 100]
+        },
+        "selection": {
+          "enabled": false
+        }
+      },
+      "api": {
+        "url": "/api/roles",
+        "method": "get",
+        "dataPath": "data.items"
+      },
+      "events": [
+        {
+          "trigger": "click",
+          "eventTarget": "toolbar-add",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "input_form_name_t4u5v",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_key_w6x7y",
+              "value": ""
+            },
+            {
+              "type": "set-value",
+              "target": "number_form_sort_z8a9b",
+              "value": 0
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_c0d1e",
+              "value": true
+            },
+            {
+              "type": "set-value",
+              "target": "textarea_form_remark_f2g3h",
+              "value": ""
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "add"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": ""
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_role_i4j5k"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-edit",
+          "actions": [
+            {
+              "type": "set-value",
+              "target": "input_form_name_t4u5v",
+              "value": "${row.name}"
+            },
+            {
+              "type": "set-value",
+              "target": "input_form_key_w6x7y",
+              "value": "${row.permissionKey}"
+            },
+            {
+              "type": "set-value",
+              "target": "number_form_sort_z8a9b",
+              "value": "${row.sort}"
+            },
+            {
+              "type": "set-value",
+              "target": "switch_form_status_c0d1e",
+              "value": "${row.status}"
+            },
+            {
+              "type": "set-value",
+              "target": "textarea_form_remark_f2g3h",
+              "value": "${row.remark}"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editMode",
+              "value": "edit"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_editId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_role_i4j5k"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-assignPerm",
+          "actions": [
+            {
+              "type": "set-variable",
+              "variable": "_permRoleId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "set-variable",
+              "variable": "_permRoleName",
+              "value": "${row.name}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_permission_m6n7o"
+            }
+          ]
+        },
+        {
+          "trigger": "click",
+          "eventTarget": "row-delete",
+          "confirm": "确认删除该角色？删除后不可恢复。",
+          "actions": [
+            {
+              "type": "set-variable",
+              "variable": "_deleteId",
+              "value": "${row._id}"
+            },
+            {
+              "type": "open-dialog",
+              "target": "dialog_confirm_p8q9r"
+            }
+          ]
+        }
+      ],
+      "style": { "width": "100%" }
+    },
+    {
+      "id": "dialog_role_i4j5k",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "角色表单弹窗",
+      "position": { "x": 0, "y": 0, "w": 560, "h": 460, "zIndex": 100 },
+      "props": {
+        "title": "角色信息",
+        "width": "560px",
+        "confirmText": "确定",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false,
+        "draggable": true
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "submit"
+            },
+            {
+              "type": "condition",
+              "condition": "${_editMode === 'add'}",
+              "then": [
+                {
+                  "type": "api",
+                  "apiUrl": "/api/roles",
+                  "apiMethod": "post",
+                  "apiParams": "formData"
+                }
+              ],
+              "else": [
+                {
+                  "type": "api",
+                  "apiUrl": "/api/roles/${_editId}",
+                  "apiMethod": "put",
+                  "apiParams": "formData"
+                }
+              ]
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_roles_n0o1p"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "form_role_l0m1n",
+          "type": "form",
+          "name": "FgForm",
+          "label": "角色表单",
+          "position": { "x": 0, "y": 0, "w": 520, "h": 380, "zIndex": 1 },
+          "props": {
+            "labelWidth": "100px",
+            "labelPosition": "right"
+          },
+          "children": [
+            {
+              "id": "input_form_name_t4u5v",
+              "type": "input",
+              "name": "FgInput",
+              "label": "角色名称",
+              "field": "name",
+              "position": { "x": 0, "y": 0, "w": 480, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入角色名称", "clearable": true },
+              "validationRules": [
+                { "required": true, "message": "请输入角色名称", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "input_form_key_w6x7y",
+              "type": "input",
+              "name": "FgInput",
+              "label": "权限字符",
+              "field": "permissionKey",
+              "position": { "x": 0, "y": 56, "w": 480, "h": 40, "zIndex": 1 },
+              "props": { "placeholder": "请输入权限字符，如 admin、editor", "clearable": true },
+              "validationRules": [
+                { "required": true, "message": "请输入权限字符", "trigger": "blur" }
+              ]
+            },
+            {
+              "id": "number_form_sort_z8a9b",
+              "type": "number",
+              "name": "FgNumber",
+              "label": "排序",
+              "field": "sort",
+              "position": { "x": 0, "y": 112, "w": 480, "h": 40, "zIndex": 1 },
+              "props": { "min": 0, "max": 999, "step": 1 },
+              "defaultValue": 0
+            },
+            {
+              "id": "switch_form_status_c0d1e",
+              "type": "switch",
+              "name": "FgSwitch",
+              "label": "状态",
+              "field": "status",
+              "position": { "x": 0, "y": 168, "w": 200, "h": 40, "zIndex": 1 },
+              "props": {
+                "activeText": "启用",
+                "inactiveText": "停用",
+                "activeValue": 1,
+                "inactiveValue": 0
+              },
+              "defaultValue": 1
+            },
+            {
+              "id": "textarea_form_remark_f2g3h",
+              "type": "textarea",
+              "name": "FgTextarea",
+              "label": "备注",
+              "field": "remark",
+              "position": { "x": 0, "y": 224, "w": 480, "h": 80, "zIndex": 1 },
+              "props": { "placeholder": "请输入备注", "rows": 3 }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dialog_permission_m6n7o",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "分配权限弹窗",
+      "position": { "x": 0, "y": 0, "w": 600, "h": 520, "zIndex": 150 },
+      "props": {
+        "title": "分配权限",
+        "width": "600px",
+        "confirmText": "确定",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false,
+        "draggable": true
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "api",
+              "apiUrl": "/api/roles/${_permRoleId}",
+              "apiMethod": "put",
+              "apiParams": {
+                "permissions": "${permissionTree_s0t1u.checkedKeys}"
+              }
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_roles_n0o1p"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "permissionTree_s0t1u",
+          "type": "permission-tree",
+          "name": "FgPermissionTree",
+          "label": "菜单权限",
+          "field": "permissions",
+          "position": { "x": 0, "y": 0, "w": 560, "h": 440, "zIndex": 1 },
+          "props": {
+            "showCheckbox": true,
+            "checkStrictly": true,
+            "defaultExpandAll": true,
+            "nodeKey": "id",
+            "props": { "children": "children", "label": "label" }
+          },
+          "api": {
+            "url": "/api/permissions/tree",
+            "method": "get",
+            "dataPath": "data",
+            "labelKey": "name",
+            "valueKey": "code",
+            "childrenKey": "children"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dialog_confirm_p8q9r",
+      "type": "dialog",
+      "name": "FgDialog",
+      "label": "删除确认弹窗",
+      "position": { "x": 0, "y": 0, "w": 420, "h": 200, "zIndex": 200 },
+      "props": {
+        "title": "确认删除",
+        "width": "420px",
+        "confirmText": "确认删除",
+        "cancelText": "取消",
+        "destroyOnClose": true,
+        "contentMode": "edit",
+        "showFooter": true,
+        "closeOnClickModal": false
+      },
+      "events": [
+        {
+          "trigger": "confirm",
+          "eventTarget": "confirm",
+          "actions": [
+            {
+              "type": "api",
+              "apiUrl": "/api/roles/${_deleteId}",
+              "apiMethod": "delete",
+              "apiParams": {}
+            },
+            {
+              "type": "close-dialog"
+            },
+            {
+              "type": "refresh",
+              "target": "table_roles_n0o1p"
+            }
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "text_confirm_q2r3s",
+          "type": "title",
+          "name": "FgTitle",
+          "label": "确认提示",
+          "position": { "x": 0, "y": 0, "w": 380, "h": 60, "zIndex": 1 },
+          "props": {
+            "text": "确认删除该角色？删除后不可恢复。",
+            "level": 4
+          }
+        }
+      ]
+    }
+  ]
+}

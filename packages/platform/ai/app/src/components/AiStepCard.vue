@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { StepType, StepStatus } from '@/types'
@@ -99,11 +99,12 @@ function formatTime(date: Date): string {
 // - tool_error: 始终展开（便于用户看到错误）
 // - tool_call: 运行中展开，完成后折叠
 // - 其他: 折叠
-const collapsed = computed(() => {
-  if (props.type === 'tool_error') return false
-  if (props.status === 'running') return false
-  return true
-})
+const collapsed = ref(true)
+watch(() => [props.type, props.status], () => {
+  if (props.type === 'tool_error') collapsed.value = false
+  else if (props.status === 'running') collapsed.value = false
+  else collapsed.value = true
+}, { immediate: true })
 const jsonCollapsed = ref(false)
 
 const hasHeader = computed(() =>

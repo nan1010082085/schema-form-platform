@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { message } from '@schema-form/platform-shared/utils/message'
 import AiStepCard from './AiStepCard.vue'
 import AiLoadingDots from './AiLoadingDots.vue'
@@ -110,23 +110,13 @@ function handleFeedback(type: 'positive' | 'negative'): void {
 
 /** Buffered content that only updates at animation frame cadence */
 const renderedContentRef = ref('')
-let rafId = 0
 let latestContent = ''
-
-function flushContent() {
-  rafId = 0
-  renderedContentRef.value = latestContent
-}
 
 watch(() => props.content, (newContent) => {
   latestContent = newContent ?? ''
   // 直接更新，不使用 requestAnimationFrame，确保流式响应实时显示
   renderedContentRef.value = latestContent
 }, { immediate: true })
-
-onBeforeUnmount(() => {
-  if (rafId) cancelAnimationFrame(rafId)
-})
 
 // ---- Code block collapse state ----
 

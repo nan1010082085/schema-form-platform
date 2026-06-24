@@ -510,8 +510,8 @@ describe('AiPreviewPanel', () => {
       const flowData = {
         title: '测试流程',
         nodes: [
-          { id: 'n1', data: { bpmnType: 'startEvent', label: '开始' }, position: { x: 0, y: 0 } },
-          { id: 'n2', data: { bpmnType: 'endEvent', label: '结束' }, position: { x: 200, y: 0 } },
+          { label: '开始', type: 'start' as const },
+          { label: '结束', type: 'end' as const },
         ],
         graph: {
           nodes: [

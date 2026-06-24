@@ -191,7 +191,8 @@ async function loadTask() {
 
     // 加载审批日志
     if (task.value?.instanceId) {
-      logs.value = await flowApi.getApprovalLogs(task.value.instanceId)
+      const res = await flowApi.getApprovalLogs(task.value.instanceId)
+      logs.value = res.items ?? res as unknown as any[]
     }
 
     // 加载驳回目标节点
@@ -248,8 +249,7 @@ async function handleDelegate() {
 
   try {
     await flowApi.delegateTask(task.value.id, {
-      assignee: delegateAssignee.value,
-      comment: delegateComment.value,
+      targetUserId: delegateAssignee.value,
     })
     showDelegateDialog.value = false
     await loadTask()

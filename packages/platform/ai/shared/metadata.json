@@ -1,6 +1,6 @@
 {
   "version": "2026-06-24",
-  "generatedAt": "2026-06-24T05:57:25.753Z",
+  "generatedAt": "2026-06-24T18:42:20.611Z",
   "widgets": [
     {
       "type": "dialog",
@@ -748,6 +748,69 @@
       ]
     },
     {
+      "type": "icon-picker",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "图标选择",
+      "description": "图标选择器，从 Element Plus Icons 中选择图标",
+      "defaultProps": {
+        "placeholder": "请选择图标",
+        "clearable": true,
+        "disabled": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "图标名称",
+          "example": "Edit"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "iframe",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "iframe",
+      "description": "嵌入外部网页",
+      "defaultProps": {
+        "src": "",
+        "width": "100%",
+        "height": "400px",
+        "border": false,
+        "fullscreen": false,
+        "dialogMode": false
+      },
+      "keyProps": [],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "src",
+          "type": "string",
+          "description": "当前 iframe 地址",
+          "example": "https://example.com"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
+      ]
+    },
+    {
       "type": "input",
       "group": "form",
       "canHaveChildren": false,
@@ -786,6 +849,41 @@
         "events",
         "rules",
         "variables"
+      ]
+    },
+    {
+      "type": "micro-app",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "微应用",
+      "description": "嵌入微前端应用（京东 micro-app 方案）",
+      "defaultProps": {
+        "name": "",
+        "url": "",
+        "width": "100%",
+        "height": "400px",
+        "iframe": false
+      },
+      "keyProps": [],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "name",
+          "type": "string",
+          "description": "微应用名称",
+          "example": "my-sub-app"
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "description": "微应用 URL",
+          "example": "http://localhost:8080"
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events"
       ]
     },
     {
@@ -870,6 +968,44 @@
       "configPanels": [
         "events",
         "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "permission-tree",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "权限树",
+      "description": "权限树选择器，展示菜单和按钮权限，支持勾选",
+      "defaultProps": {
+        "data": [],
+        "showCheckbox": true,
+        "checkStrictly": false,
+        "defaultExpandAll": true,
+        "nodeKey": "id",
+        "props": {
+          "children": "children",
+          "label": "label"
+        }
+      },
+      "keyProps": [
+        "showCheckbox",
+        "checkStrictly",
+        "defaultExpandAll"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "checkedKeys",
+          "type": "array",
+          "description": "勾选的节点key",
+          "example": []
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
         "variables"
       ]
     },
@@ -981,6 +1117,62 @@
       "configPanels": [
         "events",
         "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "role-management",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "角色管理",
+      "description": "角色管理表格，支持搜索、分页、新增/编辑/删除角色、分配菜单权限",
+      "defaultProps": {
+        "tableColumns": [
+          "name",
+          "permissions",
+          "data_scope",
+          "createdAt"
+        ],
+        "pageSize": 20,
+        "searchable": true
+      },
+      "keyProps": [
+        "tableColumns",
+        "pageSize",
+        "searchable"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "表格数据"
+        },
+        {
+          "key": "total",
+          "type": "number",
+          "description": "总条数"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "选中行"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "刷新角色列表"
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
         "variables"
       ]
     },
@@ -1303,6 +1495,52 @@
       ]
     },
     {
+      "type": "tree-select",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "树形选择",
+      "description": "树形选择器，支持层级数据选择（如菜单、部门）",
+      "defaultProps": {
+        "placeholder": "请选择",
+        "clearable": true,
+        "disabled": false,
+        "multiple": false,
+        "checkStrictly": true,
+        "showCheckbox": false
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "multiple",
+        "checkStrictly",
+        "showCheckbox"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "选中值",
+          "example": ""
+        },
+        {
+          "key": "label",
+          "type": "string",
+          "description": "选中标签",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "api",
+        "variables"
+      ]
+    },
+    {
       "type": "upload",
       "group": "form",
       "canHaveChildren": false,
@@ -1330,6 +1568,106 @@
           "key": "value",
           "type": "string",
           "description": "当前字段值",
+          "example": ""
+        }
+      ],
+      "receivableEvents": [],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "rules",
+        "variables"
+      ]
+    },
+    {
+      "type": "user-management",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "用户管理",
+      "description": "用户管理表格，支持搜索、分页、新增/编辑/删除用户、重置密码",
+      "defaultProps": {
+        "tableColumns": [
+          "username",
+          "displayName",
+          "deptId",
+          "phone",
+          "status",
+          "createdAt"
+        ],
+        "pageSize": 20,
+        "searchable": true
+      },
+      "keyProps": [
+        "tableColumns",
+        "pageSize",
+        "searchable"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "loading",
+          "type": "boolean",
+          "description": "加载状态"
+        },
+        {
+          "key": "tableData",
+          "type": "array",
+          "description": "表格数据"
+        },
+        {
+          "key": "total",
+          "type": "number",
+          "description": "总条数"
+        },
+        {
+          "key": "selectedRows",
+          "type": "array",
+          "description": "选中行"
+        }
+      ],
+      "receivableEvents": [
+        {
+          "name": "refresh",
+          "description": "刷新用户列表"
+        }
+      ],
+      "eventTargets": [],
+      "configPanels": [
+        "events",
+        "variables"
+      ]
+    },
+    {
+      "type": "user-selector",
+      "group": "form",
+      "canHaveChildren": false,
+      "displayName": "用户选择",
+      "description": "用户选择器，支持搜索和多选用户",
+      "defaultProps": {
+        "placeholder": "请选择用户",
+        "clearable": true,
+        "disabled": false,
+        "multiple": false,
+        "filterable": true
+      },
+      "keyProps": [
+        "placeholder",
+        "clearable",
+        "disabled",
+        "multiple"
+      ],
+      "defaultSize": null,
+      "exposedValues": [
+        {
+          "key": "value",
+          "type": "string",
+          "description": "选中用户ID",
+          "example": ""
+        },
+        {
+          "key": "label",
+          "type": "string",
+          "description": "选中用户名",
           "example": ""
         }
       ],

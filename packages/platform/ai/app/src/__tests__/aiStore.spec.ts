@@ -4,6 +4,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAiStore } from '@/stores/ai'
+import { useConversationStore } from '@/stores/conversation'
+import { useSchemaStore } from '@/stores/schema'
+import { useStreamStore } from '@/stores/stream'
 
 // Mock the API module (REST endpoints only — chat is now via WebSocket)
 vi.mock('@/api/aiApi', () => ({
@@ -18,12 +21,8 @@ import { getConversations, deleteConversation, publish } from '@/api/aiApi'
 // ---- WebSocket mock ----
 // 模拟服务端 chat:event 推送
 let chatEventHandler: ((event: Record<string, unknown>) => void) | null = null
-let lastChatSendPayload: Record<string, unknown> | null = null
-
 vi.mock('@schema-form/platform-shared/socket', () => ({
-  emitChatSend: vi.fn((payload: Record<string, unknown>) => {
-    lastChatSendPayload = payload
-  }),
+  emitChatSend: vi.fn(),
   emitChatCancel: vi.fn(),
   emitChatResume: vi.fn(),
   onChatEvent: vi.fn((handler: (event: Record<string, unknown>) => void) => {
@@ -32,7 +31,7 @@ vi.mock('@schema-form/platform-shared/socket', () => ({
   }),
 }))
 
-import { emitChatSend, emitChatCancel } from '@schema-form/platform-shared/socket'
+import { emitChatSend } from '@schema-form/platform-shared/socket'
 
 /** 模拟服务端推送事件到客户端 */
 function pushChatEvent(event: Record<string, unknown>) {
@@ -195,10 +194,13 @@ describe('useAiStore', () => {
   describe('clearConversation', () => {
     it('resets conversation state', () => {
       const store = useAiStore()
-      store.messages = [{ role: 'user', content: 'hi', timestamp: new Date() }]
-      store.currentConversationId = 'conv-1'
-      store.currentSchema = [{ id: '1' }] as any
-      store.error = 'some error'
+      const conversationStore = useConversationStore()
+      const schemaStore = useSchemaStore()
+      const streamStore = useStreamStore()
+      conversationStore.messages = [{ role: 'user', content: 'hi', timestamp: new Date() }]
+      conversationStore.currentConversationId = 'conv-1'
+      schemaStore.setCurrentSchema([{ id: '1' }] as any)
+      streamStore.error = 'some error'
 
       store.clearConversation()
 
@@ -227,11 +229,12 @@ describe('useAiStore', () => {
   describe('removeConversation', () => {
     it('deletes and removes from list', async () => {
       const store = useAiStore()
-      store.conversations = [
+      const conversationStore = useConversationStore()
+      conversationStore.conversations = [
         { id: '1', title: 'a', source: 'standalone', activeAgent: 'editor', createdAt: '', updatedAt: '' },
         { id: '2', title: 'b', source: 'standalone', activeAgent: 'editor', createdAt: '', updatedAt: '' },
       ]
-      store.currentConversationId = '1'
+      conversationStore.currentConversationId = '1'
       vi.mocked(deleteConversation).mockResolvedValue(undefined)
 
       await store.removeConversation('1')
@@ -251,15 +254,16 @@ describe('useAiStore', () => {
 
     it('returns null when no schema or flow', async () => {
       const store = useAiStore()
-      store.currentConversationId = 'conv-1'
+      useConversationStore().currentConversationId = 'conv-1'
       const result = await store.publishCurrent()
       expect(result).toBeNull()
     })
 
     it('publishes schema and returns id/publishId/type', async () => {
       const store = useAiStore()
-      store.currentConversationId = 'conv-1'
-      store.currentSchema = [{ id: '1', type: 'input' }] as any
+      const conversationStore = useConversationStore()
+      conversationStore.currentConversationId = 'conv-1'
+      store.setCurrentSchema([{ id: '1', type: 'input' }] as any)
       vi.mocked(publish).mockResolvedValue({ id: 's1', publishId: 'p1' })
 
       const result = await store.publishCurrent()
@@ -274,8 +278,8 @@ describe('useAiStore', () => {
 
     it('publishes flow when no schema', async () => {
       const store = useAiStore()
-      store.currentConversationId = 'conv-1'
-      store.currentFlow = { nodes: [], edges: [] } as any
+      useConversationStore().currentConversationId = 'conv-1'
+      store.setCurrentFlow({ nodes: [], edges: [] } as any)
       vi.mocked(publish).mockResolvedValue({ id: 'f1', publishId: 'p2' })
 
       const result = await store.publishCurrent()
@@ -485,13 +489,13 @@ describe('useAiStore', () => {
 
     it('returns true when schema exists', () => {
       const store = useAiStore()
-      store.currentSchema = [{ id: '1' }] as any
+      store.setCurrentSchema([{ id: '1' }] as any)
       expect(store.hasPreview).toBe(true)
     })
 
     it('returns true when flow exists', () => {
       const store = useAiStore()
-      store.currentFlow = { nodes: [], edges: [] } as any
+      store.setCurrentFlow({ nodes: [], edges: [] } as any)
       expect(store.hasPreview).toBe(true)
     })
   })
@@ -501,7 +505,7 @@ describe('useAiStore', () => {
   describe('F5: stream end handling', () => {
     it('refreshes conversation list when done event received', async () => {
       const store = useAiStore()
-      store.currentConversationId = 'conv-existing'
+      useConversationStore().currentConversationId = 'conv-existing'
 
       const convos = [
         { id: 'conv-existing', title: 'test', source: 'standalone', activeAgent: 'editor', createdAt: '', updatedAt: '' },
@@ -522,7 +526,7 @@ describe('useAiStore', () => {
 
     it('skips conversation refresh when stream was aborted', async () => {
       const store = useAiStore()
-      store.currentConversationId = 'conv-1'
+      useConversationStore().currentConversationId = 'conv-1'
 
       vi.mocked(emitChatSend).mockImplementation(() => {
         pushChatEvent({ type: 'text', content: 'partial' })
