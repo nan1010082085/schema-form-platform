@@ -245,7 +245,7 @@ function onAiIframeLoad() {
   setTimeout(sendContextToAi, 500)
 }
 
-// 监听 Schema 引用变化，实时更新 AI sidebar（shallowRef，仅整体替换时触发）
+// 监听 Schema 变化，实时更新 AI sidebar
 watch(
   () => widgetStore.widgets,
   () => {
@@ -253,6 +253,7 @@ watch(
       sendContextToAi()
     }
   },
+  { deep: true },
 )
 
 // 页面刷新/关闭拦截
