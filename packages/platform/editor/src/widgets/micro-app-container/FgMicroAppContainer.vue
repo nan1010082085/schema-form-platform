@@ -102,12 +102,6 @@ onUnmounted(() => {
   microApp?.unmount()
   microApp = null
 })
-
-function postMessage(data: unknown) {
-  containerRef.value?.querySelector('iframe')?.contentWindow?.postMessage(data, '*')
-}
-
-defineExpose({ postMessage })
 </script>
 
 <template>

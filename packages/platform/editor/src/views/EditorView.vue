@@ -37,6 +37,8 @@ import SchemaVersionCompare from '@/components/SchemaVersionCompare.vue'
 import { useSchemaVersionStore } from '@/stores/schemaVersion'
 import SaveTemplateDialog from '@/components/Editor/SaveTemplateDialog.vue'
 import EditorViewToolbar from './EditorViewToolbar.vue'
+import { loadMicroApp, type MicroApp } from 'qiankun'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import EditorViewLeftPanel from './EditorViewLeftPanel.vue'
 import EditorViewRightPanel from './EditorViewRightPanel.vue'
 import styles from './EditorView.module.scss'
@@ -53,7 +55,8 @@ const apiStore = useApiStore()
 const schemaVersionStore = useSchemaVersionStore()
 const { captureElement } = useSnapshot()
 const editorCanvasRef = ref<InstanceType<typeof EditorCanvas>>()
-const aiIframeRef = ref<HTMLIFrameElement>()
+const aiContainerRef = ref<HTMLElement>()
+let aiMicroApp: MicroApp | null = null
 
 // 自动保存：脏数据 60 秒后自动触发保存（偏好持久化到 localStorage）
 const autoSaveEnabled = ref(localStorage.getItem('editor_auto_save') !== 'off')
@@ -77,7 +80,10 @@ const showLogPanel = ref(false)
 const showCodePanel = ref(false)
 const showAiDrawer = ref(false)
 const showVersionCompare = ref(false)
-const aiBaseUrl = import.meta.env.VITE_AI_URL || '/ai/index-sidebar.html'
+const isDev = import.meta.env.DEV
+const aiEntryUrl = isDev
+  ? `http://localhost:${APP_CONFIGS.aiPlatform.devPort}/`
+  : `${window.location.origin}${APP_CONFIGS.aiPlatform.basePath}`
 
 // ================================================================
 // Mode
@@ -215,13 +221,10 @@ onMounted(async () => {
 })
 
 // ================================================================
-// AI iframe 通信
+// AI sidebar (qiankun loadMicroApp)
 // ================================================================
 
 function sendContextToAi() {
-  const iframe = aiIframeRef.value
-  if (!iframe?.contentWindow) return
-
   const context = {
     type: 'ai:set-context',
     payload: {
@@ -230,20 +233,38 @@ function sendContextToAi() {
       editorMode: editorStore.mode,
     },
   }
-
   const currentSchema = {
     type: 'ai:current-schema',
     payload: widgetStore.widgets,
   }
-
-  iframe.contentWindow.postMessage(context, '*')
-  iframe.contentWindow.postMessage(currentSchema, '*')
+  window.postMessage(context, '*')
+  window.postMessage(currentSchema, '*')
 }
 
-function onAiIframeLoad() {
-  // 延迟发送，确保 AI sidebar 已准备好接收消息
-  setTimeout(sendContextToAi, 500)
-}
+// 监听 AI drawer 开关，动态挂载/卸载 AI 子应用
+watch(showAiDrawer, async (open) => {
+  if (open) {
+    await nextTick()
+    if (aiContainerRef.value && !aiMicroApp) {
+      aiMicroApp = loadMicroApp({
+        name: 'aiPlatform',
+        entry: aiEntryUrl,
+        container: aiContainerRef.value,
+        props: { agent: 'editor' },
+      }, {
+        sandbox: { experimentalStyleIsolation: true },
+      })
+      aiMicroApp.mountPromise.then(() => {
+        setTimeout(sendContextToAi, 300)
+      })
+    }
+  } else {
+    if (aiMicroApp) {
+      aiMicroApp.unmount()
+      aiMicroApp = null
+    }
+  }
+})
 
 // 监听 Schema 变化，实时更新 AI sidebar
 watch(
@@ -266,6 +287,10 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 window.addEventListener('beforeunload', handleBeforeUnload)
 onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  if (aiMicroApp) {
+    aiMicroApp.unmount()
+    aiMicroApp = null
+  }
 })
 
 // ================================================================
@@ -554,14 +579,7 @@ function handleVersionLoadedFromToolbar(version: string) {
         :class="[styles.aiDrawer, { [styles.aiDrawerOpen]: showAiDrawer }]"
       >
         <div :class="styles.aiInner">
-          <iframe
-            v-if="showAiDrawer"
-            ref="aiIframeRef"
-            :src="aiBaseUrl + '?agent=editor'"
-            :class="styles.aiIframe"
-            frameborder="0"
-            @load="onAiIframeLoad"
-          />
+          <div ref="aiContainerRef" :class="styles.aiContainer" />
         </div>
       </div>
     </div>

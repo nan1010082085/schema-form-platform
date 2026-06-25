@@ -55,9 +55,9 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Send command to child micro-app iframe via postMessage
+// Send command to child micro-app via postMessage
 function sendToChild(msg: Record<string, unknown>) {
-  containerRef.value?.querySelector('iframe')?.contentWindow?.postMessage(msg, '*')
+  window.postMessage(msg, '*')
 }
 
 // Host message handler — receives responses from child via postMessage

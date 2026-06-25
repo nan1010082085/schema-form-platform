@@ -466,11 +466,10 @@
   height: 100%;
 }
 
-.aiIframe {
+.aiContainer {
   width: 400px;
   height: 100%;
-  border: none;
-  display: block;
+  overflow: auto;
 }
 
 // ================================================================
