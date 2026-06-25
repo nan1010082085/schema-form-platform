@@ -8,6 +8,7 @@
  * - 响应归一化（dataPath 提取）
  */
 import type { FlowApiConfig, FlowGraph } from '@schema-form/flow-shared'
+import { fetchApiRaw } from '@/api/flowApi'
 
 // ============================================================
 // 响应归一化
@@ -116,10 +117,7 @@ async function executeRequest(config: FlowApiConfig): Promise<unknown> {
 
     const init: RequestInit = {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...config.headers,
-      },
+      headers: config.headers,
       signal: controller.signal,
     }
 
@@ -127,9 +125,7 @@ async function executeRequest(config: FlowApiConfig): Promise<unknown> {
       init.body = JSON.stringify(config.body)
     }
 
-    const res = await fetch(url.toString(), init)
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-    return await res.json()
+    return await fetchApiRaw(url.toString(), init)
   } finally {
     clearTimeout(timer)
   }

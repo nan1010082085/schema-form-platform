@@ -36,6 +36,12 @@ const { bootstrap, mount, unmount } = createQiankunApp({
   extraSetup: (app) => {
     setupElementPlus(app)
   },
+  afterMount: (props) => {
+    // sidebar 模式：导航到 /sidebar 路由
+    if (props?.mode === 'sidebar') {
+      router.push('/sidebar')
+    }
+  },
 })
 
 export { bootstrap, mount, unmount }

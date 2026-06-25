@@ -116,7 +116,7 @@ router.post('/:webhookId/trigger', async (ctx) => {
   eventBus.emit('webhook.triggered', {
     webhookId,
     instanceId: (instance as unknown as { _id: string })?._id,
-  }).catch(() => {})
+  }).catch((err) => console.error('[webhook.triggered] emit failed:', err))
 
   ctx.status = 201
   ctx.body = {
@@ -215,7 +215,7 @@ router.get('/:webhookId/trigger', async (ctx) => {
   eventBus.emit('webhook.triggered', {
     webhookId,
     instanceId: instance?._id,
-  }).catch(() => {})
+  }).catch((err) => console.error('[webhook.triggered] emit failed:', err))
 
   ctx.status = 201
   ctx.body = {

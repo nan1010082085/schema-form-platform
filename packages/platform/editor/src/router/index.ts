@@ -37,51 +37,13 @@ const routes = [
   },
 
   // ---- Redirects ----
-  { path: '/', redirect: '/instances' },
+  { path: '/', redirect: '/editor' },
   {
     path: '/renderer',
     redirect: (to: { query: { id?: string } }) => `/view?id=${to.query.id || ''}`,
   },
 
-  // ---- 带全局布局的管理页面 ----
-  {
-    path: '/',
-    component: () => import('@/components/AppLayout.vue'),
-    children: [
-      {
-        path: 'instances',
-        name: 'instances',
-        component: () => import('@/views/InstancesView.vue'),
-      },
-      {
-        path: 'templates',
-        name: 'widget-templates',
-        component: () => import('@/views/WidgetTemplateView.vue'),
-      },
-      {
-        path: 'credentials',
-        name: 'credentials',
-        component: () => import('@/views/CredentialListView.vue'),
-      },
-      {
-        path: 'tenants',
-        name: 'tenants',
-        component: () => import('@/views/TenantListView.vue'),
-      },
-      {
-        path: 'submissions',
-        name: 'submissions',
-        component: () => import('@/views/SubmissionListView.vue'),
-      },
-      {
-        path: 'widget-docs',
-        name: 'widget-docs',
-        component: () => import('@/views/WidgetDocsView.vue'),
-      },
-    ],
-  },
-
-  // ---- 全屏页面（无布局壳）----
+  // ---- Editor core pages (无布局壳) ----
   {
     path: '/editor',
     name: 'editor',

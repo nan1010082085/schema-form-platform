@@ -7,7 +7,7 @@
 import { ref, inject, onMounted, watch, toValue, type Ref, type MaybeRefOrGetter } from 'vue'
 import { FORM_GRID_CONTEXT_KEY, FORM_GRID_FORM_KEY } from '@/components/WidgetRenderer/types'
 import type { SchemaApiConfig, DictItem, FormData } from '@/components/WidgetRenderer/types'
-import { apiClient } from '@/utils/apiClient'
+import { requestExternalUrl } from '@/api/requestApi'
 import { getCachedOptions, setCachedOptions } from '@/utils/optionsCache'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import { executeWithRetry } from '@/utils/retryRequest'
@@ -77,7 +77,7 @@ export function useDynamicOptions(apiConfig: MaybeRefOrGetter<SchemaApiConfig | 
     try {
       const method = config.method ?? 'get'
       const res: unknown = await executeWithRetry(
-        () => apiClient.requestUrl(method, config.url, resolvedParams),
+        () => requestExternalUrl(method, config.url, resolvedParams),
         { enableRetry: config.enableRetry, maxRetries: config.retryCount },
       )
 

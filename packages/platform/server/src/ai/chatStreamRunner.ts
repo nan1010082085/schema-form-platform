@@ -661,7 +661,7 @@ async function runChatStream(
 
     await appendMessage(convo._id, assistantMessage)
 
-    maybeGenerateSummary(convo._id).catch(() => {})
+    maybeGenerateSummary(convo._id).catch((err) => { logger.error({ msg: '[WS:chat] maybeGenerateSummary failed', convoId: convo._id, err }) })
 
     sendEvent({ type: 'done', conversationId: convo._id })
     doneSent = true

@@ -21,12 +21,6 @@
         <h3 :class="$style.cardTitle">AI 应用</h3>
         <p :class="$style.cardDesc">AI 对话式生成表单和流程</p>
       </router-link>
-
-      <router-link to="/admin" :class="$style.card">
-        <div :class="$style.icon"><AppIcon name="setting" :size="48" /></div>
-        <h3 :class="$style.cardTitle">系统管理</h3>
-        <p :class="$style.cardDesc">用户、角色、权限、菜单管理</p>
-      </router-link>
     </div>
   </div>
 </template>

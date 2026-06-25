@@ -6,7 +6,7 @@
  *
  * 此文件为纯配置 + 纯工具函数，不依赖任何微前端运行时。
  *
- * @deprecated 请使用 @schema-form/shared-qiankun/config 中的同名导出，此文件保留仅为向后兼容。
+ * @deprecated 请使用 @schema-form/platform-shared/qiankun/config 中的同名导出，此文件保留仅为向后兼容。
  */
 
 // 浏览器环境声明（构建时 window 可能不存在）

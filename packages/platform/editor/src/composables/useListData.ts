@@ -4,10 +4,8 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import { apiClient } from '@/utils/apiClient'
+import { fetchGenericList } from '@/api/dataApi'
 import type { ListApiConfig } from '@/components/WidgetRenderer/types'
-import { normalizeListResponse } from '@/utils/responseNormalizer'
-import { executeWithRetry } from '@/utils/retryRequest'
 
 export interface UseListDataOptions {
   listApi: ListApiConfig
@@ -38,17 +36,6 @@ export interface UseListDataReturn {
 }
 
 
-/** Filter out undefined, null, and empty string values */
-function filterEmptyParams(params: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null && value !== '') {
-      result[key] = value
-    }
-  }
-  return result
-}
-
 export function useListData(options: UseListDataOptions): UseListDataReturn {
   const { listApi, pageSize: defaultPageSize = 10, autoLoad = true } = options
 
@@ -67,27 +54,18 @@ export function useListData(options: UseListDataOptions): UseListDataReturn {
     loading.value = true
     error.value = ''
     try {
-      const params: Record<string, unknown> = {
-        [listApi.pageParam ?? 'pageNum']: currentPage.value,
-        [listApi.sizeParam ?? 'pageSize']: pageSize.value,
-        ...filterEmptyParams(searchParams),
-        ...(listApi.extraParams ?? {}),
-      }
-      if (sortState.prop) {
-        params.sortField = sortState.prop
-        params.sortOrder = sortState.order
-      }
-
-      const method = listApi.method ?? 'post'
-      const response: unknown = await executeWithRetry(
-        () => apiClient.requestUrl(method, listApi.url, params),
+      const { data, total: totalVal } = await fetchGenericList(
+        listApi,
+        {
+          page: currentPage.value,
+          pageSize: pageSize.value,
+          searchParams,
+          extraParams: listApi.extraParams,
+          sortField: sortState.prop || undefined,
+          sortOrder: sortState.order || undefined,
+        },
         { enableRetry: options.enableRetry, maxRetries: options.retryCount },
       )
-
-      const { data, total: totalVal } = normalizeListResponse(response, {
-        dataPath: listApi.dataPath ?? 'data',
-        totalPath: listApi.totalPath ?? 'total',
-      })
 
       tableData.value = data
       total.value = totalVal

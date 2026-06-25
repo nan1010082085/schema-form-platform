@@ -241,7 +241,9 @@ router.post('/:id/apply', async (ctx) => {
   regenerateIds(widgets)
 
   // Increment usage count asynchronously (fire-and-forget)
-  WidgetTemplateModel.findByIdAndUpdate(id, { $inc: { usageCount: 1 } }).catch(() => {})
+  WidgetTemplateModel.findByIdAndUpdate(id, { $inc: { usageCount: 1 } }).catch((err) => {
+    console.error('[template] Failed to increment usageCount:', err)
+  })
 
   ctx.body = {
     success: true,

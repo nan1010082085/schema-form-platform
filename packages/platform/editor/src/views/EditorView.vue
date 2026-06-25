@@ -82,8 +82,8 @@ const showAiDrawer = ref(false)
 const showVersionCompare = ref(false)
 const isDev = import.meta.env.DEV
 const aiEntryUrl = isDev
-  ? `http://localhost:${APP_CONFIGS.aiPlatform.devPort}/`
-  : `${window.location.origin}${APP_CONFIGS.aiPlatform.basePath}`
+  ? `http://localhost:${APP_CONFIGS.ai.devPort}/`
+  : `${window.location.origin}${APP_CONFIGS.ai.basePath}`
 
 // ================================================================
 // Mode
@@ -247,12 +247,13 @@ watch(showAiDrawer, async (open) => {
     await nextTick()
     if (aiContainerRef.value && !aiMicroApp) {
       aiMicroApp = loadMicroApp({
-        name: 'aiPlatform',
+        name: 'ai',
         entry: aiEntryUrl,
         container: aiContainerRef.value,
-        props: { agent: 'editor' },
+        props: { agent: 'editor', mode: 'sidebar' },
       }, {
         sandbox: { experimentalStyleIsolation: true },
+        singular: true,
       })
       aiMicroApp.mountPromise.then(() => {
         setTimeout(sendContextToAi, 300)

@@ -9,7 +9,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { UserConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { type AppName, APP_CONFIGS, getApiProxyTarget } from '@schema-form/shared-qiankun/config'
+import { type AppName, APP_CONFIGS, getApiProxyTarget } from '@schema-form/platform-shared/qiankun/config'
 
 // 监视 workspace 包源码的 Vite 插件
 // Vite 的 chokidar watcher 默认忽略 node_modules，导致 pnpm workspace 符号链接指向的源码变更无法触发 HMR

@@ -11,7 +11,7 @@ import type { PartialWidget } from '@/components/WidgetRenderer/types'
 import type { SchemaListItem } from '@/types/api'
 import type { InteractionMode } from '@/composables/useConstant'
 import { useApiStore } from '@/stores/api'
-import { getAppUrl } from '@schema-form/platform-shared/qiankun/config'
+import { APP_CONFIGS } from '@schema-form/platform-shared/qiankun/config'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
 import styles from './EditorToolbar.module.scss'
 
@@ -186,8 +186,8 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function goToPortal() {
-  const base = getAppUrl('editor', import.meta.env.DEV)
-  window.location.href = `${base}instances`
+  // Navigate to shell home — management pages belong to admin/shell, not editor
+  window.location.href = APP_CONFIGS.shell.basePath
 }
 
 onMounted(() => { document.addEventListener('keydown', handleKeydown) })

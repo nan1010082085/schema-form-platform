@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AppIcon from '@schema-form/platform-shared/components/common/AppIcon.vue'
+import { flowApi } from '@/api/flowApi'
 
 interface SchemaItem {
   id: string
@@ -75,24 +76,13 @@ const total = ref(0)
 async function fetchSchemas() {
   loading.value = true
   try {
-    const token = localStorage.getItem('sfp_access_token')
-    const params = new URLSearchParams({
-      page: String(currentPage.value),
-      pageSize: String(pageSize),
+    const data = await flowApi.listSchemas({
+      page: currentPage.value,
+      pageSize,
+      search: searchQuery.value || undefined,
     })
-    if (searchQuery.value) {
-      params.set('search', searchQuery.value)
-    }
-
-    const API_BASE = import.meta.env.VITE_API_BASE_URL
-    const response = await fetch(`${API_BASE}/schemas?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await response.json()
-    if (data.success) {
-      schemas.value = data.data.items || []
-      total.value = data.data.total || 0
-    }
+    schemas.value = data.items || []
+    total.value = data.total || 0
   } catch (err) {
     console.error('Failed to fetch schemas:', err)
   } finally {

@@ -5,7 +5,10 @@
  * 底层委托 utils/apiClient。
  */
 import { apiClient } from '@/utils/apiClient'
+import { normalizeListResponse } from '@/utils/responseNormalizer'
+import { executeWithRetry } from '@/utils/retryRequest'
 import type { PaginatedResponse } from '@/types/api'
+import type { ListApiConfig } from '@/components/WidgetRenderer/types'
 import type {
   CredentialItem,
   CredentialDetail,
@@ -107,6 +110,74 @@ export async function updateTenant(id: string, payload: TenantUpdatePayload): Pr
 
 export async function deleteTenant(id: string): Promise<null> {
   return apiClient.delete<null>(`/tenants/${encodeURIComponent(id)}`)
+}
+
+// ---- 通用列表查询 ----
+
+/** 通用列表查询参数 */
+export interface GenericListParams {
+  /** 当前页码 */
+  page: number
+  /** 每页条数 */
+  pageSize: number
+  /** 搜索参数 */
+  searchParams?: Record<string, unknown>
+  /** 额外固定参数 */
+  extraParams?: Record<string, unknown>
+  /** 排序字段 */
+  sortField?: string
+  /** 排序方向 */
+  sortOrder?: string
+}
+
+/** 通用列表查询结果 */
+export interface GenericListResult {
+  data: Record<string, unknown>[]
+  total: number
+}
+
+/**
+ * 通用列表查询 — 封装 requestUrl + normalizeListResponse + 重试
+ *
+ * 供 useListData 等 composable 调用，遵循 API 聚合规则。
+ */
+export async function fetchGenericList(
+  listApi: ListApiConfig,
+  params: GenericListParams,
+  retryOptions?: { enableRetry?: boolean; maxRetries?: number },
+): Promise<GenericListResult> {
+  const requestParams: Record<string, unknown> = {
+    [listApi.pageParam ?? 'pageNum']: params.page,
+    [listApi.sizeParam ?? 'pageSize']: params.pageSize,
+    ...filterEmptyParams(params.searchParams ?? {}),
+    ...(params.extraParams ?? {}),
+  }
+  if (params.sortField) {
+    requestParams.sortField = params.sortField
+    requestParams.sortOrder = params.sortOrder
+  }
+
+  const method = listApi.method ?? 'post'
+  const response: unknown = await executeWithRetry(
+    () => apiClient.requestUrl(method, listApi.url, requestParams),
+    retryOptions,
+  )
+
+  return normalizeListResponse(response, {
+    dataPath: listApi.dataPath ?? 'data',
+    totalPath: listApi.totalPath ?? 'total',
+  })
+}
+
+/** 过滤空值参数 */
+function filterEmptyParams(params: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      result[key] = value
+    }
+  }
+  return result
 }
 
 // ---- 流程操作 ----

@@ -60,7 +60,7 @@ import { validateApiKey } from './ai/graph/agentBase.js'
 validateApiKey()
 
 // ── Redis (non-blocking, optional in dev) ──
-connectRedis().catch(() => { /* handled in connectRedis */ })
+connectRedis()
 
 const app = new Koa()
 

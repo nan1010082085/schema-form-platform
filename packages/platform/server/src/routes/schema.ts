@@ -624,7 +624,7 @@ router.post('/:id/publish', requireAuth, requirePermission('schema:publish'), as
   ctx.body = { success: true, data: published }
 
   // Fire-and-forget webhook event
-  eventBus.emit('schema.published', { schemaId: draft.editId, name: draft.name }).catch(() => {})
+  eventBus.emit('schema.published', { schemaId: draft.editId, name: draft.name }).catch((err) => console.error('[schema.published] emit failed:', err))
 })
 
 // ────────────────────────────────────────────

@@ -9,7 +9,7 @@
     "./element": "./element.ts"
   },
   "dependencies": {
-    "@schema-form/shared-qiankun": "workspace:*",
+    "@schema-form/platform-shared": "workspace:*",
     "@element-plus/icons-vue": "^2.3.1",
     "@vitejs/plugin-vue": "^5.2.3",
     "element-plus": "^2.9.7",

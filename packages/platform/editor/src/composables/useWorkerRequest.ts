@@ -1,6 +1,7 @@
 /** useWorkerRequest — fetch 请求封装 */
 import { ref, readonly, type Ref } from 'vue'
 import { useLogger } from './useLogger'
+import { genericFetchApi } from '@/api/requestApi'
 
 export interface RequestConfig {
   url: string
@@ -33,10 +34,7 @@ export function useWorkerRequest(): WorkerRequestAPI {
     try {
       const { url, method = 'get', params, headers, dataPath } = config
       let requestUrl = url
-      const fetchOptions: RequestInit = {
-        method: method.toUpperCase(),
-        headers: { 'Content-Type': 'application/json', ...headers },
-      }
+      const mergedHeaders: Record<string, string> = { 'Content-Type': 'application/json', ...headers }
 
       if (method === 'get' && params) {
         const searchParams = new URLSearchParams()
@@ -47,16 +45,14 @@ export function useWorkerRequest(): WorkerRequestAPI {
         }
         const separator = url.includes('?') ? '&' : '?'
         requestUrl = `${url}${separator}${searchParams.toString()}`
-      } else if (method === 'post' && params) {
-        fetchOptions.body = JSON.stringify(params)
       }
 
-      const response = await fetch(requestUrl, fetchOptions)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      let data: unknown = await response.json()
+      let data: unknown = await genericFetchApi(
+        requestUrl,
+        method,
+        mergedHeaders,
+        method === 'get' ? undefined : params,
+      )
       if (dataPath) {
         const extracted = extractByPath(data, dataPath)
         if (extracted !== undefined) data = extracted

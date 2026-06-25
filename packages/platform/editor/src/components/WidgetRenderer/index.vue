@@ -38,7 +38,7 @@ import { useFormData } from '@/composables/useFormData'
 import { useLifecycle } from '@/composables/useLifecycle'
 import { useLocale } from '@/composables/useLocale'
 import { useLogger } from '@/composables/useLogger'
-import { apiClient } from '@/utils/apiClient'
+import { fetchRuntimeUrl } from '@/api/runtimeApi'
 import { triggerWidgetEvent } from '@/engine/eventEngine'
 import styles from './style.module.scss'
 
@@ -382,7 +382,7 @@ async function loadApiData(config: LoadApiConfig): Promise<void> {
   loading.value = true
   try {
     const method = config.method ?? 'get'
-    const res: unknown = await apiClient.requestUrl(method, config.url, config.params)
+    const res = await fetchRuntimeUrl(method, config.url, config.params)
 
     // 假设 API 返回 { code: 0, data: Record<string, any> }
     let rawData: Record<string, unknown> = {}

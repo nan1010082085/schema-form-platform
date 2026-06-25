@@ -4,9 +4,9 @@
  * 提供公共的组合函数和监听函数、注册等
  */
 
-export { useQiankun } from './useQiankun'
-export { useQiankunEvent } from './useQiankunEvent'
+export { useQiankun, initQiankunProps } from './useQiankun'
+export { useQiankunEvent, initQiankunLifecycle } from './useQiankunEvent'
 export { useMicroApp } from './useMicroApp'
 export { createQiankunApp } from './createQiankunApp'
 export type { QiankunLifecycle, QiankunProps, QiankunEvent } from './types'
-export type { MicroAppMode, UseMicroAppOptions, UseMicroAppReturn } from './useMicroApp'
+export type { UseMicroAppOptions, UseMicroAppReturn, LoadMicroAppFn } from './useMicroApp'

@@ -274,10 +274,10 @@ watch(showAiDrawer, async (open) => {
     await nextTick()
     if (aiContainerRef.value && !aiMicroApp) {
       aiMicroApp = loadMicroApp({
-        name: 'ai-sidebar',
+        name: 'ai',
         entry: aiEntryUrl,
         container: aiContainerRef.value,
-        props: { agent: 'flow' },
+        props: { agent: 'flow', mode: 'sidebar' },
       }, {
         sandbox: { experimentalStyleIsolation: true },
       })

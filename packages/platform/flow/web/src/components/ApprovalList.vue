@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { flowApi } from '@/api/flowApi'
 
 interface ApprovalTask {
   taskId: string
@@ -70,17 +71,8 @@ async function fetchApprovalList() {
 
   loading.value = true
   try {
-    const token = localStorage.getItem('sfp_access_token')
-    const API_BASE = import.meta.env.VITE_API_BASE_URL
-    const response = await fetch(`${API_BASE}/flow-tasks/approval-list?instanceId=${props.instanceId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const data = await response.json()
-    if (data.success) {
-      tasks.value = data.data.tasks || []
-    }
-  } catch (err) {
-    console.error('Failed to fetch approval list:', err)
+    const data = await flowApi.getApprovalList(props.instanceId)
+    tasks.value = data.tasks || []
   } finally {
     loading.value = false
   }

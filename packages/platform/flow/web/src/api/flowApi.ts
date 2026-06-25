@@ -66,6 +66,29 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return json.data
 }
 
+/**
+ * 通用 API 请求函数，供 flowRequestQueue 等外部调用方使用。
+ * 自动附加认证头，与内部 request 函数共享 token 机制。
+ */
+export async function fetchApiRaw(url: string, init?: RequestInit): Promise<unknown> {
+  const token = tokenProvider?.()
+  const authHeaders: Record<string, string> = {}
+  if (token) authHeaders['Authorization'] = `Bearer ${token}`
+
+  const mergedInit: RequestInit = {
+    headers: { 'Content-Type': 'application/json', ...authHeaders, ...init?.headers },
+    ...init,
+  }
+
+  const res = await fetch(url, mergedInit)
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Authentication required')
+    const text = await res.text().catch(() => '')
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`)
+  }
+  return res.json()
+}
+
 export const flowApi = {
   // Flow definitions
   listFlows: (query?: FlowListQuery) => {
@@ -155,6 +178,9 @@ export const flowApi = {
     return request<TaskInstanceListData>(`/flow-tasks/my?${params}`)
   },
 
+  getApprovalList: (instanceId: string) =>
+    request<{ tasks: Array<{ taskId: string; nodeId: string; nodeName: string; status: 'pending' | 'claimed' | 'completed' | 'cancelled'; assignee?: string; outcome?: string; formData?: Record<string, unknown>; formSchemaId?: string; formPublishId?: string; createdAt: string; updatedAt: string }> }>(`/flow-tasks/approval-list?instanceId=${instanceId}`),
+
   getTask: (id: string) => request<TaskInstanceData>(`/flow-tasks/${id}`),
 
   claimTask: (id: string) =>
@@ -214,6 +240,15 @@ export const flowApi = {
   getApprovalLogs: (instanceId: string) => {
     const params = new URLSearchParams({ instanceId })
     return request<ApprovalLogListData>(`/flow-approvals?${params}`)
+  },
+
+  // Schemas (editor-server) — 分页查询
+  listSchemas: (query?: { search?: string; page?: number; pageSize?: number }) => {
+    const params = new URLSearchParams()
+    if (query?.page) params.set('page', String(query.page))
+    if (query?.pageSize) params.set('pageSize', String(query.pageSize))
+    if (query?.search) params.set('search', query.search)
+    return request<{ items: Array<{ id: string; name: string; type?: string; status?: string; publishId?: string }>; total: number }>(`/schemas?${params}`)
   },
 
   // Published forms (editor-server)

@@ -388,7 +388,7 @@ export class FlowEngine {
                     token.nodeId,
                     uid,
                     node.config.label,
-                  ).catch(() => { /* notification failure should not block engine */ })
+                  ).catch((err) => { console.error('[notification] failed:', err) })
                 }
 
                 changed = true
@@ -445,7 +445,7 @@ export class FlowEngine {
                   token.nodeId,
                   assignees[i],
                   node.config.label,
-                ).catch(() => { /* notification failure should not block engine */ })
+                ).catch((err) => { console.error('[notification] failed:', err) })
               }
               changed = true
               break
@@ -970,7 +970,7 @@ export class FlowEngine {
         instance._id,
         instance.initiatedBy,
         flowDef?.name,
-      ).catch(() => { /* notification failure should not block engine */ })
+      ).catch((err) => { console.error('[notification] failed:', err) })
     }
 
     // Emit webhook event for flow completion
@@ -978,7 +978,7 @@ export class FlowEngine {
       eventBus.emit('flow.completed', {
         instanceId: instance._id,
         definitionId: instance.definitionId,
-      }).catch(() => {})
+      }).catch((err) => console.error('[flow.completed] emit failed:', err))
     }
 
     if (instance.status === 'completed' && instance.parentInstanceId) {
@@ -1029,14 +1029,14 @@ export class FlowEngine {
         instance.initiatedBy,
         task.nodeName,
         operator,
-      ).catch(() => { /* notification failure should not block engine */ })
+      ).catch((err) => { console.error('[notification] failed:', err) })
 
       // Emit webhook event for flow rejection
       eventBus.emit('flow.rejected', {
         instanceId: instance._id,
         definitionId: instance.definitionId,
         reason: `Task "${task.nodeName}" rejected by ${operator}`,
-      }).catch(() => {})
+      }).catch((err) => console.error('[flow.rejected] emit failed:', err))
     }
 
     // Write form data to instance variables only if formVariable is configured

@@ -12,7 +12,7 @@
 declare const window: { location: { hostname: string; port: string; origin: string } } | undefined
 
 /** 应用名称（含宿主） */
-export type AppName = 'shell' | 'editor' | 'flow' | 'ai' | 'admin'
+export type AppName = 'shell' | 'editor' | 'flow' | 'ai'
 
 /** 单个子应用的配置（开发环境 fallback） */
 export interface AppConfig {
@@ -34,7 +34,6 @@ export const APP_CONFIGS: Record<AppName, AppConfig> = {
   editor:   { name: 'editor',   basePath: '/schema-platform/micro/editor/', devPort: 5100 },
   flow:     { name: 'flow',     basePath: '/schema-platform/micro/flow/',   devPort: 5200 },
   ai:       { name: 'ai',       basePath: '/schema-platform/micro/ai/',     devPort: 5300 },
-  admin:    { name: 'admin',    basePath: '/schema-platform/micro/admin/',  devPort: 5555 },
 }
 
 /** API 服务端口 */

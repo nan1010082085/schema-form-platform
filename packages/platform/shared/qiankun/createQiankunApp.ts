@@ -13,6 +13,8 @@
  */
 import { createApp, type App, type Component } from 'vue'
 import { createPinia } from 'pinia'
+import { initQiankunProps } from './useQiankun'
+import type { QiankunProps } from './types'
 
 // ── 工厂函数 ──
 
@@ -27,6 +29,8 @@ export interface CreateQiankunAppOptions {
   getToken?: () => string | null
   /** 额外的 setup 回调（在插件注册后执行） */
   extraSetup?: (app: App) => void
+  /** 挂载完成后的回调（接收 qiankun props） */
+  afterMount?: (props: Record<string, unknown>) => void
 }
 
 /**
@@ -39,6 +43,7 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
     plugins = [],
     getToken,
     extraSetup,
+    afterMount,
   } = options
 
   let app: App | null = null
@@ -112,7 +117,7 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
       console.log(`[${name}] bootstrap`)
     },
 
-    async mount(props: { container?: HTMLElement }) {
+    async mount(props: Record<string, unknown> & { container?: HTMLElement }) {
       // qiankun 调用了 mount()，取消 standalone fallback
       if (standaloneFallbackTimer) {
         clearTimeout(standaloneFallbackTimer)
@@ -123,7 +128,14 @@ export function createQiankunApp(options: CreateQiankunAppOptions) {
         container: props.container,
         containerId: props.container?.id,
       })
+
+      // 注入 qiankun props，启用 globalState 事件通道
+      if (typeof props.onGlobalStateChange === 'function' && typeof props.setGlobalState === 'function') {
+        initQiankunProps(props as QiankunProps)
+      }
+
       render(props)
+      if (afterMount) afterMount(props)
     },
 
     async unmount() {

@@ -152,7 +152,9 @@ function handleDelete(item: SchemaListItem) {
     const ok = await store.deleteSchema(item.id)
     if (ok) ElMessage.success('已删除')
     else ElMessage.error(store.error || '删除失败')
-  }).catch(() => {})
+  }).catch((err) => {
+    if (err !== 'cancel') throw err
+  })
 }
 
 function handleDesigner(id: string) {
@@ -182,6 +184,11 @@ async function handlePublish(item: SchemaListItem) {
         type: 'info',
       }
     )
+  } catch {
+    return // 用户取消，不做任何操作
+  }
+
+  try {
     publishingId.value = item.id
     const result = await store.publishSchema(item.id)
     if (result) {
@@ -190,8 +197,10 @@ async function handlePublish(item: SchemaListItem) {
     } else {
       ElMessage.error(store.error || '发布失败')
     }
-    setTimeout(() => { publishingId.value = null }, COOLDOWN_MS)
-  } catch {
+  } catch (err) {
+    console.error('发布失败:', err)
+    ElMessage.error('发布失败')
+  } finally {
     setTimeout(() => { publishingId.value = null }, COOLDOWN_MS)
   }
 }
@@ -221,6 +230,11 @@ async function handleBulkDelete() {
         type: 'warning',
       }
     )
+  } catch {
+    return // 用户取消
+  }
+
+  try {
     let success = 0
     let fail = 0
     for (const id of selectedIds.value) {
@@ -233,7 +247,10 @@ async function handleBulkDelete() {
 
     bulkMode.value = false
     selectedIds.value.clear()
-  } catch {}
+  } catch (err) {
+    console.error('批量删除失败:', err)
+    ElMessage.error('批量删除失败')
+  }
 }
 
 // ---- Export/Import ----

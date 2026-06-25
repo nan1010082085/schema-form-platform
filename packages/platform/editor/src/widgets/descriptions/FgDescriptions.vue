@@ -2,6 +2,7 @@
 import { inject, computed, ref, onMounted } from 'vue'
 import { widgetDataKey } from '../base/types'
 import { useExposeWidget } from '../../composables/useExposeWidget'
+import { fetchWidgetDataSource } from '@/api/widgetApi'
 import type { DescriptionItemConfig } from './config'
 import styles from './style.module.scss'
 
@@ -30,10 +31,7 @@ async function loadData() {
 
   loading.value = true
   try {
-    const resp = await fetch(api.url)
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    const json = await resp.json()
-    data.value = json.data ?? json
+    data.value = await fetchWidgetDataSource(api.url)
   } catch (err) {
     console.error('[FgDescriptions] Failed to load data:', err)
   } finally {

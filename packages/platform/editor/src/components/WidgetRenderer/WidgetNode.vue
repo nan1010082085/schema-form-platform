@@ -115,6 +115,24 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
   if (!eventCtx) return
   await triggerWidgetEvent(props.widget as Widget, trigger, eventCtx)
 }
+
+// ---- 弹框确认/取消 ----
+async function handleDialogConfirm() {
+  if (eventCtx) {
+    await triggerWidgetEvent(props.widget as Widget, 'confirm', eventCtx, 'confirm')
+  }
+  // 如果事件引擎没有关闭弹框（没有 close-dialog 动作），默认关闭
+  if (dialogVisible.value) {
+    dialogVisible.value = false
+  }
+}
+
+function handleDialogCancel() {
+  if (eventCtx) {
+    triggerWidgetEvent(props.widget as Widget, 'cancel', eventCtx, 'cancel')
+  }
+  dialogVisible.value = false
+}
 </script>
 
 <template>
@@ -142,10 +160,10 @@ async function handleWidgetEvent(trigger: string, _value?: unknown) {
         />
       </template>
       <template v-if="widget.props?.showFooter !== false" #footer>
-        <el-button @click="dialogVisible = false">
+        <el-button @click="handleDialogCancel">
           {{ (widget.props?.cancelText as string) || '取消' }}
         </el-button>
-        <el-button type="primary" @click="dialogVisible = false">
+        <el-button type="primary" @click="handleDialogConfirm">
           {{ (widget.props?.confirmText as string) || '确定' }}
         </el-button>
       </template>

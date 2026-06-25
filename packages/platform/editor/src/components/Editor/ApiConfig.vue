@@ -6,7 +6,7 @@
  * 右侧：测试连接面板（独立区域，不跟随表单滚动）
  */
 import { ref, computed } from 'vue'
-import { apiClient } from '@/utils/apiClient'
+import { requestExternalUrl } from '@/api/requestApi'
 import { inferFieldsFromJson, fieldInferencesToSchema } from '@/utils/jsonToSchema'
 import { normalizeListResponse } from '@/utils/responseNormalizer'
 import type { SchemaApiConfig, PartialWidget } from '@/components/WidgetRenderer/types'
@@ -179,7 +179,7 @@ async function testConnection() {
   rawResponse.value = null
   try {
     const method = props.api.method ?? 'get'
-    const res: unknown = await apiClient.requestUrl(
+    const res: unknown = await requestExternalUrl(
       method,
       props.api.url,
       method === 'post' ? props.api.body : props.api.params,
